@@ -25,8 +25,17 @@
 //   preview-phone    error; an invitation still sends from the sponsor's own email app. The same at 390x844 with touch
 //   phone            server mode at 390x844 with touch: the box fits the width, a tap ticks it, the flag is sent
 //   managed          the managed edition's invite form holds no package box; its C-03 slices still pass
-// 10 parts. Every part ends with the leak scan of the screens it saw (phase 6's leak check and frame.js's vendor scan).
-//   NODE_PATH=$(npm root -g) node package-invite.js [--only single,declined,nocard,notoffered,account,unreachable,preview-desktop,preview-phone,phone,managed]
+// Plan 08-13 (D-01, research Pitfall 9, 08-CONTEXT P1 and P5): the box on "Import a list".
+//   list             one box with the list's total (each row's own tier and price, decided by the single form's rule);
+//                    ticked, one POST /v1/billing/entitlements with the rows' client ids and tiers before the first
+//                    invitation; an investor on file whose package the server does not offer is not paid for, not in the
+//                    total and sent without the package; the paid rows are exactly the rows sent with package true
+//   list-declined    the list box's no-card and not-offered states; a refused payment: no invitation, nothing created, the
+//                    list as it was, the server's sentence once; sent again, the same keys; 205 rows are paid in groups of
+//                    200, each group sent before the next is paid, and a refused group stops the list there; the owner's
+//                    preview (framed, no server, 390x844 touch): the box switched off with one line, the list still sends
+// 12 parts. Every part ends with the leak scan of the screens it saw (phase 6's leak check and frame.js's vendor scan).
+//   NODE_PATH=$(npm root -g) node package-invite.js [--only single,declined,nocard,notoffered,account,unreachable,preview-desktop,preview-phone,phone,managed,list,list-declined]
 // The last line is "PACKAGE INVITE: PASS (parts run: N)" or "PACKAGE INVITE: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -327,6 +336,91 @@ async function preview({ check, S }, view) {
     await A.context.close().catch(() => {});
   }
 }
+
+/* ---------- Plan 08-13: the list form ---------- */
+/** "Import a list" open on the Investors page (p: the page, or the frame that holds the portal). */
+async function openList(p) {
+  await p.evaluate(() => (location.hash = '#console-investors'));
+  await p.waitForSelector('[data-action=invite-toggle]', { timeout: 20000 });
+  await p.evaluate(() => {
+    const ui = window.CVPortal.state.ui;
+    ui.inviteOpen = true;
+    ui.inviteTab = 'bulk';
+    window.CVPortal.app.render();
+  });
+  await p.waitForSelector('#iv-csv', { timeout: 10000 });
+}
+/** The list pasted and checked ("Check list"); resolves once "Send N invitations" is on screen. */
+async function checkList(p, lines, tap) {
+  await openList(p);
+  await p.fill('#iv-csv', lines.join('\n'));
+  if (tap) await p.tap('form[data-form="invite-bulk"] button[type=submit]');
+  else await p.click('form[data-form="invite-bulk"] button[type=submit]');
+  await p.waitForSelector('[data-action="invite-bulk-add"]', { timeout: 15000 });
+  await p.waitForTimeout(300);
+}
+/** The list's box as the screen shows it. */
+const bulkBox = (p) =>
+  p.evaluate(() => {
+    const row = document.getElementById('iv-bulkPackage-row');
+    const input = document.getElementById('iv-bulkPackage');
+    const shown = (el) => !!el && !el.hidden && !!(el.offsetWidth || el.offsetHeight);
+    const label = document.getElementById('iv-bulkPackage-label');
+    const line = document.getElementById('iv-bulkPackage-line');
+    const a = line && line.querySelector('a');
+    const send = document.querySelector('[data-action="invite-bulk-add"]');
+    return {
+      present: !!input,
+      shown: shown(row) && shown(input),
+      disabled: !!(input && input.disabled),
+      checked: !!(input && input.checked),
+      label: label ? label.innerText.trim() : '',
+      line: shown(line) ? line.innerText.trim() : '',
+      href: a ? a.getAttribute('href') : '',
+      rows: shown(row) ? row.innerText.split('\n').map((x) => x.trim()).filter(Boolean) : [],
+      send: send ? send.textContent.trim() : '',
+      listed: document.querySelectorAll('.inv8-bulk-tbl tbody tr').length,
+      error: Array.from(document.querySelectorAll('#iv-bulk-error')).map((e) => e.innerText.trim())
+    };
+  });
+/** Waits until the list's box is on screen (the billing reply has arrived) or the time is up. */
+async function bulkShown(p, ms) {
+  await p
+    .waitForFunction(() => {
+      const row = document.getElementById('iv-bulkPackage-row');
+      return !!row && !row.hidden && !!row.offsetWidth;
+    }, null, { timeout: ms || 8000 })
+    .catch(() => {});
+  return bulkBox(p);
+}
+/** The server is asked again (as after a card change) and the page drawn from its answer. */
+const reread = async (p) => {
+  await p.evaluate(() => window.CVPortal.pkg.load(window.CVPortal.state.ws, true).then(() => window.CVPortal.app.render()));
+  await p.waitForTimeout(400);
+  return bulkBox(p);
+};
+/** Each email's newest invitation in the console: { email: { id, pkg, serverId, emailStatus } }. */
+const byEmails = (p, emails) =>
+  p.evaluate((emails) => {
+    const ws = window.CVPortal.state.ws;
+    const out = {};
+    emails.forEach((e) => {
+      const inv = ws.investors.find((i) => String(i.email || '').toLowerCase() === e.toLowerCase());
+      const it = inv && (ws.invitations || []).filter((x) => x.investorId === inv.id).pop();
+      out[e] = it ? { id: it.id, pkg: it.package === true, serverId: it.serverId || '', emailStatus: it.emailStatus } : null;
+    });
+    return out;
+  }, emails);
+const people = (n, tag) => Array.from({ length: n }, (_, k) => ({ first: `Pat${tag}${k}`, last: `Rowe${tag}${k}`, email: `pat.${tag}${k}@example.com` }));
+const lineOf = (x, off) => [x.first, x.last, x.email].concat(off ? [off] : []).join(',');
+const occurrences = (text, s) => text.split(s).length - 1;
+/** The paying stand-in: the server's price for each item, as plan 08-04's server works it out. */
+const payReply = (prices, paid) => (req) => {
+  const items = (req.body && req.body.items) || [];
+  const cents = items.reduce((n, it) => n + (prices[it.tier] || 0), 0);
+  if (paid) paid.push(cents);
+  return { status: 200, body: { paid: items.map((it) => it.key), chargedCents: cents, creditUsedCents: 0 } };
+};
 
 const parts = {
   single: async ({ check, S }) => {
@@ -729,6 +823,247 @@ const parts = {
       check('STATUS MATH\'s managed slices still pass (C-03)', r.status === 0 && last === 'STATUS MATH: PASS (cases run: 1)', last);
       check('no page error', A.errors.length === 0, A.errors);
       F.leakFree(check, 'the managed invite form', form);
+    } finally {
+      await A.context.close().catch(() => {});
+    }
+  },
+
+  list: async ({ check, S }) => {
+    const prices = { identity: 1900, full: 9900, reverify: 6900 };
+    let full = false;
+    const charged = [];
+    const C = await consoleOn(
+      S,
+      check,
+      F.VIEW.desktop,
+      {
+        'GET /v1/billing': () => ({ status: 200, body: BILLING({ prices, available: { identity: true, full, reverify: false } }) }),
+        'POST /v1/billing/entitlements': payReply(prices, charged)
+      },
+      { account: true }
+    );
+    try {
+      const p = C.page;
+      // An investor on file holding the Rule 506(c) offering (their package is the full one), invited to it again.
+      const holder = await p.evaluate((oid) => {
+        const ws = window.CVPortal.state.ws;
+        const i = ws.investors.find(
+          (x) =>
+            x.onboarding.status === 'complete' &&
+            x.email &&
+            /\s/.test(String(x.contact || '').trim()) &&
+            (x.positions || []).some((y) => y.offeringId === oid) &&
+            !(ws.invitations || []).some((y) => y.investorId === x.id && ['cancelled', 'completed'].indexOf(y.status) < 0) &&
+            !(ws.requests || []).some((r) => r.investorId === x.id && r.offeringId === oid && r.status === 'pending')
+        );
+        if (!i) return null;
+        const parts = String(i.contact).trim().split(/\s+/);
+        return { first: parts[0], last: parts.slice(1).join(' '), email: i.email };
+      }, C.off.offeringId);
+      check('an investor on file holding the Rule 506(c) offering, free to be invited to it again', !!holder, holder);
+      const fresh = people(3, 'l');
+      const lines = fresh.map((x) => lineOf(x)).concat(holder ? [lineOf(holder, C.off.offeringId)] : []);
+      await checkList(p, lines);
+      let b = await bulkShown(p);
+      check('four rows on the list, "Send 4 invitations"', b.listed === 4 && b.send === 'Send 4 invitations', b);
+      check('the list\'s box: three rows can carry the package (the investor on file\'s full package is not offered), total $57', b.shown && !b.disabled && !b.checked && b.label === 'Add verification package to 3 invitations ($57)' && b.line === '', b);
+      check('lean: the box says its label and nothing else', b.rows.length === 1 && b.rows[0] === b.label, b.rows);
+      // The same rule as the single form: once the server offers the full package, the investor on file's row is counted
+      // at its own price.
+      full = true;
+      b = await reread(p);
+      check('the full package offered: four rows, each at its own price ($19 x 3 + $99 = $156)', b.label === 'Add verification package to 4 invitations ($156)', b.label);
+      full = false;
+      b = await reread(p);
+      check('offered no longer: back to three rows, $57', b.label === 'Add verification package to 3 invitations ($57)' && !b.disabled, b.label);
+      const seen = [await F.noRawError(check, p, 'the list form', C.A.errors)];
+
+      await p.check('#iv-bulkPackage');
+      const label = (await bulkBox(p)).label;
+      await p.click('[data-action="invite-bulk-add"]');
+      const all = fresh.concat(holder ? [holder] : []).map((x) => x.email);
+      await p
+        .waitForFunction((emails) => {
+          const ws = window.CVPortal.state.ws;
+          return emails.every((e) => {
+            const inv = ws.investors.find((i) => String(i.email || '').toLowerCase() === e.toLowerCase());
+            const it = inv && (ws.invitations || []).filter((x) => x.investorId === inv.id).pop();
+            return !!(it && it.serverId);
+          });
+        }, all, { timeout: 60000 })
+        .catch(() => {});
+      await p.waitForTimeout(500);
+      const got = await byEmails(p, all);
+      const keys = (C.stub.sent('POST /v1/billing/entitlements')[0] || { body: {} }).body.items || [];
+      const order = C.stub.calls.filter((c) => c.key === 'POST /v1/billing/entitlements' || c.key === 'POST /v1/invitations').map((c) => c.key);
+      check('exactly one POST /v1/billing/entitlements, before the first POST /v1/invitations', C.stub.sent('POST /v1/billing/entitlements').length === 1 && order[0] === 'POST /v1/billing/entitlements' && order.filter((k) => k === 'POST /v1/invitations').length === 4, order);
+      check('it was sent with the sponsor\'s token', !!C.token && C.token !== C.srv.token && (C.stub.sent('POST /v1/billing/entitlements')[0] || {}).auth === `Bearer ${C.token}`);
+      const freshIds = fresh.map((x) => got[x.email] && got[x.email].id);
+      check('its items are the three new investors\' client ids (their invitations\' ids), each at the identity tier', keys.length === 3 && keys.every((it) => it.tier === 'identity') && freshIds.every((id) => !!id && keys.some((it) => it.key === id)), { keys, freshIds });
+      const hid = holder && got[holder.email] ? got[holder.email].id : '';
+      check('P1: the investor on file\'s key is not in the payment and not in the total', !!hid && !keys.some((it) => it.key === hid) && label === 'Add verification package to 3 invitations ($57)', { hid, keys, label });
+      check('the total shown ($57) is what the server charges for those items (5700 cents)', charged.length === 1 && charged[0] === 5700, charged);
+      const posts = C.stub.sent('POST /v1/invitations').map(packageOf);
+      const withPkg = posts.filter((x) => x.package === true).map((x) => x.clientId).sort();
+      check('P1: the invitations sent with package true are exactly the rows paid for (same client ids)', JSON.stringify(withPkg) === JSON.stringify(keys.map((it) => it.key).sort()), { withPkg, keys });
+      check('the investor on file\'s invitation is sent without the package', posts.filter((x) => !('package' in x) && !('clientId' in x)).length === 1, posts);
+      check('the console\'s records agree: three invitations carry the package, the investor on file\'s does not', fresh.every((x) => got[x.email] && got[x.email].pkg) && !!holder && got[holder.email] && got[holder.email].pkg === false, got);
+      const rows = await C.srv.rows();
+      check('the real server holds the four invitations', all.every((e) => got[e] && rows.some((r) => r.id === got[e].serverId)), { rows: rows.length });
+      const took = fresh.map((x) => got[x.email]).filter(Boolean).map((it) => ({ it, s: stored(C, it.serverId) }));
+      const hs = holder && got[holder.email] ? stored(C, got[holder.email].serverId) : null;
+      check('the server took the three packages: each stored invitation carries its own (identity, this account, its client id), paid from the balance at $19, nothing sent to a payment provider; the investor on file\'s carries none', took.length === 3 && took.every(({ it, s }) => tookPackage(s, C, it, 'identity', 1900)) && !!hs && hs.held && hs.pkg === null, { took: took.map((x) => x.s), hs });
+      seen.push(await F.noRawError(check, p, 'after sending', C.A.errors));
+      F.leakFree(check, 'every screen of this part', seen.join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+
+  'list-declined': async ({ check, S }) => {
+    const prices = { identity: 1900, full: 9900, reverify: 6900 };
+    let billing = BILLING({ prices });
+    let pay = () => ({ status: 402, body: { error: DECLINED, code: 'card_declined' } });
+    let posted = 0;
+    let quick = false;
+    const C = await consoleOn(
+      S,
+      check,
+      F.VIEW.desktop,
+      {
+        'GET /v1/billing': () => ({ status: billing.status || 200, body: billing.body || billing }),
+        'POST /v1/billing/entitlements': (req) => pay(req),
+        // Stubbed for the 205-row run only (each invitation answered here); otherwise the real server's.
+        'POST /v1/invitations': () => (quick ? { status: 200, body: { id: `ivt_q${++posted}`, link: 'http://127.0.0.1/invite', emailStatus: 'sent', expiresAt: new Date(Date.now() + 864e5 * 30).toISOString() } } : null)
+      },
+      { account: true }
+    );
+    try {
+      const p = C.page;
+      const seen = [];
+      // The list's box follows the single form's rules: no card, switched off with the line; 403 account_required (the
+      // shared token), switched off with the server's sentence; not offered, no box.
+      const two = people(2, 'n');
+      billing = BILLING({ prices, card: null });
+      await checkList(p, two.map((x) => lineOf(x)));
+      let b = await bulkShown(p);
+      check(`no card: the list's box switched off with the line "${LINE_NO_CARD}" (link to Integrations)`, b.shown && b.disabled && b.label === LABEL && b.line === LINE_NO_CARD && b.href === '#console-integrations' && b.rows.length === 2, b);
+      seen.push(await F.noRawError(check, p, 'no card', C.A.errors));
+      billing = { status: 403, body: { error: ACCOUNT, code: 'account_required' } };
+      b = await reread(p);
+      check(`403 account_required: the list's box switched off with the server's sentence "${ACCOUNT}", no link; "Send 2 invitations" stays`, b.shown && b.disabled && !b.checked && b.label === LABEL && b.line === ACCOUNT && !b.href && b.rows.length === 2 && b.send === 'Send 2 invitations', b);
+      await p.locator('#iv-bulkPackage-row').click({ timeout: 5000 }).catch(() => {});
+      await p.waitForTimeout(200);
+      b = await bulkBox(p);
+      check('403 account_required: the list\'s box cannot be ticked', b.checked === false && b.disabled === true, b);
+      seen.push(await F.noRawError(check, p, '403 account_required on the list form', C.A.errors));
+      billing = BILLING({ prices });
+      b = await reread(p);
+      check('offered with a card: the box, $38 for two', b.shown && !b.disabled && b.label === 'Add verification package to 2 invitations ($38)', b);
+
+      // A refused payment: nothing is sent, nothing is created, the list stays, the server's sentence once.
+      const three = people(3, 'd');
+      await checkList(p, three.map((x) => lineOf(x)));
+      await bulkShown(p);
+      await p.check('#iv-bulkPackage');
+      const before = await p.evaluate(() => ({ invitations: (window.CVPortal.state.ws.invitations || []).length, investors: window.CVPortal.state.ws.investors.length, audit: (window.CVPortal.state.ws.audit || []).length }));
+      await p.click('[data-action="invite-bulk-add"]');
+      await p.waitForSelector('#iv-bulk-error', { timeout: 15000 }).catch(() => {});
+      await p.waitForTimeout(600);
+      const after = await p.evaluate(() => ({ invitations: (window.CVPortal.state.ws.invitations || []).length, investors: window.CVPortal.state.ws.investors.length, audit: (window.CVPortal.state.ws.audit || []).length }));
+      b = await bulkBox(p);
+      const text = await F.noRawError(check, p, 'after the refused payment', C.A.errors);
+      seen.push(text);
+      const first = (C.stub.sent('POST /v1/billing/entitlements')[0] || { body: {} }).body.items || [];
+      check('one payment was asked for, for the three rows', C.stub.sent('POST /v1/billing/entitlements').length === 1 && first.length === 3, first);
+      check('refused: no POST /v1/invitations', C.stub.sent('POST /v1/invitations').length === 0, C.stub.sent('POST /v1/invitations').length);
+      check('refused: nothing created in the console (invitations, investors and the audit trail unchanged)', JSON.stringify(before) === JSON.stringify(after), { before, after });
+      check('refused: the list stays as it was ("Send 3 invitations", three rows listed, the box still ticked)', b.send === 'Send 3 invitations' && b.listed === 3 && b.checked && b.shown, b);
+      check(`refused: the server's sentence is shown once: "${DECLINED}"`, b.error.length === 1 && b.error[0] === DECLINED && occurrences(text, DECLINED) === 1, { error: b.error, n: occurrences(text, DECLINED) });
+
+      // The card goes through: sent again, the same keys are paid (a payment that was not confirmed is never paid twice).
+      pay = payReply(prices);
+      await p.click('[data-action="invite-bulk-add"]');
+      const emails = three.map((x) => x.email);
+      await p
+        .waitForFunction((emails) => emails.every((e) => {
+          const ws = window.CVPortal.state.ws;
+          const inv = ws.investors.find((i) => i.email === e);
+          const it = inv && (ws.invitations || []).filter((x) => x.investorId === inv.id).pop();
+          return !!(it && it.serverId);
+        }), emails, { timeout: 60000 })
+        .catch(() => {});
+      await p.waitForTimeout(400);
+      const again = (C.stub.sent('POST /v1/billing/entitlements')[1] || { body: {} }).body.items || [];
+      const got = await byEmails(p, emails);
+      check('sent again: the same three keys, and they are the invitations\' ids', JSON.stringify(again.map((x) => x.key).sort()) === JSON.stringify(first.map((x) => x.key).sort()) && emails.every((e) => got[e] && first.some((x) => x.key === got[e].id) && got[e].pkg), { first, again, got });
+      check('sent again: three invitations posted, each with package true', C.stub.sent('POST /v1/invitations').length === 3 && C.stub.sent('POST /v1/invitations').every((c) => packageOf(c).package === true), C.stub.sent('POST /v1/invitations').length);
+      const took = emails.map((e) => got[e]).filter(Boolean).map((it) => stored(C, it.serverId));
+      check('sent again: the server took the three packages (each stored invitation carries its own, paid from the balance at $19, nothing sent to a payment provider)', took.length === 3 && emails.every((e) => got[e] && tookPackage(stored(C, got[e].serverId), C, got[e], 'identity', 1900)), took);
+      b = await bulkBox(p);
+      check('the sentence is gone once the list is sent', b.error.length === 0, b.error);
+
+      // P5: 205 package rows are paid in groups of 200; each group is sent before the next is paid; a refused group stops.
+      quick = true;
+      const many = people(205, 'm');
+      await checkList(p, many.map((x) => lineOf(x)));
+      b = await bulkShown(p);
+      check('205 rows: the box, $3,895 for 205', b.label === 'Add verification package to 205 invitations ($3,895)' && b.send === 'Send 205 invitations', b);
+      await p.check('#iv-bulkPackage');
+      let calls = 0;
+      pay = (req) => (++calls === 1 ? payReply(prices)(req) : { status: 402, body: { error: DECLINED, code: 'card_declined' } });
+      const mark = C.stub.calls.length;
+      await p.click('[data-action="invite-bulk-add"]');
+      await p.waitForSelector('#iv-bulk-error', { timeout: 240000 }).catch(() => {});
+      await p.waitForTimeout(800);
+      const seq = C.stub.calls.slice(mark).filter((c) => c.key === 'POST /v1/billing/entitlements' || c.key === 'POST /v1/invitations');
+      const pays = seq.map((c, k) => (c.key === 'POST /v1/billing/entitlements' ? k : -1)).filter((k) => k >= 0);
+      const g1 = seq[pays[0]] ? seq[pays[0]].body.items.length : 0;
+      const g2 = seq[pays[1]] ? seq[pays[1]].body.items.length : 0;
+      check('two payments: the first for 200 packages, the second for the 5 left', pays.length === 2 && g1 === 200 && g2 === 5, { pays, g1, g2 });
+      check('the first group\'s 200 invitations were all sent before the second payment, none after it', pays[0] === 0 && pays[1] === 201 && seq.length === 202, { pays, n: seq.length });
+      const sentKeys = seq.filter((c) => c.key === 'POST /v1/invitations').map((c) => packageOf(c).clientId);
+      check('those 200 are the first group\'s rows, in order', seq[pays[0]] && JSON.stringify(sentKeys) === JSON.stringify(seq[pays[0]].body.items.map((x) => x.key)), sentKeys.length);
+      b = await bulkBox(p);
+      const text2 = await F.noRawError(check, p, 'after the refused second group', C.A.errors);
+      seen.push(text2);
+      const left = await byEmails(p, many.slice(200).map((x) => x.email));
+      check('the refused group stops the list there: its 5 rows are not created and stay on the list ("Send 5 invitations")', Object.values(left).every((x) => x === null) && b.send === 'Send 5 invitations' && b.listed === 5, { left, send: b.send, listed: b.listed });
+      check(`the server's sentence once: "${DECLINED}"`, b.error.length === 1 && b.error[0] === DECLINED && occurrences(text2, DECLINED) === 1, b.error);
+      const sent = await byEmails(p, [many[0].email, many[199].email]);
+      check('the first group\'s invitations are in the console, with the package', Object.values(sent).every((x) => x && x.pkg && /^ivt_q/.test(x.serverId)), sent);
+      F.leakFree(check, 'every screen of this part (server mode)', seen.join('\n'));
+    } finally {
+      await C.close();
+    }
+
+    // The owner's preview: no server, every connection refused, 390x844 with touch.
+    const { A, fr } = await F.framed(S, 'phone');
+    try {
+      await F.proveRefused(check, A, fr);
+      await fr.waitForSelector('[data-action=diy-sample][data-id=kestrel-bay]', { timeout: 30000 });
+      await fr.click('[data-action=diy-sample][data-id=kestrel-bay] >> nth=0');
+      await fr.waitForFunction(() => window.CVPortal && window.CVPortal.state.ws && window.CVPortal.state.ws.tenant.id === 'kestrel-bay', null, { timeout: 30000 });
+      const two = people(2, 'v');
+      await checkList(fr, two.map((x) => lineOf(x)), true);
+      let b = await bulkShown(fr);
+      check(`the preview: the list's box switched off, with the one line "${LINE_NO_SERVER}"`, b.shown && b.disabled && b.label === LABEL && b.line === LINE_NO_SERVER && !b.href && b.rows.length === 2, b);
+      await fr.locator('#iv-bulkPackage-row').tap({ timeout: 5000 }).catch(() => {});
+      b = await bulkBox(fr);
+      check('the preview: it cannot be ticked', b.checked === false, b);
+      const f = await fr.evaluate(() => {
+        const r = document.getElementById('iv-bulkPackage-row').getBoundingClientRect();
+        return { width: innerWidth, left: Math.round(r.left), right: Math.round(r.right), page: document.documentElement.scrollWidth };
+      });
+      check('the preview: the box fits the width', f.left >= 0 && f.right <= f.width && f.page <= f.width + 1, f);
+      const seen = [await F.noRawError(check, fr, 'the preview list form')];
+      await fr.tap('[data-action="invite-bulk-add"]');
+      await fr.waitForTimeout(1200);
+      const got = await byEmails(fr, two.map((x) => x.email));
+      check('the preview: the list still sends, from the sponsor\'s own email app, with no package', Object.values(got).every((x) => x && x.emailStatus === 'manual' && !x.pkg), got);
+      seen.push(await F.noRawError(check, fr, 'the preview after sending'));
+      check('the preview: nothing outside the page was asked for', A.net.external.length === 0 && A.net.allowed.length === 0, A.net);
+      F.leakFree(check, 'every screen of the preview', seen.join('\n'));
     } finally {
       await A.context.close().catch(() => {});
     }

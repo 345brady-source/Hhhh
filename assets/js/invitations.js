@@ -200,7 +200,7 @@
     const kind = NS.investorKind(o.type);
     const type = kind.type;
     const at = nowIso();
-    const id = uid('invt');
+    const id = o.id || uid('invt');
     const token = serverOn(ws) ? '' : newToken();
     const have = byEmail(ws, email);
     const existing = active(have);
@@ -1395,6 +1395,7 @@
   }
   NS.binders.inv8b = (path, v) => {
     if (path === 'includeTax') S().ui.bulkTax = !!v;
+    if (path === 'package') S().ui.bulkPackage = !!v;
   };
   /** The invite form's optional fields, kept under More options. */
   const MORE_FIELDS = ['type', 'account', 'offeringId', 'amount', 'cls', 'note'];
@@ -1448,7 +1449,42 @@
     line.hidden = !pk.line;
     line.innerHTML = packageLine(pk);
   }
-  const fieldErr = (d, k) => (d.errors[k] ? `<span class="cs-error" id="iv-err-${k}">${h(d.errors[k])}</span>` : '');
+  /**
+   * Plan 08-13 (D-01, research Pitfall 9, 08-CONTEXT P1): the list form's "Add verification package" box. Each row is
+   * decided by the single form's own rule (packageBox): the rows it enables are the rows paid for, counted in the label's
+   * total and created with the package; every other row is sent without it. rows: the rows that will be sent.
+   */
+  function bulkPackage(ws, rows) {
+    const off = { show: false, enabled: false, label: '', line: '', href: '' };
+    if (!E.diy || !NS.pkg || !(rows || []).length) return off;
+    const each = rows.map((r) => packageBox(ws, r));
+    const yes = each.filter((b) => b.enabled);
+    if (yes.length) return { show: true, enabled: true, label: `Add verification package to ${yes.length} invitation${yes.length === 1 ? '' : 's'} (${NS.pkg.priceLabel(yes.reduce((n, b) => n + b.cents, 0))})`, line: '', href: '' };
+    const shown = each.find((b) => b.show);
+    return shown ? Object.assign(off, { show: true, label: 'Add verification package', line: shown.line, href: shown.href }) : off;
+  }
+  /** The rows of the checked list that can still be sent (a row that became invalid since is left out of the total too). */
+  const sendable = (ws, rows) => (rows || []).filter((r) => !Object.keys(validate(ws, { name: r.name, email: r.email, offeringId: r.offeringId, cents: r.cents })).length);
+  function bulkPackageHtml(ws, ui) {
+    const bp = bulkPackage(ws, sendable(ws, ui.bulkRows));
+    return `<label class="cs-check inv8-package" id="iv-bulkPackage-row" for="iv-bulkPackage"${bp.show ? '' : ' hidden'}><input id="iv-bulkPackage" name="bulkPackage" type="checkbox" data-bind="inv8b:package"${bp.enabled && ui.bulkPackage ? ' checked' : ''}${bp.enabled ? '' : ' disabled'}><span><span id="iv-bulkPackage-label">${h(bp.label)}</span><span class="cs-hint" id="iv-bulkPackage-line"${bp.line ? '' : ' hidden'}>${packageLine(bp)}</span></span></label>`;
+  }
+  /** The list's box brought up to date in place (the server's answer arrived): no re-render over the paste box. */
+  function syncBulkPackage() {
+    const row = document.getElementById('iv-bulkPackage-row');
+    const input = document.getElementById('iv-bulkPackage');
+    if (!row || !input || !W()) return;
+    const ui = S().ui;
+    const bp = bulkPackage(W(), sendable(W(), ui.bulkRows));
+    row.hidden = !bp.show;
+    input.disabled = !bp.enabled;
+    if (!bp.enabled) input.checked = ui.bulkPackage = false;
+    document.getElementById('iv-bulkPackage-label').textContent = bp.label;
+    const line = document.getElementById('iv-bulkPackage-line');
+    line.hidden = !bp.line;
+    line.innerHTML = packageLine(bp);
+  }
+  const fieldErr =(d, k) => (d.errors[k] ? `<span class="cs-error" id="iv-err-${k}">${h(d.errors[k])}</span>` : '');
   const inval = (d, k) => (d.errors[k] ? ` aria-invalid="true" aria-describedby="iv-err-${k}"` : '');
   function invitePanel() {
     const w = W();
@@ -1465,6 +1501,7 @@
     const agreement = off && NS.esign && NS.esign.templateReady ? (NS.esign.templateReady(w, off.id) ? 'ready' : 'missing') : '';
     // Plan 08-06: what the connected server offers is asked once the form is open (never without a server).
     if (NS.pkg && serverOn(w)) NS.pkg.load(w).then(syncPackage);
+    if (NS.pkg && serverOn(w) && (S().ui.bulkRows || []).length) NS.pkg.load(w).then(syncBulkPackage);
     const pk = packageBox(w, d);
     const what = off
       ? `They will be invited to ${h(off.name.replace(/\.$/, ''))}${agreement === 'ready' ? ' and sign its subscription agreement during onboarding' : ''} (change under More options).`
@@ -1500,6 +1537,8 @@
       <label class="cs-field" for="iv-csv"><span>Or paste a list: first name, last name, email, offering, commitment</span><textarea id="iv-csv" name="csv" rows="6" spellcheck="false" placeholder="first name,last name,email,offering,commitment&#10;Anita,Shah,anita.shah@example.com,${eg},100000&#10;Ravi,Patel,ravi.patel@example.com">${h(ui.bulkText || '')}</textarea><span class="cs-hint">One investor per line. Offering and commitment are optional; the offering can be its short name or full name. Add a last column for the investor type: individual, joint, trust, entity or IRA (all U.S.), foreign individual or foreign entity. Without it: U.S. individual. A list with the full name in one column (name, email, offering, commitment) also works.</span></label>
       ${ui.bulkResult || ''}
       ${(ui.bulkRows || []).some((r) => r.offeringId && onFileEmail(w, r.email)) ? `<label class="cs-check inv8-tax" for="iv-bulkTax"><input id="iv-bulkTax" name="includeTax" type="checkbox" data-bind="inv8b:includeTax"${ui.bulkTax ? ' checked' : ''}><span>Include tax form</span></label>` : ''}
+      ${E.diy && NS.pkg && (ui.bulkRows || []).length ? bulkPackageHtml(w, ui) : ''}
+      ${ui.bulkPayError ? `<p class="cs-error" id="iv-bulk-error" role="alert">${h(ui.bulkPayError)}</p>` : ''}
       <div class="cs-row"><button class="cs-btn" type="submit">Check list</button>${ui.bulkRows && ui.bulkRows.length ? `<button class="cs-btn cs-btn-primary" type="button" data-action="invite-bulk-add"${ui.bulkBusy ? ' disabled aria-busy="true"' : ''}>${ui.bulkBusy ? 'Sending…' : `Send ${ui.bulkRows.length} invitation${ui.bulkRows.length === 1 ? '' : 's'}`}</button>` : ''}</div>
     </form>`;
     const srvUrl = serverOn(w) ? IV().serverUrl(w) : '';
@@ -1893,12 +1932,18 @@
     ui.bulkText = String(text || '');
     const { rows, errors } = parseBulk(ui.bulkText);
     ui.bulkRows = rows;
-    // Plan 06-27 (D-10): "Include tax form" starts unticked for each list checked.
+    // Plan 06-27 (D-10): "Include tax form" starts unticked for each list checked; so does the package box (plan 08-13).
     ui.bulkTax = false;
-    ui.bulkResult = `<div class="cs-bulk">${rows.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-bulk-tbl"><thead><tr><th scope="col">First name</th><th scope="col">Last name</th><th scope="col">Email</th><th scope="col">Offering</th><th scope="col" class="num">Commitment</th></tr></thead><tbody>${rows
+    ui.bulkPackage = false;
+    ui.bulkPayError = '';
+    ui.bulkResult = bulkTable(w, rows, errors);
+    return { rows, errors };
+  }
+  /** The checked list as the form shows it: the rows to send, then the lines to fix. */
+  function bulkTable(w, rows, errors) {
+    return `<div class="cs-bulk">${rows.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-bulk-tbl"><thead><tr><th scope="col">First name</th><th scope="col">Last name</th><th scope="col">Email</th><th scope="col">Offering</th><th scope="col" class="num">Commitment</th></tr></thead><tbody>${rows
       .map((r) => `<tr><td>${h(r.first)}</td><td>${h(r.last)}${r.type !== 'individual' ? `<span class="sub">${h(NS.investorKindLabel(r.type))}</span>` : ''}</td><td>${h(r.email)}</td><td>${r.offeringName ? h(r.offeringName) : '<span class="cs-muted">Account only</span>'}</td><td class="num">${r.cents ? h(money(offOf(w, r.offeringId), r.cents)) : '<span class="cs-muted">Investor chooses</span>'}</td></tr>`)
       .join('')}</tbody></table></div>` : ''}${errors.length ? `<ul class="cs-errors">${errors.map((e) => `<li>${h(e)}</li>`).join('')}</ul>` : ''}${!rows.length && !errors.length ? '<p class="cs-muted">No rows found.</p>' : ''}</div>`;
-    return { rows, errors };
   }
   const baseBulk = NS.forms['invite-bulk'];
   NS.forms['invite-bulk'] = function (f) {
@@ -2024,20 +2069,76 @@
     const ui = S().ui;
     const w = W();
     if (ui.bulkBusy) return;
-    const rows = (ui.bulkRows || []).filter((r) => !Object.keys(validate(w, { name: r.name, email: r.email, offeringId: r.offeringId, cents: r.cents })).length);
+    const rows = sendable(w, ui.bulkRows);
+    // Plan 08-13 (D-01, research Pitfall 9, 08-CONTEXT P1, P4, P5): with the box ticked, the rows the single form's rule
+    // enables are paid for before any invitation is created: one payment per group of 200 (the server's limit), each
+    // group sent before the next is paid. A refused payment stops the list there: nothing of that group or after it is
+    // created, those rows stay on the list, and the server's sentence is shown. The server's answer is held still
+    // meanwhile, so the rows paid for are exactly the rows created with the package.
+    const paying = !!(NS.pkg && ui.bulkPackage === true && bulkPackage(w, rows).enabled);
     ui.bulkBusy = true;
+    ui.bulkPayError = '';
     NS.app.render();
-    // Plan 06-27 (D-10): "Include tax form" applies to the investors on file on the list (create ignores it for anyone else).
-    const made = rows.map((r) => create(w, { name: r.name, email: r.email, type: r.type, offeringId: r.offeringId, cents: r.cents, includeTax: ui.bulkTax === true }).invitation);
-    NS.app.save(true);
+    if (paying) NS.pkg.hold(true);
+    const plan = rows.map((r) => {
+      const b = paying ? packageBox(w, r) : null;
+      const pkg = !!(b && b.enabled);
+      // The invitation's id is made before paying and kept on the row: a list sent again after an unconfirmed payment
+      // pays for the same keys, which the server never charges twice.
+      if (pkg && !r.id) r.id = uid('invt');
+      return { r, pkg, tier: pkg ? b.tier : '' };
+    });
+    const made = [];
     const res = [];
-    for (const it of made) res.push(await send(w, it));
-    Object.assign(ui, { bulkBusy: false, bulkRows: null, bulkResult: '', bulkText: '', bulkFileNote: '', bulkFileError: '', bulkTax: false, inviteOpen: false, inv8Filter: 'open' });
-    NS.app.render();
+    let at = 0;
+    let refused = '';
+    try {
+      while (at < plan.length) {
+        let end = at;
+        for (let n = 0; end < plan.length && !(plan[end].pkg && n === PAY_GROUP); end++) if (plan[end].pkg) n++;
+        const group = plan.slice(at, end);
+        const items = group.filter((x) => x.pkg).map((x) => ({ key: x.r.id, tier: x.tier }));
+        if (items.length) {
+          try {
+            await api(w, 'POST', '/v1/billing/entitlements', { items });
+          } catch (e) {
+            refused = (e && e.message) || 'The payment could not be made.';
+            break;
+          }
+        }
+        // Plan 06-27 (D-10): "Include tax form" applies to the investors on file on the list (create ignores it for anyone else).
+        const its = group.map((x) => {
+          const it = create(w, Object.assign({ name: x.r.name, email: x.r.email, type: x.r.type, offeringId: x.r.offeringId, cents: x.r.cents, includeTax: ui.bulkTax === true }, x.pkg ? { id: x.r.id, package: true } : {})).invitation;
+          if (x.pkg) it.package = true; // paid for above: it carries the package (create's own rule agrees while the answer is held)
+          return it;
+        });
+        NS.app.save(true);
+        for (const it of its) res.push(await send(w, it));
+        made.push(...its);
+        at = end;
+      }
+    } finally {
+      if (paying) {
+        NS.pkg.hold(false);
+        NS.pkg.load(w, true).then(syncBulkPackage);
+      }
+    }
     const manual = res.filter((r) => r.emailStatus === 'manual').length;
     const failed = res.filter((r) => r.emailStatus === 'failed').length;
-    U.toast(manual ? `${made.length} invitation${made.length === 1 ? '' : 's'} ready. Send each one from your email app with Email in the invitations list.` : `${made.length - failed} invitation${made.length - failed === 1 ? '' : 's'} sent${failed ? `; ${failed} could not be sent (see the list)` : ''}.`);
+    const sent = () => U.toast(manual ? `${made.length} invitation${made.length === 1 ? '' : 's'} ready. Send each one from your email app with Email in the invitations list.` : `${made.length - failed} invitation${made.length - failed === 1 ? '' : 's'} sent${failed ? `; ${failed} could not be sent (see the list)` : ''}.`);
+    if (refused) {
+      const left = plan.slice(at).map((x) => x.r);
+      Object.assign(ui, { bulkBusy: false, bulkPayError: refused }, made.length ? { bulkRows: left, bulkResult: bulkTable(w, left, []), bulkFileNote: '' } : {});
+      NS.app.render();
+      if (made.length) sent();
+      return;
+    }
+    Object.assign(ui, { bulkBusy: false, bulkRows: null, bulkResult: '', bulkText: '', bulkFileNote: '', bulkFileError: '', bulkTax: false, bulkPackage: false, bulkPayError: '', inviteOpen: false, inv8Filter: 'open' });
+    NS.app.render();
+    sent();
   };
+  /** Plan 08-13 (P5): the most packages one payment holds (the integration server's limit). */
+  const PAY_GROUP = 200;
 
   /* ---------- Console: the email to send from the sponsor's own email app ---------- */
   /** An invitation whose link no longer works: say why, and offer what still makes sense (never the dead link). */

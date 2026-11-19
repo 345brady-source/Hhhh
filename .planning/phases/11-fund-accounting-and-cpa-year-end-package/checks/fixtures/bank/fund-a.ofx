@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?OFX OFXHEADER="200" VERSION="211" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>
+<OFX>
+  <SIGNONMSGSRSV1>
+    <SONRS>
+      <STATUS>
+        <CODE>0</CODE>
+        <SEVERITY>INFO</SEVERITY>
+      </STATUS>
+      <DTSERVER>20270102060000.000[-5:EST]</DTSERVER>
+      <LANGUAGE>ENG</LANGUAGE>
+      <FI>
+        <ORG>EXAMPLE BANK</ORG>
+        <FID>99999</FID>
+      </FI>
+    </SONRS>
+  </SIGNONMSGSRSV1>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <TRNUID>1</TRNUID>
+      <STATUS>
+        <CODE>0</CODE>
+        <SEVERITY>INFO</SEVERITY>
+      </STATUS>
+      <STMTRS>
+        <CURDEF>USD</CURDEF>
+        <BANKACCTFROM>
+          <BANKID>000000000</BANKID>
+          <ACCTID>000123456789</ACCTID>
+          <ACCTTYPE>CHECKING</ACCTTYPE>
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20260101</DTSTART>
+          <DTEND>20261231</DTEND>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20260115</DTPOSTED>
+            <TRNAMT>300000.00</TRNAMT>
+            <FITID>260115001</FITID>
+            <NAME>WIRE IN FA-1001</NAME>
+            <MEMO>FUND A CALL 1</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20260115</DTPOSTED>
+            <TRNAMT>150000.00</TRNAMT>
+            <FITID>260115002</FITID>
+            <NAME>WIRE IN FA-1002</NAME>
+            <MEMO>FUND A CALL 1</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260120</DTPOSTED>
+            <TRNAMT>-400000.00</TRNAMT>
+            <FITID>260120003</FITID>
+            <NAME>WIRE OUT PORTFOLIO CO X</NAME>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CHECK</TRNTYPE>
+            <DTPOSTED>20260310</DTPOSTED>
+            <TRNAMT>-7500.00</TRNAMT>
+            <FITID>260310004</FITID>
+            <CHECKNUM>1042</CHECKNUM>
+            <NAME>=SUM(A1) LAW FIRM</NAME>
+            <MEMO>INV 2231</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260331</DTPOSTED>
+            <TRNAMT>-4500.00</TRNAMT>
+            <FITID>260331005</FITID>
+            <NAME>ACH DEBIT MANAGER FEES Q1</NAME>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <DTPOSTED>20260630</DTPOSTED>
+            <TRNAMT>12000.00</TRNAMT>
+            <FITID>260630006</FITID>
+            <NAME>ACH CREDIT PORTFOLIO CO X</NAME>
+            <MEMO>DIVIDEND</MEMO>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260630</DTPOSTED>
+            <TRNAMT>-4500.00</TRNAMT>
+            <FITID>260630007</FITID>
+            <NAME>ACH DEBIT MANAGER FEES Q2</NAME>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20260930</DTPOSTED>
+            <TRNAMT>-4500.00</TRNAMT>
+            <FITID>260930008</FITID>
+            <NAME>ACH DEBIT MANAGER FEES Q3</NAME>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20261215</DTPOSTED>
+            <TRNAMT>-6000.00</TRNAMT>
+            <FITID>261215009</FITID>
+            <NAME>ACH DEBIT DISTRIBUTION FILE</NAME>
+          </STMTTRN>
+        </BANKTRANLIST>
+        <LEDGERBAL>
+          <BALAMT>35000.00</BALAMT>
+          <DTASOF>20261231</DTASOF>
+        </LEDGERBAL>
+        <AVAILBAL>
+          <BALAMT>34000.00</BALAMT>
+          <DTASOF>20261231</DTASOF>
+        </AVAILBAL>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
