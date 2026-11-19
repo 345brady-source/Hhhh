@@ -498,7 +498,9 @@ a.list-title:active, .link-btn.list-title:active, a:active > .list-title { color
 /* A PDF in a dialog: its pages drawn in the page (esign.js viewPdf), scrolled with the dialog's body. */
 .doc-pages { display: flex; flex-direction: column; gap: var(--space-sm); border-radius: var(--r-inner); }
 .doc-pages:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
-.doc-page { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--r-inner); background: #fff; }
+.doc-page { display: block; flex: none; width: calc(100% * var(--doc-zoom, 1)); max-width: none; height: auto; border: 1px solid var(--line); border-radius: var(--r-inner); background: #fff; }
+/* Zoomed (signflow.js sf-doc-zoom), the pages grow from the left edge and the dialog's body scrolls sideways. */
+.doc-pages.is-zoomed { align-items: flex-start; }
 .doc-text { margin: 0; padding: 20px var(--space-lg); max-height: 70vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--font-body); font-size: var(--text-sm); line-height: 1.65; color: var(--fg); background: var(--surface); border-radius: var(--r-inner); box-shadow: var(--edge-light); }
 
 /* ---------- Responsive ---------- */

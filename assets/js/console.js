@@ -2122,6 +2122,8 @@
   };
   NS.actions['req-funded'] = (el) => {
     const r = reqById(el.getAttribute('data-id'));
+    // Countersign on an agreement still waiting for the firm's signature opens that signing (esign.js); it is accepted when signed.
+    if (r && NS.esign && NS.esign.countersign && NS.esign.countersign(W(), r)) return;
     if (r && OPS().markFunded(W(), r)) {
       NS.app.render();
       U.toast(r.status === 'funded' ? `Subscription funded, effective ${date(r.dealing)}.` : 'Subscription countersigned. The commitment is on the investor register.');
@@ -2399,7 +2401,7 @@
   NS.actions['kyc-iv-file'] = (el) => {
     OPS()
       .files.get(el.getAttribute('data-id'))
-      .then((blob) => (blob ? U.download(el.getAttribute('data-name'), blob, { mime: blob.type }) : U.toast('This file was uploaded in a different browser.')));
+      .then((blob) => (blob ? U.download(el.getAttribute('data-name'), blob, { mime: blob.type }) : U.toast(NS.esign.lostText('this file'))));
   };
   NS.actions['kyc-approve'] = (el) => {
     const inv = invById(el.getAttribute('data-id'));

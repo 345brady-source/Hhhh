@@ -363,4 +363,6 @@ const PARTS = {
   'iphone-agreement-lost': agreementLost(IPHONE)
 };
 
-Lib.runParts(PARTS, { name: 'SAFARI FINISH', browser: true });
+// Run as a check; required by another check (signing-documents.js), it lends the host's frame and the simulations.
+if (require.main === module) Lib.runParts(PARTS, { name: 'SAFARI FINISH', browser: true });
+else module.exports = { simulate, framed, press, DESKTOP, IPHONE };

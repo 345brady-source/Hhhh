@@ -465,6 +465,24 @@
       pages && pages.length
         ? `<div class="doc-pages" tabindex="0" role="document" aria-label="${h(title)}">${pages.map((p, i) => `<img class="doc-page" src="${p.url}" width="${Math.round(p.w)}" height="${Math.round(p.h)}" alt="Page ${i + 1} of ${pages.length}">`).join('')}</div>`
         : `<p class="empty">This PDF cannot be shown here.${download ? ' Use Download to open it.' : ''}</p>`;
+    // The signing views' zoom control, in the dialog's head beside Download and Close (walkthrough failure 10: on a phone a
+    // page that fits the width is too small to read). The pages open fitting the width.
+    const acts = body.closest('.dlg') && body.closest('.dlg').querySelector('.dlg-actions');
+    if (acts && pages && pages.length && NS.signflow && NS.signflow.zoomHTML && !acts.querySelector('.sf-zoom')) acts.insertAdjacentHTML('afterbegin', NS.signflow.zoomHTML(1, 'sf-doc-zoom'));
+  }
+  /**
+   * What is said when this browser no longer has a file it stored (walkthrough failure 1): it would not keep it (storage
+   * refused, so the file lasted only while the page was open) or it cleared it. Never "a different browser", which is not
+   * what happened. what names the file; kind says what to do: an investor is told whom to ask, the firm's people what to do.
+   */
+  const LOST_TODO = { copy: ['for a copy', ''], sign: ['to send it again', ''], agreement: ['to send it again', 'Add the agreement again from the offering page.'], upload: ['for a copy', 'Upload the PDF instead.'] };
+  const investorSide = () => S().role === 'investor' || S().route === 'sign' || S().route === 'invite';
+  function lostText(what, kind) {
+    const t = T();
+    const sup = t.support || {};
+    const todo = LOST_TODO[kind] || LOST_TODO.copy;
+    if (investorSide()) return `This browser did not keep ${what}. Ask ${sup.team || t.shortName}${sup.email ? ` at ${sup.email}` : ''} ${todo[0]}.`;
+    return `This browser did not keep ${what}${todo[1] ? `. ${todo[1]}` : ' after the page was closed.'}`;
   }
   const pageCache = {};
   function loadPages(docId) {
@@ -473,7 +491,8 @@
     c = pageCache[docId] = { status: 'loading', pages: [], error: '' };
     c.promise = (async () => {
       const blob = await files().get(docId);
-      if (!blob) throw new Error('This document is stored in a different browser. In production, envelopes are kept in the document vault.');
+      // Said where the pages are drawn (pagesHTML), in the words for whoever is looking.
+      if (!blob) throw Object.assign(new Error('This browser did not keep this document’s file.'), { lost: true });
       const r = await pageImages(new Uint8Array(await blob.arrayBuffer()));
       c.encrypted = r.encrypted;
       return r.pages;
@@ -485,6 +504,7 @@
       },
       (err) => {
         c.status = 'error';
+        c.lost = !!(err && err.lost);
         c.error = (err && err.message) || 'This PDF could not be opened.';
         throw err;
       }
@@ -496,11 +516,14 @@
     if (!pageCache[docId]) loadPages(docId).then(() => NS.app.render(), () => NS.app.render());
     return pageCache[docId];
   }
+  // An imported envelope whose template file is gone keeps only its work or signed copy: show that rather than an error.
+  const pagesSrc = (env) => env.docId || env.workDocId || env.signedDocId || '';
   function pagesHTML(env, layer) {
-    // An imported envelope whose template file is gone keeps only its work or signed copy: show that rather than an error.
-    const src = env.docId || env.workDocId || env.signedDocId || '';
+    const src = pagesSrc(env);
     const c = pagesOf(src);
     if (c.status === 'loading') return '<p class="es-loading" role="status">Loading document…</p>';
+    // A file this browser did not keep cannot come back by trying again: one line says so and what to do.
+    if (c.lost) return `<div class="es-note es-note-bad" role="alert"><span>${h(lostText(env.agreementFor || env.requestId ? 'the agreement’s file' : 'this document’s file', env.agreementFor ? 'agreement' : 'sign'))}</span></div>`;
     if (c.status === 'error') return `<div class="es-note es-note-bad" role="alert"><span>${h(c.error)}</span><button class="${S().route === 'sign' || S().route === 'invite' ? 'btn btn-small' : 'cs-btn cs-btn-small'}" type="button" data-action="es-pages-retry" data-doc="${h(src)}">Try again</button></div>`;
     const n = c.pages.length;
     return c.pages
@@ -872,7 +895,7 @@
     const env = envById(W(), envId);
     if (!env || !env.signedDocId) throw new Error('This envelope is not completed yet.');
     const b = await files().get(env.signedDocId);
-    if (!b) throw new Error('The signed file is stored in a different browser.');
+    if (!b) throw new Error(lostText('the signed PDF'));
     return b;
   }
 
@@ -1211,7 +1234,7 @@
       me.userAgent = navigator.userAgent;
       addEvent(next, actor, 'Signed', `${fieldsOf(next, me).length} field${fieldsOf(next, me).length === 1 ? '' : 's'} completed`, at);
       const src = await files().get(next.workDocId || next.docId);
-      if (!src) throw new Error('The document is stored in a different browser.');
+      if (!src) throw new Error(lostText('this document’s file', 'sign'));
       const pdf = await L.PDFDocument.load(new Uint8Array(await src.arrayBuffer()), { ignoreEncryption: true });
       // pdf-lib cannot write an encrypted file: saving would produce a PDF no reader can open.
       if (pdf.isEncrypted) throw new Error(`This PDF is password-protected, so signatures cannot be added to it. ${T().name} needs to send an unprotected copy.`);
@@ -1580,10 +1603,10 @@
         docId = tpl.docId;
         fileName = tpl.fileName;
         const b = await files().get(docId);
-        if (!b) throw new Error('The template’s file is stored in a different browser.');
+        if (!b) throw new Error(lostText('the template’s file'));
       } else {
         const blob = n.source === 'upload' ? n.file : await files().get(pdoc.id);
-        if (!blob) throw new Error('That document’s file is stored in a different browser.');
+        if (!blob) throw new Error(lostText('that document’s file', 'upload'));
         fileName = n.source === 'upload' ? n.file.name : pdoc.fileName;
         bytes = new Uint8Array(await blob.arrayBuffer());
         // Told by the first bytes before anything is stored: a file that is not a PDF is never kept.
@@ -1674,7 +1697,7 @@
     if (!env.docId) return U.toast('The original document is not stored for this agreement. Download the signed copy instead.');
     files()
       .get(env.docId)
-      .then((b) => (b ? U.download(env.fileName, b, { mime: 'application/pdf' }) : U.toast('The file is stored in a different browser.')));
+      .then((b) => (b ? U.download(env.fileName, b, { mime: 'application/pdf' }) : U.toast(lostText('the original document’s file'))));
   };
 
   /* =====================================================================
@@ -2326,6 +2349,9 @@
     if (!el && document.querySelector('.es-loading')) return;
     S().ui.esFocus = null;
     if (el) el.focus({ preventScroll: true });
+    // The finished card takes the place of a long document: the page returns to its top, so its way out (Back to envelope,
+    // Documents) is on screen with the card, not scrolled away above it.
+    if (el && sel === '.es-done' && el.closest('.es-sign') && el.closest('.es-sign').getBoundingClientRect().top < 0) window.scrollTo(0, 0);
   }
 
   /* =====================================================================
@@ -2420,7 +2446,9 @@
     const flow = opts.ctx === 'flow';
     const back = con ? `<button class="${btn()} es-back" type="button" data-action="es-sign-exit">${icon('back')}Back to envelope</button>` : flow ? '' : `<a class="es-back-link" href="#documents">${icon('back')}Documents</a>`;
     // While the signer is at the document, declining is a quiet action beside the document's details (never in the guide).
-    const atDoc = !st.finished && s.status !== 'signed' && env.status === 'sent' && isTurn(env, s) && !!s.consentAt;
+    // A document that cannot be shown (its pages failed to load) offers nothing to do on it: no guide, no Decline (below).
+    const unseen = (pageCache[pagesSrc(env)] || {}).status === 'error';
+    const atDoc = !st.finished && s.status !== 'signed' && env.status === 'sent' && isTurn(env, s) && !!s.consentAt && !unseen;
     const meta = `<div class="es-sign-row"><p class="es-sign-meta">${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · signing as <strong>${h(s.name)}</strong> &lt;${h(s.email)}&gt;</p>${atDoc ? `<button class="${btn()} ${con ? 'cs-btn-small' : 'btn-small'} es-decline" type="button" data-action="es-decline" data-id="${h(env.id)}" data-sid="${h(s.id)}"${preview || st.busy ? ' disabled' : ''}>Decline to sign</button>` : ''}</div>`;
     // Inside the onboarding flow the step already names the document: only the file and the signer are shown.
     const head = flow
@@ -2476,7 +2504,9 @@
         .map((f) => (f.signerId === s.id ? myFieldHTML(env, s, f, st, preview || st.busy) : filledFieldHTML(env, f, s)))
         .join('');
     // The guide (Start, Next, what is left, Finish, zoom) is signflow.js; it also marks the fields once the page is drawn.
-    return wrap(`${note}${NS.signflow.barHTML(env, s, st, { ctx: opts.ctx, preview, back: opts.back })}
+    // A document that cannot be shown gets no guide: nothing reads "Ready to finish" and no Finish is offered for pages
+    // nobody can see; the page's own way out stays (Back to envelope, Documents, or the onboarding step's Back).
+    return wrap(`${note}${unseen ? '' : NS.signflow.barHTML(env, s, st, { ctx: opts.ctx, preview, back: opts.back })}
       <div class="es-doc es-doc-sign">${pagesHTML(env, layer)}</div>`);
   }
   /* What the signing guide (signflow.js) reads from this file. */
@@ -2729,9 +2759,11 @@
     const n = list.length;
     return `<section class="es-banner" aria-label="Documents to sign"><span class="es-banner-icon">${PEN}</span><div class="es-banner-body"><strong>${n === 1 ? 'A document is' : `${n} documents are`} waiting for your signature</strong><span>${list.map((e) => h(e.title)).join(' · ')}</span></div><a class="btn btn-primary btn-small" href="#sign-${h(list[0].id)}">Review and sign</a></section>`;
   }
+  // Documents for an investor who holds investments: what to sign, and the agreements they signed that wait for the firm (a
+  // copy they signed is never missing from Documents: the fully signed copy joins the table below once the firm signs).
   NS.hooks.documentsTop.push((inv) => {
     const list = inv ? pendingFor(W(), inv.id) : [];
-    return list.length ? waitingHTML(list) : '';
+    return (list.length ? waitingHTML(list) : '') + (inv ? mineHTML(W(), inv) : '');
   });
   NS.actions['es-open-doc'] = (el) => {
     const inv = PK().viewer();
@@ -2748,7 +2780,7 @@
       .then((blob) => {
         const body = document.querySelector('#dlg .dlg-body');
         if (!body) return;
-        if (!blob) return (body.innerHTML = '<p class="empty">This file was stored in a different browser. In production, documents are kept in the document vault and open on any device.</p>');
+        if (!blob) return (body.innerHTML = `<p class="empty">${h(lostText('this document’s file'))}</p>`);
         return viewPdf(body, blob, d.title, true);
       })
       .catch(() => {
@@ -2767,6 +2799,40 @@
   });
   NS.navCounts = NS.navCounts || {};
   NS.navCounts['console-esign'] = (ws) => countersignDue(ws).length;
+
+  /* ---------- Countersign on Requests (console.js req-funded): the firm signs the subscription agreement ---------- */
+  /**
+   * Walkthrough failure 3: an approved subscription whose agreement still waits for the firm's signature is countersigned by
+   * signing that agreement as the firm, in the view "Sign as sponsor" opens. The request is accepted, and the commitment
+   * goes on the register, only once that signing is finished (the hook below); leaving it unfinished changes nothing.
+   * Returns true when Countersign is handled here (the signing opened, or it is not yet the firm's turn, said in a toast),
+   * false when it records at once as before (no agreement, no field for the firm, or the firm has signed).
+   */
+  function countersign(ws, r) {
+    const o = r ? ws.offerings.find((x) => x.id === r.offeringId) : null;
+    if (!o || r.type !== 'subscription' || r.status !== 'approved' || !r.envelopeId || NS.ops.isOpen(o)) return false;
+    const env = envById(ws, r.envelopeId);
+    const firm = env && env.status === 'sent' ? env.signers.find((s) => s.role === 'countersigner' && s.status !== 'signed' && fieldsOf(env, s).length) : null;
+    if (!firm) return false;
+    if (!isTurn(env, firm)) {
+      const first = currentSigners(env)[0];
+      U.toast(`The subscription agreement is waiting for ${first ? first.name : 'the investor'} to sign first.`);
+      return true;
+    }
+    Object.assign(esUi(), { signAs: env.id, signAsSigner: firm.id, sel: null, tool: null });
+    NS.app.go('console-envelope-' + env.id);
+    window.scrollTo(0, 0);
+    return true;
+  }
+  signedHooks.push((env, s, complete) => {
+    if (!complete || !s || s.role !== 'countersigner') return false;
+    const ws = W();
+    const r = (ws.requests || []).find((x) => x.envelopeId === env.id && x.type === 'subscription' && x.status === 'approved');
+    const o = r ? ws.offerings.find((x) => x.id === r.offeringId) : null;
+    if (!o || NS.ops.isOpen(o) || !NS.ops.markFunded(ws, r)) return false;
+    U.toast('Subscription countersigned. The commitment is on the investor register.');
+    return true;
+  });
 
   /* ---------- Console Documents: removing a signed copy from portals keeps the envelope's file ---------- */
   // The portal listing of a completed envelope shares the envelope's stored file (same id), so the
@@ -3000,9 +3066,13 @@
     if (!inv) return '';
     const ws = W();
     const waiting = pendingFor(ws, inv.id);
-    const mine = awaitingFor(ws, inv.id);
     const signed = signedDocsFor(ws, inv);
-    const sent = mine.length
+    return (waiting.length ? waitingHTML(waiting) : '') + mineHTML(ws, inv) + (signed.length ? signedHTML(signed) : '');
+  }
+  /** "Signed by you": the agreements an investor signed that wait for the firm's countersignature, each with its copy so far. */
+  function mineHTML(ws, inv) {
+    const mine = awaitingFor(ws, inv.id);
+    return mine.length
       ? `<section class="sec es-mine" aria-label="Signed by you">${PK().sec('Signed by you', `<span class="hint">Waiting for ${h(T().shortName)}’s countersignature</span>`)}<div class="tbl-scroll"><table class="tbl tbl-mid"><thead><tr><th scope="col">Signed</th><th scope="col">Document</th></tr></thead><tbody>${mine
           .map((e) => {
             const s = flowSigner(e, inv.id);
@@ -3010,7 +3080,6 @@
           })
           .join('')}</tbody></table></div></section>`
       : '';
-    return (waiting.length ? waitingHTML(waiting) : '') + sent + (signed.length ? signedHTML(signed) : '');
   }
   NS.actions['es-open-mine'] = (el) => {
     const inv = PK().viewer();
@@ -3026,7 +3095,7 @@
       .then((blob) => {
         const body = document.querySelector('#dlg .dlg-body');
         if (!body) return;
-        if (!blob) return (body.innerHTML = '<p class="empty">This file was stored in a different browser. In production, documents are kept in the document vault and open on any device.</p>');
+        if (!blob) return (body.innerHTML = `<p class="empty">${h(lostText('this document’s file'))}</p>`);
         return viewPdf(body, blob, env.title, false);
       })
       .catch(() => {
@@ -3066,7 +3135,7 @@
     const op = opts || {};
     if (op.kept && layoutKept && layoutKept.docId === docId) return layoutKept.pages;
     const blob = await files().get(docId);
-    if (!blob) throw new Error('This document is stored in a different browser.');
+    if (!blob) throw new Error(lostText('this document’s file'));
     const lib = await pdfjs();
     const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise;
     const out = [];
@@ -3625,11 +3694,11 @@
     if (tpl) {
       docId = tpl.docId;
       fileName = tpl.fileName;
-      if (!(await files().get(docId))) throw new Error('The agreement’s file is stored in a different browser.');
+      if (!(await files().get(docId))) throw new Error(lostText('the agreement’s file', 'agreement'));
     } else {
       const doc = src.docId ? (ws.docs || []).find((d) => d.id === src.docId) : null;
       const blob = src.file || (doc ? await files().get(doc.id) : null);
-      if (!blob) throw new Error('That document’s file is stored in a different browser.');
+      if (!blob) throw new Error(lostText('that document’s file', 'upload'));
       if (blob.size > MAX_BYTES) throw new Error(`This file is over 25 MB (${(blob.size / 1048576).toFixed(1)} MB). Upload a smaller PDF.`);
       fileName = src.file ? src.file.name : (doc && doc.fileName) || 'Subscription_Agreement.pdf';
       bytes = new Uint8Array(await blob.arrayBuffer());
@@ -3647,6 +3716,8 @@
       const env = makeEnvelope({ id, title: String(src.title || (tpl && tpl.title) || 'Subscription Agreement').trim() || 'Subscription Agreement', fileName, docId, pages: pages.length, pageSizes: pages.map((p) => ({ w: p.w, h: p.h })), sha256Original: tpl ? tpl.sha256 : NS.audit.sha256(bytes), offeringId, templateId: tpl ? tpl.id : null, sequential: true, message: tpl ? tpl.message || '' : '' });
       env.agreementFor = offeringId;
       env.replaceTemplateId = tpl ? tpl.id : null;
+      // Made from a document already on the offering: saving the agreement gives that document the agreement's title.
+      if (!tpl && !src.file && src.docId) env.fromDocId = src.docId;
       makeSigner(env, { investorId: AGR_INVESTOR, name: 'Investor (each subscriber)', email: '', account: '' });
       makeSigner(env, { name: `${T().shortName} (countersigns)`, email: T().support.email || '' });
       if (tpl) applyTemplateFields(env, tpl);
@@ -3889,6 +3960,10 @@
     tpls(w).forEach((t) => t.offeringId === env.agreementFor && (t.subscription = false));
     tpls(w).push(tpl);
     w.envelopes = envs(w).filter((e) => e !== env);
+    // Walkthrough failure 7 (D-11): the offering's document the agreement was made from is titled as the agreement, never by
+    // its file name, which it keeps as its file name.
+    const from = env.fromDocId ? (w.docs || []).find((d) => d.id === env.fromDocId && d.offeringId === env.agreementFor) : null;
+    if (from) from.title = tpl.title;
     const placed = tpl.fields.filter((f) => f.auto).length;
     const settled = tpl.fields.filter((f) => f.auto && !f.review && f.confidence && f.confidence !== 'high').length;
     CK().audit('Subscription agreement saved', `${o ? o.name : env.agreementFor}: ${tpl.title}, ${tpl.fields.length} fields (${tpl.roles.join(', ')})${placed ? `; ${placed} placed by the portal${settled ? `, ${settled} of them confirmed or adjusted by the firm after review` : ''}` : ''}; investors sign it during onboarding`, env.agreementFor, tpl.id);
@@ -3986,7 +4061,7 @@
   };
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal, firmOnly });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
-  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, viewPdf, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
+  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, viewPdf, lostText, countersign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
   // How long the upload waits for the reading server before the in-page reading stands (a check may shorten it).
   NS.esign.createFromPdf = createFromPdf;
   NS.esign.SERVER_LIMIT_MS = 330000;

@@ -1062,7 +1062,7 @@
         const body = document.querySelector('#dlg .dlg-body');
         if (!body) return;
         if (!blob) {
-          body.innerHTML = '<p class="empty">This file was published from a different browser. In production, documents are stored in the document vault and open on any device.</p>';
+          body.innerHTML = `<p class="empty">${h(NS.esign.lostText('this document’s file'))}</p>`;
           return;
         }
         if (/^text\//.test(blob.type) || /\.(txt|md)$/i.test(doc.fileName)) return blob.text().then((t) => (body.innerHTML = `<pre class="doc-text">${h(t)}</pre>`));
@@ -1094,7 +1094,7 @@
   NS.actions['up-download'] = (el) => {
     const doc = (W().docs || []).find((d) => d.id === el.getAttribute('data-id'));
     if (!doc) return;
-    NS.ops.files.get(doc.id).then((blob) => (blob ? U.download(doc.fileName, blob, { mime: doc.type || 'application/octet-stream' }) : U.toast('This file is stored in a different browser.')));
+    NS.ops.files.get(doc.id).then((blob) => (blob ? U.download(doc.fileName, blob, { mime: doc.type || 'application/octet-stream' }) : U.toast(NS.esign.lostText('this document’s file'))));
   };
   NS.actions['open-doc'] = (el) => {
     const v = vm();

@@ -186,6 +186,8 @@
 .ivf-agreement .ob-actions:empty { display: none; }
 /* Plan 06-29: while the signing guide carries the step's Back (always on screen), the one below the last page is not repeated. */
 .ivf-agreement:has(.sf-back) > .ob-actions { display: none; }
+/* Plan 06-32: a document that cannot be shown has no Start or Finish, so the line that names them is not shown either. */
+.ivf-agreement:has(.es-doc-sign > .es-note-bad) .lede { display: none; }
 .ivf-wide { grid-template-columns: 200px minmax(0, 1fr); gap: var(--space-xl); }
 .es-sign-flow { padding-top: var(--space-2xs); }
 .es-sign-head-flow { padding: 0; border: 0; }
