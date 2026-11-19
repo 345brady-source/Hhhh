@@ -535,6 +535,31 @@ a.cs-link::after { content: ""; position: absolute; inset: -12px 0; }
   .op-modes a { padding: 0 var(--space-xs); }
   .cs-steps li { grid-template-columns: 24px minmax(0, 1fr); gap: var(--space-sm); }
   .cs-steps li .cs-step-act { grid-column: 2; flex-direction: row; justify-content: space-between; align-items: flex-end; }
+  /* Nothing runs past the screen: a button with a long name wraps (Offering intake's samples, "Add the standard terms
+     for …"), and so does a long file name (the audit package's). */
+  .cs-row > .cs-btn { white-space: normal; text-align: center; }
+  .cs-hint code { overflow-wrap: anywhere; }
+  /* A table whose rows carry actions becomes labelled blocks, as the investor portal's tables do (portal.css .tbl-stack):
+     no header row; each row a two-column grid of its cells, labelled from data-label; the row's name, its first cell and
+     its actions across the whole width, so every action is on the screen without dragging the table sideways. */
+  .tbl-scroll:has(> .cs-stack) { overflow-x: visible; }
+  .cs-stack thead { display: none; }
+  .cs-stack, .cs-stack tbody { display: block; width: 100%; }
+  .cs-stack tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm) var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--cv-line-soft); }
+  .cs-stack tbody tr:first-child { padding-top: 0; }
+  .cs-stack tbody tr:last-child { border-bottom: 0; padding-bottom: 0; }
+  .cs-stack th, .cs-stack td, .cs-stack .num { display: block; min-width: 0; padding: 0; border: 0; text-align: left; white-space: normal; }
+  .cs-stack th[scope="row"], .cs-stack td:first-child, .cs-stack td:last-child { grid-column: 1 / -1; }
+  .cs-stack td[data-label]::before { content: attr(data-label); display: block; margin-bottom: var(--space-3xs); font-size: var(--text-xs); font-weight: 500; color: var(--cv-ink-3); }
+  .cs-stack td:empty { display: none; }
+  .cs-stack td.cs-row-actions { display: flex; }
+  .cs-stack .cs-row-actions { justify-content: flex-start; }
+  /* Small links get a touch area at least 24px high laid over them, as .cs-link already has (nothing moves); the lines of
+     an ACH file, which touch one another, are 24px high. */
+  .cs-list a:not([class]), .cs-muted a:not([class]), .cs-hint a:not([class]), .aud-check summary { position: relative; }
+  .cs-list a:not([class])::after, .cs-muted a:not([class])::after, .cs-hint a:not([class])::after { content: ""; position: absolute; inset: -5px 0; }
+  .aud-check summary::after { content: ""; position: absolute; inset: -2px 0; }
+  .nl { line-height: 2; }
 }
 
 /* The main region takes focus after navigation for screen readers; it is not a control, so no ring. */

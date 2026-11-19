@@ -826,10 +826,10 @@
           // The committed line shows only while some of the commitment is still to be called (compared in cents).
           return `<tr>
             <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span>${NS.coInvestor ? NS.coInvestor.statusHTML(w, i) : ''}</th>
-            <td>${h(typeLabel(i))}</td>
-            <td class="num">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
-            <td>${activation(i)}${taxLine(w, i)}</td>
-            <td>${payLabel(i)}</td>
+            <td data-label="Type">${h(typeLabel(i))}</td>
+            <td class="num" data-label="Invested">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
+            <td data-label="Activation">${activation(i)}${taxLine(w, i)}</td>
+            <td data-label="Paid by">${payLabel(i)}</td>
             <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done
                 ? `${taxAskButton(i)}<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
@@ -854,7 +854,7 @@
         ${panel(
           '',
           list.length
-            ? `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Investor</th><th scope="col">Type</th><th scope="col" class="num">Invested</th><th scope="col">Activation</th><th scope="col">Paid by</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>`
+            ? `<div class="tbl-scroll"><table class="cs-tbl cs-stack"><thead><tr><th scope="col">Investor</th><th scope="col">Type</th><th scope="col" class="num">Invested</th><th scope="col">Activation</th><th scope="col">Paid by</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>`
             : `<p class="cs-muted">${w.investors.length ? 'No investors match this filter.' : `No investors yet. Use ${I8 ? 'Invite an investor' : 'Invite investors'} to add them.`}</p>`
         )}`,
         'console-investors'
@@ -1044,11 +1044,11 @@
   /* ---------- Distributions and NACHA ---------- */
   function runsTable(runs, withFile) {
     const name = (id) => (W().offerings.find((o) => o.id === id) || {}).shortName || id;
-    return `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Payment date</th><th scope="col">Offering</th><th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Investors</th><th scope="col">Status</th>${withFile ? '<th scope="col"><span class="sr-only">ACH file</span></th>' : ''}</tr></thead><tbody>${runs
+    return `<div class="tbl-scroll"><table class="cs-tbl${withFile ? ' cs-stack' : ''}"><thead><tr><th scope="col">Payment date</th><th scope="col">Offering</th><th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Investors</th><th scope="col">Status</th>${withFile ? '<th scope="col"><span class="sr-only">ACH file</span></th>' : ''}</tr></thead><tbody>${runs
       .map((r) => {
         const n = NS.data.runRows(W(), r).filter((a) => a.cents > 0).length;
         const st = NS.data.runState(r, today());
-        return `<tr><td class="nowrap">${date(r.date)}</td><td>${h(name(r.offeringId))}</td><td>${h(r.type)}</td><td class="num">${usdc(r.total)}</td><td class="num">${n}</td><td>${st === 'cancelled' ? badge('mute', 'Cancelled') : st === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
+        return `<tr><td class="nowrap" data-label="Payment date">${date(r.date)}</td><td data-label="Offering">${h(name(r.offeringId))}</td><td data-label="Type">${h(r.type)}</td><td class="num" data-label="Amount">${usdc(r.total)}</td><td class="num" data-label="Investors">${n}</td><td data-label="Status">${st === 'cancelled' ? badge('mute', 'Cancelled') : st === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
           withFile ? `<td class="num">${st === 'cancelled' ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button>`}</td>` : ''
         }</tr>`;
       })
@@ -1178,6 +1178,8 @@
     );
   }
 
+  /** Why "Generate NACHA file" cannot be pressed yet, shown beside it ('' when it can). */
+  const distWhy = (d, total, ach, reason) => (!achReady() ? 'Complete ACH origination first.' : !total ? 'Enter an amount.' : !ach.length ? 'No investors in this offering have a bank account on file.' : reason ? `The payment date ${reason}.` : d.date < today() ? 'The payment date is in the past.' : '');
   NS.views['console-distributions'] = {
     mode: 'console',
     render() {
@@ -1199,7 +1201,7 @@
       const invested = NS.data.investedAt(w.investors, o.id, d.date);
       const annualized = invested && months ? (total / 100 / invested) * (12 / months) : 0;
       const canFile = ach.length && total > 0 && achReady() && !reason && d.date >= today();
-      const why = !achReady() ? 'Complete ACH origination first.' : !total ? 'Enter an amount.' : !ach.length ? 'No investors in this offering have a bank account on file.' : reason ? `The payment date ${reason}.` : d.date < today() ? 'The payment date is in the past.' : '';
+      const why = distWhy(d, total, ach, reason);
       const history = ui.histAll ? w.runs : w.runs.slice(0, 12);
       return shell(
         `${head('Distributions', 'Allocate a payment pro rata by amount invested, then generate the NACHA file for the bank.')}
@@ -1293,6 +1295,13 @@
       const reason = NS.nacha.bankingDayReason(d.date);
       if (file) file.disabled = !(ach.length && total > 0 && achReady() && !reason && d.date >= today());
       if (rec) rec.disabled = !(total > 0 && rows.length);
+      // The reason beside the buttons follows the amount as it is typed ("Enter an amount." goes once there is one)
+      const why = distWhy(d, total, ach, reason);
+      const bar = rec && rec.parentElement;
+      const said = bar && bar.querySelector(':scope > .cs-hint');
+      if (said && why) said.textContent = why;
+      else if (said) said.remove();
+      else if (bar && why) bar.insertAdjacentHTML('beforeend', `<span class="cs-hint">${h(why)}</span>`);
       const fs = document.getElementById('ds-file');
       if (fs) fs.innerHTML = '';
       return;
@@ -2099,13 +2108,13 @@
           else if (r.status === 'approved') act = `<button class="cs-btn cs-btn-small" type="button" data-action="req-funded" data-id="${h(r.id)}">${OPS().isOpen(o) ? 'Record funding' : 'Countersign'}</button>`;
           // Eligibility warnings (C-01): shown under the request; Approve stays as it is, the sponsor decides.
           const warn = E.diy && NS.eligibility ? NS.eligibility.flags(w, r).map((f) => `<span class="sub"><span class="iv-warn">${h(f)}</span></span>`).join('') : '';
-          return `<tr><td class="nowrap">${date(r.submitted)}</td><td>${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td>${h(o.shortName || o.name)}</td><td>${h(reqLabel(r, o))}${warn}${repLine(r)}<span class="sub">E-signed by ${h(r.signedBy || inv.contact)}</span></td><td class="nowrap">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num">${est}</td><td>${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
+          return `<tr><td class="nowrap" data-label="Submitted">${date(r.submitted)}</td><td data-label="Investor">${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td data-label="Fund">${h(o.shortName || o.name)}</td><td data-label="Request">${h(reqLabel(r, o))}${warn}${repLine(r)}<span class="sub">E-signed by ${h(r.signedBy || inv.contact)}</span></td><td class="nowrap" data-label="Date">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num" data-label="Amount">${est}</td><td data-label="Status">${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
         })
         .join('');
       return shell(
         `${head('Investor requests', 'Redemptions and subscriptions investors submit and e-sign in their portal. Approve or decline, then record the payment or the funding: the investor register, capital accounts and audit schedules update automatically.')}
         <div class="cs-tabs" role="group" aria-label="Requests"><button type="button" class="cs-tab" data-action="req-tab" data-t="pending" aria-pressed="${tab === 'pending'}">Open <span class="cs-count">${open.length}</span></button><button type="button" class="cs-tab" data-action="req-tab" data-t="all" aria-pressed="${tab === 'all'}">All <span class="cs-count">${all.length}</span></button></div>
-        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Submitted</th><th scope="col">Investor</th><th scope="col">Fund</th><th scope="col">Request</th><th scope="col">Date</th><th scope="col" class="num">Amount</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Redemptions are paid at net asset value on the dealing date, which follows the fund’s notice period and lock-up. Payment can be recorded once that month’s valuation is final.</p>` : '<p class="cs-muted">No open requests.</p>')}`,
+        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">Submitted</th><th scope="col">Investor</th><th scope="col">Fund</th><th scope="col">Request</th><th scope="col">Date</th><th scope="col" class="num">Amount</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Redemptions are paid at net asset value on the dealing date, which follows the fund’s notice period and lock-up. Payment can be recorded once that month’s valuation is final.</p>` : '<p class="cs-muted">No open requests.</p>')}`,
         'console-requests'
       );
     }
@@ -2173,7 +2182,7 @@
         .map((x) => {
           const o = x.offeringId ? offById(x.offeringId) : null;
           const n = OPS().recipientsOf(w, x).length;
-          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden ? ', not shown to investors' : ''}` : ''}</span></td><td>${h(o ? o.shortName || o.name : 'All investors')}</td><td>${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td>${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
+          return `<tr><td class="nowrap" data-label="Date">${date(x.date)}</td><td data-label="Document">${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden ? ', not shown to investors' : ''}` : ''}</span></td><td data-label="Fund">${h(o ? o.shortName || o.name : 'All investors')}</td><td data-label="Recipients">${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td data-label="Type">${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td data-label="SHA-256"><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
         })
         .join('');
       return shell(
@@ -2194,7 +2203,7 @@
           ${d.errors.length ? `<p class="cs-error">${h(d.errors.join(' '))}</p>` : ''}
           <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="docs-publish"${d.files.length && !d.busy ? '' : ' disabled'}>${d.busy ? 'Publishing…' : 'Publish'}</button></div>`
         )}
-        ${panel(`Published <span class="cs-count">${docs.length}</span>`, docs.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Date</th><th scope="col">Document</th><th scope="col">Fund</th><th scope="col">Recipients</th><th scope="col">Type</th><th scope="col">SHA-256</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Each file’s SHA-256 fingerprint is recorded in the change log when it is published. In this demo, files are kept in this browser; in production they are stored in the document vault.</p>` : '<p class="cs-muted">Nothing published from this page yet. Generated statements and reports already appear in investor portals.</p>')}`,
+        ${panel(`Published <span class="cs-count">${docs.length}</span>`, docs.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">Date</th><th scope="col">Document</th><th scope="col">Fund</th><th scope="col">Recipients</th><th scope="col">Type</th><th scope="col">SHA-256</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Each file’s SHA-256 fingerprint is recorded in the change log when it is published. In this demo, files are kept in this browser; in production they are stored in the document vault.</p>` : '<p class="cs-muted">Nothing published from this page yet. Generated statements and reports already appear in investor portals.</p>')}`,
         'console-docs'
       );
     }
@@ -2321,7 +2330,7 @@
                 <label class="cs-field" for="kyc-note"><span>${rec.length ? 'Note (required to record a result or decide; kept in the change log)' : 'Review note (kept in the change log)'}</span><textarea id="kyc-note" rows="2" maxlength="300" data-input="kyc-note">${h(S().ui.kycNote || '')}</textarea></label>
                 <div class="cs-row">${k.match && !ivd ? `<button class="cs-btn cs-btn-primary" type="button" data-action="kyc-clear" data-id="${h(i.id)}">Clear as false positive</button>` : ''}${ivd ? `<button class="cs-btn${rec.length ? '' : ' cs-btn-primary'}" type="button" data-action="kyc-iv-approve" data-id="${h(i.id)}">Approve investor</button><button class="cs-btn" type="button" data-action="kyc-iv-decline" data-id="${h(i.id)}">Decline</button>` : ''}<button class="cs-btn" type="button" data-action="kyc-escalate" data-id="${h(i.id)}">Escalate to compliance officer</button><button class="cs-btn" type="button" data-action="kyc-open" data-id="">Cancel</button></div>${k.escalated ? `<p class="cs-hint">Escalated ${date(k.escalated)}.</p>` : ''}</div></td></tr>`
               : '';
-          return `<tr><td>${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td>${h(k.risk || '—')}</td><td>${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td>${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : k.screening === 'pending' ? 'Waiting for results' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap">${k.nextReview ? date(k.nextReview) : '—'}</td><td>${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td>${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
+          return `<tr><td data-label="Investor">${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td data-label="Risk">${h(k.risk || '—')}</td><td data-label="Identity verified">${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td data-label="Screening">${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : k.screening === 'pending' ? 'Waiting for results' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap" data-label="Next review">${k.nextReview ? date(k.nextReview) : '—'}</td><td data-label="Beneficial owners">${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td data-label="Status">${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
         })
         .join('');
       const due = rows0.filter((r) => r.lab.key === 'due');
@@ -2335,7 +2344,7 @@
           <div><dt>In progress or not started</dt><dd>${count('pending') + count('not_started')}</dd></div>
         </dl>
         <div class="cs-tabs" role="group" aria-label="Filter"><button type="button" class="cs-tab" data-action="kyc-tab" data-t="attention" aria-pressed="${tab === 'attention'}">Needs attention <span class="cs-count">${attention.length}</span></button><button type="button" class="cs-tab" data-action="kyc-tab" data-t="all" aria-pressed="${tab === 'all'}">All investors <span class="cs-count">${rows0.length}</span></button></div>
-        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Investor</th><th scope="col">Risk</th><th scope="col">Identity verified</th><th scope="col">Screening</th><th scope="col">Next review</th><th scope="col">Beneficial owners</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="cs-muted">Every investor is cleared and current.</p>')}
+        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">Investor</th><th scope="col">Risk</th><th scope="col">Identity verified</th><th scope="col">Screening</th><th scope="col">Next review</th><th scope="col">Beneficial owners</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="cs-muted">Every investor is cleared and current.</p>')}
         <p class="cs-hint">${E.diy ? 'Screening runs through every screening connection that is on; any potential match holds the investor for review. Re-screening follows the interval set on the Integrations page.' : 'Screening covers OFAC SDN and consolidated lists, UN, EU and UK HMT sanctions, politically exposed persons and adverse media. Low-risk investors are re-screened every 24 months, medium every 12, high every 6. In production this connects to the screening provider; here results are simulated.'}</p>`,
         'console-kyc'
       );
@@ -2479,9 +2488,9 @@
       if (t === 'check') return `<input id="${id}" type="checkbox" aria-label="${h(path)}" data-bind="ik:${path}"${v ? ' checked' : ''}>`;
       return `<input id="${id}" type="${t === 'number' ? 'number' : 'text'}"${t === 'number' ? ' step="any"' : ''} aria-label="${h(path)}" data-bind="ik:${path}" value="${h(v == null ? '' : v)}">`;
     };
-    const rows = arr.map((row, i) => `<tr>${cols.map(([k, , t, opt]) => `<td>${cell(`${list}.${i}.${k}`, row[k], t, opt)}</td>`).join('')}<td class="num"><button class="cs-icon" type="button" data-action="ik-row-del" data-list="${list}" data-i="${i}" aria-label="Remove">${icon('x')}</button></td></tr>`).join('');
+    const rows = arr.map((row, i) => `<tr>${cols.map(([k, label, t, opt]) => `<td data-label="${h(label)}">${cell(`${list}.${i}.${k}`, row[k], t, opt)}</td>`).join('')}<td class="num"><button class="cs-icon" type="button" data-action="ik-row-del" data-list="${list}" data-i="${i}" aria-label="Remove">${icon('x')}</button></td></tr>`).join('');
     return `<div class="ik-list cs-wide"><div class="ik-list-head"><strong>${title}</strong> ${ikChip(list, arr)} ${ikSrc(list)}</div>
-      <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact ik-tbl"><thead><tr>${cols.map((c) => `<th scope="col">${c[1]}</th>`).join('')}<th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows || `<tr><td colspan="${cols.length + 1}" class="cs-muted">None.</td></tr>`}</tbody></table></div>
+      <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact ik-tbl cs-stack"><thead><tr>${cols.map((c) => `<th scope="col">${c[1]}</th>`).join('')}<th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows || `<tr><td colspan="${cols.length + 1}" class="cs-muted">None.</td></tr>`}</tbody></table></div>
       <button class="cs-btn cs-btn-small" type="button" data-action="ik-row-add" data-list="${list}">${icon('plus')}Add</button>${hint ? `<p class="cs-hint">${hint}</p>` : ''}</div>`;
   }
   function ikUpload() {
@@ -2687,9 +2696,10 @@
   NS.binders.ikt = (path, v) => {
     ikState()[path] = v;
   };
-  NS.binders.ik = (path, v) => {
+  NS.binders.ik = (path, v, el) => {
     const st = ikState();
     if (!st.profile) return;
+    if (path === 'offering.name' && el && String(v).trim()) el.removeAttribute('aria-invalid');
     if (path === 'fees.other') v = String(v).split('\n').map((x) => x.trim()).filter(Boolean);
     // A corrected Name corrects the Short name, until the sponsor types a short name of their own (an existing offering's
     // counts as theirs unless it is its Name's own short form). Set in place, so typing in the Name is never interrupted.
@@ -2820,7 +2830,15 @@
   NS.actions['ik-apply'] = async () => {
     const st = ikState();
     if (!st.profile || st.busy) return;
-    if (!String(st.profile.offering.name || '').trim()) return U.toast('Enter the offering name.');
+    if (!String(st.profile.offering.name || '').trim()) {
+      // The field is marked and takes focus (the mark goes once a name is typed: NS.binders.ik)
+      const f = document.getElementById('ik-offering-name');
+      if (f) {
+        f.setAttribute('aria-invalid', 'true');
+        f.focus();
+      }
+      return U.toast('Enter the offering name.');
+    }
     st.busy = true;
     NS.app.render();
     const docs = st.docs.filter((d) => d.text != null).map((d) => ({ name: d.name, sha256: d.sha256, pages: d.pages, chars: d.chars, size: d.size || (d.text || '').length, type: d.type || '', file: d.file || null }));
@@ -2992,8 +3010,8 @@
         ${panel(
           `Audit package <span class="cs-count">${B.list.length + 2} files</span>`,
           `<p class="cs-muted">One .zip with every schedule as a CSV, a README that explains how they tie and the basis of preparation, and a SHA-256 manifest so the auditor can confirm nothing changed after export. Every download is recorded in the change log.</p>
-          <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">File</th><th scope="col">Schedule</th><th scope="col" class="num">Rows</th><th scope="col"><span class="sr-only">Download</span></th></tr></thead><tbody>
-          ${B.list.map((s) => `<tr><td class="nowrap"><code>${h(s.file)}</code></td><td>${h(s.title)}</td><td class="num">${s.rows.length}</td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="aud-csv" data-id="${s.id}">CSV</button></td></tr>`).join('')}
+          <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">File</th><th scope="col">Schedule</th><th scope="col" class="num">Rows</th><th scope="col"><span class="sr-only">Download</span></th></tr></thead><tbody>
+          ${B.list.map((s) => `<tr><td class="nowrap" data-label="File"><code>${h(s.file)}</code></td><td data-label="Schedule">${h(s.title)}</td><td class="num" data-label="Rows">${s.rows.length}</td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="aud-csv" data-id="${s.id}">CSV</button></td></tr>`).join('')}
           </tbody></table></div>
           ${lastExport ? `<p class="cs-hint">Last exported ${date(lastExport.at.slice(0, 10))} by ${h(lastExport.actor)}: <code>${h(lastExport.record)}</code>. ${h(lastExport.detail)}.</p>` : ''}`
         )}

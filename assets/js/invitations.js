@@ -2393,10 +2393,10 @@
         const activity = [[unsent(it) ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
         return `<tr data-invitation="${h(it.id)}">
           <th scope="row"><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.email)}</span></th>
-          <td>${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
-          <td>${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
-          <td class="inv8-activity">${activity}</td>
-          <td>${em}</td>
+          <td data-label="Offering">${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
+          <td data-label="Progress">${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
+          <td class="inv8-activity" data-label="Activity">${activity}</td>
+          <td data-label="Email">${em}</td>
           <td class="cs-row-actions">${acts.join('')}</td>
         </tr>`;
       })
@@ -2411,7 +2411,7 @@
     return CK().panel(
       `Invitations <span class="cs-count">${open.length} in progress</span>`,
       `<div class="cs-tabs cs-tabs-inline" role="group" aria-label="Invitations">${tabs.map(([k, l]) => `<button type="button" class="cs-tab" data-action="inv8-filter" data-f="${k}" aria-pressed="${f === k}">${l}</button>`).join('')}</div>
-      ${shown.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-tbl"><thead><tr><th scope="col">Investor</th><th scope="col">Offering</th><th scope="col">Progress</th><th scope="col">Activity</th><th scope="col">Email</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="cs-muted">${f === 'open' ? 'No invitations in progress.' : f === 'completed' ? 'No completed onboardings yet.' : 'No invitations.'}</p>`}
+      ${shown.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-tbl cs-stack"><thead><tr><th scope="col">Investor</th><th scope="col">Offering</th><th scope="col">Progress</th><th scope="col">Activity</th><th scope="col">Email</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="cs-muted">${f === 'open' ? 'No invitations in progress.' : f === 'completed' ? 'No completed onboardings yet.' : 'No invitations.'}</p>`}
       <label class="cs-check inv8-rule" for="inv8-rule"><input id="inv8-rule" type="checkbox" data-change="inv8-rule"${r.autoAccept ? ' checked' : ''}${NS.app.can('configure') ? '' : ' disabled'}><span>Accept subscriptions automatically once the agreement is countersigned and the investor is verified<span class="cs-hint">Closed-end offerings: the commitment goes on the investor register. Open-ended funds: approved, then you record the funding when the wire arrives.${NS.app.can('configure') ? '' : ' Only admins can change this.'}</span></span></label>`,
       srv ? `<span class="inv8-check">${check.at ? `<span class="cs-hint">${check.error ? `Last check failed: ${h(check.error)}` : `Checked ${h(ago(check.at)).toLowerCase()}`}</span>` : ''}<button class="cs-btn cs-btn-small" type="button" data-action="inv8-check"${check.busy ? ' disabled' : ''}>Check now</button></span>` : ''
     );
