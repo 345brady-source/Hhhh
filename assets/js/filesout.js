@@ -9,6 +9,9 @@
  * can add it; pct (a fraction) as a number shown 0.00%; ratio and price as numbers shown 0.00; int as a number shown
  * 0; qty as a number when it is one; date and every other value as an inline string, which a spreadsheet never
  * reads as a formula. No formula is ever written. null and '' write no cell.
+ *
+ * pdf(doc, kit): a printable PDF of the same schedule objects (US Letter landscape), written with the PDF writer and
+ * Unicode font shipped with the portal (NS.esignKit.writer() and unicodeFont(), or the kit passed in). Nothing is fetched.
  */
 (function (NS) {
   'use strict';
@@ -239,5 +242,287 @@
     return NS.audit.zip(parts, opts && opts.when);
   }
 
-  NS.files = Object.assign(NS.files || {}, { workbook, sheetName });
+  /* ---------- PDF ---------- */
+  // US Letter landscape with 0.5 inch margins, in points.
+  const PG = { W: 792, H: 612, M: 36 };
+  const NUMERIC = { money: 1, pct: 1, ratio: 1, price: 1, int: 1 };
+  const PAD = 4; // space left and right of a cell's text
+  const VPAD = 1.75; // space above and below a row's lines
+  const MIN_TEXT = 72; // the narrowest a text column is made before the type is made smaller
+  const INK = [0.1, 0.1, 0.1];
+  const MUTE = [0.38, 0.38, 0.38];
+
+  /** A cell as the Audit page displays it; money negatives in parentheses. Throws on money that is not whole cents. */
+  function pdfCell(c, v, where) {
+    if (v == null || v === '') return '';
+    if (typeof v === 'number' && !Number.isFinite(v)) throw new Error(`${where}: ${v} is not a number that can be written`);
+    if (c.t === 'money' && typeof v === 'number') {
+      if (!Number.isSafeInteger(v)) throw new Error(`${where}: money must be whole cents, got ${v}`);
+      const s = NS.audit.display(c, Math.abs(v));
+      return v < 0 ? `(${s})` : s;
+    }
+    return NS.audit.display(c, v);
+  }
+  const rightAligned = (c, v) => !!NUMERIC[c.t] || (c.t === 'qty' && typeof v === 'number');
+
+  /**
+   * A PDF of tables, written in the browser with the PDF writer and Unicode font shipped with the portal; nothing is
+   * fetched. doc = { title, subtitle, sheets: [schedule object], footer, when }; kit = { PDFLib, fontkit, fontBytes,
+   * boldBytes } (optional; when absent the writer and font come from NS.esignKit). Each sheet starts a page: its title,
+   * its description on one line, then its table, whose headings are repeated on every page it runs onto. Every page's
+   * footer: doc.footer on the left, "Page n of N" on the right. A character the font lacks is drawn as '?' and counted:
+   * the result (the bytes) carries the count as .missing.
+   */
+  async function pdf(doc, kit) {
+    doc = doc || {};
+    const sheets = doc.sheets || [];
+    if (!sheets.length) throw new Error('A PDF needs at least one sheet');
+    kit = kit || {};
+    const E = NS.esignKit || {};
+    const L = kit.PDFLib || (E.writer ? await E.writer() : null);
+    let fontkit = kit.fontkit;
+    let fontBytes = kit.fontBytes;
+    if (!fontkit || !fontBytes) {
+      if (!E.unicodeFont) throw new Error('The PDF writer is not on this page');
+      ({ fontkit, fontBytes } = await E.unicodeFont());
+    }
+    if (!L) throw new Error('The PDF writer is not on this page');
+    const out = await L.PDFDocument.create();
+    out.registerFontkit(fontkit);
+    // Ligatures off, so every character is its own glyph: measured widths match drawn widths and text reads back as typed.
+    const embed = async (bytes) => {
+      const f = await out.embedFont(bytes, { subset: true, features: { liga: false } });
+      const cs = new Set(f.getCharacterSet());
+      const cache = new Map();
+      const width = (s, size) => {
+        let w = 0;
+        for (const ch of s) {
+          let u = cache.get(ch);
+          if (u === undefined) cache.set(ch, (u = f.widthOfTextAtSize(ch, 1000)));
+          w += u;
+        }
+        return (w * size) / 1000;
+      };
+      return { f, has: (cp) => cs.has(cp), width };
+    };
+    const reg = await embed(fontBytes);
+    let boldBytes = kit.boldBytes;
+    if (!boldBytes && NS.fontData && typeof NS.fontData.bold === 'string' && E.fromBase64) boldBytes = E.fromBase64(NS.fontData.bold);
+    const bold = boldBytes ? await embed(boldBytes) : null;
+    const fontOf = (b) => (b && bold) || reg;
+    const rgb = (a) => L.rgb(a[0], a[1], a[2]);
+
+    // Text the font can draw: tabs become spaces, other control characters go, a character the font lacks becomes '?'.
+    let missing = 0;
+    const fit = (s, b) => {
+      const F = fontOf(b);
+      let t = '';
+      for (const ch of String(s == null ? '' : s)) {
+        const cp = ch.codePointAt(0);
+        if (cp === 9) t += ' ';
+        else if (cp < 0x20 || (cp >= 0x7f && cp < 0xa0)) continue;
+        else if ((cp >= 0xd800 && cp <= 0xdfff) || !F.has(cp)) {
+          t += '?';
+          missing++;
+        } else t += ch;
+      }
+      return t;
+    };
+    /** Paragraphs of a value (its own line breaks kept), each made drawable. */
+    const paras = (s, b) => String(s).split(/\r\n|\r|\n/).map((p) => fit(p, b));
+    const cutTo = (s, F, size, w) => {
+      if (F.width(s, size) <= w) return s;
+      const cps = Array.from(s);
+      while (cps.length && F.width(cps.join('') + '…', size) > w) cps.pop();
+      return cps.join('').replace(/\s+$/, '') + '…';
+    };
+    /** Lines of the paragraphs inside width w: broken at spaces, and a word wider than w broken between characters. */
+    const wrap = (ps, F, size, w) => {
+      const lines = [];
+      ps.forEach((p) => {
+        let line = '';
+        p.split(/ +/).forEach((word) => {
+          const tryLine = line ? line + ' ' + word : word;
+          if (F.width(tryLine, size) <= w) return (line = tryLine);
+          if (line) lines.push(line);
+          let cps = Array.from(word);
+          while (cps.length > 1 && F.width(cps.join(''), size) > w) {
+            let k = 1;
+            while (k < cps.length && F.width(cps.slice(0, k + 1).join(''), size) <= w) k++;
+            lines.push(cps.slice(0, k).join(''));
+            cps = cps.slice(k);
+          }
+          line = cps.join('');
+        });
+        lines.push(line);
+      });
+      return lines;
+    };
+
+    const title = fit(doc.title || '', true);
+    const subtitle = fit(doc.subtitle || '');
+    const footer = fit(doc.footer || '');
+    const W = PG.W - 2 * PG.M;
+    const TOP = PG.H - PG.M;
+    const FLOOR = PG.M + 16; // the table stops above the footer
+    const pages = [];
+    let page = null;
+    const text = (s, x, y, size, b, color) => {
+      if (!s) return;
+      const o = { x, y, size, font: fontOf(b).f, color: rgb(color || INK) };
+      if (b && !bold) {
+        // No bold font data: the regular font filled and outlined reads as bold.
+        page.pushOperators(L.pushGraphicsState(), L.setTextRenderingMode(L.TextRenderingMode.FillAndOutline), L.setLineWidth(size * 0.04), L.setStrokingColor(o.color));
+        page.drawText(s, o);
+        page.pushOperators(L.popGraphicsState());
+      } else page.drawText(s, o);
+    };
+    const rule = (y, thickness, gray) => page.drawLine({ start: { x: PG.M, y }, end: { x: PG.M + W, y }, thickness, color: L.rgb(gray, gray, gray) });
+
+    sheets.forEach((s, si) => {
+      const where = `Sheet "${s.title || si + 1}"`;
+      const cols = s.cols || [];
+      const sTitle = fit(s.title || '', true);
+      const desc = fit(String(s.desc || '').replace(/\s+/g, ' ').trim());
+      const heads = cols.map((c) => paras(String(c.h == null ? '' : c.h) + (c.t === 'money' && s.currency && s.currency !== 'USD' ? ` (${s.currency})` : ''), true));
+      const body = (s.rows || []).map((r, k) => cols.map((c, i) => paras(pdfCell(c, (r || [])[i], `${where} row ${k + 1}`), false)));
+      const total = s.total ? cols.map((c, i) => paras(pdfCell(c, s.total[i], `${where} total`), true)) : null;
+      const right = cols.map((c, i) => rightAligned(c, ((s.rows || []).find((r) => r && r[i] != null && r[i] !== '') || s.total || [])[i]));
+
+      // Column widths: the widest text of each column at the type size, then fitted to the page width.
+      let size = 8;
+      let widths = [];
+      for (;;) {
+        const most = (a, f) => a.reduce((m, x) => Math.max(m, f(x)), 0);
+        const widest = (ps, F) => most(ps, (p) => F.width(p, size));
+        const longestWord = (ps, F) => most(ps, (p) => most(p.split(/ +/), (w) => F.width(w, size)));
+        const cellNat = cols.map((c, i) => Math.max(longestWord(heads[i], fontOf(true)), most(body, (r) => widest(r[i], reg)), total ? widest(total[i], fontOf(true)) : 0) + 2 * PAD);
+        const headNat = cols.map((c, i) => Math.max(cellNat[i], widest(heads[i], fontOf(true)) + 2 * PAD));
+        const sum = (a) => a.reduce((x, y) => x + y, 0);
+        const textCols = cols.map((c, i) => i).filter((i) => !right[i]);
+        const grow = (base) => {
+          const extra = W - sum(base);
+          const to = textCols.length ? textCols : cols.map((c, i) => i);
+          const share = sum(to.map((i) => base[i])) || 1;
+          return base.map((b, i) => (to.indexOf(i) >= 0 ? b + (extra * b) / share : b));
+        };
+        if (sum(headNat) <= W) widths = grow(headNat);
+        else if (sum(cellNat) <= W) widths = grow(cellNat);
+        else {
+          const numSum = sum(cols.map((c, i) => (right[i] ? cellNat[i] : 0)));
+          const mins = textCols.map((i) => Math.min(cellNat[i], MIN_TEXT));
+          if (numSum + sum(mins) <= W || size <= 6) {
+            if (numSum + sum(mins) <= W) {
+              // Numbers keep their width; the text columns share what is left, none wider than it needs.
+              widths = cellNat.slice();
+              let left = W - numSum;
+              let open = textCols.slice();
+              for (;;) {
+                const fair = left / open.length;
+                const small = open.filter((i) => cellNat[i] <= fair);
+                if (!small.length) {
+                  open.forEach((i) => (widths[i] = fair));
+                  break;
+                }
+                small.forEach((i) => {
+                  widths[i] = cellNat[i];
+                  left -= cellNat[i];
+                });
+                open = open.filter((i) => small.indexOf(i) < 0);
+                if (!open.length) break;
+              }
+            } else widths = cellNat.map((w) => (w * W) / sum(cellNat));
+          } else {
+            size -= 0.5;
+            continue;
+          }
+        }
+        break;
+      }
+      const LH = size * 1.2;
+      const xs = [];
+      widths.reduce((x, w, i) => ((xs[i] = x), x + w), PG.M);
+      const lay = (cells, b) => cells.map((ps, i) => wrap(ps, fontOf(b), size, Math.max(1, widths[i] - 2 * PAD)));
+      const headLines = lay(heads, true);
+      const headH = Math.max(1, ...headLines.map((l) => l.length)) * LH + 2 * VPAD;
+
+      // Page furniture, then the table rows page by page.
+      let y = 0;
+      const drawRow = (lines, b, color) => {
+        lines.forEach((ls, i) => {
+          const F = fontOf(b);
+          ls.forEach((ln, j) => {
+            const base = y - VPAD - size * 0.9 - j * LH;
+            const x = right[i] ? xs[i] + widths[i] - PAD - F.width(ln, size) : xs[i] + PAD;
+            text(ln, x, base, size, b, color);
+          });
+        });
+      };
+      const open = (cont) => {
+        page = out.addPage([PG.W, PG.H]);
+        pages.push(page);
+        y = TOP;
+        if (title || subtitle) {
+          const tl = cutTo(title, fontOf(true), 9, W * 0.6);
+          text(tl, PG.M, y - 9, 9, true);
+          const st = cutTo(subtitle, reg, 9, W - fontOf(true).width(tl, 9) - 24);
+          text(st, PG.M + W - reg.width(st, 9), y - 9, 9, false, MUTE);
+          y -= 24;
+        }
+        const tt = cutTo(sTitle + (cont ? ' (continued)' : ''), fontOf(true), 13, W);
+        text(tt, PG.M, y - 13, 13, true);
+        y -= 19;
+        if (desc && !cont) {
+          text(cutTo(desc, reg, 8.5, W), PG.M, y - 8.5, 8.5, false, MUTE);
+          y -= 14;
+        }
+        y -= 6;
+        if (!cols.length) return;
+        page.drawRectangle({ x: PG.M, y: y - headH, width: W, height: headH, color: L.rgb(0.93, 0.93, 0.93) });
+        drawRow(headLines, true);
+        y -= headH;
+        rule(y, 0.6, 0.25);
+      };
+      open(false);
+      if (!cols.length) return;
+      // The most lines a row may have so it fits on a page of its own; longer cells are cut with an ellipsis.
+      const room = () => y - FLOOR;
+      const firstRoom = room();
+      const maxLines = Math.max(1, Math.floor((firstRoom - 2 * VPAD) / LH));
+      const rows = body.map((r) => ({ cells: r, b: false }));
+      if (total) rows.push({ cells: total, b: true, total: true });
+      if (!rows.length) rows.push({ cells: cols.map((c, i) => (i === 0 ? [fit('None')] : [''])), b: false, color: MUTE });
+      rows.forEach((row) => {
+        let lines = lay(row.cells, row.b);
+        lines = lines.map((ls, i) => (ls.length > maxLines ? ls.slice(0, maxLines - 1).concat([cutTo(ls[maxLines - 1] + '…', fontOf(row.b), size, Math.max(1, widths[i] - 2 * PAD))]) : ls));
+        const h = Math.max(1, ...lines.map((l) => l.length)) * LH + 2 * VPAD;
+        if (h > room()) open(true);
+        if (row.total) rule(y, 0.8, 0.1);
+        drawRow(lines, row.b, row.color);
+        y -= h;
+        if (!row.total) rule(y, 0.3, 0.82);
+      });
+    });
+
+    // Every page's footer, now that the number of pages is known.
+    pages.forEach((p, k) => {
+      page = p;
+      const n = `Page ${k + 1} of ${pages.length}`;
+      text(n, PG.M + W - reg.width(n, 8), PG.M + 2, 8, false, MUTE);
+      text(cutTo(footer, reg, 8, W - reg.width(n, 8) - 24), PG.M, PG.M + 2, 8, false, MUTE);
+    });
+    const who = footer || title;
+    out.setTitle(title);
+    out.setProducer(who);
+    out.setCreator(who);
+    if (doc.when) {
+      out.setCreationDate(new Date(doc.when));
+      out.setModificationDate(new Date(doc.when));
+    }
+    const bytes = await out.save();
+    bytes.missing = missing;
+    return bytes;
+  }
+
+  NS.files = Object.assign(NS.files || {}, { workbook, sheetName, pdf });
 })(window.CVPortal);
