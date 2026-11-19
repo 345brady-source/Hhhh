@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# Debug finish-notfound-safari gate: the 06-30 gate plus checks/safari-finish.js (SAFARI FINISH, 6 parts).
+# Plan 06-33 gate (the phone layout of the owner-path walkthrough, failures 5, 9, 11, 12 and 14): the reference gate as
+# merged (the debug finish-notfound-safari gate plus HELP CHAT, 10 parts) plus checks/phone-layout.js (PHONE LAYOUT, 8 parts:
+# 390x844 touch and 1280x800; every desktop element compared with a run on the base tip, PHONE_LAYOUT_BASE). Server tests
+# follow the merged tree (272).
 # two persons, owner walks and leak search, the owner's folder, phase-4 signing and phase-5 record checks on the base tree
 # and on this tree) plus email-dialog, agreement-name, tax-request-leave and this plan's ways-out. Every step runs.
-cd /home/user/Hhhh/.claude/worktrees/dbg-safari-finish || exit 9
+cd /home/user/Hhhh/.claude/worktrees/agent-a1abdd780a1107725 || exit 9
 S=/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad
 P=.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa
 Q=.planning/phases/01.4-every-subscription-agreement-the-reader-is-trained-and-measu/checks
-O=$S/dbg-sf/gate
+O=$S/fix-walk-c/gate
 mkdir -p $O
 export P6_OUT=$O/checks-out P6_SHOTS=$O/shots
 LINKED=0
@@ -30,10 +33,12 @@ NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/safari-finish.js > $O/saf
 tail -n 2 $O/server.txt $O/math.txt $O/maps.txt $O/forms.txt $O/status.txt $O/srvmode.txt $O/persons.txt $O/owner.txt $O/email.txt $O/agrname.txt $O/taxleave.txt $O/waysout.txt $O/nonet.txt $O/embed.txt $O/safari.txt
 NODE_PATH=$GN bash $S/exec-011/heavy.sh node .planning/phases/07-help-chatbot/checks/help-chat.js > $O/helpchat.txt 2>&1
 tail -n 2 $O/helpchat.txt
+PHONE_LAYOUT_BASE=$S/fix-walk-c/red-base-merged/checks-out/phone-layout NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/phone-layout.js > $O/phone.txt 2>&1
+tail -n 2 $O/phone.txt
 FAIL=0
 ok() { if eval "$2"; then echo "GATE ok   $1"; else echo "GATE FAIL $1"; FAIL=1; fi; }
 ok 'server tests # fail 0' "grep -q '^# fail 0$' $O/server.txt"
-ok 'server tests 197' "grep -qx '# tests 197' $O/server.txt"
+ok 'server tests 272' "grep -qx '# tests 272' $O/server.txt"
 ok 'STATUS MATH (13)' "grep -qx 'STATUS MATH: PASS (cases run: 13)' $O/math.txt"
 ok 'FORM MAPS (3)' "grep -qx 'FORM MAPS: PASS (forms run: 3)' $O/maps.txt"
 ok 'FORMS FLOW (34)' "grep -qx 'FORMS FLOW: PASS (cases run: 34)' $O/forms.txt"
@@ -50,6 +55,7 @@ ok 'NO NETWORK (3)' "grep -qx 'NO NETWORK: PASS (parts run: 3)' $O/nonet.txt"
 ok 'EMBED DATA (3)' "grep -qx 'EMBED DATA: PASS (files: 3)' $O/embed.txt"
 ok 'SAFARI FINISH (6)' "grep -qx 'SAFARI FINISH: PASS (parts run: 6)' $O/safari.txt"
 ok 'HELP CHAT (10)' "grep -qx 'HELP CHAT: PASS (parts run: 10)' $O/helpchat.txt"
+ok 'PHONE LAYOUT (8)' "grep -qx 'PHONE LAYOUT: PASS (parts run: 8)' $O/phone.txt"
 BASE=$(cat $O/base-commit.txt)
 HEADC=$(git rev-parse HEAD)
 ok 'base is an ancestor of HEAD and HEAD moved' "git merge-base --is-ancestor $BASE HEAD && test '$BASE' != '$HEADC'"
