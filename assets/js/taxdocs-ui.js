@@ -35,7 +35,7 @@
   const KINDS = ['k1-1065', 'k1-other', '8805', '1042-s', 'letter'];
   // The picture beside a package, as page fractions: a K-1's Part I and Part II (the left column from the top of Part I
   // to the foot of Part II); the top half of the first page of anything else; a whole page.
-  const CROP = { k1: { x: 0.03, y: 0.165, w: 0.48, h: 0.78 }, top: { x: 0, y: 0, w: 1, h: 0.5 }, page: { x: 0, y: 0, w: 1, h: 1 } };
+  const CROP = { k1: { x: 0.03, y: 0.172, w: 0.48, h: 0.773 }, top: { x: 0, y: 0, w: 1, h: 0.5 }, page: { x: 0, y: 0, w: 1, h: 1 } };
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`;
   const redraw = () => NS.app.render();
   const btn = (action, label, attrs, cls) => `<button type="button" class="cs-btn cs-btn-small${cls ? ' ' + cls : ''}" data-action="${action}"${attrs || ''}>${label}</button>`;
