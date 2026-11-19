@@ -998,7 +998,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     if (path === '/v1/outbox') {
       requireSponsor(auth);
       if (req.method !== 'GET') throw fail(405, 'Use GET');
-      return reply(res, 200, { messages: mailer.outbox({ workspace: url.searchParams.get('workspace') || '', invitationId: url.searchParams.get('invitation') || '' }) });
+      return reply(res, 200, { messages: mailer.outbox({ workspace: pin !== null ? pin : url.searchParams.get('workspace') || '', invitationId: url.searchParams.get('invitation') || '' }) });
     }
     if (path === '/v1/invitations') {
       requireSponsor(auth);
@@ -1019,7 +1019,8 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     if (!m) return false;
     requireSponsor(auth);
     let rec = INVITATION_ID.test(m[1]) ? store.get('invitations', m[1]) : null;
-    if (!rec) throw fail(404, 'No invitation with that id');
+    // Another sponsor's invitation answers as one that does not exist (never 403, which would confirm it does).
+    if (!rec || (pin !== null && rec.workspace !== pin)) throw fail(404, 'No invitation with that id');
     const action = m[2] || '';
 
     if (!action && req.method === 'GET') return reply(res, 200, listView(rec));

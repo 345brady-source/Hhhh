@@ -782,6 +782,10 @@ export function createServer(opts = {}) {
 
     const auth = path.startsWith('/v1/') && !scope ? sponsorAuth(req) : null;
     if (path.startsWith('/v1/') && !scope && !auth) return send(res, 401, { error: 'Not authorized' });
+    // A sponsor account's calls are pinned to its workspace: what it writes is stored there whatever the request says, and
+    // another workspace's record answers 404 (never 403, which would confirm the record exists).
+    const pin = auth && auth.account ? auth.account.workspace : null;
+    const foreign = (rec) => pin !== null && (rec.workspace || '') !== pin;
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
 
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
@@ -808,6 +812,7 @@ export function createServer(opts = {}) {
       // An invitation's token runs only the checks the firm's settings use (never the test sandbox, which runs in the browser).
       if (scope && !(invites.scopeRules(scope).providers[body.kind] || []).includes(body.provider)) return send(res, 403, { error: 'This check is not one the firm uses' });
       if (scope) investor.workspace = scope.workspace;
+      if (pin !== null) investor.workspace = pin;
       const vid = id('ver');
       // createdAt is on the same clock as invitations: a submission counts only checks created once its invitation existed.
       const rec = store.put('verifications', { id: vid, kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, invitationId: scope ? scope.id : undefined, status: 'pending', settings: cleanSettings(body.settings), investor: sealPersonal('verifications', vid, 'investor', investor), returnUrl: returnTo(body.returnUrl), createdAt: new Date(now()).toISOString() });
@@ -820,7 +825,7 @@ export function createServer(opts = {}) {
     const ver = path.match(/^\/v1\/verifications\/(ver_[\w-]+)$/);
     if (req.method === 'GET' && ver) {
       const rec = store.get('verifications', ver[1]);
-      if (!rec) return send(res, 404, { error: 'Not found' });
+      if (!rec || foreign(rec)) return send(res, 404, { error: 'Not found' });
       if (scope && !ownCheck(rec, scope)) return send(res, 403, { error: 'This invitation can only see its own investor’s checks' });
       return send(res, 200, view(await refresh(rec)));
     }
@@ -831,7 +836,7 @@ export function createServer(opts = {}) {
       const rec = store.get('verifications', evd[1]);
       const item = rec && (rec.evidence || [])[Number(evd[2])];
       const p = rec && PROVIDERS[rec.provider];
-      if (!rec || !item || !p || !p.fetchEvidence) return send(res, 404, { error: 'Not found' });
+      if (!rec || foreign(rec) || !item || !p || !p.fetchEvidence) return send(res, 404, { error: 'Not found' });
       const file = await p.fetchEvidence(ctx(rec.provider, rec, { item }));
       if (!file || !file.body) return send(res, 404, { error: 'Not found' });
       res.writeHead(200, { 'Content-Type': file.contentType || 'application/pdf', 'Content-Disposition': `attachment; filename="${String(file.fileName || 'evidence.pdf').replace(/[^\w.-]+/g, '_')}"`, 'Cache-Control': 'no-store' });
@@ -853,6 +858,7 @@ export function createServer(opts = {}) {
       const inv = cleanInvestor(body.investor);
       if (scope && inv.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only screen its own investor' });
       if (scope) inv.workspace = scope.workspace;
+      if (pin !== null) inv.workspace = pin;
       const sid = id('scr');
       const rec = store.put('screenings', { id: sid, kind: 'aml', provider: body.provider, investorId: inv.id, workspace: inv.workspace, invitationId: scope ? scope.id : undefined, names: sealPersonal('screenings', sid, 'names', names), settings: cleanSettings(body.settings), investor: sealPersonal('screenings', sid, 'investor', inv), status: 'pending', createdAt: new Date(now()).toISOString() });
       const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
@@ -865,7 +871,7 @@ export function createServer(opts = {}) {
     const scr = path.match(/^\/v1\/screenings\/(scr_[\w-]+)$/);
     if (req.method === 'GET' && scr) {
       const rec = store.get('screenings', scr[1]);
-      if (!rec) return send(res, 404, { error: 'Not found' });
+      if (!rec || foreign(rec)) return send(res, 404, { error: 'Not found' });
       if (scope && !ownCheck(rec, scope)) return send(res, 403, { error: 'This invitation can only see its own investor’s checks' });
       return send(res, 200, screeningView(rec.status === 'pending' ? await refreshScreening(rec) : rec));
     }
