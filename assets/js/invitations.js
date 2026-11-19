@@ -51,6 +51,14 @@
    * created a blank record when reading one, which then read as unverified.
    */
   const probe = (inv) => (inv && !inv.verify ? Object.assign({}, inv) : inv);
+  /**
+   * Does an invitation of this investor to this offering (or to none) need VERIFIED accreditation? One answer, used by the
+   * snapshot the integration server gets and by the verification package the invite form offers (plan 08-06). Read only.
+   */
+  function accreditationRequired(ws, inv, off) {
+    const I = IV();
+    return !!(I && I.needsAccreditation && ((off && I.needsAccreditation(ws, probe(inv), off)) || I.needsAccreditation(ws, probe(inv))));
+  }
   /** "finished onboarding", or for an investor already on file invited to another offering, "finished their subscription". */
   const finishedWhat = (it) => (it && it.taxRequest ? 'finished your tax form request' : it && it.existing ? 'finished their subscription' : 'finished onboarding');
   /** "started onboarding", or for an investor already on file, "started their subscription". */
@@ -253,6 +261,10 @@
     // Plan 06-27 (D-10): the sponsor chose "Include tax form" inviting an investor on file to subscribe: the short flow holds
     // the tax step too (before subscribe). Never on the investor's own portal entry points (onboarding.js selfInvite).
     if (existing && o.includeTax === true && off && !invitation.taxRequest) invitation.includeTax = true;
+    // Plan 08-06 (D-01): the sponsor ticked "Add verification package". Kept only where the box could be ticked: a server
+    // is connected and offers the package for this invitation. The server is sent the choice and this invitation's id
+    // (snapshot); it decides what is charged.
+    if (o.package === true && packageBox(ws, { email, offeringId: off ? off.id : '' }).enabled) invitation.package = true;
     if (token) invitation.link = linkFor(ws, invitation);
     if (!have) ws.investors.push(investor);
     list(ws).push(invitation);
@@ -482,7 +494,7 @@
     // Whether this invitation needs VERIFIED accreditation, answered here on the whole workspace: the investor's device holds
     // only the invited offering, so its own reading of the firm's rules ("no offering names an exemption") can misfire.
     // Read only (probe): nothing is written on the investor.
-    const accreditationRequired = !!(I && I.needsAccreditation && ((off && I.needsAccreditation(ws, probe(inv), off)) || I.needsAccreditation(ws, probe(inv))));
+    const needsVerified = accreditationRequired(ws, inv, off);
     return {
       workspace: t.id,
       sendEmail: true,
@@ -492,8 +504,8 @@
       firm: { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) },
       investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest || it.includeTax ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest || it.includeTax ? { taxPrefill: taxPrefill(inv) } : {}),
       offering,
-      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}),
-      verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired },
+      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}, it.package ? { package: true, clientId: it.id } : {}),
+      verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired: needsVerified },
       esign
     };
   }
@@ -664,6 +676,17 @@
     if (it.status !== 'cancelled' && !(it.status === 'completed' && it.importedAt)) set('status', String(row.status || it.status));
     ['stepKey', 'stepLabel', 'openedAt', 'completedAt', 'expiresAt', 'emailStatus', 'emailError'].forEach((k) => typeof row[k] === 'string' && (row[k] || k === 'emailError') && set(k, row[k]));
     ['stepIndex', 'stepCount'].forEach((k) => typeof row[k] === 'number' && set(k, row[k]));
+    // Plan 08-06: the server's word on the package (null, or { tier, status }) replaces the sponsor's tick.
+    if (row.package && typeof row.package === 'object') {
+      const pk = { tier: String(row.package.tier || ''), status: String(row.package.status || '') };
+      if (!it.package || it.package.tier !== pk.tier || it.package.status !== pk.status) {
+        it.package = pk;
+        changed = true;
+      }
+    } else if (row.package === null && it.package) {
+      delete it.package;
+      changed = true;
+    }
     if (!wasOpened && it.openedAt) notify(ws, 'invite_opened', `${inv ? inv.title : 'An investor'} opened the invitation`, offOf(ws, it.offeringId) ? `Invited to ${offOf(ws, it.offeringId).name}` : 'Account invitation', 'console-investors');
     if (it.stepKey && it.stepKey !== wasStep && it.stepKey !== 'done') {
       const have = notes(ws).find((n) => n.kind === 'invite_progress' && n.invitationId === it.id);
@@ -1391,12 +1414,38 @@
       if (row) row.hidden = !onFile;
       const type = document.getElementById('iv-type-row');
       if (type) type.hidden = onFile;
+      syncPackage();
     }
     if (path === 'offeringId') {
       d.cls = '';
       NS.app.render();
     }
   };
+  /**
+   * Plan 08-06 (D-01): the "Add verification package" box for the invitation being written (d: its email and offering):
+   * { show, enabled, label, line, href } from NS.pkg.box. An investor on file is asked to subscribe only, so their link
+   * holds no identity or accreditation step for a package to run: no box for their email.
+   */
+  function packageBox(ws, d) {
+    if (!E.diy || !NS.pkg || onFileEmail(ws, d.email)) return { show: false, enabled: false, label: '', line: '', href: '' };
+    return NS.pkg.box(ws, d.offeringId || '', undefined, byEmail(ws, d.email));
+  }
+  const packageLine = (pk) => (pk.href ? `<a href="${h(pk.href)}">${h(pk.line)}</a>` : h(pk.line));
+  /** The box brought up to date in place (the server's answer arrived, or the email changed): no re-render while typing. */
+  function syncPackage() {
+    const row = document.getElementById('iv-package-row');
+    const input = document.getElementById('iv-package');
+    if (!row || !input || !W()) return;
+    const d = draft();
+    const pk = packageBox(W(), d);
+    row.hidden = !pk.show;
+    input.disabled = !pk.enabled;
+    if (!pk.enabled) input.checked = d.package = false;
+    document.getElementById('iv-package-label').textContent = pk.label;
+    const line = document.getElementById('iv-package-line');
+    line.hidden = !pk.line;
+    line.innerHTML = packageLine(pk);
+  }
   const fieldErr = (d, k) => (d.errors[k] ? `<span class="cs-error" id="iv-err-${k}">${h(d.errors[k])}</span>` : '');
   const inval = (d, k) => (d.errors[k] ? ` aria-invalid="true" aria-describedby="iv-err-${k}"` : '');
   function invitePanel() {
@@ -1412,6 +1461,9 @@
     const dflt = offs.length === 1 ? offs[0].id : '';
     const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || /Choose an offering/.test(d.errors.email || '') || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
     const agreement = off && NS.esign && NS.esign.templateReady ? (NS.esign.templateReady(w, off.id) ? 'ready' : 'missing') : '';
+    // Plan 08-06: what the connected server offers is asked once the form is open (never without a server).
+    if (NS.pkg && serverOn(w)) NS.pkg.load(w).then(syncPackage);
+    const pk = packageBox(w, d);
     const what = off
       ? `They will be invited to ${h(off.name.replace(/\.$/, ''))}${agreement === 'ready' ? ' and sign its subscription agreement during onboarding' : ''} (change under More options).`
       : offs.length
@@ -1422,6 +1474,7 @@
       <label class="cs-field" for="iv-last"><span>Last name</span><input id="iv-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8:last" value="${h(d.last || '')}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
       <label class="cs-field cs-wide" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
       <label class="cs-check cs-wide inv8-tax" id="iv-tax-row" for="iv-includeTax"${onFileEmail(w, d.email) ? '' : ' hidden'}><input id="iv-includeTax" name="includeTax" type="checkbox" data-bind="inv8:includeTax"${d.includeTax ? ' checked' : ''}><span>Include tax form</span></label>
+      ${E.diy && NS.pkg ? `<label class="cs-check cs-wide inv8-package" id="iv-package-row" for="iv-package"${pk.show ? '' : ' hidden'}><input id="iv-package" name="package" type="checkbox" data-bind="inv8:package"${pk.enabled && d.package ? ' checked' : ''}${pk.enabled ? '' : ' disabled'}><span><span id="iv-package-label">${h(pk.label)}</span><span class="cs-hint" id="iv-package-line"${pk.line ? '' : ' hidden'}>${packageLine(pk)}</span></span></label>` : ''}
       <label class="cs-field cs-wide" id="iv-type-row" for="iv-type"${onFileEmail(w, d.email) ? ' hidden' : ''}><span>Investor type</span><select id="iv-type" name="type" data-bind="inv8:type">${NS.investorKindOptions(d.type, h)}</select><span class="cs-hint">Decides the tax form they are shown. They can correct it during onboarding.</span></label>
       <p class="cs-hint cs-wide inv8-what" id="iv-what">${what}</p>
       ${agreement === 'missing' ? `<p class="cs-hint cs-hint-warn cs-wide inv8-warn" id="iv-agreement-warn">${h(off.name.replace(/\.$/, ''))} has no subscription agreement yet. <a href="#console-offering-${h(off.id)}">Add it on the offering</a> so investors sign it during onboarding.</p>` : ''}
@@ -1645,7 +1698,7 @@
     const v = (n) => (f.elements[n] ? String(f.elements[n].value || '') : '');
     const first = v('contact').trim();
     const last = v('last').trim();
-    return { first, last, name: [first, last].filter(Boolean).join(' '), email: v('email').trim(), type: v('type') || 'individual', account: v('title').trim(), offeringId: v('offering'), amount: v('amount').trim(), cls: v('cls'), note: v('note').trim(), includeTax: !!(f.elements.includeTax && f.elements.includeTax.checked) };
+    return { first, last, name: [first, last].filter(Boolean).join(' '), email: v('email').trim(), type: v('type') || 'individual', account: v('title').trim(), offeringId: v('offering'), amount: v('amount').trim(), cls: v('cls'), note: v('note').trim(), includeTax: !!(f.elements.includeTax && f.elements.includeTax.checked), package: !!(f.elements.package && f.elements.package.checked && !f.elements.package.disabled) };
   }
   async function submitInvite(f) {
     const w = W();
@@ -1666,7 +1719,7 @@
       if (first) first.focus();
       return;
     }
-    const r = create(w, { name: x.name, email: x.email, type: x.type, account: x.account, offeringId: x.offeringId, cents: cents || 0, cls: x.cls, note: x.note, includeTax: x.includeTax });
+    const r = create(w, { name: x.name, email: x.email, type: x.type, account: x.account, offeringId: x.offeringId, cents: cents || 0, cls: x.cls, note: x.note, includeTax: x.includeTax, package: x.package });
     NS.app.save(true);
     d.busy = true;
     S().ui.inv8Filter = 'open';
@@ -2237,7 +2290,7 @@
         const activity = [[unsent(it) ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
         return `<tr data-invitation="${h(it.id)}">
           <th scope="row"><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.email)}</span></th>
-          <td>${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span></td>
+          <td>${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
           <td>${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
           <td class="inv8-activity">${activity}</td>
           <td>${em}</td>
@@ -2452,6 +2505,7 @@
     mailtoFor,
     sweep,
     serverOn,
+    accreditationRequired,
     requestTax,
     openTaxRequest,
     taxFormFor,
