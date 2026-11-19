@@ -8,7 +8,17 @@
 //                                 from), completed by touch or click; a reload half way and after Review keeps it; Review
 //                                 by item with no error; the admin's sign-off; the order with "$100 due"; the file built
 //                                 from the signed notice validates against the SEC schema with xmllint
-//   NODE_PATH=$(npm root -g) node formd-flow.js [--only order-phone,order-desktop]
+//   errors-phone, errors-desktop  a P.O. box street line of 41 characters, no related person, a remaining amount changed
+//                                 by hand and a signature date tomorrow: one message per field (F2), each naming its item
+//                                 and linking to it, no sign-off until each is fixed; a warning that does not block; an
+//                                 offering in another currency; no CIK (with and without the EDGAR access section).
+//                                 Desktop: related persons and recipients, the one exemption, a team member, angle
+//                                 brackets shown as text, a signed notice never edited (F6)
+//   amend-phone, amend-desktop    the line "Amendment due <date>: Start" (annual) or "Amendment needed: Start" (a change)
+//                                 (F1); a D/A from the portal's own filed notice, or from the file or pasted text of a
+//                                 notice filed elsewhere (a masked filed notice); a file that is not a notice refused;
+//                                 the previous accession number; the $50 order; the file validates as a D/A
+//   NODE_PATH=$(npm root -g) node formd-flow.js [--only order-phone,order-desktop,errors-phone,errors-desktop,amend-phone,amend-desktop]
 // The last line is "FORMD FLOW: PASS (parts run: N)" or "FORMD FLOW: FAIL (parts run: N) - <failed parts>". The two
 // marker lines above are read by gate9.sh.
 const path = require('path');
@@ -513,19 +523,20 @@ async function amend(size, { check, S }) {
   const phone = size === 'phone';
   const acc = '0001234567-25-000321';
   const filedOn = L9.iso(today, phone ? -350 : -200);
-  await F.fr.evaluate(([oid, text, filedOn, acc, phone]) => {
+  // the notice the portal filed, read in Node (formd.js loads in the page only with the tab)
+  const snap = require(path.join(Lib.ROOT, 'assets/js/formd.js')).snapshot(REAL_D);
+  await F.fr.evaluate(([oid, d, snap, filedOn, acc, phone]) => {
     const NS = window.CVPortal;
     const ws = NS.state.ws;
     if (phone) {
-      const d = NS.formD.fromXml(text);
-      NS.filings.recordFiled(ws, oid, { type: 'D', filedOn, accession: acc, draft: d, snapshot: NS.formD.snapshot(d), source: 'portal' });
+      NS.filings.recordFiled(ws, oid, { type: 'D', filedOn, accession: acc, draft: d, snapshot: snap, source: 'portal' });
     } else {
       ws.offerings.find((x) => x.id === oid).minimum = 88000;
       NS.filings.recordFiled(ws, oid, { type: 'D', filedOn, accession: '', snapshot: { minimumInvestment: 100000 }, source: 'self' });
     }
     NS.app.save(true);
     NS.app.render();
-  }, [id, REAL, filedOn, acc, phone]);
+  }, [id, REAL_D, snap, filedOn, acc, phone]);
   await L9.press(F, NAV);
   await F.fr.waitForSelector(lineOf(id), { timeout: 30000 }).catch(() => {});
   const line = await L9.text(F, lineOf(id));
