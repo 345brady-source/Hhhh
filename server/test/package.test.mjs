@@ -382,3 +382,152 @@ test('already sent: a second post while the first invitation is open is refused 
     assert.deepEqual(tables(store), before);
   });
 });
+
+/** A sponsor's own connection, and connections that name the package providers or the package ids. */
+const OWN = { id: 'own', name: 'Our checks', type: 'server', connector: 'sandbox', checks: ['identity', 'accreditation'] };
+const CLAIMED = [
+  { id: 'k-id', name: 'Claimed identity', type: 'server', connector: 'idcheck', checks: ['identity', 'aml'] },
+  { id: 'k-acc', name: 'Claimed accreditation', type: 'server', connector: 'accredit', checks: ['accreditation'] },
+  { id: 'package-id', name: 'Claimed package', type: 'server', connector: 'sandbox', checks: ['identity', 'aml'], package: true },
+  { id: 'package-acc', name: 'Claimed package', type: 'link', checks: ['accreditation'], package: true }
+];
+const claiming = (accreditationRequired = false) => ({ accreditationRequired, connections: [OWN].concat(CLAIMED), use: { identity: ['own', 'k-id', 'package-id'], accreditation: ['k-acc', 'package-acc', 'own'], aml: ['k-id', 'package-id'] } });
+
+test('shared token: the operator’s shared token cannot buy a package, and keeps its identity check connections exactly as before', async () => {
+  await shop({ env: { API_TOKEN: API } }, async ({ base, server, store, gw }) => {
+    const billingSays = await j(base, 'GET', '/v1/billing', { bearer: API });
+    assert.equal(billingSays.status, 403);
+    const before = tables(store);
+    const calls = gw.calls.length;
+    const r = await invite(base, API, { package: true, clientId: 's1' }, { workspace: 'ws-harbor' });
+    assert.equal(r.status, 403, r.text);
+    assert.deepEqual(r.body, { error: 'Card payments need a sponsor account.', code: 'account_required' });
+    assert.deepEqual(r.body, billingSays.body, 'billing’s own sentence');
+    assert.equal(gw.calls.length, calls);
+    assert.deepEqual(tables(store), before);
+
+    const verification = { accreditationRequired: false, connections: [{ id: 'k1', name: 'Identity', type: 'server', connector: 'idcheck', checks: ['identity', 'aml'] }], use: { identity: ['k1'], aml: ['k1'] } };
+    const ok = await invite(base, API, {}, { workspace: 'ws-harbor', verification });
+    assert.equal(ok.status, 200, ok.text);
+    const rec = store.get('invitations', ok.body.id);
+    assert.equal(rec.package, undefined);
+    assert.deepEqual(snapshot(server, rec).verification, verification);
+  });
+});
+
+test('claimed connections: an account’s snapshot loses every connection naming a package provider or package id; a paid one holds only the server’s', async () => {
+  await shop({}, async ({ base, server, store, a }) => {
+    const plain = await invite(base, a.token, {}, { verification: claiming() });
+    assert.equal(plain.status, 200, plain.text);
+    const v = snapshot(server, store.get('invitations', plain.body.id)).verification;
+    assert.deepEqual(v.connections, [OWN]);
+    assert.deepEqual(v.use, { identity: ['own'], accreditation: ['own'], aml: [] });
+
+    const paid = await invite(base, a.token, { package: true, clientId: 'cc1' }, { verification: claiming() });
+    assert.equal(paid.status, 200, paid.text);
+    const pv = snapshot(server, store.get('invitations', paid.body.id)).verification;
+    assert.deepEqual(pv.connections, [OWN, { id: 'package-id', name: 'Identity check', type: 'server', connector: 'idcheck', checks: ['identity', 'aml'], package: true }]);
+    assert.deepEqual(pv.use, { identity: ['package-id'], accreditation: ['own'], aml: ['package-id'] });
+  });
+});
+
+test('unavailable: a tier whose provider is not set up is refused with nothing charged or stored; once set up the full tier charges its price', async () => {
+  await shop({ env: { ACCREDIT_API_KEY: '' } }, async ({ base, store, gw, a }) => {
+    const before = tables(store);
+    const calls = gw.calls.length;
+    const r = await invite(base, a.token, { package: true, clientId: 'u1' }, { offering: withDoc, verification: { accreditationRequired: true, connections: [], use: {} } });
+    assert.equal(r.status, 409, r.text);
+    assert.deepEqual(r.body, { error: 'The verification package is not available on this server right now. Nothing was charged.', code: 'package_unavailable' });
+    assert.equal(gw.calls.length, calls);
+    assert.deepEqual(tables(store), before);
+    const id = await invite(base, a.token, { package: true, clientId: 'u2' });
+    assert.equal(id.status, 200, id.text);
+    assert.equal(gw.charges()[0].body.amount, '1900');
+  });
+  await shop({}, async ({ base, server, store, gw, a }) => {
+    const r = await invite(base, a.token, { package: true, clientId: 'u3' }, { verification: { accreditationRequired: true, connections: [], use: {} } });
+    assert.equal(r.status, 200, r.text);
+    assert.equal(gw.charges().length, 1);
+    assert.equal(gw.charges()[0].body.amount, '9900');
+    const rec = store.get('invitations', r.body.id);
+    assert.equal(rec.package.tier, 'full');
+    const v = snapshot(server, rec).verification;
+    assert.deepEqual(v.connections.find((c) => c.id === 'package-acc'), { id: 'package-acc', name: 'Accreditation check', type: 'server', connector: 'accredit', checks: ['accreditation'], package: true });
+    assert.deepEqual(v.use, { identity: ['package-id'], aml: ['package-id'], accreditation: ['package-acc'] });
+  });
+});
+
+test('W5 flags: a portal link and a tax-form request never carry the package and never pay', async () => {
+  await shop({}, async ({ base, store, gw, a }) => {
+    const calls = gw.calls.length;
+    const access = await invite(base, a.token, { existing: true, access: true, package: true, clientId: 'w1' }, { offering: null });
+    assert.equal(access.status, 200, access.text);
+    const tax = await invite(base, a.token, { existing: true, taxRequest: true, package: true, clientId: 'w2' }, { offering: null, investor: { id: 'HRC-0007', contact: 'Zelda Quixote', email: 'zelda@investor.example', taxType: 'us-individual' } });
+    assert.equal(tax.status, 200, tax.text);
+    assert.equal(gw.calls.length, calls, 'no payment call');
+    for (const r of [access, tax]) assert.equal(store.get('invitations', r.body.id).package, undefined);
+    assert.deepEqual(store.list('entitlements'), []);
+  });
+});
+
+test('W9 investor view: the investor’s view of a package invitation holds no level, no package record and no price', async () => {
+  await shop({}, async ({ base, store, a }) => {
+    const r = await invite(base, a.token, { package: true, clientId: 'clientKeyW9' });
+    assert.equal(r.status, 200, r.text);
+    assert.ok(store.get('invitations', r.body.id).package);
+    const view = await j(base, 'GET', '/v1/invite', { invite: r.body.token });
+    assert.equal(view.status, 200, view.text);
+    for (const word of ['tier', 'entitlement', '1900', '9900', 'clientKeyW9']) assert.ok(!view.text.includes(word), `the investor's reply holds "${word}"`);
+    assert.ok(!('package' in view.body.invitation) && !('clientId' in view.body.invitation));
+  });
+});
+
+test('rows: the row reads the invitation’s own package: none, paid, started, credited, refunded (refunded, disputed, refunding)', async () => {
+  await shop({}, async ({ base, store, a }) => {
+    const row = async (id) => {
+      const r = await j(base, 'GET', `/v1/invitations/${id}`, { bearer: a.token });
+      assert.equal(r.status, 200, r.text);
+      return r.body.package;
+    };
+    const plain = await invite(base, a.token, {});
+    assert.equal(await row(plain.body.id), null);
+    const r = await invite(base, a.token, { package: true, clientId: 'rw1' });
+    const rec = store.get('invitations', r.body.id);
+    assert.deepEqual(await row(rec.id), { tier: 'identity', status: 'paid' });
+    const eid = rec.package.entitlement;
+    const at = new Date(T0).toISOString();
+    const cases = [
+      [{ status: 'consumed', startedAt: at }, 'started'],
+      [{ status: 'credited', startedAt: null }, 'credited'],
+      [{ status: 'refunded' }, 'refunded'],
+      [{ status: 'disputed' }, 'refunded'],
+      [{ status: 'refunding' }, 'refunded']
+    ];
+    for (const [patch, want] of cases) {
+      store.put('entitlements', Object.assign({ id: eid }, patch));
+      assert.deepEqual(await row(rec.id), { tier: 'identity', status: want }, JSON.stringify(patch));
+    }
+    // The key's newest entitlement is now another one: the row still reads its own.
+    store.put('entitlements', { id: eid, status: 'credited', startedAt: null });
+    store.put('entitlements', { id: 'ent_newer', account: a.id, workspace: 'alpha', key: 'rw1', tier: 'identity', cents: 1900, by: 'card', status: 'paid', chargeRef: '', invitationId: null, paidAt: at, startedAt: null, creditedAt: null });
+    assert.deepEqual(await row(rec.id), { tier: 'identity', status: 'credited' });
+    const list = await j(base, 'GET', '/v1/invitations', { bearer: a.token });
+    assert.deepEqual(list.body.find((x) => x.id === rec.id).package, { tier: 'identity', status: 'credited' });
+  });
+});
+
+test('amounts: the charge is the server’s price for the server’s tier; amounts, prices and a level in the request change nothing', async () => {
+  await shop({ env: { PACKAGE_PRICE_IDENTITY_CENTS: '2500' } }, async ({ base, store, gw, a }) => {
+    const sent = [
+      ['m1', 1900],
+      ['m2', 9900]
+    ];
+    for (const [clientId, cents] of sent) {
+      const r = await invite(base, a.token, { package: true, clientId, cents, amount: 9900, price: 1, tier: 'full' }, { amount: 9900, cents: 1 });
+      assert.equal(r.status, 200, r.text);
+      assert.equal(store.get('invitations', r.body.id).package.tier, 'identity');
+    }
+    assert.deepEqual(gw.charges().map((c) => c.body.amount), ['2500', '2500']);
+    assert.deepEqual(store.list('entitlements').map((e) => e.cents), [2500, 2500]);
+  });
+});

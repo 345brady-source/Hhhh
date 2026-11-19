@@ -570,6 +570,22 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const s = packageState(rec);
     return s ? { tier: s.tier, status: s.status } : null;
   };
+  /**
+   * N1 (create part): a sponsor account's snapshot may not name a package provider or a package id itself (that would run
+   * the paid checks without paying). Those connections, and every use of their ids, are dropped; the rest stay as sent.
+   */
+  function stripReserved(verification) {
+    const reserved = packages ? [packages.identity, packages.accreditation] : [env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit'];
+    const gone = new Set(PACKAGE_IDS);
+    if (Array.isArray(verification.connections))
+      verification.connections = verification.connections.filter((c) => {
+        const drop = !!obj(c) && (PACKAGE_IDS.includes(c.id) || reserved.includes(c.connector));
+        if (drop) gone.add(c.id);
+        return !drop;
+      });
+    const use = obj(verification.use);
+    if (use) for (const k of Object.keys(use)) if (Array.isArray(use[k])) use[k] = use[k].filter((cid) => !gone.has(cid));
+  }
   /** The connections a paid snapshot holds, built here from the provider registry (names as the providers give them). */
   function packageConnections(verification, tier) {
     const name = (pid) => String((packages.providers[pid] && (packages.providers[pid].name || packages.providers[pid].label)) || pid);
@@ -1033,6 +1049,8 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const verification = cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
     const { esign, pdf } = cleanEsign(body.esign);
     const consoleUrl = returnTo(body.consoleUrl) || `${portalUrl.split('#')[0]}#console-investors`;
+    // With the shared or open token (the operator's own) nothing is dropped.
+    if (auth && auth.account) stripReserved(verification);
 
     // The package is paid before anything is stored: by a sponsor account only, at the tier this server works out and the
     // price billing holds for it (credit first, then the card). A refusal leaves nothing behind.
