@@ -1,11 +1,15 @@
 // gate: browser
-// last "FILINGS FLOW: PASS (parts run: 8)"
+// last "FILINGS FLOW: PASS (parts run: 9)"
 // Plan 09-03: the Filings tab of the self-serve console, as the owner tests it: inside a sandboxed iframe whose policy
 // refuses every connection, with no server, on a 390x844 touch screen (-phone) and at 1280x800 (-desktop). Every part
 // answers 404 for the part files later plans add beside filings-ui.js, so it measures the tab alone and stays valid after
 // those plans land.
 //   tab-phone, tab-desktop       the menu entry with its count opens the page; an overdue first Form D with its date and
-//                                reason, and a state notice with the first sale date and no due date; the overview's item
+//                                reason, and a state notice with the first sale date and no due date; the overview's item.
+//                                Phone: the one part file that loads shows its line and its page under the bar with Back;
+//                                a reload at a section's address shows the section, at an absent section's the list.
+//                                Desktop: nothing is shown for the absent part files; the server link's line under an
+//                                order; a section registered by the check; a team member; an investor
 //   silence-phone, -desktop      Silence and Turn back on, one reminder and the whole offering; the menu count and the
 //                                overview follow; the choice is still there after a reload
 //   own-phone, own-desktop       one sale counted once; the first sale date and where it came from; a notice the sponsor
@@ -13,7 +17,8 @@
 //   published                    the published page (portal.html) has the same entry and page
 //   filed-long-ago               twenty states: one row that opens; the notices recorded as filed one by one and together;
 //                                the sponsor's own Form D and amendment recorded; the menu count follows
-//   NODE_PATH=$(npm root -g) node filings-flow.js [--only tab-phone,tab-desktop,silence-phone,silence-desktop,own-phone,own-desktop,published,filed-long-ago]
+//   managed                      the managed edition (index.html) has no Filings entry, route, reminder or file of this phase
+//   NODE_PATH=$(npm root -g) node filings-flow.js [--only tab-phone,tab-desktop,silence-phone,silence-desktop,own-phone,own-desktop,published,filed-long-ago,managed]
 // The last line is "FILINGS FLOW: PASS (parts run: N)" or "FILINGS FLOW: FAIL (parts run: N) - <failed parts>". The two
 // marker lines above are read by gate9.sh.
 const path = require('path');
@@ -28,11 +33,14 @@ Lib.describeShots([
   [/-silenced\.png$/, 'One reminder silenced: it stays, greyed, with its date and Turn back on; the count beside Filings is one lower.'],
   [/-own\.png$/, 'After the sponsor recorded a Form D they filed themselves: the annual amendment with its date, and an order with the amount due.'],
   [/-states\.png$/, 'An offering sold in twenty states: one row for the state notices, opened to the states.'],
-  [/-filed\.png$/, 'The same offering once its notices are recorded as filed: nothing is counted beside Filings.']
+  [/-filed\.png$/, 'The same offering once its notices are recorded as filed: nothing is counted beside Filings.'],
+  [/-section\.png$/, 'A section\'s own page, scrolled to its middle: the bar with Back and the offering\'s name stays on screen.'],
+  [/-team\.png$/, 'The tab as a team member sees it: the reminders and Silence, and no control that orders.']
 ]);
 
 const NAV = '.cs-nav a[href="#console-filings"]';
 const row = (key) => `.fl-row[data-key="${key}"]`;
+const rowSel = row;
 /** The offering's name carries angle brackets: the tab must show them as text (T-09-07). */
 const NAME = 'Harbor <b>Growth</b> Fund, L.P.';
 /** The module under test, for the dates the screen must show (its date rules are proven by filings-math.js). */
@@ -77,14 +85,168 @@ async function save(F, form, values) {
   await L9.press(F, `${form} button[type=submit]`);
 }
 
+/** A section as a later plan adds one: registered under the key probe, with a line under the offering and a long page. */
+const probe = () => {
+  const NS = window.CVPortal;
+  NS.filingsUI.part('probe', {
+    order: 5,
+    title: 'Probe section',
+    summary: (ws, o) => `Probe summary for ${NS.ui.h(o.shortName)}`,
+    render: (ws, o, rest) => `<div class="probe-body" data-offering="${NS.ui.h(o.id)}" data-rest="${NS.ui.h(rest)}">${new Array(41).join('<p>Probe line</p>')}</div>`
+  });
+};
+/** Count the redraws asked for through NS.app.render from now on (the address changing draws without it). */
+const countRenders = (F) =>
+  F.fr.evaluate(() => {
+    const NS = window.CVPortal;
+    window.__renders = 0;
+    if (NS.app.render.__counted) return;
+    const r = NS.app.render;
+    NS.app.render = function () {
+      window.__renders++;
+      return r.apply(this, arguments);
+    };
+    NS.app.render.__counted = true;
+  });
+const BACK = { selector: '.fl-bar a.fl-back' };
+/** Where the frame is: { hash, route, section, list, bold, title }. */
+const where = (F) =>
+  F.fr.evaluate(() => ({
+    hash: location.hash,
+    route: window.CVPortal.state.route,
+    section: (document.querySelector('.fl-section') || { getAttribute: () => '' }).getAttribute('data-part') || '',
+    body: document.querySelectorAll('.probe-body').length,
+    list: document.querySelectorAll('.fl-off').length,
+    title: ((document.querySelector('.fl-bar-title') || {}).innerText || '').trim(),
+    bold: document.querySelectorAll('.fl-bar b').length
+  }));
+
+/** C4, on the phone: the one part file that loads; its page; a reload at a section's address, and at an absent section's. */
+async function sectionsPhone(F, check, seeded) {
+  const id = seeded.offeringId;
+  const line = `.fl-off[data-offering="${id}"] .fl-part[data-part="probe"]`;
+  await F.fr.waitForFunction(() => window.__renders >= 1, null, { timeout: 20000 }).catch(() => {});
+  const shown = await L9.text(F, line);
+  const renders = await F.fr.evaluate(() => window.__renders);
+  check('the one part file that loads shows its line under the offering, after one redraw once loading has settled', /Probe section/.test(shown) && /Probe summary for/.test(shown) && renders === 1 && (await F.fr.locator('.fl-part').count()) === 1, { shown, renders });
+  if (!shown) return;
+  await L9.press(F, `${line} a`);
+  await F.fr.waitForSelector('.fl-section', { timeout: 20000 }).catch(() => {});
+  let at = await where(F);
+  check('tapping the line opens the section at its own address, under a bar with Back and the offering\'s name as text', at.hash === `#console-filings-probe-${id}` && at.route === 'console-filings' && at.section === 'probe' && at.body === 1 && at.title === NAME && at.bold === 0, at);
+  await L9.wayOut(check, F, 'the section: Back stays on screen', BACK);
+  await F.fr.evaluate(() => window.scrollTo(0, Math.round((document.documentElement.scrollHeight - innerHeight) / 2)));
+  await F.fr.waitForTimeout(300);
+  await F.A.page.screenshot({ path: path.join(OUT, 'phone-section.png'), fullPage: false });
+  await L9.press(F, '.fl-bar a.fl-back');
+  at = await where(F);
+  check('Back returns to the list', at.hash === '#console-filings' && at.section === '' && at.list === 1, at);
+  await F.reload(`console-filings-probe-${id}`);
+  await F.fr.waitForSelector('.fl-section', { timeout: 20000 }).catch(() => {});
+  at = await where(F);
+  check('a reload at the section\'s address shows the section (its script is loaded first, then it is drawn)', at.hash === `#console-filings-probe-${id}` && at.section === 'probe' && at.body === 1 && at.title === NAME, at);
+  await L9.wayOut(check, F, 'the section after a reload: Back stays on screen', BACK);
+  await F.reload(`console-filings-formd-${id}`);
+  await F.fr.waitForSelector('.fl-off', { timeout: 20000 }).catch(() => {});
+  at = await where(F);
+  const words = await L9.text(F, '.fl');
+  check('a reload at the address of a section whose file is answered 404 shows the list, with no error on screen', at.route === 'console-filings' && at.section === '' && at.list === 1 && !/could not|error|failed|loading/i.test(words), { at, words: words.slice(0, 200) });
+  await L9.goto(F, 'console-filings-probe-no-such-offering', '.fl-off');
+  at = await where(F);
+  check('a section\'s address for an offering that is not there shows the list', at.section === '' && at.list === 1, at);
+  // refresh() and a field with focus
+  await L9.goto(F, 'console-filings', '.fl-off');
+  await L9.press(F, `[data-action="fl-open"][data-id="options:${id}"]`);
+  await countRenders(F);
+  const held = await F.fr.evaluate(() => {
+    const input = document.querySelector('.fl form[data-form="fl-first"] input');
+    input.focus();
+    input.setAttribute('data-held', '1');
+    window.CVPortal.filingsUI.refresh();
+    return { renders: window.__renders, focused: document.activeElement === input };
+  });
+  const left = await F.fr.evaluate(async () => {
+    document.activeElement.blur();
+    await new Promise((r) => setTimeout(r, 300));
+    return { renders: window.__renders, kept: document.querySelectorAll('[data-held]').length };
+  });
+  check('refresh() does not redraw while a field on the tab has focus, and redraws once the field is left', held.renders === 0 && held.focused && left.renders === 1 && left.kept === 0, { held, left });
+}
+
+/** On the desktop: the absent files, the server link, a section registered by the check, a team member, an investor. */
+async function sectionsDesktop(F, check, seeded) {
+  const id = seeded.offeringId;
+  const panel = `.fl-off[data-offering="${id}"]`;
+  await F.fr.waitForFunction(() => window.__renders >= 1, null, { timeout: 20000 }).catch(() => {});
+  const words = await L9.text(F, '.fl');
+  const renders = await F.fr.evaluate(() => window.__renders);
+  check('with the six part files answered 404 no section is shown and no error is on screen or in the browser (one redraw once loading has settled)', (await F.fr.locator('.fl-part').count()) === 0 && renders === 1 && !/could not|error|failed|loading/i.test(words) && F.A.errors.length === 0, { renders, errors: F.A.errors, words: words.slice(0, 200) });
+  // the server link
+  const order = await F.fr.evaluate((oid) => {
+    const NS = window.CVPortal;
+    const o = NS.filings.addOrder(NS.state.ws, { kind: 'formd', offeringId: oid, by: 'check' });
+    NS.app.render();
+    return o;
+  }, id);
+  const before = { note: await F.fr.locator('.fl-connect').count(), cancel: await F.fr.locator(`${panel} .fl-order [data-kind="cancel"]`).count() };
+  await F.fr.evaluate(() => {
+    const NS = window.CVPortal;
+    NS.filingsUI.link = { connected: () => true, orderLine: (ws, o) => `<p class="probe-line">Sent to the server: ${NS.ui.h(o.id)}</p>` };
+    NS.filingsUI.refresh();
+  });
+  const line = await L9.text(F, `${panel} .fl-order[data-order="${order.id}"] .probe-line`);
+  check('with the server link set and connected, the one-line notice is gone and the link\'s line is drawn under the order (an admin can cancel the order)', before.note === 1 && before.cancel === 1 && (await F.fr.locator('.fl-connect').count()) === 0 && line.indexOf(order.id) >= 0, { before, line });
+  // a section registered from here
+  await F.fr.evaluate(probe);
+  await F.fr.evaluate(() => window.CVPortal.filingsUI.refresh());
+  const row = `${panel} .fl-part[data-part="probe"]`;
+  const shown = await L9.text(F, row);
+  check('a section registered by another file shows its line under the offering', /Probe section/.test(shown) && /Probe summary for/.test(shown), shown);
+  if (shown) {
+    await L9.press(F, `${row} a`);
+    await F.fr.waitForSelector('.fl-section', { timeout: 20000 }).catch(() => {});
+    let at = await where(F);
+    check('its page opens at console-filings-probe-<offering> under a bar that stays on screen, with Back and the offering\'s name as text', at.hash === `#console-filings-probe-${id}` && at.section === 'probe' && at.body === 1 && at.title === NAME && at.bold === 0 && (await sticky(F)) === 'sticky', at);
+    await L9.wayOut(check, F, 'the section: Back stays on screen', BACK);
+    await L9.press(F, '.fl-bar a.fl-back');
+    at = await where(F);
+    check('Back returns to the list', at.hash === '#console-filings' && at.section === '' && at.list === 1, at);
+    await L9.press(F, `${row} a`);
+    await F.fr.waitForSelector('.fl-section', { timeout: 20000 }).catch(() => {});
+    await F.fr.evaluate(() => history.back());
+    await F.fr.waitForTimeout(800);
+    at = await where(F);
+    check('the browser\'s back returns to the list as well', at.hash === '#console-filings' && at.section === '' && at.list === 1, at);
+  }
+  // a team member
+  await L9.role(F, 'team');
+  const m = await menu(F);
+  await L9.goto(F, 'console-filings', '.fl-off');
+  const controls = await F.fr.evaluate(() => Array.from(document.querySelectorAll('.fl button, .fl a')).map((b) => b.innerText.trim()).filter(Boolean));
+  const mine = await rows(F, id);
+  await F.A.page.screenshot({ path: path.join(OUT, 'desktop-team.png'), fullPage: false });
+  check('a team member sees the tab and its reminders, and no control that orders or signs', m.there && m.count === '2' && mine.length === 2 && (await F.fr.locator('.fl [data-kind="cancel"], .fl [data-action="fl-cancel-order"]').count()) === 0 && !controls.some((t) => /order|sign/i.test(t)) && (await F.fr.locator(`${panel} .fl-order`).count()) === 1, { menu: m, controls, rows: mine.map((x) => x.key) });
+  await L9.press(F, `${rowSel(`formd-first:${id}`)} [data-action="fl-silence"]`);
+  check('a team member can silence a reminder', (await menu(F)).count === '1' && ((await rows(F, id)).find((x) => x.key === `formd-first:${id}`) || {}).off === true, await menu(F));
+  // an investor
+  await L9.role(F, 'investor');
+  await F.fr.evaluate(() => (location.hash = 'console-filings'));
+  await F.fr.waitForTimeout(900);
+  const inv = await F.fr.evaluate(() => ({ route: window.CVPortal.state.route, role: window.CVPortal.state.role, tab: document.querySelectorAll('.fl').length, entry: document.querySelectorAll('a[href="#console-filings"]').length }));
+  check('an investor cannot open the route, and sees no entry for it', inv.role === 'investor' && inv.route !== 'console-filings' && inv.tab === 0 && inv.entry === 0, inv);
+}
+
 /** The tab for an offering whose first sale, to three investors in New York, was 20 days ago. */
 async function tab(size, { check, S }, page) {
-  const F = await L9.framed(S, size, { absent: L9.LATER, page });
+  // On the phone one part file loads (the probe, answered in the place of the last one); every other is answered 404.
+  const withProbe = size === 'phone' && !page;
+  const F = await L9.framed(S, size, withProbe ? { absent: L9.LATER.slice(0, -1), scripts: { [L9.LATER[L9.LATER.length - 1]]: `(${probe.toString()})();` } } : { absent: L9.LATER, page });
   await L9.proveRefused(check, F);
   await L9.sample(F);
   const seeded = await L9.seed(F, { name: NAME, sales: [{ daysAgo: 20, state: 'NY', funded: true }, { daysAgo: 12, state: 'NY' }, { daysAgo: 3, state: 'NY' }] });
   const first = seeded.sales[0].date;
   const due = firstDue(first);
+  await countRenders(F);
   const m = await menu(F);
   check('the console menu has Filings with the count 2 (the first Form D and the New York notice)', m.there && m.label === 'Filings' && m.count === '2', m);
   if (!m.there) return F.A.context.close();
@@ -113,6 +275,44 @@ async function tab(size, { check, S }, page) {
   }
   await L9.wayOut(check, F, 'the list');
   await L9.leak(check, F, 'the list');
+  if (!page) await (size === 'phone' ? sectionsPhone : sectionsDesktop)(F, check, seeded);
+  await L9.quiet(check, F);
+  await F.A.context.close();
+}
+
+/**
+ * The managed edition is unchanged (C-03): index.html has no Filings entry, both addresses fall back to the same default
+ * page, its overview has no reminder item, and the page loads none of this phase's files.
+ */
+async function managed({ check, S }) {
+  const F = await L9.framed(S, 'desktop', { page: 'index.html' });
+  await L9.proveRefused(check, F);
+  const fr = F.fr;
+  await fr.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 30000 });
+  const source = fs.readFileSync(path.join(Lib.ROOT, 'index.html'), 'utf8');
+  const loaded = await fr.evaluate(() => ({ edition: window.CVPortal.EDITION.id, filings: typeof window.CVPortal.filings, ui: typeof window.CVPortal.filingsUI, view: !!window.CVPortal.views['console-filings'], scripts: Array.from(document.scripts).map((x) => x.src).filter((x) => /filings|formd|bluesky|edgar/i.test(x)), sheets: Array.from(document.querySelectorAll('link[rel=stylesheet]')).map((x) => x.href).filter((x) => /filings/i.test(x)) }));
+  check('the managed page names and loads none of this phase\'s files', loaded.edition === 'managed' && !/filings|formd|bluesky|edgar/i.test(source) && loaded.filings === 'undefined' && loaded.ui === 'undefined' && !loaded.view && loaded.scripts.length === 0 && loaded.sheets.length === 0, loaded);
+  for (const role of ['staff', 'sponsor']) {
+    await fr.evaluate((role) => {
+      const NS = window.CVPortal;
+      NS.state.role = role;
+      NS.store.set('role', role);
+      NS.app.go('console');
+    }, role);
+    await fr.waitForSelector('.cs-nav', { timeout: 20000 });
+    await fr.waitForTimeout(400);
+    const home = await fr.evaluate(() => ({ role: window.CVPortal.state.role, route: window.CVPortal.state.route, entry: document.querySelectorAll('a[href^="#console-filings"]').length, labels: Array.from(document.querySelectorAll('.cs-nav nav a')).map((a) => a.childNodes[0].textContent.trim()), attention: Array.from(document.querySelectorAll('.cs-list a')).map((a) => a.innerText.trim()).filter((t) => /filing/i.test(t)) }));
+    check(`as ${role === 'staff' ? 'staff' : 'sponsor staff'}: the console menu has no Filings entry and the overview has no reminder item`, home.role === role && home.route === 'console' && home.entry === 0 && home.labels.length >= 8 && home.labels.indexOf('Filings') < 0 && home.attention.length === 0, home);
+    const land = [];
+    for (const hash of ['console-filings', 'console-filings-formd-x']) {
+      await fr.evaluate((h) => (location.hash = h), hash);
+      await fr.waitForTimeout(700);
+      land.push(await fr.evaluate(() => ({ route: window.CVPortal.state.route, param: window.CVPortal.state.param, tab: document.querySelectorAll('.fl').length, empty: document.querySelector('#view').innerText.trim().length === 0, words: (document.body.innerText.match(/[^\n]*(could not|error|failed|undefined)[^\n]*/i) || [''])[0] })));
+      await fr.evaluate(() => window.CVPortal.app.go('console'));
+      await fr.waitForTimeout(400);
+    }
+    check(`as ${role === 'staff' ? 'staff' : 'sponsor staff'}: console-filings and console-filings-formd-x both fall back to the same default page, with no error on screen`, land.length === 2 && land[0].route === land[1].route && land[0].route !== 'console-filings' && land.every((x) => x.param === null && x.tab === 0 && !x.empty && !x.words), land);
+  }
   await L9.quiet(check, F);
   await F.A.context.close();
 }
@@ -306,7 +506,8 @@ const PARTS = {
   'own-phone': (ctx) => own('phone', ctx),
   'own-desktop': (ctx) => own('desktop', ctx),
   published: (ctx) => tab('phone', ctx, 'portal.html'),
-  'filed-long-ago': filedLongAgo
+  'filed-long-ago': filedLongAgo,
+  managed
 };
 
 Lib.runParts(PARTS, { name: 'FILINGS FLOW', browser: true });
