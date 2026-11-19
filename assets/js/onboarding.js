@@ -3636,6 +3636,13 @@
     });
   }
 
+  /** Plan 06-26: the link of the tax-form request the firm sent this active investor, while it is open ('' when none). */
+  function taxAsk(inv) {
+    const ws = W();
+    const it = ED.diy && inv && inv.onboarding.status === 'complete' ? openFor(ws, inv) || remoteOpen(ws, inv) : null;
+    return it && it.taxRequest ? `#invite-${it.token || ws.invite.key}` : '';
+  }
+
   /** The steps an invitation's flow has (for the console: "Step 6 of 10"). */
   function invitationSteps(ws, it) {
     const i = it && ws.investors.find((x) => x.id === it.investorId);
@@ -3644,5 +3651,5 @@
     const req = fl.requestId ? (ws.requests || []).find((r) => r.id === fl.requestId) || null : null;
     return flowSteps({ ws, it, inv: i, fl, req, off: ws.offerings.find((x) => x.id === it.offeringId && (x.status === 'Raising' || req)) || null });
   }
-  NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL, taxOnFile };
+  NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL, taxOnFile, taxAsk };
 })(window.CVPortal);

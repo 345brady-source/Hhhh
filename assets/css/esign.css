@@ -448,6 +448,10 @@
   .sf-bar .sf-acts .sf-next { flex-grow: 3; }
   .sf-bar .sf-acts .sf-back { flex: none; }
   .sf-bar.has-tray .sf-finish[aria-disabled="true"], .sf-bar.has-tray .sf-back { display: none; }
+  /* The hint wraps rather than being cut mid-word; while a blank is typed in the tray, the tray's label already names the
+     field, so the hint that repeats it gives way (a nudge is always said in full). */
+  .sf-hint, .sf-tray-label { white-space: normal; }
+  .sf-bar.has-tray .sf-hint:not(.is-nudge) { display: none; }
   .sf-zoom-fit { display: none; }
   .es-sign-row .es-decline { margin-left: calc(var(--space-md) * -1); }
   /* Inside the wizard the tray runs to the panel's edges, so the page is as wide as the phone allows. */
@@ -912,9 +916,16 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
   .es-review button:not(.cs-btn) { min-height: 44px; }
 }
 /* Phones: the page keeps the height. The marks are on the fields themselves, the line under the field types says how
-   many are left, and confirming one moves on to the next. */
+   many are left, and confirming one moves on to the next. The summary above the editor says how to confirm one there,
+   not where the list is (esign.js editorHTML). */
+.es-rv-tap { display: none; }
 @media (max-width: 640px) {
   .fe-sec-review { display: none; }
+  .es-rv-list { display: none; }
+  .es-rv-tap { display: inline; }
+  /* "Read the PDF again", the last words of that summary: a touch area 24px high or more laid over it (nothing moves). */
+  .es-read-again { position: relative; }
+  .es-read-again::after { content: ""; position: absolute; inset: -4px 0; }
 }
 /* ===================== end of PLACEMENT REVIEW ===================== */
 
