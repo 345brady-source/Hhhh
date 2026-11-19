@@ -229,7 +229,7 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     const e = store.get('entitlements', String(entitlementId));
     if (!e) throw new BillingError('', 404, 'No package payment with that id');
     if (e.status === 'consumed' && e.invitationId === inv) return Object.assign({}, e);
-    if (e.status !== 'paid') throw new BillingError('package_used', 409, e.status === 'consumed' ? 'This package belongs to another invitation.' : 'This package was returned as credit.');
+    if (e.status !== 'paid') throw new BillingError('package_used', 409, e.status === 'consumed' ? 'This package belongs to another invitation.' : e.status === 'credited' ? 'This package was returned as credit.' : 'This package can no longer be used.');
     const saved = store.put('entitlements', { id: e.id, status: 'consumed', invitationId: inv });
     store.flush();
     return Object.assign({}, saved);
@@ -484,11 +484,22 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
   function line(e, type, by, cents, extra = {}) {
     store.put('ledger', Object.assign({ id: id('led'), account: e.account, at: iso(), type, by, cents, tier: e.tier || null, entitlement: e.id || null, invitationId: e.invitationId || null, chargeRef: e.chargeRef || '' }, extra));
   }
+  /**
+   * A credited package whose money is gone or contested: the credit it gave is taken back, read from the account's
+   * record at this moment and never below 0 (part of it may already be spent), with one line for what was removed.
+   */
+  function takeCredit(e, type, extra) {
+    const removed = Math.min(e.cents, Math.max(0, record(e.account).creditCents || 0));
+    if (!removed) return;
+    store.put('billing', { id: e.account, creditCents: (record(e.account).creditCents || 0) - removed });
+    line(e, type, 'credit', removed, extra);
+  }
   /** The money for a package went back to the card. Writes nothing for a package already refunded. */
   function refundOne(e, refundRef, cents) {
     const cur = store.get('entitlements', e.id);
     if (!cur || cur.status === 'refunded') return;
     line(cur, 'refund', 'card', cents === undefined ? cur.cents : cents, { refundRef });
+    if (cur.status === 'credited') takeCredit(cur, 'refund', { refundRef });
     store.put('entitlements', { id: cur.id, status: 'refunded', refundedAt: iso() });
   }
   /** A refund delivery, acted on from the charge as read back. */
@@ -501,7 +512,35 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
         const own = list.find((r) => ASSUMED.refundEntitlement(r) === e.id) || list[list.length - 1];
         refundOne(e, own ? String(own.id) : '');
       }
+      return;
     }
+    // Part of the charge went back: each refund is matched to its package by the entitlement it names (the operator's
+    // refund sets it). One nobody can match is recorded once, by its refund id, for a person to look at.
+    for (const r of list) {
+      const e = on.find((x) => x.id === ASSUMED.refundEntitlement(r));
+      const cents = Number.isSafeInteger(Number(r.amount)) && Number(r.amount) > 0 ? Number(r.amount) : 0;
+      if (e) {
+        refundOne(e, String(r.id), cents || undefined);
+        continue;
+      }
+      if (store.list('ledger').some((l) => l.account === accountId && l.refundRef === String(r.id))) continue;
+      line({ account: accountId, chargeRef: ref }, 'refund', 'card', cents, { refundRef: String(r.id) });
+      store.event({ type: 'refund_unmatched', account: accountId });
+    }
+  }
+  /**
+   * A dispute delivery: every package on the charge whose check has not started is disputed. It is never active and
+   * never credited again, and credit it gave is taken back. A person restores it by hand if the dispute is won.
+   */
+  function dispute(accountId, ref, read) {
+    if (!ASSUMED.disputed(read)) return;
+    const hit = entitlementsOf(accountId).filter((e) => e.chargeRef === ref && !e.startedAt && e.status !== 'disputed' && e.status !== 'refunded');
+    for (const e of hit) {
+      line(e, 'dispute', 'card', e.cents);
+      if (e.status === 'credited') takeCredit(e, 'dispute');
+      store.put('entitlements', { id: e.id, status: 'disputed', disputedAt: iso() });
+    }
+    if (hit.length) store.event({ type: 'payment_disputed', account: accountId, entitlements: hit.length });
   }
 
   async function delivery(req, res) {
@@ -512,8 +551,8 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
       return send(res, 401, { error: 'Bad signature' });
     }
     const ev = parseObject(raw);
-    const evId = String(ASSUMED.eventId(ev) || '');
-    const seenKey = `billing:${DELIVERY_ID.test(evId) ? evId : sha256(raw)}`;
+    const evId = ASSUMED.eventId(ev);
+    const seenKey = `billing:${typeof evId === 'string' && DELIVERY_ID.test(evId) ? evId : sha256(raw)}`;
     // A duplicate is found by reading the seen list, which records nothing: a delivery is recorded only once it is acted on.
     if (store.data().seen.includes(seenKey)) return send(res, 200, { received: true, duplicate: true });
     const kind = Object.keys(ASSUMED.chargeOf).find((k) => ASSUMED.events[k] === ev.type);
@@ -530,7 +569,8 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     if (!read || typeof read !== 'object' || read.id !== chargeId) throw unchecked();
     const ref = String(ASSUMED.chargePayment(read) || '');
     const owner = PROVIDER_ID.test(ref) ? store.list('entitlements').find((e) => e.chargeRef === ref) : null;
-    if (owner) await serial(owner.account, () => refunds(owner.account, ref, read));
+    // Inside the account's queue, so it never interleaves with a payment; each action writes nothing a second time.
+    if (owner) await serial(owner.account, () => (kind === 'disputed' ? dispute : refunds)(owner.account, ref, read));
     store.flush();
     store.seen(seenKey);
     return send(res, 200, { received: true });
