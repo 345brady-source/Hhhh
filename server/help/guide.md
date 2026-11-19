@@ -328,6 +328,7 @@ Only an admin opens this page; a team member asks an admin. Investors are verifi
 - "Connections": "Add a connection" adds a verification service the firm uses. Two are built in and cannot be removed, only turned off: "Sandbox" (simulated results for trying the flow; turn it off before inviting real investors) and "Upload for your team to review" (investors upload an ID or a verification letter and the team records the result on the AML/KYC page).
 - "Approval rules": "Approve investors automatically when every check passes", "Require verified accreditation", "Accreditation valid for (days)", "Re-screen investors every (days)" and "Hold politically exposed persons for enhanced due diligence".
 - "Integration server": enter the "Server address" and, if one is set, the "Access token", then choose "Check connection". With a server connected, invitations are emailed automatically and investors can onboard on any device.
+- "Verification package": once the portal is connected to its server, it shows the prices of the checks a sponsor can add to invitations, the card they are charged to ("Add card", "Replace card" or "Remove"), any credit and each charge.
 
 ## console-ach
 audience: sponsor

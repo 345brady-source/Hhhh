@@ -80,7 +80,7 @@
   function priceLabel(cents) {
     const n = Number(cents);
     if (!isFinite(n) || n <= 0 || Math.round(n) !== n) return '';
-    return `$${n % 100 ? (n / 100).toFixed(2) : n / 100}`;
+    return `$${(n / 100).toLocaleString('en-US', { minimumFractionDigits: n % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
   }
 
   const LABEL = 'Add verification package';
@@ -103,7 +103,8 @@
     const label = `${LABEL} (${price})`;
     // A balance that covers the price pays for it; otherwise a card must be on file.
     if (!d.card && !(Number(d.creditCents) >= Number(d.prices[t]))) return Object.assign(off, { show: true, label, line: 'Add a card on the Integrations page to use it.', href: '#console-integrations' });
-    return { show: true, enabled: true, label, line: '', href: '' };
+    // tier and cents: the package this invitation would be paid for (plan 08-13: a list pays for exactly these).
+    return { show: true, enabled: true, label, line: '', href: '', tier: t, cents: Number(d.prices[t]) };
   }
 
 
@@ -290,5 +291,10 @@
     refresh(ws);
   };
 
-  NS.pkg = { load, info, tierFor, priceLabel, box, panel };
+  /** Hold the server's answer still (on) while a list is paid for and sent; released (off), it is asked again when next needed. */
+  function hold(v) {
+    held = !!v;
+  }
+
+  NS.pkg = { load, info, tierFor, priceLabel, box, panel, hold };
 })(window.CVPortal);
