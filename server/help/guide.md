@@ -16,7 +16,7 @@ menu: Overview, at the top
 anchor: Needs attention
 anchor: Recent distributions
 
-The first page of the console. The menu on every console page has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents), Report (Reports, Audit, AML/KYC) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
+The first page of the console. The menu on every console page has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
 
 Overview shows:
 - "Setup": a checklist for a new portal. Choose "Start" or "Review" beside an item to open its page, or "Remove" to take the item off the list.
@@ -299,6 +299,26 @@ Identity verification, sanctions and PEP screening and accredited investor check
 - "Re-screen" beside an investor runs the screening again; the button at the top of the page re-screens every investor whose re-screening is due.
 
 How often investors are re-screened is set on the Integrations page.
+
+## console-aml
+audience: sponsor
+kind: console
+title: AML program
+menu: Report, then AML program
+anchor: AML program
+anchor: Sanctions records are kept for ten years.
+
+A record of the firm's AML program to show a bank, fund administrator, auditor or investor who asks for it. It has eight sections:
+- "Policy": "Statement", "Scope", "Adopted on" and "Approved by".
+- "Responsible person": "Name", "Title" and "Designated on".
+- "Risk assessment": "Investor types, countries and offerings".
+- "Procedures in force": filled in from the Integrations page (which connections run each check, how often investors are re-screened, when verified accreditation is required and for how long it is valid, the hold for politically exposed persons, and whether approval is automatic). Change them on the Integrations page.
+- "Screening log": every screening and every review of a possible match from the change log, newest first, with the date, the investor, what happened and who did it.
+- "Escalation": "Who is told of a possible match and what is reported".
+- "Training and independent review": "Training" entries and "Independent reviews" entries.
+- "Retention": "Sanctions records are kept for ten years."
+
+Choose "Save" to keep what was typed. Only an admin can change the record; a team member sees it read-only. "Export" saves the whole record as one file that opens in any browser and prints; each export is written to the change log.
 
 ## console-filings
 audience: sponsor
