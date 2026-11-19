@@ -1,5 +1,5 @@
 // gate: node
-// last "FORMD XML: PASS (cases run: 3)"
+// last "FORMD XML: PASS (cases run: 4)"
 // The Form D builder (assets/js/formd.js) against the SEC's own schema files, which are pinned by SHA-256 and checked
 // before anything else. Pure: no browser, no network, no filing. Every file the builder writes, and every fixture, is
 // passed to xmllint with server/test/fixtures/formd/schema/formDSubmission.xsd.xml.
@@ -186,10 +186,115 @@ const cases = {
     files.forEach((f) => check(`${rel(f)} validates against the pinned schema`, v[f] === true));
   },
 
+  async real({ check }) {
+    const FD = load();
+    const dir = path.join(FIX, 'real');
+    const names = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => /^real-\d\d-(D|DA)\.xml$/.test(f)).sort() : [];
+    check(`twelve masked filings are stored (found ${names.length})`, names.length === 12);
+    check('six are Form D and six are Form D/A', names.filter((f) => /-D\.xml$/.test(f)).length === 6 && names.filter((f) => /-DA\.xml$/.test(f)).length === 6);
+    const structure = {};
+    (fs.existsSync(path.join(dir, 'STRUCTURE.txt')) ? fs.readFileSync(path.join(dir, 'STRUCTURE.txt'), 'utf8') : '').split('\n').forEach((l) => {
+      const m = l.match(/^([0-9a-f]{64})\s+(\d+)\s+(\S+)$/);
+      if (m) structure[m[3]] = { hash: m[1], count: Number(m[2]) };
+    });
+    check('STRUCTURE.txt lists exactly the twelve files', names.length === 12 && same(Object.keys(structure).sort(), names));
+    const main = fs.readFileSync(XSD, 'utf8');
+    // words of the schema's own choice lists (never the two-letter codes), which say nothing about anyone
+    const WORDS = new Set(['true', 'false'].concat(Array.from(main.matchAll(/<xs:enumeration value="([^"]*)"\/>/g)).map((x) => x[1])));
+    const NUMBER = /^[0-9]+$/;
+    const DATE = /^\d{4}-\d\d-\d\d$/;
+    // the masking set of mask-formd.js, written out again here so the tool cannot loosen its own proof
+    const ENTITY = /^Masked Entity \d{2,3}$/;
+    const SIGNER = /^Masked Signer \d{2,3}$/;
+    const TEXT = /^Masked text \d{2,3}$/;
+    const CRD = /^9000\d{2,3}$/;
+    const ALLOWED = {
+      schemaVersion: (v) => /^X\d{4}$/.test(v),
+      submissionType: (v) => v === 'D' || v === 'D/A',
+      testOrLive: (v) => v === 'LIVE' || v === 'TEST',
+      cik: (v) => /^90000000\d\d$/.test(v),
+      entityName: (v) => ENTITY.test(v),
+      issuerName: (v) => ENTITY.test(v),
+      previousName: (v) => ENTITY.test(v),
+      recipientName: (v) => ENTITY.test(v),
+      associatedBDName: (v) => ENTITY.test(v),
+      firstName: (v) => /^Given\d{2,3}$/.test(v),
+      middleName: (v) => /^Middle\d{2,3}$/.test(v),
+      lastName: (v) => /^Family\d{2,3}$/.test(v),
+      street1: (v) => /^\d{2,3} Masked Street$/.test(v),
+      street2: (v) => /^Suite \d{2,3}$/.test(v),
+      city: (v) => /^Masked City \d{2,3}$/.test(v),
+      zipCode: (v) => /^000\d\d$/.test(v),
+      issuerPhoneNumber: (v) => /^\(555\) 010-0\d{3}$/.test(v),
+      stateOrCountry: (v) => FD.LISTS.stateOrCountry.indexOf(v) >= 0,
+      state: (v) => FD.LISTS.stateOfSolicitation.indexOf(v) >= 0,
+      'yearOfInc/value': (v) => /^2\d\d\d$/.test(v),
+      'dateOfFirstSale/value': (v) => DATE.test(v),
+      'statesOfSolicitationList/value': (v) => v === 'All States',
+      signatureDate: (v) => DATE.test(v),
+      previousAccessionNumber: (v) => /^9000000000-00-000\d{3}$/.test(v),
+      recipientCRDNumber: (v) => CRD.test(v),
+      associatedBDCRDNumber: (v) => CRD.test(v),
+      minimumInvestmentAccepted: (v) => NUMBER.test(v),
+      totalOfferingAmount: (v) => NUMBER.test(v) || v === 'Indefinite',
+      totalAmountSold: (v) => NUMBER.test(v),
+      totalRemaining: (v) => NUMBER.test(v) || v === 'Indefinite',
+      numberNonAccreditedInvestors: (v) => NUMBER.test(v),
+      totalNumberAlreadyInvested: (v) => NUMBER.test(v),
+      dollarAmount: (v) => NUMBER.test(v),
+      signatureName: (v) => SIGNER.test(v),
+      nameOfSigner: (v) => SIGNER.test(v)
+    };
+    const files = names.map((f) => path.join(dir, f));
+    const v = lint(files);
+    files.forEach((f, i) => {
+      const name = names[i];
+      const text = fs.readFileSync(f, 'utf8');
+      check(`${name} validates against the pinned schema`, v[f] === true);
+      const body = text.replace(/^<\?xml version="1\.0"\?>\s*/, '');
+      const marks = (body.match(/<[^>]*>/g) || []).filter((t) => !/^<\/?[A-Za-z0-9]+>$/.test(t));
+      check(`${name} holds no comment, attribute or instruction`, marks.length === 0 && body.indexOf('<?') < 0 && body.indexOf('<!') < 0 && /^<\?xml version="1\.0"\?>/.test(text), { found: marks.length });
+      // every text value: on a miss the element is named, never the value itself
+      const stack = [];
+      const missed = [];
+      const tags = [];
+      let last = '';
+      let value = '';
+      (body.match(/<[^>]*>|[^<]+/g) || []).forEach((t) => {
+        if (t.charAt(0) !== '<') {
+          value = t;
+          return;
+        }
+        if (t.charAt(1) === '/') {
+          const leaf = last === 'open';
+          const n = stack.pop();
+          if (leaf) {
+            const val = value.trim();
+            const rule = ALLOWED[`${stack[stack.length - 1]}/${n}`] || ALLOWED[n];
+            const ok = val === '' || WORDS.has(val) || (rule ? rule(val) : TEXT.test(val));
+            if (!ok || val !== value) missed.push(stack.concat(n).slice(1).join('/'));
+          } else if (value.trim() !== '') missed.push(`${stack.concat(n).slice(1).join('/')} (text beside elements)`);
+          last = 'close';
+        } else {
+          if (value.trim() !== '') missed.push(`${stack.slice(1).join('/')} (text beside elements)`);
+          stack.push(t.slice(1, -1));
+          tags.push(t.slice(1, -1));
+          last = 'open';
+        }
+        value = '';
+      });
+      check(`${name}: every text value is a schema value, a number or date in its own element, or a member of the masking set`, missed.length === 0, Array.from(new Set(missed)).slice(0, 12));
+      const type = (text.match(/<submissionType>([^<]*)<\/submissionType>/) || [])[1];
+      check(`${name} is the form type its name says`, type === (/-DA\.xml$/.test(name) ? 'D/A' : 'D'));
+      const s = structure[name];
+      check(`${name} has the elements the tool counted in the original (${s ? s.count : 'not listed'})`, !!s && s.count === tags.length && s.hash === sha(tags.join('\n')));
+    });
+  },
+
   async roundtrip({ check }) {
     const FD = load();
     const files = fixtures();
-    check(`fixtures to read back: ${files.length}`, files.length >= 2);
+    check(`all fourteen fixtures are read back: the SEC's two samples and twelve masked filings (found ${files.length})`, files.length === 14);
     const built = [];
     files.forEach((f) => {
       const d = FD.fromXml(fs.readFileSync(f, 'utf8'));
