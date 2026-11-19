@@ -30,6 +30,10 @@ NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/safari-finish.js > $O/saf
 tail -n 2 $O/server.txt $O/math.txt $O/maps.txt $O/forms.txt $O/status.txt $O/srvmode.txt $O/persons.txt $O/owner.txt $O/email.txt $O/agrname.txt $O/taxleave.txt $O/waysout.txt $O/nonet.txt $O/embed.txt $O/safari.txt
 NODE_PATH=$GN bash $S/exec-011/heavy.sh node .planning/phases/07-help-chatbot/checks/help-chat.js > $O/helpchat.txt 2>&1
 tail -n 2 $O/helpchat.txt
+NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/real-firm.js > $O/realfirm.txt 2>&1
+tail -n 2 $O/realfirm.txt
+NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/signing-documents.js > $O/sigdocs.txt 2>&1
+tail -n 2 $O/sigdocs.txt
 FAIL=0
 ok() { if eval "$2"; then echo "GATE ok   $1"; else echo "GATE FAIL $1"; FAIL=1; fi; }
 ok 'server tests # fail 0' "grep -q '^# fail 0$' $O/server.txt"
@@ -52,6 +56,8 @@ ok 'NO NETWORK (3)' "grep -qx 'NO NETWORK: PASS (parts run: 3)' $O/nonet.txt"
 ok 'EMBED DATA (3)' "grep -qx 'EMBED DATA: PASS (files: 3)' $O/embed.txt"
 ok 'SAFARI FINISH (6)' "grep -qx 'SAFARI FINISH: PASS (parts run: 6)' $O/safari.txt"
 ok 'HELP CHAT (10)' "grep -qx 'HELP CHAT: PASS (parts run: 10)' $O/helpchat.txt"
+ok 'REAL FIRM (9)' "grep -qx 'REAL FIRM: PASS (parts run: 9)' $O/realfirm.txt"
+ok 'SIGNING DOCUMENTS (8)' "grep -qx 'SIGNING DOCUMENTS: PASS (parts run: 8)' $O/sigdocs.txt"
 BASE=$(cat $O/base-commit.txt)
 HEADC=$(git rev-parse HEAD)
 ok 'base is an ancestor of HEAD and HEAD moved' "git merge-base --is-ancestor $BASE HEAD && test '$BASE' != '$HEADC'"
