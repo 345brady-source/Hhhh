@@ -79,3 +79,11 @@
 - P5: with more than 200 package rows the list is paid in groups of 200 in order; each group's invitations are sent before the next group is paid; a refused group stops the list there with the server's sentence. A check part asserts the 200 boundary with stubbed replies.
 - P6: if the plan runs short of room, Task 3 (the list form) is the piece to hand over.
 - P7: one sentence about the package panel in the guide's `console-integrations` entry, then `node server/help/build.mjs`.
+
+## After 08-04 (merged 2026-11-19; server tests 252 on the merged tree)
+- Built and tested against a stand-in only. No page of the payments provider could be read from here (all 14 refused by the network rules); all 7 fixtures are marked unconfirmed and every assumption is in `ASSUMED` in `server/lib/billing.mjs` for 08-12. No card can be charged until the owner has an account and 08-12 runs against the provider's test mode.
+- For 08-14 (carried as an addition): a payment whose outcome stays unknown for 23 hours is marked `unresolved` and never sent again; the money may have been taken with no package recorded. 08-14 settles these from the provider's delivery of the charge's result (or by reading the charge back), records the package or the refund, and the sponsor's billing view shows an unresolved payment in one line until it is settled. A test proves an unresolved payment that the provider reports as succeeded ends as a recorded package and one that it reports as failed ends closed with nothing owed.
+- For 08-14: when a pending payment is confirmed by the repeat and the same call asks for that key at another level, the reply must not say "Nothing was charged."; README gains the billing settings.
+- For 08-05: `billing` is passed to the invitation code (it is not on the server object); a package paid more than 24 hours before it is used has gone back to credit, `consume` answers 409 and a new `entitle` pays from that credit.
+- For 08-13: with the shared token every `/v1/billing` route answers 403 `account_required`; the panel says so in one line.
+- Limits: card sessions and the per-account queue are in memory (one server process).
