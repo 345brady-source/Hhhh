@@ -576,6 +576,8 @@
   }
 
   const API = { ensure, rec, applies, facts, holidays, businessDay, due, count, changeNeeded, silence, unsilence, PRICES, orderLines, addOrder, cancelOrder, setIssuer, setEdgar, recordFiled, recordState };
+  /** A state's or territory's name for its two-letter code ('' when it is not one): what the Filings tab writes. */
+  API.stateName = (code) => (typeof code === 'string' && own(STATES, code) ? STATES[code] : '');
   if (NS) NS.filings = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);

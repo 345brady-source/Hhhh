@@ -296,6 +296,19 @@ Identity verification, sanctions and PEP screening and accredited investor check
 
 How often investors are re-screened is set on the Integrations page.
 
+## console-filings
+audience: sponsor
+kind: console
+title: Filings
+menu: Report, then Filings
+anchor: First Form D notice
+anchor: State notice
+
+Filings lists each offering under Rule 506(b) or Rule 506(c) with what is due for its Form D and its state notices: the date and the reason beside each. The number beside Filings in the menu is the count that is due or overdue. An offering under another exemption, or with none set, is not listed; the exemption is set in the offering's settings.
+
+- "First Form D notice" is shown once the offering has a first sale, with its due date, 15 days after the first sale.
+- A state notice is shown for each state with a sale, with the date of the first sale in that state.
+
 ## console-brand
 audience: sponsor
 kind: console
