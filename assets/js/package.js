@@ -186,5 +186,109 @@
     return `<div id="pkg-panel">${panelBody(ws)}</div>`;
   }
 
+  /* ---------- The card: entered on the integration server's own page, inside the console's dialog ---------- */
+  const TOKEN = 'The integration server did not accept the access token.';
+  const NO_PAGE = 'The card page could not be opened. Try again.';
+  const FAILED = 'The integration server could not do this. Try again.';
+  const originOf = (u) => {
+    try {
+      const x = new URL(String(u));
+      return /^https?:$/.test(x.protocol) ? x.origin : '';
+    } catch (e) {
+      return '';
+    }
+  };
+  /** One call to the server's billing routes with the sponsor's token; a refusal is thrown as one plain sentence. */
+  async function call(ws, method, path) {
+    const s = IV().ensure(ws).server;
+    let res;
+    try {
+      res = await fetch(`${IV().serverUrl(ws)}${path}`, { method, headers: { Accept: 'application/json', Authorization: `Bearer ${s.token}` } });
+    } catch (e) {
+      throw new Error(UNREACHABLE);
+    }
+    let data = null;
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = null;
+    }
+    if (res.status === 401) throw new Error(TOKEN);
+    if (!res.ok) throw new Error(data && typeof data.error === 'string' && data.error ? data.error : FAILED);
+    return data && typeof data === 'object' ? data : {};
+  }
+  /** The server is asked again and the panel drawn from its answer (after the card dialog closes, by any way). */
+  function refresh(ws) {
+    return load(ws, true).then(() => redraw(ws));
+  }
+
+  /* The card dialog while it is open: the server's origin it was opened for (only a message from there is believed). */
+  let cardDlg = null;
+  window.addEventListener('message', (e) => {
+    if (!cardDlg || !e.origin || e.origin !== cardDlg.origin) return;
+    const fr = document.getElementById('pkg-card-frame');
+    if (!fr || e.source !== fr.contentWindow || !e.data || e.data.type !== 'cv-card-saved') return;
+    U().closeDialog();
+  });
+  document.addEventListener(
+    'close',
+    (e) => {
+      const d = e.target;
+      if (!d || d.id !== 'dlg' || d.open || !cardDlg) return;
+      const ws = cardDlg.ws;
+      cardDlg = null;
+      refresh(ws);
+    },
+    true
+  );
+  NS.actions['pkg-card'] = async () => {
+    const ws = NS.state.ws;
+    if (!on(ws) || act.busy) return;
+    act = { busy: true, error: '' };
+    redraw(ws);
+    try {
+      const r = await call(ws, 'POST', '/v1/billing/card/setup');
+      const origin = originOf(IV().serverUrl(ws));
+      // Only a card page on the connected server's own origin is opened.
+      if (!origin || !r || typeof r.url !== 'string' || originOf(r.url) !== origin) throw new Error(NO_PAGE);
+      act = { busy: false, error: '' };
+      redraw(ws);
+      const h = U().h;
+      const had = !!((info(ws) || {}).data || {}).card;
+      U().dialog(
+        `<div class="dlg-head"><div><h2>${had ? 'Replace card' : 'Add card'}</h2></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${U().icon('close')}</button></div></div>
+        <div class="dlg-body"><iframe id="pkg-card-frame" title="Card" src="${h(r.url)}" referrerpolicy="no-referrer" style="display:block;width:100%;height:340px;border:0"></iframe></div>`,
+        'dlg-iv dlg-pkg'
+      );
+      cardDlg = { ws, origin };
+    } catch (e) {
+      act = { busy: false, error: (e && e.message) || FAILED };
+      redraw(ws);
+    }
+  };
+  NS.actions['pkg-card-remove'] = () => {
+    const ws = NS.state.ws;
+    if (!on(ws) || act.busy) return;
+    U().dialog(
+      `<div class="dlg-head"><div><h2>Remove the card?</h2></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${U().icon('close')}</button></div></div>
+      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="pkg-card-remove-confirm">Remove card</button></div></div>`,
+      'dlg-iv'
+    );
+  };
+  NS.actions['pkg-card-remove-confirm'] = async () => {
+    const ws = NS.state.ws;
+    U().closeDialog();
+    if (!on(ws) || act.busy) return;
+    act = { busy: true, error: '' };
+    redraw(ws);
+    try {
+      await call(ws, 'DELETE', '/v1/billing/card');
+      act = { busy: false, error: '' };
+    } catch (e) {
+      act = { busy: false, error: (e && e.message) || FAILED };
+    }
+    refresh(ws);
+  };
+
   NS.pkg = { load, info, tierFor, priceLabel, box, panel };
 })(window.CVPortal);
