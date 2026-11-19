@@ -430,7 +430,7 @@
     pkg.state = 'confirmed';
     pkg.confirmedBy = a.by;
     pkg.confirmedAt = stamp(a.at);
-    log(ws, { action: 'Tax document match confirmed', fund: batch.offeringId, record: pkg.id, actor: a.by, at: pkg.confirmedAt, detail: `${KINDS[batch.kind].label} ${batch.year}, ${pagesText(pkg)} of ${batch.fileName}, for ${nameOf(ws, inv.id)}; basis: ${pkg.basis}; source SHA-256 ${batch.sourceSha256}` });
+    log(ws, { action: 'Tax document match confirmed', fund: batch.offeringId, record: pkg.id, actor: a.by, at: pkg.confirmedAt, detail: `${KINDS[batch.kind].label} ${batch.year}, ${pagesText(pkg)} of ${batch.fileName}, for ${nameOf(ws, inv.id)}; basis: ${pkg.basis}${a.together ? ' (confirmed together)' : ''}; source SHA-256 ${batch.sourceSha256}` });
     return pkg;
   }
 
@@ -457,24 +457,116 @@
     return doc;
   }
 
+  /* ---------- documents made by the portal itself ---------- */
+  /**
+   * A document the portal made for one investor from figures a person confirmed (the Form 1099 recipient copies of
+   * plans 10-10 and 10-11). Refused without the person who confirmed. It is confirmed and hidden, like a confirmed
+   * package's document, and goes through delivery by the same functions.
+   */
+  function addGenerated(ws, a) {
+    ensure(ws);
+    if (!a) refuse('Nothing to add.');
+    if (!KINDS[a.kind]) refuse('Unknown kind of tax document.');
+    if (!/^\d{4}$/.test(String(a.year))) refuse('The tax year must be four digits.');
+    if (!a.confirmedBy) refuse('The person who confirmed the figures must be named.');
+    const inv = investorOf(ws, a.investorId);
+    if (!holds(inv, a.offeringId)) refuse('That investor does not hold this offering.');
+    if (!a.id) refuse('The document needs an id.');
+    if (ws.docs.some((d) => d.id === a.id)) refuse('A document with that id already exists.');
+    const at = stamp(a.confirmedAt);
+    const doc = docRecord(a, a.offeringId, inv.id, a.year, at);
+    doc.tax = taxBlock(a.kind, a.year, { basis: 'made for this investor', confirmedBy: a.confirmedBy, confirmedAt: at });
+    ws.docs.push(doc);
+    log(ws, { action: 'Tax document made', fund: doc.offeringId, record: doc.id, actor: a.confirmedBy, at, detail: `${KINDS[a.kind].label} ${doc.tax.year} for ${nameOf(ws, inv.id)}, made by the portal from figures confirmed by ${a.confirmedBy}; not delivered yet` });
+    return doc;
+  }
+
+  /* ---------- confirming together (C-06) ---------- */
+  // A document counts for its investor, offering, kind and year in these states (withdrawn and replaced ones do not).
+  const LIVE = ['confirmed', 'waiting', 'delivered', 'paper'];
+  // ...and has been given to the investor (or is owed to them) in these.
+  const GIVEN = ['waiting', 'delivered', 'paper'];
+  const sameSlot = (d, investorId, offeringId, kind, year) => d.tax && (d.investors || [])[0] === investorId && d.offeringId === offeringId && d.tax.kind === kind && d.tax.year === String(year);
+  const docsIn = (ws, states, investorId, offeringId, kind, year) => (ws.docs || []).filter((d) => sameSlot(d, investorId, offeringId, kind, year) && states.indexOf(d.tax.state) >= 0);
+  /**
+   * Confirm in one step every open package proposed on 'number and name' that nobody needs to look at: not marked
+   * (look), not of another partnership, its investor proposed for no other package of the file, with no live document
+   * of that kind and year and no package confirmed for them in another file. Every other package stays open, to be
+   * confirmed one at a time. Returns the number confirmed; each writes its own change-log entry.
+   */
+  function confirmTogether(ws, batchId, a) {
+    const batch = batchOf(ws, batchId);
+    if (!a || !a.by) refuse('The person confirming must be named.');
+    const at = stamp(a.at);
+    const proposedFor = {};
+    batch.packages.forEach((p) => {
+      if (p.proposed.investorId) proposedFor[p.proposed.investorId] = (proposedFor[p.proposed.investorId] || 0) + 1;
+    });
+    const confirmedIn = (id) => ensure(ws).batches.some((b) => b.offeringId === batch.offeringId && b.kind === batch.kind && b.year === batch.year && b.packages.some((p) => p.state === 'confirmed' && !p.docId && p.investorId === id));
+    const ready = batch.packages.filter((p) => {
+      const id = p.proposed.investorId;
+      return p.state === 'open' && id && p.proposed.basis === 'number and name' && !p.look && !p.otherPartnership && proposedFor[id] === 1 && !docsIn(ws, LIVE, id, batch.offeringId, batch.kind, batch.year).length && !confirmedIn(id);
+    });
+    ready.forEach((p) => confirm(ws, batchId, p.id, { investorId: p.proposed.investorId, by: a.by, at, together: true }));
+    return ready.length;
+  }
+
   /* ---------- consent (Rev. Proc. 2012-17 sections 4 and 5) ---------- */
-  const consentText = (ws) => `Consent to receive tax documents electronically (version ${CONSENT.version}).`;
+  /**
+   * The disclosure shown with the consent: how to open and print a document (section 5.01), then one entry for each of
+   * sections 5.02 to 5.08, in that order. Nothing else. Choices made here: one consent covers every kind of tax
+   * document; asking for a paper copy does not withdraw it; a withdrawal takes effect the day it is received.
+   */
+  CONSENT.lines = function (contact) {
+    const c = contact || {};
+    const who = `${c.name || ''}, ${c.address || ''}, telephone ${c.phone || ''}, email ${c.email || ''}`;
+    return [
+      { rule: '5.01', text: 'Your tax documents are posted on the Documents page of this portal. Tap a document to open it, and use Download to save or print it.' },
+      { rule: '5.02', text: 'If you do not consent, your tax documents will be sent to you on paper.' },
+      { rule: '5.03', text: 'This consent covers every tax document we furnish to you, such as Schedules K-1, Forms 1099 and 1042-S and tax letters, from today until you withdraw it.' },
+      { rule: '5.04', text: 'You can ask for a paper copy of any tax document at any time by writing to the contact below. Asking for a paper copy does not withdraw this consent.' },
+      { rule: '5.05', text: `You can withdraw this consent at any time by writing, by email or on paper, to ${who}. A withdrawal takes effect on the day we receive it, we will confirm it and that date to you in writing, and documents delivered electronically before that day stay delivered.` },
+      { rule: '5.06', text: 'We will stop delivering tax documents electronically if you withdraw this consent, if you no longer hold an interest in any of our offerings, or if we stop offering electronic delivery, and you will then receive them on paper.' },
+      { rule: '5.07', text: 'To update your email address or other contact details, change them on your Account page or write to the contact above. We will tell you if our contact details change.' },
+      { rule: '5.08', text: 'You need a device with a current web browser to open tax documents and a PDF reader to print and keep them; each document shows the date it leaves the portal, which for a Schedule K-1 is at least twelve months after the end of its tax year or six months after it was posted, whichever is later, and for Forms 1099 and 1042-S at least 15 October of the following year. A tax document may have to be printed and attached to a federal, state or local income tax return.' }
+    ];
+  };
+  const consentText = (ws) => CONSENT.lines(ensure(ws).contact).map((l) => l.text).join('\n\n');
   /** Consent is in effect when it was given, has not been withdrawn and is of the current version. */
   function inEffect(investor) {
     const c = investor && investor.taxDelivery;
     return !!(c && c.at && !c.withdrawnAt && c.version === CONSENT.version);
   }
-  /** The investor consents. Every document of theirs that was waiting for consent is delivered. */
+  /** The investor consents, to the full text shown. Every document of theirs that was waiting for consent is delivered. */
   function consent(ws, investorId, a) {
     const inv = investorOf(ws, investorId) || refuse('That investor is not in this workspace.');
     if (missingContact(ws).length) refuse(`The firm's contact for tax documents is not complete (${missingContact(ws).join(', ')}).`);
     const at = stamp(a && a.at);
     inv.taxDelivery = { at, version: CONSENT.version, text: consentText(ws), where: a && a.where === 'link' ? 'link' : 'portal', withdrawnAt: '' };
     log(ws, { action: 'Tax document consent given', record: inv.id, actor: `${inv.title} (investor)`, at, detail: `Electronic delivery of tax documents, version ${CONSENT.version}, given in the ${inv.taxDelivery.where}` });
-    return (ws.docs || []).filter((d) => d.tax && d.tax.state === 'waiting' && (d.investors || [])[0] === inv.id).map((d) => release(ws, d, at, d.tax.waitingBy || '', 'email'));
+    return (ws.docs || []).filter((d) => d.tax && d.tax.state === 'waiting' && (d.investors || [])[0] === inv.id).map((d) => release(ws, d, at, d.tax.waitingBy || '', d.tax.waitingHow || 'email'));
+  }
+  /**
+   * The investor withdraws consent. It takes effect the day it is made (section 4.02). Documents delivered before stay
+   * delivered (section 5.05(4)); the next delivery waits for paper. withdrawalConfirmed is for the written confirmation
+   * section 5.05(3) requires (plan 10-06 fills it).
+   */
+  function withdrawConsent(ws, investorId, a) {
+    const inv = investorOf(ws, investorId) || refuse('That investor is not in this workspace.');
+    const c = inv.taxDelivery;
+    if (!c || !c.at || c.withdrawnAt) refuse('There is no consent in effect to withdraw.');
+    c.withdrawnAt = stamp(a && a.at);
+    c.withdrawalConfirmed = { at: '', how: '' };
+    log(ws, { action: 'Tax document consent withdrawn', record: inv.id, actor: (a && a.by) || `${inv.title} (investor)`, at: c.withdrawnAt, detail: `Electronic delivery of tax documents withdrawn, effective ${dayOf(c.withdrawnAt)}; later tax documents are owed on paper` });
+    return inv;
   }
 
   /* ---------- delivery ---------- */
+  function addDays(day, n) {
+    const [y, m, d] = dayOf(day).split('-').map(Number);
+    const t = new Date(Date.UTC(y, m - 1, d + n));
+    return iso(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
+  }
   function release(ws, doc, at, by, how) {
     const t = doc.tax;
     t.state = 'delivered';
@@ -484,12 +576,14 @@
     doc.hidden = false;
     doc.publishedAt = at;
     doc.publishedBy = by;
-    log(ws, { action: 'Tax document delivered', fund: doc.offeringId, record: doc.id, actor: by || undefined, at, detail: `${KINDS[t.kind].label} ${t.year} to ${nameOf(ws, doc.investors[0])}; notice by ${how}; available until ${t.availableUntil}; match confirmed by ${t.match.confirmedBy} (${t.match.basis})` });
+    log(ws, { action: 'Tax document delivered', fund: doc.offeringId, record: doc.id, actor: by || undefined, at, detail: `${KINDS[t.kind].label} ${t.year} to ${nameOf(ws, doc.investors[0])}; notice by ${how}; available until ${t.availableUntil}; match confirmed by ${t.match.confirmedBy} (${t.match.basis})${t.replaces ? `; replaces ${t.replaces}` : ''}` });
     return doc;
   }
   const HOWS = ['email', 'own email', 'paper'];
   /**
-   * Deliver a confirmed document to its one investor. Refused when no person confirmed the match. With the investor's
+   * Deliver a confirmed document to its one investor. Refused when no person confirmed the match, when the firm's
+   * contact is incomplete, and when the investor already has a document for that offering, kind and year unless
+   * `replaces` names it (an amended document replaces the earlier one; it never sits beside it). With the investor's
    * consent in effect it is shown to them; without it, it waits, hidden, on the paper list.
    */
   function deliver(ws, docId, a) {
@@ -501,16 +595,125 @@
     if (!a || !a.by) refuse('The person delivering must be named.');
     if (HOWS.indexOf(a.how) < 0) refuse('Say how the investor is told: email, own email or paper.');
     const inv = investorOf(ws, (doc.investors || [])[0]) || refuse('The investor of this document is not in this workspace.');
+    const earlier = docsIn(ws, GIVEN, inv.id, doc.offeringId, t.kind, t.year).filter((d) => d !== doc);
+    let old = null;
+    if (a.replaces) old = earlier.find((d) => d.id === a.replaces) || refuse('The document it replaces must be the one this investor has now for the same offering, kind and year.');
+    else if (earlier.length) refuse(`${inv.title} already has a ${KINDS[t.kind].label} for ${t.year}. Say which document this one replaces.`);
     const at = stamp(a.at);
+    if (old) {
+      old.tax.state = 'replaced';
+      old.hidden = true;
+      t.replaces = old.id;
+      log(ws, { action: 'Tax document replaced', fund: old.offeringId, record: old.id, actor: a.by, at, detail: `${KINDS[t.kind].label} ${t.year} for ${nameOf(ws, inv.id)} replaced by ${doc.id}; it leaves the investor's list and keeps its record of opens` });
+    }
     if (inEffect(inv)) return release(ws, doc, at, a.by, a.how);
     t.state = 'waiting';
     t.waitingBy = a.by;
+    t.waitingHow = a.how;
     doc.hidden = true;
     log(ws, { action: 'Tax document waiting for consent', fund: doc.offeringId, record: doc.id, actor: a.by, at, detail: `${KINDS[t.kind].label} ${t.year} for ${nameOf(ws, inv.id)}: no consent to electronic delivery in effect, so it is owed on paper` });
     return doc;
   }
 
-  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, reopen, confirm, toDocument, inEffect, consent, deliver, availableUntil };
+  /** A document owed on paper is marked sent: one waiting for consent, or a delivered one whose notice came back. */
+  function markPaper(ws, docId, a) {
+    const doc = docOf(ws, docId);
+    const t = doc.tax;
+    if (!a || !/^\d{4}-\d{2}-\d{2}$/.test(String(a.sentOn || ''))) refuse('Give the date it was sent on paper.');
+    if (!a.by) refuse('The person who sent it must be named.');
+    const bouncedOpen = t.state === 'delivered' && t.notice && t.notice.bounced && !t.paper;
+    if (t.state !== 'waiting' && !bouncedOpen) refuse('This document is not owed on paper.');
+    t.paper = { sentOn: a.sentOn, by: a.by };
+    if (t.state === 'waiting') {
+      t.state = 'paper';
+      doc.hidden = true;
+    }
+    log(ws, { action: 'Tax document sent on paper', fund: doc.offeringId, record: doc.id, actor: a.by, at: stamp(a.at), detail: `${KINDS[t.kind].label} ${t.year} for ${nameOf(ws, doc.investors[0])} sent on paper on ${a.sentOn}${bouncedOpen ? ' after the notice came back' : ''}` });
+    return doc;
+  }
+  /** The email notice of a delivered document came back: paper is due 30 calendar days later (section 7.02). */
+  function bounced(ws, docId, date) {
+    const doc = docOf(ws, docId);
+    const t = doc.tax;
+    if (t.state !== 'delivered' || !t.notice) refuse('Only the notice of a delivered document can come back.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) refuse('Give the date the notice came back.');
+    t.notice.bounced = date;
+    t.notice.paperBy = addDays(date, 30);
+    t.paper = null;
+    log(ws, { action: 'Tax document notice came back', fund: doc.offeringId, record: doc.id, at: stamp(), detail: `${KINDS[t.kind].label} ${t.year} for ${nameOf(ws, doc.investors[0])}: the notice came back on ${date}; a paper notice is due by ${t.notice.paperBy}` });
+    return doc;
+  }
+  /** The sponsor takes a document back: it leaves the investor's list; its record, and its record of opens, stay. */
+  function withdraw(ws, docId, a) {
+    const doc = docOf(ws, docId);
+    const t = doc.tax;
+    if (['confirmed', 'waiting', 'delivered'].indexOf(t.state) < 0) refuse('This document cannot be withdrawn.');
+    if (!a || !a.by) refuse('The person withdrawing it must be named.');
+    if (!a.why || !String(a.why).trim()) refuse('Say why it is withdrawn.');
+    const at = stamp(a.at);
+    t.state = 'withdrawn';
+    t.withdrawn = { at, by: a.by, why: String(a.why).trim() };
+    doc.hidden = true;
+    log(ws, { action: 'Tax document withdrawn', fund: doc.offeringId, record: doc.id, actor: a.by, at, detail: `${KINDS[t.kind].label} ${t.year} for ${nameOf(ws, doc.investors[0])} withdrawn: ${t.withdrawn.why}; opened ${t.opens.count} times` });
+    return doc;
+  }
+  /** The investor opened a delivered document. Anything else (hidden, withdrawn, replaced) changes nothing. */
+  function opened(ws, docId, at) {
+    const doc = (ws.docs || []).find((d) => d.id === docId);
+    if (!doc || !doc.tax || doc.hidden || doc.tax.state !== 'delivered') return doc || null;
+    const o = doc.tax.opens;
+    const when = stamp(at);
+    if (!o.first) o.first = when;
+    o.last = when;
+    o.count += 1;
+    const inv = investorOf(ws, doc.investors[0]);
+    log(ws, { action: 'Tax document opened', fund: doc.offeringId, record: doc.id, actor: inv ? `${inv.title} (investor)` : undefined, at: when, detail: `${KINDS[doc.tax.kind].label} ${doc.tax.year}, open number ${o.count}` });
+    return doc;
+  }
+
+  /** The notice of section 7.01: the required words as its subject; how to open and print; the firm's contact. */
+  function notice(ws, doc) {
+    const t = doc.tax;
+    const c = ensure(ws).contact;
+    const body = [
+      `A tax document is available for you in the investor portal: ${KINDS[t.kind].label} for ${t.year}${t.replaces ? ', which replaces the one posted earlier' : ''}.`,
+      'To open it, sign in, go to Documents and tap it. Use Download to save or print it.',
+      t.availableUntil ? `It stays available in the portal until ${t.availableUntil}.` : '',
+      `Questions: ${c.name}, ${c.address}, telephone ${c.phone}, email ${c.email}.`
+    ].filter(Boolean);
+    return { subject: NOTICE_SUBJECT, body: body.join('\n\n') };
+  }
+
+  /**
+   * One offering's tax documents of a kind and year, sorted: packages open and set aside, documents confirmed and
+   * delivered, documents owed on paper (waiting for consent, or delivered with a notice that came back; dueBy is the
+   * date paper is due where the rule gives one), and the investors holding the offering with no live document.
+   */
+  function lists(ws, q) {
+    const t = ensure(ws);
+    const year = String(q.year);
+    const batches = t.batches.filter((b) => b.offeringId === q.offeringId && b.kind === q.kind && b.year === year);
+    const packages = (state) => batches.reduce((out, b) => out.concat(b.packages.filter((p) => p.state === state)), []);
+    const docs = ws.docs.filter((d) => d.tax && d.offeringId === q.offeringId && d.tax.kind === q.kind && d.tax.year === year);
+    const paper = [];
+    docs.forEach((d) => {
+      if (d.tax.state === 'waiting') {
+        const c = (investorOf(ws, d.investors[0]) || {}).taxDelivery;
+        paper.push({ doc: d, why: 'no consent', dueBy: c && c.withdrawnAt ? addDays(c.withdrawnAt, 30) : '' });
+      } else if (d.tax.state === 'delivered' && d.tax.notice && d.tax.notice.bounced && !d.tax.paper) paper.push({ doc: d, why: 'notice came back', dueBy: d.tax.notice.paperBy });
+    });
+    const live = (id) => docs.some((d) => (d.investors || [])[0] === id && LIVE.indexOf(d.tax.state) >= 0);
+    return {
+      open: packages('open'),
+      confirmed: docs.filter((d) => d.tax.state === 'confirmed'),
+      delivered: docs.filter((d) => d.tax.state === 'delivered'),
+      paper,
+      missing: holdersOf(ws.investors, q.offeringId).filter((inv) => !live(inv.id)),
+      aside: packages('aside')
+    };
+  }
+
+  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, reopen, confirm, confirmTogether, toDocument, addGenerated, inEffect, consent, withdrawConsent, deliver, markPaper, bounced, withdraw, opened, notice, lists, availableUntil };
   if (NS) NS.taxdocs = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);
