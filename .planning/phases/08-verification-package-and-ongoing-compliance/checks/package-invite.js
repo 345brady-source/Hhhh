@@ -297,15 +297,23 @@ const parts = {
       check('unticked: the request holds neither invitation.package nor invitation.clientId', !!sent2 && !('package' in sent2) && !('clientId' in sent2), sent2);
       check('unticked: the request keeps the fields it had before', !!sent2 && ['cents', 'cls', 'note', 'expiresAt', 'senderName'].every((k) => k in sent2), sent2 ? Object.keys(sent2) : null);
 
-      // An investor on file is asked to subscribe only (no identity or accreditation step in their link): no box for their email.
-      const onFile = await p.evaluate(() => (window.CVPortal.state.ws.investors.find((i) => i.onboarding.status === 'complete' && i.email) || {}).email || '');
+      // The form's controls do not change with the investor (phase 6's include-tax check, D-06): an investor on file keeps
+      // the box, and its price is the one the server will be told to charge (holding a Rule 506(c) offering calls for
+      // verified accreditation, the same answer the snapshot sends).
+      const holder = await p.evaluate((oid) => {
+        const ws = window.CVPortal.state.ws;
+        const i = ws.investors.find((x) => x.onboarding.status === 'complete' && x.email && (x.positions || []).some((y) => y.offeringId === oid));
+        return i ? i.email : '';
+      }, C.off.offeringId);
       await openForm(p);
+      await chooseOffering(p, '');
       await p.fill('#iv-email', 'someone.new@example.com');
-      const forNew = await boxShown(p);
-      await p.fill('#iv-email', onFile);
       await p.waitForTimeout(300);
-      const forOnFile = await box(p);
-      check('an investor on file\'s email: no box (their link holds no check); a new email: the box', !!onFile && forNew.shown === true && forOnFile.shown === false, { onFile, forNew: forNew.shown, forOnFile: forOnFile.shown });
+      const forNew = await boxShown(p);
+      await p.fill('#iv-email', holder);
+      await p.waitForTimeout(300);
+      const forHolder = await box(p);
+      check('an investor on file keeps the box; holding the Rule 506(c) offering their price is the full one ($99), a new investor\'s $19', !!holder && forNew.shown && forNew.label === 'Add verification package ($19)' && forHolder.shown && !forHolder.disabled && forHolder.label === 'Add verification package ($99)', { holder, forNew: forNew.label, forHolder });
 
       // The server is asked again (as after a card change) while the form is in use: the box stays as it was meanwhile.
       await p.fill('#iv-email', 'someone.new@example.com');

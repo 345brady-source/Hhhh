@@ -1423,11 +1423,12 @@
   };
   /**
    * Plan 08-06 (D-01): the "Add verification package" box for the invitation being written (d: its email and offering):
-   * { show, enabled, label, line, href } from NS.pkg.box. An investor on file is asked to subscribe only, so their link
-   * holds no identity or accreditation step for a package to run: no box for their email.
+   * { show, enabled, label, line, href } from NS.pkg.box. The investor on file for the email, when there is one, goes
+   * with it: what they hold can call for verified accreditation, and the label shows the price of the package the server
+   * will be told about (the same answer the snapshot sends).
    */
   function packageBox(ws, d) {
-    if (!E.diy || !NS.pkg || onFileEmail(ws, d.email)) return { show: false, enabled: false, label: '', line: '', href: '' };
+    if (!E.diy || !NS.pkg) return { show: false, enabled: false, label: '', line: '', href: '' };
     return NS.pkg.box(ws, d.offeringId || '', undefined, byEmail(ws, d.email));
   }
   /** The box's one line; it leads to the Integrations page only for someone who can open it (an admin). */
