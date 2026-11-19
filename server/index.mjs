@@ -118,14 +118,16 @@ function cleanEvidence(list) {
   });
 }
 
+/** The client's address: the first X-Forwarded-For entry behind a trusted proxy (TRUST_PROXY=1), else the socket's. */
+const clientOf = (req, env) => (env.TRUST_PROXY === '1' ? String(header(req.headers, 'x-forwarded-for') || '').split(',')[0].trim() : '') || req.socket.remoteAddress || 'unknown';
+
 /** A small per-client limit on the calls that can cost money or create records. */
 function rateLimiter(env) {
   const max = Number(env.RATE_LIMIT_PER_MIN === undefined ? 60 : env.RATE_LIMIT_PER_MIN);
   const hits = new Map();
   return (req) => {
     if (!max) return false;
-    const fwd = env.TRUST_PROXY === '1' ? String(header(req.headers, 'x-forwarded-for') || '').split(',')[0].trim() : '';
-    const who = fwd || req.socket.remoteAddress || 'unknown';
+    const who = clientOf(req, env);
     const now = Date.now();
     const h = hits.get(who);
     if (!h || now > h.reset) {
@@ -583,6 +585,11 @@ export function createServer(opts = {}) {
 
   /** The largest help request body: one question of at most 500 characters and a few short keys. */
   const HELP_BODY = 8 * 1024;
+  /**
+   * Who a help session belongs to: the invitation for an investor's link, one shared owner for the console's token.
+   * This is the one place to change when callers have accounts: the owner becomes the account's id.
+   */
+  const helpOwner = (scope) => (scope ? `inv:${scope.id}` : 'sponsor');
   async function answerHelp(req, res, scope) {
     const fail = (status, reason) => send(res, status, { ok: false, reason });
     try {
@@ -613,15 +620,18 @@ export function createServer(opts = {}) {
       res.on('close', onClose);
       let r;
       try {
-        r = await help.ask({ message: body.message, session: body.session, page: body.page, step: body.step, role: body.role }, { signal: ctl.signal });
+        // Only these five fields of the body are read; who is asking comes from the credential, never from the body.
+        r = await help.ask({ message: body.message, session: body.session, page: body.page, step: body.step, role: body.role, investor: !!scope, owner: helpOwner(scope), client: clientOf(req, env) }, { signal: ctl.signal });
       } catch {
         r = null;
       }
       res.off('close', onClose);
       r = r && r.body && Number.isInteger(r.status) ? r : { status: 502, body: { ok: false, reason: 'failed' }, row: null };
       if (!res.writableEnded && !res.destroyed) send(res, r.status, r.body);
+      if (r.status !== 200 && r.row) console.error(`help: ${r.body.reason} ${r.status}`);
     } catch {
       if (!res.headersSent) fail(502, 'failed');
+      console.error('help: failed 502');
     }
   }
 
