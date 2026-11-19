@@ -32,7 +32,10 @@ fs.mkdirSync(OUT, { recursive: true });
 Lib.describeShots([
   [/-form\.png$/, 'The Form D section as it opens: the figures the portal holds already filled in, each saying where it came from.'],
   [/-review\.png$/, 'Review: the whole notice by item on the page, with nothing left to fix, and the sign-off under the SEC\'s Terms of Submission.'],
-  [/-signed\.png$/, 'After the sign-off: who signed and when, the order with the amount due, and the line about sending it to be filed.']
+  [/-signed\.png$/, 'After the sign-off: who signed and when, the order with the amount due, and the line about sending it to be filed.'],
+  [/-errors\.png$/, 'Review with things to fix: one plain sentence per field, each naming its item with a link to it, and no sign-off.'],
+  [/-amend-start\.png$/, 'An offering with a filed notice: where an amendment starts (the portal\'s own notice, or the file or text of one filed elsewhere).'],
+  [/-amend-form\.png$/, 'The amendment as it opens: the last notice\'s answers with today\'s figures, marked as an amendment with the previous accession number.']
 ]);
 
 const SCHEMA = path.join(Lib.ROOT, 'server/test/fixtures/formd/schema/formDSubmission.xsd.xml');
@@ -307,6 +310,7 @@ async function errors(size, { check, S }) {
   await typeIn(F, `${P}.offeringSalesAmounts.totalRemaining`, '12345');
   await typeIn(F, `${SIG}.signatureDate`, L9.iso(seeded.today, 1));
   let r = await openReview(F);
+  await F.A.page.screenshot({ path: path.join(OUT, `${size}-errors.png`), fullPage: false });
   const street = onField(r, STREET);
   check('F2: one message for the street line, the P.O. box sentence (EDGAR\'s rule), although it is also too long', street.length === 1 && /P\.O\. box/.test(street[0].text) && /^Item 2:/.test(street[0].text), r.errors.map((m) => `${m.field} :: ${m.text}`));
   const fields = r.errors.map((m) => m.field);
@@ -546,6 +550,7 @@ async function amend(size, { check, S }) {
   await L9.press(F, lineOf(id));
   await F.fr.waitForSelector('.fl-section[data-part="formd"]', { timeout: 20000 }).catch(() => {});
   const before = (await store(F, id)).rec.formD.length;
+  await F.A.page.screenshot({ path: path.join(OUT, `${size}-amend-start.png`), fullPage: false });
   if (phone) {
     const start = await sectionText(F);
     check('the section names the last notice filed and offers "Start an amendment"', start.indexOf(L9.label(filedOn)) >= 0 && (await F.fr.locator('.fl-section [data-action="fd-amend"]').innerText().catch(() => '')).trim() === 'Start an amendment', start.slice(0, 300));
@@ -565,6 +570,8 @@ async function amend(size, { check, S }) {
     await F.fr.waitForTimeout(800);
   }
   await F.fr.waitForSelector('.fl-section .fd-form', { timeout: 20000 }).catch(() => {});
+  await F.fr.evaluate(() => document.getElementById('fd-i7') && document.getElementById('fd-i7').scrollIntoView({ block: 'start' }));
+  await F.A.page.screenshot({ path: path.join(OUT, `${size}-amend-form.png`), fullPage: false });
   const f = await factsOf(F, id);
   let st = await store(F, id);
   const e = st.rec.formD.filter((x) => x.status === 'draft').pop();
