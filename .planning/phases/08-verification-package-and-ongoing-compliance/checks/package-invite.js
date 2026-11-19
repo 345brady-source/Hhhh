@@ -1,16 +1,51 @@
 #!/usr/bin/env node
 // GATE CHECK: PACKAGE INVITE
-// Plan 08-06 (D-01): the one tick box "Add verification package" on the sponsor's invite form. The sponsor's console is the
-// sample self-serve portal connected to the real integration server (server/index.mjs in this process); the billing
-// replies of plans 08-04 and 08-05 are stood in for by the check (frame.js stubServer), every other call is the server's.
-//   single   1280x800: the label carries the server's price for this invitation ($19 without an offering, $99 for a
-//            Rule 506(c) offering); ticked, the request the server receives holds invitation.package true and
-//            invitation.clientId (the console's invitation id); unticked, neither; a row the server reports as a package
-//            row shows the word "Package"
-//   NODE_PATH=$(npm root -g) node package-invite.js [--only single]
+// Plan 08-06 (D-01): the one tick box "Add verification package" on the sponsor's invite form. In the server parts the
+// sponsor's console is the sample self-serve portal connected to the real integration server (server/index.mjs in this
+// process); the billing replies of plans 08-04 and 08-05 are stood in for by the check (frame.js stubServer), every other
+// call is the server's. In the preview parts the portal runs as the owner sees it: a sandboxed frame that refuses every
+// connection, no server.
+//   single           1280x800: the label carries the server's price for this invitation ($19 without an offering, $99
+//                    for a Rule 506(c) offering); ticked, the request the server receives holds invitation.package true
+//                    and invitation.clientId (the console's invitation id); unticked, neither; a row the server reports
+//                    as a package row shows the word "Package"
+//   declined         a refused charge (402 card_declined): the server's sentence on screen, no email dialog, "Not sent
+//                    yet"; sent again, the same clientId
+//   nocard           no card on file: the box switched off with a line that leads to the Integrations page; the price in
+//                    the label is the server's, whatever it is
+//   notoffered       403 account_required, or a server without billing: no box; available.full false: no box for a Rule
+//                    506(c) offering, the box for an identity-tier invitation
+//   unreachable      a server address nothing answers at: the box switched off with one line
+//   preview-desktop  the owner's preview at 1280x800: the box shown, switched off, one line; nothing attempted, no raw
+//   preview-phone    error; an invitation still sends from the sponsor's own email app. The same at 390x844 with touch
+//   phone            server mode at 390x844 with touch: the box fits the width, a tap ticks it, the flag is sent
+//   managed          the managed edition's invite form holds no package box; its C-03 slices still pass
+// Every part ends with the leak scan of the screens it saw (phase 6's leak check and frame.js's vendor scan).
+//   NODE_PATH=$(npm root -g) node package-invite.js [--only single,declined,nocard,notoffered,unreachable,preview-desktop,preview-phone,phone,managed]
 // The last line is "PACKAGE INVITE: PASS (parts run: N)" or "PACKAGE INVITE: FAIL (parts run: N) - <failed parts>".
+const fs = require('fs');
+const path = require('path');
+const { spawnSync } = require('child_process');
 const F = require('./frame.js');
 const Lib = F.Lib;
+
+const SHOTS = path.join(Lib.OUT, 'package-invite-shots');
+fs.mkdirSync(SHOTS, { recursive: true });
+Lib.describeShots([
+  ['single-form.png', 'Server mode, 1280x800: the invite form for a Rule 506(c) offering, the box "Add verification package ($99)" ticked.'],
+  ['nocard-form.png', 'Server mode, no card on file: the box switched off with the line that leads to the Integrations page.'],
+  ['unreachable-form.png', 'A server address nothing answers at: the box switched off with "The integration server could not be reached."'],
+  ['preview-desktop-form.png', 'The owner\'s preview (sandboxed frame, no connection allowed, no server) at 1280x800: the box switched off with its one line.'],
+  ['preview-phone-form.png', 'The owner\'s preview at 390x844 with touch: the box switched off with its one line.'],
+  ['phone-form.png', 'Server mode at 390x844 with touch: the box with the server\'s price, ticked by a tap.']
+]);
+
+const LABEL = 'Add verification package';
+const LINE_NO_SERVER = 'Checks run once your portal is connected to its server.';
+const LINE_NO_CARD = 'Add a card on the Integrations page to use it.';
+const LINE_UNREACHABLE = 'The integration server could not be reached.';
+const DECLINED = 'The card was declined. Nothing was charged.';
+const ACCOUNT = 'Card payments need a sponsor account.';
 
 const BILLING = (over) =>
   Object.assign(
@@ -19,9 +54,10 @@ const BILLING = (over) =>
   );
 
 /** The sponsor's console on the sample portal (a Rule 506(c) offering raising), connected to the integration server. */
-async function consoleOn(S, check, view, handlers) {
+async function consoleOn(S, check, view, handlers, opts) {
+  opts = opts || {};
   const srv = await Lib.serverPortal(S);
-  const A = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({ acceptDownloads: true }, view) });
+  const A = await Lib.open(S, { allow: [srv.base].concat(opts.allow || []), init: srv.init, context: Object.assign({ acceptDownloads: true }, view) });
   const off = await Lib.setupPortal(S, A, { exemption: 'Rule 506(c)' });
   const stub = await F.stubServer(A.context, srv.base, Object.assign({ 'POST /v1/invitations': () => null }, handlers));
   check('the console uses the integration server', (await srv.configure(A.page)) === true);
@@ -70,7 +106,9 @@ const box = (p) =>
       name: input ? input.name : '',
       label: label ? label.innerText.trim() : '',
       line: shown(line) ? line.innerText.trim() : '',
-      href: a ? a.getAttribute('href') : ''
+      href: a ? a.getAttribute('href') : '',
+      // lean: what the whole row says, line by line (the label, and at most one line under it)
+      rows: shown(row) ? row.innerText.split('\n').map((x) => x.trim()).filter(Boolean) : []
     };
   });
 /** Waits until the box is on screen (the billing reply has arrived) or the time is up; resolves to the box. */
@@ -83,6 +121,29 @@ async function boxShown(p, ms) {
     .catch(() => {});
   return box(p);
 }
+/** Waits until the console has asked the server what it offers n times and the answer has been applied; resolves to the box. */
+async function boxAfterAnswer(p, stub, n) {
+  for (let i = 0; i < 80 && stub.sent('GET /v1/billing').length < n; i++) await p.waitForTimeout(100);
+  await p.waitForTimeout(500);
+  return box(p);
+}
+/** A person tries to tick the box: a click (or a tap on a phone) on its label, whatever its state. */
+async function tryTick(p, tap) {
+  const row = p.locator('#iv-package-row');
+  await row.scrollIntoViewIfNeeded().catch(() => {});
+  if (tap) await row.tap({ timeout: 5000 }).catch(() => {});
+  else await row.click({ timeout: 5000 }).catch(() => {});
+  await p.waitForTimeout(200);
+  return box(p);
+}
+/** The row and its text inside the window's width, and no sideways scroll. */
+const fit = (p) =>
+  p.evaluate(() => {
+    const r = document.getElementById('iv-package-row').getBoundingClientRect();
+    const inner = ['iv-package', 'iv-package-label', 'iv-package-line'].map((id) => document.getElementById(id)).filter((el) => el && !el.hidden && el.offsetWidth).map((el) => el.getBoundingClientRect());
+    return { width: innerWidth, left: Math.round(Math.min(r.left, ...inner.map((x) => x.left))), right: Math.round(Math.max(r.right, ...inner.map((x) => x.right))), page: document.documentElement.scrollWidth };
+  });
+const fits = (f) => f.left >= 0 && f.right <= f.width && f.page <= f.width + 1;
 
 /** The console's newest invitation for this email, as the page holds it. */
 const invitationOf = (p, email) =>
@@ -90,7 +151,7 @@ const invitationOf = (p, email) =>
     const ws = window.CVPortal.state.ws;
     const inv = ws.investors.find((i) => String(i.email || '').toLowerCase() === email.toLowerCase());
     const it = inv && (ws.invitations || []).filter((x) => x.investorId === inv.id).pop();
-    return it ? { id: it.id, serverId: it.serverId || '', emailStatus: it.emailStatus, emailError: it.emailError || '', token: it.token || '', pkg: it.package === undefined ? null : it.package } : null;
+    return it ? { id: it.id, serverId: it.serverId || '', link: it.link || '', emailStatus: it.emailStatus, emailError: it.emailError || '', token: it.token || '', pkg: it.package === undefined ? null : it.package } : null;
   }, email);
 
 /** Fill the form and send; o.package ticks the box first (when it is there and can be ticked). Resolves to the invitation. */
@@ -109,7 +170,9 @@ async function invite(p, o) {
       ticked = (await box(p)).checked;
     }
   }
-  await p.click('.inv8-form[data-form="invite-one"] button[type=submit]');
+  if (o.beforeSend) await o.beforeSend();
+  if (o.tap) await p.tap('.inv8-form[data-form="invite-one"] button[type=submit]');
+  else await p.click('.inv8-form[data-form="invite-one"] button[type=submit]');
   await p
     .waitForFunction((email) => {
       const ws = window.CVPortal.state.ws;
@@ -128,12 +191,71 @@ const rowText = (p, id) =>
     const tr = document.querySelector(`tr[data-invitation="${id}"]`);
     return tr ? tr.innerText.replace(/\s+/g, ' ').trim() : '';
   }, id);
+const packageOf = (post) => ((post && post.body) || {}).invitation || {};
+/** The viewport as it is (the frame's host page in the preview parts), with the box brought into view first. */
+async function shot(A, p, name) {
+  await p.locator('#iv-package-row').scrollIntoViewIfNeeded().catch(() => {});
+  await A.page.screenshot({ path: path.join(SHOTS, name) });
+}
+
+/** The owner's preview: the portal framed with every connection refused, no server, at one size. */
+async function preview({ check, S }, view) {
+  const tap = view === 'phone';
+  const { A, fr } = await F.framed(S, view);
+  try {
+    const size = A.page.viewportSize();
+    check(`the window is ${F.VIEW[view].viewport.width}x${F.VIEW[view].viewport.height}${tap ? ' with touch' : ''}`, size.width === F.VIEW[view].viewport.width && size.height === F.VIEW[view].viewport.height && (await fr.evaluate(() => navigator.maxTouchPoints > 0)) === tap, size);
+    await F.proveRefused(check, A, fr);
+    await fr.waitForSelector('[data-action=diy-sample][data-id=kestrel-bay]', { timeout: 30000 });
+    await fr.click('[data-action=diy-sample][data-id=kestrel-bay] >> nth=0');
+    await fr.waitForFunction(() => window.CVPortal && window.CVPortal.state.ws && window.CVPortal.state.ws.tenant.id === 'kestrel-bay', null, { timeout: 30000 });
+    check('no integration server is connected', (await fr.evaluate(() => window.CVPortal.invitations.serverOn(window.CVPortal.state.ws))) === false);
+    await openForm(fr);
+    let b = await boxShown(fr);
+    check('the box is on the invite form, under the email field, switched off', b.present && b.shown && b.disabled && !b.checked, b);
+    check(`its label is "${LABEL}" (no price: no server has given one)`, b.label === LABEL, b.label);
+    check(`one plain line under it: "${LINE_NO_SERVER}"`, b.line === LINE_NO_SERVER && !b.href && b.rows.length === 2, b);
+    b = await tryTick(fr, tap);
+    check('it cannot be ticked', b.checked === false && b.disabled === true, b);
+    const f = await fit(fr);
+    check('the box, its label and its line fit the width (no sideways scroll)', fits(f), f);
+    await shot(A, fr, `preview-${view}-form.png`);
+    const seen = [await F.noRawError(check, fr, 'the invite form')];
+
+    // The form still sends: the sponsor's own email app, as before.
+    const who = { first: 'Wilhelmina', last: 'Okonkwo', email: 'wilhelmina.okonkwo@example.net' };
+    const it = await invite(fr, Object.assign({ package: true, tap }, who));
+    await fr.waitForSelector('#dlg[open] .inv8-email', { timeout: 15000 }).catch(() => {});
+    const dlg = await fr.evaluate(() => {
+      const d = document.getElementById('dlg');
+      return { open: !!(d && d.open), heading: d ? ((d.querySelector('.dlg-head h2') || {}).textContent || '').trim() : '' };
+    });
+    check('an invitation still sends by the sponsor\'s own email app (the email dialog opens)', dlg.open && dlg.heading === 'Invitation email' && !!it && it.emailStatus === 'manual' && !!it.link, { dlg, it });
+    check('the invitation carries no package', !!it && it.ticked === false && it.pkg === null, it);
+    seen.push(await F.noRawError(check, fr, 'the email dialog'));
+    if (tap) await fr.tap('#dlg [data-action=close-dialog]');
+    else await fr.click('#dlg [data-action=close-dialog]');
+    await fr.waitForTimeout(400);
+    check('the dialog closes', (await fr.evaluate(() => !!(document.getElementById('dlg') || {}).open)) === false);
+    const row = it ? await rowText(fr, it.id) : '';
+    check('the invitation is on the list, without the word "Package"', !!row && !/package/i.test(row), row);
+    seen.push(await F.noRawError(check, fr, 'the list after sending'));
+    check('nothing outside the page was asked for', A.net.external.length === 0 && A.net.allowed.length === 0, A.net);
+    F.leakFree(check, 'every screen of this part', seen.join('\n'));
+  } finally {
+    await A.context.close().catch(() => {});
+  }
+}
 
 const parts = {
   single: async ({ check, S }) => {
     const paid = {};
+    let slow = 0;
     const C = await consoleOn(S, check, F.VIEW.desktop, {
-      'GET /v1/billing': () => ({ status: 200, body: BILLING() }),
+      'GET /v1/billing': async () => {
+        if (slow) await new Promise((r) => setTimeout(r, slow));
+        return { status: 200, body: BILLING() };
+      },
       // Rows as plan 08-05's server reports them: package null, or { tier, status } for a paid package invitation.
       'GET /v1/invitations': () => ({ amend: (rows) => (Array.isArray(rows) ? rows.map((r) => Object.assign({}, r, { package: paid[r.id] || null })) : rows) })
     });
@@ -148,29 +270,59 @@ const parts = {
         return !!(email && row && email.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING && row.getBoundingClientRect().top >= email.getBoundingClientRect().bottom);
       })), b);
       check('no offering: the box reads "Add verification package ($19)" (the server\'s identity price)', b.label === 'Add verification package ($19)' && !b.disabled && !b.checked && b.line === '', b);
+      check('lean: the box\'s row says its label and nothing else', b.rows.length === 1 && b.rows[0] === b.label, b.rows);
       await chooseOffering(p, C.off.offeringId);
       b = await boxShown(p);
       check('a Rule 506(c) offering: the box reads "Add verification package ($99)" (the server\'s full price)', b.label === 'Add verification package ($99)' && !b.disabled, b);
       check('the price was asked of the server with the sponsor\'s token (GET /v1/billing)', C.stub.sent('GET /v1/billing').length >= 1 && C.stub.sent('GET /v1/billing').every((c) => c.auth === `Bearer ${C.srv.token}`), C.stub.calls.map((c) => c.key));
+      const seen = [await F.noRawError(check, p, 'the invite form', C.A.errors)];
 
       // Ticked and sent: what the server received (the intercepted request, on its way to the real server).
-      const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: C.off.offeringId, package: true });
+      const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: C.off.offeringId, package: true, beforeSend: () => shot(C.A, p, 'single-form.png') });
       let posts = C.stub.sent('POST /v1/invitations');
-      const sent1 = posts.length === 1 ? (posts[0].body || {}).invitation || {} : {};
+      const sent1 = posts.length === 1 ? packageOf(posts[0]) : {};
       check('ticked: the box was ticked and the invitation went to the integration server', one.ticked === true && /^ivt_/.test(one.serverId) && posts.length === 1, { one, posts: posts.length });
       check('ticked: the request the server received holds invitation.package true', sent1.package === true, sent1);
       check('ticked: the request holds invitation.clientId, the console\'s invitation id', !!one.id && sent1.clientId === one.id, { clientId: sent1.clientId, id: one.id });
       check('ticked: the request tells the server the offering needs verified accreditation (the full tier)', posts.length === 1 && ((posts[0].body || {}).verification || {}).accreditationRequired === true, posts.length === 1 ? (posts[0].body || {}).verification && posts[0].body.verification.accreditationRequired : null);
       const held = (await C.srv.rows()).find((x) => x.id === one.serverId);
       check('ticked: the real server holds the invitation', !!held && held.status === 'sent', held || null);
+      seen.push(await F.noRawError(check, p, 'after sending', C.A.errors));
 
       // Sent unticked: the request is as before.
       const two = await invite(p, { first: 'Ravi', last: 'Patel', email: 'ravi.patel@example.com', offeringId: C.off.offeringId });
       posts = C.stub.sent('POST /v1/invitations');
-      const sent2 = posts.length === 2 ? (posts[1].body || {}).invitation || {} : null;
+      const sent2 = posts.length === 2 ? packageOf(posts[1]) : null;
       check('unticked: the invitation went to the integration server', /^ivt_/.test(two.serverId) && posts.length === 2, { two, posts: posts.length });
       check('unticked: the request holds neither invitation.package nor invitation.clientId', !!sent2 && !('package' in sent2) && !('clientId' in sent2), sent2);
       check('unticked: the request keeps the fields it had before', !!sent2 && ['cents', 'cls', 'note', 'expiresAt', 'senderName'].every((k) => k in sent2), sent2 ? Object.keys(sent2) : null);
+
+      // An investor on file is asked to subscribe only (no identity or accreditation step in their link): no box for their email.
+      const onFile = await p.evaluate(() => (window.CVPortal.state.ws.investors.find((i) => i.onboarding.status === 'complete' && i.email) || {}).email || '');
+      await openForm(p);
+      await p.fill('#iv-email', 'someone.new@example.com');
+      const forNew = await boxShown(p);
+      await p.fill('#iv-email', onFile);
+      await p.waitForTimeout(300);
+      const forOnFile = await box(p);
+      check('an investor on file\'s email: no box (their link holds no check); a new email: the box', !!onFile && forNew.shown === true && forOnFile.shown === false, { onFile, forNew: forNew.shown, forOnFile: forOnFile.shown });
+
+      // The server is asked again (as after a card change) while the form is in use: the box stays as it was meanwhile.
+      await p.fill('#iv-email', 'someone.new@example.com');
+      await chooseOffering(p, C.off.offeringId);
+      await boxShown(p);
+      await p.check('#iv-package');
+      const asked = C.stub.sent('GET /v1/billing').length;
+      slow = 1500;
+      await p.evaluate(() => void window.CVPortal.pkg.load(window.CVPortal.state.ws, true));
+      await chooseOffering(p, ''); // the form is drawn again while the answer is on its way
+      const mid = await box(p);
+      slow = 0;
+      await p.waitForTimeout(1800);
+      const after = await box(p);
+      check('asked again while the form is in use: the box stays shown and ticked meanwhile, and after the answer', C.stub.sent('GET /v1/billing').length === asked + 1 && mid.shown && mid.checked && mid.label === 'Add verification package ($19)' && after.shown && after.checked && !after.disabled, { asked: C.stub.sent('GET /v1/billing').length - asked, mid, after });
+      await p.uncheck('#iv-package').catch(() => {});
+      await p.fill('#iv-email', '');
 
       // The server's list reports the first invitation as a paid package row.
       if (one.serverId) paid[one.serverId] = { tier: 'full', status: 'paid' };
@@ -187,9 +339,237 @@ const parts = {
       const r2 = await rowText(p, two.id);
       check('the package invitation\'s row shows the word "Package"', /\bPackage\b/.test(r1), r1);
       check('the other invitation\'s row does not', !!r2 && !/package/i.test(r2), r2);
-      check('no page error', C.A.errors.length === 0, C.A.errors);
+      seen.push(await F.noRawError(check, p, 'the list', C.A.errors));
+      F.leakFree(check, 'every screen of this part', seen.join('\n'));
     } finally {
       await C.close();
+    }
+  },
+
+  declined: async ({ check, S }) => {
+    let answer = 'declined';
+    const C = await consoleOn(S, check, F.VIEW.desktop, {
+      'GET /v1/billing': () => ({ status: 200, body: BILLING() }),
+      'POST /v1/invitations': () => (answer === 'declined' ? { status: 402, body: { error: DECLINED, code: 'card_declined' } } : null)
+    });
+    try {
+      const p = C.page;
+      const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: '', package: true });
+      let posts = C.stub.sent('POST /v1/invitations');
+      check('the ticked invitation was sent to the server once, with the flag and its id', one.ticked === true && posts.length === 1 && packageOf(posts[0]).package === true && packageOf(posts[0]).clientId === one.id, { one, posts: posts.map(packageOf) });
+      const text = await F.noRawError(check, p, 'after the refused charge', C.A.errors);
+      check(`the console shows the server's one plain sentence: "${DECLINED}"`, text.indexOf(DECLINED) >= 0, text.split('\n').filter((l) => /declin|could not/i.test(l)));
+      check('no email dialog opens', (await p.locator('#dlg[open]').count()) === 0);
+      check('no invitation email is prepared: no link, no token, nothing on the server', one.serverId === '' && one.link === '' && one.token === '' && one.emailStatus === 'failed' && (await C.srv.rows()).length === 0, { one, rows: (await C.srv.rows()).length });
+      const row = await rowText(p, one.id);
+      check('the invitation reads "Not sent yet"', /Not sent yet/.test(row) && row.indexOf(DECLINED) >= 0, row);
+
+      // The card now goes through: the same invitation, sent again with its own button.
+      answer = 'through';
+      await p.click(`tr[data-invitation="${one.id}"] [data-action=inv8-resend]`);
+      await p.waitForFunction((id) => !!((window.CVPortal.state.ws.invitations || []).find((x) => x.id === id) || {}).serverId, one.id, { timeout: 30000 }).catch(() => {});
+      await p.waitForTimeout(500);
+      posts = C.stub.sent('POST /v1/invitations');
+      check('sending it again posts the same clientId, with the flag', posts.length === 2 && packageOf(posts[1]).clientId === one.id && packageOf(posts[1]).package === true, posts.map(packageOf));
+      const rows = await C.srv.rows();
+      const row2 = await rowText(p, one.id);
+      check('the server now holds it and the row no longer reads "Not sent yet"', rows.length === 1 && !/Not sent yet/.test(row2) && row2.indexOf(DECLINED) < 0, { rows: rows.length, row2 });
+      const text2 = await F.noRawError(check, p, 'after sending again', C.A.errors);
+      F.leakFree(check, 'every screen of this part', [text, text2].join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+
+  nocard: async ({ check, S }) => {
+    let credit = 0;
+    // Prices that are not the launch figures: the label can only have them from the server.
+    const C = await consoleOn(S, check, F.VIEW.desktop, { 'GET /v1/billing': () => ({ status: 200, body: BILLING({ card: null, creditCents: credit, prices: { identity: 2500, full: 12550, reverify: 6900 } }) }) });
+    try {
+      const p = C.page;
+      await openForm(p);
+      await chooseOffering(p, '');
+      let b = await boxShown(p);
+      check('no card on file: the box is shown, switched off', b.shown && b.disabled && !b.checked, b);
+      check('its label carries the server\'s price, whatever it is ($25 here: no figure comes from the browser\'s own code)', b.label === 'Add verification package ($25)', b.label);
+      check(`one line under it: "${LINE_NO_CARD}"`, b.line === LINE_NO_CARD && b.rows.length === 2, b);
+      check('the line\'s link goes to #console-integrations', b.href === '#console-integrations', b.href);
+      b = await tryTick(p, false);
+      check('it cannot be ticked', b.checked === false, b);
+      await chooseOffering(p, C.off.offeringId);
+      b = await boxShown(p);
+      check('a price with cents is shown with its cents ($125.50 for the Rule 506(c) offering)', b.label === 'Add verification package ($125.50)', b.label);
+      await shot(C.A, p, 'nocard-form.png');
+      const seen = [await F.noRawError(check, p, 'the invite form', C.A.errors)];
+      const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: '', package: true });
+      const posts = C.stub.sent('POST /v1/invitations');
+      check('an invitation sent from this form carries no package', one.ticked === false && posts.length === 1 && !('package' in packageOf(posts[0])) && !('clientId' in packageOf(posts[0])), posts.map(packageOf));
+      await openForm(p);
+      await boxShown(p);
+      await p.click('#iv-package-line a');
+      await p.waitForTimeout(600);
+      check('following the link opens the Integrations page', (await p.evaluate(() => location.hash)) === '#console-integrations' && /Integrations/.test(await p.locator('h1').first().innerText().catch(() => '')), await p.evaluate(() => location.hash));
+      seen.push(await F.noRawError(check, p, 'the Integrations page', C.A.errors));
+
+      // A balance that covers the price pays for it (plan 08-04: credit first), so no card is needed.
+      credit = 2500;
+      await p.reload();
+      await p.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
+      await openForm(p);
+      await chooseOffering(p, '');
+      b = await boxShown(p);
+      check('a balance that covers the price: the box can be ticked, no line', b.shown && !b.disabled && b.line === '' && b.label === 'Add verification package ($25)', b);
+      await chooseOffering(p, C.off.offeringId);
+      b = await boxShown(p);
+      check('a balance below the price: switched off again, with the line', b.shown && b.disabled && b.line === LINE_NO_CARD, b);
+      F.leakFree(check, 'every screen of this part', seen.join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+
+  notoffered: async ({ check, S }) => {
+    let mode = 'server';
+    const C = await consoleOn(S, check, F.VIEW.desktop, {
+      'GET /v1/billing': () => (mode === 'server' ? null : mode === 'account' ? { status: 403, body: { error: ACCOUNT, code: 'account_required' } } : { status: 200, body: BILLING({ available: { identity: true, full: false, reverify: false } }) })
+    });
+    try {
+      const p = C.page;
+      const seen = [];
+      const fresh = async () => {
+        await p.reload();
+        await p.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
+        await openForm(p);
+      };
+      // The integration server as it is in this tree answers for itself (no stand-in).
+      await openForm(p);
+      await chooseOffering(p, '');
+      let b = await boxAfterAnswer(p, C.stub, 1);
+      const own = await C.srv.call('GET', '/v1/billing');
+      check(`the integration server's own answer to GET /v1/billing (${own.status}) is not an offer: no box`, own.status !== 200 && C.stub.sent('GET /v1/billing').length >= 1 && b.shown === false, { status: own.status, b });
+      seen.push(await F.noRawError(check, p, 'the server\'s own answer', C.A.errors));
+
+      mode = 'account';
+      await fresh();
+      await chooseOffering(p, '');
+      b = await boxAfterAnswer(p, C.stub, 2);
+      check('403 account_required: no box', C.stub.sent('GET /v1/billing').length >= 2 && b.shown === false, b);
+      await chooseOffering(p, C.off.offeringId);
+      b = await boxAfterAnswer(p, C.stub, 2);
+      check('403 account_required: no box for a Rule 506(c) offering either', b.shown === false, b);
+      const text = await F.noRawError(check, p, '403 account_required', C.A.errors);
+      seen.push(text);
+      check('the refusal is not put on the invite form', text.indexOf(ACCOUNT) < 0 && !/verification package/i.test(await p.locator('.inv8-form').innerText()), text.split('\n').filter((l) => /sponsor account|verification package/i.test(l)));
+      const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: C.off.offeringId, package: true });
+      const posts = C.stub.sent('POST /v1/invitations');
+      check('an invitation still sends, as before, with no package', one.ticked === false && /^ivt_/.test(one.serverId) && posts.length === 1 && !('package' in packageOf(posts[0])) && !('clientId' in packageOf(posts[0])), { one, sent: posts.map(packageOf) });
+
+      mode = 'nofull';
+      await fresh();
+      await chooseOffering(p, C.off.offeringId);
+      b = await boxAfterAnswer(p, C.stub, 3);
+      check('available.full false: no box for a Rule 506(c) offering', C.stub.sent('GET /v1/billing').length >= 3 && b.shown === false, b);
+      await chooseOffering(p, '');
+      b = await boxShown(p);
+      check('available.full false: the box is still there for an identity-tier invitation', b.shown && !b.disabled && b.label === 'Add verification package ($19)', b);
+      seen.push(await F.noRawError(check, p, 'available.full false', C.A.errors));
+      F.leakFree(check, 'every screen of this part', seen.join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+
+  unreachable: async ({ check, S }) => {
+    const dead = `http://127.0.0.1:${await Lib.freePort()}`;
+    const C = await consoleOn(S, check, F.VIEW.desktop, {}, { allow: [dead] });
+    try {
+      const p = C.page;
+      // The address on the Integrations settings is one nothing answers at.
+      const on = await p.evaluate((dead) => {
+        const NS = window.CVPortal;
+        NS.integrations.ensure(NS.state.ws).server.url = dead;
+        NS.app.save(true);
+        return NS.invitations.serverOn(NS.state.ws);
+      }, dead);
+      check('a server address is set, and nothing answers there', on === true && (await fetch(dead + '/health').then(() => 'answered', () => 'refused')) === 'refused');
+      await openForm(p);
+      await chooseOffering(p, '');
+      let b = await boxShown(p, 15000);
+      check('the box is shown, switched off', b.shown && b.disabled && !b.checked, b);
+      check(`its label is "${LABEL}" (no price: the server gave none)`, b.label === LABEL, b.label);
+      check(`one line under it: "${LINE_UNREACHABLE}"`, b.line === LINE_UNREACHABLE && !b.href && b.rows.length === 2, b);
+      b = await tryTick(p, false);
+      check('it cannot be ticked', b.checked === false, b);
+      check('the console did try the address it was given', C.A.net.allowed.some((x) => x === `GET ${dead}/v1/billing`), C.A.net.allowed.slice(0, 6));
+      await shot(C.A, p, 'unreachable-form.png');
+      const text = await F.noRawError(check, p, 'the invite form', C.A.errors);
+      F.leakFree(check, 'every screen of this part', text);
+    } finally {
+      await C.close();
+    }
+  },
+
+  'preview-desktop': (ctx) => preview(ctx, 'desktop'),
+  'preview-phone': (ctx) => preview(ctx, 'phone'),
+
+  phone: async ({ check, S }) => {
+    const C = await consoleOn(S, check, F.VIEW.phone, { 'GET /v1/billing': () => ({ status: 200, body: BILLING() }) });
+    try {
+      const p = C.page;
+      const size = p.viewportSize();
+      check('the window is 390x844 with touch', size.width === 390 && size.height === 844 && (await p.evaluate(() => navigator.maxTouchPoints > 0)), size);
+      await openForm(p);
+      await chooseOffering(p, C.off.offeringId);
+      const b = await boxShown(p);
+      check('the box reads "Add verification package ($99)" for the Rule 506(c) offering', b.shown && !b.disabled && b.label === 'Add verification package ($99)', b);
+      const f = await fit(p);
+      check('the box and its label fit the width (no sideways scroll)', fits(f), f);
+      const seen = [await F.noRawError(check, p, 'the invite form', C.A.errors)];
+      const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: C.off.offeringId, package: true, tap: true, beforeSend: () => shot(C.A, p, 'phone-form.png') });
+      const posts = C.stub.sent('POST /v1/invitations');
+      check('a tap ticks it', one.ticked === true, one);
+      check('the sent request carries the flag and the invitation\'s id', posts.length === 1 && packageOf(posts[0]).package === true && packageOf(posts[0]).clientId === one.id && /^ivt_/.test(one.serverId), { one, sent: posts.map(packageOf) });
+      const row = await rowText(p, one.id);
+      check('the invitation\'s row shows the word "Package"', /\bPackage\b/.test(row), row);
+      const f2 = await p.evaluate(() => ({ width: innerWidth, page: document.documentElement.scrollWidth }));
+      check('the list does not make the page scroll sideways', f2.page <= f2.width + 1, f2);
+      seen.push(await F.noRawError(check, p, 'the list', C.A.errors));
+      F.leakFree(check, 'every screen of this part', seen.join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+
+  managed: async ({ check, S }) => {
+    const A = await Lib.open(S, { context: F.VIEW.desktop });
+    try {
+      const p = A.page;
+      await p.goto(`${S.origin}/index.html`);
+      await p.evaluate(() => Object.keys(localStorage).forEach((k) => localStorage.removeItem(k)));
+      await p.goto(`${S.origin}/index.html`);
+      await p.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
+      check('index.html is the managed edition', (await p.evaluate(() => window.CVPortal.EDITION.id)) === 'managed');
+      await openForm(p);
+      // C2: first the managed form itself (its email field on screen), then what it must not hold.
+      check('the managed invite form is on screen (its email field is visible)', (await p.locator('form[data-form="invite-one"] #iv-email').isVisible()) && (await p.locator('form[data-form="invite-one"] #iv-last-name').count()) === 1);
+      check('it holds no element named package and no #iv-package', (await p.locator('[name=package]').count()) === 0 && (await p.locator('#iv-package').count()) === 0 && (await p.locator('#iv-package-row').count()) === 0);
+      const form = await p.locator('form[data-form="invite-one"]').innerText();
+      check('its text says nothing about a package', !/package/i.test(form), form.split('\n').filter((l) => /package/i.test(l)));
+      const api = await p.evaluate(() => {
+        const NS = window.CVPortal;
+        const b = NS.pkg.box(NS.state.ws, '');
+        return { show: b.show, enabled: b.enabled, info: NS.pkg.info(NS.state.ws) };
+      });
+      check('the package code offers nothing in the managed edition', api.show === false && api.enabled === false && api.info === null, api);
+      check('nothing outside the page was asked for', A.net.external.length === 0, A.net.external);
+      // C-03: the managed edition's onboarding slices, as phase 6's STATUS MATH guards them.
+      const r = spawnSync(process.execPath, [path.join(__dirname, '..', '..', '06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa', 'checks', 'status-math.js'), '--case', 'managed'], { encoding: 'utf8' });
+      const last = String(r.stdout || '').trim().split('\n').pop();
+      check('STATUS MATH\'s managed slices still pass (C-03)', r.status === 0 && last === 'STATUS MATH: PASS (cases run: 1)', last);
+      check('no page error', A.errors.length === 0, A.errors);
+      F.leakFree(check, 'the managed invite form', form);
+    } finally {
+      await A.context.close().catch(() => {});
     }
   }
 };

@@ -27,14 +27,16 @@
 
   /**
    * One read of what the server offers. Resolves to info(ws) and never rejects: a failure is kept as a plain sentence.
-   * The answer is reused for a minute; force asks again (after the card or the server's settings changed).
+   * The answer is reused for a minute; force asks again (after the card changed).
    */
   function load(ws, force) {
     if (!on(ws)) return Promise.resolve(null);
     const key = keyOf(ws);
     if (mem.key === key && mem.promise) return mem.promise;
     if (mem.key === key && !force && mem.status !== 'idle' && Date.now() - mem.at < FRESH_MS) return Promise.resolve(info(ws));
-    const mine = (mem = { key, status: 'loading', data: null, error: '', code: '', at: 0, promise: null });
+    // Asked again of the same server: the last answer stands until the new one arrives (a box in use does not come and go).
+    if (mem.key !== key) mem = { key, status: 'loading', data: null, error: '', code: '', at: 0, promise: null };
+    const mine = mem;
     const done = (status, data, error, code) => {
       if (mem === mine) Object.assign(mem, { status, data, error, code: code || '', at: Date.now(), promise: null });
       return info(ws);
