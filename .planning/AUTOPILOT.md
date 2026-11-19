@@ -28,3 +28,8 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 - Browser checks go through SCRATCH/exec-011/heavy.sh (shared queue). Link server/node_modules from /home/user/Hhhh for runs only; never stage it. Run commands containing $(git ...) from script files; use tail -n N.
 - Disk is limited (about 5 GB free): keep outputs small and delete base-tree copies, archives and screenshots after the gate.
 - Reports: failures first, then the gate's last lines verbatim, commits, deviations. Nothing is "done" until the owner has checked it.
+
+## Model (owner, 2026-11-19, verbatim: "when you run out of fable usage switch to opus 5.5")
+- Work runs on the session's current model until its usage is exhausted. When an agent stops on a usage limit for that model, the orchestrator relaunches it on Opus 5.5 (the Agent tool's model override) from the last commit it pushed, and launches every later agent the same way. Nothing is restarted from scratch that was already pushed to a wip branch.
+- The orchestrator cannot change the main session's own model; the owner does that with /model claude-opus-5-5.
+
