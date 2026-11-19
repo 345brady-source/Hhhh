@@ -33,6 +33,18 @@
   const byDateSrc = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.src < b.src ? -1 : a.src > b.src ? 1 : 0);
   /** ACH with a bank on file: the test the audit engine's bank evidence uses (runEvidence). */
   const paysByAch = (inv) => !!(inv && inv.payment && inv.payment.method === 'ach' && inv.payment.bank);
+  /** The fund's books start date ('' when the books run from inception). Reads only. */
+  function startOf(ws, id) {
+    const f = ws && ws.books && ws.books.funds && ws.books.funds[id];
+    return f && typeof f.start === 'string' ? f.start : '';
+  }
+  /** Add a listed item to fund.exceptions once (the same item already there is not added again). */
+  function note(f, item) {
+    const key = JSON.stringify(Object.assign({}, item, { found: undefined }));
+    if (f.exceptions.some((x) => JSON.stringify(Object.assign({}, x, { found: undefined })) === key)) return false;
+    f.exceptions.push(item);
+    return true;
+  }
 
   /** { entries, notes } for one offering: notes are the records the books list for a person to look at. */
   function plan(ws, o, opts) {
@@ -45,9 +57,12 @@
     const notes = [];
     const used = new Set();
     const add = (src, date, memo, lines) => {
+      used.add(src);
+      // A record holding an amount that is not whole cents is not posted; it is listed instead.
+      const odd = lines.find((l) => !Number.isSafeInteger(l[1]));
+      if (odd) return notes.push({ src, kind: 'amount', account: odd[0], value: String(odd[1]) });
       const kept = lines.filter((l) => l[1] !== 0);
       if (kept.length < 2) return;
-      used.add(src);
       entries.push({ src, date, memo, lines: kept });
     };
 
@@ -79,13 +94,21 @@
       const g = group(d.run);
       g.gross.set(d.inv.id, (g.gross.get(d.inv.id) || 0) + d.cents);
     });
+    (L.strays || []).forEach((s) => {
+      const g = group(s.run);
+      g.gross.set(s.investorId, (g.gross.get(s.investorId) || 0) + s.cents);
+      g.strays.push(s);
+    });
     Array.from(runs.values())
       .sort((a, b) => (a.run.date < b.run.date ? -1 : a.run.date > b.run.date ? 1 : a.run.id < b.run.id ? -1 : a.run.id > b.run.id ? 1 : 0))
       .forEach((g) => {
         const run = g.run;
+        const src = `run:${run.id}`;
         const rows = NS.data.runRows(ws, run).filter((r) => g.gross.has(r.investor.id));
         const lines = [];
+        // Gross to each investor's capital; tax withheld owed until it is paid over; then the cash that left the fund.
         rows.forEach((r) => lines.push(ln('3100', g.gross.get(r.investor.id), r.investor.id)));
+        rows.forEach((r) => lines.push(ln('2400', -(g.gross.get(r.investor.id) - r.netCents), r.investor.id)));
         let ach = 0;
         const other = [];
         rows.forEach((r) => {
@@ -95,17 +118,38 @@
         });
         lines.push(ln('1000', -ach));
         other.forEach((l) => lines.push(l));
-        add(`run:${run.id}`, run.date, `Distribution ${run.id}`, lines);
+        // The general partner's share paid with the distribution (carried interest), deducted from nobody's capital.
+        if (run.gp > 0) lines.push(ln('3300', run.gp), ln('1000', -run.gp));
+        g.strays.forEach((s) => notes.push({ src, kind: 'stray', investorId: s.investorId, cents: s.cents }));
+        add(src, run.date, `Distribution ${run.id}`, lines);
       });
 
-    // Management fees, month by month, as the engine charges them.
-    L.keys.forEach((k) => {
-      const F = L.byKey[k];
-      if (F && F.fee > 0) add(`fee:${o.id}:${k}`, endOf(k), `Management fee ${monthLabel(k)}`, [ln('5000', F.fee), ln('2100', -F.fee)]);
+    // Redemptions: capital out at the dealing date (owed), then the payment. The engine's cents are posted; a payment
+    // recorded above them is listed for a person to look at.
+    (L.redemptions || []).forEach((x) => {
+      const q = x.req;
+      const id = x.inv.id;
+      add(`req:${q.id}`, x.date, `Redemption ${q.id}: ${id}`, [ln('3100', x.cents, id), ln('2200', -x.cents)]);
+      if (q.status === 'paid' && q.paid) {
+        add(`reqpaid:${q.id}`, q.paid, `Redemption paid ${q.id}: ${id}`, [ln('2200', x.cents), ln('1000', -x.cents, id)]);
+        if (q.paidCents != null && q.paidCents > x.cents) notes.push({ src: `reqpaid:${q.id}`, kind: 'overpaid', investorId: id, cents: q.paidCents - x.cents });
+      }
     });
 
-    entries.sort(byDateSrc);
-    return { entries, notes };
+    // Management fees and the general partner's crystallized share, month by month, as the engine works them out.
+    const gpWord = L.S && L.S.open ? 'Incentive allocation' : 'Carried interest';
+    L.keys.forEach((k) => {
+      const F = L.byKey[k];
+      if (!F) return;
+      if (F.fee > 0) add(`fee:${o.id}:${k}`, endOf(k), `Management fee ${monthLabel(k)}`, [ln('5000', F.fee), ln('2100', -F.fee)]);
+      if (F.gpOut > 0) add(`gp:${o.id}:${k}`, endOf(k), `${gpWord} ${monthLabel(k)}`, [ln('3300', F.gpOut), ln('2600', -F.gpOut)]);
+    });
+
+    // Books started part-way: nothing dated before the start is posted from records.
+    const start = startOf(ws, o.id);
+    const kept = start ? entries.filter((e) => e.date >= start) : entries;
+    kept.sort(byDateSrc);
+    return { entries: kept, notes: start ? notes.filter((n) => kept.some((e) => e.src === n.src)) : notes };
   }
 
   /** Every entry the records of offering o call for, by date then src. Reads only. */
@@ -119,6 +163,7 @@
     const who = { by: opts.by || AUTO, at: opts.at };
     const out = { posted: 0, reversed: 0, exceptions: 0 };
     if (typeof NS.clearCaches === 'function') NS.clearCaches();
+    const found = opts.today || NS.dates.today();
     ((ws && ws.offerings) || []).forEach((o) => {
       if (!o || !o.id) return;
       const P = plan(ws, o, opts);
@@ -128,8 +173,12 @@
         B.post(ws, o.id, d, who);
         out.posted++;
       });
+      if (P.notes.length) {
+        const f = B.fund(ws, o.id);
+        P.notes.forEach((n) => note(f, Object.assign({}, n, { found })) && out.exceptions++);
+      }
     });
-    if (out.posted && NS.workspace && typeof NS.workspace.save === 'function') NS.workspace.save(ws);
+    if ((out.posted || out.reversed || out.exceptions) && NS.workspace && typeof NS.workspace.save === 'function') NS.workspace.save(ws);
     return out;
   }
 
