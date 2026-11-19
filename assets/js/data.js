@@ -252,11 +252,15 @@
 
   const FREQ_MONTHS = { Monthly: 1, Quarterly: 3, 'Semi-annual': 6, Annual: 12 };
 
+  /**
+   * Who holds an offering on a date. A position redeemed in full (p.redeemed, its dealing date) is held through that
+   * date and not after it, so it takes no share of a later distribution.
+   */
   function holdersAt(investors, offeringId, date) {
     const out = [];
     investors.forEach((inv) => {
       inv.positions.forEach((p) => {
-        if (p.offeringId === offeringId && p.date <= date) out.push({ investor: inv, amount: p.amount });
+        if (p.offeringId === offeringId && p.date <= date && !(p.redeemed && p.redeemed < date)) out.push({ investor: inv, amount: p.amount });
       });
     });
     return out;
