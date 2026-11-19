@@ -5,12 +5,18 @@
 // { ok, kind, answer, session } or a neutral reason: no key, no model or provider name, no error text. No question and
 // no answer is written anywhere; a session lives in memory only.
 import { randomBytes } from 'node:crypto';
+import fs from 'node:fs';
 import { VERSION, RULES, MARKER, GUIDE, PAGES } from './help-guide.mjs';
-import { createClient, available as keySet, outcomeOf, errorReason, usageOf, costOf, createBudget } from './model.mjs';
+import { createClient, available as keySet, outcomeOf, errorReason, usageOf, costOf, createBudget, PRICES } from './model.mjs';
 
-/** The model help asks (the owner's choice, D-02). */
-const MODEL_DEFAULT = 'claude-haiku-5-5';
-const EFFORT_DEFAULT = 'low';
+/** The models help may ask: the first is the owner's choice (D-02); the second is for measuring a larger one only. */
+const MODELS = ['claude-haiku-5-5', 'claude-sonnet-5-5'];
+const EFFORTS = ['low', 'medium', 'high'];
+const setting = (env, name) => String((env && env[name]) ?? '').trim();
+/** CARROWVALE_HELP_MODEL, only within the fixed list; anything else is the default. */
+const modelOf = (env) => (MODELS.includes(setting(env, 'CARROWVALE_HELP_MODEL')) ? setting(env, 'CARROWVALE_HELP_MODEL') : MODELS[0]);
+/** CARROWVALE_HELP_EFFORT: low (the default), medium or high. Fixed for the process: a change would empty the cache. */
+const effortOf = (env) => (EFFORTS.includes(setting(env, 'CARROWVALE_HELP_EFFORT')) ? setting(env, 'CARROWVALE_HELP_EFFORT') : EFFORTS[0]);
 /** The longest reply, thinking included. */
 const MAX_TOKENS = 1024;
 const KINDS = ['answer', 'cannot', 'out_of_scope'];
@@ -121,15 +127,49 @@ function replyOf(message) {
 
 /** CARROWVALE_HELP_PER_HOUR: questions an address may ask in an hour (default 30; 0 is off; anything else is 30). */
 function perHourOf(env) {
-  const raw = String((env && env.CARROWVALE_HELP_PER_HOUR) ?? '').trim();
+  const raw = setting(env, 'CARROWVALE_HELP_PER_HOUR');
   const n = Number(raw);
   return raw && Number.isInteger(n) && n >= 0 ? n : 30;
 }
+/**
+ * CARROWVALE_HELP_DAILY_USD: what help may spend in one UTC day (default 2, so it is on when nothing is set). A value
+ * that is set and is not an amount of zero or more gives NaN, which allows nothing.
+ */
+function dailyCapOf(env) {
+  const raw = setting(env, 'CARROWVALE_HELP_DAILY_USD');
+  if (!raw) return 2;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : NaN;
+}
+const dayOf = (t) => new Date(t).toISOString().slice(0, 10);
+/** What help already spent on the given UTC day, from its rows of the read log (so a restart does not reset the day). */
+function spentOn(env, day) {
+  if (!env || !env.CARROWVALE_READ_LOG) return 0;
+  let text = '';
+  try {
+    text = fs.readFileSync(env.CARROWVALE_READ_LOG, 'utf8');
+  } catch {
+    return 0;
+  }
+  let usd = 0;
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    try {
+      const o = JSON.parse(line);
+      if (o && o.route === 'help' && typeof o.at === 'string' && o.at.slice(0, 10) === day) usd += costOf(o.usage, o.model).usd;
+    } catch {
+      /* a broken line costs nothing it can prove */
+    }
+  }
+  return usd;
+}
+const bytes = (s) => Buffer.byteLength(String(s), 'utf8');
 
 const SESSION_ID = /^[0-9a-f]{32}$/;
 
 /**
- * createHelp(): { budget, available(), ask(input, { signal }), sessions() }.
+ * createHelp(): { budget, available(), ask(input, { signal }), sessions() }. budget is the server's shared spend cap
+ * (the caller adds each row's usage to it); the daily help cap is kept here.
  * ask({ message, session, page, step, role, investor, owner, client }) answers { status, body, row }: the HTTP status,
  * the body for the browser, and the numbers for the log (null for a question that was not well formed). Only message,
  * session, page, step and role come from the browser; investor, owner and client are the caller's own findings.
@@ -137,9 +177,26 @@ const SESSION_ID = /^[0-9a-f]{32}$/;
 export function createHelp({ env = process.env, fetch, timeoutMs = 15000, budget = createBudget(env), now = () => Date.now(), maxSessions = LIMITS.sessions } = {}) {
   let client = null;
   const getClient = async () => client || (client = await createClient({ env, fetch, timeoutMs }));
-  const model = MODEL_DEFAULT;
-  const effort = EFFORT_DEFAULT;
+  const model = modelOf(env);
+  const effort = effortOf(env);
   const perHour = perHourOf(env);
+  // The worst case of one question: every byte sent counted as a token written to the cache (a token is at least one
+  // byte, and a cache write is the dearest input price), and the whole reply limit. This model has no fallback, so the
+  // model asked is the model that answers and its own rate is the right one.
+  const rate = { input: PRICES[model].cacheWrite, output: PRICES[model].output };
+  const worst = (bound) => (bound * rate.input + MAX_TOKENS * rate.output) / 1e6;
+
+  /** The daily help cap: spent this UTC day, plus the worst case of the questions in flight. */
+  const dailyCap = dailyCapOf(env);
+  let day = dayOf(now());
+  let spentToday = spentOn(env, day);
+  let inFlight = 0;
+  const roll = (t) => {
+    if (dayOf(t) !== day) {
+      day = dayOf(t);
+      spentToday = 0;
+    }
+  };
 
   /** Sessions by id, least recently used first: { owner, audience, count, exchanges: [{ q, a }], last }. */
   const sessions = new Map();
@@ -223,7 +280,7 @@ export function createHelp({ env = process.env, fetch, timeoutMs = 15000, budget
       const id = had ? o.session : randomBytes(16).toString('hex');
       const s = had || { owner, audience, count: 0, exchanges: [], last: t };
 
-      const base = { audience, page: key, turn: s.count + 1, bound: 0, stopReason: '', model, usage: usageOf(null), cost: 0, guide: VERSION };
+      const base = { audience, page: key, turn: s.count + 1, bound: 0, outcome: '', stopReason: '', model, usage: usageOf(null), cost: 0, guide: VERSION };
       const row = (extra) => Object.assign({ ms: Date.now() - t0 }, base, extra);
       const refuse = (reason, extra) => ({ status: STATUS[reason], body: { ok: false, reason }, row: row(Object.assign({ outcome: reason }, extra)) });
 
@@ -232,11 +289,27 @@ export function createHelp({ env = process.env, fetch, timeoutMs = 15000, budget
       if (overHourly(String(o.client || 'unknown'), t)) return refuse('limit');
 
       const params = buildRequest({ model, effort, audience, history: s.exchanges, question, note: noteOf(audience, o.role, key) });
+      // Both caps are checked on the worst case before the service is asked anything.
+      const bound = params.system.reduce((a, b) => a + bytes(b.text), 0) + params.messages.reduce((a, m) => a + bytes(m.content), 0);
+      base.bound = bound;
+      roll(t);
+      const reserve = worst(bound);
+      if (!budget.allow(bound, MAX_TOKENS, rate)) return refuse('spend_cap');
+      if (!(spentToday + inFlight + reserve <= dailyCap + 1e-12)) return refuse('spend_cap');
+
       s.count += 1;
       if (had) keep(id, s, t);
-      const r = await call(params, signal);
+      inFlight += reserve;
+      let r;
+      try {
+        r = await call(params, signal);
+      } finally {
+        inFlight -= reserve;
+      }
       const served = r.model || model;
       const spent = { model: served, usage: r.usage, cost: costOf(r.usage, served).usd };
+      roll(now());
+      spentToday += spent.cost;
       if (!r.msg) return refuse(r.reason, spent);
       const out = outcomeOf(r.msg);
       spent.stopReason = out.stopReason;

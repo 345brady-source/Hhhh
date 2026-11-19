@@ -628,7 +628,12 @@ export function createServer(opts = {}) {
       res.off('close', onClose);
       r = r && r.body && Number.isInteger(r.status) ? r : { status: 502, body: { ok: false, reason: 'failed' }, row: null };
       if (!res.writableEnded && !res.destroyed) send(res, r.status, r.body);
-      if (r.status !== 200 && r.row) console.error(`help: ${r.body.reason} ${r.status}`);
+      if (r.row) {
+        // What the question used counts against the shared cap, and its numbers (never its words) go to the read log.
+        if (help.budget && help.budget.add) help.budget.add(r.row.usage, r.row.model);
+        logLine(env, Object.assign({ at: new Date(now()).toISOString(), route: 'help' }, r.row));
+        if (r.status !== 200) console.error(`help: ${r.body.reason} ${r.status}`);
+      }
     } catch {
       if (!res.headersSent) fail(502, 'failed');
       console.error('help: failed 502');
