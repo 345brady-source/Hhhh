@@ -2,32 +2,51 @@
 // GATE CHECK: PACKAGE INVITE
 // Plan 08-06 (D-01): the one tick box "Add verification package" on the sponsor's invite form. In the server parts the
 // sponsor's console is the sample self-serve portal connected to the real integration server (server/index.mjs in this
-// process); the billing replies of plans 08-04 and 08-05 are stood in for by the check (frame.js stubServer), every other
-// call is the server's. In the preview parts the portal runs as the owner sees it: a sandboxed frame that refuses every
-// connection, no server.
+// process). GET /v1/billing (where the server would read the card from the payment provider) and a refused charge are
+// stood in for by the check (frame.js stubServer); every other call is the server's. A ticked package is sent with a
+// sponsor account's token (plan 08-05: the shared token is the operator's and cannot buy one), and the real server takes
+// it, paid from the account's balance, so no payment provider is called and no key is used. In the preview parts the
+// portal runs as the owner sees it: a sandboxed frame that refuses every connection, no server.
 //   single           1280x800: the label carries the server's price for this invitation ($19 without an offering, $99
 //                    for a Rule 506(c) offering); ticked, the request the server receives holds invitation.package true
-//                    and invitation.clientId (the console's invitation id); unticked, neither; a row the server reports
-//                    as a package row shows the word "Package"
+//                    and invitation.clientId (the console's invitation id) and the server stores the package with the
+//                    invitation; unticked, neither; the row the server reports as a package row shows the word "Package"
 //   declined         a refused charge (402 card_declined): the server's sentence on screen, no email dialog, "Not sent
-//                    yet"; sent again, the same clientId
+//                    yet"; sent again, the same clientId, and the server stores the package
 //   nocard           no card on file: the box switched off with a line that leads to the Integrations page; the price in
 //                    the label is the server's, whatever it is
-//   notoffered       403 account_required, or a server without billing: no box; available.full false: no box for a Rule
-//                    506(c) offering, the box for an identity-tier invitation
+//   notoffered       a server without billing: no box; available.full false: no box for a Rule 506(c) offering, the box
+//                    for an identity-tier invitation
+//   account          the shared token (the operator's own): the server's own 403 account_required; the box shown,
+//                    switched off, with the server's sentence; it cannot be ticked; an invitation still sends without the
+//                    package. At 1280x800, and at 390x844 with touch
 //   unreachable      a server address nothing answers at: the box switched off with one line
 //   preview-desktop  the owner's preview at 1280x800: the box shown, switched off, one line; nothing attempted, no raw
 //   preview-phone    error; an invitation still sends from the sponsor's own email app. The same at 390x844 with touch
 //   phone            server mode at 390x844 with touch: the box fits the width, a tap ticks it, the flag is sent
 //   managed          the managed edition's invite form holds no package box; its C-03 slices still pass
-// Every part ends with the leak scan of the screens it saw (phase 6's leak check and frame.js's vendor scan).
-//   NODE_PATH=$(npm root -g) node package-invite.js [--only single,declined,nocard,notoffered,unreachable,preview-desktop,preview-phone,phone,managed]
+// 10 parts. Every part ends with the leak scan of the screens it saw (phase 6's leak check and frame.js's vendor scan).
+//   NODE_PATH=$(npm root -g) node package-invite.js [--only single,declined,nocard,notoffered,account,unreachable,preview-desktop,preview-phone,phone,managed]
 // The last line is "PACKAGE INVITE: PASS (parts run: N)" or "PACKAGE INVITE: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 const F = require('./frame.js');
 const Lib = F.Lib;
+
+// The integration server runs in this process: a call it makes to anywhere outside this machine (a payment or check
+// provider) is refused here and kept, so a part can prove none was made.
+const outside = [];
+const ownFetch = globalThis.fetch;
+globalThis.fetch = (input, init) => {
+  const u = new URL(String(input && input.url ? input.url : input));
+  if (['127.0.0.1', 'localhost', '[::1]'].indexOf(u.hostname) < 0) {
+    outside.push(`${(init && init.method) || 'GET'} ${u.origin}${u.pathname}`);
+    return Promise.reject(new Error('refused by the check: no call leaves this machine'));
+  }
+  return ownFetch(input, init);
+};
 
 const SHOTS = path.join(Lib.OUT, 'package-invite-shots');
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -37,7 +56,9 @@ Lib.describeShots([
   ['unreachable-form.png', 'A server address nothing answers at: the box switched off with "The integration server could not be reached."'],
   ['preview-desktop-form.png', 'The owner\'s preview (sandboxed frame, no connection allowed, no server) at 1280x800: the box switched off with its one line.'],
   ['preview-phone-form.png', 'The owner\'s preview at 390x844 with touch: the box switched off with its one line.'],
-  ['phone-form.png', 'Server mode at 390x844 with touch: the box with the server\'s price, ticked by a tap.']
+  ['phone-form.png', 'Server mode at 390x844 with touch: the box with the server\'s price, ticked by a tap.'],
+  ['account-desktop-form.png', 'The shared token (no sponsor account), 1280x800: the box switched off with "Card payments need a sponsor account."'],
+  ['account-phone-form.png', 'The shared token at 390x844 with touch: the box switched off with the server\'s sentence, inside the width.']
 ]);
 
 const LABEL = 'Add verification package';
@@ -53,20 +74,58 @@ const BILLING = (over) =>
     over || {}
   );
 
-/** The sponsor's console on the sample portal (a Rule 506(c) offering raising), connected to the integration server. */
+/**
+ * A server that can sell a sponsor account the package with no payment provider and no key: the operator's admin token
+ * (sponsor accounts, plan 08-01); stand-in values where the server only asks that the payment settings are filled (they
+ * are read on a call to the provider, and none is made: see outside); the server's own built-in test provider named for
+ * both checks (nothing is called when an invitation is created).
+ */
+const ADMIN = crypto.randomBytes(24).toString('hex');
+const ACCOUNT_ENV = { ADMIN_TOKEN: ADMIN, BILLING_SECRET_KEY: 'stand-in-not-a-key', BILLING_PUBLISHABLE_KEY: 'stand-in-not-a-key', PACKAGE_IDENTITY_PROVIDER: 'sandbox', PACKAGE_ACCREDITATION_PROVIDER: 'sandbox' };
+/** The account's balance (credit, as from returned packages, plan 08-04): above any price, so the server pays from it. */
+const BALANCE = 100000;
+
+/**
+ * The sponsor's console on the sample portal (a Rule 506(c) offering raising), connected to the integration server.
+ * opts.account: the console holds a sponsor account's token (made through POST /v1/admin/accounts with the admin token,
+ * as the server tests do, for the console's workspace, with BALANCE on it); otherwise the shared token.
+ */
 async function consoleOn(S, check, view, handlers, opts) {
   opts = opts || {};
-  const srv = await Lib.serverPortal(S);
+  const srv = await Lib.serverPortal(S, opts.account ? ACCOUNT_ENV : undefined);
   const A = await Lib.open(S, { allow: [srv.base].concat(opts.allow || []), init: srv.init, context: Object.assign({ acceptDownloads: true }, view) });
   const off = await Lib.setupPortal(S, A, { exemption: 'Rule 506(c)' });
   const stub = await F.stubServer(A.context, srv.base, Object.assign({ 'POST /v1/invitations': () => null }, handlers));
-  check('the console uses the integration server', (await srv.configure(A.page)) === true);
+  let token = srv.token;
+  let account = null;
+  if (opts.account) {
+    const workspace = await A.page.evaluate(() => window.CVPortal.state.ws.tenant.id);
+    const res = await fetch(`${srv.base}/v1/admin/accounts`, { method: 'POST', headers: { Authorization: `Bearer ${ADMIN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ workspace, name: 'Kestrel Bay Capital' }) });
+    account = await res.json().catch(() => null);
+    check('a sponsor account is made for the console\'s workspace with the operator\'s admin token', res.status === 200 && !!account && !!account.token && account.workspace === workspace, { status: res.status, workspace: account && account.workspace });
+    if (account && account.id) srv.server.store.put('billing', { id: account.id, creditCents: BALANCE });
+    token = account && account.token;
+    const on = await A.page.evaluate(
+      ({ base, token }) => {
+        const NS = window.CVPortal;
+        const s = NS.integrations.ensure(NS.state.ws).server;
+        s.url = base;
+        s.token = token;
+        NS.app.save(true);
+        return NS.invitations.serverOn(NS.state.ws);
+      },
+      { base: srv.base, token }
+    );
+    check('the console uses the integration server with the sponsor account\'s token', on === true);
+  } else check('the console uses the integration server', (await srv.configure(A.page)) === true);
   return {
     srv,
     A,
     page: A.page,
     off,
     stub,
+    token,
+    account,
     close: async () => {
       await A.context.close().catch(() => {});
       await srv.close().catch(() => {});
@@ -192,6 +251,28 @@ const rowText = (p, id) =>
     return tr ? tr.innerText.replace(/\s+/g, ' ').trim() : '';
   }, id);
 const packageOf = (post) => ((post && post.body) || {}).invitation || {};
+
+/**
+ * What the real server stored for an invitation (C: a console on a sponsor account): the record's package, the payment
+ * behind it, and whether anything was sent to a payment provider (a payment record is written before any provider call,
+ * plan 08-04 M1) or anywhere outside this machine.
+ */
+function stored(C, serverId) {
+  const st = C.srv.server.store;
+  const rec = (serverId && st.get('invitations', serverId)) || null;
+  const pk = rec && rec.package ? rec.package : null;
+  const ent = pk ? st.get('entitlements', pk.entitlement) : null;
+  return {
+    held: !!rec,
+    pkg: pk ? { tier: pk.tier, account: pk.account, key: pk.key } : null,
+    paid: ent ? { status: ent.status, invitationId: ent.invitationId, by: ent.by, cents: ent.cents } : null,
+    payments: st.list('payments').length,
+    outside: outside.slice()
+  };
+}
+/** The stored invitation carries the package: this tier, this account, the console's invitation id; paid once, from the balance, at the server's price. */
+const tookPackage = (s, C, one, tier, cents) =>
+  !!s.pkg && s.pkg.tier === tier && s.pkg.account === (C.account || {}).id && s.pkg.key === one.id && !!s.paid && s.paid.status === 'consumed' && s.paid.invitationId === one.serverId && s.paid.by === 'credit' && s.paid.cents === cents && s.payments === 0 && s.outside.length === 0;
 /** The viewport as it is (the frame's host page in the preview parts), with the box brought into view first. */
 async function shot(A, p, name) {
   await p.locator('#iv-package-row').scrollIntoViewIfNeeded().catch(() => {});
@@ -249,16 +330,21 @@ async function preview({ check, S }, view) {
 
 const parts = {
   single: async ({ check, S }) => {
-    const paid = {};
     let slow = 0;
-    const C = await consoleOn(S, check, F.VIEW.desktop, {
-      'GET /v1/billing': async () => {
-        if (slow) await new Promise((r) => setTimeout(r, slow));
-        return { status: 200, body: BILLING() };
+    const C = await consoleOn(
+      S,
+      check,
+      F.VIEW.desktop,
+      {
+        'GET /v1/billing': async () => {
+          if (slow) await new Promise((r) => setTimeout(r, slow));
+          return { status: 200, body: BILLING() };
+        },
+        // The rows are the real server's (plan 08-05: package null, or { tier, status }); the check only counts the reads.
+        'GET /v1/invitations': () => null
       },
-      // Rows as plan 08-05's server reports them: package null, or { tier, status } for a paid package invitation.
-      'GET /v1/invitations': () => ({ amend: (rows) => (Array.isArray(rows) ? rows.map((r) => Object.assign({}, r, { package: paid[r.id] || null })) : rows) })
-    });
+      { account: true }
+    );
     try {
       const p = C.page;
       await openForm(p);
@@ -274,7 +360,7 @@ const parts = {
       await chooseOffering(p, C.off.offeringId);
       b = await boxShown(p);
       check('a Rule 506(c) offering: the box reads "Add verification package ($99)" (the server\'s full price)', b.label === 'Add verification package ($99)' && !b.disabled, b);
-      check('the price was asked of the server with the sponsor\'s token (GET /v1/billing)', C.stub.sent('GET /v1/billing').length >= 1 && C.stub.sent('GET /v1/billing').every((c) => c.auth === `Bearer ${C.srv.token}`), C.stub.calls.map((c) => c.key));
+      check('the price was asked of the server with the sponsor\'s token (GET /v1/billing)', !!C.token && C.token !== C.srv.token && C.stub.sent('GET /v1/billing').length >= 1 && C.stub.sent('GET /v1/billing').every((c) => c.auth === `Bearer ${C.token}`), C.stub.calls.map((c) => c.key));
       const seen = [await F.noRawError(check, p, 'the invite form', C.A.errors)];
 
       // Ticked and sent: what the server received (the intercepted request, on its way to the real server).
@@ -287,6 +373,9 @@ const parts = {
       check('ticked: the request tells the server the offering needs verified accreditation (the full tier)', posts.length === 1 && ((posts[0].body || {}).verification || {}).accreditationRequired === true, posts.length === 1 ? (posts[0].body || {}).verification && posts[0].body.verification.accreditationRequired : null);
       const held = (await C.srv.rows()).find((x) => x.id === one.serverId);
       check('ticked: the real server holds the invitation', !!held && held.status === 'sent', held || null);
+      const s1 = stored(C, one.serverId);
+      check('ticked: the server took the package: the stored invitation carries it (full, this account, the console\'s invitation id), paid once from the balance at the server\'s price ($99), nothing sent to a payment provider', tookPackage(s1, C, one, 'full', 9900), s1);
+      check('ticked: the server reports it as a paid package row', !!held && !!held.package && held.package.tier === 'full' && held.package.status === 'paid', held ? held.package : null);
       seen.push(await F.noRawError(check, p, 'after sending', C.A.errors));
 
       // Sent unticked: the request is as before.
@@ -296,6 +385,8 @@ const parts = {
       check('unticked: the invitation went to the integration server', /^ivt_/.test(two.serverId) && posts.length === 2, { two, posts: posts.length });
       check('unticked: the request holds neither invitation.package nor invitation.clientId', !!sent2 && !('package' in sent2) && !('clientId' in sent2), sent2);
       check('unticked: the request keeps the fields it had before', !!sent2 && ['cents', 'cls', 'note', 'expiresAt', 'senderName'].every((k) => k in sent2), sent2 ? Object.keys(sent2) : null);
+      const s2 = stored(C, two.serverId);
+      check('unticked: the server stored it without a package, and nothing more was paid', s2.held && s2.pkg === null && C.srv.server.store.list('entitlements').length === 1, { s2, entitlements: C.srv.server.store.list('entitlements').length });
 
       // The form's controls do not change with the investor (phase 6's include-tax check, D-06): an investor on file keeps
       // the box, and its price is the one the server will be told to charge (holding a Rule 506(c) offering calls for
@@ -332,8 +423,7 @@ const parts = {
       await p.uncheck('#iv-package').catch(() => {});
       await p.fill('#iv-email', '');
 
-      // The server's list reports the first invitation as a paid package row.
-      if (one.serverId) paid[one.serverId] = { tier: 'full', status: 'paid' };
+      // The server's list reports the first invitation as a paid package row (the real server's own row).
       const before = C.stub.sent('GET /v1/invitations').length;
       await p.waitForSelector('[data-action=inv8-check]', { timeout: 10000 }).catch(() => {});
       await p.click('[data-action=inv8-check]').catch(() => {});
@@ -343,6 +433,8 @@ const parts = {
       }, one.id, { timeout: 8000 }).catch(() => {});
       await p.waitForTimeout(400);
       check('the console read the server\'s list again', C.stub.sent('GET /v1/invitations').length > before, C.stub.sent('GET /v1/invitations').length);
+      const k1 = await invitationOf(p, 'dana.whitfield@example.com');
+      check('the console holds the server\'s word on the package ({ tier full, status paid }), not only the sponsor\'s tick', !!k1 && !!k1.pkg && k1.pkg.tier === 'full' && k1.pkg.status === 'paid', k1 ? k1.pkg : null);
       const r1 = await rowText(p, one.id);
       const r2 = await rowText(p, two.id);
       check('the package invitation\'s row shows the word "Package"', /\bPackage\b/.test(r1), r1);
@@ -356,10 +448,16 @@ const parts = {
 
   declined: async ({ check, S }) => {
     let answer = 'declined';
-    const C = await consoleOn(S, check, F.VIEW.desktop, {
-      'GET /v1/billing': () => ({ status: 200, body: BILLING() }),
-      'POST /v1/invitations': () => (answer === 'declined' ? { status: 402, body: { error: DECLINED, code: 'card_declined' } } : null)
-    });
+    const C = await consoleOn(
+      S,
+      check,
+      F.VIEW.desktop,
+      {
+        'GET /v1/billing': () => ({ status: 200, body: BILLING() }),
+        'POST /v1/invitations': () => (answer === 'declined' ? { status: 402, body: { error: DECLINED, code: 'card_declined' } } : null)
+      },
+      { account: true }
+    );
     try {
       const p = C.page;
       const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: '', package: true });
@@ -382,6 +480,9 @@ const parts = {
       const rows = await C.srv.rows();
       const row2 = await rowText(p, one.id);
       check('the server now holds it and the row no longer reads "Not sent yet"', rows.length === 1 && !/Not sent yet/.test(row2) && row2.indexOf(DECLINED) < 0, { rows: rows.length, row2 });
+      const again = await invitationOf(p, 'dana.whitfield@example.com');
+      const s = stored(C, again && again.serverId);
+      check('the server took the package with it (identity, no offering), paid once from the balance at its price ($19), nothing sent to a payment provider', !!again && tookPackage(s, C, again, 'identity', 1900), s);
       const text2 = await F.noRawError(check, p, 'after sending again', C.A.errors);
       F.leakFree(check, 'every screen of this part', [text, text2].join('\n'));
     } finally {
@@ -449,9 +550,11 @@ const parts = {
   },
 
   notoffered: async ({ check, S }) => {
-    let mode = 'server';
+    let mode = 'nobilling';
     const C = await consoleOn(S, check, F.VIEW.desktop, {
-      'GET /v1/billing': () => (mode === 'server' ? null : mode === 'account' ? { status: 403, body: { error: ACCOUNT, code: 'account_required' } } : { status: 200, body: BILLING({ available: { identity: true, full: false, reverify: false } }) })
+      // A server without billing (as before plan 08-04) answers the path as one it does not know; then a server whose
+      // accreditation provider is not set up. The shared token's own answer (403 account_required) is part account's.
+      'GET /v1/billing': () => (mode === 'nobilling' ? { status: 404, body: { error: 'Not found' } } : { status: 200, body: BILLING({ available: { identity: true, full: false, reverify: false } }) })
     });
     try {
       const p = C.page;
@@ -461,25 +564,16 @@ const parts = {
         await p.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
         await openForm(p);
       };
-      // The integration server as it is in this tree answers for itself (no stand-in).
       await openForm(p);
       await chooseOffering(p, '');
       let b = await boxAfterAnswer(p, C.stub, 1);
-      const own = await C.srv.call('GET', '/v1/billing');
-      check(`the integration server's own answer to GET /v1/billing (${own.status}) is not an offer: no box`, own.status !== 200 && C.stub.sent('GET /v1/billing').length >= 1 && b.shown === false, { status: own.status, b });
-      seen.push(await F.noRawError(check, p, 'the server\'s own answer', C.A.errors));
-
-      mode = 'account';
-      await fresh();
-      await chooseOffering(p, '');
-      b = await boxAfterAnswer(p, C.stub, 2);
-      check('403 account_required: no box', C.stub.sent('GET /v1/billing').length >= 2 && b.shown === false, b);
+      check('a server without billing (GET /v1/billing answers 404): no box', C.stub.sent('GET /v1/billing').length >= 1 && b.shown === false, b);
       await chooseOffering(p, C.off.offeringId);
-      b = await boxAfterAnswer(p, C.stub, 2);
-      check('403 account_required: no box for a Rule 506(c) offering either', b.shown === false, b);
-      const text = await F.noRawError(check, p, '403 account_required', C.A.errors);
+      b = await boxAfterAnswer(p, C.stub, 1);
+      check('a server without billing: no box for a Rule 506(c) offering either', b.shown === false, b);
+      const text = await F.noRawError(check, p, 'a server without billing', C.A.errors);
       seen.push(text);
-      check('the refusal is not put on the invite form', text.indexOf(ACCOUNT) < 0 && !/verification package/i.test(await p.locator('.inv8-form').innerText()), text.split('\n').filter((l) => /sponsor account|verification package/i.test(l)));
+      check('the refusal is not put on the invite form', text.indexOf('Not found') < 0 && !/verification package/i.test(await p.locator('.inv8-form').innerText()), text.split('\n').filter((l) => /not found|verification package/i.test(l)));
       const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: C.off.offeringId, package: true });
       const posts = C.stub.sent('POST /v1/invitations');
       check('an invitation still sends, as before, with no package', one.ticked === false && /^ivt_/.test(one.serverId) && posts.length === 1 && !('package' in packageOf(posts[0])) && !('clientId' in packageOf(posts[0])), { one, sent: posts.map(packageOf) });
@@ -487,8 +581,8 @@ const parts = {
       mode = 'nofull';
       await fresh();
       await chooseOffering(p, C.off.offeringId);
-      b = await boxAfterAnswer(p, C.stub, 3);
-      check('available.full false: no box for a Rule 506(c) offering', C.stub.sent('GET /v1/billing').length >= 3 && b.shown === false, b);
+      b = await boxAfterAnswer(p, C.stub, 2);
+      check('available.full false: no box for a Rule 506(c) offering', C.stub.sent('GET /v1/billing').length >= 2 && b.shown === false, b);
       await chooseOffering(p, '');
       b = await boxShown(p);
       check('available.full false: the box is still there for an identity-tier invitation', b.shown && !b.disabled && b.label === 'Add verification package ($19)', b);
@@ -497,6 +591,51 @@ const parts = {
     } finally {
       await C.close();
     }
+  },
+
+  account: async ({ check, S }) => {
+    // The shared token is the operator's own (plan 08-05): the integration server answers GET /v1/billing with its own
+    // 403 account_required (no stand-in; the check only counts the reads). Once at 1280x800, once at 390x844 with touch.
+    const seen = [];
+    for (const view of ['desktop', 'phone']) {
+      const tap = view === 'phone';
+      const C = await consoleOn(S, check, F.VIEW[view], { 'GET /v1/billing': () => null });
+      try {
+        const p = C.page;
+        const size = p.viewportSize();
+        check(`${view}: the window is ${F.VIEW[view].viewport.width}x${F.VIEW[view].viewport.height}${tap ? ' with touch' : ''}`, size.width === F.VIEW[view].viewport.width && size.height === F.VIEW[view].viewport.height && (await p.evaluate(() => navigator.maxTouchPoints > 0)) === tap, size);
+        const own = await C.srv.call('GET', '/v1/billing');
+        check(`${view}: the server's own answer to the shared token is 403 account_required, "${ACCOUNT}"`, own.status === 403 && !!own.body && own.body.code === 'account_required' && own.body.error === ACCOUNT, own);
+        await openForm(p);
+        await chooseOffering(p, '');
+        let b = await boxAfterAnswer(p, C.stub, 1);
+        check(`${view}: the console asked the server with the shared token; the box is shown, switched off, "${LABEL}" (no price)`, C.stub.sent('GET /v1/billing').length >= 1 && C.stub.sent('GET /v1/billing').every((c) => c.auth === `Bearer ${C.srv.token}`) && b.present && b.shown && b.disabled && !b.checked && b.label === LABEL, b);
+        check(`${view}: one plain line under it, the server's own sentence: "${ACCOUNT}"`, b.line === ACCOUNT && !b.href && b.rows.length === 2, b);
+        b = await tryTick(p, tap);
+        check(`${view}: it cannot be ticked`, b.checked === false && b.disabled === true, b);
+        await chooseOffering(p, C.off.offeringId);
+        b = await boxShown(p);
+        check(`${view}: the same for a Rule 506(c) offering`, b.shown && b.disabled && !b.checked && b.label === LABEL && b.line === ACCOUNT && !b.href && b.rows.length === 2, b);
+        b = await tryTick(p, tap);
+        check(`${view}: it cannot be ticked there either`, b.checked === false && b.disabled === true, b);
+        const f = await fit(p);
+        check(`${view}: the box, its label and its line fit the width (no sideways scroll)`, fits(f), f);
+        await shot(C.A, p, `account-${view}-form.png`);
+        seen.push(await F.noRawError(check, p, `${view}: the invite form`, C.A.errors));
+
+        const one = await invite(p, { first: 'Dana', last: 'Whitfield', email: 'dana.whitfield@example.com', offeringId: C.off.offeringId, package: true, tap });
+        const posts = C.stub.sent('POST /v1/invitations');
+        check(`${view}: an invitation still sends, with no package: the request holds neither invitation.package nor invitation.clientId`, !!one && one.ticked === false && one.pkg === null && /^ivt_/.test(one.serverId) && one.emailError.indexOf(ACCOUNT) < 0 && posts.length === 1 && !('package' in packageOf(posts[0])) && !('clientId' in packageOf(posts[0])), { one, sent: posts.map(packageOf) });
+        const held = (await C.srv.rows()).find((x) => x.id === one.serverId);
+        check(`${view}: the real server holds it, without a package`, !!held && held.status === 'sent' && held.package === null, held || null);
+        const row = await rowText(p, one.id);
+        check(`${view}: its row is on the list, without the word "Package"`, !!row && !/package/i.test(row), row);
+        seen.push(await F.noRawError(check, p, `${view}: the list`, C.A.errors));
+      } finally {
+        await C.close();
+      }
+    }
+    F.leakFree(check, 'every screen of this part', seen.join('\n'));
   },
 
   unreachable: async ({ check, S }) => {
@@ -533,7 +672,7 @@ const parts = {
   'preview-phone': (ctx) => preview(ctx, 'phone'),
 
   phone: async ({ check, S }) => {
-    const C = await consoleOn(S, check, F.VIEW.phone, { 'GET /v1/billing': () => ({ status: 200, body: BILLING() }) });
+    const C = await consoleOn(S, check, F.VIEW.phone, { 'GET /v1/billing': () => ({ status: 200, body: BILLING() }) }, { account: true });
     try {
       const p = C.page;
       const size = p.viewportSize();
@@ -549,6 +688,8 @@ const parts = {
       const posts = C.stub.sent('POST /v1/invitations');
       check('a tap ticks it', one.ticked === true, one);
       check('the sent request carries the flag and the invitation\'s id', posts.length === 1 && packageOf(posts[0]).package === true && packageOf(posts[0]).clientId === one.id && /^ivt_/.test(one.serverId), { one, sent: posts.map(packageOf) });
+      const s = stored(C, one.serverId);
+      check('the server took the package: the stored invitation carries it (full), paid once from the balance at the server\'s price ($99), nothing sent to a payment provider', tookPackage(s, C, one, 'full', 9900), s);
       const row = await rowText(p, one.id);
       check('the invitation\'s row shows the word "Package"', /\bPackage\b/.test(row), row);
       const f2 = await p.evaluate(() => ({ width: innerWidth, page: document.documentElement.scrollWidth }));
