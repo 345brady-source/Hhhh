@@ -25,6 +25,8 @@
  *   POST /v1/invitations          the console invites an investor; this server emails the link
  *   GET  /v1/invitations          their statuses; GET/DELETE /v1/invitations/:id/submission, POST …/resend, …/cancel
  *   GET  /v1/outbox               messages kept here when no SMTP server is set
+ *   POST /v1/admin/accounts       the operator makes a sponsor account with its own token (ADMIN_TOKEN; lib/accounts.mjs)
+ *   GET  /v1/admin/accounts       the accounts; POST /v1/admin/accounts/:id/token replaces an account's token
  *   GET  /v1/invite               the investor's browser loads its onboarding (X-Invite-Token)
  *   PUT  /v1/invite/progress      …reports the step it is on
  *   POST /v1/invite/complete      …sends back the finished paperwork; the sponsor is emailed
@@ -47,6 +49,7 @@ import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
+import { createAccounts } from './lib/accounts.mjs';
 import { createIntake } from './lib/intake.mjs';
 import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
 import { costOf, logLine } from './lib/model.mjs';
@@ -157,6 +160,32 @@ export function createServer(opts = {}) {
   const reader = opts.reader || createReader({ env, fetch: opts.fetch, budget: intake.budget || undefined });
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
+  const accounts = createAccounts({ store, now });
+  /**
+   * Who is calling a sponsor route: null (refuse), { shared: true } (the shared API_TOKEN, or an open server: no API_TOKEN
+   * and no account), or { account } (a sponsor's own token; the call then acts on that account's workspace only).
+   */
+  function sponsorAuth(req) {
+    if (env.API_TOKEN && authorize(req, env)) return { shared: true };
+    const account = accounts.find(String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, ''));
+    if (account) return { account };
+    return !env.API_TOKEN && !store.list('accounts').length ? { shared: true } : null;
+  }
+  /** The operator's routes for sponsor accounts. Off unless ADMIN_TOKEN is set; then they need that token, compared in constant time. */
+  async function admin(req, res, path) {
+    if (!env.ADMIN_TOKEN) return send(res, 404, { error: 'Not found' });
+    if (limited(req)) return send(res, 429, { error: 'Too many requests' });
+    if (!safeEqual(String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, ''), String(env.ADMIN_TOKEN))) return send(res, 401, { error: 'Not authorized' });
+    if (path === '/v1/admin/accounts') {
+      if (req.method === 'GET') return send(res, 200, { accounts: accounts.list() });
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use GET or POST' });
+      return send(res, 200, accounts.create(parseObject(await readRaw(req, 16 * 1024))));
+    }
+    const m = path.match(/^\/v1\/admin\/accounts\/(acct_[\w-]+)\/token$/);
+    if (!m) return send(res, 404, { error: 'Not found' });
+    if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+    return send(res, 200, accounts.rotate(m[1]));
+  }
   /**
    * Investors' details on verification and screening records (name, email, address, phone, the names
    * screened) are sealed with DATA_KEY like invitations (lib/vault.mjs); providers get them in memory.
@@ -748,7 +777,11 @@ export function createServer(opts = {}) {
       return invites.investor(req, res, path, scope);
     }
 
-    if (path.startsWith('/v1/') && !scope && !authorize(req, env)) return send(res, 401, { error: 'Not authorized' });
+    // Sponsor accounts (ADMIN_TOKEN): below the invitation token's refusal above, so an investor's link never reaches them.
+    if (/^\/v1\/admin(\/|$)/.test(path)) return admin(req, res, path);
+
+    const auth = path.startsWith('/v1/') && !scope ? sponsorAuth(req) : null;
+    if (path.startsWith('/v1/') && !scope && !auth) return send(res, 401, { error: 'Not authorized' });
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
 
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
@@ -837,7 +870,7 @@ export function createServer(opts = {}) {
       return send(res, 200, screeningView(rec.status === 'pending' ? await refreshScreening(rec) : rec));
     }
 
-    if (await invites.sponsor(req, res, url)) return;
+    if (await invites.sponsor(req, res, url, auth)) return;
 
     return send(res, 404, { error: 'Not found' });
   }
