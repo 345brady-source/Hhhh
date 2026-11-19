@@ -248,7 +248,7 @@
   const NUMERIC = { money: 1, pct: 1, ratio: 1, price: 1, int: 1 };
   const PAD = 4; // space left and right of a cell's text
   const VPAD = 1.75; // space above and below a row's lines
-  const MIN_TEXT = 72; // the narrowest a text column is made before the type is made smaller
+  const CAP_EM = 20; // a word wider than this many type sizes may be broken between characters
   const INK = [0.1, 0.1, 0.1];
   const MUTE = [0.38, 0.38, 0.38];
 
@@ -389,118 +389,154 @@
       const total = s.total ? cols.map((c, i) => paras(pdfCell(c, s.total[i], `${where} total`), true)) : null;
       const right = cols.map((c, i) => rightAligned(c, ((s.rows || []).find((r) => r && r[i] != null && r[i] !== '') || s.total || [])[i]));
 
-      // Column widths: the widest text of each column at the type size, then fitted to the page width.
-      let size = 8;
-      let widths = [];
-      for (;;) {
-        const most = (a, f) => a.reduce((m, x) => Math.max(m, f(x)), 0);
+      // Column widths. A figure (money, a percentage, a number, a date) never wraps; text wraps between words, and only
+      // a word wider than CAP_EM type sizes is broken. The type is made smaller, down to 6 points, until the narrowest
+      // widths fit the page; a sheet still too wide is printed in parts, each repeating the sheet's leading text columns.
+      const sum = (a) => a.reduce((x, y) => x + y, 0);
+      const most = (a, f) => a.reduce((mx, x) => Math.max(mx, f(x)), 0);
+      const fixed = cols.map((c, i) => right[i] || c.t === 'date');
+      const measure = (size) => {
+        const B = fontOf(true);
         const widest = (ps, F) => most(ps, (p) => F.width(p, size));
         const longestWord = (ps, F) => most(ps, (p) => most(p.split(/ +/), (w) => F.width(w, size)));
-        const cellNat = cols.map((c, i) => Math.max(longestWord(heads[i], fontOf(true)), most(body, (r) => widest(r[i], reg)), total ? widest(total[i], fontOf(true)) : 0) + 2 * PAD);
-        const headNat = cols.map((c, i) => Math.max(cellNat[i], widest(heads[i], fontOf(true)) + 2 * PAD));
-        const sum = (a) => a.reduce((x, y) => x + y, 0);
-        const textCols = cols.map((c, i) => i).filter((i) => !right[i]);
-        const grow = (base) => {
-          const extra = W - sum(base);
-          const to = textCols.length ? textCols : cols.map((c, i) => i);
-          const share = sum(to.map((i) => base[i])) || 1;
-          return base.map((b, i) => (to.indexOf(i) >= 0 ? b + (extra * b) / share : b));
-        };
-        if (sum(headNat) <= W) widths = grow(headNat);
-        else if (sum(cellNat) <= W) widths = grow(cellNat);
-        else {
-          const numSum = sum(cols.map((c, i) => (right[i] ? cellNat[i] : 0)));
-          const mins = textCols.map((i) => Math.min(cellNat[i], MIN_TEXT));
-          if (numSum + sum(mins) <= W || size <= 6) {
-            if (numSum + sum(mins) <= W) {
-              // Numbers keep their width; the text columns share what is left, none wider than it needs.
-              widths = cellNat.slice();
-              let left = W - numSum;
-              let open = textCols.slice();
-              for (;;) {
-                const fair = left / open.length;
-                const small = open.filter((i) => cellNat[i] <= fair);
-                if (!small.length) {
-                  open.forEach((i) => (widths[i] = fair));
-                  break;
-                }
-                small.forEach((i) => {
-                  widths[i] = cellNat[i];
-                  left -= cellNat[i];
-                });
-                open = open.filter((i) => small.indexOf(i) < 0);
-                if (!open.length) break;
-              }
-            } else widths = cellNat.map((w) => (w * W) / sum(cellNat));
-          } else {
-            size -= 0.5;
-            continue;
+        const min = [];
+        const nat = [];
+        cols.forEach((c, i) => {
+          const full = Math.max(most(body, (r) => widest(r[i], reg)), total ? widest(total[i], B) : 0);
+          const word = Math.max(most(body, (r) => longestWord(r[i], reg)), total ? longestWord(total[i], B) : 0);
+          const hw = longestWord(heads[i], B);
+          min[i] = Math.max(hw, fixed[i] ? full : Math.min(word, CAP_EM * size)) + 2 * PAD;
+          nat[i] = Math.max(min[i], widest(heads[i], B) + 2 * PAD, full + 2 * PAD);
+        });
+        return { min, nat };
+      };
+      /** Widths for the columns idx across the page: each at least its narrowest, grown toward its widest, extra space to text. */
+      const fill = (idx, m) => {
+        const min = idx.map((i) => m.min[i]);
+        const nat = idx.map((i) => m.nat[i]);
+        let left = W - sum(min);
+        const need = nat.map((n, k) => n - min[k]);
+        if (left <= 0) return min.map((w) => (w * W) / sum(min));
+        if (sum(need) >= left) {
+          // The columns that need least get all they need first (a short name stays on one line); the rest share what is left.
+          const w = min.slice();
+          let open = need.map((n, k) => k).filter((k) => need[k] > 0);
+          while (open.length) {
+            const fair = left / open.length;
+            const small = open.filter((k) => need[k] <= fair);
+            if (!small.length) {
+              open.forEach((k) => (w[k] += fair));
+              break;
+            }
+            small.forEach((k) => {
+              w[k] += need[k];
+              left -= need[k];
+            });
+            open = open.filter((k) => small.indexOf(k) < 0);
           }
+          return w;
         }
-        break;
+        left -= sum(need);
+        const to = idx.map((i, k) => k).filter((k) => !fixed[idx[k]]);
+        const into = to.length ? to : idx.map((i, k) => k);
+        const share = sum(into.map((k) => nat[k])) || 1;
+        return nat.map((n, k) => (into.indexOf(k) >= 0 ? n + (left * n) / share : n));
+      };
+      let size = 8;
+      let m = measure(size);
+      while (sum(m.min) > W && size > 6) m = measure((size -= 0.5));
+      const all = cols.map((c, i) => i);
+      let parts = [all];
+      const key = [];
+      if (sum(m.min) > W) {
+        // In parts at 7 points: the leading text columns (at most two, at most a third of the width) begin every part.
+        m = measure((size = 7));
+        for (let i = 0; i < Math.min(2, cols.length - 1) && !fixed[i] && sum(key.map((k) => m.min[k])) + m.min[i] <= W / 3; i++) key.push(i);
+        const room0 = W - sum(key.map((k) => m.min[k]));
+        const rest = all.filter((i) => key.indexOf(i) < 0);
+        // As few parts as fit, then the columns spread evenly over them so no part is crowded and another empty.
+        const pack = (target, n) => {
+          const out = [];
+          let cur = [];
+          rest.forEach((i) => {
+            const w = sum(cur.map((k) => m.min[k]));
+            if (cur.length && (w + m.min[i] > room0 || (w + m.min[i] / 2 > target && out.length < n - 1))) {
+              out.push(cur);
+              cur = [];
+            }
+            cur.push(i);
+          });
+          if (cur.length) out.push(cur);
+          return out;
+        };
+        const n = pack(Infinity, Infinity).length;
+        parts = pack(sum(rest.map((k) => m.min[k])) / n, n).map((p) => key.concat(p));
       }
       const LH = size * 1.2;
-      const xs = [];
-      widths.reduce((x, w, i) => ((xs[i] = x), x + w), PG.M);
-      const lay = (cells, b) => cells.map((ps, i) => wrap(ps, fontOf(b), size, Math.max(1, widths[i] - 2 * PAD)));
-      const headLines = lay(heads, true);
-      const headH = Math.max(1, ...headLines.map((l) => l.length)) * LH + 2 * VPAD;
-
-      // Page furniture, then the table rows page by page.
-      let y = 0;
-      const drawRow = (lines, b, color) => {
-        lines.forEach((ls, i) => {
-          const F = fontOf(b);
-          ls.forEach((ln, j) => {
-            const base = y - VPAD - size * 0.9 - j * LH;
-            const x = right[i] ? xs[i] + widths[i] - PAD - F.width(ln, size) : xs[i] + PAD;
-            text(ln, x, base, size, b, color);
-          });
-        });
-      };
-      const open = (cont) => {
-        page = out.addPage([PG.W, PG.H]);
-        pages.push(page);
-        y = TOP;
-        if (title || subtitle) {
-          const tl = cutTo(title, fontOf(true), 9, W * 0.6);
-          text(tl, PG.M, y - 9, 9, true);
-          const st = cutTo(subtitle, reg, 9, W - fontOf(true).width(tl, 9) - 24);
-          text(st, PG.M + W - reg.width(st, 9), y - 9, 9, false, MUTE);
-          y -= 24;
-        }
-        const tt = cutTo(sTitle + (cont ? ' (continued)' : ''), fontOf(true), 13, W);
-        text(tt, PG.M, y - 13, 13, true);
-        y -= 19;
-        if (desc && !cont) {
-          text(cutTo(desc, reg, 8.5, W), PG.M, y - 8.5, 8.5, false, MUTE);
-          y -= 14;
-        }
-        y -= 6;
-        if (!cols.length) return;
-        page.drawRectangle({ x: PG.M, y: y - headH, width: W, height: headH, color: L.rgb(0.93, 0.93, 0.93) });
-        drawRow(headLines, true);
-        y -= headH;
-        rule(y, 0.6, 0.25);
-      };
-      open(false);
-      if (!cols.length) return;
-      // The most lines a row may have so it fits on a page of its own; longer cells are cut with an ellipsis.
-      const room = () => y - FLOOR;
-      const firstRoom = room();
-      const maxLines = Math.max(1, Math.floor((firstRoom - 2 * VPAD) / LH));
       const rows = body.map((r) => ({ cells: r, b: false }));
       if (total) rows.push({ cells: total, b: true, total: true });
       if (!rows.length) rows.push({ cells: cols.map((c, i) => (i === 0 ? [fit('None')] : [''])), b: false, color: MUTE });
-      rows.forEach((row) => {
-        let lines = lay(row.cells, row.b);
-        lines = lines.map((ls, i) => (ls.length > maxLines ? ls.slice(0, maxLines - 1).concat([cutTo(ls[maxLines - 1] + '…', fontOf(row.b), size, Math.max(1, widths[i] - 2 * PAD))]) : ls));
-        const h = Math.max(1, ...lines.map((l) => l.length)) * LH + 2 * VPAD;
-        if (h > room()) open(true);
-        if (row.total) rule(y, 0.8, 0.1);
-        drawRow(lines, row.b, row.color);
-        y -= h;
-        if (!row.total) rule(y, 0.3, 0.82);
+
+      // Each part: the page furniture, then the table rows page by page.
+      parts.forEach((idx, pi) => {
+        const widths = fill(idx, m);
+        const xs = [];
+        widths.reduce((x, w, k) => ((xs[k] = x), x + w), PG.M);
+        const lay = (cells, b) => idx.map((i, k) => wrap(cells[i], fontOf(b), size, Math.max(1, widths[k] - 2 * PAD)));
+        const headLines = lay(heads, true);
+        const headH = Math.max(1, ...headLines.map((l) => l.length)) * LH + 2 * VPAD;
+        let y = 0;
+        const drawRow = (lines, b, color) => {
+          const F = fontOf(b);
+          lines.forEach((ls, k) => {
+            ls.forEach((ln, j) => {
+              const base = y - VPAD - size * 0.9 - j * LH;
+              const x = right[idx[k]] ? xs[k] + widths[k] - PAD - F.width(ln, size) : xs[k] + PAD;
+              text(ln, x, base, size, b, color);
+            });
+          });
+        };
+        const open = (cont) => {
+          page = out.addPage([PG.W, PG.H]);
+          pages.push(page);
+          y = TOP;
+          if (title || subtitle) {
+            const tl = cutTo(title, fontOf(true), 9, W * 0.6);
+            text(tl, PG.M, y - 9, 9, true);
+            const st = cutTo(subtitle, reg, 9, W - fontOf(true).width(tl, 9) - 24);
+            text(st, PG.M + W - reg.width(st, 9), y - 9, 9, false, MUTE);
+            y -= 24;
+          }
+          const tt = cutTo(sTitle + (parts.length > 1 ? `, part ${pi + 1} of ${parts.length}` : '') + (cont ? ' (continued)' : ''), fontOf(true), 13, W);
+          text(tt, PG.M, y - 13, 13, true);
+          y -= 19;
+          if (desc && !cont && pi === 0) {
+            text(cutTo(desc, reg, 8.5, W), PG.M, y - 8.5, 8.5, false, MUTE);
+            y -= 14;
+          }
+          y -= 6;
+          if (!cols.length) return;
+          page.drawRectangle({ x: PG.M, y: y - headH, width: W, height: headH, color: L.rgb(0.93, 0.93, 0.93) });
+          drawRow(headLines, true);
+          y -= headH;
+          rule(y, 0.6, 0.25);
+        };
+        open(false);
+        if (!cols.length) return;
+        // The most lines a row may have so it fits on a page of its own; longer cells are cut with an ellipsis.
+        const maxLines = Math.max(1, Math.floor((y - FLOOR - 2 * VPAD) / LH));
+        rows.forEach((row) => {
+          // a part whose columns hold nothing of the total row prints no total row
+          if (row.total && parts.length > 1 && idx.every((i) => key.indexOf(i) >= 0 || !row.cells[i].join(''))) return;
+          let lines = lay(row.cells, row.b);
+          lines = lines.map((ls, k) => (ls.length > maxLines ? ls.slice(0, maxLines - 1).concat([cutTo(ls[maxLines - 1] + '…', fontOf(row.b), size, Math.max(1, widths[k] - 2 * PAD))]) : ls));
+          const h = Math.max(1, ...lines.map((l) => l.length)) * LH + 2 * VPAD;
+          if (h > y - FLOOR) open(true);
+          if (row.total) rule(y, 0.8, 0.1);
+          drawRow(lines, row.b, row.color);
+          y -= h;
+          if (!row.total) rule(y, 0.3, 0.82);
+        });
       });
     });
 
