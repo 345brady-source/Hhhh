@@ -169,6 +169,7 @@ export function createServer(opts = {}) {
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   const accounts = createAccounts({ store, now });
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
+  const pkg = invites.usePackages({ billing, providers: PROVIDERS, identity: env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', accreditation: env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit' }); // the package on invitations (08-05); 08-15 adds its route helpers
   /**
    * Who is calling a sponsor route: null (refuse), { shared: true } (the shared API_TOKEN, or an open server: no API_TOKEN
    * and no account), or { account } (a sponsor's own token; the call then acts on that account's workspace only).
