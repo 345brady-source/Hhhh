@@ -553,6 +553,33 @@ test('no reply before the limit is 504 timeout; a service error and a refused co
       assert.deepEqual(logs, [`help: ${reason} ${status}`], name);
       for (const s of logs.concat(text)) assert.equal(VENDOR.test(s) || s.includes(KEY), false, name);
     }
+
+    // Whatever the library throws or hands back, the route answers its own closed reason and prints its own line.
+    const { createServer } = await import('../index.mjs');
+    const broken = [
+      async () => {
+        throw new Error(`Anthropic said no to ${KEY}`);
+      },
+      async () => ({ status: 'claude', body: null }),
+      async () => undefined
+    ];
+    for (const brokenAsk of broken) {
+      const server = createServer({ env: { NODE_ENV: 'test', RATE_LIMIT_PER_MIN: '100000' }, store: openStore(null), help: { available: async () => true, ask: brokenAsk } });
+      await new Promise((r) => server.listen(0, r));
+      let got = null;
+      const logs = await captureConsole(async () => {
+        try {
+          got = await ask(`http://127.0.0.1:${server.address().port}`, { message: 'How do I sign?' });
+        } finally {
+          server.closeAllConnections();
+          await new Promise((r) => server.close(r));
+        }
+      });
+      assert.equal(got.status, 502);
+      assert.deepEqual(got.body, { ok: false, reason: 'failed' });
+      assert.deepEqual(logs, ['help: failed 502']);
+      assert.equal(VENDOR.test(got.text) || got.text.includes(KEY), false);
+    }
   }));
 
 test('the guard: an answer that names a vendor or model, holds the marker, an address or a number shape, uses the forbidden word or is too long comes back as "I do not have that information."', async () => {

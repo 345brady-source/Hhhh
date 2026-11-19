@@ -626,8 +626,10 @@ export function createServer(opts = {}) {
         r = null;
       }
       res.off('close', onClose);
-      r = r && r.body && Number.isInteger(r.status) ? r : { status: 502, body: { ok: false, reason: 'failed' }, row: null };
+      const sound = !!(r && r.body && Number.isInteger(r.status));
+      if (!sound) r = { status: 502, body: { ok: false, reason: 'failed' }, row: null };
       if (!res.writableEnded && !res.destroyed) send(res, r.status, r.body);
+      if (!sound) console.error('help: failed 502');
       if (r.row) {
         // What the question used counts against the shared cap, and its numbers (never its words) go to the read log.
         if (help.budget && help.budget.add) help.budget.add(r.row.usage, r.row.model);
