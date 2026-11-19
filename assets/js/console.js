@@ -1316,11 +1316,10 @@
     const d = draft();
     const total = draftTotalCents(d);
     if (!(total > 0)) return;
-    const id = `${d.offeringId}-${d.date}-${Date.now().toString(36)}`;
     const wf = d.wf && d.wf.lp === total ? d.wf : null;
-    W().runs.unshift(Object.assign({ id, offeringId: d.offeringId, date: d.date, type: d.type, total, status: d.date > today() ? 'scheduled' : 'paid', source: 'console', file: d.file ? d.file.filename : '' }, wf ? { gp: wf.gp, gross: wf.gross } : {}));
+    // The record keeps what each investor is paid (NS.data.recordRun); the console adds its change-log entry.
+    const id = NS.data.recordRun(W(), Object.assign({ offeringId: d.offeringId, date: d.date, type: d.type, total, file: d.file ? d.file.filename : '' }, wf ? { gp: wf.gp, gross: wf.gross } : {}), { by: NS.app.actor(), today: today() }).id;
     audit('Distribution recorded', `${d.type}: ${usdc(total)} ${d.date > today() ? 'scheduled for' : 'paid'} ${date(d.date)}${wf ? ` (waterfall: ${usdc(wf.gross)} gross, ${usdc(wf.gp)} to the GP)` : ''}; ${d.file ? d.file.filename : 'no NACHA file'}`, d.offeringId, id);
-    W().runs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     NS.app.save(true);
     const o = W().offerings.find((x) => x.id === d.offeringId);
     S().ui.dist = null;
