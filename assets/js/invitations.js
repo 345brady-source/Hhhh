@@ -1430,7 +1430,8 @@
     if (!E.diy || !NS.pkg || onFileEmail(ws, d.email)) return { show: false, enabled: false, label: '', line: '', href: '' };
     return NS.pkg.box(ws, d.offeringId || '', undefined, byEmail(ws, d.email));
   }
-  const packageLine = (pk) => (pk.href ? `<a href="${h(pk.href)}">${h(pk.line)}</a>` : h(pk.line));
+  /** The box's one line; it leads to the Integrations page only for someone who can open it (an admin). */
+  const packageLine = (pk) => (pk.href && NS.app.can('configure') ? `<a href="${h(pk.href)}">${h(pk.line)}</a>` : h(pk.line));
   /** The box brought up to date in place (the server's answer arrived, or the email changed): no re-render while typing. */
   function syncPackage() {
     const row = document.getElementById('iv-package-row');

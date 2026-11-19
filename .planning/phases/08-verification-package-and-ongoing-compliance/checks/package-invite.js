@@ -411,6 +411,18 @@ const parts = {
       check('following the link opens the Integrations page', (await p.evaluate(() => location.hash)) === '#console-integrations' && /Integrations/.test(await p.locator('h1').first().innerText().catch(() => '')), await p.evaluate(() => location.hash));
       seen.push(await F.noRawError(check, p, 'the Integrations page', C.A.errors));
 
+      // A team member cannot open the Integrations page (admins only): the same line, with no link that leads nowhere.
+      await p.selectOption('#demo-role', 'team');
+      await p.waitForTimeout(400);
+      const role = await p.evaluate(() => ({ role: window.CVPortal.state.role, configure: window.CVPortal.app.can('configure'), operate: window.CVPortal.app.can('operate') }));
+      await openForm(p);
+      await chooseOffering(p, '');
+      b = await boxShown(p);
+      check('a team member (no access to the Integrations page): the same line, without a link', role.role === 'team' && role.configure === false && role.operate === true && b.shown && b.disabled && b.line === LINE_NO_CARD && b.href === '', { role, b });
+      seen.push(await F.noRawError(check, p, 'the invite form as a team member', C.A.errors));
+      await p.selectOption('#demo-role', 'admin');
+      await p.waitForTimeout(400);
+
       // A balance that covers the price pays for it (plan 08-04: credit first), so no card is needed.
       credit = 2500;
       await p.reload();
