@@ -63,6 +63,10 @@ Then, in the portal, open Integrations and enter this server's URL.
 | `CARROWVALE_READ_MAX_TOKENS` | The longest reply a reading may produce, in tokens (default 64000, kept between 1024 and 128000). |
 | `CARROWVALE_SPEND_CAP_USD` | A spend cap in US dollars. When set, a reading is refused (402) before anything is spent if its worst case would take the money already spent past the cap. Unset, there is no cap. |
 | `CARROWVALE_READ_LOG` | Optional. A file that gets one line per reading of either kind (numbers and outcome codes only, below). With a cap, the money already spent is counted from this file, so keep it for as long as the cap should cover. |
+| `CARROWVALE_HELP_DAILY_USD` | The most portal help may spend in one day (UTC), in US dollars (default 2, so the cap is on when nothing is set). A question is refused (402) before anything is spent when its worst case would take the day past it. `0`, or a value that is not an amount, refuses every question. |
+| `CARROWVALE_HELP_PER_HOUR` | How many help questions one address may ask in an hour (default 30; `0` turns this limit off; any other value that is not a whole number is 30). |
+| `CARROWVALE_HELP_EFFORT` | How much effort each help answer takes: `low` (the default), `medium` or `high`; any other value is `low`. |
+| `CARROWVALE_HELP_MODEL` | Leave unset; used only for measurement. |
 
 Provider keys and webhook secrets are environment variables too: each connector or plug-in lists the ones it needs, and `GET /v1/connectors` reports which are missing (by name, never by value). Keep them in a `.env` file or your host's secret store, never in `connectors.json` or the portal.
 
@@ -89,6 +93,7 @@ Provider keys and webhook secrets are environment variables too: each connector 
 | `GET /v1/invite`, `PUT /v1/invite/progress`, `POST /v1/invite/complete` | The investor's browser, with the link's token in `X-Invite-Token`. |
 | `POST /v1/intake` | Read an offering's documents for the intake screen: `{ prompt }` → a stream of JSON lines ending `{ ok, json }` (below). API_TOKEN; invitation tokens are refused. |
 | `POST /v1/read` | Read an uploaded subscription agreement: `{ pdf, pages, text, list }` → `{ ok, fields, missing, ms }` (see Reading agreements). API_TOKEN; invitation tokens are refused. |
+| `POST /v1/help` | Answer a question about using the portal: `{ message, session?, page?, step?, role? }` → `{ ok, kind, answer, session }` (see Portal help). API_TOKEN, or an invitation link's token, which gets the investor's guide only. |
 
 `GET /v1/connectors` answers:
 
@@ -325,6 +330,7 @@ The token in the link authorizes only these calls, for that invitation's investo
 | `POST /v1/invite/complete` | `{ investor, request, envelope, files: { <docId>: base64 PDF, PNG or JPEG }, docs, audit, notifications }`. `files` holds only what this submission produced (see "What the server vouches for"): the envelope's copies, which must be PDFs, and the investor's own uploads for the firm to review (PDF, PNG or JPEG), checked by their first bytes; 25 MB together, body 40 MB. Any other file is dropped without failing the submission. `investor.id` must be the invited investor; `request.offeringId` must be the invited offering and, when the sponsor set a commitment, `request.cents` must be that commitment (otherwise 400). Answers `{ ok: true }` (`already: true` on a repeat) and emails the sponsor once. A cancel or resend that lands while the body uploads wins (410 or 401). |
 | `POST /v1/verifications`, `GET /v1/verifications/:id` | As for the console, but only for the invited investor in the invitation's workspace (another investor's id or check, or the same id in another workspace, is refused with 403). |
 | `POST /v1/screenings`, `GET /v1/screenings/:id` | The same. |
+| `POST /v1/help` | A question about using the portal, answered from the investor's guide only (see Portal help). |
 
 An unknown token answers 401; an expired or cancelled invitation answers 410 with a message naming the firm. The invitation token is refused (401) on every other route, including the sponsor's, even when sent together with `API_TOKEN`.
 
@@ -417,6 +423,32 @@ A token (32 random bytes) is shown once, in the answer that makes it; only its S
 
 On a server with accounts, the shared `API_TOKEN` is the operator's own: it still reaches every workspace, so give it to no sponsor. With no `API_TOKEN` and no account, `/v1/` calls need no token (development); once one account exists, every sponsor call needs a token. An account made for a workspace that already has records reaches those records. Make one account for each workspace in the portal, even for one firm: investor ids repeat from one workspace to the next, and a check is matched to an investor by id within a workspace.
 
+## Portal help
+
+The portal's Help answers questions about using the portal: where a page is, what a button does, how to finish a step. When the workspace has this server's address under Integrations, the portal sends each question here and this server has it answered with `CARROWVALE_API_KEY`, from a guide to the portal's own screens. It answers portal questions only: it gives no investment, legal or tax advice, and it cannot see anyone's account, documents or data. Help is available exactly when reading is (`reader` in `GET /health`): without a key, `POST /v1/help` answers 503 and the portal says help is not available.
+
+**Who may call it.** The console, with `API_TOKEN`, gets the sponsor's guide (every page of the console and of the investor portal). An investor's invitation link, with its token in `X-Invite-Token`, gets the investor's guide only, whatever the request says. A request can lower what it gets (`"role": "investor"`) and can never raise it. A conversation belongs to the credential that started it: its id is of no use with another credential.
+
+`POST /v1/help` takes JSON of at most 8 KB: `{ "message": "<the question, 1 to 500 characters>", "session": "<the id an earlier answer returned, optional>", "page": "<the key of the page the person is on, optional>", "step": "<the key of the step, optional>", "role": "admin" | "team" | "investor" (optional) }`. Every other field is ignored, and `page` and `step` are used only when they are keys the guide knows. The answers, all with `Cache-Control: no-store`:
+
+- `200 { "ok": true, "kind", "answer", "session" }`: `kind` is `answer`, `cannot` (the guide does not have it) or `out_of_scope` (not a question about using the portal). Send `session` back with the next question to continue the conversation;
+- `400 { ok: false, reason: "invalid" }` when the body is not a JSON object or has no question, and `413 { ok: false, reason: "too_large" }` when the body is over 8 KB or the question over 500 characters;
+- `429 { ok: false, reason: "limit" }` and `402 { ok: false, reason: "spend_cap" }` for the limits and caps below, before anything is spent;
+- `503 { ok: false, reason: "unavailable" }` without a key, answered before the body is read;
+- `504 { ok: false, reason: "timeout" }` when there is no answer within 15 seconds, and `502 { ok: false, reason: "incomplete" | "invalid" | "failed" }` for a cut-off answer, an answer of the wrong shape, or any other error.
+
+**Limits and cost.** A question is at most 500 characters and an answer is short. A conversation takes 20 questions (the next question starts a new conversation) and ends after 30 minutes without one; this server holds at most 5,000 conversations. One address may ask `CARROWVALE_HELP_PER_HOUR` questions an hour (30 unless set), on top of `RATE_LIMIT_PER_MIN`.
+
+Help spends at most `CARROWVALE_HELP_DAILY_USD` US dollars in one day (UTC): **$2 a day unless you set another amount**. Before each question this server takes its worst case (every byte it would send, priced at the dearest input price of the published price list, plus the longest reply it allows) and refuses the question with 402 when that, added to what help has already spent that day, would pass the amount. At the guide's present size the worst case of one question is under one US cent. The day's spending is counted again from `CARROWVALE_READ_LOG` when the server starts; without that file a restart starts the day's count at zero. `CARROWVALE_SPEND_CAP_USD`, when set, covers help together with reading, by the same worst-case rule.
+
+**What is kept.** Nothing but numbers. No question and no answer is written to a file or a log. The last three questions and answers of a conversation are held in this server's memory only, so a follow-up question makes sense, and are gone 30 minutes after the last question or when the server stops. Before a question is sent for an answer or held, email addresses, tax numbers and any run of 8 or more digits in it are replaced by `[removed]`. Each question adds one line to `CARROWVALE_READ_LOG` (when set): `{ at, route: "help", ms, audience, page, turn, bound, outcome, stopReason, model, usage: { input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens }, cost, guide }`: the time, the audience (`sponsor` or `investor`), the page's key, the question's number in its conversation, the worst-case input the caps used, an outcome code (`answer`, `cannot`, `out_of_scope`, `declined`, `guarded`, `incomplete`, `invalid`, `timeout`, `failed`, `spend_cap` or `limit`), the id of the model that answered, the counts, the cost and the guide's version, never a question, an answer, a name or an address. A question that is not well formed (400 or 413) adds no line. A failure also prints one line to the console with its reason and HTTP status only.
+
+No answer ever carries a key, a model or provider name, or the text of an error: an answer that would name one, repeat an address or a long number, or run past 1,200 characters is replaced by "I do not have that information." before it leaves this server. When the browser closes the connection, the question is stopped.
+
+**The guide.** `lib/help-guide.mjs` is generated from `help/guide.md` and `help/rules.md` with `node server/help/build.mjs` and is checked by the tests, which fail when a page, a step or a name on a screen changes without the guide.
+
+**The support contact.** The address a sponsor's people see beside an answer is set where the portal is published, as `window.CVPortalConfig.supportEmail`. Until it is set, a team member sees "Contact your administrator." and an administrator sees no contact line.
+
 ## Data protection
 
 Invitations hold investors' personal details, bank details and signed documents, so:
@@ -437,6 +469,7 @@ Invitations hold investors' personal details, bank details and signed documents,
 - `GET /hosted/:id` never redirects to a link the portal supplied (the `link` provider), so this server's domain cannot be used as an open redirect.
 - Error messages are scrubbed of every secret, raw, URL-encoded or inside base64 (for example a basic-auth `user:password` echoed back by a provider).
 - Reading: the reading key is read from `CARROWVALE_API_KEY` only (no other key, token, profile or address setting is used, and the service address is fixed), it is built into one client in `lib/model.mjs`, and it never leaves this server. `POST /v1/intake` and `POST /v1/read` sit behind `PORTAL_ORIGIN`, `API_TOKEN`, the rate limit, the size limits and the spend cap. Text inside an uploaded agreement is treated as data: the reading can only choose among places the browser measured on the page, and every field lands on printed geometry.
+- Portal help: `POST /v1/help` uses the same key and client and sits behind `PORTAL_ORIGIN`, a credential (`API_TOKEN` or an invitation link's token), the rate limit, its own hourly limit and both caps. Who is asking comes from the credential, never from the request; the conversation is kept by this server, so a request cannot supply earlier turns; a person's question is treated as a question, never as an instruction, and every answer is checked before it is sent.
 - Invitations: personal data encrypted at rest with `DATA_KEY`, tokens stored only as hashes, links scoped to one investor, submissions deleted after import (see Data protection). SMTP credentials are never sent unencrypted or included in error messages.
 
 Before production:
