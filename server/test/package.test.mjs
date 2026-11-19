@@ -196,3 +196,189 @@ test('tracer: a sponsor account’s package invitation is paid before it is stor
     assert.ok(!('package' in snap.invitation) && !('clientId' in snap.invitation), 'neither value is written into the snapshot’s invitation');
   });
 });
+
+test('N2 order: the record is written, then the package is tied to it, then the email; the charge saw neither', async () => {
+  const seen = [];
+  const charge = (call, ok, store) => {
+    seen.push({ invitations: store.list('invitations').length, outbox: store.list('outbox').length });
+    return ok(call);
+  };
+  await shop({ charge }, async ({ base, store, a }) => {
+    const from = store.log.length;
+    const r = await invite(base, a.token, { package: true, clientId: 'o1' }, { offering: withDoc });
+    assert.equal(r.status, 200, r.text);
+    assert.deepEqual(seen, [{ invitations: 0, outbox: 0 }]);
+    const log = store.log.slice(from);
+    const at = (pred) => log.findIndex(pred);
+    const record = at((x) => x.kind === 'invitations' && x.op === 'put' && x.rec.id === r.body.id);
+    const tied = at((x) => x.kind === 'entitlements' && x.op === 'put' && x.rec.status === 'consumed' && x.rec.invitationId === r.body.id);
+    const email = at((x) => x.kind === 'outbox' && x.op === 'put');
+    assert.ok(record >= 0 && tied >= 0 && email >= 0, JSON.stringify({ record, tied, email }));
+    assert.ok(record < tied && tied < email, `the order is record ${record}, package ${tied}, email ${email}`);
+    assert.equal(log.filter((x) => x.kind === 'outbox').length, 1);
+  });
+});
+
+test('N2 together: two posts with one client id at the same moment give one 200 and one 409, one invitation, one email, one charge', async () => {
+  let release;
+  const held = new Promise((r) => (release = r));
+  const charge = async (call, ok) => {
+    await held;
+    return ok(call);
+  };
+  await shop({ charge }, async ({ base, server, store, gw, a }) => {
+    // The charge is held until both requests have been read by the server (a safety timer stops a hang).
+    let ended = 0;
+    server.on('request', (req) => {
+      if (req.method === 'POST' && req.url === '/v1/invitations') req.on('end', () => ++ended === 2 && setImmediate(release));
+    });
+    const safety = setTimeout(release, 3000);
+    const both = await Promise.all([invite(base, a.token, { package: true, clientId: 'c2' }, { offering: withDoc }), invite(base, a.token, { package: true, clientId: 'c2' }, { offering: withDoc })]);
+    clearTimeout(safety);
+    assert.equal(ended, 2);
+    assert.deepEqual(both.map((r) => r.status).sort(), [200, 409], both.map((r) => r.text).join(' | '));
+    const won = both.find((r) => r.status === 200);
+    const lost = both.find((r) => r.status === 409);
+    assert.ok(['already_sent', 'package_used'].includes(lost.body.code), lost.text);
+    assert.equal(store.list('invitations').length, 1);
+    assert.equal(store.list('outbox').length, 1);
+    assert.equal(gw.charges().length, 1);
+    assert.deepEqual(store.blobs(), store.get('invitations', won.body.id).blobs.slice().sort(), 'only the 200’s files are kept');
+  });
+});
+
+test('N2 tier: a key paid at one level is refused at the other, both ways, with nothing charged, stored or emailed', async () => {
+  await shop({}, async ({ base, store, gw, a }) => {
+    const cases = [
+      ['t1', 'identity', true],
+      ['t2', 'full', false]
+    ];
+    for (const [key, paidAs, accreditationRequired] of cases) {
+      const pre = await buy(base, a.token, [{ key, tier: paidAs }]);
+      assert.equal(pre.status, 200, pre.text);
+      const before = tables(store);
+      const calls = gw.calls.length;
+      const r = await invite(base, a.token, { package: true, clientId: key }, { offering: withDoc, verification: { accreditationRequired, connections: [], use: {} } });
+      assert.equal(r.status, 409, r.text);
+      assert.deepEqual(r.body, { error: "This invitation's package was paid at another level. Nothing was charged.", code: 'tier_mismatch' });
+      assert.equal(gw.calls.length, calls, 'no call to the payment provider');
+      assert.deepEqual(tables(store), before, 'tables, files and outbox unchanged');
+    }
+  });
+});
+
+test('N2 prepaid 25 hours: a key paid a day earlier has gone back to credit and the invitation is paid from it, with no second charge', async () => {
+  await shop({}, async ({ base, store, gw, clock, a }) => {
+    const pre = await buy(base, a.token, [{ key: 'p1', tier: 'identity' }]);
+    assert.equal(pre.status, 200, pre.text);
+    assert.equal(gw.charges().length, 1);
+    const first = entitlementsOf(store, a, 'p1')[0];
+    clock.t = T0 + 25 * HOUR;
+    const mid = await j(base, 'GET', '/v1/billing', { bearer: a.token });
+    assert.equal(mid.body.creditCents, 1900);
+    assert.deepEqual(mid.body.charges[0], { at: new Date(T0 + 25 * HOUR).toISOString(), type: 'credit', by: 'credit', cents: 1900, tier: 'identity', invitationId: null });
+    const r = await invite(base, a.token, { package: true, clientId: 'p1' });
+    assert.equal(r.status, 200, r.text);
+    assert.equal(gw.charges().length, 1, 'no second charge');
+    const rec = store.get('invitations', r.body.id);
+    assert.notEqual(rec.package.entitlement, first.id, 'a new package');
+    const own = store.get('entitlements', rec.package.entitlement);
+    assert.equal(own.by, 'credit');
+    assert.equal(own.status, 'consumed');
+    assert.equal(own.invitationId, rec.id);
+    const after = await j(base, 'GET', '/v1/billing', { bearer: a.token });
+    assert.equal(after.body.creditCents, 0);
+  });
+});
+
+test('N2 other account: account B using account A’s client id never touches A’s package', async () => {
+  await shop({}, async ({ base, store, gw, a }) => {
+    const ra = await invite(base, a.token, { package: true, clientId: 'x1' });
+    assert.equal(ra.status, 200, ra.text);
+    const pick = (e) => ({ id: e.id, status: e.status, invitationId: e.invitationId });
+    const aBefore = entitlementsOf(store, a, 'x1').map(pick);
+    const b = await account(base, 'beta');
+    await saveCard(base, b.token);
+    const rb = await invite(base, b.token, { package: true, clientId: 'x1' });
+    assert.equal(rb.status, 200, rb.text);
+    assert.deepEqual(entitlementsOf(store, a, 'x1').map(pick), aBefore);
+    const bEnts = entitlementsOf(store, b, 'x1');
+    assert.equal(bEnts.length, 1);
+    assert.equal(gw.charges().length, 2, 'B paid for its own package');
+    const recB = store.get('invitations', rb.body.id);
+    assert.equal(recB.package.account, b.id);
+    assert.equal(recB.package.entitlement, bEnts[0].id);
+    assert.equal(bEnts[0].invitationId, recB.id);
+  });
+});
+
+test('refused charge: a declined card, a bank asking for confirmation and no card on file each answer 402 and leave nothing behind', async () => {
+  let answer = '';
+  const charge = (call, ok) => (answer ? refusal(answer) : ok(call));
+  await shop({ charge }, async ({ base, store, gw, a }) => {
+    const expect = [
+      ['error-card-declined', { error: 'The card was declined. Nothing was charged.', code: 'card_declined' }],
+      ['error-authentication-required', { error: "The card's bank asks for confirmation. Replace the card on the Integrations page, then try again.", code: 'authentication_required' }]
+    ];
+    for (const [fixture, body] of expect) {
+      answer = fixture;
+      const before = tables(store);
+      const n = gw.charges().length;
+      const r = await invite(base, a.token, { package: true, clientId: 'r1' }, { offering: withDoc });
+      assert.equal(r.status, 402, r.text);
+      assert.deepEqual(r.body, body);
+      assert.equal(gw.charges().length, n + 1);
+      const after = tables(store);
+      assert.deepEqual(after.invitations, before.invitations);
+      assert.deepEqual(after.blobs, before.blobs);
+      assert.deepEqual(after.outbox, before.outbox);
+      assert.deepEqual(after.entitlements, [], 'no package recorded');
+    }
+    const removed = await j(base, 'DELETE', '/v1/billing/card', { bearer: a.token });
+    assert.equal(removed.status, 200, removed.text);
+    const before = tables(store);
+    const calls = gw.calls.length;
+    const r = await invite(base, a.token, { package: true, clientId: 'r1' }, { offering: withDoc });
+    assert.equal(r.status, 402, r.text);
+    assert.deepEqual(r.body, { error: 'Add a card on the Integrations page first.', code: 'no_card' });
+    assert.equal(gw.calls.length, calls);
+    assert.deepEqual(tables(store), before);
+  });
+});
+
+test('already sent: a second post while the first invitation is open is refused with no charge; once that invitation is gone the package’s credit pays', async () => {
+  await shop({}, async ({ base, store, gw, a }) => {
+    const first = await invite(base, a.token, { package: true, clientId: 'c3' });
+    assert.equal(first.status, 200, first.text);
+    assert.equal(gw.charges().length, 1);
+    let before = tables(store);
+    let calls = gw.calls.length;
+    const again = await invite(base, a.token, { package: true, clientId: 'c3' });
+    assert.equal(again.status, 409, again.text);
+    assert.deepEqual(again.body, { code: 'already_sent', error: 'This invitation was already sent. Nothing was charged.' });
+    assert.equal(gw.calls.length, calls);
+    assert.deepEqual(tables(store), before);
+
+    // As a purge would: the invitation is gone, so its package counts as ended and returns as credit, which pays the next one.
+    store.remove('invitations', first.body.id);
+    const next = await invite(base, a.token, { package: true, clientId: 'c3' });
+    assert.equal(next.status, 200, next.text);
+    assert.equal(gw.calls.length, calls, 'paid from the returned credit');
+    const rec = store.get('invitations', next.body.id);
+    assert.equal(store.get('entitlements', rec.package.entitlement).by, 'credit');
+    assert.equal((store.get('billing', a.id) || {}).creditCents, 0);
+
+    // R7: a package whose check started is never returned; once its invitation has ended, the same client id answers
+    // package_used, with no charge and nothing stored.
+    store.put('entitlements', { id: rec.package.entitlement, startedAt: new Date(T0).toISOString() });
+    const cancel = await j(base, 'POST', `/v1/invitations/${rec.id}/cancel`, { bearer: a.token });
+    assert.equal(cancel.status, 200, cancel.text);
+    before = tables(store);
+    calls = gw.calls.length;
+    const used = await invite(base, a.token, { package: true, clientId: 'c3' });
+    assert.equal(used.status, 409, used.text);
+    assert.equal(used.body.code, 'package_used');
+    assert.equal(gw.calls.length, calls);
+    assert.deepEqual(tables(store), before);
+  });
+});

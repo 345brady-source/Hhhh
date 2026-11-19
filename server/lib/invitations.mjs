@@ -1044,6 +1044,14 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       if (!packages) return refusePackage(res, 'package_unavailable');
       const tier = invitation.existing && invitation.reverify === true ? 'reverify' : verification.accreditationRequired === true ? 'full' : 'identity';
       if (!packages.billing.available()[tier]) return refusePackage(res, 'package_unavailable');
+      // One client id is one package: while its invitation is open a second post is refused before any payment. A package
+      // whose invitation has ended or no longer exists goes back to credit (unless its check started), which pays this one.
+      const prev = packages.billing.find(account, clientId);
+      if (prev && prev.status === 'consumed') {
+        const owner = prev.invitationId ? store.get('invitations', prev.invitationId) : null;
+        if (owner && !ENDED.includes(owner.status) && !expired(owner)) return refusePackage(res, 'already_sent');
+        packages.billing.release(prev.id);
+      }
       try {
         await packages.billing.entitle(account, [{ key: clientId, tier }]);
       } catch (e) {
