@@ -35,7 +35,8 @@ const SRC = (f, root) => fs.readFileSync(path.join(root || process.env.P10_ROOT 
  */
 function load(day, files, root) {
   const window = { CVPortal: {} };
-  const ctx = vm.createContext({ window });
+  // timers that never fire: the change log's write-behind (audit.js) is not part of what is checked
+  const ctx = vm.createContext({ window, setTimeout: () => 0, clearTimeout: () => {}, TextEncoder, TextDecoder });
   const [y, m, d] = day.split('-').map(Number);
   vm.runInContext(`(function () { const R = Date; const fixed = new R(${y}, ${m - 1}, ${d}, 12, 0, 0).getTime(); class D extends R { constructor(...a) { if (a.length) super(...a); else super(fixed); } static now() { return fixed; } } globalThis.Date = D; })();`, ctx);
   (files || ['data.js']).forEach((f) => vm.runInContext(SRC('assets/js/' + f, root), ctx, { filename: f }));
@@ -452,16 +453,21 @@ const cases = {
       NS2.data.recordRun(ws3, { offeringId: o3.id, date: '2026-10-15', type: 'Income', total: 1000000, file: '' }, { by: BY, today: '2026-11-24', id: 'p10-stray' });
       ws3.runs.find((x) => x.id === 'p10-stray').lines[0].investorId = 'KBC-9999';
       NS2.clearCaches();
+      // the readiness checks read onboarding.js's one tax-form rule, which needs a page; the same rule, as written there
+      NS2.inviteFlow = NS2.inviteFlow || { taxOnFile: (i) => !!(i && i.taxForm) && (i.taxCert || {}).signed !== false && (i.taxCert || {}).received !== false };
       let L3 = null;
       let ready = '';
       let err = '';
       try {
         L3 = NS2.audit.ledger(ws3, o3);
-        ready = J(NS2.audit.checks(ws3, NS2.audit.period(ws3, o3, '2026-10-01', '2026-10-31')).filter((c) => c.status === 'exception'));
+        ready = J(NS2.audit.checks(ws3, NS2.audit.period(ws3, o3, '2026-10-01', '2026-10-31'), { verify: NS2.audit.verify(ws3) }).filter((c) => c.status === 'exception'));
       } catch (e) {
         err = String(e && e.message);
       }
-      check('A9: a stored line for an investor who does not hold the fund is skipped by the engine, not a crash', !!L3 && !err && !L3.dists.some((x) => x.inv.id === 'KBC-9999') && L3.dists.some((x) => x.run.id === 'p10-stray'), err);
+      const stray = ws3.runs.find((x) => x.id === 'p10-stray');
+      const want = J(stray.lines.slice(1).map((l) => [l.investorId, l.grossCents]));
+      const rows = L3 ? J(L3.dists.filter((x) => x.run.id === 'p10-stray').map((x) => [x.inv.id, x.cents])) : '';
+      check('A9: a stored line for an investor who does not hold the fund is skipped by the engine, not a crash; the run’s other stored lines are its rows', !!L3 && !err && rows === want, err || { rows: rows.slice(0, 200), want: want.slice(0, 200) });
       check('A9: and it is reported as a readiness exception for that period', /KBC-9999/.test(ready), ready.slice(0, 400));
     });
   },

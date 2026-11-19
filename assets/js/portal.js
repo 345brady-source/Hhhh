@@ -825,7 +825,7 @@
       <thead><tr><th scope="col">Payment date</th>${showOffering ? '<th scope="col">Investment</th>' : ''}<th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col">Status</th></tr></thead>
       <tbody>${list
         .map(
-          (p) => `<tr><td class="nowrap td-lead">${date(p.date)}</td>${showOffering ? `<td class="td-full" data-label="Investment">${h(name(p.offeringId))}</td>` : ''}<td data-label="Type">${h(p.type)}</td><td class="num" data-label="Amount">${usdc(p.cents)}</td><td data-label="Status">${p.status === 'scheduled' ? '<span class="status status-pending">Scheduled</span>' : '<span class="status">Paid</span>'}</td></tr>`
+          (p) => `<tr><td class="nowrap td-lead">${date(p.date)}</td>${showOffering ? `<td class="td-full" data-label="Investment">${h(name(p.offeringId))}</td>` : ''}<td data-label="Type">${h(p.type)}</td><td class="num" data-label="Amount">${usdc(p.cents)}${p.withheldCents > 0 ? `<span class="sub">Tax withheld ${usdc(p.withheldCents)}</span><span class="sub">Amount paid ${usdc(p.netCents)}</span>` : ''}</td><td data-label="Status">${p.status === 'scheduled' ? '<span class="status status-pending">Scheduled</span>' : '<span class="status">Paid</span>'}</td></tr>`
         )
         .join('')}</tbody>
     </table></div>`;
