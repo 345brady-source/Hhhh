@@ -377,7 +377,8 @@ test('forged: a wrong signature, a stale or unsigned time, or no secret changes 
       ['session: no signature at all', good, { 'X-Timestamp': String(now) }],
       ['session: body changed after signing', Object.assign({}, good, { status: 'Declined' }), { 'X-Signature': sign(raw) }],
       ['session: signed body is 301 seconds old, under a fresh timestamp header', statusUpdated(v.id, { timestamp: now - 301 }), null],
-      ['session: signed body is 301 seconds ahead', statusUpdated(v.id, { timestamp: now + 301 }), null],
+      // 360 s, not 301: `now` is taken before the loop, and a slow machine can start the loop more than a second later.
+      ['session: signed body is 360 seconds ahead', statusUpdated(v.id, { timestamp: now + 360 }), null],
       ['session: signed body has no timestamp', without(statusUpdated(v.id), 'timestamp'), null],
       ['alert: signed with another secret', alert, { 'X-Timestamp': String(now), 'X-Signature-V2': sign(`${now}.${rawAlert}`, 'another-secret') }],
       ['alert: timestamp header 301 seconds old', alert, { 'X-Timestamp': String(now - 301), 'X-Signature-V2': sign(`${now - 301}.${rawAlert}`) }],
