@@ -12,6 +12,13 @@
  * written by this file (the pictures show the CPA's document as printed and are never stored). Values that came from a
  * file or from the workspace are escaped before they are drawn. No network call is made on any path.
  * The managed edition does not load this file.
+ *
+ * Sections later plans add (withholding, the investor's tax record, Form 1099, the link to the server) are their own
+ * scripts beside this one, registered with NS.taxUI.part(key, { order, title, summary(ws) -> html or '',
+ * render(ws, rest) -> html }): the list page draws each summary line with a link to console-taxdocs-<key>, and that
+ * address draws render() under the bar with Back. The scripts are a fixed list (PARTS), added in their order when this
+ * file loads; one that does not load is left out for that visit and nothing is shown for it. No file name comes from data
+ * or from the address.
  */
 (function (NS) {
   'use strict';
@@ -142,6 +149,87 @@
   }
   const isPdf = (bytes) => bytes.length > 4 && String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]) === '%PDF-';
 
+  /* ---------- sections other files add (NS.taxUI) ---------- */
+  const HERE = (document.currentScript && document.currentScript.src) || '';
+  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js', 'tax1099-ui.js', 'taxlink.js']);
+  const parts = {};
+  const load = { settled: false, waiting: false };
+  function part(key, spec) {
+    if (!/^[a-z][a-z0-9]*$/.test(String(key)) || key === 'batch' || !spec || typeof spec.render !== 'function') return false;
+    parts[key] = { key, order: Number(spec.order) || 0, title: String(spec.title || ''), summary: typeof spec.summary === 'function' ? spec.summary : null, render: spec.render };
+    return true;
+  }
+  /** One script from beside this file; resolves to whether it loaded. */
+  function script(name) {
+    return new Promise((resolve) => {
+      let src = '';
+      try {
+        src = HERE ? new URL(name, HERE).href : new URL(`assets/js/${name}`, document.baseURI).href;
+      } catch (e) {
+        return resolve(false);
+      }
+      const el = document.createElement('script');
+      el.src = src;
+      el.async = false;
+      el.onload = () => resolve(true);
+      el.onerror = () => {
+        el.remove();
+        resolve(false);
+      };
+      document.head.appendChild(el);
+    });
+  }
+  const typing = () => {
+    const a = document.activeElement;
+    return !!(a && a.closest && a.closest('.tx') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
+  };
+  /** Draw the page again (a section calls it after it registers or changes); never while a field on the page has focus. */
+  function refresh() {
+    if (S().route !== ROUTE) return;
+    if (typing()) {
+      load.waiting = true;
+      return;
+    }
+    load.waiting = false;
+    redraw();
+  }
+  document.addEventListener('focusout', () => {
+    if (load.waiting) setTimeout(refresh, 0);
+  });
+  /** What a section gives, or '' when it fails: one section's fault never takes the page down. */
+  function from(fn, ...args) {
+    try {
+      return fn(...args) || '';
+    } catch (e) {
+      if (window.console) console.error(e);
+      return '';
+    }
+  }
+  const API = { part, PARTS, refresh, link: null, reader, pagePicture };
+  /** Whether the link to the server (set by its own script) is connected. */
+  function connected(ws) {
+    const l = API.link;
+    try {
+      return !!(l && typeof l.connected === 'function' && l.connected(ws));
+    } catch (e) {
+      if (window.console) console.error(e);
+      return false;
+    }
+  }
+  const linkLine = (ws, doc) => (doc && connected(ws) && typeof API.link.rowLine === 'function' ? from(API.link.rowLine, ws, doc) : '');
+  const sorted = () => Object.values(parts).sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
+  function partsHTML(ws) {
+    const list = sorted();
+    return list.length ? CK().panel('', `<ul class="tx-list" data-list="parts">${list.map((x) => `<li class="tx-row"><div class="tx-what"><a class="tx-title" href="#${ROUTE}-${x.key}">${h(x.title)}</a>${x.summary ? `<span class="tx-detail">${from(x.summary, ws)}</span>` : ''}</div></li>`).join('')}</ul>`) : '';
+  }
+  /** A section's page: console-taxdocs-<key>[-<rest>]; null when no such section is registered. */
+  function partHTML(ws, param) {
+    const m = /^([a-z][a-z0-9]*)(?:-(.*))?$/.exec(String(param || ''));
+    if (!m || m[1] === 'batch' || !Object.prototype.hasOwnProperty.call(parts, m[1])) return null;
+    const x = parts[m[1]];
+    return `<div class="tx"><div class="tx-bar"><a class="tx-back" href="#${ROUTE}">Back</a><h1>${h(x.title)}</h1></div>${from(x.render, ws, m[2] || '')}</div>`;
+  }
+
   /* ---------- taking a file in ---------- */
   /** One file taken in as one import; refused with one sentence (the file name is added by the caller). */
   async function takeIn(ws, f, u) {
@@ -187,7 +275,7 @@
   }
   function listHTML(ws) {
     const batches = ((ws.taxdocs || {}).batches || []).slice().reverse();
-    return `<div class="tx">${CK().head('Tax documents', '')}${importHTML(ws)}${batches.length ? CK().panel(`Imports <span class="cs-count">${batches.length}</span>`, `<ul class="tx-list">${batches.map((b) => batchRow(ws, b)).join('')}</ul>`) : ''}</div>`;
+    return `<div class="tx">${CK().head('Tax documents', '')}${importHTML(ws)}${partsHTML(ws)}${batches.length ? CK().panel(`Imports <span class="cs-count">${batches.length}</span>`, `<ul class="tx-list">${batches.map((b) => batchRow(ws, b)).join('')}</ul>`) : ''}</div>`;
   }
 
   /* ---------- one import ---------- */
@@ -272,7 +360,7 @@
       ${single.length ? CK().panel(`One by one <span class="cs-count">${single.length}</span>`, list('single', single.map((p) => singleRow(ws, b, p)).join(''))) : ''}
       ${loose}
       ${aside.length ? CK().panel(`Set aside <span class="cs-count">${aside.length}</span>`, list('aside', aside.map((p) => `<li class="tx-row" data-id="${h(p.id)}"><div class="tx-what"><span class="tx-title">${pkgTitle(b, p)}</span><span class="tx-detail">${pagesText(p)}</span></div><div class="tx-acts">${btn('tx-reopen', 'Reopen', on(b, p))}</div></li>`).join(''))) : ''}
-      ${made.length ? CK().panel(`Confirmed <span class="cs-count">${made.length}</span>`, list('confirmed', made.map(({ p, doc }) => `<li class="tx-row" data-id="${h(p.id)}"><div class="tx-what"><span class="tx-title">${invLine(ws, p.investorId)}</span><span class="tx-detail">${pagesText(p)} · ${h(BASIS[p.basis] || p.basis)} · ${h(p.confirmedBy)}</span></div><div class="tx-when"><span class="tx-pill is-wait">Not delivered</span></div></li>`).join(''))) : ''}
+      ${made.length ? CK().panel(`Confirmed <span class="cs-count">${made.length}</span>`, list('confirmed', made.map(({ p, doc }) => `<li class="tx-row" data-id="${h(p.id)}"><div class="tx-what"><span class="tx-title">${invLine(ws, p.investorId)}</span><span class="tx-detail">${pagesText(p)} · ${h(BASIS[p.basis] || p.basis)} · ${h(p.confirmedBy)}</span>${linkLine(ws, doc)}</div><div class="tx-when"><span class="tx-pill is-wait">Not delivered</span></div></li>`).join(''))) : ''}
       ${missing.length ? CK().panel(`No K-1 in this file <span class="cs-count">${missing.length}</span>`, list('missing', missing.map((i) => `<li class="tx-row"><div class="tx-what"><span class="tx-title">${h(i.title)}</span><span class="tx-detail">${h(i.id)}</span></div></li>`).join(''))) : ''}
     </div>`;
   }
@@ -444,11 +532,22 @@
         const ws = W();
         const m = /^batch-(.+)$/.exec(String(param || ''));
         const b = m ? batchOf(ws, m[1]) : null;
-        return CK().shell(b ? batchHTML(ws, b) : listHTML(ws), ROUTE);
+        if (b) return CK().shell(batchHTML(ws, b), ROUTE);
+        const sec = param && !m ? partHTML(ws, param) : null;
+        if (sec) return CK().shell(sec, ROUTE);
+        // A section's address before the scripts have settled: wait for them. Afterwards an unknown address shows the list.
+        if (param && !m && !load.settled) return CK().shell(`<div class="tx"><div class="tx-bar"><a class="tx-back" href="#${ROUTE}">Back</a><h1>Tax documents</h1></div><p class="cs-muted" role="status">Loading…</p></div>`, ROUTE);
+        return CK().shell(listHTML(ws), ROUTE);
       },
       after() {
         drawPictures();
       }
     };
+    (async () => {
+      for (const name of PARTS) await script(name);
+      load.settled = true;
+      refresh();
+    })();
   }
+  NS.taxUI = API;
 })(window.CVPortal);
