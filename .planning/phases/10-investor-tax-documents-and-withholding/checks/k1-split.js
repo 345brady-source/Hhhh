@@ -70,7 +70,7 @@ const cases = {
     const doc = T.toDocument(ws, batch.id, pk.id, file);
     const of = (id) => NS.ops.docsFor(ws, ws.investors.find((i) => i.id === id)).map((d) => d.id);
     check('the confirmed document is hidden and no investor sees it yet', doc.hidden === true && doc.tax.state === 'confirmed' && ws.investors.every((i) => of(i.id).length === 0), doc.tax && doc.tax.state);
-    check('the document records who confirmed, when, on what basis, the source file and the pages', doc.tax.match.confirmedBy === BY && doc.tax.match.confirmedAt === AT && doc.tax.match.basis === 'number and name' && doc.tax.sourceSha256 === sha(built.bytes) && JSON.stringify(doc.tax.pages) === JSON.stringify([built.partners[0].first, built.partners[0].last]), { basis: doc.tax.match.basis, pages: doc.tax.pages });
+    check('the document records who confirmed, when, on what basis, the source file and the pages', doc.tax.match.confirmedBy === BY && doc.tax.match.confirmedAt === AT && doc.tax.match.basis === 'by hand' && doc.tax.sourceSha256 === sha(built.bytes) && JSON.stringify(doc.tax.pages) === JSON.stringify([built.partners[0].first, built.partners[0].last]), { basis: doc.tax.match.basis, pages: doc.tax.pages });
     T.consent(ws, 'INV-1001', { at: AT, where: 'portal' });
     check('the consent is in effect for that investor and for no other', T.inEffect(ws.investors[0]) === true && ws.investors.slice(1).every((i) => T.inEffect(i) === false));
     T.deliver(ws, doc.id, { at: AT, by: BY, how: 'email' });

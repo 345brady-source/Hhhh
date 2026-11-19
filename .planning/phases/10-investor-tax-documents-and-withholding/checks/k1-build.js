@@ -155,7 +155,7 @@ async function read(bytes, T, opts) {
 /** The portal's own scripts in a fresh sandbox (the real dates, change log and document listing), then taxdocs.js. */
 function portal(files) {
   const window = { CVPortal: {} };
-  const ctx = vm.createContext({ window, console, setTimeout, clearTimeout });
+  const ctx = vm.createContext({ window, console, setTimeout, clearTimeout, TextEncoder, TextDecoder });
   (files || ['data.js', 'audit.js', 'operations.js', 'taxdocs.js']).forEach((f) => vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js', f), 'utf8'), ctx, { filename: f }));
   return window.CVPortal;
 }
