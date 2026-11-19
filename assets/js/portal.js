@@ -81,7 +81,7 @@
   function footer() {
     const t = T();
     return `<footer class="pt-foot"><div class="pt-wrap">
-      <div class="pt-foot-row"><span>${h(t.support.team)}</span><span>${h(t.support.phone)}</span><span>${h(t.support.email)}</span><span>${h(t.support.hours)}</span></div>
+      <div class="pt-foot-row"><span>${h(t.support.team)}</span><span>${h(t.support.phone)}</span><span>${h(t.support.email)}</span><span>${h(t.support.hours)}</span>${NS.EDITION.diy ? '<button class="pt-foot-help" type="button" data-action="help-open" aria-haspopup="dialog">Help</button>' : ''}</div>
       <p>${h(t.disclaimer)}</p>
       <p class="pt-foot-legal">© ${new Date().getFullYear()} ${h(t.legalName)}${NS.EDITION.poweredBy && t.showPoweredBy ? ` · Powered by ${h(NS.EDITION.poweredBy)}` : ''}</p>
     </div></footer>`;

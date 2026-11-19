@@ -29,3 +29,7 @@
 - C-07: a CPA reads one sample package before the package is called ready (owner item).
 - C-08: real firms' Audit pages change when this ships: generated gains, fees and cash disappear and only recorded figures show, with one line naming each missing input. Why: the current figures are invented, which is wrong for a real fund.
 - Not confirmed by the research (blocked sites): the accounting standards' own text, real audited fund statements, vendor prices, the older bank file layout, Excel/Numbers opening the workbook, saving files from the iPhone preview. Each plan that depends on one of these says so and proves what it can.
+
+## From phase 10's plan check (2026-11-19)
+- The audit engine's bank evidence (the "Distribution reconciliation to bank records" schedule) stays at gross after 10-01, while the ACH file pays net once tax is withheld (10-07). This phase's bank work compares like with like: net paid against the bank, tax withheld as a liability.
+- `holdersAt` ignoring fully redeemed positions is traced and, if confirmed, fixed in 10-01 (its addition A8); this phase's tie-outs assume the fixed behaviour.
