@@ -746,6 +746,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       (method === 'PUT' && path === '/v1/invite/progress') ||
       (method === 'POST' && path === '/v1/invite/complete') ||
       (method === 'POST' && (path === '/v1/verifications' || path === '/v1/screenings')) ||
+      (method === 'POST' && path === '/v1/help') ||
       (method === 'GET' && (/^\/v1\/verifications\/ver_[\w-]+$/.test(path) || /^\/v1\/screenings\/scr_[\w-]+$/.test(path)))
     );
   }

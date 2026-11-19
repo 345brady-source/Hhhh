@@ -19,6 +19,7 @@
  *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
  *   POST /v1/intake               read an offering's documents for the intake screen (lib/intake.mjs; ndjson stream)
  *   POST /v1/read                 read an uploaded subscription agreement's places (lib/read.mjs)
+ *   POST /v1/help                 answer a question about using the portal (lib/help.mjs)
  *   GET  /health                  which providers are configured, and whether reading is available
  *
  * Investor invitations (lib/invitations.mjs; see README.md):
@@ -53,6 +54,7 @@ import { createAccounts } from './lib/accounts.mjs';
 import { createBilling } from './lib/billing.mjs';
 import { createIntake } from './lib/intake.mjs';
 import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
+import { createHelp } from './lib/help.mjs';
 import { costOf, logLine } from './lib/model.mjs';
 import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
@@ -120,14 +122,16 @@ function cleanEvidence(list) {
   });
 }
 
+/** The client's address: the first X-Forwarded-For entry behind a trusted proxy (TRUST_PROXY=1), else the socket's. */
+const clientOf = (req, env) => (env.TRUST_PROXY === '1' ? String(header(req.headers, 'x-forwarded-for') || '').split(',')[0].trim() : '') || req.socket.remoteAddress || 'unknown';
+
 /** A small per-client limit on the calls that can cost money or create records. */
 function rateLimiter(env) {
   const max = Number(env.RATE_LIMIT_PER_MIN === undefined ? 60 : env.RATE_LIMIT_PER_MIN);
   const hits = new Map();
   return (req) => {
     if (!max) return false;
-    const fwd = env.TRUST_PROXY === '1' ? String(header(req.headers, 'x-forwarded-for') || '').split(',')[0].trim() : '';
-    const who = fwd || req.socket.remoteAddress || 'unknown';
+    const who = clientOf(req, env);
     const now = Date.now();
     const h = hits.get(who);
     if (!h || now > h.reset) {
@@ -159,6 +163,8 @@ export function createServer(opts = {}) {
   const intake = opts.intake || createIntake({ env, fetch: opts.fetch });
   // The agreement reader shares the intake's spend cap, so the cap counts every reading call this server makes.
   const reader = opts.reader || createReader({ env, fetch: opts.fetch, budget: intake.budget || undefined });
+  // Help shares that cap too, and has its own daily cap (lib/help.mjs).
+  const help = opts.help || createHelp({ env, fetch: opts.fetch, budget: intake.budget || undefined, now });
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   const accounts = createAccounts({ store, now });
@@ -608,6 +614,65 @@ export function createServer(opts = {}) {
     }
   }
 
+  /** The largest help request body: one question of at most 500 characters and a few short keys. */
+  const HELP_BODY = 8 * 1024;
+  /**
+   * Who a help session belongs to: the invitation for an investor's link, one shared owner for the console's token.
+   * This is the one place to change when callers have accounts: the owner becomes the account's id.
+   */
+  const helpOwner = (scope, auth) => (scope ? `inv:${scope.id}` : auth && auth.account ? `acct:${auth.account.id}` : 'sponsor');
+  async function answerHelp(req, res, scope, auth) {
+    const fail = (status, reason) => send(res, status, { ok: false, reason });
+    try {
+      let on = false;
+      try {
+        on = !!(await help.available());
+      } catch {
+        on = false;
+      }
+      if (!on) return fail(503, 'unavailable');
+      let raw;
+      try {
+        raw = await readRaw(req, HELP_BODY);
+      } catch (e) {
+        return e && e.status === 413 ? fail(413, 'too_large') : fail(400, 'invalid');
+      }
+      let body = null;
+      try {
+        body = JSON.parse(raw.toString('utf8'));
+      } catch {
+        body = null;
+      }
+      if (!body || typeof body !== 'object' || Array.isArray(body)) return fail(400, 'invalid');
+      const ctl = new AbortController();
+      const onClose = () => {
+        if (!res.writableFinished) ctl.abort();
+      };
+      res.on('close', onClose);
+      let r;
+      try {
+        // Only these five fields of the body are read; who is asking comes from the credential, never from the body.
+        r = await help.ask({ message: body.message, session: body.session, page: body.page, step: body.step, role: body.role, investor: !!scope, owner: helpOwner(scope, auth), client: clientOf(req, env) }, { signal: ctl.signal });
+      } catch {
+        r = null;
+      }
+      res.off('close', onClose);
+      const sound = !!(r && r.body && Number.isInteger(r.status));
+      if (!sound) r = { status: 502, body: { ok: false, reason: 'failed' }, row: null };
+      if (!res.writableEnded && !res.destroyed) send(res, r.status, r.body);
+      if (!sound) console.error('help: failed 502');
+      if (r.row) {
+        // What the question used counts against the shared cap, and its numbers (never its words) go to the read log.
+        if (help.budget && help.budget.add) help.budget.add(r.row.usage, r.row.model);
+        logLine(env, Object.assign({ at: new Date(now()).toISOString(), route: 'help' }, r.row));
+        if (r.status !== 200) console.error(`help: ${r.body.reason} ${r.status}`);
+      }
+    } catch {
+      if (!res.headersSent) fail(502, 'failed');
+      console.error('help: failed 502');
+    }
+  }
+
   async function route(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const path = url.pathname;
@@ -802,6 +867,11 @@ export function createServer(opts = {}) {
     if (path === '/v1/read') {
       if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
       return readAgreement(req, res);
+    }
+
+    if (path === '/v1/help') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      return answerHelp(req, res, scope, auth);
     }
 
     if (req.method === 'POST' && path === '/v1/verifications') {

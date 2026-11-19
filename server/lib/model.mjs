@@ -8,14 +8,20 @@ export const MODEL = 'claude-fable-5-2';
 /** Fixed, so an ambient base URL setting can never redirect the key. */
 const BASE_URL = 'https://api.anthropic.com';
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
-/** Published prices in US dollars per million tokens (input, output, and cache reads where the price list gives them). */
+/**
+ * Published prices in US dollars per million tokens (input, output, and cache reads and 5-minute cache writes where the
+ * price list gives them). The last two are the models portal help may ask (lib/help.mjs), at their price for prompts of
+ * up to 100,000 tokens, which help never passes.
+ */
 export const PRICES = Object.freeze({
   'claude-fable-5-2': Object.freeze({ input: 8, output: 40, cacheRead: 0.2 }),
   'claude-fable-5-1': Object.freeze({ input: 10, output: 50 }),
   'claude-fable-5': Object.freeze({ input: 10, output: 50 }),
   'claude-opus-5-5': Object.freeze({ input: 4, output: 20, cacheRead: 0.2 }),
   'claude-opus-5': Object.freeze({ input: 5, output: 25 }),
-  'claude-opus-4-8': Object.freeze({ input: 5, output: 25 })
+  'claude-opus-4-8': Object.freeze({ input: 5, output: 25 }),
+  'claude-haiku-5-5': Object.freeze({ input: 0.1, output: 0.5, cacheRead: 0.01, cacheWrite: 0.125 }),
+  'claude-sonnet-5-5': Object.freeze({ input: 2, output: 10, cacheRead: 0.1, cacheWrite: 2.5 })
 });
 /**
  * The dearest price in the table: what a model not in it is charged at (a refusal fallback may be served by another
@@ -89,23 +95,27 @@ const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : 0)
 /** The four usage counts, as numbers. */
 export const usageOf = (u) => ({ input_tokens: num(u && u.input_tokens), output_tokens: num(u && u.output_tokens), cache_creation_input_tokens: num(u && u.cache_creation_input_tokens), cache_read_input_tokens: num(u && u.cache_read_input_tokens) });
 /**
- * What a call cost in US dollars: cache reads at the model's cache-read price where it has one, other cache tokens as
- * input; a model not in PRICES at the dearest price (every input token as input), flagged.
+ * What a call cost in US dollars: cache reads at the model's cache-read price and cache writes at its cache-write price
+ * where it has one, other cache tokens as input; a model not in PRICES at the dearest price (every input token as
+ * input), flagged.
  */
 export function costOf(usage, model) {
   const u = usageOf(usage);
   const p = PRICES[model];
   const rate = p || DEAREST;
   const reads = p && typeof p.cacheRead === 'number' ? u.cache_read_input_tokens * p.cacheRead : u.cache_read_input_tokens * rate.input;
-  const input = u.input_tokens + u.cache_creation_input_tokens;
-  return { usd: (input * rate.input + reads + u.output_tokens * rate.output) / 1e6, flagged: !p };
+  const priced = !!p && typeof p.cacheWrite === 'number';
+  const writes = priced ? u.cache_creation_input_tokens * p.cacheWrite : 0;
+  const input = u.input_tokens + (priced ? 0 : u.cache_creation_input_tokens);
+  return { usd: (input * rate.input + writes + reads + u.output_tokens * rate.output) / 1e6, flagged: !p };
 }
 
 /**
  * The spend cap (CARROWVALE_SPEND_CAP_USD; off when unset). Spent starts as the cost of every call already in the read
  * log and grows with each call. allow(inputTokens, maxTokens) is true only when spent plus the worst case of the next
- * call (its input at $10 and its whole output limit at $50 per million) stays within the cap. A cap that is set but not
- * a number allows nothing.
+ * call (its input at $10 and its whole output limit at $50 per million) stays within the cap. A caller whose call is
+ * always served by the model it asks (no fallback) may give that model's own rate, { input, output }, as a third
+ * argument. A cap that is set but not a number allows nothing.
  */
 export function createBudget(env = process.env) {
   const raw = env.CARROWVALE_SPEND_CAP_USD;
@@ -131,10 +141,11 @@ export function createBudget(env = process.env) {
   }
   return {
     on,
-    allow(inputTokens, maxTokens) {
+    allow(inputTokens, maxTokens, rate) {
       if (!on) return true;
       if (!Number.isFinite(cap) || !Number.isFinite(Number(inputTokens)) || !Number.isFinite(Number(maxTokens))) return false;
-      const bound = (Number(inputTokens) * DEAREST.input + Number(maxTokens) * DEAREST.output) / 1e6;
+      const r = rate && typeof rate.input === 'number' && typeof rate.output === 'number' && rate.input >= 0 && rate.output >= 0 ? rate : DEAREST;
+      const bound = (Number(inputTokens) * r.input + Number(maxTokens) * r.output) / 1e6;
       return spent + bound <= cap + 1e-9;
     },
     add(usage, model) {
