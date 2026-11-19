@@ -1,0 +1,10 @@
+view.js and view-worker.js: the PDF reader the portal uses to draw a PDF's pages in the page, and its worker.
+They are files of the npm package pdfjs-dist 3.11.174 (license Apache-2.0, https://github.com/mozilla/pdfjs-dist),
+tarball integrity sha512-TdTZPf1trZ8/UFu5Cx/GXB7GZM30LT+wWUNfsi6Bq8ePLnb+woNKtDymI2mxZYBpMbonNFqKmiz684DIfnd8dA==
+(compared with the npm registry's integrity value on 2026-11-19 before the files were taken out):
+  view.js         = package/build/pdf.min.js          320,004 bytes
+  view-worker.js  = package/build/pdf.worker.min.js   1,087,212 bytes
+These are the same files the portal loaded from https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/ before they
+were shipped here; that address stays the fallback when the shipped copy cannot be loaded (assets/js/esign.js).
+The bytes are unchanged; only the file names differ. SHA256SUMS pins them.
+LICENSE-view.txt = package/LICENSE, unchanged (the Apache License 2.0 the package is published under).

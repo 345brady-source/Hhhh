@@ -41,6 +41,15 @@
     }
   };
   const FONT_DATA = { regular: besideMe('../vendor/textfont/text-regular.js', 'assets/vendor/textfont/text-regular.js'), bold: besideMe('../vendor/textfont/text-bold.js', 'assets/vendor/textfont/text-bold.js') };
+  // The PDF libraries above, shipped with the portal (assets/vendor/pdfview and pdfwrite: the same files, pinned by SHA-256)
+  // and tried first, so a page that may load scripts from its own address only still draws, fills and signs PDFs. The
+  // outside addresses are used only when a shipped copy cannot be loaded.
+  const SHIPPED = {
+    view: besideMe('../vendor/pdfview/view.js', 'assets/vendor/pdfview/view.js'),
+    viewWorker: besideMe('../vendor/pdfview/view-worker.js', 'assets/vendor/pdfview/view-worker.js'),
+    write: besideMe('../vendor/pdfwrite/write.js', 'assets/vendor/pdfwrite/write.js'),
+    fonts: besideMe('../vendor/pdfwrite/fonts.js', 'assets/vendor/pdfwrite/fonts.js')
+  };
   const MAX_BYTES = 25 * 1024 * 1024;
   const MIN_TEXT_PT = 5;
   const COLORS = ['#2563EB', '#D9480F', '#0F8A5F', '#C2255C', '#7048E8', '#0B7285'];
@@ -239,30 +248,58 @@
       });
     return loads[src];
   }
+  /** The PDF reader library with its worker: the shipped copy first, then the loaders used before it was shipped. */
   async function pdfjs() {
+    let worker = '';
     try {
-      if (NS.pdfLib) return await NS.pdfLib();
+      await loadOnce(SHIPPED.view, () => !!window.pdfjsLib);
+      await loadOnce(SHIPPED.viewWorker, () => !!window.pdfjsWorker);
+      worker = SHIPPED.viewWorker;
     } catch (e) {
-      /* the shared loader keeps a failed attempt; retry with ours below */
+      /* a shipped copy did not load; the loaders below */
     }
-    try {
-      await loadOnce(PDFJS_URL, () => !!window.pdfjsLib);
-      await loadOnce(PDFJS_WORKER_URL, () => !!window.pdfjsWorker);
-    } catch (e) {
-      throw new Error('Could not load the PDF viewer. Check the connection and try again.');
+    if (!worker) {
+      try {
+        if (NS.pdfLib) return await NS.pdfLib();
+      } catch (e) {
+        /* the shared loader keeps a failed attempt; retry with ours below */
+      }
+      try {
+        await loadOnce(PDFJS_URL, () => !!window.pdfjsLib);
+        await loadOnce(PDFJS_WORKER_URL, () => !!window.pdfjsWorker);
+      } catch (e) {
+        throw new Error('Could not load the PDF viewer. Check the connection and try again.');
+      }
+      worker = PDFJS_WORKER_URL;
     }
     const lib = window.pdfjsLib;
-    if (lib && lib.GlobalWorkerOptions) lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+    if (lib && lib.GlobalWorkerOptions) lib.GlobalWorkerOptions.workerSrc = worker;
     return lib;
   }
-  async function pdflib() {
+  /** One library script: the shipped copy first, then its outside address; true once the library is there. */
+  async function shippedFirst(shipped, outside, ready) {
     try {
-      await loadOnce(PDFLIB_URL, () => !!window.PDFLib);
+      await loadOnce(shipped, ready);
     } catch (e) {
-      /* message below */
+      /* the shipped copy did not load; the outside address below */
     }
-    if (!window.PDFLib) throw new Error('Could not load the PDF writer. Check the connection and try again.');
+    if (!ready()) {
+      try {
+        await loadOnce(outside, ready);
+      } catch (e) {
+        /* the caller says what could not be loaded */
+      }
+    }
+    return ready();
+  }
+  async function pdflib() {
+    if (!(await shippedFirst(SHIPPED.write, PDFLIB_URL, () => !!window.PDFLib))) throw new Error('Could not load the PDF writer. Check the connection and try again.');
     return window.PDFLib;
+  }
+  /** The font embedder (both places that embed a Unicode font load it here). */
+  async function fontkitLib() {
+    if (!(await shippedFirst(SHIPPED.fonts, FONTKIT_URL, () => !!window.fontkit))) throw new Error('Could not load the PDF writer. Check the connection and try again.');
+    return window.fontkit;
   }
   /** Base64 text as bytes. */
   function fromBase64(s) {
@@ -313,9 +350,9 @@
     if (texts.every((s) => winAnsi(pdfText(s)))) fonts = await standard();
     else {
       try {
-        await loadOnce(FONTKIT_URL, () => !!window.fontkit);
+        const fontkit = await fontkitLib();
         const [r, b] = await Promise.all([fontFile('regular'), fontFile('bold')]);
-        pdf.registerFontkit(window.fontkit);
+        pdf.registerFontkit(fontkit);
         const regular = await pdf.embedFont(r, { subset: true });
         const bold = await pdf.embedFont(b, { subset: true });
         const cs = new Set(regular.getCharacterSet());
@@ -404,11 +441,12 @@
   NS.esignKit = Object.assign(NS.esignKit || {}, { writer: pdflib, fontsFor, printable, printed, textWidth, drawText, drawPictures });
   /** The font embedder and the regular Unicode font file, for a writer outside this module (the tax forms, taxforms.js). */
   async function unicodeFont() {
-    await loadOnce(FONTKIT_URL, () => !!window.fontkit);
-    if (!window.fontkit) throw new Error('Could not load the PDF writer. Check the connection and try again.');
-    return { fontkit: window.fontkit, fontBytes: await fontFile('regular') };
+    const fontkit = await fontkitLib();
+    return { fontkit, fontBytes: await fontFile('regular') };
   }
   NS.esignKit.unicodeFont = unicodeFont;
+  // The PDF reader library, its worker registered (phase 11 draws and reads PDFs through it).
+  NS.esignKit.reader = pdfjs;
   // For taxforms.js: the script loader (a failed load is forgotten) and the base64 decoder.
   NS.esignKit.loadScript = loadOnce;
   NS.esignKit.fromBase64 = fromBase64;

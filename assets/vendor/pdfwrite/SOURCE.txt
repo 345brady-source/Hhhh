@@ -1,0 +1,22 @@
+write.js: the PDF writer the portal uses to fill tax forms, write signed copies and certificates.
+It is a file of the npm package pdf-lib 1.17.1 (license MIT, https://github.com/Hopding/pdf-lib),
+tarball integrity sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo67j/XLw==
+(compared with the npm registry's integrity value on 2026-11-19 before the file was taken out):
+  write.js  = package/dist/pdf-lib.min.js   525,099 bytes
+LICENSE-write.md = package/LICENSE.md, unchanged.
+
+fonts.js: the font embedder the writer uses when a name or value has characters the standard PDF fonts cannot print.
+It is a file of the npm package @pdf-lib/fontkit 1.1.1 (license MIT, as its package.json states; repository
+https://github.com/Hopding/fontkit, a fork of https://github.com/foliojs/fontkit),
+tarball integrity sha512-KjMd7grNapIWS/Dm0gvfHEilSyAmeLvrEGVcqLGi0VYebuqqzTbgF29efCx7tvx+IEbG3zQciRSWl3GkUSvjZg==
+(compared with the npm registry's integrity value on 2026-11-19 before the file was taken out):
+  fonts.js  = package/dist/fontkit.umd.min.js   758,440 bytes
+LICENSE-fonts.txt: the package carries no licence file and the fork publishes none of its own, so this is the MIT
+licence of the upstream project foliojs/fontkit, of which @pdf-lib/fontkit is a fork, fetched from that project on
+2026-11-19 and copied unchanged (SHA-256 cf22b8198f0886a8d4626121579114f23141070e1fceab02ab3c1c361e163440). It is
+kept here because the MIT licence asks that its notice go with every copy of the software.
+
+These are the same files the portal loaded from https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/ and
+https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/ before they were shipped here; those addresses stay the
+fallback when a shipped copy cannot be loaded (assets/js/esign.js). The bytes are unchanged; only the file names
+differ. SHA256SUMS pins them.
