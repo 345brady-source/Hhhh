@@ -132,7 +132,8 @@
         const s = own(f.byState, code) ? f.byState[code] : null;
         return { code, name: nameOf(code), firstSale: s ? s.firstSale : '', sold: s ? s.sold : 0, investors: s ? s.investors : 0 };
       }),
-      contact: { name: String(me.name || ''), email: String(me.email || sup.email || ''), phone: String(me.phone || sup.phone || '') }
+      // With no team list on record (a workspace never opened at Team), the firm's own support contact.
+      contact: me.name ? { name: String(me.name), email: String(me.email || sup.email || ''), phone: String(me.phone || sup.phone || '') } : { name: String(sup.team || (ws && ws.tenant && ws.tenant.shortName) || ''), email: String(sup.email || ''), phone: String(sup.phone || '') }
     };
   }
 
