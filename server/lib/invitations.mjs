@@ -542,8 +542,43 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   let packages = null;
   function usePackages({ billing, providers, identity, accreditation }) {
     packages = { billing, providers: providers || {}, identity, accreditation };
-    return { packageState };
+    return { packageState, isPackage, gate, settings: packageSettings, start: packageStart, connectors: packageConnectors };
   }
+  /*
+   * Plan 08-15: who may start a paid check. The package providers are reserved: an investor's token starts one only while
+   * its invitation holds its own paid package (N3, whoever created the invitation); a sponsor account never reaches them
+   * directly (N1); the shared or open token (the operator's own) behaves as before. Recorded trade-off: an operator who
+   * hands the shared token to a sponsor gives that sponsor the providers for free.
+   */
+  const isPackage = (provider) => !!packages && typeof provider === 'string' && (provider === packages.identity || provider === packages.accreditation);
+  const packageCheck = (scope, provider) => !!scope && isPackage(provider);
+  function gate(scope, auth, provider) {
+    if (!isPackage(provider)) return;
+    if (scope) {
+      const s = scope.package ? packageState(scope) : null;
+      if (!s || !s.usable) throw fail(403, 'This check is not part of this invitation');
+      return;
+    }
+    if (auth && auth.account) throw fail(403, 'This check runs only from an invitation with the verification package.');
+  }
+  /** A package check runs with the invitation's own firm name as its only setting; any other call keeps what it sent. */
+  const packageSettings = (scope, provider, settings) => (packageCheck(scope, provider) ? { firm: clip(firmName(scope), 120) } : settings);
+  /** A package check's start: billing holds the package while the provider is called; the first start accepted marks it started. */
+  async function packageStart(scope, provider, fn) {
+    if (!packageCheck(scope, provider) || !scope.package) return fn();
+    const finish = packages.billing.hold(scope.package.entitlement);
+    let out;
+    try {
+      out = await fn();
+    } catch (e) {
+      finish(false);
+      throw e;
+    }
+    finish(true);
+    return out;
+  }
+  /** The provider list a sponsor account reads: without the package providers. */
+  const packageConnectors = (list) => (Array.isArray(list) ? list.filter((c) => !isPackage(c && c.id)) : list);
   /** A package refusal with its code and sentence (the generic error handler would drop the code). */
   const refusePackage = (res, code) => reply(res, PACKAGE_SAYS[code][0], { error: PACKAGE_SAYS[code][1], code });
   /** A refusal from lib/billing.mjs, sent with its own status, code and sentence; anything else does not claim nothing was charged. */

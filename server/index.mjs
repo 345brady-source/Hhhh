@@ -861,6 +861,7 @@ export function createServer(opts = {}) {
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
 
+    if (req.method === 'GET' && path === '/v1/connectors' && auth && auth.account) return send(res, 200, { connectors: pkg.connectors(describe(env, PROVIDERS)) }); // a sponsor account never sees the package providers (08-15)
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
 
     if (path === '/v1/intake') {
@@ -889,12 +890,14 @@ export function createServer(opts = {}) {
       if (scope && investor.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only verify its own investor' });
       // An invitation's token runs only the checks the firm's settings use (never the test sandbox, which runs in the browser).
       if (scope && !(invites.scopeRules(scope).providers[body.kind] || []).includes(body.provider)) return send(res, 403, { error: 'This check is not one the firm uses' });
+      pkg.gate(scope, auth, body.provider, body.kind); // a package provider: only from the invitation holding its own paid package (08-15)
       if (scope) investor.workspace = scope.workspace;
       if (pin !== null) investor.workspace = pin;
       const vid = id('ver');
+      body.settings = pkg.settings(scope, body.provider, body.settings); // a package check runs with the invitation's firm name only
       // createdAt is on the same clock as invitations: a submission counts only checks created once its invitation existed.
       const rec = store.put('verifications', { id: vid, kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, invitationId: scope ? scope.id : undefined, status: 'pending', settings: cleanSettings(body.settings), investor: sealPersonal('verifications', vid, 'investor', investor), returnUrl: returnTo(body.returnUrl), createdAt: new Date(now()).toISOString() });
-      const r = (await p.createSession(ctx(body.provider, rec))) || {};
+      const r = (await pkg.start(scope, body.provider, () => p.createSession(ctx(body.provider, rec)), body.kind)) || {};
       const saved = apply('verifications', rec, Object.assign({}, r, { status: r.status || 'pending' }));
       store.event({ type: 'verification_started', provider: body.provider, id: rec.id, ref: saved.ref || '' });
       return send(res, 200, { id: saved.id, status: saved.status, url: saved.url || '' });
@@ -931,6 +934,7 @@ export function createServer(opts = {}) {
       // From an invitation's link: only the screenings the firm uses, and always the investor's names as the sponsor entered them.
       const rules = scope ? invites.scopeRules(scope) : null;
       if (rules && !rules.providers.aml.includes(body.provider)) return send(res, 403, { error: 'This screening is not one the firm uses' });
+      pkg.gate(scope, auth, body.provider, 'aml'); // a package provider: only from the invitation holding its own paid package (08-15)
       const names = Array.from(new Set((rules ? rules.names : []).concat(body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
       if (!names.length) return send(res, 400, { error: 'names are required' });
       const inv = cleanInvestor(body.investor);
@@ -938,8 +942,9 @@ export function createServer(opts = {}) {
       if (scope) inv.workspace = scope.workspace;
       if (pin !== null) inv.workspace = pin;
       const sid = id('scr');
+      body.settings = pkg.settings(scope, body.provider, body.settings); // a package check runs with the invitation's firm name only
       const rec = store.put('screenings', { id: sid, kind: 'aml', provider: body.provider, investorId: inv.id, workspace: inv.workspace, invitationId: scope ? scope.id : undefined, names: sealPersonal('screenings', sid, 'names', names), settings: cleanSettings(body.settings), investor: sealPersonal('screenings', sid, 'investor', inv), status: 'pending', createdAt: new Date(now()).toISOString() });
-      const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
+      const r = (await pkg.start(scope, body.provider, () => p.screen(ctx(body.provider, rec, { names })), 'aml')) || {};
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });
       store.event({ type: 'screening', provider: body.provider, id: rec.id, hits: (saved.hits || []).length });
