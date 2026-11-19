@@ -22,6 +22,17 @@ const INVITATION_ID = /^ivt_[\w-]{1,64}$/;
 const STATUSES = ['sent', 'opened', 'in_progress', 'completed', 'cancelled', 'expired'];
 const ENDED = ['completed', 'cancelled', 'expired'];
 const NOTIFICATION_KINDS = ['invite_opened', 'invite_progress', 'verification_review', 'onboarding_completed', 'agreement_signed', 'subscription_accepted'];
+// The verification package (plan 08-05, D-01): the console's client id for the invitation (the billing key pattern), the
+// two connections only this server may put into a snapshot, and the sentences of its refusals. account_required and
+// tier_mismatch are lib/billing.mjs's own sentences, word for word.
+const PACKAGE_KEY = /^[A-Za-z0-9_-]{1,80}$/;
+const PACKAGE_IDS = ['package-id', 'package-acc'];
+const PACKAGE_SAYS = {
+  account_required: [403, 'Card payments need a sponsor account.'],
+  package_unavailable: [409, 'The verification package is not available on this server right now. Nothing was charged.'],
+  already_sent: [409, 'This invitation was already sent. Nothing was charged.'],
+  tier_mismatch: [409, "This invitation's package was paid at another level. Nothing was charged."]
+};
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
 /** Send a reply and report the route as handled. */
@@ -523,6 +534,75 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   };
   const dropBlobs = (keys) => (keys || []).forEach((k) => store.removeBlob(k));
 
+  /*
+   * The verification package (plan 08-05, D-01): index.mjs hands over the billing module, the provider registry and the
+   * ids of the two package providers. Until then no invitation can carry a package. Plan 08-15 adds its route helpers to
+   * the object usePackages returns.
+   */
+  let packages = null;
+  function usePackages({ billing, providers, identity, accreditation }) {
+    packages = { billing, providers: providers || {}, identity, accreditation };
+    return { packageState };
+  }
+  /** A package refusal with its code and sentence (the generic error handler would drop the code). */
+  const refusePackage = (res, code) => reply(res, PACKAGE_SAYS[code][0], { error: PACKAGE_SAYS[code][1], code });
+  /** A refusal from lib/billing.mjs, sent with its own status, code and sentence; anything else does not claim nothing was charged. */
+  function billingRefusal(res, e) {
+    const status = Number(e && e.status);
+    if (!(status >= 400 && status < 500) || typeof e.message !== 'string') return reply(res, 409, { error: 'The payment could not be confirmed. Try again in a few minutes.', code: 'billing_unavailable' });
+    return reply(res, status, e.code ? { error: e.message, code: e.code } : { error: e.message });
+  }
+  /**
+   * Where an invitation's package stands, from the billing records: null without one; status paid (started once its check
+   * began), credited, or refunded (refunded, disputed and refunding all read refunded); usable when the key's newest
+   * entitlement is this invitation's own, consumed by it (plan 08-15's check gate reads this).
+   */
+  function packageState(rec) {
+    const p = rec && obj(rec.package);
+    if (!p) return null;
+    const e = packages ? packages.billing.find(p.account, p.key) : null;
+    const own = e && e.id === p.entitlement ? e : store.get('entitlements', String(p.entitlement));
+    const s = own ? own.status : '';
+    const status = s === 'paid' || s === 'consumed' ? (own.startedAt ? 'started' : 'paid') : s === 'credited' ? 'credited' : 'refunded';
+    return { tier: p.tier, status, usable: !!(e && e.id === p.entitlement && e.status === 'consumed' && e.invitationId === rec.id) };
+  }
+  const packageRow = (rec) => {
+    const s = packageState(rec);
+    return s ? { tier: s.tier, status: s.status } : null;
+  };
+  /**
+   * N1 (create part): a sponsor account's snapshot may not name a package provider or a package id itself (that would run
+   * the paid checks without paying). Those connections, and every use of their ids, are dropped; the rest stay as sent.
+   */
+  function stripReserved(verification) {
+    const reserved = packages ? [packages.identity, packages.accreditation] : [env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit'];
+    const gone = new Set(PACKAGE_IDS);
+    if (Array.isArray(verification.connections))
+      verification.connections = verification.connections.filter((c) => {
+        const drop = !!obj(c) && (PACKAGE_IDS.includes(c.id) || reserved.includes(c.connector));
+        if (drop) gone.add(c.id);
+        return !drop;
+      });
+    const use = obj(verification.use);
+    if (use) for (const k of Object.keys(use)) if (Array.isArray(use[k])) use[k] = use[k].filter((cid) => !gone.has(cid));
+  }
+  /** The connections a paid snapshot holds, built here from the provider registry (names as the providers give them). */
+  function packageConnections(verification, tier) {
+    const name = (pid) => String((packages.providers[pid] && (packages.providers[pid].name || packages.providers[pid].label)) || pid);
+    const conns = Array.isArray(verification.connections) ? verification.connections : [];
+    const use = (verification.use = obj(verification.use) || {});
+    if (tier !== 'reverify') {
+      conns.push({ id: 'package-id', name: name(packages.identity), type: 'server', connector: packages.identity, checks: ['identity', 'aml'], package: true });
+      use.identity = ['package-id'];
+      use.aml = ['package-id'];
+    }
+    if (tier !== 'identity') {
+      conns.push({ id: 'package-acc', name: name(packages.accreditation), type: 'server', connector: packages.accreditation, checks: ['accreditation'], package: true });
+      use.accreditation = ['package-acc'];
+    }
+    verification.connections = conns;
+  }
+
   const addEvent = (rec, kind, extra) => {
     const events = (rec.events || []).concat(Object.assign({ at: iso(), kind }, extra)).slice(-50);
     return store.put('invitations', { id: rec.id, events });
@@ -930,6 +1010,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       notifyStatus: rec.notifyStatus || '',
       hasSubmission: !!rec.hasSubmission,
       importedAt: rec.importedAt || '',
+      package: packageRow(rec),
       events: rec.events || []
     };
   }
@@ -960,9 +1041,46 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     // it carries the same pre-fill.
     if (!(invitation.existing && invitation.includeTax && offering && !invitation.taxRequest)) delete invitation.includeTax;
     if (!invitation.taxRequest && !invitation.includeTax) delete inv.taxPrefill;
+    // Plan 08-05 (D-01): the verification package the sponsor ticked, and the console's own id for this invitation. Never on
+    // a portal link or a tax-form request (W5). Neither value is written into the snapshot's invitation.
+    const asked = obj(body.invitation) || {};
+    const wantsPackage = asked.package === true && asked.access !== true && asked.taxRequest !== true;
+    const clientId = typeof asked.clientId === 'string' ? asked.clientId : '';
     const verification = cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
     const { esign, pdf } = cleanEsign(body.esign);
     const consoleUrl = returnTo(body.consoleUrl) || `${portalUrl.split('#')[0]}#console-investors`;
+    // With the shared or open token (the operator's own) nothing is dropped.
+    if (auth && auth.account) stripReserved(verification);
+
+    // The package is paid before anything is stored: by a sponsor account only, at the tier this server works out and the
+    // price billing holds for it (credit first, then the card). A refusal leaves nothing behind.
+    let paid = null;
+    if (wantsPackage) {
+      const account = auth && auth.account;
+      if (!account) return refusePackage(res, 'account_required');
+      if (!PACKAGE_KEY.test(clientId)) throw fail(400, 'invitation.clientId is required with the package (1 to 80 letters, digits, underscores or hyphens)');
+      if (!packages) return refusePackage(res, 'package_unavailable');
+      const tier = invitation.existing && invitation.reverify === true ? 'reverify' : verification.accreditationRequired === true ? 'full' : 'identity';
+      if (!packages.billing.available()[tier]) return refusePackage(res, 'package_unavailable');
+      // One client id is one package: while its invitation is open a second post is refused before any payment. A package
+      // whose invitation has ended or no longer exists goes back to credit (unless its check started), which pays this one.
+      const prev = packages.billing.find(account, clientId);
+      if (prev && prev.status === 'consumed') {
+        const owner = prev.invitationId ? store.get('invitations', prev.invitationId) : null;
+        if (owner && !ENDED.includes(owner.status) && !expired(owner)) return refusePackage(res, 'already_sent');
+        packages.billing.release(prev.id);
+      }
+      try {
+        await packages.billing.entitle(account, [{ key: clientId, tier }]);
+      } catch (e) {
+        return billingRefusal(res, e);
+      }
+      // From here to consume below nothing awaits, so of two requests for one client id only one can tie the package (N2).
+      const e = packages.billing.find(account, clientId);
+      if (!e || e.tier !== tier || !['paid', 'consumed'].includes(e.status)) return refusePackage(res, 'tier_mismatch');
+      paid = { entitlement: e.id, tier: e.tier, account: account.id, key: clientId };
+      packageConnections(verification, tier);
+    }
 
     // The link is built before anything is stored, so one that cannot be built leaves nothing behind.
     const token = newToken();
@@ -985,7 +1103,18 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     rec.tokenHash = hashToken(token).toString('hex');
     rec.blobs = blobs;
     rec.snapshot = seal(rec, 'snapshot', snap);
+    if (paid) rec.package = paid;
     store.put('invitations', rec);
+    // N2: the package is tied to the stored invitation before its email; when it cannot be, the invitation and its files go.
+    if (paid) {
+      try {
+        packages.billing.consume(paid.entitlement, rec.id);
+      } catch (e) {
+        store.remove('invitations', rec.id);
+        dropBlobs(blobs);
+        return billingRefusal(res, e);
+      }
+    }
     store.event({ type: 'invitation_created', id: rec.id, workspace: rec.workspace });
     let out = { link: firstLink, emailStatus: 'not_sent', emailError: '' };
     if (body.sendEmail !== false) out = await sendInvite(rec, snap, token, 'invitation');
@@ -1086,6 +1215,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     purge,
     mailer,
     vault,
+    usePackages,
     stop: () => clearInterval(timer)
   };
 }
