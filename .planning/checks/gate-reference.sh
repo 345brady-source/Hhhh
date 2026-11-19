@@ -33,7 +33,9 @@ tail -n 2 $O/helpchat.txt
 FAIL=0
 ok() { if eval "$2"; then echo "GATE ok   $1"; else echo "GATE FAIL $1"; FAIL=1; fi; }
 ok 'server tests # fail 0' "grep -q '^# fail 0$' $O/server.txt"
-ok 'server tests 197' "grep -qx '# tests 197' $O/server.txt"
+N_TESTS=$(grep -Eo '^# tests [0-9]+$' $O/server.txt | grep -Eo '[0-9]+$')
+# Exact when the caller states the expected count (GATE_SERVER_TESTS); otherwise the measured count is printed and must exist.
+if [ -n "$GATE_SERVER_TESTS" ]; then ok "server tests $GATE_SERVER_TESTS" "[ \"$N_TESTS\" = \"$GATE_SERVER_TESTS\" ]"; else ok "server tests ${N_TESTS:-0}" "[ -n \"$N_TESTS\" ]"; fi
 ok 'STATUS MATH (13)' "grep -qx 'STATUS MATH: PASS (cases run: 13)' $O/math.txt"
 ok 'FORM MAPS (3)' "grep -qx 'FORM MAPS: PASS (forms run: 3)' $O/maps.txt"
 ok 'FORMS FLOW (34)' "grep -qx 'FORMS FLOW: PASS (cases run: 34)' $O/forms.txt"

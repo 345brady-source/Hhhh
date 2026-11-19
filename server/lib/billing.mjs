@@ -576,8 +576,8 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
   /**
    * True only for a delivery signed with the delivery secret over its signed time and its exact bytes, with that time
    * fresh. The header is split here with this file's own two fixed patterns: the connector's matcher runs a sponsor's
-   * patterns in a sandbox with a 50 ms limit, which a busy server misses on genuine deliveries (measured in plan 08-14:
-   * 11 of 48 runs under load). The signature itself, the freshness and the constant-time comparison are the connector's.
+   * patterns in a time-limited sandbox (50 ms, retried once at 500 ms since the fix of 2026-11-19), which this route has
+   * no need for: its two patterns are fixed. The signature itself, the freshness and the constant-time comparison are the connector's.
    */
   function signedByProvider(raw, headers) {
     const v = ASSUMED.webhook;
