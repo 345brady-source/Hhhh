@@ -381,3 +381,237 @@ test('full tier: the full package starts identity, screening and accreditation, 
     assert.equal(accreditCalls.length, acc + 1, 'no call to the accreditation stand-in');
   });
 });
+
+const cancel = (h, id) => j(h.base, 'POST', `/v1/invitations/${id}/cancel`, { bearer: h.a.token });
+const complete = (h, token) => j(h.base, 'POST', '/v1/invite/complete', { invite: token, body: SUBMISSION });
+const expiryOf = (h, id) => Date.parse(h.store.get('invitations', id).expiresAt);
+/** Opens an expired link without a purge running first (the last purge less than a minute ago), so authenticate sets expired. */
+async function openExpired(h, p) {
+  h.clock.t = expiryOf(h, p.id) - 30 * 1000;
+  h.server.invitations.purge();
+  h.clock.t = expiryOf(h, p.id) + 1000;
+  const r = await j(h.base, 'GET', '/v1/invite', { invite: p.token });
+  assert.equal(r.status, 410, r.text);
+  assert.equal(h.store.get('invitations', p.id).status, 'expired');
+  return r;
+}
+/** Resolves once the stand-in has received n session calls. */
+async function sessionsReach(h, n) {
+  for (let i = 0; i < 400 && h.f.sessions() < n; i++) await new Promise((r) => setTimeout(r, 5));
+  assert.equal(h.f.sessions(), n, 'the start reached the provider');
+}
+const operatorMail = (h) => h.server.invitations.mailer.outbox().filter((m) => m.kind === 'package_alert');
+
+test('W4 cancel: cancelling a paid, unstarted package invitation returns its price as credit once', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('w1');
+    assert.equal(h.credit(), 0);
+    const r = await cancel(h, p.id);
+    assert.equal(r.status, 200, r.text);
+    assert.equal(h.credit(), 1900);
+    assert.equal(h.creditLines(p.entitlement), 1, 'one credit ledger line');
+    assert.deepEqual(await h.row(p.id), { tier: 'identity', status: 'credited' });
+    const again = await cancel(h, p.id);
+    assert.equal(again.status, 200, again.text);
+    assert.equal(h.credit(), 1900, 'a second cancel adds nothing');
+    assert.equal(h.creditLines(p.entitlement), 1);
+  });
+});
+
+test('W4 expired: purge past the expiry credits once however often it runs; an investor opening an expired link credits once', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('x1');
+    h.clock.t += DAY;
+    const q = await h.send('x2');
+    h.clock.t = expiryOf(h, p.id) + 1000;
+    h.server.invitations.purge();
+    assert.equal(h.store.get('invitations', p.id).status, 'expired');
+    assert.equal(h.credit(), 1900);
+    h.server.invitations.purge();
+    h.clock.t += 2 * 60 * 1000;
+    h.server.invitations.purge();
+    assert.equal(h.credit(), 1900, 'more purges add nothing');
+    assert.equal(h.creditLines(p.entitlement), 1);
+    assert.equal(h.store.get('invitations', q.id).status, 'sent', 'the second invitation has not expired yet');
+
+    await openExpired(h, q);
+    assert.equal(h.credit(), 3800);
+    assert.equal(h.creditLines(q.entitlement), 1);
+    const again = await j(h.base, 'GET', '/v1/invite', { invite: q.token });
+    assert.equal(again.status, 410);
+    h.server.invitations.purge();
+    assert.equal(h.credit(), 3800, 'once');
+    assert.equal(h.creditLines(q.entitlement), 1);
+  });
+});
+
+test('W4 completed: an onboarding completed with no package check started returns the package as credit once', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('d1');
+    const r = await complete(h, p.token);
+    assert.equal(r.status, 200, r.text);
+    assert.deepEqual(r.body, { ok: true }, 'the completion’s reply is unchanged');
+    const notes = h.server.invitations.mailer.outbox({ invitationId: p.id }).filter((m) => m.kind === 'sponsor_notification');
+    assert.equal(notes.length, 1, 'the sponsor’s notification is sent as before');
+    assert.equal(h.store.get('invitations', p.id).notifyStatus, 'outbox');
+    assert.equal(h.credit(), 1900);
+    assert.equal(h.creditLines(p.entitlement), 1);
+    assert.deepEqual(await h.row(p.id), { tier: 'identity', status: 'credited' });
+    const again = await complete(h, p.token);
+    assert.deepEqual(again.body, { ok: true, already: true });
+    assert.equal(h.credit(), 1900);
+  });
+});
+
+test('W4 started: once a package check started, cancel, expiry and completion return no credit', async () => {
+  await shop({}, async (h) => {
+    const started = async (key) => {
+      const p = await h.send(key);
+      const s = await h.identity(p.token);
+      assert.equal(s.status, 200, s.text);
+      return p;
+    };
+    const kept = async (p, what) => {
+      assert.equal(h.credit(), 0, `${what}: no credit for a started package`);
+      assert.equal(h.creditLines(), 0, what);
+      assert.deepEqual(await h.row(p.id), { tier: 'identity', status: 'started' }, what);
+    };
+    const a = await started('t1');
+    assert.equal((await cancel(h, a.id)).status, 200);
+    await kept(a, 'cancel');
+    const c = await started('t3');
+    assert.equal((await complete(h, c.token)).status, 200);
+    await kept(c, 'completion');
+    const b = await started('t2');
+    h.clock.t += DAY;
+    const d = await started('t4');
+    h.clock.t = expiryOf(h, b.id) + 1000;
+    h.server.invitations.purge();
+    assert.equal(h.store.get('invitations', b.id).status, 'expired');
+    await kept(b, 'expiry by purge');
+    await openExpired(h, d);
+    await kept(d, 'expiry when the link is opened');
+  });
+});
+
+test('I2 cancel during start: a cancel while the start waits on the provider credits nothing if the check runs, once if it fails', async () => {
+  await shop({}, async (h) => {
+    const session = { status: 201, body: idfx('session-created').reply };
+    let answer = null;
+    h.f.ctl.session = () => new Promise((r) => (answer = r));
+    const p = await h.send('i1');
+    const pending = h.identity(p.token);
+    await sessionsReach(h, 1);
+    const c = await cancel(h, p.id);
+    assert.equal(c.status, 200, c.text);
+    assert.equal(h.credit(), 0, 'nothing credited while the start is waiting');
+    answer(session);
+    const r = await pending;
+    assert.equal(r.status, 200, r.text);
+    assert.ok(h.ent(p.entitlement).startedAt, 'the check ran: the package is started');
+    assert.equal(h.ent(p.entitlement).status, 'consumed');
+    assert.equal(h.credit(), 0);
+    h.clock.t = expiryOf(h, p.id) + 1000;
+    h.server.invitations.purge();
+    assert.equal(h.credit(), 0, 'a later purge adds nothing');
+
+    const q = await h.send('i2');
+    const second = h.identity(q.token);
+    await sessionsReach(h, 2);
+    assert.equal((await cancel(h, q.id)).status, 200);
+    assert.equal(h.credit(), 0);
+    answer({ status: 500, body: { detail: 'unavailable' } });
+    const failed = await second;
+    assert.equal(failed.status, 502, failed.text);
+    assert.equal(h.credit(), 1900, 'the failed start credits the cancelled package');
+    assert.equal(h.creditLines(q.entitlement), 1);
+    assert.ok(!h.ent(q.entitlement).startedAt);
+    assert.equal((await cancel(h, q.id)).status, 200);
+    assert.equal(h.credit(), 1900, 'once');
+  });
+});
+
+test('provider refusal: the provider refusing to start keeps the package valid, tells the investor plainly and the operator once a day', async () => {
+  await shop({ env: { OPERATOR_EMAIL: OPERATOR } }, async (h) => {
+    const p = await h.send('p1');
+    h.f.ctl.session = () => providerSays(402);
+    const r = await h.identity(p.token);
+    assert.equal(r.status, 502, r.text);
+    assert.deepEqual(r.body, { error: COULD_NOT_START });
+    assert.ok(!/\d/.test(r.text) && !vendorWord.test(r.text), r.text);
+    assert.ok(!h.ent(p.entitlement).startedAt, 'not started');
+    assert.equal(h.ent(p.entitlement).status, 'consumed', 'still valid');
+    assert.ok(h.store.get('invitations', p.id).events.some((e) => e.kind === 'package_check_failed'));
+    assert.ok(h.store.list('events').some((e) => e.type === 'package_check_failed' && e.id === p.id));
+    const mail = operatorMail(h);
+    assert.equal(mail.length, 1, 'one message to the operator');
+    assert.equal(mail[0].to, OPERATOR);
+    assert.equal(mail[0].workspace, '');
+    assert.equal(mail[0].invitationId, '');
+    assert.ok(!vendorWord.test(`${mail[0].from} ${mail[0].subject} ${mail[0].text} ${mail[0].html}`), 'no vendor word');
+    const listed = await j(h.base, 'GET', '/v1/outbox', { bearer: h.a.token });
+    assert.equal(listed.status, 200, listed.text);
+    assert.ok(listed.body.messages.length > 0 && !listed.body.messages.some((m) => m.kind === 'package_alert' || m.to === OPERATOR), 'not in the sponsor’s outbox');
+
+    h.f.ctl.session = () => providerSays(403);
+    const second = await h.identity(p.token);
+    assert.equal(second.status, 502);
+    assert.deepEqual(second.body, { error: COULD_NOT_START });
+    assert.equal(operatorMail(h).length, 1, 'at most once a day');
+    h.clock.t += 25 * HOUR;
+    h.f.ctl.session = () => providerSays(402);
+    assert.equal((await h.identity(p.token)).status, 502);
+    assert.equal(operatorMail(h).length, 2, 'a day later, one more');
+    assert.ok(!h.ent(p.entitlement).startedAt);
+
+    h.f.ctl.session = () => ({ status: 201, body: idfx('session-created').reply });
+    const ok = await h.identity(p.token);
+    assert.equal(ok.status, 200, ok.text);
+    assert.ok(h.ent(p.entitlement).startedAt, 'a later accepted start marks the package started');
+  });
+  await shop({}, async (h) => {
+    const p = await h.send('p2');
+    h.f.ctl.session = () => providerSays(402);
+    const r = await h.identity(p.token);
+    assert.equal(r.status, 502, r.text);
+    assert.deepEqual(r.body, { error: COULD_NOT_START });
+    assert.equal(operatorMail(h).length, 0, 'without OPERATOR_EMAIL nothing is sent');
+    assert.ok(!h.store.list('events').some((e) => e.type === 'package_alert'));
+  });
+});
+
+test('start limit: a package allows three accepted starts of each kind; a fourth is refused with no provider call', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('l1');
+    h.f.ctl.session = () => providerSays(402);
+    assert.equal((await h.identity(p.token)).status, 502, 'a start the provider refused does not count');
+    h.f.ctl.session = () => ({ status: 201, body: idfx('session-created').reply });
+    for (let i = 1; i <= 3; i++) {
+      const r = await h.identity(p.token);
+      assert.equal(r.status, 200, `start ${i}: ${r.text}`);
+    }
+    const sessions = h.f.sessions();
+    const fourth = await h.identity(p.token);
+    assert.equal(fourth.status, 409, fourth.text);
+    assert.deepEqual(fourth.body, { error: LIMIT });
+    assert.equal(h.f.sessions(), sessions, 'no provider call');
+    const s = await h.screening(p.token);
+    assert.equal(s.status, 200, 'each kind has its own three');
+
+    // Starts still waiting on the provider count: three at once are held, a fourth meanwhile is refused.
+    const q = await h.send('l2');
+    const answers = [];
+    const session = { status: 201, body: idfx('session-created').reply };
+    h.f.ctl.session = () => (answers.length < 3 ? new Promise((r) => answers.push(r)) : session);
+    const base = h.f.sessions();
+    const waiting = [h.identity(q.token), h.identity(q.token), h.identity(q.token)];
+    await sessionsReach(h, base + 3);
+    const extra = await h.identity(q.token);
+    assert.equal(extra.status, 409, extra.text);
+    assert.deepEqual(extra.body, { error: LIMIT });
+    assert.equal(h.f.sessions(), base + 3, 'no provider call');
+    answers.forEach((r) => r(session));
+    for (const r of await Promise.all(waiting)) assert.equal(r.status, 200, r.text);
+    assert.equal((await h.identity(q.token)).status, 409);
+  });
+});
