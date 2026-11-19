@@ -198,7 +198,15 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
   /** An account's billing record (customer, card, credit); not stored until there is something to keep. */
   const record = (accountId) => store.get('billing', accountId) || { id: accountId, customer: '', card: null, creditCents: 0 };
   const entitlementsOf = (accountId) => store.list('entitlements').filter((e) => e.account === accountId);
-  const newest = (accountId, key) => entitlementsOf(accountId).filter((e) => e.key === key).pop() || null;
+  /**
+   * The entitlement that speaks for a key: its newest usable one when it has one, otherwise its newest. A settled
+   * payment can record a key bought again meanwhile; that duplicate goes straight back as credit and is newer than the
+   * package in use, which must still be the one found (else the key would read as unpaid and be charged again).
+   */
+  function newest(accountId, key) {
+    const list = entitlementsOf(accountId).filter((e) => e.key === key);
+    return list.filter((e) => ACTIVE.includes(e.status)).pop() || list.pop() || null;
+  }
   function find(account, key) {
     const e = newest(account && account.id ? account.id : account, key);
     return e ? Object.assign({}, e) : null;
@@ -390,10 +398,12 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     return [...seen].map(([key, tier]) => ({ key, tier }));
   }
   /** A key that already holds a paid or used package of another tier is refused before anything is charged. */
-  function sameTier(accountId, list) {
+  function sameTier(accountId, list, confirmed = 0) {
     for (const it of list) {
       const e = newest(accountId, it.key);
-      if (e && ACTIVE.includes(e.status) && e.tier !== it.tier) throw refuse('tier_mismatch');
+      if (!e || !ACTIVE.includes(e.status) || e.tier === it.tier) continue;
+      // An earlier charge was confirmed in this very call, so the sentence cannot say that nothing was charged.
+      throw confirmed > 0 ? new BillingError('tier_mismatch', 409, "This invitation's package was paid at another level.") : refuse('tier_mismatch');
     }
   }
 
@@ -404,7 +414,7 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     sweep(account.id);
     sameTier(account.id, list);
     const confirmed = await settle(account);
-    sameTier(account.id, list);
+    sameTier(account.id, list, confirmed);
 
     // The whole payment is worked out first: what is already paid, what the credit covers in full, what goes to the card.
     const p = prices();

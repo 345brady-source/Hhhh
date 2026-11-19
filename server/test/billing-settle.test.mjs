@@ -172,3 +172,173 @@ test('tracer: an unresolved payment shows in the sponsor’s billing view and is
     assert.deepEqual((await view(base, a.token)).unresolved, []);
   });
 });
+
+/** A payment read back as not charged (the failed delivery's own object), for this server's payment record. */
+function failedRead(pay, patch = {}) {
+  return Object.assign(copy(fx('webhook-payment-failed').reply.data.object), { id: 'pi_lost1', amount: pay.cardCents, metadata: { payment: pay.id } }, patch);
+}
+const TWO = [{ key: 'k1', tier: 'identity' }, { key: 'k3', tier: 'full' }];
+
+test('N7 unresolved then reported succeeded: the payment ends as recorded packages, once; a key bought again meanwhile goes straight back as credit', async () => {
+  await lost(async ({ base, a, gw, store, pay, b }) => {
+    assert.equal(pay.cardCents, 11800);
+    gw.payRead = () => paymentRead(pay);
+    assert.deepEqual((await deliver(base, paymentEvent('webhook-payment-succeeded'))).body, { received: true });
+    assert.equal(store.get('payments', pay.id).status, 'succeeded');
+    for (const it of TWO) {
+      const es = mine(store, 'entitlements', a).filter((e) => e.key === it.key);
+      assert.deepEqual(es.map((e) => [e.status, e.tier, e.chargeRef]), [['paid', it.tier, 'pi_lost1']], it.key);
+      assert.deepEqual(mine(store, 'ledger', a).filter((l) => l.entitlement === es[0].id).map((l) => [l.type, l.by]), [['package', 'card']], it.key);
+    }
+    // The same payment reported again under another event id: nothing changes.
+    const before = held(store);
+    assert.deepEqual((await deliver(base, paymentEvent('webhook-payment-succeeded', { id: 'evt_paid_again' }))).body, { received: true });
+    assert.equal(held(store), before);
+    assert.equal(gw.payReads().length, 2);
+    assert.equal(b.find(a.id, 'k3').status, 'paid');
+  }, { first: TWO });
+
+  // The sponsor bought k1 again by card while its first payment was unresolved: the settled duplicate is credited.
+  await lost(async ({ base, a, gw, store, pay, b }) => {
+    const again = b.find(a.id, 'k1');
+    assert.equal(again.status, 'paid');
+    assert.notEqual(again.chargeRef, 'pi_lost1');
+    assert.equal(creditOf(store, a), 0);
+    gw.payRead = () => paymentRead(pay);
+    assert.deepEqual((await deliver(base, paymentEvent('webhook-payment-succeeded'))).body, { received: true });
+    assert.equal(store.get('payments', pay.id).status, 'succeeded');
+    const es = mine(store, 'entitlements', a).filter((e) => e.key === 'k1');
+    assert.deepEqual(es.map((e) => [e.status, e.chargeRef]), [['paid', again.chargeRef], ['credited', 'pi_lost1']]);
+    assert.deepEqual(mine(store, 'ledger', a).filter((l) => l.type === 'credit').map((l) => [l.cents, l.entitlement]), [[1900, es[1].id]]);
+    assert.equal(creditOf(store, a), 1900, 'the price of the duplicate, as credit');
+    assert.equal(b.find(a.id, 'k1').id, again.id, 'find still returns the one active package');
+    assert.deepEqual((await view(base, a.token)).unresolved, []);
+  }, { next: [{ key: 'k1', tier: 'identity' }] });
+
+  // R8: the payment succeeded, but its money has already gone back (or is contested) by the time it is settled: the
+  // packages are recorded with it and are never usable.
+  for (const [how, charge, status] of [['refunded', { amount_refunded: 11800, refunded: true }, 'refunded'], ['disputed', { disputed: true }, 'disputed']]) {
+    await lost(async ({ base, a, gw, store, pay, b }) => {
+      gw.payRead = () => paymentRead(pay, {}, charge);
+      assert.deepEqual((await deliver(base, paymentEvent('webhook-payment-succeeded'))).body, { received: true }, how);
+      assert.equal(store.get('payments', pay.id).status, 'succeeded', how);
+      for (const it of TWO) {
+        assert.equal(b.find(a.id, it.key).status, status, `${how}: ${it.key}`);
+        assert.equal(b.release(b.find(a.id, it.key).id), false, `${how}: never credited`);
+        assert.throws(() => b.consume(b.find(a.id, it.key).id, 'invt_x'), (err) => err.status === 409, `${how}: never consumed`);
+      }
+      assert.equal(creditOf(store, a), 0, how);
+    }, { first: TWO });
+  }
+});
+
+test('N7 unresolved then reported failed: the payment ends closed with nothing owed and nothing recorded', async () => {
+  await lost(async ({ base, a, gw, store, pay }) => {
+    const ledger = mine(store, 'ledger', a).length;
+    const ents = mine(store, 'entitlements', a).length;
+    gw.payRead = () => failedRead(pay);
+    const r = await deliver(base, paymentEvent('webhook-payment-failed'));
+    assert.equal(r.status, 200, r.text);
+    assert.equal(store.get('payments', pay.id).status, 'failed');
+    assert.equal(mine(store, 'entitlements', a).filter((e) => e.key === 'k1').length, 0);
+    assert.equal(mine(store, 'entitlements', a).length, ents);
+    assert.equal(mine(store, 'ledger', a).length, ledger);
+    assert.equal(creditOf(store, a), 0);
+    const v = await view(base, a.token);
+    assert.deepEqual(v.unresolved, []);
+    assert.equal(v.creditCents, 0);
+    assert.equal(gw.charges().length, 2, 'nothing was charged');
+  });
+});
+
+test('N7 mismatch: another account’s payment, a different amount or customer, a closed payment read the other way: nothing changes and nothing throws', async () => {
+  await lost(async ({ base, a, gw, store, pay }) => {
+    // A second account with a payment of its own left pending, under its own customer.
+    const beta = await account(base, 'beta');
+    await saveCard(base, beta.token);
+    store.put('billing', { id: beta.id, customer: 'cus_beta1' });
+    gw.down = true;
+    assert.equal((await buy(base, beta.token, [{ key: 'b1', tier: 'identity' }])).status, 409);
+    gw.down = false;
+    const betaPay = mine(store, 'payments', beta)[0];
+    const okPay = mine(store, 'payments', a).find((p) => p.status === 'succeeded');
+    const k2 = mine(store, 'entitlements', a).find((e) => e.key === 'k2');
+    const tries = [
+      ['alpha’s customer naming beta’s payment', () => paymentRead(betaPay)],
+      ['a different amount', () => paymentRead(pay, { amount: 1800 })],
+      ['a different customer', () => paymentRead(pay, { customer: 'cus_someoneElse' })],
+      ['no payment named', () => paymentRead(pay, { metadata: {} })],
+      ['a payment this server never made', () => paymentRead(pay, { metadata: { payment: 'pay_unknown1' } })],
+      ['a succeeded payment read back as failed', () => failedRead(okPay)]
+    ];
+    let n = 0;
+    for (const [why, read] of tries) {
+      const before = held(store);
+      gw.payRead = read;
+      const r = await deliver(base, paymentEvent(why.includes('failed') ? 'webhook-payment-failed' : 'webhook-payment-succeeded', { id: `evt_mismatch_${++n}` }));
+      assert.equal(r.status, 200, `${why}: ${r.text}`);
+      assert.deepEqual(r.body, { received: true }, why);
+      assert.equal(held(store), before, why);
+    }
+    assert.equal(store.get('payments', okPay.id).status, 'succeeded');
+    assert.equal(store.get('entitlements', k2.id).status, 'paid');
+    assert.equal(store.get('payments', betaPay.id).status, 'pending');
+    assert.equal(store.get('payments', pay.id).status, 'unresolved');
+
+    // A failed payment read back as succeeded stays failed.
+    gw.payRead = () => failedRead(pay);
+    assert.equal((await deliver(base, paymentEvent('webhook-payment-failed', { id: 'evt_fail_first' }))).status, 200);
+    assert.equal(store.get('payments', pay.id).status, 'failed');
+    const before = held(store);
+    gw.payRead = () => paymentRead(pay);
+    const r = await deliver(base, paymentEvent('webhook-payment-succeeded', { id: 'evt_then_paid' }));
+    assert.equal(r.status, 200, r.text);
+    assert.equal(held(store), before);
+    assert.equal(mine(store, 'entitlements', a).filter((e) => e.key === 'k1').length, 0);
+  });
+});
+
+test('N7 pending reported succeeded: a pending payment younger than 23 hours is recorded once, and the next payment never repeats its charge', async () => {
+  await lost(async ({ base, a, gw, store, clock, pay }) => {
+    clock.t = T0 + HOUR;
+    assert.equal(gw.charges().length, 1);
+    gw.payRead = () => paymentRead(pay);
+    assert.deepEqual((await deliver(base, paymentEvent('webhook-payment-succeeded'))).body, { received: true });
+    assert.equal(store.get('payments', pay.id).status, 'succeeded');
+    assert.deepEqual(mine(store, 'entitlements', a).map((e) => [e.key, e.status, e.chargeRef]), [['k1', 'paid', 'pi_lost1']]);
+
+    const r = await buy(base, a.token, [{ key: 'k1', tier: 'identity' }, { key: 'k2', tier: 'identity' }]);
+    assert.equal(r.status, 200, r.text);
+    assert.deepEqual(r.body, { paid: ['k1', 'k2'], chargedCents: 1900, creditUsedCents: 0 });
+    assert.equal(gw.charges().length, 2, 'one new charge, for k2; the settled one was not repeated');
+    assert.equal(gw.charges()[1].body.amount, '1900');
+    assert.deepEqual(mine(store, 'entitlements', a).map((e) => e.key), ['k1', 'k2']);
+    assert.equal(mine(store, 'ledger', a).length, 2);
+  }, { next: [] });
+});
+
+test('N7 wording: a charge confirmed in the same call that is then refused for its level never says "Nothing was charged"', async () => {
+  const SHORT = { error: "This invitation's package was paid at another level.", code: 'tier_mismatch' };
+  const LONG = { error: "This invitation's package was paid at another level. Nothing was charged.", code: 'tier_mismatch' };
+  const gw = gateway();
+  const store = openStore(null);
+  await start({ fetch: gw, store, now: () => T0 }, async (base) => {
+    const a = await account(base, 'alpha');
+    await saveCard(base, a.token);
+    gw.down = true;
+    assert.deepEqual((await buy(base, a.token, [{ key: 'k1', tier: 'identity' }])).body, UNCONFIRMED);
+    gw.down = false;
+    const r = await buy(base, a.token, [{ key: 'k1', tier: 'full' }]);
+    assert.equal(r.status, 409, r.text);
+    assert.deepEqual(r.body, SHORT);
+    assert.ok(!r.text.includes('Nothing was charged'), r.text);
+    assert.equal(gw.charges().length, 2, 'the stored call was repeated and succeeded');
+    assert.equal(mine(store, 'payments', a)[0].status, 'succeeded');
+    assert.equal(mine(store, 'entitlements', a)[0].tier, 'identity');
+    // A plain mismatch, with no charge confirmed in that call, keeps the full sentence.
+    const plain = await buy(base, a.token, [{ key: 'k1', tier: 'full' }]);
+    assert.equal(plain.status, 409);
+    assert.deepEqual(plain.body, LONG);
+    assert.equal(gw.charges().length, 2);
+  });
+});
