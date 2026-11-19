@@ -16,7 +16,7 @@
 #    "// gate: browser" and, on a later line, // last "<the exact last line of a full run>". It is run, its output kept
 #    in GATE_OUT/gate/<name>.txt, and its last line must equal the quoted line. A file with no marker fails the gate, and
 #    so does a run in which no phase 11 check ran.
-#    Steps 3 and 4 run each check with P11_ROOT and P10_ROOT set to GATE_OUT/gate/base-tree (the base tree step 1
+#    Steps 3 and 4 run each check with P11_ROOT and P10_BASE set to (P10_ROOT unset) GATE_OUT/gate/base-tree (the base tree step 1
 #    extracted), P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots; browser checks go through heavy.sh.
 # The last line is GATE_EXIT=0 or GATE_EXIT=1. Once it is known, the base tree, the screenshots, the checks' page
 # captures and PDFs (checks-out, the owner's folder), the reference copy and a server/node_modules link the gate made
@@ -65,14 +65,15 @@ self_test() {
   printf '%s\n' '#!/usr/bin/env bash' 'cd /nonexistent/fixed/folder || exit 9' 'O=/nonexistent/out' 'mkdir -p $O' 'test -s $O/base-commit.txt && echo "GATE ok   stand-in step"' 'echo "GATE FAIL server tests 197"' 'echo "GATE_EXIT=1"' 'exit 1' > "$T/ref-good.sh"
   grep -v '^cd ' "$T/ref-good.sh" > "$T/ref-nofolder.sh"
   sed 's/^echo "GATE FAIL server tests 197"$/echo "GATE FAIL stand-in step two"/' "$T/ref-good.sh" > "$T/ref-fail.sh"
-  # Stand-in checks. The good ones pass only when the base tree is passed to them (P11_ROOT, P10_ROOT: 11-CONTEXT W5).
+  # Stand-in checks. The good ones pass only when the base tree is passed to them (P11_ROOT, and P10_BASE with P10_ROOT unset,
+  # as gate10 does: dist-record.js loads every case from P10_ROOT when it is set, which would judge the base's code).
   mkdir -p "$T/good" "$T/lastline" "$T/nomarker" "$T/p10good" "$T/p10lastline"
   printf '%s\n' '// gate: node' '// last "STAND IN: PASS (parts run: 1)"' 'if (!/\/gate\/base-tree$/.test(process.env.P11_ROOT || "")) { console.log("FAIL P11_ROOT is not the base tree"); process.exit(1); }' 'console.log("PASS one");' 'console.log("STAND IN: PASS (parts run: 1)");' > "$T/good/stand-in.js"
   printf '%s\n' '// gate: none' 'throw new Error("a file marked none must not be run");' > "$T/good/helper.js"
   printf '%s\n' '// gate: node' '// last "STAND IN: PASS (parts run: 2)"' 'console.log("STAND IN: PASS (parts run: 1)");' > "$T/lastline/stand-in.js"
   cp "$T/good/stand-in.js" "$T/nomarker/stand-in.js"
   printf '%s\n' 'console.log("OTHER: PASS (parts run: 1)");' > "$T/nomarker/other.js"
-  printf '%s\n' '// gate: node' '// last "TEN STAND IN: PASS (cases run: 1)"' 'if (!/\/gate\/base-tree$/.test(process.env.P10_ROOT || "")) { console.log("FAIL P10_ROOT is not the base tree"); process.exit(1); }' 'console.log("TEN STAND IN: PASS (cases run: 1)");' > "$T/p10good/ten.js"
+  printf '%s\n' '// gate: node' '// last "TEN STAND IN: PASS (cases run: 1)"' 'if (process.env.P10_ROOT !== undefined) { console.log("FAIL P10_ROOT is set: the check would judge the base tree"); process.exit(1); }' 'if (!/\/gate\/base-tree$/.test(process.env.P10_BASE || "")) { console.log("FAIL P10_BASE is not the base tree"); process.exit(1); }' 'console.log("TEN STAND IN: PASS (cases run: 1)");' > "$T/p10good/ten.js"
   printf '%s\n' '// gate: none' 'throw new Error("a file marked none must not be run");' > "$T/p10good/lib10.js"
   printf '%s\n' '// gate: node' '// last "TEN STAND IN: PASS (cases run: 2)"' 'console.log("TEN STAND IN: PASS (cases run: 1)");' > "$T/p10lastline/ten.js"
   run() { # name, reference, phase 11 checks folder, counts, phase 10 checks folder
@@ -91,7 +92,7 @@ self_test() {
   # the reference's own count line is set aside (the good reference prints a failing one), a "none" file is skipped and
   # the base tree reaches the phase 10 and phase 11 checks (each good stand-in fails without it).
   run control "$T/ref-good.sh" "$T/good" "197 197 0"
-  if [ "$(tail -n 1 "$T/control.txt")" = 'GATE_EXIT=0 (stand-in)' ] && ! grep -q '^GATE FAIL' "$T/control.txt" && grep -q '^GATE ok   stand-in step$' "$T/control.txt" && grep -q '^GATE ok   STAND IN$' "$T/control.txt" && grep -q '^GATE ok   TEN STAND IN$' "$T/control.txt" && grep -q '^GATE ok   server tests 197 = base 197 + 0 declared$' "$T/control.txt" && ! grep -qE '^GATE (ok|FAIL) +server tests [0-9]+$' "$T/control.txt"; then note 'control: the stand-ins pass when nothing is wrong (base tree passed as P10_ROOT and P11_ROOT; never the line of a real gate)' 1 control; else note 'control: the stand-ins pass when nothing is wrong' 0 control; fi
+  if [ "$(tail -n 1 "$T/control.txt")" = 'GATE_EXIT=0 (stand-in)' ] && ! grep -q '^GATE FAIL' "$T/control.txt" && grep -q '^GATE ok   stand-in step$' "$T/control.txt" && grep -q '^GATE ok   STAND IN$' "$T/control.txt" && grep -q '^GATE ok   TEN STAND IN$' "$T/control.txt" && grep -q '^GATE ok   server tests 197 = base 197 + 0 declared$' "$T/control.txt" && ! grep -qE '^GATE (ok|FAIL) +server tests [0-9]+$' "$T/control.txt"; then note 'control: the stand-ins pass when nothing is wrong (base tree passed as P11_ROOT and P10_BASE, P10_ROOT unset; never the line of a real gate)' 1 control; else note 'control: the stand-ins pass when nothing is wrong' 0 control; fi
   run lastline "$T/ref-good.sh" "$T/lastline" "197 197 0"
   fails lastline "a phase 11 check whose last line differs from its marker" 'STAND IN'
   run nomarker "$T/ref-good.sh" "$T/nomarker" "197 197 0"
@@ -176,9 +177,9 @@ run_checks() { # folder, prefix of the output files; sets RAN
     RAN=$((RAN + 1))
     OUTF="$G/$2$NAME.txt"
     if [ "$KIND" = browser ]; then
-      NODE_PATH="$GN" P11_ROOT="$G/base-tree" P10_ROOT="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" bash "$S/exec-011/heavy.sh" node "$f" > "$OUTF" 2>&1
+      env -u P10_ROOT NODE_PATH="$GN" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" bash "$S/exec-011/heavy.sh" node "$f" > "$OUTF" 2>&1
     else
-      P11_ROOT="$G/base-tree" P10_ROOT="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" node "$f" > "$OUTF" 2>&1
+      env -u P10_ROOT P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" node "$f" > "$OUTF" 2>&1
     fi
     GOT=$(tail -n 1 "$OUTF")
     if [ "$GOT" = "$LAST" ]; then
