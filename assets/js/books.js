@@ -228,6 +228,132 @@
     f.journal.push(stored);
     return clone(stored);
   }
+  /**
+   * Reverse an entry with an equal and opposite one that names it (src 'rev:<id>', rev <id>). The entry itself is never
+   * changed; afterwards its src may be posted again. Dated who.date, else the entry's own date.
+   */
+  function reverse(ws, offeringId, entryId, who) {
+    who = who || {};
+    const j = list(peek(ws, offeringId), 'journal');
+    const e = j.find((x) => x && x.id === entryId);
+    if (!e) throw new Error(`There is no entry ${entryId} in this fund's journal.`);
+    if (e.rev) throw new Error(`Entry ${entryId} is itself a reversal and cannot be reversed; post the original again instead.`);
+    if (j.some((x) => x && x.rev === entryId)) throw new Error(`Entry ${entryId} has already been reversed.`);
+    const date = who.date == null || who.date === '' ? e.date : who.date;
+    if (!isDate(date)) throw new Error('The date is not a real calendar date written YYYY-MM-DD.');
+    if (date < e.date) throw new Error('A reversal cannot be dated before the entry it reverses.');
+    const ct = closedThrough(ws, offeringId);
+    if (ct && (e.date <= ct || date <= ct)) throw closedError(ct);
+    const entry = {
+      date,
+      memo: who.memo == null || who.memo === '' ? `Reversal of ${entryId}` : who.memo,
+      src: 'rev:' + entryId,
+      lines: (e.lines || []).map((l) => compact([l[0], -l[1]].concat(l.slice(2))))
+    };
+    const why = check(entry, accounts(ws, offeringId));
+    if (why) throw new Error(why);
+    const f = fund(ws, offeringId);
+    const stored = { id: nextId(f), date, memo: entry.memo, src: entry.src, lines: entry.lines, at: who.at || new Date().toISOString(), by: who.by || '', rev: entryId };
+    f.journal.push(stored);
+    return clone(stored);
+  }
+
+  /* ---------- Closing a period ---------- */
+  /** 'code|end' lines over the trial balance from the start of the books through the day. */
+  function tbText(ws, offeringId, through) {
+    return trialBalance(ws, offeringId, peek(ws, offeringId).start || '', through)
+      .map((r) => `${r.code}|${r.end}`)
+      .join('\n');
+  }
+  /** Close through a month-end after the last one closed: stores the SHA-256 of tbText, who and when. */
+  function close(ws, offeringId, through, who) {
+    who = who || {};
+    if (!isDate(through) || endOf(through.slice(0, 7)) !== through) throw new Error('A period can be closed only through the last day of a month.');
+    const ct = closedThrough(ws, offeringId);
+    if (ct && through <= ct) throw new Error(`The books are already closed through ${ct}; choose a later month-end.`);
+    if (typeof who.by !== 'string' || !who.by.trim()) throw new Error('Closing a period needs the name of the person closing it.');
+    const f = fund(ws, offeringId);
+    const rec = { through, tb: NS.audit.sha256(tbText(ws, offeringId, through)), at: who.at || new Date().toISOString(), by: who.by };
+    f.closed.push(rec);
+    return clone(rec);
+  }
+  /** Reopen the last close with a reason; closedThrough becomes the previous through or ''. */
+  function reopen(ws, offeringId, who) {
+    who = who || {};
+    const why = typeof who.why === 'string' ? who.why.trim() : '';
+    if (!why) throw new Error('Reopening the books needs a reason.');
+    if (typeof who.by !== 'string' || !who.by.trim()) throw new Error('Reopening the books needs the name of the person reopening them.');
+    let last = null;
+    list(peek(ws, offeringId), 'closed').forEach((r) => {
+      if (r && !r.reopened && typeof r.through === 'string' && (!last || r.through >= last.through)) last = r;
+    });
+    if (!last) throw new Error('The books are not closed for any period.');
+    fund(ws, offeringId);
+    last.reopened = { at: who.at || new Date().toISOString(), by: who.by, why };
+    return clone(last);
+  }
+
+  /* ---------- Accounts and holdings ---------- */
+  /** Add an account beyond the template: four digits, unused, a known type, a name. */
+  function addAccount(ws, offeringId, a) {
+    a = a || {};
+    const code = a.code == null ? '' : String(a.code);
+    if (!/^\d{4}$/.test(code)) throw new Error('An account code is four digits.');
+    if (accounts(ws, offeringId).some((x) => x.code === code)) throw new Error(`Account ${code} is already in this fund's chart of accounts.`);
+    if (TYPES.indexOf(a.type) < 0) throw new Error(`An account's type is one of: ${TYPES.join(', ')}.`);
+    const name = typeof a.name === 'string' ? a.name.trim() : '';
+    if (!name) throw new Error('An account needs a name.');
+    const line = a.line == null ? '' : String(a.line);
+    fund(ws, offeringId).accounts.push([code, name, a.type, line]);
+    return { code, name, type: a.type, line };
+  }
+  const HOLDING_KEYS = ['name', 'kind', 'level', 'address', 'placed', 'landCents', 'buildingCents'];
+  /** '' when the holding's fields are valid, else a sentence. */
+  function holdingFault(h) {
+    if (typeof h.name !== 'string' || !h.name.trim()) return 'An investment needs a name.';
+    if (h.kind !== 'investment' && h.kind !== 'property') return "An investment's kind is investment or property.";
+    if (h.level !== 1 && h.level !== 2 && h.level !== 3) return "An investment's fair value level is 1, 2 or 3.";
+    if (typeof h.address !== 'string') return 'The address must be text.';
+    if (h.placed !== '' && !isDate(h.placed)) return 'The placed-in-service date is not a real calendar date written YYYY-MM-DD.';
+    for (const k of ['landCents', 'buildingCents']) if (!Number.isSafeInteger(h[k]) || h[k] < 0) return `The ${k === 'landCents' ? 'land' : 'building'} cost must be a whole number of cents, not below zero.`;
+    return '';
+  }
+  /** Add an investment or property (id 'h-' + base-36 count). */
+  function addHolding(ws, offeringId, fields) {
+    fields = fields || {};
+    const h = {
+      id: '',
+      name: typeof fields.name === 'string' ? fields.name.trim() : fields.name,
+      kind: fields.kind == null ? 'investment' : fields.kind,
+      level: fields.level == null ? 3 : fields.level,
+      address: fields.address == null ? '' : fields.address,
+      placed: fields.placed == null ? '' : fields.placed,
+      landCents: fields.landCents == null ? 0 : fields.landCents,
+      buildingCents: fields.buildingCents == null ? 0 : fields.buildingCents
+    };
+    const why = holdingFault(h);
+    if (why) throw new Error(why);
+    const f = fund(ws, offeringId);
+    const used = new Set(f.holdings.map((x) => x && x.id));
+    let n = f.holdings.length + 1;
+    while (used.has('h-' + n.toString(36))) n++;
+    h.id = 'h-' + n.toString(36);
+    f.holdings.push(h);
+    return clone(h);
+  }
+  /** Change a holding's fields (never its id). */
+  function setHolding(ws, offeringId, id, fields) {
+    const h = list(peek(ws, offeringId), 'holdings').find((x) => x && x.id === id);
+    if (!h) throw new Error(`There is no investment ${id} in this fund.`);
+    const next = Object.assign({ address: '', placed: '', landCents: 0, buildingCents: 0 }, h);
+    HOLDING_KEYS.forEach((k) => {
+      if (fields && Object.prototype.hasOwnProperty.call(fields, k)) next[k] = k === 'name' && typeof fields[k] === 'string' ? fields[k].trim() : fields[k];
+    });
+    const why = holdingFault(next);
+    if (why) throw new Error(why);
+    HOLDING_KEYS.forEach((k) => (h[k] = next[k]));
+    return clone(h);
+  }
 
   /* ---------- Reads (the report builder's; none changes the workspace) ---------- */
   /**
@@ -284,6 +410,65 @@
     });
     return total;
   }
+  const idNum = (id) => (/^je-\d+$/.test(id) ? Number(id.slice(3)) : Infinity);
+  /**
+   * One row per journal line { id, date, memo, src, code, cents, partner, holding }, by date then id. Filters: from, to
+   * (dates, inclusive), account (a code or a list), partner, holding, src (a prefix).
+   */
+  function entries(ws, offeringId, q) {
+    q = q || {};
+    const from = q.from || '';
+    const to = q.to || '9999-12-31';
+    const accts = q.account == null || q.account === '' ? null : new Set([].concat(q.account).map(String));
+    const p = q.partner ? String(q.partner) : '';
+    const h = q.holding ? String(q.holding) : '';
+    const src = q.src ? String(q.src) : '';
+    const rows = [];
+    list(peek(ws, offeringId), 'journal').forEach((e) => {
+      if (!e || typeof e.date !== 'string' || e.date < from || e.date > to || !Array.isArray(e.lines)) return;
+      if (src && String(e.src || '').indexOf(src) !== 0) return;
+      e.lines.forEach((l) => {
+        const code = String(l[0]);
+        if (accts && !accts.has(code)) return;
+        if (p && (l[2] || '') !== p) return;
+        if (h && (l[3] || '') !== h) return;
+        rows.push({ id: e.id, date: e.date, memo: e.memo || '', src: e.src || '', code, cents: l[1], partner: l[2] || '', holding: l[3] || '' });
+      });
+    });
+    return rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : idNum(a.id) - idNum(b.id) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)));
+  }
+  /** Net activity on the accounts per month from from's month to to's month, every month present. */
+  function series(ws, offeringId, codes, from, to) {
+    if (!isDate(from) || !isDate(to)) throw new Error('A series needs a first and a last date written YYYY-MM-DD.');
+    const set = new Set([].concat(codes).map(String));
+    const out = [];
+    const at = {};
+    let y = Number(from.slice(0, 4));
+    let m = Number(from.slice(5, 7));
+    const last = to.slice(0, 7);
+    for (let guard = 0; guard < 12000; guard++) {
+      const k = `${y}-${String(m).padStart(2, '0')}`;
+      if (k > last) break;
+      at[k] = out.length;
+      out.push({ month: k, cents: 0 });
+      m++;
+      if (m > 12) (m = 1), y++;
+    }
+    list(peek(ws, offeringId), 'journal').forEach((e) => {
+      if (!e || typeof e.date !== 'string' || e.date < from || e.date > to || !Array.isArray(e.lines)) return;
+      const i = at[e.date.slice(0, 7)];
+      if (i === undefined) return;
+      e.lines.forEach((l) => {
+        if (set.has(String(l[0]))) out[i].cents += l[1];
+      });
+    });
+    return out;
+  }
+  /** { start, closedThrough, entries (count), exceptions (count) }. */
+  function status(ws, offeringId) {
+    const f = peek(ws, offeringId);
+    return { start: typeof f.start === 'string' ? f.start : '', closedThrough: closedThrough(ws, offeringId), entries: list(f, 'journal').length, exceptions: list(f, 'exceptions').length };
+  }
 
-  NS.books = { chart, accounts, fund, check, post, live, trialBalance, balance, closedThrough };
+  NS.books = { chart, accounts, fund, check, post, reverse, live, trialBalance, entries, balance, series, tbText, close, reopen, closedThrough, status, addAccount, addHolding, setHolding };
 })(typeof window !== 'undefined' ? window : globalThis);
