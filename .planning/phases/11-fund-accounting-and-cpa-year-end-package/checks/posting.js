@@ -213,6 +213,12 @@ const cases = {
     check("and it is listed once in fund.exceptions as { src, kind: 'stray', investorId, cents }", ex.length === 1 && ex[0].src === 'run:fa-run-1' && ex[0].kind === 'stray' && ex[0].investorId === 'FA-1003' && ex[0].cents === 50000 && S.r.exceptions === 1, ex);
     const r2 = NS2.books.sync(S.ws, { today: TODAY });
     check('a second sync does not list it again', r2.exceptions === 0 && S.ws.books.funds[S.oid].exceptions.length === 1, r2);
+
+    // A hand-edited line paying more than its gross (net 300,001 on 300,000): the run is not posted and is listed.
+    const NS3 = load();
+    const T = fundA(NS3, { others: false, edit: (w) => (w.runs[0].lines.find((x) => x.investorId === 'FA-1002').netCents = 300001) });
+    const ex3 = T.ws.books.funds[T.oid].exceptions;
+    check("a line whose net is above its gross: no run entry, listed as kind 'mismatch'", !NS3.books.live(T.ws.books.funds[T.oid], 'run:fa-run-1') && ex3.length === 1 && ex3[0].src === 'run:fa-run-1' && ex3[0].kind === 'mismatch' && ex3[0].investorId === 'FA-1002', ex3);
   },
 
   /** fa-run-1 with gp 100,000 ($1,000.00): the entry adds [3300 +100,000][1000 -100,000]; cash ends at 3,100,000; 3300 at +100,000. */
@@ -228,6 +234,14 @@ const cases = {
     check("the run's entry adds the general partner's lines", e && J(e.lines) === J([['3100', 600000, 'FA-1001'], ['3100', 300000, 'FA-1002'], ['1000', -600000], ['1000', -300000, 'FA-1002'], ['3300', 100000], ['1000', -100000]]), e && e.lines);
     check('cash ends at 3,100,000', NS.books.balance(ws, oid, '1000', '2026-12-31') === 3100000, NS.books.balance(ws, oid, '1000', '2026-12-31'));
     check('3300 ends at +100,000', NS.books.balance(ws, oid, '3300', '2026-12-31') === 100000);
+
+    // A hand-edited share that is not whole cents: nothing is posted or reversed for the run, and it is listed.
+    const f = ws.books.funds[oid];
+    const before = J(f.journal);
+    ws.runs[0].gp = 1000.5;
+    const r = NS.books.sync(ws, { today: TODAY });
+    check('gp 1000.5 (not whole cents): the run\'s live entry stays as it is and nothing is posted', J(f.journal) === before && r.posted === 0 && r.reversed === 0, r);
+    check("and it is listed as { src: 'run:fa-run-1', kind: 'amount', account: '3300', value: '1000.5' }", f.exceptions.length === 1 && J(Object.assign({}, f.exceptions[0], { found: undefined })) === J({ src: 'run:fa-run-1', kind: 'amount', account: '3300', value: '1000.5' }), f.exceptions);
   },
 
   /** With fund.start 2026-02-01: no call entry (January) and eleven fee entries; nothing dated before the start. */
