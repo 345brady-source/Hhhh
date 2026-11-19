@@ -304,13 +304,28 @@ Plans:
 
 ### Phase 8: Verification package and ongoing compliance
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** A sponsor adds an optional identity, sanctions screening and accreditation package to an invitation with one tick box and pays for it from a card on file before the invitation is sent; the investor completes the checks inside onboarding and never pays; package investors are screened continuously, everyone else is re-screened against the free U.S. Treasury lists when due, the sponsor can ask an investor to re-verify accreditation, and the console holds an exportable record of the AML program
+**Requirements**: VPK-01, VPK-02, VPK-03, VPK-04, VPK-05, VPK-06, VPK-07, VPK-08, VPK-09, VPK-10 (defined in 08-RESEARCH.md, "Phase Requirements")
 **Depends on:** Phase 7
-**Plans:** 0 plans
+**Plans:** 14 plans
+
+Waves: 1 = 08-01, 08-02, 08-03, 08-06 · 2 = 08-04, 08-11, 08-13 · 3 = 08-05, 08-14 · 4 = 08-07 · 5 = 08-08, 08-09 · 6 = 08-10 · 7 = 08-12. Built and tested against recorded replies and stand-ins; nothing is called working before 08-12's real runs and the owner's check.
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 8 to break down)
+- [ ] 08-01-PLAN.md — Sponsor accounts: per-sponsor tokens stored as hashes, every sponsor call pinned to the token's workspace, admin routes behind ADMIN_TOKEN; the shared token unchanged (wave 1)
+- [ ] 08-02-PLAN.md — Identity and screening plug-in with neutral names: session, every status, several names with monitoring, both webhook schemes, against recorded fixtures (wave 1)
+- [ ] 08-03-PLAN.md — Accreditation plug-in: order, the investor's page, result, the letter; starts once the provider's API reference is saved (wave 1, not autonomous)
+- [ ] 08-04-PLAN.md — Card on file through an embedded field hosted by the server, server-side prices by tier, credit first, one charge for a list, no double charge, GET /v1/billing (wave 2)
+- [ ] 08-05-PLAN.md — The package on an invitation: charge before send, 402 leaves nothing, entitlement on the server for paid invitations only, credit when an invitation ends unused (wave 3)
+- [ ] 08-06-PLAN.md — The one tick box on the invite form, the flag and client id, the no-server line in the preview, the phase gate script and framed-check helpers (wave 1)
+- [ ] 08-07-PLAN.md — Investor flow and results end to end against stand-ins: neutral step wording, plain start errors, the letter download, the vendor-name scan over screens and emails (wave 4)
+- [ ] 08-08-PLAN.md — Ongoing screening: changed-checks route, the console's pull that holds an investor on a new hit, the free Treasury re-screen by itself when due (wave 5)
+- [ ] 08-09-PLAN.md — Ask an investor on file to re-verify accreditation: one button, a single-step link, with the package box (wave 5)
+- [ ] 08-10-PLAN.md — Free methods built switched off: five-year written representation and the high-minimum method, re-checked by the console (wave 6)
+- [ ] 08-11-PLAN.md — AML program record: one console page, compiled procedures and screening log, one-file export (wave 2)
+- [ ] 08-12-PLAN.md — Real proofs run by the orchestrator with the owner's keys (sandbox identity, screening hit, monitoring alert, staging accreditation, test-mode card, charge, decline, refund), results failures first, the owner's walk (wave 7, not autonomous)
+- [ ] 08-13-PLAN.md — The one console panel (prices, card, credit, charges), the card dialog, the list form's box with one payment for the list (wave 2)
+- [ ] 08-14-PLAN.md — Payment webhook with signature and read-back, disputes, the operator's refund of an unused package, the operator's README section (wave 3)
 
 ### Phase 9: Filings tab: Form D and blue sky
 
