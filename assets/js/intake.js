@@ -1421,7 +1421,7 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
     return window.JSZip;
   };
   NS.pdfLib = pdfLib;
-  NS.intake = { readFile, corpus, serverSample, readWithServer, readWithRules, normalize, fromOffering, apply, filled, agreementDoc, prepareAgreement, SAMPLES, LIMIT: 200000 };
+  NS.intake = { readFile, corpus, serverSample, readWithServer, readWithRules, normalize, fromOffering, apply, filled, agreementDoc, prepareAgreement, shortOf, SAMPLES, LIMIT: 200000 };
   /** How long the browser waits for the reading server (its own limit is 600 s). */
   NS.intake.SERVER_LIMIT_MS = 630000;
   NS.intake.unreadableShare = unreadableShare;

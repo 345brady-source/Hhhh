@@ -81,8 +81,8 @@
   function footer() {
     const t = T();
     return `<footer class="pt-foot"><div class="pt-wrap">
-      <div class="pt-foot-row"><span>${h(t.support.team)}</span><span>${h(t.support.phone)}</span><span>${h(t.support.email)}</span><span>${h(t.support.hours)}</span></div>
-      <p>${h(t.disclaimer)}</p>
+      <div class="pt-foot-row">${[t.support.team, t.support.phone, t.support.email, t.support.hours].filter(Boolean).map((x) => `<span>${h(x)}</span>`).join('')}</div>
+      ${t.disclaimer ? `<p>${h(t.disclaimer)}</p>` : ''}
       <p class="pt-foot-legal">© ${new Date().getFullYear()} ${h(t.legalName)}${NS.EDITION.poweredBy && t.showPoweredBy ? ` · Powered by ${h(NS.EDITION.poweredBy)}` : ''}</p>
     </div></footer>`;
   }
@@ -169,7 +169,7 @@
     const wi = OPS().wire(W(), o, inv, c);
     const t = T();
     return `<dl class="wire"><div><dt>Bank</dt><dd>${h(wi.bank)}</dd></div><div><dt>ABA routing number</dt><dd>${h(wi.aba)}</dd></div><div><dt>Account number</dt><dd>${h(wi.accountFull || wi.account)}</dd></div><div><dt>Beneficiary</dt><dd>${h(wi.beneficiary)}</dd></div><div><dt>Reference</dt><dd>${h(wi.reference)}</dd></div></dl>
-      <p class="wire-warn">${icon('alert')}<span>Before you send a wire, call ${h(t.support.team)} at ${h(t.support.phone)} to confirm these instructions. ${h(t.shortName)} will never change wire instructions by email.</span></p>`;
+      <p class="wire-warn">${icon('alert')}<span>Before you send a wire, call ${h(t.support.team)}${t.support.phone ? ` at ${h(t.support.phone)}` : ''} to confirm these instructions. ${h(t.shortName)} will never change wire instructions by email.</span></p>`;
   }
   function callsDueHTML(inv) {
     const due = callsDue(inv);
@@ -480,8 +480,10 @@
     const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
     switch (e.basis) {
       case 'maturity':
+        if (!e.date) return ['Not set', ''];
         return now >= e.date ? ['Matured', `Matured ${date(e.date)}`] : [span(M(now, e.date)), `Matures ${date(e.date)}`];
       case 'range': {
+        if (!e.from || !e.to) return ['Not set', ''];
         const a = M(now, e.from);
         const b = M(now, e.to);
         const fy = e.from.slice(0, 4);
@@ -538,7 +540,7 @@
       ${sec(has ? 'Company overview' : 'Investor relations')}
       ${about ? `<p class="ov-text">${h(about)}</p>` : ''}
       ${metrics.length ? `<dl class="ov-metrics">${metrics.map((m) => `<div><dt>${h(m[1] || '')}</dt><dd>${h(m[0])}</dd></div>`).join('')}</dl>` : ''}
-      <div class="ov-contact"><strong>${h(has ? s.team : t.name)}</strong>${has ? '' : `<span>${h(s.team)}</span>`}<span>${h(s.phone)}</span>${s.email ? `<a href="mailto:${h(s.email)}">${h(s.email)}</a>` : ''}<span>${h(s.hours)}</span></div>
+      <div class="ov-contact"><strong>${h(has ? s.team : t.name)}</strong>${has ? '' : `<span>${h(s.team)}</span>`}${s.phone ? `<span>${h(s.phone)}</span>` : ''}${s.email ? `<a href="mailto:${h(s.email)}">${h(s.email)}</a>` : ''}${s.hours ? `<span>${h(s.hours)}</span>` : ''}</div>
     </section>`;
   }
   /**
@@ -867,7 +869,7 @@
           ${fig(h(x.label), h(x.value), h(x.state === 'exited' ? '' : NS.holdYear(o)))}
         </dl>
 
-        <section class="sec">${sec(x.state === 'exited' ? 'Holding period' : x.state === 'open' ? 'Term' : 'Time to exit')}${timeline}</section>
+        ${x.progress == null && !(e.note || x.remaining) ? '' : `<section class="sec">${sec(x.state === 'exited' ? 'Holding period' : x.state === 'open' ? 'Term' : 'Time to exit')}${timeline}</section>`}
 
         ${capitalHTML(v.investor, o)}
         ${callsHTML(v.investor, o)}
@@ -1143,7 +1145,7 @@
             ${row('Email', h(inv.email))}
             ${row('Phone', h(inv.phone || '—'))}
             ${row('Mailing address', h(inv.address || '—'))}
-          </dl><p class="meta">To change these details, contact ${h(t.support.team)} at ${h(t.support.phone)}.</p></section>
+          </dl><p class="meta">To change these details, contact ${h(t.support.team)} at ${h(t.support.phone || t.support.email)}.</p></section>
 
           <section class="sec">${sec('Distribution payments', '<button class="sec-link link-btn" type="button" data-action="update-bank">Update bank account</button>')}<dl class="terms">
             ${row('Method', bank ? 'Direct deposit (ACH)' : 'Check by mail')}
@@ -1237,7 +1239,7 @@
               pending ? `<button class="link-btn" type="button" data-action="activate" data-id="${h(pending.id)}">First time here? Activate your account</button>` : ''
             }</div>
           </form>
-          <aside class="auth-help"><h2>Need help signing in?</h2><p>${h(t.support.team)}</p><p>${h(t.support.phone)}</p><p>${h(t.support.email)}</p><p>${h(t.support.hours)}</p></aside>
+          <aside class="auth-help"><h2>Need help signing in?</h2>${[t.support.team, t.support.phone, t.support.email, t.support.hours].filter(Boolean).map((x) => `<p>${h(x)}</p>`).join('')}</aside>
           </div>
           <div class="auth-art" aria-hidden="true">${art ? `<img src="${art}" alt="">` : '<canvas class="auth-engrave" aria-hidden="true"></canvas>'}</div>
         </div></main>

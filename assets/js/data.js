@@ -326,7 +326,7 @@
       portal_name: tenant.portalName,
       firm: tenant.name,
       team: tenant.support.team,
-      phone: tenant.support.phone,
+      phone: tenant.support.phone || tenant.support.email,
       call_number: notice.callNumber != null ? String(notice.callNumber) : '',
       call_amount: notice.amounts && notice.amounts[inv.id] != null ? '$' + (notice.amounts[inv.id] / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '',
       due_date: notice.due ? parse(notice.due).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : ''
@@ -431,16 +431,20 @@
     const e = o.exit || {};
     const close = o.closeDate;
     const frac = (a, b) => Math.max(0, Math.min(1, (parse(now) - parse(a)) / (parse(b) - parse(a) || 1)));
+    // No date entered: nothing to show (an empty date would read as 1 January 1900).
+    const unset = { label: 'Projected exit', value: 'Not set', remaining: '', progress: null, state: 'open' };
     switch (e.basis) {
       case 'exited':
         return { label: 'Exited', value: e.date ? longDate(e.date) : 'Exited', remaining: e.date ? `Held ${span(monthsBetween(close, e.date))}` : '', progress: 1, state: 'exited' };
       case 'open':
         return { label: 'Term', value: 'No set term', remaining: `Held ${span(monthsBetween(close, now))}`, progress: null, state: 'open' };
       case 'maturity': {
+        if (!e.date) return unset;
         const m = monthsBetween(now, e.date);
         return { label: 'Maturity', value: longDate(e.date), remaining: now >= e.date ? 'Matured' : `${span(m)} remaining`, progress: frac(close, e.date), state: now >= e.date ? 'due' : 'active' };
       }
       case 'range': {
+        if (!e.from || !e.to) return unset;
         const fy = parse(e.from).getUTCFullYear();
         const ty = parse(e.to).getUTCFullYear();
         const value = fy === ty ? String(fy) : `${fy}–${ty}`;
@@ -457,7 +461,7 @@
         return { label: 'Projected exit', value, remaining, progress: frac(close, e.to), windowStart: frac(close, e.to) > 0 ? (parse(e.from) - parse(close)) / (parse(e.to) - parse(close)) : 0, state };
       }
       default: {
-        if (!e.date) return { label: 'Projected exit', value: 'Not set', remaining: '', progress: null, state: 'open' };
+        if (!e.date) return unset;
         const m = monthsBetween(now, e.date);
         return { label: 'Projected exit', value: monthYear(e.date), remaining: now >= e.date ? 'Past projected date' : `${span(m)} remaining`, progress: frac(close, e.date), state: now >= e.date ? 'due' : 'active' };
       }
@@ -597,9 +601,13 @@
     };
   };
 
-  /** Documents available to one investor, built from their positions. */
+  /**
+   * Documents available to one investor, built from their positions: the sample firms' and the managed edition's demo
+   * statements. A firm that signed itself up has only what it published and its investors signed (none built here).
+   */
   NS.investorDocs = function (ws, view) {
     const docs = [];
+    if (NS.EDITION && NS.EDITION.diy && !(NS.workspace && NS.workspace.isBuiltin(ws.tenant.id))) return docs;
     const year = Number(today().slice(0, 4));
     view.positions.forEach((p) => {
       const o = p.offering;
