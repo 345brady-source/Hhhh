@@ -65,6 +65,8 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
   /** Why the module is off although FILINGS=1 ('' when it is on). */
   function problem() {
     if (loadProblem) return loadProblem;
+    // Only code can pass in another transport (tests): no setting selects one, so a running server cannot report a made-up filing.
+    if (env.EDGAR_TRANSPORT !== undefined && env.EDGAR_TRANSPORT !== '' && env.EDGAR_TRANSPORT !== 'staff') return 'EDGAR_TRANSPORT must be staff: this server has no other way of sending a notice';
     if (!validAddress(env.FILINGS_STAFF_EMAIL)) return 'Set FILINGS_STAFF_EMAIL: every new order is emailed to the staff address';
     return '';
   }
@@ -211,6 +213,7 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
   function buildFile(rec, mode) {
     const notice = unseal(rec, 'notice');
     const ccc = {};
+    const missing = [];
     issuersOf(notice).forEach((i, k) => {
       const on = issuerOnFile(i.cik);
       let code = '';
@@ -220,9 +223,12 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
         throw fail(500, 'A stored filing record could not be opened with this server’s DATA_KEY');
       }
       if (code) ccc[String(i.cik).trim()] = code;
+      else missing.push(String(i.cik).trim());
       const sig = notice.offeringData.signatureBlock.signature[k];
       if (sig && on && on.name) sig.issuerName = on.name;
     });
+    // One CCC per issuer: the file is not built until every issuer of the notice has its own on file.
+    if (missing.length) throw fail(409, `No CCC is on file for ${missing.length === 1 ? 'CIK' : 'CIKs'} ${missing.join(', ')}. Record each with PUT /v1/filings/staff/issuers/<cik>`, { missing });
     const contact = { name: text(env.FILINGS_CONTACT_NAME, 30), phone: text(env.FILINGS_CONTACT_PHONE, 20), email: text(env.FILINGS_CONTACT_EMAIL, 80) };
     const secrets = Object.values(ccc);
     const scrub = (s) => secrets.reduce((t, c) => t.split(c).join('[withheld]'), String(s));
@@ -231,44 +237,115 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
     return { xml: formd.toXml(notice, { mode, ccc, contact }), filerCik: bareCik(notice.primaryIssuer.cik) };
   }
 
-  /** Record what EDGAR said about a submission this server handed to a transport. */
-  function applyStatus(rec, mode, accession, s) {
-    const formD = Object.assign({}, rec.formD);
-    const patch = { id: rec.id, formD };
+  /** Has a test of the notice as it is now stored been accepted? A replaced notice needs its own test. */
+  const testPassed = (rec) => !!(rec.formD && rec.formD.test && rec.formD.test.result === 'accepted' && rec.formD.test.version === rec.version);
+  /**
+   * Every LIVE file, LIVE submission and live outcome passes here first: the guard (403, or 409 for an outcome), then
+   * TEST before LIVE (409).
+   */
+  function requireLive(rec, guardStatus) {
+    const g = edgar.allowLive();
+    if (!g.ok) throw fail(guardStatus, g.reason);
+    if (!testPassed(rec)) throw fail(409, 'A test submission of this notice must be accepted before it is filed live');
+  }
+  /** A file or a submission is for a Form D order still open, and never for a notice already sent live (never twice). */
+  const formDOrder = (rec, mode) => {
+    if (!rec.formD) throw fail(409, 'Only a Form D order has a file');
+    if (mode !== 'TEST' && mode !== 'LIVE') throw fail(400, 'mode must be TEST or LIVE');
+    if (rec.status !== 'received') throw fail(409, `This order is ${rec.status}`);
+    if (mode === 'LIVE') requireLive(rec, 403);
+    if (rec.formD.status === 'submitted') throw fail(409, 'This notice is already with EDGAR');
+  };
+
+  /**
+   * Record an outcome of a test or live step, from a transport's status or from staff. s = { status: 'accepted' (with a
+   * transport: in progress) | 'disseminated' (complete) | 'suspended', messages, filedOn }.
+   */
+  function applyStatus(rec, mode, accession, s, at) {
+    const formD = Object.assign({}, rec.formD, { pending: null });
+    const patch = { id: rec.id, formD, messages: seal(rec.id, 'messages', s.status === 'suspended' ? s.messages || [] : []) };
     if (s.status === 'suspended') {
       formD.status = 'suspended';
-      patch.messages = seal(rec.id, 'messages', s.messages || []);
       if (mode === 'TEST') formD.test = { version: rec.version, result: 'suspended', accession, at: iso() };
     } else if (mode === 'TEST') {
       formD.status = 'test_passed';
       formD.test = { version: rec.version, result: 'accepted', accession, at: iso() };
-      patch.messages = seal(rec.id, 'messages', []);
+    } else if (s.status === 'disseminated') {
+      formD.status = 'accepted';
+      formD.accession = accession;
+      formD.filedOn = s.filedOn || edgar.filingDay(at);
+      patch.status = 'done';
+    } else {
+      // LIVE and still in progress at EDGAR: read again when staff next open the order.
+      formD.status = 'submitted';
+      formD.accession = accession;
+      formD.pending = { mode, accession, at };
     }
     return store.put('filings', patch);
   }
+  /** A LIVE submission still in progress is read again through the transport when staff open the order. */
+  async function refresh(rec) {
+    const p = rec.formD && rec.formD.pending;
+    if (!p) return rec;
+    const s = await edgar.status({ accession: p.accession });
+    return s.error ? rec : applyStatus(rec, p.mode, p.accession, s, p.at);
+  }
+
+  /** The Form D file itself. This answer and the text handed to the transport are the only places a CCC leaves the server. */
+  function file(req, res, url, rec) {
+    // No browser page can read it: a page's request carries Origin or Sec-Fetch-Mode, a command-line tool's does not.
+    if (header(req.headers, 'origin') !== undefined || header(req.headers, 'sec-fetch-mode') !== undefined) throw fail(403, 'The file is downloaded with a command-line tool, never from a web page');
+    const mode = url.searchParams.get('mode');
+    formDOrder(rec, mode);
+    const built = buildFile(rec, mode);
+    store.event({ type: 'filing_file_downloaded', order: rec.id, mode });
+    res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', 'Content-Disposition': `attachment; filename="formd-${rec.id}-${mode}.xml"`, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    return res.end(built.xml);
+  }
 
   async function submit(req, res, rec) {
-    if (!rec.formD) throw fail(409, 'Only a Form D order has a file to submit');
     const b = await body(req);
     const mode = b.mode;
-    if (mode !== 'TEST' && mode !== 'LIVE') throw fail(400, 'mode must be TEST or LIVE');
-    if (mode === 'LIVE') {
-      const g = edgar.allowLive();
-      if (!g.ok) throw fail(403, g.reason);
-    }
-    const file = buildFile(rec, mode);
-    const r = await edgar.submit({ xml: file.xml, mode, filerCik: file.filerCik });
+    formDOrder(rec, mode);
+    const built = buildFile(rec, mode);
+    const at = now();
+    const r = await edgar.submit({ xml: built.xml, mode, filerCik: built.filerCik });
     if (r.refused) throw fail(403, r.reason);
+    if (r.closed) throw fail(409, 'EDGAR is not accepting submissions now. Nothing was sent', { nextOpen: r.nextOpen });
     store.event({ type: 'filing_submitted', order: rec.id, mode, transport: edgar.transport, ok: r.ok === true });
     if (r.pending) return send(res, 200, { ok: true, pending: r.pending });
     if (r.rejected) {
-      const cur = applyStatus(rec, mode, '', { status: 'suspended', messages: r.messages });
+      const cur = applyStatus(rec, mode, '', { status: 'suspended', messages: r.messages }, at);
       return send(res, 200, { ok: false, rejected: true, messages: r.messages, formD: formDView(cur) });
     }
     if (!r.ok) throw fail(502, 'EDGAR could not be reached. This server does not know whether the file arrived: look on EDGAR before trying again');
     const s = await edgar.status({ accession: r.accession });
-    const cur = s.error ? rec : applyStatus(rec, mode, r.accession, s);
+    // No status yet: a LIVE file is with EDGAR all the same, and a TEST can simply be sent again.
+    const cur = s.error ? (mode === 'LIVE' ? applyStatus(rec, mode, r.accession, { status: 'accepted' }, at) : rec) : applyStatus(rec, mode, r.accession, s, at);
     return send(res, 200, { ok: true, accession: r.accession, formD: formDView(cur) });
+  }
+
+  const ACCESSION = /^\d{10}-\d{2}-\d{6}$/;
+  const isDay = (v) => typeof v === 'string' && /^\d{4}-\d\d-\d\d$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v;
+  const cleanMessages = (list) => (Array.isArray(list) ? list.slice(0, 50).map((m) => (m && typeof m === 'object' ? { type: text(m.type, 20), code: text(m.code, 20), message: text(m.message, 500) } : { type: '', code: '', message: text(m, 500) })) : []);
+
+  /** Staff record what EDGAR did with a file they uploaded: { step: 'test' | 'live', result: 'accepted' | 'suspended', accession, filedOn, messages }. */
+  function outcome(res, rec, b) {
+    if (!rec.formD) throw fail(409, 'Only a Form D order has a test or live outcome');
+    if (!['test', 'live'].includes(b.step) || !['accepted', 'suspended'].includes(b.result)) throw fail(400, 'An outcome gives step (test or live) and result (accepted or suspended)');
+    if (rec.status !== 'received') throw fail(409, `This order is ${rec.status}`);
+    const accession = text(b.accession, 40);
+    if (b.step === 'test' && rec.formD.status === 'submitted') throw fail(409, 'This notice is already with EDGAR');
+    if (b.step === 'live') {
+      requireLive(rec, 409);
+      if (b.result === 'accepted') {
+        if (!ACCESSION.test(accession)) throw fail(400, 'An accepted notice has an accession number of the form 0001234567-26-000123');
+        if (!isDay(b.filedOn) || b.filedOn > today()) throw fail(400, 'filedOn is the date EDGAR accepted the notice (YYYY-MM-DD), today or earlier');
+      }
+    }
+    const cur = applyStatus(rec, b.step === 'test' ? 'TEST' : 'LIVE', accession, { status: b.result === 'suspended' ? 'suspended' : b.step === 'live' ? 'disseminated' : 'accepted', messages: cleanMessages(b.messages), filedOn: b.filedOn }, now());
+    store.event({ type: 'filing_outcome', order: rec.id, step: b.step, result: b.result });
+    return send(res, 200, statusView(cur));
   }
 
   const listView = (rec) => ({ id: rec.id, firm: rec.firm, offering: rec.offering, kind: rec.kind, status: rec.status, formD: rec.formD ? rec.formD.status : '', dueCents: rec.dueCents, at: rec.at });
@@ -285,6 +362,8 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
       signoff: who.signoff || null,
       notice,
       issuers: notice ? issuersOf(notice).map((i) => ({ cik: String(i.cik).trim(), name: (issuerOnFile(i.cik) || {}).name || '', cccOnFile: !!(issuerOnFile(i.cik) || {}).ccc })) : [],
+      edgar: edgar.openAt(now()),
+      live: edgar.allowLive(),
       staffEmail: rec.staffEmail || '',
       createdAt: rec.createdAt
     });
@@ -318,11 +397,19 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
     if (!rec) return notFound(res);
     if (!m[3]) {
       if (req.method !== 'GET') throw fail(405, 'Use GET');
-      return send(res, 200, staffView(rec));
+      return send(res, 200, staffView(await refresh(rec)));
+    }
+    if (m[3] === '/file') {
+      if (req.method !== 'GET') throw fail(405, 'Use GET');
+      return file(req, res, url, rec);
     }
     if (m[3] === '/submit') {
       if (req.method !== 'POST') throw fail(405, 'Use POST');
       return submit(req, res, rec);
+    }
+    if (m[3] === '/outcome') {
+      if (req.method !== 'POST') throw fail(405, 'Use POST');
+      return outcome(res, rec, await body(req));
     }
     return notFound(res);
   }

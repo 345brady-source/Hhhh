@@ -4,9 +4,13 @@
 //   makeEdgar({ transport, env, now, holidays }) → {
 //     allowLive()                        { ok, reason }: LIVE needs EDGAR_ALLOW_LIVE=1, and is always refused when the
 //                                        server runs as a test (NODE_ENV=test)
-//     submit({ xml, mode, filerCik })    hands a file to the transport; every LIVE passes allowLive() first, and a file
-//                                        whose own TEST or LIVE line differs from mode is refused
+//     submit({ xml, mode, filerCik })    hands a file to the transport; every LIVE passes allowLive() first, a file
+//                                        whose own TEST or LIVE line differs from mode is refused, and nothing is sent
+//                                        outside EDGAR's hours or while EDGAR reports itself closed
 //     status({ accession })              the transport's status for a submission
+//     openAt(ms)                         { open, nextOpen }: EDGAR takes submissions from 06:00 to 22:00 Eastern on
+//                                        business days; nextOpen is the next 06:00 Eastern as an instant ('' when open)
+//     filingDay(ms)                      the filing date of a submission made at that instant
 //   }
 //   transport = { name, submit({ xml, mode, filerCik }), status({ accession }), operational() }
 //     staffTransport()        the route that works on the day access is granted: nothing is sent from this server; a
@@ -101,8 +105,42 @@ export function recordedTransport(replies = {}, dir = '') {
 }
 
 /* ---------- The connector ---------- */
-export function makeEdgar({ transport, env = {}, now = () => Date.now() } = {}) {
+const OPENS = 6 * 60;
+const CLOSES = 22 * 60;
+/** A submission begun after 17:30 Eastern is filed the next business day (Regulation S-T, rule 13). Not yet seen in a reply from EDGAR. */
+const SAME_DAY_UNTIL = 17 * 60 + 30;
+const nextDay = (date) => new Date(Date.parse(`${date}T12:00:00Z`) + 864e5).toISOString().slice(0, 10);
+
+export function makeEdgar({ transport, env = {}, now = () => Date.now(), holidays } = {}) {
   const t = transport || staffTransport();
+  const isBusinessDay = (date) => {
+    const w = new Date(`${date}T12:00:00Z`).getUTCDay();
+    return w !== 0 && w !== 6 && !(typeof holidays === 'function' ? holidays(Number(date.slice(0, 4))) : []).includes(date);
+  };
+  const nextBusinessDay = (date) => {
+    let d = nextDay(date);
+    while (!isBusinessDay(d)) d = nextDay(d);
+    return d;
+  };
+  /** 06:00 Eastern on a calendar day, as an instant (New York is four or five hours behind UTC). */
+  const opening = (date) => {
+    for (const hours of [4, 5]) {
+      const ms = Date.parse(`${date}T${String(6 + hours).padStart(2, '0')}:00:00Z`);
+      const e = eastern(ms);
+      if (e.date === date && e.minutes === OPENS) return new Date(ms).toISOString();
+    }
+    return '';
+  };
+  function openAt(ms = now()) {
+    const e = eastern(ms);
+    const business = isBusinessDay(e.date);
+    if (business && e.minutes >= OPENS && e.minutes < CLOSES) return { open: true, nextOpen: '' };
+    return { open: false, nextOpen: opening(business && e.minutes < OPENS ? e.date : nextBusinessDay(e.date)) };
+  }
+  function filingDay(ms = now()) {
+    const e = eastern(ms);
+    return isBusinessDay(e.date) && e.minutes <= SAME_DAY_UNTIL ? e.date : nextBusinessDay(e.date);
+  }
 
   /** The guard. Every LIVE file and every LIVE submission asks it first. */
   function allowLive() {
@@ -117,16 +155,29 @@ export function makeEdgar({ transport, env = {}, now = () => Date.now() } = {}) 
       const g = allowLive();
       if (!g.ok) return { ok: false, refused: true, reason: g.reason };
     }
+    // The file says itself whether it is a test: a LIVE file never rides on a TEST call.
+    const line = /<testOrLive>([^<]*)<\/testOrLive>/.exec(String(xml));
+    if (!line || line[1] !== mode) return { ok: false, refused: true, reason: 'The file’s own TEST or LIVE line does not match the mode asked for' };
     if (t.name === 'staff') return { ok: true, pending: 'staff' };
-    let r;
+    const hours = openAt(now());
+    if (!hours.open) return { ok: false, closed: true, nextOpen: hours.nextOpen };
+    if (typeof t.operational === 'function') {
+      let op;
+      try {
+        op = await t.operational();
+      } catch {
+        return { ok: false, error: true };
+      }
+      if (!op || op.open !== true) return { ok: false, closed: true, nextOpen: '' };
+    }
     try {
-      r = await t.submit({ xml: String(xml), mode, filerCik: clip(filerCik, 10) });
+      const r = await t.submit({ xml: String(xml), mode, filerCik: clip(filerCik, 10) });
+      if (r && r.ok === true && r.accession) return { ok: true, accession: clip(r.accession, 40) };
+      if (r && r.rejected) return { ok: false, rejected: true, messages: readMessages(r.messages) };
+      return { ok: false, error: true };
     } catch {
       return { ok: false, error: true };
     }
-    if (r && r.ok === true && r.accession) return { ok: true, accession: clip(r.accession, 40) };
-    if (r && r.rejected) return { ok: false, rejected: true, messages: readMessages(r.messages) };
-    return { ok: false, error: true };
   }
 
   async function status({ accession } = {}) {
@@ -139,5 +190,5 @@ export function makeEdgar({ transport, env = {}, now = () => Date.now() } = {}) 
     }
   }
 
-  return { transport: t.name, allowLive, submit, status, now };
+  return { transport: t.name, allowLive, submit, status, openAt, filingDay };
 }

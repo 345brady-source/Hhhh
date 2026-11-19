@@ -1,0 +1,8 @@
+{
+  "_source": "Hand-made on 2026-11-19 from the SEC's Overview of EDGAR APIs (EDGAR Business Office, 22 December 2025), Figure C, the reply for a completed submission. Not recorded from EDGAR. To be replaced by a reply recorded in the SEC's Beta environment (plan 09-08). The accession number is invented and written in EDGAR's usual 10-2-6 form; the figure's own example is grouped differently.",
+  "unconfirmed": true,
+  "reply": {
+    "status": "disseminated",
+    "accession number": "0009999999-26-000001"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "_source": "Hand-made on 2026-11-19 from the SEC's Overview of EDGAR APIs (EDGAR Business Office, 22 December 2025), Figure E, the reply out of business hours. Not recorded from EDGAR. To be replaced by a reply recorded in the SEC's Beta environment (plan 09-08). The overview's text gives other words for this state (\"Outside hours of operation\") than its figure; which EDGAR sends is not confirmed.",
+  "unconfirmed": true,
+  "reply": {
+    "status": "NOT AVAILABLE"
+  }
+}
