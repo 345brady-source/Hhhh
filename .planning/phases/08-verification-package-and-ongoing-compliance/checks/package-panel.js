@@ -7,7 +7,7 @@
 // (frame.js stubServer), and the server's hosted card page by a stand-in page on the server's own origin.
 //   panel            1280x800: exactly one panel with the server's prices, the card, the credit and three charges, each
 //                    with its date, the investor's account name and its amount; nothing else; a payment being confirmed
-//                    shows in one line, and nothing when there is none
+//                    shows in one line, and nothing when there is none; so does an amount owed (08-16)
 //   card             Add card opens the server's card page in the console's dialog; a "card saved" message from any other
 //                    origin changes nothing; from the card page it closes the dialog and the card is read from the server;
 //                    Replace card and Remove; nothing about the card is kept in the console
@@ -240,6 +240,15 @@ const parts = {
       delete over.unresolved;
       u = await redraw();
       check('a server that does not send the list: no such line', !u.lines.some((l) => /being confirmed/.test(l)) && u.rows.length === 3, u.lines);
+      // 08-16 (R9): an amount owed shows in one line; with none, nothing.
+      over.owedCents = 1900;
+      u = await redraw();
+      check('an amount owed: one line "Amount owed $19"', u.lines.filter((l) => l === 'Amount owed $19').length === 1, u.lines);
+      seen.push(u.text);
+      over.owedCents = 0;
+      u = await redraw();
+      check('nothing owed: no such line', !u.lines.some((l) => /owed/i.test(l)), u.lines);
+      delete over.owedCents;
       seen.push(await F.noRawError(check, p, 'after reading again', C.A.errors));
       F.leakFree(check, 'every screen of this part', seen.join('\n'));
     } finally {

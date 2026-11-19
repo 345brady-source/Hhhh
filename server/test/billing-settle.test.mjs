@@ -342,3 +342,299 @@ test('N7 wording: a charge confirmed in the same call that is then refused for i
     assert.equal(gw.charges().length, 2);
   });
 });
+
+// ---------- The operator's card refund (N6's admin part, W7), credit owed (R9), refunds counted once (R10) ----------
+
+const NOT_ALLOWED = { error: 'This package cannot be refunded to the card.', code: 'refund_not_allowed' };
+const REFUSED = { error: 'The refund was refused. Nothing was refunded.', code: 'refund_refused' };
+const UNSURE = { error: 'The refund could not be confirmed. Try again in a few minutes.', code: 'refund_unconfirmed' };
+const OWED = { error: 'A refunded payment left an amount owed. Settle it before adding packages.', code: 'credit_owed' };
+const refundIt = (base, entitlement, { bearer = ADMIN, invite } = {}) => j(base, 'POST', '/billing/admin/refund', { bearer, invite, body: { entitlement } });
+let refundN = 0;
+/** The provider's answer to a refund that went through: its own id and status. */
+const refundDone = (call) => Object.assign(copy(fx('refund-created').reply), { id: `re_admin_${++refundN}`, amount: Number(call.body.amount), metadata: { entitlement: call.body['metadata[entitlement]'] } });
+/** A refund delivery: the event names the charge; the read-back lists the given refunds. */
+function refundEvent(id, charge = 'ch_fixture1') {
+  const ev = copy(fx('webhook-refunded').reply);
+  ev.id = id;
+  ev.data.object.id = charge;
+  return JSON.stringify(ev);
+}
+const chargeRead = (ref, patch) => Object.assign(copy(fx('charge-read').reply), { payment_intent: ref }, patch);
+/** A server, an account with a card, and the packages it bought in one card charge. */
+async function shop(items, fn, { gw = gateway(), store = openStore(null), env } = {}) {
+  await start({ fetch: gw, store, env, now: () => T0 }, async (base) => {
+    const a = await account(base, 'alpha');
+    await saveCard(base, a.token);
+    const r = await buy(base, a.token, items);
+    assert.equal(r.status, 200, r.text);
+    const ents = items.map((it) => mine(store, 'entitlements', a).find((e) => e.key === it.key));
+    await fn({ base, a, gw, store, ents, b: tools(store, { fetch: gw }) });
+  });
+}
+const refundLines = (store, a, e) => mine(store, 'ledger', a).filter((l) => l.type === 'refund' && l.entitlement === e.id);
+
+test('N6 admin refund: an unused card-paid package is refunded to the card, written as refunding before the provider is called; every other package is refused with no provider call', async () => {
+  const file = join(mkdtempSync(join(tmpdir(), 'billing-settle-')), 'store.json');
+  const disk = () => JSON.parse(readFileSync(file, 'utf8'));
+  const atCall = [];
+  const gw = gateway();
+  gw.refund = (call) => {
+    const e = disk().entitlements[call.body['metadata[entitlement]']];
+    atCall.push({ status: e && e.status, key: call.headers['Idempotency-Key'], form: call.body });
+    return refundDone(call);
+  };
+  const items = ['k1', 'k2', 'k3', 'k6', 'k7', 'k8'].map((key) => ({ key, tier: key === 'k6' ? 'full' : 'identity' }));
+  await shop(items, async ({ base, a, store, ents: [paid, used, back, big, begun, gone], b }) => {
+    b.consume(used.id, 'invt_used');
+    // k1 (paid) and k2 (consumed, not started): refunded to the card.
+    for (const e of [paid, used]) {
+      const r = await refundIt(base, e.id);
+      assert.equal(r.status, 200, r.text);
+      assert.deepEqual(r.body, { refunded: true, cents: 1900 });
+      const seen = atCall[atCall.length - 1];
+      assert.equal(seen.status, 'refunding', 'the stored file held refunding when the provider was called');
+      assert.deepEqual([seen.form.payment_intent, seen.form.amount, seen.form['metadata[entitlement]']], [e.chargeRef, '1900', e.id]);
+      assert.match(String(seen.key), /^[0-9a-f]{64}$/, 'an idempotency key was sent');
+      assert.equal(store.get('entitlements', e.id).status, 'refunded');
+      assert.deepEqual(refundLines(store, a, e).map((l) => [l.type, l.by, l.cents, l.refundRef]), [['refund', 'card', 1900, `re_admin_${refundN}`]]);
+    }
+    assert.notEqual(atCall[0].key, atCall[1].key);
+    // k3 returned as credit, its credit still in the balance: refunded, and its credit removed with one line.
+    assert.equal(b.release(back.id), true);
+    assert.equal(creditOf(store, a), 1900);
+    const r3 = await refundIt(base, back.id);
+    assert.equal(r3.status, 200, r3.text);
+    assert.equal(atCall[atCall.length - 1].status, 'refunding');
+    assert.equal(store.get('entitlements', back.id).status, 'refunded');
+    assert.deepEqual(refundLines(store, a, back).map((l) => [l.by, l.cents]), [['card', 1900], ['credit', 1900]]);
+    assert.equal(creditOf(store, a), 0);
+
+    // Refused, each with no provider call: one paid by credit, a credited one whose credit was spent, one started, one
+    // refunded by the provider's own delivery, one disputed, and one whose check is starting.
+    assert.equal(b.release(big.id), true);
+    assert.equal((await buy(base, a.token, [{ key: 'k4', tier: 'identity' }])).status, 200);
+    const byCredit = b.find(a.id, 'k4');
+    assert.equal(byCredit.by, 'credit');
+    assert.equal(creditOf(store, a), 8000, 'part of the credited full package was spent');
+    b.consume(begun.id, 'invt_begun');
+    assert.equal(b.started(begun.id), true);
+    gw.read = () => chargeRead(gone.chargeRef, { amount: 19400, amount_refunded: 1900, refunds: { object: 'list', data: [{ id: 're_dash1', amount: 1900, status: 'succeeded', metadata: { entitlement: gone.id } }] } });
+    assert.equal((await deliver(base, refundEvent('evt_dash_refund'))).status, 200);
+    assert.equal(store.get('entitlements', gone.id).status, 'refunded');
+    // A full package costs more than the credit left, so it goes to the card, on a charge of its own.
+    assert.equal((await buy(base, a.token, [{ key: 'k9', tier: 'full' }])).status, 200);
+    const contested = b.find(a.id, 'k9');
+    assert.equal(contested.by, 'card');
+    gw.read = () => chargeRead(contested.chargeRef, { id: 'ch_k9', amount: 9900, disputed: true });
+    assert.equal((await deliver(base, JSON.stringify(Object.assign(copy(fx('webhook-dispute').reply), { id: 'evt_k9_dispute', data: { object: Object.assign(copy(fx('webhook-dispute').reply.data.object), { charge: 'ch_k9' }) } })))).status, 200);
+    assert.equal(store.get('entitlements', contested.id).status, 'disputed');
+    const calls = gw.refunds().length;
+    for (const [why, e] of [['paid by credit', byCredit], ['credit spent', big], ['started', begun], ['refunded by the provider', gone], ['disputed', contested]]) {
+      const before = held(store);
+      const r = await refundIt(base, e.id);
+      assert.equal(r.status, 409, `${why}: ${r.text}`);
+      assert.deepEqual(r.body, NOT_ALLOWED, why);
+      assert.equal(held(store), before, why);
+    }
+    assert.equal(gw.refunds().length, calls, 'no provider call for any of them');
+    // A check starting on a package (a hold, on the module's own functions): refused too.
+    const k10 = (await buy(base, a.token, [{ key: 'k10', tier: 'identity' }]), b.find(a.id, 'k10'));
+    b.consume(k10.id, 'invt_k10');
+    const finish = b.hold(k10.id);
+    await assert.rejects(b.refund(k10.id), (err) => err.status === 409 && err.code === 'refund_not_allowed');
+    finish(false);
+    assert.equal(gw.refunds().length, calls);
+    const unknown = await refundIt(base, 'ent_doesNotExist1');
+    assert.equal(unknown.status, 404, unknown.text);
+  }, { gw, store: openStore(file) });
+});
+
+test('N6 admin refund refused and unknown: a refusal puts the package back and the next try uses a new key; an unknown outcome stays refunding and is repeated with the same key', async () => {
+  const gw = gateway();
+  const answers = [];
+  gw.refund = (call) => answers.shift()(call);
+  await shop([{ key: 'k1', tier: 'identity' }, { key: 'k2', tier: 'identity' }], async ({ base, a, store, ents: [e1, e2], b }) => {
+    const keys = () => gw.refunds().map((c) => c.headers['Idempotency-Key']);
+    // Refusals: the card's refusal (402), a request refused (400), a refund answered as failed.
+    for (const [why, answer] of [['402', () => ({ status: 402, body: { error: { code: 'charge_disputed' } } })], ['400', () => ({ status: 400, body: { error: { code: 'charge_already_refunded' } } })], ['failed', (call) => Object.assign(refundDone(call), { status: 'failed' })]]) {
+      answers.push(answer);
+      const r = await refundIt(base, e1.id);
+      assert.equal(r.status, 409, `${why}: ${r.text}`);
+      assert.deepEqual(r.body, REFUSED, why);
+      assert.equal(store.get('entitlements', e1.id).status, 'paid', why);
+      assert.equal(refundLines(store, a, e1).length, 0, why);
+    }
+    assert.equal(new Set(keys()).size, 3, 'each try after a refusal carries a new key');
+
+    // Unknown outcomes: no answer, a 500, a refund still pending. The package stays refunding: never usable.
+    for (const [why, answer] of [['thrown', () => Promise.reject(new Error('timed out'))], ['500', () => ({ status: 500, body: { error: {} } })], ['pending', (call) => Object.assign(refundDone(call), { status: 'pending' })]]) {
+      answers.push(answer);
+      const r = await refundIt(base, e1.id);
+      assert.equal(r.status, 409, `${why}: ${r.text}`);
+      assert.deepEqual(r.body, UNSURE, why);
+      assert.equal(b.find(a.id, 'k1').status, 'refunding', why);
+      assert.equal(b.release(e1.id), false, why);
+      assert.throws(() => b.consume(e1.id, 'invt_1'), (err) => err.status === 409, why);
+    }
+    const k = keys();
+    assert.equal(k[3], k[4], 'the repeat after an unknown outcome carries the same key');
+    assert.equal(k[4], k[5]);
+    assert.notEqual(k[3], k[2]);
+    answers.push(refundDone);
+    const ok = await refundIt(base, e1.id);
+    assert.equal(ok.status, 200, ok.text);
+    assert.equal(keys()[6], k[3]);
+    assert.equal(store.get('entitlements', e1.id).status, 'refunded');
+    assert.equal(refundLines(store, a, e1).length, 1);
+
+    // A credited package refused: its credit is put back.
+    assert.equal(b.release(e2.id), true);
+    answers.push(() => ({ status: 402, body: { error: {} } }));
+    assert.deepEqual((await refundIt(base, e2.id)).body, REFUSED);
+    assert.equal(store.get('entitlements', e2.id).status, 'credited');
+    assert.equal(creditOf(store, a), 1900);
+    assert.equal(refundLines(store, a, e2).length, 0);
+  }, { gw });
+});
+
+test('N6 admin refund then delivery: the provider’s delivery of the operator’s own refund adds no second line; one confirmed only by the delivery is refunded once', async () => {
+  const gw = gateway();
+  await shop([{ key: 'k1', tier: 'identity' }, { key: 'k2', tier: 'identity' }], async ({ base, a, store, ents: [e1, e2], b }) => {
+    gw.refund = refundDone;
+    assert.equal((await refundIt(base, e1.id)).status, 200);
+    const ref1 = refundLines(store, a, e1)[0].refundRef;
+    const listed = [{ id: ref1, amount: 1900, status: 'succeeded', metadata: { entitlement: e1.id } }];
+    gw.read = () => chargeRead(e1.chargeRef, { amount: 3800, amount_refunded: 1900, refunds: { object: 'list', data: listed } });
+    assert.equal((await deliver(base, refundEvent('evt_admin_refund1'))).status, 200);
+    assert.equal(refundLines(store, a, e1).length, 1, 'one refund line, not two');
+
+    // The second refund's outcome is unknown; the provider's delivery then lists it: refunded once, and the operator's
+    // repeat changes nothing and calls nobody.
+    gw.refund = () => Promise.reject(new Error('timed out'));
+    assert.deepEqual((await refundIt(base, e2.id)).body, UNSURE);
+    listed.push({ id: 're_late2', amount: 1900, status: 'succeeded', metadata: { entitlement: e2.id } });
+    gw.read = () => chargeRead(e1.chargeRef, { amount: 3800, amount_refunded: 3800, refunded: true, refunds: { object: 'list', data: listed } });
+    assert.equal((await deliver(base, refundEvent('evt_admin_refund2'))).status, 200);
+    assert.equal(store.get('entitlements', e2.id).status, 'refunded');
+    assert.deepEqual(refundLines(store, a, e2).map((l) => [l.by, l.cents, l.refundRef]), [['card', 1900, 're_late2']]);
+    const calls = gw.refunds().length;
+    const before = held(store);
+    const again = await refundIt(base, e2.id);
+    assert.equal(again.status, 200, again.text);
+    assert.deepEqual(again.body, { refunded: true, cents: 1900 });
+    assert.equal(gw.refunds().length, calls);
+    assert.equal(held(store), before);
+    assert.equal(mine(store, 'ledger', a).filter((l) => l.type === 'refund').length, 2);
+    assert.equal(b.find(a.id, 'k2').status, 'refunded');
+  }, { gw });
+});
+
+test('W7 admin only: the refund route is off without ADMIN_TOKEN and answers 401 to every other token and to any invitation token header', async () => {
+  const off = gateway();
+  await start({ fetch: off, env: { ADMIN_TOKEN: '' } }, async (base) => {
+    const r = await refundIt(base, 'ent_x', { bearer: 'anything' });
+    assert.equal(r.status, 404, r.text);
+  });
+  const gw = gateway();
+  gw.refund = refundDone;
+  await shop([{ key: 'k1', tier: 'identity' }], async ({ base, a, store, ents: [e] }) => {
+    const tables = () => JSON.stringify({ e: store.list('entitlements'), l: store.list('ledger'), b: store.list('billing') });
+    const before = tables();
+    for (const [why, opts] of [['a wrong token', { bearer: 'operator-admin-token-wrong-000000' }], ['the account’s own token', { bearer: a.token }], ['an invitation token', { bearer: 'invite-token-0123456789abcdef', invite: 'invite-token-0123456789abcdef' }], ['ADMIN_TOKEN beside an invitation token', { bearer: ADMIN, invite: 'invite-token-0123456789abcdef' }], ['no token', { bearer: '' }]]) {
+      const r = await refundIt(base, e.id, opts);
+      assert.equal(r.status, 401, `${why}: ${r.text}`);
+      assert.equal(tables(), before, why);
+    }
+    assert.equal(gw.refunds().length, 0);
+    const get = await j(base, 'GET', '/billing/admin/refund', { bearer: ADMIN });
+    assert.equal(get.status, 405, get.text);
+    assert.equal(tables(), before);
+    assert.equal((await refundIt(base, e.id)).status, 200, 'with ADMIN_TOKEN alone it is refunded');
+  }, { gw });
+});
+
+test('W6 no vendor text: refund and payment read-back replies holding the vendor’s name, domain and secrets reach no reply, event or log line', async () => {
+  const loudText = `${VENDOR} says no: key ${SECRET} signing ${WHSEC} at https://api.${VENDOR}.com/v1`;
+  const loud = (status) => ({ status, body: { error: { type: 'api_error', code: 'x', message: loudText, doc_url: `https://${VENDOR}.com/docs` } } });
+  const noisy = { description: loudText, receipt_url: `https://pay.${VENDOR}.com/receipts/x`, failure_message: loudText, last_payment_error: { message: loudText } };
+  const replies = [];
+  const lines = [];
+  const real = { error: console.error, log: console.log, warn: console.warn };
+  for (const k of Object.keys(real)) console[k] = (...args) => lines.push(args.map(String).join(' '));
+  let store;
+  try {
+    await lost(async ({ base, a, gw, store: s, pay }) => {
+      store = s;
+      const k2 = mine(s, 'entitlements', a).find((e) => e.key === 'k2');
+      const answers = [() => loud(402), () => loud(500), () => Promise.reject(new Error(`connect to api.${VENDOR}.com refused (${SECRET})`)), (call) => Object.assign(refundDone(call), noisy, { status: 'failed' }), (call) => Object.assign(refundDone(call), noisy)];
+      gw.refund = (call) => answers.shift()(call);
+      for (let i = 0; i < 5; i++) replies.push((await refundIt(base, k2.id)).text);
+      const reads = [() => loud(500), () => Promise.reject(new Error(`read from api.${VENDOR}.com refused (${SECRET})`)), () => Object.assign(failedRead(pay), noisy), () => Object.assign(paymentRead(pay), noisy)];
+      for (let i = 0; i < reads.length; i++) {
+        gw.payRead = reads[i];
+        const ev = JSON.parse(paymentEvent('webhook-payment-succeeded', { id: `evt_loud_${i}` }));
+        Object.assign(ev.data.object, noisy);
+        replies.push((await deliver(base, JSON.stringify(ev))).text);
+      }
+      assert.equal(s.get('payments', pay.id).status, 'failed');
+      assert.equal(s.get('entitlements', k2.id).status, 'refunded');
+    });
+  } finally {
+    Object.assign(console, real);
+  }
+  assert.deepEqual(replies.slice(0, 5).map((t) => JSON.parse(t)), [REFUSED, UNSURE, UNSURE, REFUSED, { refunded: true, cents: 1900 }]);
+  assert.deepEqual(replies.slice(5, 7).map((t) => JSON.parse(t)), [{ error: 'The payment could not be checked. Try again later.' }, { error: 'The payment could not be checked. Try again later.' }]);
+  for (const text of [...replies, JSON.stringify(store.data().events), ...lines]) {
+    const low = text.toLowerCase();
+    assert.ok(!low.includes(VENDOR), `the vendor is named in: ${text.slice(0, 200)}`);
+    assert.ok(!text.includes(SECRET) && !low.includes('sk_test'), `the secret key is in: ${text.slice(0, 200)}`);
+    assert.ok(!text.includes(WHSEC) && !low.includes('whsec'), `the delivery secret is in: ${text.slice(0, 200)}`);
+  }
+});
+
+test('credit owed: credit already spent and then refunded or disputed is owed; while owed, no new package is paid; returned credit settles it first', async () => {
+  for (const how of ['refund', 'dispute']) {
+    await shop([{ key: 'k1', tier: 'identity' }], async ({ base, a, gw, store, ents: [e1], b }) => {
+      assert.equal(b.release(e1.id), true);
+      assert.deepEqual((await buy(base, a.token, [{ key: 'k2', tier: 'identity' }])).body, { paid: ['k2'], chargedCents: 0, creditUsedCents: 1900 }, how);
+      assert.equal(creditOf(store, a), 0);
+      // The first charge's money goes back (or is contested): the credit it gave was already spent on k2.
+      gw.read = () => chargeRead(e1.chargeRef, how === 'refund' ? { amount: 1900, amount_refunded: 1900, refunded: true } : { amount: 1900, disputed: true });
+      const raw = how === 'refund' ? refundEvent('evt_owed_refund') : JSON.stringify(Object.assign(copy(fx('webhook-dispute').reply), { id: 'evt_owed_dispute' }));
+      assert.equal((await deliver(base, raw)).status, 200, how);
+      const v = await view(base, a.token);
+      assert.equal(v.creditCents, 0, how);
+      assert.equal(v.owedCents, 1900, `${how}: the spent credit is owed`);
+      const charges = gw.charges().length;
+      const r = await buy(base, a.token, [{ key: 'k3', tier: 'identity' }]);
+      assert.equal(r.status, 409, `${how}: ${r.text}`);
+      assert.deepEqual(r.body, OWED, how);
+      assert.equal(gw.charges().length, charges, `${how}: no provider call`);
+      assert.equal(b.find(a.id, 'k3'), null, how);
+      // A key already paid is not a new package: asking for it again still answers, with nothing charged.
+      assert.deepEqual((await buy(base, a.token, [{ key: 'k2', tier: 'identity' }])).body, { paid: ['k2'], chargedCents: 0, creditUsedCents: 0 }, how);
+      // Credit that comes back pays what is owed first; then packages can be paid again.
+      assert.equal(b.release(b.find(a.id, 'k2').id), true);
+      const after = await view(base, a.token);
+      assert.deepEqual([after.creditCents, after.owedCents], [0, 0], how);
+      const ok = await buy(base, a.token, [{ key: 'k3', tier: 'identity' }]);
+      assert.equal(ok.status, 200, `${how}: ${ok.text}`);
+      assert.equal(ok.body.chargedCents, 1900, how);
+    });
+  }
+});
+
+test('R10 refund counted once: a charge partly refunded with an unmatched refund and later wholly refunded counts the refunded total once', async () => {
+  await shop([{ key: 'k1', tier: 'identity' }, { key: 'k2', tier: 'identity' }], async ({ base, a, gw, store, ents: [e1, e2] }) => {
+    const loose = { id: 're_loose1', amount: 500, status: 'succeeded', metadata: {} };
+    gw.read = () => chargeRead(e1.chargeRef, { amount: 3800, amount_refunded: 500, refunds: { object: 'list', data: [loose] } });
+    assert.equal((await deliver(base, refundEvent('evt_r10_partial'))).status, 200);
+    gw.read = () => chargeRead(e1.chargeRef, { amount: 3800, amount_refunded: 3800, refunded: true, refunds: { object: 'list', data: [loose, { id: 're_rest1', amount: 3300, status: 'succeeded', metadata: {} }] } });
+    assert.equal((await deliver(base, refundEvent('evt_r10_full'))).status, 200);
+    assert.equal(store.get('entitlements', e1.id).status, 'refunded');
+    assert.equal(store.get('entitlements', e2.id).status, 'refunded');
+    const card = mine(store, 'ledger', a).filter((l) => l.type === 'refund' && l.by === 'card');
+    assert.equal(card.reduce((n, l) => n + l.cents, 0), 3800, `the charge's 3800 once: ${JSON.stringify(card.map((l) => l.cents))}`);
+  });
+});

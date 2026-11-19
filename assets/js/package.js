@@ -166,7 +166,7 @@
     const buttons = `<div class="cs-row" id="pkg-actions"><button class="cs-btn" type="button" data-action="pkg-card"${act.busy ? ' disabled aria-busy="true"' : ''}>${c ? 'Replace card' : 'Add card'}</button>${c ? ` <button class="cs-btn" type="button" data-action="pkg-card-remove"${act.busy ? ' disabled' : ''}>Remove</button>` : ''}</div>`;
     return K.panel(
       TITLE,
-      `${prices.length ? `<dl class="iv-summary" id="pkg-prices">${prices.join('')}</dl>` : ''}${card}${buttons}${act.error ? `<p class="cs-error" id="pkg-error" role="alert">${h(act.error)}</p>` : ''}${credit}${waiting ? `<p class="cs-hint" id="pkg-unresolved">${h(waiting)}</p>` : ''}${table}`
+      `${prices.length ? `<dl class="iv-summary" id="pkg-prices">${prices.join('')}</dl>` : ''}${card}${buttons}${act.error ? `<p class="cs-error" id="pkg-error" role="alert">${h(act.error)}</p>` : ''}${credit}${Number(d.owedCents) > 0 ? `<p class="cs-error" id="pkg-owed">Amount owed ${h(priceLabel(d.owedCents))}</p>` : ''}${waiting ? `<p class="cs-hint" id="pkg-unresolved">${h(waiting)}</p>` : ''}${table}`
     );
   }
   /** The panel drawn again in place (no page render: a field on the page may be in use). */

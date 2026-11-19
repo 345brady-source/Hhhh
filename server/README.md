@@ -501,6 +501,38 @@ Statuses: an order is `received`, `done` or `cancelled`; a Form D order's `formD
 
 **What is sealed.** Notices, packages, sign-offs, EDGAR's messages and each issuer's CCC are sealed with `DATA_KEY`. A CCC is entered only by staff and is never returned by any call, emailed, logged or written to an event: it leaves the server only inside the Form D file of the staff file call. The staff email holds the order id, firm, offering, service and amount only.
 
+## Verification package (for the operator)
+
+A sponsor with an account can add the verification package to an invitation: an identity check with sanctions screening, and, for an offering that requires it, accreditation. The sponsor's card on file is charged when the invitation is sent; the investor never pays and never sees a price. Payments go to your payment provider's account, and your check providers' accounts pay for the checks. Nothing here has been run against the real providers yet: every request, reply and delivery was built from recorded examples, and the card is not to be charged for real before your payment provider's test mode has been run end to end.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `BILLING_SECRET_KEY` | none | Your payment provider's secret key. Without it and `BILLING_PUBLISHABLE_KEY`, card payments are off and the package is not offered. |
+| `BILLING_PUBLISHABLE_KEY` | none | Your payment provider's publishable key, used only by the card page this server hosts. |
+| `BILLING_WEBHOOK_SECRET` | none | The signing secret of the delivery address below. Until it is set, `POST /billing/webhook` answers 404 and refunds, disputes and unconfirmed payments are not settled. |
+| `PACKAGE_PRICE_FULL_CENTS` | `9900` | The full package, in cents. |
+| `PACKAGE_PRICE_IDENTITY_CENTS` | `1900` | Identity check and screening only, in cents. |
+| `PACKAGE_PRICE_REVERIFY_CENTS` | the full price | An accreditation check again, in cents. |
+| `PACKAGE_IDENTITY_PROVIDER` | `idcheck` | The plug-in that runs the identity check and screening. |
+| `PACKAGE_ACCREDITATION_PROVIDER` | `accredit` | The plug-in that runs accreditation. A tier is offered only when its plug-ins are installed and their settings filled. |
+| `IDCHECK_API_KEY`, `IDCHECK_WORKFLOW`, `IDCHECK_WEBHOOK_SECRET` | none | The identity check provider's key, the workflow it runs and its delivery secret. |
+| `OPERATOR_EMAIL` | none | Where this server writes, at most once a day, when a check provider refuses to start a paid check (check that provider account's balance and keys). Without it nothing is sent. |
+| `ADMIN_TOKEN` | none | The operator's token: sponsor accounts and the card refund below. |
+
+A price must be a whole number of cents of at least 50; any other value switches card payments off. Prices can be changed at any time; a package already paid keeps its price.
+
+**Addresses to register.** At your payment provider, a delivery address `<PUBLIC_URL>/billing/webhook` for refunds, disputes and payment results. At your identity check provider, `<PUBLIC_URL>/webhooks/idcheck`.
+
+**The rules.**
+
+- The sponsor's card is charged when an invitation with the package is sent: credit first, then the card, at this server's price. One charge covers a list of invitations.
+- An invitation that ends (cancelled, expired, completed or deleted) with no check started returns the package as credit, which pays for the sponsor's next package. Once a check has started, nothing is returned. A package paid but not put on an invitation within 24 hours also returns as credit.
+- On request, you can refund an unused package to the sponsor's card instead of credit. The card fee is not returned to you. `POST /billing/admin/refund` with `Authorization: Bearer <ADMIN_TOKEN>` and `{ "entitlement": "<id>" }` → `200 { refunded: true, cents }`. Only a package paid by card whose check has not started can be refunded, and a package returned as credit only while that credit is unspent; any other answers `409 refund_not_allowed`. A refusal by the provider answers `409 refund_refused` and nothing changed. When the provider's answer is not known, the package is held as being refunded (it cannot be used) and the answer is `409 refund_unconfirmed`: call again later with the same id; the provider is asked with the same key, so the money goes back once. The route answers 404 while `ADMIN_TOKEN` is unset and 401 to any other token or to a call that carries an invitation token.
+- A package whose money was refunded, or whose charge is disputed, can no longer be used, and credit it gave is taken back. Credit the sponsor had already spent is owed instead: the sponsor's billing view shows the amount owed, no new package is paid until it is settled. Credit returned later pays it first; otherwise settle it with the sponsor and set the account's `owedCents` to 0 in the store file's `billing` table while the server is stopped. If you win a dispute, restore the package the same way.
+- A payment whose result could not be confirmed is asked again with the same key for up to 23 hours, then left alone. The sponsor's billing view shows it as being confirmed until your payment provider's delivery settles it: a payment the provider reports as paid becomes the packages it paid for; one reported as failed is closed with nothing owed.
+
+**Limits.** Card sessions, the queue that runs one account's payments one after another, and the hold while a check is starting live in this server's memory: run one server process for one store file. A restart only means asking for the card page again.
+
 ## Data protection
 
 Invitations hold investors' personal details, bank details and signed documents, so:
