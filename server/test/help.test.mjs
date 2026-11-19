@@ -138,8 +138,9 @@ test('a sponsor question is answered 200 { ok, kind, answer, session }, and the 
     assert.equal(call.url, 'https://api.anthropic.com/v1/messages');
     assert.equal(call.headers.get('anthropic-beta'), null, 'no beta header');
     assert.equal(/beta/i.test(call.url), false, 'no beta query');
-    assert.equal(call.headers.get('x-api-key'), KEY, 'the key is CARROWVALE_API_KEY, never an ambient one');
-    assert.equal(call.headers.get('authorization'), null);
+    // The installed client sends the key as a bearer credential (as the reading routes' tests show).
+    assert.equal(call.headers.get('authorization'), `Bearer ${KEY}`, 'the key is CARROWVALE_API_KEY, never an ambient one');
+    assert.ok(call.headers.get('x-api-key') === null || call.headers.get('x-api-key') === KEY);
   }));
 
 test('without CARROWVALE_API_KEY: 503 unavailable before the body is read, and the service is never called', async () => {

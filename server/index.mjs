@@ -19,6 +19,7 @@
  *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
  *   POST /v1/intake               read an offering's documents for the intake screen (lib/intake.mjs; ndjson stream)
  *   POST /v1/read                 read an uploaded subscription agreement's places (lib/read.mjs)
+ *   POST /v1/help                 answer a question about using the portal (lib/help.mjs)
  *   GET  /health                  which providers are configured, and whether reading is available
  *
  * Investor invitations (lib/invitations.mjs; see README.md):
@@ -49,6 +50,7 @@ import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
 import { createIntake } from './lib/intake.mjs';
 import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
+import { createHelp } from './lib/help.mjs';
 import { costOf, logLine } from './lib/model.mjs';
 import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
@@ -155,6 +157,8 @@ export function createServer(opts = {}) {
   const intake = opts.intake || createIntake({ env, fetch: opts.fetch });
   // The agreement reader shares the intake's spend cap, so the cap counts every reading call this server makes.
   const reader = opts.reader || createReader({ env, fetch: opts.fetch, budget: intake.budget || undefined });
+  // Help shares that cap too, and has its own daily cap (lib/help.mjs).
+  const help = opts.help || createHelp({ env, fetch: opts.fetch, budget: intake.budget || undefined, now });
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   /**
@@ -577,6 +581,50 @@ export function createServer(opts = {}) {
     }
   }
 
+  /** The largest help request body: one question of at most 500 characters and a few short keys. */
+  const HELP_BODY = 8 * 1024;
+  async function answerHelp(req, res, scope) {
+    const fail = (status, reason) => send(res, status, { ok: false, reason });
+    try {
+      let on = false;
+      try {
+        on = !!(await help.available());
+      } catch {
+        on = false;
+      }
+      if (!on) return fail(503, 'unavailable');
+      let raw;
+      try {
+        raw = await readRaw(req, HELP_BODY);
+      } catch (e) {
+        return e && e.status === 413 ? fail(413, 'too_large') : fail(400, 'invalid');
+      }
+      let body = null;
+      try {
+        body = JSON.parse(raw.toString('utf8'));
+      } catch {
+        body = null;
+      }
+      if (!body || typeof body !== 'object' || Array.isArray(body)) return fail(400, 'invalid');
+      const ctl = new AbortController();
+      const onClose = () => {
+        if (!res.writableFinished) ctl.abort();
+      };
+      res.on('close', onClose);
+      let r;
+      try {
+        r = await help.ask({ message: body.message, session: body.session, page: body.page, step: body.step, role: body.role }, { signal: ctl.signal });
+      } catch {
+        r = null;
+      }
+      res.off('close', onClose);
+      r = r && r.body && Number.isInteger(r.status) ? r : { status: 502, body: { ok: false, reason: 'failed' }, row: null };
+      if (!res.writableEnded && !res.destroyed) send(res, r.status, r.body);
+    } catch {
+      if (!res.headersSent) fail(502, 'failed');
+    }
+  }
+
   async function route(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const path = url.pathname;
@@ -761,6 +809,11 @@ export function createServer(opts = {}) {
     if (path === '/v1/read') {
       if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
       return readAgreement(req, res);
+    }
+
+    if (path === '/v1/help') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      return answerHelp(req, res, scope);
     }
 
     if (req.method === 'POST' && path === '/v1/verifications') {
