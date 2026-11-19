@@ -1,0 +1,10 @@
+{
+  "_source": "https://docs.didit.me/sessions-api/create-session",
+  "_status": "unconfirmed: documented shape quoted by search on 2026-11-19; to be confirmed in the sandbox by plan 08-12",
+  "reply": {
+    "session_id": "11111111-2222-4333-8444-555555555555",
+    "session_token": "tok-fixture-1",
+    "url": "https://verify.didit.me/session/tok-fixture-1",
+    "status": "Not Started"
+  }
+}
