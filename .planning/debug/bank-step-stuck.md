@@ -1,8 +1,8 @@
 ---
-status: fixing
+status: awaiting_human_verify
 trigger: "Intermittent: phase 4 signing-step check stuck on onboarding step 'Distribution payments' with 'Enter the account number (4 to 17 digits).' after typing bank details, on a heavily loaded machine; re-run passes."
 created: 2026-11-19T00:00:00Z
-updated: 2026-11-19T00:00:00Z
+updated: 2026-11-19T22:20:00Z
 ---
 
 ## Current Focus
@@ -22,9 +22,7 @@ reasoning_checkpoint:
 
 bug_class: Bohrbug triggered by timing (a late, unconditional full-page redraw), not a data race inside the step
 hypothesis: H1 - after Finish on the W-9 signing view, the W-9 page images (esign.js pagesOf -> loadPages(...).then(() => NS.app.render())) can finish loading AFTER the flow has moved to "Distribution payments"; that unconditional NS.app.render() redraws the bank step (#view innerHTML) while the account number is being typed. The focused input is replaced, focus falls to <body>, and keystrokes after the redraw go nowhere (a phone keyboard closes). Playwright fill() = focus+select, then a separate Input.insertText to the focused element, so a redraw between the two drops the whole value silently.
-test: instrument NS.app.render (stack + heading) and run the walk to the bank step under CPU throttling; look for a render from esign.js pagesOf while the heading is "Distribution payments"
-expecting: H1 true -> such a render appears (at least sometimes) after the step change; H1 false -> no render on the bank step after it is shown
-next_action: write scratch diag.js (phase 6 lib, render log) and run it through heavy.sh at throttle 1 and 6
+next_action: owner check on the iPhone (published preview): on the tax step press Finish as soon as it shows, then type the bank details at once; every digit must stay and Continue must move on. Then archive this session.
 
 ## Hypotheses (candidates, >=2 categories)
 - code (product): stray late redraw from esign.js pagesOf after the W-9 step has moved on (H1)
@@ -37,10 +35,18 @@ next_action: write scratch diag.js (phase 6 lib, render log) and run it through 
 expected: after the check types routing + account number on "Distribution payments" and presses continue, onboarding advances to step 9
 actual: step stays on "Distribution payments" showing "Enter the account number (4 to 17 digits)." (twice, under ~10 agents on 4 cores); re-run passes 75/0
 errors: "FAIL 390px: the investor reaches the signing step :: [... \"Step 8 of 11: Distribution payments | Distribution payments\",\"STUCK: \"]"; "FAIL investor onboards and signs the agreement inside onboarding :: [... \"Distribution payments\",\"STUCK: Enter the account number (4 to 17 digits).\"]"
-reproduction: intermittent under heavy CPU load; not yet deterministic
+reproduction: intermittent under heavy CPU load (natural); deterministic with bank-step-typing.js (W-9 page image held until the account number is half typed)
 started: seen twice on 2026-11-19
 
 ## Eliminated
+
+- hypothesis: the check types before the bank step's fields are ready (harness timing fault)
+  evidence: the walkers wait for the step's heading, which is drawn in the same innerHTML as the fields; in the failing record run the routing number (typed first) landed and only the account number was lost; diag.js shows the loss coincides with a redraw from esign.js:496, not with the step appearing
+  timestamp: 2026-11-19T20:45Z
+
+- hypothesis: the step reads a value before its input event lands (binder timing)
+  evidence: app.js onBind writes ob().d on every input event synchronously; validate() and the redraw both read ob().d; the bank step itself never redraws while typing (routing updates #routing-status in place)
+  timestamp: 2026-11-19T20:25Z
 
 ## Evidence
 
@@ -74,9 +80,40 @@ started: seen twice on 2026-11-19
   found: both parts FAIL the same way - after the redraw: account "1234" (the 5 digits typed after it went nowhere), focus BODY, Continue -> "The account numbers do not match." Preconditions PASS (W-9 still "Loading document..." at Finish; the W-9 finished drawing while the account number was typed).
   implication: product bug, user-visible: a person typing on a slow phone loses the keyboard and every digit after the redraw. The gate's fill() variant of the same redraw drops the whole value ("Enter the account number").
 
+- timestamp: 2026-11-19T21:20Z
+  checked: scratch diag-press.js on a base-tree copy (e7f3721), sandboxed frame 390x844 isMobile/hasTouch (as signing-step.js's 390px run): bank step filled as the walkers fill it, mouse button down on Continue, the held W-9 page image released (the late redraw lands), mouse button up
+  found: {"heading":"Distribution payments","submits":0,"clicks":[],"errors":[],"account":"123456789"} - no click event reached anything, no submit, no field error, every value present. The automation's hit-target guard only checks the first pointer event, so it reports the click done.
+  implication: the second symptom ("STUCK: " with no message, 390px signing-step run) is the same late redraw landing between the press and the release of Continue. Same root cause; one fix covers both.
+
+- timestamp: 2026-11-19T21:45Z
+  checked: bank-step-typing.js and diag-press.js on the fixed tree (esign.js pagesOf guarded), same hold/release
+  found: BANK STEP TYPING: PASS (parts run: 2), 18/18 (iphone and desktop: all 9 digits in the field, focus stays on ob-account, Continue moves on with no field error). diag-press: {"heading":"Subscription","submits":1,"clicks":["BUTTON.btn btn-primary"],"errors":[]}.
+  implication: both symptoms gone with the one change; falsification test of the reasoning checkpoint passed (no other redraw source)
+
+- timestamp: 2026-11-19T21:55Z
+  checked: diag.js on the fixed tree, natural slowing only (no hold): CPU throttle 6, sandboxed frame, 390x844 touch, 2 runs
+  found: same timeline as base (Finish pressed while the W-9 was still drawing: no page-image redraw on the tax view; finishSigning's renders at ~9.0/10.2 s and ~8.5/9.8 s), and "onBank": [] in both runs - the late redraw that hit the bank step in 2/2 base runs is gone
+  implication: the fix holds under the real slowing, not only under the check's injected hold
+
 ## Resolution
 
-root_cause:
-fix:
+verdict: PRODUCT BUG (not the check's fault). The check exposed it because it presses Finish on the W-9 as soon as it is offered, which a person on a slow phone can also do (D-30: nothing on the W-9 is required).
+
+root_cause: assets/js/esign.js pagesOf() (base e7f3721 line 496) - `if (!pageCache[docId]) loadPages(docId).then(() => NS.app.render(), () => NS.app.render());` redraws the whole page when a document's page images finish, whatever is on screen by then. On a slow device the W-9's pages are still drawing when Finish is pressed; finishSigning moves the flow to "Distribution payments"; the drawing ends a moment later and the redraw replaces the bank step's inputs while the investor types. Focus falls to <body> (a phone's keyboard closes) and every key after that goes nowhere. AND-gate: (1) Finish before the W-9 is drawn AND (2) typing when the drawing ends.
+
+fix: esign.js pagesOf() redraws only while the page still shows that document's "Loading document..." placeholder (pagesHTML now marks it with data-doc="<docId>"); once the screen has moved on, nothing on it needs the pages, so no redraw. No on-screen text changed; no other file changed.
+
+files_changed: [assets/js/esign.js]
+check_added: .planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/bank-step-typing.js (BANK STEP TYPING, parts iphone + desktop), added to .planning/checks/gate-reference.sh
+oracle_type: specified (every typed digit stays in the field; focus stays in it; Continue moves on with no field error)
+
 verification:
-files_changed: []
+  - signal reproduce-before: bank-step-typing.js on e7f3721 -> "BANK STEP TYPING: FAIL (parts run: 2) - iphone, desktop" (account "1234", focus BODY, "The account numbers do not match.")
+  - signal fixed-after: same check on ab70688 -> "BANK STEP TYPING: PASS (parts run: 2)", 18/18, iphone 390x844 touch and desktop 1280x800, both in the sandboxed frame with connect-src 'none'
+  - signal second-symptom: diag-press on base = no click, no submit, no error (the "STUCK: " case); on the fix = 1 click, 1 submit, heading "Subscription"
+  - signal natural-slowing: diag.js CPU throttle 6, 2 runs each: base 2/2 runs had the late redraw on the bank step (esign.js:496); fixed 0/2
+  - signal no-text-change: diff is esign.js only, a data-doc attribute on the existing placeholder and the redraw condition; no string shown on screen changed
+  - signal regression: reference gate (GATE_SERVER_TESTS=314) with BANK STEP TYPING added -> GATE_EXIT=0; signing base 75/0, plan 75/0; record base 40/0, plan 40/0; server tests 314/314
+  guardrail_verdict: accepted (pending the owner's own check)
+why_not_caught: the phase 4/5 walkers press Finish on the W-9 at once, so they could catch it, but only when the machine was slow enough that the W-9 pages outlived finishSigning; no check held the drawing on purpose. Now bank-step-typing.js does, in the gate.
+recurrence_guard: .planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/bank-step-typing.js (BANK STEP TYPING, 2 parts) in .planning/checks/gate-reference.sh
