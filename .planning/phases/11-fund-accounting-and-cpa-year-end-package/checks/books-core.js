@@ -148,6 +148,9 @@ const cases = {
     });
     check('each fault has its own sentence', new Set(said).size === faults.length, said);
     check('the sentence for 1 cent says by how much', /\$0\.01/.test(said[4]), said[4]);
+    // I4: the amount itself must be a safe integer (not only the running total); 2^53 is an integer but not a safe one.
+    const big = NS.books.check(Object.assign({}, good, { lines: [['1000', -9007199254740992], ['5100', 9007199254740992]] }), accts);
+    check('I4: 1e300 and 2^53 are refused on their own line as amounts too large to hold exactly', /^Line 1: .*too large/.test(said[7]) && /^Line 1: .*too large/.test(big), { e300: said[7], big });
     check('a valid entry posts after the refusals', NS.books.post(ws, oid, good, ACTOR).id === 'je-000001');
   },
 
