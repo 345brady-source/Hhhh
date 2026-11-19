@@ -424,8 +424,9 @@ test('M1 b: a timeout, then a longer list: the stored call is repeated first, th
 
 test('M1 c: declined, the card replaced, a retry: a different key, and the charge is recorded', async () => {
   let declined = true;
+  let down = false;
   let second = false;
-  const gw = gateway(Object.assign({ charge: (call, ok) => (declined ? refusal('error-card-declined') : ok(call)) }, secondCard(() => second)));
+  const gw = gateway(Object.assign({ charge: (call, ok) => { if (down) throw new Error('timed out'); return declined ? refusal('error-card-declined') : ok(call); } }, secondCard(() => second)));
   await shop({ gw }, async ({ base, a, store }) => {
     assert.deepEqual((await buy(base, a.token, ids(1))).body, DECLINED);
     assert.deepEqual((await buy(base, a.token, ids(1))).body, DECLINED);
@@ -446,6 +447,24 @@ test('M1 c: declined, the card replaced, a retry: a different key, and the charg
     assert.deepEqual(e.map((x) => [x.key, x.status, x.chargeRef]), [['k1', 'paid', 'pi_fixture_1']]);
     assert.deepEqual(store.list('ledger').map((l) => [l.type, l.by, l.cents, l.chargeRef, l.entitlement]), [['package', 'card', 1900, 'pi_fixture_1', e[0].id]]);
     assert.deepEqual(store.list('payments').map((p) => p.status), ['failed', 'failed', 'succeeded']);
+
+    // A call whose outcome was not known, and which the provider refuses when it is repeated, is closed the same way:
+    // the repeat carries the old key, the payment worked out after it a new one, and nothing is recorded for either.
+    down = true;
+    assert.deepEqual((await buy(base, a.token, [{ key: 'k9', tier: 'full' }])).body, UNCONFIRMED);
+    down = false;
+    declined = true;
+    assert.deepEqual((await buy(base, a.token, [{ key: 'k9', tier: 'full' }])).body, DECLINED);
+    const [c4, c5, c6] = gw.charges().slice(3);
+    assert.equal(gw.charges().length, 6);
+    assert.equal(idem(c5), idem(c4), 'the repeat of the unknown call');
+    assert.notEqual(idem(c6), idem(c4), 'then a new payment');
+    assert.deepEqual(store.list('payments').slice(3).map((p) => [p.status, p.attempt]), [['failed', 0], ['failed', 1]]);
+    assert.equal(store.list('entitlements').length, 1);
+    declined = false;
+    assert.deepEqual((await buy(base, a.token, [{ key: 'k9', tier: 'full' }])).body, { paid: ['k9'], chargedCents: 9900, creditUsedCents: 0 });
+    assert.equal(gw.charges().length, 7);
+    assert.ok(![idem(c4), idem(c6)].includes(idem(gw.charges()[6])));
   });
 });
 
