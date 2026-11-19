@@ -252,11 +252,15 @@
 
   const FREQ_MONTHS = { Monthly: 1, Quarterly: 3, 'Semi-annual': 6, Annual: 12 };
 
+  /**
+   * Who holds an offering on a date. A position redeemed in full (p.redeemed, its dealing date) is held through that
+   * date and not after it, so it takes no share of a later distribution.
+   */
   function holdersAt(investors, offeringId, date) {
     const out = [];
     investors.forEach((inv) => {
       inv.positions.forEach((p) => {
-        if (p.offeringId === offeringId && p.date <= date) out.push({ investor: inv, amount: p.amount });
+        if (p.offeringId === offeringId && p.date <= date && !(p.redeemed && p.redeemed < date)) out.push({ investor: inv, amount: p.amount });
       });
     });
     return out;
@@ -409,14 +413,196 @@
   function allocate(ws, run) {
     const key = ws.tenant.id + ':' + run.offeringId + ':' + run.id + ':' + run.total + ':' + run.date;
     if (cache.has(key)) return cache.get(key);
+    const rows = shares(ws, run);
+    cache.set(key, rows);
+    return rows;
+  }
+  /** allocate, worked out from the register as it is now (never from the cache). */
+  function shares(ws, run) {
     const merged = {};
     holdersAt(ws.investors, run.offeringId, run.date).forEach((h) => {
       if (!merged[h.investor.id]) merged[h.investor.id] = { investor: h.investor, amount: 0 };
       merged[h.investor.id].amount += h.amount;
     });
-    const rows = split(run.total, Object.values(merged));
-    cache.set(key, rows);
-    return rows;
+    return split(run.total, Object.values(merged));
+  }
+
+  /* ---------- The distribution record ---------- */
+  /*
+   * What each investor was paid is stored on the run when the distribution is recorded and is never worked out again.
+   * A run is an entry of ws.runs. Keys of the record:
+   *   lines: [ { investorId, grossCents, withheld: [ w ], netCents } ]   one per investor paid
+   *   w = { kind, cents, basisCents, ratePct, source: 'rule' | 'entered', why, confirmedBy, confirmedAt }
+   *   linesBasis: 'recorded' (stored when the distribution was recorded) | 'confirmed' (stored later by a person, for a
+   *   run saved before the record existed); linesAt, linesBy; cancelled: { at, by, why } once cancelled.
+   * Always true of stored lines: the grossCents add up to run.total; netCents = grossCents minus that line's withheld
+   * cents; one line per investor; whole cents only. run.status is still written and nothing reads it: runPaid is the test.
+   */
+  const WITHHELD_KINDS = ['backup', 'foreign', 'partnership', 'real-property', 'fatca', 'state'];
+  const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const wholeCents = (n) => typeof n === 'number' && Number.isInteger(n) && n > 0;
+  const hasLines = (run) => !!run && Array.isArray(run.lines);
+  const who = (by, what) => {
+    if (typeof by !== 'string' || !by.trim()) throw new Error(`${what} needs the name of the person doing it.`);
+    return by.trim();
+  };
+  /** One withheld entry in the stored shape; throws when it is not a positive whole number of cents or not of a known kind. */
+  function withheldEntry(w, investorId) {
+    if (!w || WITHHELD_KINDS.indexOf(w.kind) < 0) throw new Error(`Tax withheld from ${investorId} needs one of these kinds: ${WITHHELD_KINDS.join(', ')}.`);
+    if (!wholeCents(w.cents)) throw new Error(`Tax withheld from ${investorId} must be a positive whole number of cents.`);
+    if (!wholeCents(w.basisCents)) throw new Error(`The amount the tax withheld from ${investorId} is worked out on must be a positive whole number of cents.`);
+    if (w.source !== 'rule' && w.source !== 'entered') throw new Error(`Tax withheld from ${investorId} must say whether it follows a rule or was entered.`);
+    const rate = w.ratePct == null ? null : Number(w.ratePct);
+    if (rate !== null && !(rate >= 0 && rate <= 100)) throw new Error(`The rate of the tax withheld from ${investorId} must be between 0 and 100.`);
+    return { kind: w.kind, cents: w.cents, basisCents: w.basisCents, ratePct: rate, source: w.source, why: String(w.why || ''), confirmedBy: String(w.confirmedBy || ''), confirmedAt: String(w.confirmedAt || '') };
+  }
+  /**
+   * The lines of one distribution: gross from the register as it is now (investors with a share above zero, in
+   * allocate's order); withheld = { [investorId]: [ w ] } or nothing. Throws on a withheld entry for an investor with no
+   * share, on an amount that is not a positive whole number of cents, when a line's withheld is more than its gross, or
+   * when the gross amounts do not add up to the total. Stores nothing.
+   */
+  function buildLines(ws, spec, withheld) {
+    if (!spec || !wholeCents(spec.total)) throw new Error('A distribution needs a total that is a positive whole number of cents.');
+    if (!ISO_DAY.test(String(spec.date || ''))) throw new Error('A distribution needs a payment date (YYYY-MM-DD).');
+    const held = withheld || {};
+    const lines = shares(ws, { offeringId: spec.offeringId, date: spec.date, total: spec.total })
+      .filter((r) => r.cents > 0)
+      .map((r) => {
+        const list = held[r.investor.id] || [];
+        if (!Array.isArray(list)) throw new Error(`Tax withheld from ${r.investor.id} must be a list.`);
+        const w = list.map((x) => withheldEntry(x, r.investor.id));
+        const out = w.reduce((a, x) => a + x.cents, 0);
+        if (out > r.cents) throw new Error(`Tax withheld from ${r.investor.id} is more than the amount of the payment.`);
+        return { investorId: r.investor.id, grossCents: r.cents, withheld: w, netCents: r.cents - out };
+      });
+    Object.keys(held).forEach((id) => {
+      if (!lines.some((l) => l.investorId === id)) throw new Error(`Tax withheld is entered for ${id}, who has no share of this distribution.`);
+    });
+    if (lines.some((l) => !wholeCents(l.grossCents)) || lines.reduce((a, l) => a + l.grossCents, 0) !== spec.total) throw new Error('The investors’ amounts do not add up to the total of the distribution.');
+    return lines;
+  }
+  /**
+   * Record a distribution: builds its lines, stores the run in date order (newest first) and returns it. Throws, and
+   * stores nothing, when the total is not a positive whole number of cents, nobody holds the offering on the date, or
+   * nobody is named as recording it. opts: { by, today, id }.
+   */
+  function recordRun(ws, spec, opts) {
+    opts = opts || {};
+    spec = spec || {};
+    if (!wholeCents(spec.total)) throw new Error('A distribution needs a total that is a positive whole number of cents.');
+    if (!ISO_DAY.test(String(spec.date || ''))) throw new Error('A distribution needs a payment date (YYYY-MM-DD).');
+    const by = who(opts.by, 'Recording a distribution');
+    if (!holdersAt(ws.investors, spec.offeringId, spec.date).some((x) => x.amount > 0)) throw new Error('No investor holds this offering on the payment date.');
+    const lines = buildLines(ws, spec, spec.withheld);
+    const now = opts.today || today();
+    const run = Object.assign(
+      { id: opts.id || `${spec.offeringId}-${spec.date}-${Date.now().toString(36)}`, offeringId: spec.offeringId, date: spec.date, type: spec.type, total: spec.total, status: spec.date > now ? 'scheduled' : 'paid', source: 'console', file: spec.file || '' },
+      spec.gp != null ? { gp: spec.gp, gross: spec.gross } : {},
+      { lines, linesBasis: 'recorded', linesAt: new Date().toISOString(), linesBy: by }
+    );
+    if (ws.runs.some((r) => r.id === run.id)) throw new Error('A distribution with this id is already recorded.');
+    ws.runs.unshift(run);
+    ws.runs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    NS.clearCaches();
+    return run;
+  }
+  /**
+   * A run's lines: the stored ones as they are, or, for a run saved without them, the shares worked out from the register
+   * as it is now (stored false, basis 'recomputed', nothing withheld).
+   */
+  function runLines(ws, run) {
+    if (hasLines(run)) return { stored: true, basis: run.linesBasis === 'confirmed' ? 'confirmed' : 'recorded', lines: run.lines.slice() };
+    return {
+      stored: false,
+      basis: 'recomputed',
+      lines: shares(ws, run)
+        .filter((r) => r.cents > 0)
+        .map((r) => ({ investorId: r.investor.id, grossCents: r.cents, withheld: [], netCents: r.cents }))
+    };
+  }
+  /** The one test of whether a distribution is paid: it is not cancelled and its date has arrived (now: 'YYYY-MM-DD', default today). */
+  function runPaid(run, now) {
+    return !!run && !run.cancelled && run.date <= (now || today());
+  }
+  /** 'paid' | 'scheduled' | 'cancelled', by the same rule. */
+  function runState(run, now) {
+    return run.cancelled ? 'cancelled' : run.date <= (now || today()) ? 'paid' : 'scheduled';
+  }
+  const runById = (ws, runId) => {
+    const run = (ws.runs || []).find((r) => r.id === runId);
+    if (!run) throw new Error('No distribution with this id is recorded.');
+    return run;
+  };
+  /**
+   * Store the lines of a run saved before the record existed, once: the shares as worked out from the register now, or
+   * gross = { [investorId]: cents } as entered (each investor on the run, whole cents, adding up to the total). Throws, and
+   * changes nothing, otherwise or when the run already has lines. opts: { by, at, gross }.
+   */
+  function confirmLines(ws, runId, opts) {
+    opts = opts || {};
+    const run = runById(ws, runId);
+    if (hasLines(run)) throw new Error('This distribution’s amounts are already stored.');
+    const by = who(opts.by, 'Confirming a distribution’s amounts');
+    const worked = runLines(ws, run).lines;
+    let lines = worked;
+    if (opts.gross) {
+      const g = opts.gross;
+      Object.keys(g).forEach((id) => {
+        if (!worked.some((l) => l.investorId === id)) throw new Error(`${id} has no share of this distribution.`);
+        if (!wholeCents(g[id])) throw new Error(`The amount for ${id} must be a positive whole number of cents.`);
+      });
+      lines = worked.filter((l) => g[l.investorId] != null).map((l) => ({ investorId: l.investorId, grossCents: g[l.investorId], withheld: [], netCents: g[l.investorId] }));
+    }
+    if (!lines.length || lines.reduce((a, l) => a + l.grossCents, 0) !== run.total) throw new Error('The investors’ amounts do not add up to the total of the distribution.');
+    Object.assign(run, { lines, linesBasis: 'confirmed', linesAt: opts.at || new Date().toISOString(), linesBy: by });
+    NS.clearCaches();
+    return run;
+  }
+  /** Cancel a recorded distribution: it is paid nowhere afterwards; its lines stay. A second cancel throws. opts: { by, at, why }. */
+  function cancelRun(ws, runId, opts) {
+    opts = opts || {};
+    const run = runById(ws, runId);
+    if (run.cancelled) throw new Error('This distribution is already cancelled.');
+    const by = who(opts.by, 'Cancelling a distribution');
+    const why = String(opts.why || '').trim();
+    if (!why) throw new Error('Cancelling a distribution needs a reason.');
+    run.cancelled = { at: opts.at || new Date().toISOString(), by, why };
+    NS.clearCaches();
+    return run;
+  }
+  /**
+   * Every line of every paid run dated from..to inclusive, oldest first, narrowed by offering and investor when given:
+   * [ { run, line, stored } ]. The one source for a period's figures. f: { offeringId, investorId, from, to, today }.
+   */
+  function paidLines(ws, f) {
+    f = f || {};
+    const out = [];
+    (ws.runs || [])
+      .filter((r) => runPaid(r, f.today) && (!f.offeringId || r.offeringId === f.offeringId) && (!f.from || r.date >= f.from) && (!f.to || r.date <= f.to))
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      .forEach((run) => {
+        const L = runLines(ws, run);
+        L.lines.forEach((line) => {
+          if (!f.investorId || line.investorId === f.investorId) out.push({ run, line, stored: L.stored });
+        });
+      });
+    return out;
+  }
+  /** Carried interest paid to the GP on an offering's distributions dated on or before a day; cancelled runs count nowhere. */
+  function gpPaid(ws, offeringId, onOrBefore) {
+    return (ws.runs || []).filter((r) => !r.cancelled && r.offeringId === offeringId && r.gp > 0 && (!onOrBefore || r.date <= onOrBefore)).reduce((a, r) => a + r.gp, 0);
+  }
+  /** runLines joined to the investor records; cents is the gross amount. An investor no longer on the register is { id, title: id }. */
+  function runRows(ws, run) {
+    return runLines(ws, run).lines.map((line) => ({
+      investor: ws.investors.find((i) => i.id === line.investorId) || { id: line.investorId, title: line.investorId },
+      cents: line.grossCents,
+      withheldCents: line.grossCents - line.netCents,
+      netCents: line.netCents,
+      line
+    }));
   }
 
   /* ---------- Time until exit ---------- */
@@ -502,7 +688,7 @@
     if (set >= 1 && set <= 31) return set;
     const counts = {};
     ws.runs.forEach((r) => {
-      if (r.offeringId === o.id) {
+      if (r.offeringId === o.id && !r.cancelled) {
         const k = Number(r.date.slice(8, 10));
         counts[k] = (counts[k] || 0) + 1;
       }
@@ -514,7 +700,7 @@
     const f = o.distribution.frequency;
     const step = FREQ_MONTHS[f];
     if (step === 1) return `Monthly on the ${ordinal(day)}`;
-    const ref = ws.runs.filter((r) => r.offeringId === o.id).map((r) => r.date).sort().pop() || o.closeDate;
+    const ref = ws.runs.filter((r) => r.offeringId === o.id && !r.cancelled).map((r) => r.date).sort().pop() || o.closeDate;
     const m0 = Number(ref.slice(5, 7)) - 1;
     const months = [];
     for (let k = 0; k < 12; k += step) months.push((m0 + k) % 12);
@@ -531,10 +717,10 @@
     const step = FREQ_MONTHS[(o.distribution || {}).frequency];
     const day = step ? paymentDay(ws, o) : null;
     const schedule = step ? scheduleText(ws, o, day) : '';
-    const sched = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'scheduled' && r.date >= now).map((r) => r.date).sort()[0];
+    const sched = ws.runs.filter((r) => r.offeringId === o.id && runState(r, now) === 'scheduled').map((r) => r.date).sort()[0];
     if (sched) return { date: sched, nominal: sched, moved: false, scheduled: true, day, schedule };
     if (!step) return null;
-    const paid = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'paid').map((r) => r.date).sort();
+    const paid = ws.runs.filter((r) => r.offeringId === o.id && runPaid(r, now)).map((r) => r.date).sort();
     let nominal = withDay(addMonths(firstOf(paid.length ? paid[paid.length - 1] : o.closeDate), step), day);
     for (let guard = 0; bankingOnOrAfter(nominal) < now && guard < 600; guard++) nominal = withDay(addMonths(firstOf(nominal), step), day);
     if (o.exit && o.exit.basis === 'maturity' && o.exit.date) {
@@ -560,9 +746,11 @@
     });
     const payments = [];
     ws.runs.forEach((run) => {
-      if (!byOffering[run.offeringId]) return;
-      const mine = allocate(ws, run).find((r) => r.investor.id === inv.id);
-      if (mine && mine.cents > 0) payments.push({ run, date: run.date, offeringId: run.offeringId, type: run.type, cents: mine.cents, status: run.status });
+      // A run with stored lines says what this investor was paid; one saved without them is worked out from positions.
+      // A cancelled run is paid nowhere.
+      if (run.cancelled || (!byOffering[run.offeringId] && !Array.isArray(run.lines))) return;
+      const mine = runRows(ws, run).find((r) => r.investor.id === inv.id);
+      if (mine && mine.cents > 0) payments.push({ run, date: run.date, offeringId: run.offeringId, type: run.type, cents: mine.cents, withheldCents: mine.withheldCents, netCents: mine.netCents, status: runState(run, now) });
     });
     payments.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     const positions = Object.keys(byOffering)
@@ -629,5 +817,5 @@
     return docs;
   };
 
-  NS.data = { allocate, split, holdersAt, investedAt, fakeRouting, abaCheckDigit, FREQ_MONTHS, ACCRED, rng, hashStr, ordinal, paymentDay };
+  NS.data = { allocate, runPaid, runState, buildLines, recordRun, runLines, runRows, confirmLines, cancelRun, paidLines, gpPaid, split, holdersAt, investedAt, fakeRouting, abaCheckDigit, FREQ_MONTHS, ACCRED, rng, hashStr, ordinal, paymentDay };
 })(window.CVPortal);

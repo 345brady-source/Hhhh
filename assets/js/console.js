@@ -104,7 +104,9 @@
   const ok = (good, label) => `<span class="cs-flag ${good ? 'is-ok' : 'is-todo'}">${icon(good ? 'check' : 'alert')}${label}</span>`;
 
   function raised(oid) {
-    return NS.data.holdersAt(W().investors, oid, '9999-12-31').reduce((a, x) => a + x.amount, 0);
+    // Capital raised counts every subscription, including a position since redeemed in full (holdersAt leaves those out
+    // after their dealing date, item A8 of plan 10-01).
+    return W().investors.reduce((a, i) => a + i.positions.filter((p) => p.offeringId === oid).reduce((s, p) => s + p.amount, 0), 0);
   }
   function holdersCount(oid) {
     return new Set(NS.data.holdersAt(W().investors, oid, '9999-12-31').map((x) => x.investor.id)).size;
@@ -243,7 +245,7 @@
       const steps = allSteps.filter((s) => removed.indexOf(s[0]) < 0);
       const done = steps.filter((s) => s[2]).length;
       const yearAgo = NS.dates.addMonths(today(), -12);
-      const paid12 = w.runs.filter((r) => r.status === 'paid' && r.date > yearAgo).reduce((a, r) => a + r.total, 0);
+      const paid12 = w.runs.filter((r) => NS.data.runPaid(r, today()) && r.date > yearAgo).reduce((a, r) => a + r.total, 0);
       const pending = w.investors.filter((i) => i.onboarding.status !== 'complete');
       const checks = w.investors.filter((i) => !(i.payment && i.payment.method === 'ach'));
       const soon = w.offerings
@@ -1044,9 +1046,10 @@
     const name = (id) => (W().offerings.find((o) => o.id === id) || {}).shortName || id;
     return `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Payment date</th><th scope="col">Offering</th><th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Investors</th><th scope="col">Status</th>${withFile ? '<th scope="col"><span class="sr-only">ACH file</span></th>' : ''}</tr></thead><tbody>${runs
       .map((r) => {
-        const n = NS.data.allocate(W(), r).filter((a) => a.cents > 0).length;
-        return `<tr><td class="nowrap">${date(r.date)}</td><td>${h(name(r.offeringId))}</td><td>${h(r.type)}</td><td class="num">${usdc(r.total)}</td><td class="num">${n}</td><td>${r.status === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
-          withFile ? `<td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button></td>` : ''
+        const n = NS.data.runRows(W(), r).filter((a) => a.cents > 0).length;
+        const st = NS.data.runState(r, today());
+        return `<tr><td class="nowrap">${date(r.date)}</td><td>${h(name(r.offeringId))}</td><td>${h(r.type)}</td><td class="num">${usdc(r.total)}</td><td class="num">${n}</td><td>${st === 'cancelled' ? badge('mute', 'Cancelled') : st === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
+          withFile ? `<td class="num">${st === 'cancelled' ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button>`}</td>` : ''
         }</tr>`;
       })
       .join('')}</tbody></table></div>`;
@@ -1100,7 +1103,9 @@
     const t = T();
     const a = t.ach;
     const o = W().offerings.find((x) => x.id === d.offeringId);
-    const rows = draftAlloc(d);
+    // A file built again for a recorded run pays the net amounts stored on it; a line with nothing left to pay has no entry.
+    const run = d.fromRun ? W().runs.find((x) => x.id === d.fromRun && Array.isArray(x.lines) && !x.cancelled) : null;
+    const rows = run ? NS.data.runRows(W(), run).map((x) => ({ investor: x.investor, cents: x.netCents })) : draftAlloc(d);
     const entries = rows
       .filter((r) => r.investor.payment && r.investor.payment.method === 'ach' && r.investor.payment.bank && r.cents > 0)
       .map((r) => ({ name: r.investor.payment.bank.holder || r.investor.title, id: r.investor.id, routing: r.investor.payment.bank.routing, account: r.investor.payment.bank.account, accountType: r.investor.payment.bank.type, cents: r.cents, sec: (NS.ENTITY_TYPES[r.investor.type] || { sec: 'PPD' }).sec }));
@@ -1125,6 +1130,8 @@
     file.filename = `${slug}_${d.date.replace(/-/g, '')}_${modifier}.ach`;
     file.modifier = modifier;
     file.company = co;
+    // what the file pays each investor, compared with the record's net amounts when the distribution is recorded
+    file.paid = entries.map((e) => ({ id: e.id, cents: e.cents }));
     log.push({ date: todayIso, modifier, filename: file.filename });
     NS.app.save();
     return file;
@@ -1243,6 +1250,8 @@
   }
   NS.binders.dist = (path, v) => {
     const d = draft();
+    // a draft loaded from a recorded run is that run only until one of its fields is edited
+    d.fromRun = null;
     if (path === 'gross') {
       d.gross = v;
       const el = document.getElementById('ds-wf-body');
@@ -1319,11 +1328,26 @@
     const d = draft();
     const total = draftTotalCents(d);
     if (!(total > 0)) return;
-    const id = `${d.offeringId}-${d.date}-${Date.now().toString(36)}`;
     const wf = d.wf && d.wf.lp === total ? d.wf : null;
-    W().runs.unshift(Object.assign({ id, offeringId: d.offeringId, date: d.date, type: d.type, total, status: d.date > today() ? 'scheduled' : 'paid', source: 'console', file: d.file ? d.file.filename : '' }, wf ? { gp: wf.gp, gross: wf.gross } : {}));
+    // The record keeps what each investor is paid (NS.data.recordRun); the console adds its change-log entry. An ACH file
+    // already built must pay exactly the net amounts about to be stored; a refusal records nothing and says why in one line.
+    const spec = Object.assign({ offeringId: d.offeringId, date: d.date, type: d.type, total, file: d.file ? d.file.filename : '' }, wf ? { gp: wf.gp, gross: wf.gross } : {});
+    let id;
+    try {
+      if (d.file && d.file.paid) {
+        const net = {};
+        NS.data.buildLines(W(), spec).forEach((l) => (net[l.investorId] = l.netCents));
+        if (d.file.paid.some((e) => net[e.id] !== e.cents)) {
+          U.toast('The ACH file was built before the investor register changed; generate it again before recording.');
+          return;
+        }
+      }
+      id = NS.data.recordRun(W(), spec, { by: NS.app.actor(), today: today() }).id;
+    } catch (e) {
+      U.toast(String((e && e.message) || e));
+      return;
+    }
     audit('Distribution recorded', `${d.type}: ${usdc(total)} ${d.date > today() ? 'scheduled for' : 'paid'} ${date(d.date)}${wf ? ` (waterfall: ${usdc(wf.gross)} gross, ${usdc(wf.gp)} to the GP)` : ''}; ${d.file ? d.file.filename : 'no NACHA file'}`, d.offeringId, id);
-    W().runs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     NS.app.save(true);
     const o = W().offerings.find((x) => x.id === d.offeringId);
     S().ui.dist = null;
@@ -1332,8 +1356,8 @@
   };
   NS.actions['dist-load'] = (el) => {
     const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
-    if (!r) return;
-    S().ui.dist = { offeringId: r.offeringId, type: r.type, date: r.date, mode: 'total', rate: '', total: (r.total / 100).toFixed(2), desc: T().ach.entryDescription || 'DISTRIB', file: null, line: null };
+    if (!r || r.cancelled) return;
+    S().ui.dist = { offeringId: r.offeringId, type: r.type, date: r.date, mode: 'total', rate: '', total: (r.total / 100).toFixed(2), desc: T().ach.entryDescription || 'DISTRIB', file: null, line: null, fromRun: Array.isArray(r.lines) ? r.id : null };
     const reason = NS.nacha.bankingDayReason(r.date);
     if (achReady() && !reason) {
       // Rebuilding a past date is allowed for reference; the checks flag the date.
@@ -1654,11 +1678,12 @@
     const w = W();
     const rows = [];
     w.runs
-      .filter((run) => run.date >= r.from && run.date <= r.to && (r.offering === 'all' || run.offeringId === r.offering) && (r.scheduled || run.status === 'paid'))
+      // a cancelled run is in no report, scheduled payments ticked or not
+      .filter((run) => !run.cancelled && run.date >= r.from && run.date <= r.to && (r.offering === 'all' || run.offeringId === r.offering) && (r.scheduled || NS.data.runPaid(run, today())))
       .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
       .forEach((run) => {
         const o = w.offerings.find((x) => x.id === run.offeringId) || { name: run.offeringId, shortName: run.offeringId };
-        NS.data.allocate(w, run).forEach((a) => {
+        NS.data.runRows(w, run).forEach((a) => {
           if (a.cents > 0) rows.push({ run, o, inv: a.investor, cents: a.cents });
         });
       });
@@ -1677,7 +1702,7 @@
       head = ['Payment date', 'Offering', 'Investor', 'Account', 'Type', 'Paid by', 'Amount'];
       body = rows.map((x) => [date(x.run.date), h(x.o.shortName || x.o.name), h(x.inv.title), h(x.inv.id), h(x.run.type), payMethod(x.inv), usdc(x.cents)]);
       csvRows = [['Payment date', 'Offering', 'Investor', 'Account', 'Contact', 'Type', 'Status', 'Paid by', 'Amount']].concat(
-        rows.map((x) => [x.run.date, x.o.name, x.inv.title, x.inv.id, x.inv.contact, x.run.type, x.run.status === 'paid' ? 'Paid' : 'Scheduled', payMethod(x.inv), dollars(x.cents)])
+        rows.map((x) => [x.run.date, x.o.name, x.inv.title, x.inv.id, x.inv.contact, x.run.type, NS.data.runState(x.run, today()) === 'paid' ? 'Paid' : 'Scheduled', payMethod(x.inv), dollars(x.cents)])
       );
       foot = [`${rows.length} payments`, '', '', '', '', '', usdc(total)];
     } else if (r.view === 'offering') {
@@ -2859,7 +2884,7 @@
     const m = (c) => X.fmt(c, S0.currency);
     const L = NS.audit.ledger(W(), o);
     const flows = (L.contribs || []).filter((c) => c.date <= d.date).map((c) => ({ date: c.date, cents: -c.cents })).concat((L.dists || []).filter((x) => x.date <= d.date).map((x) => ({ date: x.date, cents: x.cents })));
-    const gpPrior = W().runs.filter((r) => r.offeringId === o.id && r.gp > 0 && r.date <= d.date).reduce((a, r) => a + r.gp, 0);
+    const gpPrior = NS.data.gpPaid(W(), o.id, d.date);
     const r = X.waterfall(S0.tiers || X.defaultTiers(S0.carry, S0.pref, S0.catchUp), flows, gpPrior, gross, d.date);
     S().ui.wf = { lp: r.lp, gp: r.gp, gross };
     return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Tier</th><th scope="col" class="num">Investors</th><th scope="col" class="num">GP</th></tr></thead><tbody>${r.tiers.map((t) => `<tr><td>${h(t.label)}</td><td class="num">${m(t.lp)}</td><td class="num">${m(t.gp)}</td></tr>`).join('')}</tbody><tfoot><tr class="cs-total"><th scope="row">Total</th><td class="num">${m(r.lp)}</td><td class="num">${m(r.gp)}</td></tr></tfoot></table></div>

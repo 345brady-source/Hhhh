@@ -193,19 +193,25 @@
     }
     contribs.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
-    // Distributions: each paid run, split exactly as investors were paid.
+    // Distributions: each paid run, at the gross amounts stored when it was recorded (worked out from positions for a run
+    // saved before the record existed). A stored line for an investor who does not hold this fund is left out and kept
+    // in L.strays, which the readiness checks report.
     const dists = [];
+    const strays = [];
     ws.runs
-      .filter((r) => r.offeringId === o.id && r.status === 'paid' && r.date <= now)
+      .filter((r) => r.offeringId === o.id && NS.data.runPaid(r, now))
       .slice()
       .sort((a, b) => (a.date < b.date ? -1 : 1))
       .forEach((run) => {
-        NS.data.allocate(ws, run).forEach((row) => {
-          if (row.cents > 0) dists.push({ date: run.date, inv: row.investor, cents: row.cents, run });
+        NS.data.runRows(ws, run).forEach((row) => {
+          if (!(row.cents > 0)) return;
+          const inv = invs.find((i) => i.id === row.investor.id);
+          if (inv) dists.push({ date: run.date, inv, cents: row.cents, run });
+          else strays.push({ date: run.date, investorId: row.investor.id, cents: row.cents, run });
         });
       });
 
-    const L = { o, S, invs, contribs, dists, redemptions: [], keys: [], months: [], byKey: {}, prices: {}, exitKey: null, inception: contribs.length ? contribs[0].date : null };
+    const L = { o, S, invs, contribs, dists, strays, redemptions: [], keys: [], months: [], byKey: {}, prices: {}, exitKey: null, inception: contribs.length ? contribs[0].date : null };
     cache.set(ckey, L);
     if (!contribs.length) return L;
 
@@ -278,10 +284,10 @@
     dists.forEach((d) => flowsBy[d.inv.id].push({ date: d.date, cents: d.cents }));
     const gpPaidBy = {};
     ws.runs
-      .filter((r) => r.offeringId === o.id && r.status === 'paid' && r.gp > 0 && r.date <= now)
+      .filter((r) => r.offeringId === o.id && NS.data.runPaid(r, now) && r.gp > 0)
       .forEach((run) =>
-        NS.data.allocate(ws, run).forEach((row) => {
-          if (row.cents > 0) (gpPaidBy[row.investor.id] = gpPaidBy[row.investor.id] || []).push({ date: run.date, cents: Math.round((run.gp * row.cents) / run.total) });
+        NS.data.runRows(ws, run).forEach((row) => {
+          if (row.cents > 0 && flowsBy[row.investor.id]) (gpPaidBy[row.investor.id] = gpPaidBy[row.investor.id] || []).push({ date: run.date, cents: Math.round((run.gp * row.cents) / run.total) });
         })
       );
     const upTo = (arr, end) => (arr || []).filter((f) => f.date <= end);
@@ -636,7 +642,7 @@
     return (o.achOverride && o.achOverride.companyName) || ws.tenant.ach.companyName || ws.tenant.shortName;
   }
   function runEvidence(ws, o, run) {
-    const rows = NS.data.allocate(ws, run).filter((r) => r.cents > 0);
+    const rows = NS.data.runRows(ws, run).filter((r) => r.cents > 0);
     const ach = rows.filter((r) => r.investor.payment && r.investor.payment.method === 'ach' && r.investor.payment.bank);
     const chk = rows.filter((r) => ach.indexOf(r) < 0);
     const slug = String(companyName(ws, o)).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -851,7 +857,7 @@
       });
     });
     ws.runs.forEach((run) => {
-      if (run.status !== 'paid' || run.date > now) return;
+      if (!NS.data.runPaid(run, now)) return;
       const o = ws.offerings.find((x) => x.id === run.offeringId);
       if (!o) return;
       CUR = settings(o).currency || 'USD';
@@ -978,13 +984,16 @@
     const ownSum = P.inv.reduce((a, x) => a + x.own, 0);
     add('own', 'Ownership totals 100%', f.end <= 0 || Math.abs(ownSum - 1) < 1e-9, f.end > 0 ? `Ending capital percentages total ${(ownSum * 100).toFixed(4)}%.` : 'No capital outstanding at period end.', [], f.end <= 0);
 
-    const runs = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'paid' && r.date >= P.from && r.date <= P.to);
+    const runs = ws.runs.filter((r) => r.offeringId === o.id && NS.data.runPaid(r) && r.date >= P.from && r.date <= P.to);
     const runIssues = [];
     runs.forEach((r) => {
       const E = runEvidence(ws, o, r);
       if (E.allocated !== r.total) runIssues.push(`${dateShort(r.date)} ${r.type}: investor allocations differ from the total by ${money(E.allocated - r.total)}`);
       if (E.missingFile) runIssues.push(`${dateShort(r.date)} ${r.type} (${money(r.total)}): recorded without a NACHA file. Attach the bank’s ACH confirmation.`);
     });
+    (P.L.strays || [])
+      .filter((x) => x.date >= P.from && x.date <= P.to)
+      .forEach((x) => runIssues.push(`${dateShort(x.date)} ${x.run.type}: ${money(x.cents)} is stored for ${x.investorId}, who does not hold this fund; it is left out of the capital accounts.`));
     add('bank', 'Distributions agree to bank records', !runIssues.length, runs.length ? `${runs.length} distributions totaling ${money(runs.reduce((a, r) => a + r.total, 0))}; each split to the cent and matched to a NACHA file or check.` : 'No distributions in the period.', runIssues, !runs.length);
 
     const calls = P.L.contribs.filter((c) => c.date >= P.from && c.date <= P.to);
@@ -1197,7 +1206,7 @@
     );
 
     // 7. Distribution reconciliation to bank records
-    const runs = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'paid' && r.date >= P.from && r.date <= P.to).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
+    const runs = ws.runs.filter((r) => r.offeringId === o.id && NS.data.runPaid(r) && r.date >= P.from && r.date <= P.to).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
     const rec = runs.map((r) => {
       const E = evid[r.id] || runEvidence(ws, o, r);
       return [r.date, r.id, r.type, r.total, E.allocated, E.allocated - r.total, E.ach.length, E.achCents, E.chk.length, E.chkCents, E.file || 'Missing', E.missingFile ? 'Exception: no bank file' : 'Agrees'];
