@@ -34,3 +34,10 @@
 - B4: case `prefill` builds `facts` and `rec` as literals (`assets/js/filings.js` belongs to 09-01 and is not in this worktree).
 - B5: as A8.
 - B6: a notice with several issuers needs one CCC per issuer; that belongs to 09-05. If the plan runs short of room, say what is left in the summary.
+
+## After 09-02 (merged 8d56b7a, 2026-11-19)
+- Proven on the merged tree: FORMD XML 9 cases; the builder's own files pass the SEC schema; the twelve masked filings draw no error from the rule table; the independent masking proof finds none of the 295 replaced values in the fixtures; server tests 205.
+- For 09-04: `assets/js/formd.js` is loaded by no page yet; one field can carry both a schema message and an EDGAR-rule message, show one per field; the rule "an additional issuer gives previous names or None" is an error that the SEC's two sample files themselves trip (the twelve accepted filings do not): keep it as an error unless a TEST upload shows EDGAR accepts the blank.
+- For 09-05: a notice with several issuers needs one CCC per issuer (`ccc` may already be one text or a map by CIK).
+- Orchestrator choice: the masked fixtures keep their amounts, dates and state codes. Why: they are public SEC filings with every name and address replaced, and fixtures that are unlike real filings prove less. The owner may ask for rounding and date shifts.
+- Not proven until Carrow & Vale has filing access: EDGAR's own checks that only a TEST upload shows (issuer name against EDGAR's record, the CIK and CCC pair, an amended notice's accession number).
