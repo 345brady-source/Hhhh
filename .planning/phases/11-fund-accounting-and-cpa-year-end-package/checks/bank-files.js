@@ -166,6 +166,13 @@ const cases = {
     const text = read('fund-a.qfx');
     refused(check, B, 'the older OFX file cut short', text.slice(0, Math.floor(text.length * 0.6)), {}, 'cut short');
     refused(check, B, 'the newer OFX file cut short', read('fund-a.ofx').slice(0, 2500), {}, 'cut short');
+    ['fund-a.qfx', 'fund-a.ofx'].forEach((n) => {
+      const full = read(n);
+      const end = full.lastIndexOf('</OFX>') + '</OFX>'.length;
+      const read1 = [];
+      for (let cut = 1; cut < end; cut++) if (!refusal(() => B.parse(full.slice(0, cut), {}))) read1.push(cut);
+      check(`${n}: cut short at every one of its ${end - 1} places before the end of </OFX>, it is refused every time`, read1.length === 0, read1.slice(0, 10));
+    });
     refused(check, B, 'an OFX amount that is not dollars and cents', text.replace('<TRNAMT>-4500.00', '<TRNAMT>-45,00'), {}, '-45,00');
     refused(check, B, 'an OFX date that does not exist', text.replace('<DTPOSTED>20260630', '<DTPOSTED>20260631'), {}, '20260631');
   },
@@ -223,7 +230,11 @@ const cases = {
     refused(check, B, 'the 98 control total one cent higher', good.replace('98,181300000,1,14/', '98,181300001,1,14/'), {}, 'group trailer');
     refused(check, B, 'the 99 record count one higher', good.replace('99,181300000,1,16/', '99,181300000,1,17/'), {}, 'file trailer');
     refused(check, B, 'the file without its 99 trailer', good.replace(/99,181300000,1,16\/\r?\n?$/, ''), {}, 'file trailer');
-    refused(check, B, 'a 16 record dropped', good.replace(/16,451,450000,V,260930[^\n]*\n/, ''), {}, 'trailer');
+    const recs = good.split('\r\n').filter(Boolean);
+    const kept = [];
+    for (let n = 1; n < recs.length; n++) if (!refusal(() => B.parse(recs.slice(0, n).join('\r\n') + '\r\n', {}))) kept.push(n);
+    check(`fund-a.bai cut after each of its first ${recs.length - 1} records is refused every time`, recs.length === 16 && kept.length === 0, { records: recs.length, readAfter: kept });
+    refused(check, B, 'a 16 record dropped',good.replace(/16,451,450000,V,260930[^\n]*\n/, ''), {}, 'trailer');
     refused(check, B, 'a type code that is neither money in nor money out', good.replace('16,451,600000', '16,890,600000'), {}, '890');
     refused(check, B, 'a value date that does not exist', good.replace('V,261215', 'V,261232'), {}, '261232');
   },
@@ -292,6 +303,9 @@ const cases = {
     check('an unknown --case name exits 1 with a FAIL line', u.status === 1 && /^FAIL /m.test(u.stdout), { status: u.status, out: u.stdout });
     const e = run('');
     check('an empty --case list exits 1 with a FAIL line', e.status === 1 && /^FAIL /m.test(e.stdout), { status: e.status, out: e.stdout });
+    const src = fs.readFileSync(path.join(ROOT, 'assets/js/bankfiles.js'), 'utf8');
+    const banned = ['fetch(', 'XMLHttpRequest', 'DOMParser', 'eval(', 'new Function', 'import(', 'require(', 'setTimeout(', 'localStorage', 'indexedDB', 'http://', 'https://'];
+    check('bankfiles.js never fetches, stores, parses XML with the browser or evaluates text', banned.every((w) => src.indexOf(w) < 0), banned.filter((w) => src.indexOf(w) >= 0));
     check('the gate marker names twelve cases, as many as the check has', /^\/\/ last "BANK FILES: PASS \(cases run: 12\)"$/m.test(fs.readFileSync(__filename, 'utf8')) && Object.keys(cases).length === 12, Object.keys(cases));
   }
 };
