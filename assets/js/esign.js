@@ -41,6 +41,10 @@
     }
   };
   const FONT_DATA = { regular: besideMe('../vendor/textfont/text-regular.js', 'assets/vendor/textfont/text-regular.js'), bold: besideMe('../vendor/textfont/text-bold.js', 'assets/vendor/textfont/text-bold.js') };
+  // The PDF libraries above, shipped with the portal (assets/vendor/pdfview and pdfwrite: the same files, pinned by SHA-256)
+  // and tried first, so a page that may load scripts from its own address only still draws, fills and signs PDFs. The
+  // outside addresses are used only when a shipped copy cannot be loaded.
+  const SHIPPED = { view: besideMe('../vendor/pdfview/view.js', 'assets/vendor/pdfview/view.js'), viewWorker: besideMe('../vendor/pdfview/view-worker.js', 'assets/vendor/pdfview/view-worker.js') };
   const MAX_BYTES = 25 * 1024 * 1024;
   const MIN_TEXT_PT = 5;
   const COLORS = ['#2563EB', '#D9480F', '#0F8A5F', '#C2255C', '#7048E8', '#0B7285'];
@@ -239,20 +243,32 @@
       });
     return loads[src];
   }
+  /** The PDF reader library with its worker: the shipped copy first, then the loaders used before it was shipped. */
   async function pdfjs() {
+    let worker = '';
     try {
-      if (NS.pdfLib) return await NS.pdfLib();
+      await loadOnce(SHIPPED.view, () => !!window.pdfjsLib);
+      await loadOnce(SHIPPED.viewWorker, () => !!window.pdfjsWorker);
+      worker = SHIPPED.viewWorker;
     } catch (e) {
-      /* the shared loader keeps a failed attempt; retry with ours below */
+      /* a shipped copy did not load; the loaders below */
     }
-    try {
-      await loadOnce(PDFJS_URL, () => !!window.pdfjsLib);
-      await loadOnce(PDFJS_WORKER_URL, () => !!window.pdfjsWorker);
-    } catch (e) {
-      throw new Error('Could not load the PDF viewer. Check the connection and try again.');
+    if (!worker) {
+      try {
+        if (NS.pdfLib) return await NS.pdfLib();
+      } catch (e) {
+        /* the shared loader keeps a failed attempt; retry with ours below */
+      }
+      try {
+        await loadOnce(PDFJS_URL, () => !!window.pdfjsLib);
+        await loadOnce(PDFJS_WORKER_URL, () => !!window.pdfjsWorker);
+      } catch (e) {
+        throw new Error('Could not load the PDF viewer. Check the connection and try again.');
+      }
+      worker = PDFJS_WORKER_URL;
     }
     const lib = window.pdfjsLib;
-    if (lib && lib.GlobalWorkerOptions) lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+    if (lib && lib.GlobalWorkerOptions) lib.GlobalWorkerOptions.workerSrc = worker;
     return lib;
   }
   async function pdflib() {
@@ -409,6 +425,8 @@
     return { fontkit: window.fontkit, fontBytes: await fontFile('regular') };
   }
   NS.esignKit.unicodeFont = unicodeFont;
+  // The PDF reader library, its worker registered (phase 11 draws and reads PDFs through it).
+  NS.esignKit.reader = pdfjs;
   // For taxforms.js: the script loader (a failed load is forgotten) and the base64 decoder.
   NS.esignKit.loadScript = loadOnce;
   NS.esignKit.fromBase64 = fromBase64;
