@@ -335,15 +335,20 @@ function verdict(check, W) {
       let lines = 0;
       // an element is its tag, place, size and text size: a class or a label added to it (cs-stack, data-label) is not a move
       const key = (line) => line.replace(/^([a-z0-9-]+)\S*/, '$1');
+      // a toast is a passing notice, on screen for four seconds: whether one is still there when a screen is measured
+      // depends on the walk's timing, not on the layout, so the toasts are left out of the comparison
+      const page = (list) => list.filter((x) => !/^div(#toasts|\.toast)\b/.test(x));
       labels.filter((k) => B[k]).forEach((k) => {
-        lines += W.geo[k].length;
+        const was = page(B[k]);
+        const now = page(W.geo[k]);
+        lines += now.length;
         const count = (list) => list.reduce((m, x) => ((m[key(x)] = (m[key(x)] || 0) + 1), m), {});
-        const a = count(B[k]);
-        const b = count(W.geo[k]);
+        const a = count(was);
+        const b = count(now);
         const goneKeys = Object.keys(a).filter((x) => (b[x] || 0) < a[x]);
         const addedKeys = Object.keys(b).filter((x) => (a[x] || 0) < b[x]);
-        const gone = B[k].filter((x) => goneKeys.indexOf(key(x)) >= 0);
-        const added = W.geo[k].filter((x) => addedKeys.indexOf(key(x)) >= 0);
+        const gone = was.filter((x) => goneKeys.indexOf(key(x)) >= 0);
+        const added = now.filter((x) => addedKeys.indexOf(key(x)) >= 0);
         if (!gone.length && !added.length) return;
         // a change the fix makes on every screen size on purpose, named with its reason (DESKTOP_EXPECTED); anything else fails
         const why = DESKTOP_EXPECTED.find((e) => e.at.test(k) && gone.concat(added).every((x) => e.el.test(x)));
