@@ -309,9 +309,9 @@ Plans:
 **Goal:** A sponsor adds an optional identity, sanctions screening and accreditation package to an invitation with one tick box and pays for it from a card on file before the invitation is sent; the investor completes the checks inside onboarding and never pays; package investors are screened continuously, everyone else is re-screened against the free U.S. Treasury lists when due, the sponsor can ask an investor to re-verify accreditation, and the console holds an exportable record of the AML program
 **Requirements**: VPK-01, VPK-02, VPK-03, VPK-04, VPK-05, VPK-06, VPK-07, VPK-08, VPK-09, VPK-10 (defined in 08-RESEARCH.md, "Phase Requirements")
 **Depends on:** Phase 7
-**Plans:** 16 plans
+**Plans:** 20 plans
 
-Waves: 1 = 08-01, 08-02, 08-03, 08-06 · 2 = 08-04, 08-11, 08-13 · 3 = 08-05, 08-14 · 4 = 08-15, 08-16 · 5 = 08-07 · 6 = 08-08, 08-09 · 7 = 08-10 · 8 = 08-12 (the wave fields inside 08-07, 08-08, 08-09, 08-10 and 08-12 still carry the numbers from before the wave 3 split; their depends_on lines are current). Built and tested against recorded replies and stand-ins; nothing is called working before 08-12's real runs and the owner's check.
+Waves: 1 = 08-01, 08-02, 08-03, 08-06 · 2 = 08-04, 08-11, 08-13 · 3 = 08-05, 08-14 · 4 = 08-15, 08-16 · 5 = 08-07, 08-17 · 6 = 08-18, 08-19 · 7 = 08-08, 08-09 · 8 = 08-20 · 9 = 08-10 (deferred, C-07) · 10 = 08-12 (the wave fields inside 08-10 and 08-12 still carry older numbers; their depends_on lines are current). Built and tested against recorded replies and stand-ins; nothing is called working before 08-12's real runs and the owner's check.
 
 Plans:
 - [ ] 08-01-PLAN.md — Sponsor accounts: per-sponsor tokens stored as hashes, every sponsor call pinned to the token's workspace, admin routes behind ADMIN_TOKEN; the shared token unchanged (wave 1)
@@ -320,16 +320,20 @@ Plans:
 - [ ] 08-04-PLAN.md — Card on file through an embedded field hosted by the server, server-side prices by tier, credit first, one charge for a list, no double charge, GET /v1/billing (wave 2)
 - [ ] 08-05-PLAN.md — The package attached at create: paid before anything is stored, consume before the email with roll-back, one client id one package, the server's tier, claimed package connections stripped for accounts, rows and the investor's view (wave 3)
 - [ ] 08-06-PLAN.md — The one tick box on the invite form, the flag and client id, the no-server line in the preview, the phase gate script and framed-check helpers (wave 1)
-- [ ] 08-07-PLAN.md — Investor flow and results end to end against stand-ins: neutral step wording, plain start errors, the letter download, the vendor-name scan over screens and emails (wave 4)
-- [ ] 08-08-PLAN.md — Ongoing screening: changed-checks route, the console's pull that holds an investor on a new hit, the free Treasury re-screen by itself when due (wave 5)
-- [ ] 08-09-PLAN.md — Ask an investor on file to re-verify accreditation: one button, a single-step link, with the package box (wave 5)
-- [ ] 08-10-PLAN.md — Free methods built switched off: five-year written representation and the high-minimum method, re-checked by the console (wave 6)
+- [ ] 08-07-PLAN.md — The package end to end on the investor's side against stand-ins (the outside-world doubles), neutral step wording, refusals as the server sends them with the firm's contact, no price or vendor anywhere the investor looks (wave 5)
+- [ ] 08-08-PLAN.md — Ongoing screening: changed-checks route, the console's pull that holds an investor on a new hit, monitored investors not due, "Run now" never reaching the package provider, the free Treasury re-screen by itself when due (wave 7)
+- [ ] 08-09-PLAN.md — Ask an investor on file to re-verify accreditation: one button, a single-step link, the server's flag and reverify tier, the three guide lines (wave 7)
+- [ ] 08-10-PLAN.md — Free methods built switched off: five-year written representation and the high-minimum method, re-checked by the console (wave 9, deferred by C-07)
 - [ ] 08-11-PLAN.md — AML program record: one console page, compiled procedures and screening log, one-file export (wave 2)
-- [ ] 08-12-PLAN.md — Real proofs run by the orchestrator with the owner's keys (sandbox identity, screening hit, monitoring alert, staging accreditation, test-mode card, charge, decline, refund), results failures first, the owner's walk (wave 7, not autonomous)
+- [ ] 08-12-PLAN.md — Real proofs run by the orchestrator with the owner's keys (sandbox identity, screening hit, monitoring alert, staging accreditation, test-mode card, charge, decline, refund), results failures first, the owner's walk (wave 10, not autonomous)
 - [ ] 08-13-PLAN.md — The one console panel (prices, card, credit, charges), the card dialog, the list form's box with one payment for the list (wave 2)
 - [ ] 08-14-PLAN.md — Payment deliveries with signature and read-back, full and partial refunds and disputes that make a package and its credit unusable, the hold while a check is starting (wave 3)
 - [ ] 08-15-PLAN.md — The check gate on the investor's link, the package providers reserved from sponsor accounts, credit at the four places an invitation ends, the provider's own refusal and the operator's daily alert (wave 4)
 - [ ] 08-16-PLAN.md — Settling unresolved payments from the provider's payment deliveries, the unresolved line in the billing view, the operator's card refund of an unused package, the operator's README section (wave 4)
+- [ ] 08-17-PLAN.md — The console shows the server's package refusals word for word: package_used with a new local invitation (R7), tier_mismatch, the box switched off while an amount is owed, the returned resend (wave 5)
+- [ ] 08-18-PLAN.md — The accreditation step through the package, the waiting line, the result days later, "Download letter" and its guide line (wave 6)
+- [ ] 08-19-PLAN.md — R12: the investor's owners, control person and second holder screened through the package from the server's own store, at most 5; the screening reply's count shown in the console (wave 6)
+- [ ] 08-20-PLAN.md — The package box on a re-verification request in every state (G6), the subscribe screen's offer of the open request, phone and the owner's preview (wave 8)
 
 ### Phase 9: Filings tab: Form D and blue sky
 
