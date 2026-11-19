@@ -518,7 +518,7 @@ title: Sign in
 anchor: Need help signing in?
 anchor: Forgot your password?
 
-Enter "Email" and "Password" and choose "Sign in". "Forgot your password?" asks for a password reset link to be emailed to the address on file. "First time here? Activate your account" shows for an investor whose account is not active yet and starts the account setup. Under "Need help signing in?" are the contact details of the firm's team.
+Enter "Email" and "Password" and choose "Sign in". For a forgotten password, choose "Forgot your password?"; if that does not help, use the contact details on the page. "First time here? Activate your account" shows for an investor whose account is not active yet and starts the account setup. Under "Need help signing in?" are the contact details of the firm's team.
 
 ## join
 audience: investor
