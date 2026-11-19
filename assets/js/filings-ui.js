@@ -43,6 +43,127 @@
     return { value: d };
   }
 
+  /* ---------- Sections other files add ----------
+   * A section (the Form D, EDGAR access, the state notices, the link to the server) is its own script beside this one.
+   * It registers itself with NS.filingsUI.part(key, { order, title, summary(ws, offering) -> html or '',
+   * render(ws, offering, rest) -> html }): the tab draws its summary line under the offering with a link to
+   * console-filings-<key>-<offeringId>, and that address draws render() under the bar with Back and the offering's name.
+   * The scripts are a fixed list, loaded once, on the tab's first render; one that does not load is skipped for that
+   * visit and nothing is shown for it. No file name comes from data or from the address.
+   */
+  const HERE = (document.currentScript && document.currentScript.src) || '';
+  const PARTS = Object.freeze({ formd: Object.freeze(['formd.js', 'formd-ui.js']), access: Object.freeze(['edgar-access.js']), states: Object.freeze(['bluesky-data.js', 'bluesky.js']), remote: Object.freeze(['filings-remote.js']) });
+  const parts = {};
+  const load = { started: false, settled: false, waiting: false };
+  function part(key, spec) {
+    if (!/^[a-z]+$/.test(String(key)) || !spec || typeof spec.render !== 'function') return false;
+    parts[key] = { key, order: Number(spec.order) || 0, title: String(spec.title || ''), summary: typeof spec.summary === 'function' ? spec.summary : null, render: spec.render };
+    return true;
+  }
+  /** One script from beside this file; resolves to whether it loaded. */
+  function script(name) {
+    return new Promise((resolve) => {
+      let src = '';
+      try {
+        src = HERE ? new URL(name, HERE).href : new URL(`assets/js/${name}`, document.baseURI).href;
+      } catch (e) {
+        return resolve(false);
+      }
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = false;
+      s.onload = () => resolve(true);
+      s.onerror = () => {
+        s.remove();
+        resolve(false);
+      };
+      document.head.appendChild(s);
+    });
+  }
+  /** Each section's files in their order (the second needs the first); the sections side by side. */
+  function start() {
+    if (load.started) return;
+    load.started = true;
+    Promise.all(
+      Object.keys(PARTS).map(async (k) => {
+        for (const name of PARTS[k]) if (!(await script(name))) break;
+      })
+    ).then(() => {
+      load.settled = true;
+      refresh();
+    });
+  }
+  const typing = () => {
+    const a = document.activeElement;
+    return !!(a && a.closest && a.closest('.fl') && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName));
+  };
+  /**
+   * Redraw the tab after a section has registered or changed. While the sections are loading nothing is redrawn: there
+   * is one redraw when loading has settled. Never while a field on the tab has focus: it waits until the field is left.
+   */
+  function refresh() {
+    if (!load.settled || S().route !== 'console-filings') return;
+    if (typing()) {
+      load.waiting = true;
+      return;
+    }
+    load.waiting = false;
+    NS.app.render();
+  }
+  document.addEventListener('focusout', () => {
+    if (load.waiting) setTimeout(refresh, 0);
+  });
+  const API = { part, PARTS, refresh, link: null };
+  /** The link to the server (set by its own script): whether it is connected, and its line under an order. */
+  function connected(ws) {
+    const l = API.link;
+    try {
+      return !!(l && typeof l.connected === 'function' && l.connected(ws));
+    } catch (e) {
+      if (window.console) console.error(e);
+      return false;
+    }
+  }
+  /** What a section gives, or '' when it fails: one section's fault never takes the tab down. */
+  function from(fn, ...args) {
+    try {
+      return fn(...args) || '';
+    } catch (e) {
+      if (window.console) console.error(e);
+      return '';
+    }
+  }
+  /** The section an address names: console-filings-<key>-<offeringId>[-<rest>]; null when the key or the offering is not there. */
+  function sectionOf(ws, param) {
+    const m = /^([a-z]+)-(.+)$/.exec(String(param || ''));
+    if (!m || !own(parts, m[1])) return null;
+    const o = (ws.offerings || []).filter((x) => x && (m[2] === x.id || m[2].indexOf(`${x.id}-`) === 0)).sort((a, b) => b.id.length - a.id.length)[0];
+    return o ? { part: parts[m[1]], offering: o, rest: m[2].slice(o.id.length + 1) } : null;
+  }
+  const barHTML = (title) => `<div class="fl-bar"><a class="fl-back" href="#console-filings">${U.icon('back')}Back</a>${title ? `<span class="fl-bar-title">${h(title)}</span>` : ''}</div>`;
+  function sectionHTML(ws, sec) {
+    let body = '';
+    try {
+      body = sec.part.render(ws, sec.offering, sec.rest) || '';
+    } catch (e) {
+      if (window.console) console.error(e);
+      body = '<p class="fl-note" role="alert">This section could not be shown.</p>';
+    }
+    return `<div class="fl fl-section" data-part="${h(sec.part.key)}">${barHTML(sec.offering.name)}${body}</div>`;
+  }
+  /** Each registered section's line under an offering, in the sections' order. */
+  function partsHTML(ws, o) {
+    const lines = Object.keys(parts)
+      .map((k) => parts[k])
+      .sort((a, b) => a.order - b.order || (a.key < b.key ? -1 : 1))
+      .map((p) => {
+        const s = p.summary ? from(p.summary, ws, o) : '';
+        return s ? `<li class="fl-row fl-part" data-part="${h(p.key)}"><a class="fl-part-link" href="#console-filings-${h(p.key)}-${h(o.id)}"><span class="fl-what"><span class="fl-title">${h(p.title)}</span><span class="fl-detail">${s}</span></span><span class="fl-chev" aria-hidden="true">${U.icon('arrow')}</span></a></li>` : '';
+      })
+      .join('');
+    return lines ? `<ul class="fl-list fl-parts">${lines}</ul>` : '';
+  }
+
   /* ---------- What a reminder says ---------- */
   const LEVEL = { overdue: 'Overdue', due: 'Due', soon: 'Soon', later: 'Later' };
   const RANK = { overdue: 0, due: 1, soon: 2, later: 3 };
@@ -144,6 +265,7 @@
         <div class="fl-total"><span>${h(ORDER[order.status] || order.status)} · ${date(String(order.at || '').slice(0, 10))}</span><span class="fl-due">${money(order.dueCents)} due${order.openFees ? ', fees to be confirmed' : ''}</span></div>
       </div>
       ${cancel ? `<div class="fl-acts">${cancel}</div>` : ''}
+      ${API.link && typeof API.link.orderLine === 'function' ? from(API.link.orderLine, ws, order) : ''}
     </div>`;
   }
   const ordersHTML = (ws, o) => {
@@ -202,6 +324,7 @@
       <div class="cs-panel-head"><h2>${h(o.name)}</h2>${all}</div>
       <p class="cs-muted fl-facts">${facts}</p>
       ${rows ? `<ul class="fl-list">${rows}</ul>` : f.firstSale ? '<p class="cs-muted">Nothing is due.</p>' : ''}
+      ${partsHTML(ws, o)}
       ${ordersHTML(ws, o)}
       ${optionsHTML(ws, o, f)}
     </section>`;
@@ -218,7 +341,7 @@
     const ws = W();
     const offs = (ws.offerings || []).filter((o) => FL().applies(o));
     const reminders = offs.length ? FL().due(ws, today(), opts()) : [];
-    const connect = openOrders(ws).some((x) => offs.some((o) => o.id === x.offeringId)) ? '<p class="fl-note fl-connect">Sending an order to be filed needs the portal connected to its server.</p>' : '';
+    const connect = !connected(ws) && openOrders(ws).some((x) => offs.some((o) => o.id === x.offeringId)) ? '<p class="fl-note fl-connect">Sending an order to be filed needs the portal connected to its server.</p>' : '';
     return `<div class="fl">
       <div class="fl-bar"><a class="fl-back" href="#console">${U.icon('back')}Overview</a><h1>Filings</h1></div>
       ${connect}
@@ -426,9 +549,17 @@
     NS.views['console-filings'] = {
       mode: 'console',
       edition: 'diy',
-      render() {
+      render(param) {
+        start();
+        const ws = W();
+        const sec = param ? sectionOf(ws, param) : null;
+        if (sec) return CK().shell(sectionHTML(ws, sec), 'console-filings');
+        // A section's address before its script has loaded: wait for the scripts. Once they have settled, an address
+        // that names no section or no offering shows the list.
+        if (param && !load.settled) return CK().shell(`<div class="fl">${barHTML('')}<p class="cs-muted" role="status">Loading…</p></div>`, 'console-filings');
         return CK().shell(listHTML(), 'console-filings');
       }
     };
   }
+  NS.filingsUI = API;
 })(window.CVPortal);
