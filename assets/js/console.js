@@ -49,6 +49,7 @@
     ['console-reports', 'Reports'],
     ['console-audit', 'Audit'],
     ['console-kyc', 'AML/KYC'],
+    ['console-aml', 'AML program'],
     ['console-filings', 'Filings'],
     ['console-integrations', 'Integrations'],
     ['console-ach', 'ACH origination'],
@@ -60,7 +61,7 @@
     ['', ['console', 'console-notifications']],
     ['Raise', ['console-offerings', 'console-intake', 'console-investors', 'console-esign']],
     ['Operate', ['console-calls', 'console-distributions', 'console-requests', 'console-notices', 'console-docs']],
-    ['Report', ['console-reports', 'console-audit', 'console-kyc']],
+    ['Report', ['console-reports', 'console-audit', 'console-kyc', 'console-aml']],
     ['Settings', ['console-brand', 'console-integrations', 'console-ach', 'console-team']]
   ];
   NAV_SECTIONS.find((g) => g[0] === 'Report')[1].push('console-filings'); // Filings (filings-ui.js) closes the Report section; kept on its own line

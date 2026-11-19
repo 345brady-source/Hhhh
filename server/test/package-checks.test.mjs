@@ -615,3 +615,33 @@ test('start limit: a package allows three accepted starts of each kind; a fourth
     assert.equal((await h.identity(q.token)).status, 409);
   });
 });
+
+// R11: each name is its own provider call, so the names a package screening covers come from the sponsor's invitation only.
+test('screening names: a package screening from the investor’s link screens only the invitation’s own names; the shared token and a screening provider outside the package still screen the names sent', async () => {
+  const invented = Array.from({ length: 25 }, (_, i) => `Invented Person ${i + 1}`);
+  const entity = { id: 'HRC-0007', contact: 'Zelda Quixote', title: 'Quixote Holdings LLC', type: 'entity', email: 'zelda@investor.example' };
+  const own = [entity.contact, entity.title];
+  await shop({ env: { API_TOKEN: API } }, async (h) => {
+    const p = await h.send('n1', {}, { investor: entity });
+    const r = await j(h.base, 'POST', '/v1/screenings', { invite: p.token, body: { provider: 'idcheck', investor: { id: 'HRC-0007' }, names: invented } });
+    assert.equal(r.status, 200, r.text);
+    assert.equal(h.f.screens(), own.length, 'one provider call per name the invitation holds');
+    const sent = h.f.calls.filter((c) => c.method === 'POST' && AML.test(c.url)).map((c) => JSON.stringify(c.body));
+    own.forEach((n, i) => assert.ok(sent[i].includes(JSON.stringify(n)), `call ${i + 1} screens ${n}`));
+    assert.ok(!sent.some((b) => b.includes('Invented Person')), 'no name sent by the link reaches the provider');
+    const before = h.f.screens();
+    const s = await j(h.base, 'POST', '/v1/screenings', { bearer: API, body: { provider: 'idcheck', investor: { id: 'HRC-0007' }, names: invented } });
+    assert.equal(s.status, 200, s.text);
+    assert.equal(h.f.screens() - before, invented.length, 'the shared token screens the names it sends, as before');
+  });
+  const seen = [];
+  const ownScreen = { name: 'Own screening', kinds: ['aml'], env: [], screen: (ctx) => (seen.push(ctx.names.slice()), { status: 'clear', hits: [] }) };
+  await withServer({ env: Object.assign({}, ENV, { API_TOKEN: API }), fetch: standIn(), providers: Object.assign({}, PROVIDERS, { ownscreen: ownScreen }) }, async (base) => {
+    const verification = { accreditationRequired: false, connections: [{ id: 'own-aml', name: 'Own screening', type: 'server', connector: 'ownscreen', checks: ['aml'] }], use: { aml: ['own-aml'] } };
+    const inv = await j(base, 'POST', '/v1/invitations', { bearer: API, body: payload({}, { workspace: 'w1', investor: entity, verification }) });
+    assert.equal(inv.status, 200, inv.text);
+    const r = await j(base, 'POST', '/v1/screenings', { invite: inv.body.token, body: { provider: 'ownscreen', investor: { id: 'HRC-0007' }, names: invented } });
+    assert.equal(r.status, 200, r.text);
+    assert.deepEqual(seen, [own.concat(invented).slice(0, 25)], 'outside the package the link’s names are screened as before');
+  });
+});
