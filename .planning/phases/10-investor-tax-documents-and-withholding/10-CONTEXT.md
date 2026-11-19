@@ -37,3 +37,14 @@
 - C-08: opens are tracked (D-01). Not built: computed deposit due dates, a portal-built 1042-S, an export for a paid filing service, a CPA contact field.
 - For the owner: real combined K-1 files from a CPA (more than one tax program if possible) to measure the split on; the free IRS code application, so the real upload template can be downloaded and an upload tried; a CPA's read of the Notes case and the stop list.
 - Not confirmed by the research (blocked sites or sign-in): vendor prices; the IRS's own upload template (column rules were read for tax year 2025; the exact header text and cents are unconfirmed); the regulations' own text. Each plan that depends on one of these says so and proves what it can.
+
+## Plans (2026-11-19): 13 plans in 6 waves (d82a9e3, 9f994d3)
+Waves: 1 = 10-01 (distribution record, gate10.sh), 10-02 (K-1 split core) · 2 = 10-03 (PDF libraries shipped in the repository), 10-04 (Tax documents page), 10-05 (withholding rules) · 3 = 10-06 (delivery and consent), 10-07 (distribution screen), 10-08 (withheld tax, worksheet), 10-09 (1099-INT core) · 4 = 10-10 (1099-INT on screen), 10-12 (delivery to the investor's own device; needs the server) · 5 = 10-11 (1099-DIV) · 6 = 10-13 (waits on the owner: real K-1 files, the IRS template, a CPA's read).
+
+## Planner's choices the owner may reverse
+- P-1: a recorded distribution can be cancelled by an admin with a reason. Why: with "paid once its date arrives", a mistaken record would otherwise feed a 1099 with no remedy. It is the one control the managed edition gains.
+- P-2: the link that delivers a tax document to the investor's own device asks for the last four digits of the tax number on record (five tries, then locked); an investor with no number on record gets paper. Why: the document carries a full taxpayer number and a link in an email is not enough on its own.
+- P-3: the payer's own EIN is typed at each build of the IRS file and not stored (only its last four).
+- P-4: the self-serve welcome step's general tick loses the words "tax documents", because that tick is not the consent the IRS rules require for them.
+- P-5: the shipped PDF library files carry neutral names; bytes unchanged, pinned by SHA-256 (the versions the portal already runs; their hashes match the public registry).
+- Found while planning: every investor of every firm, real ones included, is shown a generated "Schedule K-1" or "Form 1099-INT" cover page nobody's CPA prepared (`data.js` `NS.investorDocs`). 10-06 removes it for firms that are not sample firms.
