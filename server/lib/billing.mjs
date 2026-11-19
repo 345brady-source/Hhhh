@@ -14,6 +14,7 @@ import { randomBytes } from 'node:crypto';
 import { readRaw, parseJson, send } from './http.mjs';
 import { requestJson } from './request.mjs';
 import { sha256, id } from './crypto.mjs';
+import { verify } from '../providers/connector.mjs';
 
 // The payment provider. Its name and addresses stay in these two lines and the card page's own script tag: no JSON
 // reply, event, log line or visible text carries them.
@@ -58,7 +59,36 @@ export const ASSUMED = Object.freeze({
   // The card page's browser calls, in this order: the script's global function with the publishable key; elements();
   // create('card', { disableLink: true }) for a card-only field with no wallet or one-click button; mount; then
   // confirmCardSetup(clientSecret, { payment_method: { card } }) → { error } or { setupIntent }.
-  page: 'see cardPage()'
+  page: 'see cardPage()',
+
+  // The provider's deliveries (plan 08-14). Every line below is unconfirmed: no page of the provider could be read.
+  // Unconfirmed: the signature header and its form "t=<unix seconds>,v1=<hex HMAC-SHA256>" (several v1 values while a
+  // secret is rotated), signed over "<t>.<the exact bytes>" with the endpoint's signing secret used as plain text.
+  webhook: { type: 'hmac', header: 'Stripe-Signature', pattern: 'v1=([0-9a-f]+)', timestampPattern: 't=(\\d+)', signed: '{timestamp}.{body}', secret: '${env.BILLING_WEBHOOK_SECRET}', tolerance: 300 },
+  signatureValue: (ts, hex) => `t=${ts},v1=${hex}`,
+  // Unconfirmed: the event names. A refund (full or partial) is reported on the charge; an opened dispute names its
+  // charge. The two payment events are for plan 08-16 (settling unresolved payments); nothing here acts on them yet.
+  events: { refunded: 'charge.refunded', disputed: 'charge.dispute.created', paymentSucceeded: 'payment_intent.succeeded', paymentFailed: 'payment_intent.payment_failed' },
+  // Unconfirmed: where an event keeps its id and its object, and where that object names the charge (a refund event's
+  // object is the charge itself; a dispute's object names it in "charge"). A payment event's object is the payment.
+  eventId: (ev) => ev && ev.id,
+  eventObject: (ev) => (ev && ev.data && ev.data.object) || null,
+  chargeOf: { refunded: (obj) => obj.id, disputed: (obj) => obj.charge },
+  paymentOf: (obj) => obj.id,
+  // Unconfirmed: reading a charge back with the secret key, asking for its refunds list to be included; the reply's
+  // fields: id, payment_intent (the payment it belongs to, which this server keeps as chargeRef), amount,
+  // amount_refunded, refunded, disputed, and refunds.data[] with id, amount, status and metadata.entitlement (the
+  // operator's refund sets metadata[entitlement], plan 08-16). A refund with one of the statuses in refundNotGone did
+  // not return the money.
+  chargeRead: (charge) => `/charges/${encodeURIComponent(charge)}?${new URLSearchParams({ 'expand[]': 'refunds' })}`,
+  chargePayment: (c) => c.payment_intent,
+  fullyRefunded: (c) => c.refunded === true || (Number(c.amount) > 0 && Number(c.amount_refunded) >= Number(c.amount)),
+  disputed: (c) => c.disputed === true,
+  refundsOf: (c) => (c.refunds && Array.isArray(c.refunds.data) ? c.refunds.data : []),
+  refundEntitlement: (r) => (r.metadata && r.metadata.entitlement) || '',
+  refundNotGone: ['failed', 'canceled'],
+  // Unconfirmed, for plan 08-16: reading a payment back; its fields status, amount and metadata.payment.
+  paymentRead: (payment) => `/payment_intents/${encodeURIComponent(payment)}`
 });
 
 const SENTENCES = {
@@ -81,6 +111,8 @@ const refuse = (code) => new BillingError(code);
 const bad = (message) => new BillingError('', 400, message);
 /** The charge's outcome is not known, so the sentence does not say that nothing was charged. Same code and status. */
 const unconfirmed = () => new BillingError('billing_unavailable', 409, 'The payment could not be confirmed. Try again in a few minutes.');
+/** A delivery whose charge could not be read back: nothing is recorded, so the provider's retry is acted on. */
+const unchecked = () => new BillingError('', 503, 'The payment could not be checked. Try again later.');
 
 const TIERS = ['identity', 'full', 'reverify'];
 const KEY = /^[A-Za-z0-9_-]{1,80}$/;
@@ -91,6 +123,8 @@ const SESSION_MS = 15 * 60 * 1000;
 const REPEAT_MS = (ASSUMED.idempotencyKeyHours - 1) * 3600 * 1000;
 const UNUSED_MS = 24 * 3600 * 1000;
 const ACTIVE = ['paid', 'consumed'];
+const DELIVERY_ID = /^[A-Za-z0-9_-]{1,120}$/;
+const DELIVERY_BODY = 256 * 1024;
 const sum = (list) => list.reduce((n, it) => n + it.cents, 0);
 
 function parseObject(raw) {
@@ -442,9 +476,70 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     return { card: null };
   }
 
+  // The provider's deliveries. Carrow & Vale receives the funds (D-01), so it must see refunds and disputes. A delivery
+  // is believed only when its signature over the exact bytes is good and its signed time is fresh, and then only for
+  // which charge to read: what changes a package or the ledger is the provider's own record, read back with the secret key.
+
+  /** One ledger line tied to a package (or to none, for a refund nobody can match). */
+  function line(e, type, by, cents, extra = {}) {
+    store.put('ledger', Object.assign({ id: id('led'), account: e.account, at: iso(), type, by, cents, tier: e.tier || null, entitlement: e.id || null, invitationId: e.invitationId || null, chargeRef: e.chargeRef || '' }, extra));
+  }
+  /** The money for a package went back to the card. Writes nothing for a package already refunded. */
+  function refundOne(e, refundRef, cents) {
+    const cur = store.get('entitlements', e.id);
+    if (!cur || cur.status === 'refunded') return;
+    line(cur, 'refund', 'card', cents === undefined ? cur.cents : cents, { refundRef });
+    store.put('entitlements', { id: cur.id, status: 'refunded', refundedAt: iso() });
+  }
+  /** A refund delivery, acted on from the charge as read back. */
+  function refunds(accountId, ref, read) {
+    const on = entitlementsOf(accountId).filter((e) => e.chargeRef === ref);
+    const list = ASSUMED.refundsOf(read).filter((r) => r && PROVIDER_ID.test(String(r.id)) && !ASSUMED.refundNotGone.includes(r.status));
+    if (ASSUMED.fullyRefunded(read)) {
+      // The whole charge went back: every package on it, started ones included (the money is gone).
+      for (const e of on) {
+        const own = list.find((r) => ASSUMED.refundEntitlement(r) === e.id) || list[list.length - 1];
+        refundOne(e, own ? String(own.id) : '');
+      }
+    }
+  }
+
+  async function delivery(req, res) {
+    if (!env.BILLING_WEBHOOK_SECRET) return send(res, 404, { error: 'Not found' });
+    const raw = await readRaw(req, DELIVERY_BODY);
+    if (!verify(ASSUMED.webhook, raw, req.headers, env, {})) {
+      store.event({ type: 'webhook_rejected', provider: 'billing' });
+      return send(res, 401, { error: 'Bad signature' });
+    }
+    const ev = parseObject(raw);
+    const evId = String(ASSUMED.eventId(ev) || '');
+    const seenKey = `billing:${DELIVERY_ID.test(evId) ? evId : sha256(raw)}`;
+    // A duplicate is found by reading the seen list, which records nothing: a delivery is recorded only once it is acted on.
+    if (store.data().seen.includes(seenKey)) return send(res, 200, { received: true, duplicate: true });
+    const kind = Object.keys(ASSUMED.chargeOf).find((k) => ASSUMED.events[k] === ev.type);
+    const obj = ASSUMED.eventObject(ev);
+    const chargeId = kind && obj ? String(ASSUMED.chargeOf[kind](obj) || '') : '';
+    // An event this module does not act on, or one naming no charge, changes nothing and is not recorded.
+    if (!kind || !PROVIDER_ID.test(chargeId)) return send(res, 200, { received: true });
+    let read = null;
+    try {
+      read = await call('GET', ASSUMED.chargeRead(chargeId));
+    } catch {
+      read = null;
+    }
+    if (!read || typeof read !== 'object' || read.id !== chargeId) throw unchecked();
+    const ref = String(ASSUMED.chargePayment(read) || '');
+    const owner = PROVIDER_ID.test(ref) ? store.list('entitlements').find((e) => e.chargeRef === ref) : null;
+    if (owner) await serial(owner.account, () => refunds(owner.account, ref, read));
+    store.flush();
+    store.seen(seenKey);
+    return send(res, 200, { received: true });
+  }
+
   async function routes(req, res, url, auth) {
     const path = url.pathname;
     const own = path.match(/^\/billing\/card\/([\w-]{20,64})(\/done)?$/);
+    if (path === '/billing/webhook' && req.method === 'POST') return delivery(req, res);
     if (path.startsWith('/billing/')) {
       const s = own ? session(own[1]) : null;
       if (!s) return send(res, 404, { error: 'Not found' });
