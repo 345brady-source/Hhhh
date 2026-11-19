@@ -291,13 +291,16 @@ Plans:
 
 ### Phase 7: Help chatbot
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** A sponsor or an investor in the self-serve portal presses Help, asks how to do something in the portal and gets a short, correct answer drawn from the portal's own guide for the page they are on, through the server's own model connection; it gives no investment, legal or tax advice, repeats no personal data and names no vendor; when it cannot answer, or no server is connected, it says so plainly and shows the support contact; real answers are measured on unseen questions before launch
+**Requirements**: HELP-01, HELP-02, HELP-03, HELP-04, HELP-05, HELP-06, HELP-07, HELP-08 (defined in 07-RESEARCH.md, "Phase Requirements"; each traces to a decision D-01 to D-06 of 07-CONTEXT.md)
 **Depends on:** Phase 6
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 7 to break down)
+- [ ] 07-01-PLAN.md — The help guide and rules written from the real screens (every route and flow step, or a skip reason), one generator, the generated module, and server tests that fail when a page has no entry or a quoted name is no longer on a screen (D-03, D-04, D-05)
+- [ ] 07-02-PLAN.md — POST /v1/help on the server's own model connection: cached guide, the page as a server-written note, the asker decided by the credential, redaction, the answer guard, session and hourly limits, the daily help cap, price entries and the spend cap at this model's rate, numbers-only log (D-01 to D-05)
+- [ ] 07-03-PLAN.md — One Help entry for sponsors (console bar) and one for investors (footer), the dialog, the conversation and a soft failure with the support contact, proven in a sandboxed frame that refuses connections at 1280x800 and 390x844 with touch; managed edition unchanged (D-01, D-03, D-04, D-05, D-30)
+- [ ] 07-04-PLAN.md — The development question set, the runner and scorer proven with no spend, then a stop where the orchestrator runs the paid measurement under a $1.00 cap and the held-out set once (D-06, D-02)
 
 ### Phase 8: Verification package and ongoing compliance
 
