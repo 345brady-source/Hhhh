@@ -11,7 +11,7 @@
 //   - credit pays whole packages first, the card is charged once for the rest;
 //   - a key paid at one level is never accepted at another; a paid package nobody used in 24 hours returns as credit.
 import { randomBytes } from 'node:crypto';
-import { readRaw, parseJson, send } from './http.mjs';
+import { readRaw, parseJson, send, header } from './http.mjs';
 import { requestJson } from './request.mjs';
 import { sha256, id } from './crypto.mjs';
 import { verify } from '../providers/connector.mjs';
@@ -154,7 +154,9 @@ function cleanOrigin(value) {
  *   consume(entitlementId, invitationId)  tie a paid package to its one invitation; throws 409 for a second one,
  *   started(entitlementId)  the package's check has begun: from now on it is never credited; true the first time,
  *   release(entitlementId)  return an unused package as credit; true when it was credited, false when nothing changed,
- *   handle(req, res, url, auth)  the routes under /billing/ (the hosted card page) and /v1/billing (a sponsor account)
+ *   hold(entitlementId)     a check's start is in flight: returns finish(ok); release waits for the last finish,
+ *   handle(req, res, url, auth)  the routes under /billing/ (the hosted card page and the payment provider's signed
+ *                           deliveries, env BILLING_WEBHOOK_SECRET) and /v1/billing (a sponsor account)
  * }
  * account is { id, workspace } as index.mjs sponsorAuth gives it.
  */
@@ -210,7 +212,35 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     store.put('ledger', { id: id('led'), account: e.account, at, type: 'credit', by: 'credit', cents: e.cents, tier: e.tier, entitlement: e.id, invitationId: e.invitationId || null, chargeRef: e.chargeRef || '' });
     store.put('entitlements', { id: e.id, status: 'credited', creditedAt: at });
   }
+  /**
+   * A check's start call is waiting on its provider: a cancel that lands meanwhile must not credit a package whose check
+   * then runs. hold(entitlementId) → finish(ok). While any hold is open, release answers false and remembers it was
+   * asked; finish(true) records the start; when the last hold finishes and nothing started, a remembered release is
+   * done then. Kept in memory, like the card sessions (one server process).
+   */
+  const holds = new Map();
+  function hold(entitlementId) {
+    const k = String(entitlementId);
+    const h = holds.get(k) || { count: 0, asked: false };
+    h.count += 1;
+    holds.set(k, h);
+    let open = true;
+    return function finish(ok) {
+      if (!open) return false;
+      open = false;
+      if (ok) started(k);
+      h.count -= 1;
+      if (h.count > 0) return false;
+      holds.delete(k);
+      return h.asked ? release(k) : false;
+    };
+  }
   function release(entitlementId) {
+    const held = holds.get(String(entitlementId));
+    if (held) {
+      held.asked = true;
+      return false;
+    }
     const e = store.get('entitlements', String(entitlementId));
     if (!e || !ACTIVE.includes(e.status) || e.startedAt) return false;
     credit(e);
@@ -219,7 +249,7 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
   }
   /** A paid package nobody put on an invitation within 24 hours goes back to credit. Runs when the account pays or reads; no timer. */
   function sweep(accountId) {
-    const stale = entitlementsOf(accountId).filter((e) => e.status === 'paid' && !e.startedAt && now() - Date.parse(e.paidAt) > UNUSED_MS);
+    const stale = entitlementsOf(accountId).filter((e) => e.status === 'paid' && !e.startedAt && !holds.has(e.id) && now() - Date.parse(e.paidAt) > UNUSED_MS);
     stale.forEach(credit);
     if (stale.length) store.flush();
   }
@@ -543,10 +573,26 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     if (hit.length) store.event({ type: 'payment_disputed', account: accountId, entitlements: hit.length });
   }
 
+  /**
+   * True only for a delivery signed with the delivery secret over its signed time and its exact bytes, with that time
+   * fresh. The header is split here with this file's own two fixed patterns: the connector's matcher runs a sponsor's
+   * patterns in a sandbox with a 50 ms limit, which a busy server misses on genuine deliveries (measured in plan 08-14:
+   * 11 of 48 runs under load). The signature itself, the freshness and the constant-time comparison are the connector's.
+   */
+  function signedByProvider(raw, headers) {
+    const v = ASSUMED.webhook;
+    const value = String(header(headers, v.header) || '');
+    if (!value || value.length > 4096) return false;
+    const ts = (value.match(new RegExp(v.timestampPattern)) || [])[1] || '';
+    const sigs = Array.from(value.matchAll(new RegExp(v.pattern, 'g')), (m) => m[1]).filter(Boolean).slice(0, 20);
+    const one = { type: 'hmac', header: 'x-signature', timestampHeader: 'x-signed-at', signed: v.signed, secret: v.secret, tolerance: v.tolerance };
+    return !!ts && sigs.some((sig) => verify(one, raw, { 'x-signature': sig, 'x-signed-at': ts }, env, {}));
+  }
+
   async function delivery(req, res) {
     if (!env.BILLING_WEBHOOK_SECRET) return send(res, 404, { error: 'Not found' });
     const raw = await readRaw(req, DELIVERY_BODY);
-    if (!verify(ASSUMED.webhook, raw, req.headers, env, {})) {
+    if (!signedByProvider(raw, req.headers)) {
       store.event({ type: 'webhook_rejected', provider: 'billing' });
       return send(res, 401, { error: 'Bad signature' });
     }
@@ -608,5 +654,5 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     }
   }
 
-  return { ready, prices, available, view, entitle, find, consume, started, release, handle };
+  return { ready, prices, available, view, entitle, find, consume, started, release, hold, handle };
 }

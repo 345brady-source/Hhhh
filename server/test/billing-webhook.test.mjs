@@ -5,7 +5,8 @@
 // recorded fixture answered by a fetch stand-in: no payment account exists and none is called.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { createHmac, createHash } from 'node:crypto';
 import { withServer, mockFetch } from './helpers.mjs';
 import { openStore } from '../lib/store.mjs';
@@ -190,7 +191,8 @@ test('N5 forged: a wrong signature, a stale time, a changed byte and no signatur
       ['wrong signature', raw, signed(raw, { secret: 'whsec_someoneElse0123456789' })],
       ['signed 400 seconds ago', raw, signed(raw, { ts: nowSeconds() - 400 })],
       ['one byte changed after signing', raw.replace('evt_fixture_refund1', 'evt_fixture_refund2'), signed(raw)],
-      ['no signature header', raw, {}]
+      ['no signature header', raw, {}],
+      ['a signature over the body alone, with no signed time', raw, { [WEBHOOK.header]: sigValue('', createHmac('sha256', WHSEC).update(raw).digest('hex')).replace(/^t=,/, '') }]
     ];
     for (const [why, body, headers] of tries) {
       const r = await deliver(base, body, headers);
@@ -198,7 +200,7 @@ test('N5 forged: a wrong signature, a stale time, a changed byte and no signatur
       assert.deepEqual(r.body, { error: 'Bad signature' }, why);
     }
     const added = store.data().events.slice(eventsBefore);
-    assert.equal(added.length, 4);
+    assert.equal(added.length, 5);
     for (const ev of added) {
       assert.deepEqual(Object.keys(ev).sort(), ['at', 'provider', 'type']);
       assert.deepEqual({ type: ev.type, provider: ev.provider }, { type: 'webhook_rejected', provider: 'billing' });
@@ -402,4 +404,138 @@ test('N6 dispute: every package on a disputed charge whose check has not started
     assert.equal(held(store), after);
     assert.equal(eventsOf(store, 'payment_disputed').length, 1);
   });
+});
+
+test('I2 hold: while a check is starting, release credits nothing; a start that happens is never credited; a failed start credits once, after the last hold', async () => {
+  const store = openStore(null);
+  const acct = { id: 'acc_hold', workspace: 'hold' };
+  store.put('billing', { id: acct.id, customer: 'cus_fixture1', card: { brand: 'visa', last4: '4242', expMonth: 12, expYear: 2030, method: 'pm_fixture1' }, creditCents: 0 });
+  const b = tools(store);
+  const items = ['h1', 'h2', 'h3', 'h4', 'h5'].map((key) => ({ key, tier: 'identity' }));
+  assert.equal((await b.entitle(acct, items)).chargedCents, 9500);
+  const [e1, e2, e3, e4, e5] = items.map((it) => b.find(acct.id, it.key));
+  for (const [i, e] of [e1, e2, e3, e4, e5].entries()) b.consume(e.id, `inv_${i + 1}`);
+  const creditLines = (e) => store.list('ledger').filter((l) => l.type === 'credit' && l.entitlement === e.id).length;
+
+  // A start that happens: never credited, before or after.
+  const f1 = b.hold(e1.id);
+  assert.equal(typeof f1, 'function');
+  assert.equal(b.release(e1.id), false, 'a cancel during the start credits nothing');
+  assert.equal(creditOf(store, acct), 0);
+  f1(true);
+  assert.ok(store.get('entitlements', e1.id).startedAt, 'the start is recorded');
+  assert.equal(b.release(e1.id), false);
+  assert.equal(creditOf(store, acct), 0);
+  assert.equal(creditLines(e1), 0);
+
+  // A start that fails after a cancel was asked: credited once, when the hold ends.
+  const f2 = b.hold(e2.id);
+  assert.equal(b.release(e2.id), false);
+  assert.equal(creditOf(store, acct), 0);
+  f2(false);
+  assert.equal(store.get('entitlements', e2.id).status, 'credited');
+  assert.equal(creditOf(store, acct), 1900);
+  assert.equal(creditLines(e2), 1);
+  f2(false);
+  assert.equal(creditOf(store, acct), 1900, 'a second finish does nothing');
+
+  // Two starts at once: the first to fail credits nothing; the last one decides.
+  const g1 = b.hold(e3.id);
+  const g2 = b.hold(e3.id);
+  assert.equal(b.release(e3.id), false);
+  g1(false);
+  assert.equal(store.get('entitlements', e3.id).status, 'consumed');
+  assert.equal(creditOf(store, acct), 1900);
+  g2(false);
+  assert.equal(store.get('entitlements', e3.id).status, 'credited');
+  assert.equal(creditOf(store, acct), 3800);
+  assert.equal(creditLines(e3), 1);
+
+  // A failed start with no cancel asked leaves the package on its invitation.
+  b.hold(e5.id)(false);
+  assert.equal(store.get('entitlements', e5.id).status, 'consumed');
+  assert.equal(creditOf(store, acct), 3800);
+
+  // No hold: release works as before.
+  assert.equal(b.release(e4.id), true);
+  assert.equal(creditOf(store, acct), 5700);
+});
+
+test('W6 no vendor text: forged deliveries, failed read-backs, refunds and disputes put no vendor name, domain or secret in any reply, event or log line', async () => {
+  const loudText = `${VENDOR} says no: key ${SECRET} signing ${WHSEC} at https://api.${VENDOR}.com/v1`;
+  const loud = { status: 500, body: { error: { type: 'api_error', message: loudText, doc_url: `https://${VENDOR}.com/docs` } } };
+  const noisy = { description: loudText, receipt_url: `https://pay.${VENDOR}.com/receipts/x`, failure_message: loudText, metadata: { note: loudText } };
+  const replies = [];
+  const lines = [];
+  const real = { error: console.error, log: console.log, warn: console.warn };
+  for (const k of Object.keys(real)) console[k] = (...args) => lines.push(args.map(String).join(' '));
+  let store;
+  try {
+    await shop([{ key: 'k1', tier: 'identity' }, { key: 'k2', tier: 'identity' }], async ({ base, gw, store: s, ents: [e1] }) => {
+      store = s;
+      const loudBody = (patch) => {
+        const ev = JSON.parse(event('webhook-refunded', Object.assign({ payment: e1.chargeRef }, patch)));
+        Object.assign(ev.data.object, noisy);
+        return JSON.stringify(ev);
+      };
+      const say = async (raw, headers) => replies.push((await deliver(base, raw, headers)).text);
+
+      // Forged: a body full of vendor text and the secrets, with a bad signature, a stale one and none.
+      const forged = loudBody({ id: 'evt_loud_forged' });
+      await say(forged, signed(forged, { secret: SECRET }));
+      await say(forged, signed(forged, { ts: nowSeconds() - 1000 }));
+      await say(forged, {});
+
+      // Read-backs that fail loudly: a provider error body and a thrown network error.
+      gw.read = () => loud;
+      await say(loudBody({ id: 'evt_loud_503a' }));
+      gw.read = () => {
+        throw new Error(`connect to api.${VENDOR}.com refused (${SECRET})`);
+      };
+      await say(loudBody({ id: 'evt_loud_503b' }));
+
+      // A refund read back with vendor text everywhere, one refund matched and one not.
+      gw.read = () => charge(e1.chargeRef, Object.assign({}, noisy, { amount: 3800, amount_refunded: 2400, refunds: { object: 'list', data: [Object.assign({ id: 're_loud1', amount: 1900, status: 'succeeded', metadata: { entitlement: e1.id }, reason: loudText }), { id: 're_loud2', amount: 500, status: 'succeeded', metadata: { note: loudText }, reason: loudText }] } }));
+      await say(loudBody({ id: 'evt_loud_refund' }));
+
+      // A dispute read back with vendor text.
+      gw.read = () => charge(e1.chargeRef, Object.assign({}, noisy, { amount: 3800, disputed: true }));
+      const disputeRaw = (() => {
+        const ev = JSON.parse(event('webhook-dispute', { id: 'evt_loud_dispute', payment: e1.chargeRef }));
+        Object.assign(ev.data.object, noisy);
+        return JSON.stringify(ev);
+      })();
+      await say(disputeRaw);
+      assert.equal(gw.reads().length, 4, 'two failed read-backs, the refund and the dispute; no forged delivery was read back');
+    });
+  } finally {
+    Object.assign(console, real);
+  }
+  assert.equal(replies.length, 7);
+  assert.deepEqual(replies.slice(0, 3).map((t) => JSON.parse(t)), [{ error: 'Bad signature' }, { error: 'Bad signature' }, { error: 'Bad signature' }]);
+  assert.deepEqual(replies.slice(3, 5).map((t) => JSON.parse(t)), [UNCHECKED, UNCHECKED]);
+  const events = store.data().events;
+  const rejected = events.filter((e) => e.type === 'webhook_rejected');
+  assert.equal(rejected.length, 3);
+  for (const e of rejected) assert.deepEqual(Object.keys(e).sort(), ['at', 'provider', 'type']);
+  assert.equal(events.filter((e) => e.type === 'refund_unmatched').length, 1);
+  assert.equal(events.filter((e) => e.type === 'payment_disputed').length, 1);
+  for (const text of [...replies, JSON.stringify(events), ...lines]) {
+    const low = text.toLowerCase();
+    assert.ok(!low.includes(VENDOR), `the vendor is named in: ${text.slice(0, 200)}`);
+    assert.ok(!text.includes(SECRET) && !low.includes('sk_test'), `the secret key is in: ${text.slice(0, 200)}`);
+    assert.ok(!text.includes(WHSEC) && !low.includes('whsec'), `the delivery secret is in: ${text.slice(0, 200)}`);
+  }
+});
+
+test('N8 fixtures: every recorded reply in the billing fixtures folder names an https source and is marked unconfirmed', () => {
+  const dir = process.env.BILLING_FIXTURE_DIR || new URL('./fixtures/billing/', import.meta.url).pathname;
+  const names = readdirSync(dir).filter((n) => n.endsWith('.json'));
+  assert.ok(names.length >= 1, 'the folder holds fixtures');
+  for (const name of names) {
+    const f = JSON.parse(readFileSync(join(dir, name), 'utf8'));
+    assert.match(String(f._source), /^https:\/\//, `${name}: _source`);
+    assert.match(String(f._status), /^unconfirmed/, `${name}: no provider page can be read from here, so nothing is confirmed`);
+    assert.ok(f.reply && typeof f.reply === 'object', `${name}: reply`);
+  }
 });
