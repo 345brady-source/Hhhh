@@ -570,6 +570,10 @@ a.list-title:active, .link-btn.list-title:active, a:active > .list-title { color
   .req-form { padding: var(--space-md); }
   .dlg-head { padding: var(--space-sm) var(--space-md); }
   .dlg-body { padding: var(--space-sm); }
+  /* A toast with a long file name ("Downloading …") wraps inside the screen. */
+  .toast { overflow-wrap: anywhere; }
+  /* The support email's touch area reaches 24px (its lines sit close; the neighbours are plain text). */
+  .ov-contact a::after { inset: -2px 0; }
   .paper { padding: var(--space-lg) 20px; }
   .paper-from { text-align: left; }
   .tl-labels { flex-direction: column; gap: var(--space-3xs); }

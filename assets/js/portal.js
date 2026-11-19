@@ -1131,6 +1131,8 @@
       const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
       const owners = jointOwners(inv);
       const heldAs = NS.names ? NS.names.tenancyLabel(inv) : '';
+      // Plan 06-26: a tax-form request the firm sent, offered here as on Home
+      const taxAsk = NS.inviteFlow.taxAsk ? NS.inviteFlow.taxAsk(inv) : '';
       return shell(
         `${title('Account', `${h(inv.title)} · Account ${h(inv.id)}`)}
         <div class="cols">
@@ -1154,7 +1156,7 @@
         </div>
         <div class="cols">
           <section class="sec">${sec('Tax and accreditation')}<dl class="terms">
-            ${row('Tax form', !inv.taxForm ? 'Not provided' : NS.inviteFlow.taxOnFile(inv) ? `${h(inv.taxForm)} on file` : `${h(inv.taxForm)} not signed`)}
+            ${row('Tax form', `${!inv.taxForm ? 'Not provided' : NS.inviteFlow.taxOnFile(inv) ? `${h(inv.taxForm)} on file` : `${h(inv.taxForm)} not signed`}${taxAsk ? ` <a class="link-btn" href="${h(taxAsk)}">Complete your tax form</a>` : ''}`)}
             ${row('Taxpayer ID', inv.tinLast4 ? `ending ${h(inv.tinLast4)}` : 'Not provided')}
             ${row('Accreditation', (() => {
               const IVN = NS.integrations;
