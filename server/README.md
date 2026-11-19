@@ -415,7 +415,7 @@ The operator manages accounts with `ADMIN_TOKEN` (`Authorization: Bearer <ADMIN_
 
 A token (32 random bytes) is shown once, in the answer that makes it; only its SHA-256 is stored, so a lost token is replaced, not recovered. The sponsor enters it in the portal under Integrations where the server's token goes.
 
-On a server with accounts, the shared `API_TOKEN` is the operator's own: it still reaches every workspace, so give it to no sponsor. With no `API_TOKEN` and no account, `/v1/` calls need no token (development); once one account exists, every sponsor call needs a token. An account made for a workspace that already has records reaches those records.
+On a server with accounts, the shared `API_TOKEN` is the operator's own: it still reaches every workspace, so give it to no sponsor. With no `API_TOKEN` and no account, `/v1/` calls need no token (development); once one account exists, every sponsor call needs a token. An account made for a workspace that already has records reaches those records. Make one account for each workspace in the portal, even for one firm: investor ids repeat from one workspace to the next, and a check is matched to an investor by id within a workspace.
 
 ## Data protection
 
