@@ -13,3 +13,19 @@
 - GAAP statements a small private fund actually issues (statement of assets and liabilities, operations, changes in partners' capital, cash flows, schedule of investments) and what a CPA expects in a tax package for a partnership return.
 - Outside services and libraries with real prices and licences; which are worth it against in-house.
 - How to prove the numbers: tie-outs against the existing audit engine and hand-worked examples.
+
+## Research findings the plans must fix (2026-11-19, 11-RESEARCH.md; defects in the portal today)
+- F-1: a real firm's Audit page shows figures nobody entered (gains from a seeded generator, a default-rate management fee, cash as a balancing figure, invented check numbers). After this phase a real fund shows only recorded figures; sample funds keep their generated data (FA-03).
+- F-2: a distribution recorded for a future date never becomes paid (status is set once when recorded, `console.js` `dist-record`), so it never reaches the capital accounts (FA-14). Fixed in this phase's first wave.
+- F-3: carried interest paid with a distribution (`run.gp`) is deducted from nobody's capital (FA-14).
+
+## Orchestrator choices (2026-11-19; the owner was told by push and may override any of them)
+- C-01: one statement format for every fund type (the investment-company format); property stays at cost until the sponsor enters a value; the CPA package carries cost, the land and building split and the placed-in-service date. A cost-basis set with book depreciation is not built now. Why: $0, no extra build, and the statement formats could not be read from the standards (those sites are blocked), so a CPA must confirm them before a second format is built.
+- C-02: the PDF writer the signing step already uses is shipped inside the repository (two files, 1.28 MB, both MIT) and no longer fetched from a CDN. Why: the owner's preview has no network; a fetched library fails there.
+- C-03: bank reconciliation by statement file upload only. Why: $0 and it works in the preview; a bank data service needs a server, keys and a monthly cost. Revisit with the NACHA step.
+- C-04: signed W-9 and W-8 files go into the CPA package only when the sponsor ticks a box for that export. Why: they are the only place full taxpayer numbers exist; nothing sensitive leaves by default.
+- C-05: F-2 and F-3 are fixed inside this phase (first wave), not as a separate task. Why: one plan already owns those lines; a separate fix would collide with it.
+- C-06: no trial-balance upload for sponsors who keep books elsewhere. Why: not needed for D-01 or D-02; about one more plan; can be added later.
+- C-07: a CPA reads one sample package before the package is called ready (owner item).
+- C-08: real firms' Audit pages change when this ships: generated gains, fees and cash disappear and only recorded figures show, with one line naming each missing input. Why: the current figures are invented, which is wrong for a real fund.
+- Not confirmed by the research (blocked sites): the accounting standards' own text, real audited fund statements, vendor prices, the older bank file layout, Excel/Numbers opening the workbook, saving files from the iPhone preview. Each plan that depends on one of these says so and proves what it can.
