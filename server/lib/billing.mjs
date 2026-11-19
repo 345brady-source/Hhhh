@@ -13,7 +13,7 @@
 import { randomBytes } from 'node:crypto';
 import { readRaw, parseJson, send, header } from './http.mjs';
 import { requestJson } from './request.mjs';
-import { sha256, id } from './crypto.mjs';
+import { sha256, id, safeEqual } from './crypto.mjs';
 import { verify } from '../providers/connector.mjs';
 
 // The payment provider. Its name and addresses stay in these two lines and the card page's own script tag: no JSON
@@ -87,8 +87,25 @@ export const ASSUMED = Object.freeze({
   refundsOf: (c) => (c.refunds && Array.isArray(c.refunds.data) ? c.refunds.data : []),
   refundEntitlement: (r) => (r.metadata && r.metadata.entitlement) || '',
   refundNotGone: ['failed', 'canceled'],
-  // Unconfirmed, for plan 08-16: reading a payment back; its fields status, amount and metadata.payment.
-  paymentRead: (payment) => `/payment_intents/${encodeURIComponent(payment)}`
+  // Unconfirmed (plan 08-16): reading a payment back with the secret key, asking for its latest charge and that charge's
+  // refunds list to be included in one reply. Fields: id, status, amount, customer, metadata.payment (this server's
+  // payment id, set by chargeForm) and latest_charge (a charge object, fields as chargeRead above).
+  paymentRead: (payment) => `/payment_intents/${encodeURIComponent(payment)}?${new URLSearchParams({ 'expand[]': 'latest_charge.refunds' })}`,
+  paymentStatus: (p) => p.status,
+  paymentRecord: (p) => (p.metadata && p.metadata.payment) || '',
+  paymentCustomer: (p) => p.customer,
+  paymentCharge: (p) => (p.latest_charge && typeof p.latest_charge === 'object' ? p.latest_charge : null),
+  // Unconfirmed: a payment read back with one of these statuses was not charged and will not be without the
+  // cardholder (the same list as notCharged above); any other status but succeeded (processing, for one) is left alone.
+  paymentFailed: ['requires_payment_method', 'requires_action', 'requires_confirmation', 'canceled'],
+
+  // Unconfirmed (plan 08-16): the operator's refund of one package to the card. POST /refunds, form-encoded, with the
+  // idempotency header; the form names the payment (this server's chargeRef), the amount in cents and
+  // metadata[entitlement], which the refund delivery matches back to the package. The reply's fields: id, status.
+  // succeeded: the money went back; a status in refundNotGone (above): it did not; any other (pending, for one): not
+  // known yet. HTTP statuses in refusedStatuses (above) mean the provider refused the refund and nothing went back.
+  refunds: '/refunds',
+  refundForm: ({ charge, cents, entitlement }) => ({ payment_intent: charge, amount: String(cents), 'metadata[entitlement]': entitlement })
 });
 
 const SENTENCES = {
@@ -97,7 +114,11 @@ const SENTENCES = {
   no_card: [402, 'Add a card on the Integrations page first.'],
   card_declined: [402, 'The card was declined. Nothing was charged.'],
   authentication_required: [402, "The card's bank asks for confirmation. Replace the card on the Integrations page, then try again."],
-  tier_mismatch: [409, "This invitation's package was paid at another level. Nothing was charged."]
+  tier_mismatch: [409, "This invitation's package was paid at another level. Nothing was charged."],
+  credit_owed: [409, 'A refunded payment left an amount owed. Settle it before adding packages.'],
+  refund_not_allowed: [409, 'This package cannot be refunded to the card.'],
+  refund_refused: [409, 'The refund was refused. Nothing was refunded.'],
+  refund_unconfirmed: [409, 'The refund could not be confirmed. Try again in a few minutes.']
 };
 /** A refusal with one of the fixed sentences: these, and nothing from the provider, are what a caller reads. */
 class BillingError extends Error {
@@ -188,8 +209,26 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
 
   /** An account's billing record (customer, card, credit); not stored until there is something to keep. */
   const record = (accountId) => store.get('billing', accountId) || { id: accountId, customer: '', card: null, creditCents: 0 };
+  /**
+   * Add credit to an account. An amount the account owes (owedCents, credit it had already spent when the money behind
+   * it was refunded or disputed) is paid from it first.
+   */
+  function addCredit(accountId, cents) {
+    const rec = record(accountId);
+    const owed = rec.owedCents || 0;
+    const paid = Math.min(owed, cents);
+    store.put('billing', Object.assign({ id: accountId, creditCents: (rec.creditCents || 0) + cents - paid }, owed ? { owedCents: owed - paid } : {}));
+  }
   const entitlementsOf = (accountId) => store.list('entitlements').filter((e) => e.account === accountId);
-  const newest = (accountId, key) => entitlementsOf(accountId).filter((e) => e.key === key).pop() || null;
+  /**
+   * The entitlement that speaks for a key: its newest usable one when it has one, otherwise its newest. A settled
+   * payment can record a key bought again meanwhile; that duplicate goes straight back as credit and is newer than the
+   * package in use, which must still be the one found (else the key would read as unpaid and be charged again).
+   */
+  function newest(accountId, key) {
+    const list = entitlementsOf(accountId).filter((e) => e.key === key);
+    return list.filter((e) => ACTIVE.includes(e.status)).pop() || list.pop() || null;
+  }
   function find(account, key) {
     const e = newest(account && account.id ? account.id : account, key);
     return e ? Object.assign({}, e) : null;
@@ -208,7 +247,7 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
   /** Return a package's price to the account's credit: one ledger line, and the package can never be credited again. */
   function credit(e) {
     const at = iso();
-    store.put('billing', { id: e.account, creditCents: (record(e.account).creditCents || 0) + e.cents });
+    addCredit(e.account, e.cents);
     store.put('ledger', { id: id('led'), account: e.account, at, type: 'credit', by: 'credit', cents: e.cents, tier: e.tier, entitlement: e.id, invitationId: e.invitationId || null, chargeRef: e.chargeRef || '' });
     store.put('entitlements', { id: e.id, status: 'credited', creditedAt: at });
   }
@@ -282,7 +321,21 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
       .reverse()
       .slice(0, 50)
       .map((l) => ({ at: l.at, type: l.type, by: l.by, cents: l.cents, tier: l.tier, invitationId: (l.entitlement && (store.get('entitlements', l.entitlement) || {}).invitationId) || null }));
-    return { ready: ready(), available: available(), card, currency: 'usd', prices: prices(), creditCents: rec.creditCents || 0, charges };
+    // A payment nobody could confirm (the card may have been charged with no package recorded), until the provider's
+    // delivery settles it: its time and its card amount only.
+    return {
+      ready: ready(),
+      available: available(),
+      card,
+      currency: 'usd',
+      prices: prices(),
+      creditCents: rec.creditCents || 0,
+      charges,
+      unresolved: store.list('payments').filter((p) => p.account === account.id && p.status === 'unresolved').map((p) => ({ at: p.at, cents: p.cardCents })),
+      // Credit the account had already spent when the money behind it was refunded or disputed; no new package is
+      // paid while it is above 0.
+      owedCents: rec.owedCents || 0
+    };
   }
 
   /** Record paid packages: one entitlement and one ledger line each. */
@@ -370,10 +423,12 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     return [...seen].map(([key, tier]) => ({ key, tier }));
   }
   /** A key that already holds a paid or used package of another tier is refused before anything is charged. */
-  function sameTier(accountId, list) {
+  function sameTier(accountId, list, confirmed = 0) {
     for (const it of list) {
       const e = newest(accountId, it.key);
-      if (e && ACTIVE.includes(e.status) && e.tier !== it.tier) throw refuse('tier_mismatch');
+      if (!e || !ACTIVE.includes(e.status) || e.tier === it.tier) continue;
+      // An earlier charge was confirmed in this very call, so the sentence cannot say that nothing was charged.
+      throw confirmed > 0 ? new BillingError('tier_mismatch', 409, "This invitation's package was paid at another level.") : refuse('tier_mismatch');
     }
   }
 
@@ -384,7 +439,7 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     sweep(account.id);
     sameTier(account.id, list);
     const confirmed = await settle(account);
-    sameTier(account.id, list);
+    sameTier(account.id, list, confirmed);
 
     // The whole payment is worked out first: what is already paid, what the credit covers in full, what goes to the card.
     const p = prices();
@@ -399,6 +454,7 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
       if (by === 'credit') left -= cents;
       fresh.push({ key: it.key, tier: it.tier, cents, by });
     }
+    if (fresh.length && (rec.owedCents || 0) > 0) throw refuse('credit_owed');
     const onCard = fresh.filter((it) => it.by === 'card').map(({ key, tier, cents }) => ({ key, tier, cents }));
     const creditUsed = sum(fresh.filter((it) => it.by === 'credit'));
     const cardCents = sum(onCard);
@@ -516,13 +572,16 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
   }
   /**
    * A credited package whose money is gone or contested: the credit it gave is taken back, read from the account's
-   * record at this moment and never below 0 (part of it may already be spent), with one line for what was removed.
+   * record at this moment, with one line for what was removed. The balance never goes below 0: what was already spent
+   * of it is owed instead (R9), the event credit_owed is written, and no new package is paid until it is settled.
    */
   function takeCredit(e, type, extra) {
-    const removed = Math.min(e.cents, Math.max(0, record(e.account).creditCents || 0));
-    if (!removed) return;
-    store.put('billing', { id: e.account, creditCents: (record(e.account).creditCents || 0) - removed });
-    line(e, type, 'credit', removed, extra);
+    const rec = record(e.account);
+    const removed = Math.min(e.cents, Math.max(0, rec.creditCents || 0));
+    const owed = e.cents - removed;
+    if (removed || owed) store.put('billing', { id: e.account, creditCents: (rec.creditCents || 0) - removed, owedCents: (rec.owedCents || 0) + owed });
+    if (removed) line(e, type, 'credit', removed, extra);
+    if (owed) store.event({ type: 'credit_owed', account: e.account, cents: owed });
   }
   /** The money for a package went back to the card. Writes nothing for a package already refunded. */
   function refundOne(e, refundRef, cents) {
@@ -530,17 +589,28 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     if (!cur || cur.status === 'refunded') return;
     line(cur, 'refund', 'card', cents === undefined ? cur.cents : cents, { refundRef });
     if (cur.status === 'credited') takeCredit(cur, 'refund', { refundRef });
-    store.put('entitlements', { id: cur.id, status: 'refunded', refundedAt: iso() });
+    // The operator's refund of a credited package took its credit out of the balance before the provider was called.
+    if (cur.status === 'refunding' && cur.refundCreditCents) line(cur, 'refund', 'credit', cur.refundCreditCents, { refundRef });
+    store.put('entitlements', { id: cur.id, status: 'refunded', refundedAt: iso(), refundCreditCents: 0 });
   }
   /** A refund delivery, acted on from the charge as read back. */
   function refunds(accountId, ref, read) {
     const on = entitlementsOf(accountId).filter((e) => e.chargeRef === ref);
     const list = ASSUMED.refundsOf(read).filter((r) => r && PROVIDER_ID.test(String(r.id)) && !ASSUMED.refundNotGone.includes(r.status));
     if (ASSUMED.fullyRefunded(read)) {
-      // The whole charge went back: every package on it, started ones included (the money is gone).
+      // The whole charge went back: every package on it, started ones included (the money is gone). The charge's amount
+      // is counted once (R10): what earlier refund lines already hold for this charge (an unmatched partial refund, a
+      // package refunded on its own) is not written again; without a usable amount each package's price is written.
+      const amount = Number(read.amount);
+      const before = store.list('ledger').filter((l) => l.account === accountId && l.type === 'refund' && l.by === 'card' && l.chargeRef === ref).reduce((n, l) => n + (Number(l.cents) || 0), 0);
+      let left = Number.isSafeInteger(amount) && amount > 0 ? Math.max(0, amount - before) : Infinity;
       for (const e of on) {
+        const cur = store.get('entitlements', e.id);
+        if (!cur || cur.status === 'refunded') continue;
         const own = list.find((r) => ASSUMED.refundEntitlement(r) === e.id) || list[list.length - 1];
-        refundOne(e, own ? String(own.id) : '');
+        const cents = Math.min(cur.cents, left);
+        left -= cents;
+        refundOne(e, own ? String(own.id) : '', cents);
       }
       return;
     }
@@ -568,7 +638,9 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     for (const e of hit) {
       line(e, 'dispute', 'card', e.cents);
       if (e.status === 'credited') takeCredit(e, 'dispute');
-      store.put('entitlements', { id: e.id, status: 'disputed', disputedAt: iso() });
+      // A credited package in the operator's refund: its credit already left the balance when the refund began.
+      if (e.status === 'refunding' && e.refundCreditCents) line(e, 'dispute', 'credit', e.refundCreditCents);
+      store.put('entitlements', { id: e.id, status: 'disputed', disputedAt: iso(), refundCreditCents: 0 });
     }
     if (hit.length) store.event({ type: 'payment_disputed', account: accountId, entitlements: hit.length });
   }
@@ -589,6 +661,53 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     return !!ts && sigs.some((sig) => verify(one, raw, { 'x-signature': sig, 'x-signed-at': ts }, env, {}));
   }
 
+  /** An account as the payment code needs it, from the account's id alone (a delivery carries no token). */
+  const accountById = (accountId) => ({ id: accountId, workspace: (store.get('accounts', accountId) || {}).workspace || '' });
+  /**
+   * A payment, as the provider read it back, settles this server's record of it (N7). Inside the account's queue, and
+   * only while the record is still open (pending, or unresolved after 23 hours): a payment that succeeded records its
+   * packages once, through closePaid; then the charge it carries is checked, so a package whose money has already gone
+   * back or is contested is never left usable (R8). A payment that was not charged is closed with nothing recorded. A
+   * succeeded or failed record is never changed by a delivery.
+   */
+  function settleFromRead(payId, ref, read) {
+    const pay = store.get('payments', payId);
+    if (!pay || (pay.status !== 'pending' && pay.status !== 'unresolved')) return;
+    const status = ASSUMED.paymentStatus(read);
+    if (status === ASSUMED.succeeded) {
+      const charge = ASSUMED.paymentCharge(read);
+      if (!charge || !PROVIDER_ID.test(String(charge.id))) throw unchecked();
+      closePaid(accountById(pay.account), pay, ref);
+      refunds(pay.account, ref, charge);
+      dispute(pay.account, ref, charge);
+      return;
+    }
+    if (ASSUMED.paymentFailed.includes(status)) store.put('payments', { id: pay.id, status: 'failed' });
+  }
+  /**
+   * A delivery about a payment (succeeded or failed; which one the body says is not believed): the payment is read back
+   * with the secret key, and only a read-back that names one of this server's payment records, for that account's
+   * customer and for exactly its card amount, settles it. Anything else changes nothing and is recorded as seen.
+   */
+  async function paymentDelivery(res, obj, seenKey) {
+    const ref = obj ? String(ASSUMED.paymentOf(obj) || '') : '';
+    if (!PROVIDER_ID.test(ref)) return send(res, 200, { received: true });
+    let read = null;
+    try {
+      read = await call('GET', ASSUMED.paymentRead(ref));
+    } catch {
+      read = null;
+    }
+    if (!read || typeof read !== 'object' || read.id !== ref) throw unchecked();
+    const payId = String(ASSUMED.paymentRecord(read) || '');
+    const pay = DELIVERY_ID.test(payId) ? store.get('payments', payId) : null;
+    const customer = pay ? record(pay.account).customer : '';
+    if (pay && customer && ASSUMED.paymentCustomer(read) === customer && Number(read.amount) === pay.cardCents) await serial(pay.account, () => settleFromRead(pay.id, ref, read));
+    store.flush();
+    store.seen(seenKey);
+    return send(res, 200, { received: true });
+  }
+
   async function delivery(req, res) {
     if (!env.BILLING_WEBHOOK_SECRET) return send(res, 404, { error: 'Not found' });
     const raw = await readRaw(req, DELIVERY_BODY);
@@ -601,8 +720,9 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     const seenKey = `billing:${typeof evId === 'string' && DELIVERY_ID.test(evId) ? evId : sha256(raw)}`;
     // A duplicate is found by reading the seen list, which records nothing: a delivery is recorded only once it is acted on.
     if (store.data().seen.includes(seenKey)) return send(res, 200, { received: true, duplicate: true });
-    const kind = Object.keys(ASSUMED.chargeOf).find((k) => ASSUMED.events[k] === ev.type);
     const obj = ASSUMED.eventObject(ev);
+    if (ev.type === ASSUMED.events.paymentSucceeded || ev.type === ASSUMED.events.paymentFailed) return paymentDelivery(res, obj, seenKey);
+    const kind = Object.keys(ASSUMED.chargeOf).find((k) => ASSUMED.events[k] === ev.type);
     const chargeId = kind && obj ? String(ASSUMED.chargeOf[kind](obj) || '') : '';
     // An event this module does not act on, or one naming no charge, changes nothing and is not recorded.
     if (!kind || !PROVIDER_ID.test(chargeId)) return send(res, 200, { received: true });
@@ -622,10 +742,80 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     return send(res, 200, { received: true });
   }
 
+  // The operator's card refund of an unused package (D-01: Carrow & Vale holds the funds; C-05: credit by default, a card
+  // refund on request, which loses the card fee). Written to the store as refunding before the provider hears of it.
+
+  /** Send a refund to the provider: { done, ref } the money went back; { refused } it did not; { unknown } nobody knows yet. */
+  async function refundCall(e) {
+    let reply;
+    try {
+      reply = await call('POST', ASSUMED.refunds, { form: ASSUMED.refundForm({ charge: e.chargeRef, cents: e.cents, entitlement: e.id }), key: e.refundKey });
+    } catch (err) {
+      return ASSUMED.refusedStatuses.includes(Number(err && err.providerStatus) || 0) ? { refused: true } : { unknown: true };
+    }
+    if (reply && reply.status === ASSUMED.succeeded && PROVIDER_ID.test(String(reply.id))) return { done: true, ref: String(reply.id) };
+    if (reply && ASSUMED.refundNotGone.includes(reply.status)) return { refused: true };
+    return { unknown: true };
+  }
+  /**
+   * Refund one package to the card, inside its account's queue. Only a package paid by card with a charge, whose check
+   * has not started and is not starting, that is paid, consumed, or credited with all its credit still in the balance.
+   * It is written as refunding (never usable, never credited; a credited one's credit leaves the balance now) and the
+   * store flushed before the provider is called, with a key made of the package and its refund attempt number. Success:
+   * refunded, with its ledger lines. A definite refusal: the previous status and the credit are put back, and the next
+   * try is a new attempt with a new key. Anything else: it stays refunding and the next call repeats the same key.
+   */
+  function refund(entitlementId) {
+    const first = store.get('entitlements', String(entitlementId));
+    if (!first) return Promise.reject(new BillingError('', 404, 'No package payment with that id'));
+    return serial(first.account, async () => {
+      const e = store.get('entitlements', first.id);
+      // Its own refund was already confirmed (by this route or by the provider's delivery): nothing more to do.
+      if (e.status === 'refunded' && e.refundKey) return { refunded: true, cents: e.cents };
+      if (e.status !== 'refunding') {
+        const balance = record(e.account).creditCents || 0;
+        const usable = e.status === 'paid' || e.status === 'consumed' || (e.status === 'credited' && balance >= e.cents);
+        if (e.by !== 'card' || !PROVIDER_ID.test(String(e.chargeRef || '')) || e.startedAt || holds.has(e.id) || !usable) throw refuse('refund_not_allowed');
+        const attempt = e.refundAttempt || 0;
+        const taken = e.status === 'credited' ? e.cents : 0;
+        if (taken) store.put('billing', { id: e.account, creditCents: balance - taken });
+        store.put('entitlements', { id: e.id, status: 'refunding', refundPrevious: e.status, refundAttempt: attempt, refundKey: sha256(JSON.stringify(['refund', e.id, attempt])), refundCreditCents: taken });
+        store.flush();
+      }
+      const out = await refundCall(store.get('entitlements', e.id));
+      const cur = store.get('entitlements', e.id);
+      if (out.done) {
+        refundOne(cur, out.ref, cur.cents);
+        store.flush();
+        return { refunded: true, cents: cur.cents };
+      }
+      if (out.unknown) throw refuse('refund_unconfirmed');
+      // Refused: put back only what this refund changed; never over a status a delivery has set since (R8).
+      if (cur.status === 'refunding') {
+        if (cur.refundCreditCents) store.put('billing', { id: cur.account, creditCents: (record(cur.account).creditCents || 0) + cur.refundCreditCents });
+        store.put('entitlements', { id: cur.id, status: cur.refundPrevious, refundAttempt: (cur.refundAttempt || 0) + 1, refundKey: '', refundCreditCents: 0 });
+        store.flush();
+      }
+      throw refuse('refund_refused');
+    });
+  }
+  /** POST /billing/admin/refund { entitlement }: the operator only (ADMIN_TOKEN, compared in constant time). */
+  async function adminRefund(req, res) {
+    if (req.method !== 'POST') return send(res, 405, { error: 'Not allowed' });
+    if (!env.ADMIN_TOKEN) return send(res, 404, { error: 'Not found' });
+    // This route is reached above index.mjs's refusal of invitation tokens, so it refuses that header itself (W7).
+    if (header(req.headers, 'x-invite-token') !== undefined) return send(res, 401, { error: 'Not authorized' });
+    if (!safeEqual(String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, ''), String(env.ADMIN_TOKEN))) return send(res, 401, { error: 'Not authorized' });
+    const body = parseObject(await readRaw(req, 4096));
+    if (typeof body.entitlement !== 'string' || !DELIVERY_ID.test(body.entitlement)) throw bad('entitlement must be a package payment id');
+    return send(res, 200, await refund(body.entitlement));
+  }
+
   async function routes(req, res, url, auth) {
     const path = url.pathname;
     const own = path.match(/^\/billing\/card\/([\w-]{20,64})(\/done)?$/);
     if (path === '/billing/webhook' && req.method === 'POST') return delivery(req, res);
+    if (path === '/billing/admin/refund') return adminRefund(req, res);
     if (path.startsWith('/billing/')) {
       const s = own ? session(own[1]) : null;
       if (!s) return send(res, 404, { error: 'Not found' });
@@ -654,5 +844,5 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     }
   }
 
-  return { ready, prices, available, view, entitle, find, consume, started, release, hold, handle };
+  return { ready, prices, available, view, entitle, find, consume, started, release, hold, refund, handle };
 }
