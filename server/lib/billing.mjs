@@ -87,8 +87,17 @@ export const ASSUMED = Object.freeze({
   refundsOf: (c) => (c.refunds && Array.isArray(c.refunds.data) ? c.refunds.data : []),
   refundEntitlement: (r) => (r.metadata && r.metadata.entitlement) || '',
   refundNotGone: ['failed', 'canceled'],
-  // Unconfirmed, for plan 08-16: reading a payment back; its fields status, amount and metadata.payment.
-  paymentRead: (payment) => `/payment_intents/${encodeURIComponent(payment)}`
+  // Unconfirmed (plan 08-16): reading a payment back with the secret key, asking for its latest charge and that charge's
+  // refunds list to be included in one reply. Fields: id, status, amount, customer, metadata.payment (this server's
+  // payment id, set by chargeForm) and latest_charge (a charge object, fields as chargeRead above).
+  paymentRead: (payment) => `/payment_intents/${encodeURIComponent(payment)}?${new URLSearchParams({ 'expand[]': 'latest_charge.refunds' })}`,
+  paymentStatus: (p) => p.status,
+  paymentRecord: (p) => (p.metadata && p.metadata.payment) || '',
+  paymentCustomer: (p) => p.customer,
+  paymentCharge: (p) => (p.latest_charge && typeof p.latest_charge === 'object' ? p.latest_charge : null),
+  // Unconfirmed: a payment read back with one of these statuses was not charged and will not be without the
+  // cardholder (the same list as notCharged above); any other status but succeeded (processing, for one) is left alone.
+  paymentFailed: ['requires_payment_method', 'requires_action', 'requires_confirmation', 'canceled']
 });
 
 const SENTENCES = {
@@ -282,7 +291,18 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
       .reverse()
       .slice(0, 50)
       .map((l) => ({ at: l.at, type: l.type, by: l.by, cents: l.cents, tier: l.tier, invitationId: (l.entitlement && (store.get('entitlements', l.entitlement) || {}).invitationId) || null }));
-    return { ready: ready(), available: available(), card, currency: 'usd', prices: prices(), creditCents: rec.creditCents || 0, charges };
+    // A payment nobody could confirm (the card may have been charged with no package recorded), until the provider's
+    // delivery settles it: its time and its card amount only.
+    return {
+      ready: ready(),
+      available: available(),
+      card,
+      currency: 'usd',
+      prices: prices(),
+      creditCents: rec.creditCents || 0,
+      charges,
+      unresolved: store.list('payments').filter((p) => p.account === account.id && p.status === 'unresolved').map((p) => ({ at: p.at, cents: p.cardCents }))
+    };
   }
 
   /** Record paid packages: one entitlement and one ledger line each. */
@@ -589,6 +609,53 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     return !!ts && sigs.some((sig) => verify(one, raw, { 'x-signature': sig, 'x-signed-at': ts }, env, {}));
   }
 
+  /** An account as the payment code needs it, from the account's id alone (a delivery carries no token). */
+  const accountById = (accountId) => ({ id: accountId, workspace: (store.get('accounts', accountId) || {}).workspace || '' });
+  /**
+   * A payment, as the provider read it back, settles this server's record of it (N7). Inside the account's queue, and
+   * only while the record is still open (pending, or unresolved after 23 hours): a payment that succeeded records its
+   * packages once, through closePaid; then the charge it carries is checked, so a package whose money has already gone
+   * back or is contested is never left usable (R8). A payment that was not charged is closed with nothing recorded. A
+   * succeeded or failed record is never changed by a delivery.
+   */
+  function settleFromRead(payId, ref, read) {
+    const pay = store.get('payments', payId);
+    if (!pay || (pay.status !== 'pending' && pay.status !== 'unresolved')) return;
+    const status = ASSUMED.paymentStatus(read);
+    if (status === ASSUMED.succeeded) {
+      const charge = ASSUMED.paymentCharge(read);
+      if (!charge || !PROVIDER_ID.test(String(charge.id))) throw unchecked();
+      closePaid(accountById(pay.account), pay, ref);
+      refunds(pay.account, ref, charge);
+      dispute(pay.account, ref, charge);
+      return;
+    }
+    if (ASSUMED.paymentFailed.includes(status)) store.put('payments', { id: pay.id, status: 'failed' });
+  }
+  /**
+   * A delivery about a payment (succeeded or failed; which one the body says is not believed): the payment is read back
+   * with the secret key, and only a read-back that names one of this server's payment records, for that account's
+   * customer and for exactly its card amount, settles it. Anything else changes nothing and is recorded as seen.
+   */
+  async function paymentDelivery(res, obj, seenKey) {
+    const ref = obj ? String(ASSUMED.paymentOf(obj) || '') : '';
+    if (!PROVIDER_ID.test(ref)) return send(res, 200, { received: true });
+    let read = null;
+    try {
+      read = await call('GET', ASSUMED.paymentRead(ref));
+    } catch {
+      read = null;
+    }
+    if (!read || typeof read !== 'object' || read.id !== ref) throw unchecked();
+    const payId = String(ASSUMED.paymentRecord(read) || '');
+    const pay = DELIVERY_ID.test(payId) ? store.get('payments', payId) : null;
+    const customer = pay ? record(pay.account).customer : '';
+    if (pay && customer && ASSUMED.paymentCustomer(read) === customer && Number(read.amount) === pay.cardCents) await serial(pay.account, () => settleFromRead(pay.id, ref, read));
+    store.flush();
+    store.seen(seenKey);
+    return send(res, 200, { received: true });
+  }
+
   async function delivery(req, res) {
     if (!env.BILLING_WEBHOOK_SECRET) return send(res, 404, { error: 'Not found' });
     const raw = await readRaw(req, DELIVERY_BODY);
@@ -601,8 +668,9 @@ export function createBilling({ env, store, fetch: fetchFn, now = () => Date.now
     const seenKey = `billing:${typeof evId === 'string' && DELIVERY_ID.test(evId) ? evId : sha256(raw)}`;
     // A duplicate is found by reading the seen list, which records nothing: a delivery is recorded only once it is acted on.
     if (store.data().seen.includes(seenKey)) return send(res, 200, { received: true, duplicate: true });
-    const kind = Object.keys(ASSUMED.chargeOf).find((k) => ASSUMED.events[k] === ev.type);
     const obj = ASSUMED.eventObject(ev);
+    if (ev.type === ASSUMED.events.paymentSucceeded || ev.type === ASSUMED.events.paymentFailed) return paymentDelivery(res, obj, seenKey);
+    const kind = Object.keys(ASSUMED.chargeOf).find((k) => ASSUMED.events[k] === ev.type);
     const chargeId = kind && obj ? String(ASSUMED.chargeOf[kind](obj) || '') : '';
     // An event this module does not act on, or one naming no charge, changes nothing and is not recorded.
     if (!kind || !PROVIDER_ID.test(chargeId)) return send(res, 200, { received: true });

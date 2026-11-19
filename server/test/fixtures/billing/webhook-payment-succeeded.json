@@ -1,0 +1,31 @@
+{
+  "_source": "https://docs.stripe.com/api/events/types",
+  "_status": "unconfirmed: the reference page could not be opened from the build environment on 2026-11-19 (no provider page can be read from here); the event's id, type and the payment object (its id, status, amount, customer, metadata.payment and its latest charge, asked for with the refunds list) are written from general knowledge of the interface, not from the page; the same object stands for the payment read back with the secret key; to be confirmed in test mode by plan 08-12",
+  "reply": {
+    "id": "evt_fixture_paid1",
+    "object": "event",
+    "type": "payment_intent.succeeded",
+    "created": 1763553600,
+    "data": {
+      "object": {
+        "id": "pi_fixture1",
+        "object": "payment_intent",
+        "status": "succeeded",
+        "amount": 1900,
+        "currency": "usd",
+        "customer": "cus_fixture1",
+        "metadata": { "payment": "pay_fixture1" },
+        "latest_charge": {
+          "id": "ch_fixture1",
+          "object": "charge",
+          "payment_intent": "pi_fixture1",
+          "amount": 1900,
+          "amount_refunded": 0,
+          "refunded": false,
+          "disputed": false,
+          "refunds": { "object": "list", "data": [] }
+        }
+      }
+    }
+  }
+}

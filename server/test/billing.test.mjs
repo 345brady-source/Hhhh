@@ -149,7 +149,7 @@ test('tracer: a sponsor saves a card through the hosted card page and pays for o
 
     const view = await j(base, 'GET', '/v1/billing', { bearer: a.token });
     assert.equal(view.status, 200, view.text);
-    assert.deepEqual(Object.keys(view.body), ['ready', 'available', 'card', 'currency', 'prices', 'creditCents', 'charges']);
+    assert.deepEqual(Object.keys(view.body), ['ready', 'available', 'card', 'currency', 'prices', 'creditCents', 'charges', 'unresolved']);
     assert.equal(view.body.ready, true);
     assert.deepEqual(Object.keys(view.body.available), ['identity', 'full', 'reverify']);
     assert.deepEqual(view.body.card, CARD);
