@@ -511,9 +511,16 @@
     );
     return c.promise;
   }
-  /** Cached page images, starting a load (and a re-render when it finishes) if needed. */
+  /**
+   * Cached page images, starting a load if needed. When it finishes the page is redrawn only while it still shows this
+   * document's "Loading document…": on a slow phone the signer may have pressed Finish and moved on (the W-9 in onboarding),
+   * and a redraw then would take the keyboard from the field being typed in on the next step (debug bank-step-stuck).
+   */
   function pagesOf(docId) {
-    if (!pageCache[docId]) loadPages(docId).then(() => NS.app.render(), () => NS.app.render());
+    if (!pageCache[docId]) {
+      const redraw = () => Array.prototype.some.call(document.querySelectorAll('.es-loading'), (n) => n.getAttribute('data-doc') === docId) && NS.app.render();
+      loadPages(docId).then(redraw, redraw);
+    }
     return pageCache[docId];
   }
   // An imported envelope whose template file is gone keeps only its work or signed copy: show that rather than an error.
@@ -521,7 +528,7 @@
   function pagesHTML(env, layer) {
     const src = pagesSrc(env);
     const c = pagesOf(src);
-    if (c.status === 'loading') return '<p class="es-loading" role="status">Loading document…</p>';
+    if (c.status === 'loading') return `<p class="es-loading" role="status" data-doc="${h(src)}">Loading document…</p>`;
     // A file this browser did not keep cannot come back by trying again: one line says so and what to do.
     if (c.lost) return `<div class="es-note es-note-bad" role="alert"><span>${h(lostText(env.agreementFor || env.requestId ? 'the agreement’s file' : 'this document’s file', env.agreementFor ? 'agreement' : 'sign'))}</span></div>`;
     if (c.status === 'error') return `<div class="es-note es-note-bad" role="alert"><span>${h(c.error)}</span><button class="${S().route === 'sign' || S().route === 'invite' ? 'btn btn-small' : 'cs-btn cs-btn-small'}" type="button" data-action="es-pages-retry" data-doc="${h(src)}">Try again</button></div>`;

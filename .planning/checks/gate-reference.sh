@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# Plan 06-33 gate (the phone layout of the owner-path walkthrough, failures 5, 9, 11, 12 and 14): the reference gate as
-# merged (the debug finish-notfound-safari gate plus HELP CHAT, 10 parts) plus checks/phone-layout.js (PHONE LAYOUT, 8 parts:
-# 390x844 touch and 1280x800; every desktop element compared with a run on the base tip, PHONE_LAYOUT_BASE). Server tests
-# follow the merged tree (272).
+# The reference gate: the debug finish-notfound-safari gate grown by later fixes: HELP CHAT (10), REAL FIRM (9), SIGNING
+# DOCUMENTS (8), PHONE LAYOUT (8), BANK STEP TYPING (2). The server test count is exact when GATE_SERVER_TESTS is given.
 # two persons, owner walks and leak search, the owner's folder, phase-4 signing and phase-5 record checks on the base tree
 # and on this tree) plus email-dialog, agreement-name, tax-request-leave and this plan's ways-out. Every step runs.
 cd /home/user/Hhhh/.claude/worktrees/agent-a1abdd780a1107725 || exit 9
@@ -30,7 +28,8 @@ NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/ways-out.js > $O/waysout.
 NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/no-network.js > $O/nonet.txt 2>&1
 node $P/checks/embed-data.js --verify > $O/embed.txt 2>&1
 NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/safari-finish.js > $O/safari.txt 2>&1
-tail -n 2 $O/server.txt $O/math.txt $O/maps.txt $O/forms.txt $O/status.txt $O/srvmode.txt $O/persons.txt $O/owner.txt $O/email.txt $O/agrname.txt $O/taxleave.txt $O/waysout.txt $O/nonet.txt $O/embed.txt $O/safari.txt
+NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/bank-step-typing.js > $O/bank.txt 2>&1
+tail -n 2 $O/server.txt $O/math.txt $O/maps.txt $O/forms.txt $O/status.txt $O/srvmode.txt $O/persons.txt $O/owner.txt $O/email.txt $O/agrname.txt $O/taxleave.txt $O/waysout.txt $O/nonet.txt $O/embed.txt $O/safari.txt $O/bank.txt
 NODE_PATH=$GN bash $S/exec-011/heavy.sh node .planning/phases/07-help-chatbot/checks/help-chat.js > $O/helpchat.txt 2>&1
 tail -n 2 $O/helpchat.txt
 NODE_PATH=$GN bash $S/exec-011/heavy.sh node $P/checks/real-firm.js > $O/realfirm.txt 2>&1
@@ -60,6 +59,7 @@ ok 'WAYS OUT (7)' "grep -qx 'WAYS OUT: PASS (parts run: 7)' $O/waysout.txt"
 ok 'NO NETWORK (3)' "grep -qx 'NO NETWORK: PASS (parts run: 3)' $O/nonet.txt"
 ok 'EMBED DATA (3)' "grep -qx 'EMBED DATA: PASS (files: 3)' $O/embed.txt"
 ok 'SAFARI FINISH (6)' "grep -qx 'SAFARI FINISH: PASS (parts run: 6)' $O/safari.txt"
+ok 'BANK STEP TYPING (2)' "grep -qx 'BANK STEP TYPING: PASS (parts run: 2)' $O/bank.txt"
 ok 'HELP CHAT (10)' "grep -qx 'HELP CHAT: PASS (parts run: 10)' $O/helpchat.txt"
 ok 'REAL FIRM (9)' "grep -qx 'REAL FIRM: PASS (parts run: 9)' $O/realfirm.txt"
 ok 'SIGNING DOCUMENTS (8)' "grep -qx 'SIGNING DOCUMENTS: PASS (parts run: 8)' $O/sigdocs.txt"
