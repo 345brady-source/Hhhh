@@ -134,3 +134,37 @@ export async function recordIssuers(base, draft, codes = CCCS, names) {
 export const recorded = (name) => JSON.parse(readFileSync(new URL(`${name}.json`, EDGAR_FIX), 'utf8'));
 /** Does any text hold any of the codes? Returns the index of the first code found, or -1 (never the code itself). */
 export const holdsCode = (text, codes = CCCS) => codes.findIndex((c) => String(text).includes(c));
+
+/** The operator makes a sponsor account (ADMIN_TOKEN must be set) → { id, workspace, token }. */
+export async function account(base, workspace) {
+  const r = await call(base, 'POST', '/v1/admin/accounts', { token: ADMIN, body: { workspace, name: `${workspace} capital` } });
+  if (r.status !== 200) throw new Error(`making the account answered ${r.status}`);
+  return r.json;
+}
+/** A real invitation → its token (what an investor's link carries). */
+export async function invitationToken(base, token = API) {
+  const body = {
+    workspace: 'harbor',
+    sendEmail: false,
+    portalUrl: 'https://portal.example/diy.html?tenant=harbor',
+    firm: { name: 'Harbor Ridge Capital', shortName: 'Harbor Ridge', supportEmail: 'ir@harborridge.example' },
+    investor: { id: 'HRC-0007', contact: 'Zelda Quixote', title: 'Zelda Quixote', type: 'individual', email: 'zelda@investor.example' },
+    offering: { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II', shortName: 'Fund II', minimum: 100000, currency: 'USD', documents: [] },
+    invitation: { cents: 25000000, cls: 'A' }
+  };
+  const r = await call(base, 'POST', '/v1/invitations', { token, body });
+  if (r.status !== 200 || !r.json.token) throw new Error(`making the invitation answered ${r.status}`);
+  return r.json.token;
+}
+/** What a state notice order carries for staff (plan 09-07 builds the real one in the portal). */
+export const statePackage = (over = {}) =>
+  Object.assign(
+    {
+      issuer: { name: 'Harbor Ridge Fund I LP', cik: '9000000001' },
+      formD: { accession: '0009999999-26-000001', filedOn: '2026-11-19' },
+      states: [{ code: 'TX', firstSale: '2026-10-01', sold: 250000 }, { code: 'NY', firstSale: '2026-10-08', sold: 400000 }, 'CA'],
+      investors: [{ name: 'Zelda Quixote', state: 'TX' }],
+      contact: { name: 'Dana Whitlock', email: 'owner@sponsor.example' }
+    },
+    over
+  );

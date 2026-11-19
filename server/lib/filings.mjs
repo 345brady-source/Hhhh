@@ -16,6 +16,9 @@ import { money, validAddress } from './mail.mjs';
 import { makeEdgar, eastern } from '../filing/edgar.mjs';
 
 const FORMD_KINDS = ['formd', 'formd-amendment'];
+const STATE_KINDS = ['bluesky', 'bluesky-renewal'];
+/** The staff token opens the files that carry CCCs: a short one is refused. */
+const STAFF_TOKEN_MIN = 24;
 const BODY_LIMIT = 1024 * 1024;
 const ORDER_ID = /^\/v1\/filings\/(staff\/)?orders\/(fil_[\w-]{1,40})(\/[a-z]+)?$/;
 const WORKSPACE = /^[A-Za-z0-9._-]{0,120}$/;
@@ -31,6 +34,18 @@ const text = (v, n) => (typeof v === 'string' || typeof v === 'number' ? String(
 const stamp = (v) => (typeof v === 'string' && v.length <= 40 && Number.isFinite(Date.parse(v)) ? new Date(Date.parse(v)).toISOString() : '');
 const bearer = (req) => String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, '');
 const bareCik = (v) => String(v === undefined || v === null ? '' : v).trim().replace(/^0+(?=\d)/, '');
+const isDay = (v) => typeof v === 'string' && /^\d{4}-\d\d-\d\d$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v;
+const isCents = (v) => Number.isInteger(v) && v >= 0 && v <= 1e11;
+/** A copy with keys in one order, so two packages or notices can be compared as text. */
+const canon = (v) => (Array.isArray(v) ? v.map(canon) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon(v[k])])) : v);
+const same = (a, b) => JSON.stringify(canon(a)) === JSON.stringify(canon(b));
+/** A package as it is kept: plain data, without any key that could hold a secret (as the portal's own record does). */
+function plain(v, depth = 0) {
+  if (depth > 12) return null;
+  if (Array.isArray(v)) return v.slice(0, 500).map((x) => plain(x, depth + 1));
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).filter(([k]) => !/ccc|token|secret|password/i.test(k)).map(([k, x]) => [k, plain(x, depth + 1)]));
+  return ['string', 'number', 'boolean'].includes(typeof v) ? v : null;
+}
 const htmlOf = (s) => `<p>${String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]).replace(/\n/g, '<br>')}</p>`;
 
 /**
@@ -40,7 +55,7 @@ const htmlOf = (s) => `<p>${String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;'
  * }
  * transport is an EDGAR transport passed in by code (tests); a running server uses the staff transport.
  */
-export function createFilings({ env, store, vault, mailer, limited, now = () => Date.now(), transport, assetsDir }) {
+export function createFilings({ env, store, vault, mailer, limited, now = () => Date.now(), accounts, transport, assetsDir }) {
   const iso = () => new Date(now()).toISOString();
   const today = () => eastern(now()).date;
   const notFound = (res) => send(res, 404, { error: 'Not found' });
@@ -68,6 +83,17 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
     // Only code can pass in another transport (tests): no setting selects one, so a running server cannot report a made-up filing.
     if (env.EDGAR_TRANSPORT !== undefined && env.EDGAR_TRANSPORT !== '' && env.EDGAR_TRANSPORT !== 'staff') return 'EDGAR_TRANSPORT must be staff: this server has no other way of sending a notice';
     if (!validAddress(env.FILINGS_STAFF_EMAIL)) return 'Set FILINGS_STAFF_EMAIL: every new order is emailed to the staff address';
+    // The staff token is nobody else's token: a sponsor, the operator's other tokens and an investor's link must never open the staff calls.
+    const staffToken = String(env.FILINGS_STAFF_TOKEN || '');
+    if (staffToken) {
+      if (staffToken.length < STAFF_TOKEN_MIN) return `FILINGS_STAFF_TOKEN must be at least ${STAFF_TOKEN_MIN} characters`;
+      for (const name of ['API_TOKEN', 'ADMIN_TOKEN', 'RESULTS_TOKEN']) if (env[name] && safeEqual(staffToken, String(env[name]))) return `FILINGS_STAFF_TOKEN must not be the same as ${name}`;
+      if (accounts && accounts.find(staffToken)) return 'FILINGS_STAFF_TOKEN must not be a sponsor account’s token';
+      const hash = sha256(staffToken);
+      if (store.list('invitations').some((i) => safeEqual(String(i.tokenHash || ''), hash))) return 'FILINGS_STAFF_TOKEN must not be an invitation’s token';
+    }
+    // An open server (no API_TOKEN and no sponsor account) is for tests only: anyone could place and read orders.
+    if (env.NODE_ENV !== 'test' && !env.API_TOKEN && !store.list('accounts').length) return 'Set API_TOKEN or make a sponsor account: without one, anyone could place and read filing orders';
     return '';
   }
 
@@ -139,6 +165,26 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
     return out;
   }
 
+  /**
+   * A state notice package: whatever the portal sends for staff to type into the states' filing system, kept as plain
+   * data. The server reads only its states (a code, or { code }), each of which must be one the form knows.
+   */
+  function checkedPackage(p) {
+    if (!p || typeof p !== 'object' || Array.isArray(p)) throw fail(422, 'A state notice order carries its package');
+    const pkg = plain(p);
+    const codes = [];
+    for (const x of Array.isArray(pkg.states) ? pkg.states : []) {
+      const code = x && typeof x === 'object' ? x.code : x;
+      if (typeof code !== 'string' || !formd.LISTS.stateOfSolicitation.includes(code)) throw fail(422, 'Every state of a package is a two-letter state code');
+      if (!codes.includes(code)) codes.push(code);
+    }
+    if (!codes.length) throw fail(422, 'A state notice order names at least one state');
+    return { pkg, codes };
+  }
+  /** The service at its price, then each state's fee and the filing system's fee at cost: no amount until staff record what was paid. */
+  const stateLines = (kind, codes, states, systemFeeCents) =>
+    lib.orderLines(kind, { passThrough: codes.map((code) => ({ label: `State filing fee, ${code}`, cents: states[code] && isCents(states[code].feeCents) ? states[code].feeCents : null, state: code })).concat([{ label: 'Filing system fee', cents: isCents(systemFeeCents) ? systemFeeCents : null }]) });
+
   /** What the portal is told about an order it placed. */
   const placed = (rec) => ({ id: rec.id, status: rec.status, lines: rec.lines, dueCents: rec.dueCents, openFees: rec.openFees });
   const formDView = (rec) => (rec.formD ? { status: rec.formD.status, accession: rec.formD.accession || '', filedOn: rec.formD.filedOn || '', messages: unseal(rec, 'messages') || [] } : null);
@@ -150,12 +196,14 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
     store.put('filings', { id: rec.id, staffEmail: r.emailStatus });
   }
 
-  async function placeOrder(req, res) {
+  async function placeOrder(req, res, auth) {
     requireVault();
     const b = await body(req);
     const kind = b.kind;
-    if (!FORMD_KINDS.includes(kind)) throw fail(422, 'kind must be formd or formd-amendment');
-    const workspace = typeof b.workspace === 'string' && WORKSPACE.test(b.workspace) ? b.workspace : null;
+    const isFormD = FORMD_KINDS.includes(kind);
+    if (!isFormD && !STATE_KINDS.includes(kind)) throw fail(422, 'kind must be formd, formd-amendment, bluesky or bluesky-renewal');
+    // A sponsor account's order is its own workspace's, whatever the body says; the shared token names the workspace.
+    const workspace = auth.account ? auth.account.workspace : typeof b.workspace === 'string' && WORKSPACE.test(b.workspace) ? b.workspace : null;
     if (workspace === null) throw fail(422, 'workspace must be up to 120 letters, digits, dots, underscores or hyphens');
     if (typeof b.clientId !== 'string' || !CLIENT_ID.test(b.clientId)) throw fail(422, 'clientId is the portal’s own number for the order (letters, digits, dots, colons, underscores or hyphens)');
     if (typeof b.key !== 'string' || !ORDER_KEY.test(b.key)) throw fail(422, 'key must be 32 random bytes chosen by the portal, as base64url or hex');
@@ -165,12 +213,37 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
     const at = stamp(b.at);
     if (!by || !at) throw fail(422, 'An order says who placed it (by) and when (at)');
     if (!firm.name || !offering.name) throw fail(422, 'An order names the firm and the offering');
-    const signoff = checkedSignoff(b.signoff);
-    const notice = checkedNotice(b.draft, kind);
+    const signoff = isFormD ? checkedSignoff(b.signoff) : null;
+    const notice = isFormD ? checkedNotice(b.draft, kind) : null;
+    const state = isFormD ? null : checkedPackage(b.package);
+    const built = isFormD ? lib.orderLines(kind, {}) : stateLines(kind, state.codes, {}, null);
+
+    // The portal's own number for the order, in its own workspace: posted again with the same key it is the same order.
+    const had = store.list('filings').find((o) => o.workspace === workspace && o.clientId === b.clientId);
+    if (had) {
+      if (!safeEqual(sha256(b.key), had.keyHash)) throw fail(409, 'That order number is already in use');
+      if (had.kind !== kind) throw fail(409, 'An order’s kind cannot change; place a new order');
+      if (isFormD ? same(notice, unseal(had, 'notice')) : same(state.pkg, unseal(had, 'package'))) return send(res, 200, placed(had));
+      // A changed notice or package replaces the stored one only while nothing has been filed from it.
+      if (had.status !== 'received' || (isFormD ? had.formD.status === 'submitted' : Object.keys(had.states || {}).length > 0)) throw fail(409, 'This order can no longer be changed');
+      const patch = { id: had.id, version: had.version + 1, placed: seal(had.id, 'placed', { by, signoff }) };
+      // The earlier test was of the earlier notice: review starts again, and LIVE waits for a test of this one.
+      if (isFormD) Object.assign(patch, { notice: seal(had.id, 'notice', notice), messages: seal(had.id, 'messages', []), formD: Object.assign({}, had.formD, { status: 'in_review', pending: null }) });
+      else Object.assign(patch, { package: seal(had.id, 'package', state.pkg), codes: state.codes, lines: built.lines, dueCents: built.dueCents, openFees: built.openFees });
+      const cur = store.put('filings', patch);
+      store.event({ type: 'filing_order_replaced', order: had.id, kind, workspace });
+      await notifyStaff(cur, 'Filing order changed');
+      return send(res, 200, placed(store.get('filings', had.id)));
+    }
 
     const oid = id('fil');
-    const built = lib.orderLines(kind, {});
-    const rec = store.put('filings', { id: oid, workspace, clientId: b.clientId, keyHash: sha256(b.key), kind, firm, offering, at, status: 'received', lines: built.lines, dueCents: built.dueCents, openFees: built.openFees, version: 1, createdAt: iso(), placed: seal(oid, 'placed', { by, signoff }), notice: seal(oid, 'notice', notice), formD: { status: 'in_review', accession: '', filedOn: '', test: null }, states: {} });
+    const rec = store.put(
+      'filings',
+      Object.assign(
+        { id: oid, workspace, clientId: b.clientId, keyHash: sha256(b.key), kind, firm, offering, at, status: 'received', lines: built.lines, dueCents: built.dueCents, openFees: built.openFees, version: 1, createdAt: iso(), placed: seal(oid, 'placed', { by, signoff }), states: {} },
+        isFormD ? { notice: seal(oid, 'notice', notice), formD: { status: 'in_review', accession: '', filedOn: '', test: null } } : { package: seal(oid, 'package', state.pkg), codes: state.codes, formD: null }
+      )
+    );
     store.event({ type: 'filing_order_received', order: oid, kind, workspace });
     await notifyStaff(rec, 'Filing order');
     return send(res, 201, placed(store.get('filings', oid)));
@@ -193,8 +266,8 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
         if (req.method !== 'POST') throw fail(405, 'Use POST');
         const b = await body(req);
         const rec = store.get('filings', m[2]);
-        // A wrong key answers exactly as an unknown id.
-        if (!rec || typeof b.key !== 'string' || !safeEqual(sha256(b.key), rec.keyHash)) return notFound(res);
+        // A wrong key answers exactly as an unknown id, and so does another sponsor account's order, even with its key.
+        if (!rec || (auth.account && rec.workspace !== auth.account.workspace) || typeof b.key !== 'string' || !safeEqual(sha256(b.key), rec.keyHash)) return notFound(res);
         return send(res, 200, statusView(rec));
       }
       return notFound(res);
@@ -326,11 +399,12 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
   }
 
   const ACCESSION = /^\d{10}-\d{2}-\d{6}$/;
-  const isDay = (v) => typeof v === 'string' && /^\d{4}-\d\d-\d\d$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v;
   const cleanMessages = (list) => (Array.isArray(list) ? list.slice(0, 50).map((m) => (m && typeof m === 'object' ? { type: text(m.type, 20), code: text(m.code, 20), message: text(m.message, 500) } : { type: '', code: '', message: text(m, 500) })) : []);
 
   /** Staff record what EDGAR did with a file they uploaded: { step: 'test' | 'live', result: 'accepted' | 'suspended', accession, filedOn, messages }. */
   function outcome(res, rec, b) {
+    if (b.cancelled === true) return cancel(res, rec);
+    if (b.states !== undefined || b.systemFeeCents !== undefined) return stateResults(res, rec, b);
     if (!rec.formD) throw fail(409, 'Only a Form D order has a test or live outcome');
     if (!['test', 'live'].includes(b.step) || !['accepted', 'suspended'].includes(b.result)) throw fail(400, 'An outcome gives step (test or live) and result (accepted or suspended)');
     if (rec.status !== 'received') throw fail(409, `This order is ${rec.status}`);
@@ -348,6 +422,43 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
     return send(res, 200, statusView(cur));
   }
 
+  /**
+   * State notices are typed into the states' filing system by a staff person; nothing here talks to it. Staff record
+   * each state's result: { states: { [code]: { filedOn, efdId, feeCents, renewsOn } }, systemFeeCents }. A fee paid
+   * becomes that line's amount (passed through at cost); the order is done when every state is filed and every fee known.
+   */
+  function stateResults(res, rec, b) {
+    if (rec.formD) throw fail(409, 'Only a state notice order has state results');
+    if (rec.status !== 'received') throw fail(409, `This order is ${rec.status}`);
+    const given = b.states === undefined ? {} : b.states;
+    if (!given || typeof given !== 'object' || Array.isArray(given) || (!Object.keys(given).length && b.systemFeeCents === undefined)) throw fail(400, 'states gives each state’s result by its two-letter code');
+    if (b.systemFeeCents !== undefined && !isCents(b.systemFeeCents)) throw fail(400, 'systemFeeCents is the filing system’s fee paid, in whole cents');
+    const states = Object.assign({}, rec.states);
+    for (const [code, v] of Object.entries(given)) {
+      if (!formd.LISTS.stateOfSolicitation.includes(code)) throw fail(400, 'A state result is recorded under a two-letter state code');
+      const o = v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+      if (!isDay(o.filedOn) || o.filedOn > today()) throw fail(400, `${code}: filedOn is the date the notice was filed (YYYY-MM-DD), today or earlier`);
+      if (!isCents(o.feeCents)) throw fail(400, `${code}: feeCents is the fee paid, in whole cents`);
+      if (o.renewsOn !== undefined && o.renewsOn !== '' && !isDay(o.renewsOn)) throw fail(400, `${code}: renewsOn is a date (YYYY-MM-DD) or empty`);
+      states[code] = { filedOn: o.filedOn, efdId: text(o.efdId, 40), feeCents: o.feeCents, renewsOn: o.renewsOn || '' };
+    }
+    const systemFeeCents = b.systemFeeCents !== undefined ? b.systemFeeCents : rec.systemFeeCents;
+    const codes = rec.codes.concat(Object.keys(states).filter((c) => !rec.codes.includes(c)));
+    const built = stateLines(rec.kind, codes, states, systemFeeCents);
+    const done = rec.codes.every((c) => states[c]) && !built.openFees;
+    const cur = store.put('filings', Object.assign({ id: rec.id, states, codes, lines: built.lines, dueCents: built.dueCents, openFees: built.openFees, status: done ? 'done' : 'received' }, isCents(systemFeeCents) ? { systemFeeCents } : {}));
+    store.event({ type: 'filing_states_recorded', order: rec.id, states: Object.keys(given) });
+    return send(res, 200, statusView(cur));
+  }
+
+  /** Staff cancel an order nothing was filed for. */
+  function cancel(res, rec) {
+    if (rec.status !== 'received' || (rec.formD && rec.formD.status === 'submitted') || Object.keys(rec.states || {}).length) throw fail(409, rec.status !== 'received' ? `This order is ${rec.status}` : 'Something was already filed for this order');
+    const cur = store.put('filings', { id: rec.id, status: 'cancelled' });
+    store.event({ type: 'filing_order_cancelled', order: rec.id });
+    return send(res, 200, statusView(cur));
+  }
+
   const listView = (rec) => ({ id: rec.id, firm: rec.firm, offering: rec.offering, kind: rec.kind, status: rec.status, formD: rec.formD ? rec.formD.status : '', dueCents: rec.dueCents, at: rec.at });
   function staffView(rec) {
     const who = unseal(rec, 'placed') || {};
@@ -360,7 +471,9 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
       at: rec.at,
       by: who.by || '',
       signoff: who.signoff || null,
+      version: rec.version,
       notice,
+      package: unseal(rec, 'package'),
       issuers: notice ? issuersOf(notice).map((i) => ({ cik: String(i.cik).trim(), name: (issuerOnFile(i.cik) || {}).name || '', cccOnFile: !!(issuerOnFile(i.cik) || {}).ccc })) : [],
       edgar: edgar.openAt(now()),
       live: edgar.allowLive(),
