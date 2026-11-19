@@ -542,8 +542,100 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   let packages = null;
   function usePackages({ billing, providers, identity, accreditation }) {
     packages = { billing, providers: providers || {}, identity, accreditation };
-    return { packageState };
+    return { packageState, isPackage, gate, settings: packageSettings, start: packageStart, connectors: packageConnectors };
   }
+  /*
+   * Plan 08-15: who may start a paid check. The package providers are reserved: an investor's token starts one only while
+   * its invitation holds its own paid package (N3, whoever created the invitation); a sponsor account never reaches them
+   * directly (N1); the shared or open token (the operator's own) behaves as before. Recorded trade-off: an operator who
+   * hands the shared token to a sponsor gives that sponsor the providers for free.
+   */
+  const isPackage = (provider) => !!packages && typeof provider === 'string' && (provider === packages.identity || provider === packages.accreditation);
+  const packageCheck = (scope, provider) => !!scope && isPackage(provider);
+  // C-08 (R3): at most three accepted starts of each kind per package (honest retries such as a blurred photo), so one
+  // payment cannot open any number of paid sessions. Starts still waiting on the provider count too.
+  const START_LIMIT = 3;
+  const startKind = (kind) => (kind === 'aml' ? 'screening' : kind === 'accreditation' ? 'accreditation' : 'identity');
+  const starting = new Map();
+  const startKey = (scope, kind) => `${scope.id}:${startKind(kind)}`;
+  const startsOf = (scope, kind) => {
+    const cur = store.get('invitations', scope.id) || scope;
+    return (Number((obj(cur.packageStarts) || {})[startKind(kind)]) || 0) + (starting.get(startKey(scope, kind)) || 0);
+  };
+  function gate(scope, auth, provider, kind) {
+    if (!isPackage(provider)) return;
+    if (scope) {
+      const s = scope.package ? packageState(scope) : null;
+      if (!s || !s.usable) throw fail(403, 'This check is not part of this invitation');
+      if (startsOf(scope, kind) >= START_LIMIT) throw fail(409, 'This check was already started.');
+      return;
+    }
+    if (auth && auth.account) throw fail(403, 'This check runs only from an invitation with the verification package.');
+  }
+  /** A package check runs with the invitation's own firm name as its only setting; any other call keeps what it sent. */
+  const packageSettings = (scope, provider, settings) => (packageCheck(scope, provider) ? { firm: clip(firmName(scope), 120) } : settings);
+  /**
+   * A package check's start: billing holds the package while the provider is called (a cancel meanwhile credits nothing
+   * if the check then runs); the first start accepted marks it started. A refusal by the provider for its own billing or
+   * key reasons (402, 403) leaves the package valid and unstarted, tells the investor plainly and alerts the operator.
+   */
+  async function packageStart(scope, provider, fn, kind) {
+    if (!packageCheck(scope, provider) || !scope.package) return fn();
+    const key = startKey(scope, kind);
+    starting.set(key, (starting.get(key) || 0) + 1);
+    const finish = packages.billing.hold(scope.package.entitlement);
+    let out;
+    try {
+      out = await fn();
+    } catch (e) {
+      finish(false);
+      const refused = e && (e.providerStatus === 402 || e.providerStatus === 403);
+      if (refused) {
+        const cur = store.get('invitations', scope.id);
+        if (cur) addEvent(cur, 'package_check_failed');
+        store.event({ type: 'package_check_failed', id: scope.id });
+        alertOperator(e.providerStatus);
+      }
+      throw refused ? fail(502, 'This check could not start. Please try again later.') : e;
+    } finally {
+      const left = (starting.get(key) || 1) - 1;
+      if (left > 0) starting.set(key, left);
+      else starting.delete(key);
+    }
+    finish(true);
+    const cur = store.get('invitations', scope.id);
+    if (cur) {
+      const starts = Object.assign({}, obj(cur.packageStarts));
+      starts[startKind(kind)] = (Number(starts[startKind(kind)]) || 0) + 1;
+      store.put('invitations', { id: cur.id, packageStarts: starts });
+    }
+    return out;
+  }
+  /**
+   * I3: the operator (OPERATOR_EMAIL) learns at most once a day that the check provider refused a paid start, so its
+   * balance or keys can be fixed. The message names no workspace and no invitation, so no sponsor's outbox lists it.
+   */
+  function alertOperator(status) {
+    const to = env.OPERATOR_EMAIL;
+    if (!validAddress(to)) return;
+    const at = now();
+    const last = store.list('events').filter((x) => x && x.type === 'package_alert').map((x) => Date.parse(x.sentAt)).filter(Number.isFinite).pop();
+    if (last !== undefined && at - last < DAY) return;
+    store.event({ type: 'package_alert', sentAt: iso(at) });
+    const lines = [`A paid verification check was refused by the check provider (status ${Number(status)}).`, 'Check the balance and the keys of the provider account set on the integration server.', 'The investor’s package stays valid; the investor can try again once this is fixed.'];
+    mailer
+      .send({ kind: 'package_alert', fromName: 'Integration server', to, subject: 'A paid check could not start', text: lines.join('\n\n'), html: `<!doctype html><html lang="en"><body>${lines.map((l) => `<p>${l}</p>`).join('')}</body></html>`, headers: { 'Auto-Submitted': 'auto-generated' } })
+      .catch(() => {});
+  }
+  /**
+   * W4 (C-05): an unused package goes back as credit wherever its invitation ends. Billing credits it once and never once
+   * its check started; asked while a start is waiting on the provider, it credits only if that start fails.
+   */
+  function endPackage(rec) {
+    if (packages && rec && obj(rec.package)) packages.billing.release(rec.package.entitlement);
+  }
+  /** The provider list a sponsor account reads: without the package providers. */
+  const packageConnectors = (list) => (Array.isArray(list) ? list.filter((c) => !isPackage(c && c.id)) : list);
   /** A package refusal with its code and sentence (the generic error handler would drop the code). */
   const refusePackage = (res, code) => reply(res, PACKAGE_SAYS[code][0], { error: PACKAGE_SAYS[code][1], code });
   /** A refusal from lib/billing.mjs, sent with its own status, code and sentence; anything else does not claim nothing was charged. */
@@ -642,6 +734,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     for (let rec of store.list('invitations')) {
       if (!ENDED.includes(rec.status) && expired(rec, nowMs)) {
         rec = store.put('invitations', { id: rec.id, status: 'expired' });
+        endPackage(rec);
         rec = addEvent(rec, 'invite_expired');
         out.expired++;
       }
@@ -842,7 +935,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     }
     if (rec.status === 'cancelled') throw fail(410, `This invitation was cancelled. Contact ${firmName(rec)} if you think this is a mistake.`);
     if (expired(rec)) {
-      if (!ENDED.includes(rec.status)) addEvent(store.put('invitations', { id: rec.id, status: 'expired' }), 'invite_expired');
+      if (!ENDED.includes(rec.status)) endPackage(addEvent(store.put('invitations', { id: rec.id, status: 'expired' }), 'invite_expired'));
       throw fail(410, `This link has expired. Ask ${firmName(rec)} to send you a new one.`);
     }
     return store.get('invitations', rec.id);
@@ -953,6 +1046,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         submissionBlobs: blobs,
         hasSubmission: true
       });
+      endPackage(rec);
       rec = addEvent(rec, 'onboarding_completed');
       store.event(Object.assign({ type: 'invite_completed', id: rec.id, files: blobs.length }, dropped ? { filesDropped: dropped } : {}));
       // The sponsor's notification: never blocks or fails the investor's submission.
@@ -1178,6 +1272,9 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       if (!rec) throw fail(404, 'No invitation with that id');
       if (rec.status === 'completed') throw fail(409, 'This onboarding is already complete');
       if (rec.status === 'cancelled') throw fail(409, 'This invitation was cancelled; send a new one instead');
+      // N3 (08-15): a package returned as credit, refunded or disputed cannot be used again, so its invitation is not resent.
+      const held = packageState(rec);
+      if (held && (held.status === 'credited' || held.status === 'refunded')) throw fail(409, "This invitation's package was returned. Send a new invitation.");
       const snap = unseal(rec, 'snapshot');
       if (!snap) throw fail(410, 'This invitation is no longer available; send a new one');
       if (body.portalUrl !== undefined) {
@@ -1199,6 +1296,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     if (action === 'cancel' && req.method === 'POST') {
       if (rec.status === 'completed') throw fail(409, 'This onboarding is already complete');
       const cur = store.put('invitations', { id: rec.id, status: 'cancelled', cancelledAt: rec.cancelledAt || iso() });
+      endPackage(cur);
       addEvent(cur, 'invite_cancelled');
       store.event({ type: 'invitation_cancelled', id: rec.id });
       return reply(res, 200, { ok: true, status: 'cancelled' });
