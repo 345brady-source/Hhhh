@@ -49,6 +49,7 @@
     ['console-reports', 'Reports'],
     ['console-audit', 'Audit'],
     ['console-kyc', 'AML/KYC'],
+    ['console-filings', 'Filings'],
     ['console-integrations', 'Integrations'],
     ['console-ach', 'ACH origination'],
     ['console-brand', 'Portal and brand'],
@@ -62,6 +63,7 @@
     ['Report', ['console-reports', 'console-audit', 'console-kyc']],
     ['Settings', ['console-brand', 'console-integrations', 'console-ach', 'console-team']]
   ];
+  NAV_SECTIONS.find((g) => g[0] === 'Report')[1].push('console-filings'); // Filings (filings-ui.js) closes the Report section; kept on its own line
   const NAV_GROUPS = NAV_SECTIONS.map(([label, keys], i) => [label, i < NAV_SECTIONS.length - 1 ? keys : keys.concat(NAV.map(([k]) => k).filter((k) => !NAV_SECTIONS.some((g) => g[1].indexOf(k) >= 0)))]);
   /** Counts other modules show beside their menu entry: NS.navCounts[key] = (ws) => n. */
   NS.navCounts = NS.navCounts || {};

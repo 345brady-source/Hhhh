@@ -359,6 +359,7 @@
     ['subscribe-', 'subscribe'],
     ['console-offering-', 'console-offering'],
     ['console-envelope-', 'console-envelope'],
+    ['console-filings-', 'console-filings'],
     ['sign-', 'sign'],
     ['join-', 'join'],
     ['invite-', 'invite']
@@ -367,7 +368,8 @@
     const raw = (location.hash || '').replace(/^#/, '');
     // A page's own name wins over a prefix: "sign-in" is the sign-in page, not the signing page for a document called "in".
     if (NS.views[raw]) return { key: raw, param: null };
-    for (const [p, key] of PREFIXED) if (raw.indexOf(p) === 0) return { key, param: raw.slice(p.length) };
+    // A prefix applies only where its page is registered: an edition without the page gets the default below.
+    for (const [p, key] of PREFIXED) if (raw.indexOf(p) === 0 && NS.views[key]) return { key, param: raw.slice(p.length) };
     return { key: NS.views.overview ? 'overview' : 'investments', param: null };
   }
   function go(route) {

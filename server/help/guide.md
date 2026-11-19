@@ -300,6 +300,24 @@ Identity verification, sanctions and PEP screening and accredited investor check
 
 How often investors are re-screened is set on the Integrations page.
 
+## console-filings
+audience: sponsor
+kind: console
+title: Filings
+menu: Report, then Filings
+anchor: First Form D notice
+anchor: Silence
+anchor: I filed this myself
+
+Filings lists each offering under Rule 506(b) or Rule 506(c) with what is due for its Form D and its state notices: the date and the reason beside each. The number beside Filings in the menu is the count that is due or overdue and not silenced. An offering under another exemption, or with none set, is not listed; the exemption is set in the offering's settings. Nothing on the page is required.
+
+- "First Form D notice" is shown once the offering has a first sale, with its due date, 15 days after the first sale. "Form D annual amendment" is shown once a notice is on record, due one year after the latest one.
+- A state notice is shown for each state with a sale, with the date of the first sale in that state. Several states show as one row, "State notices", that opens to the states.
+- "Silence" turns a reminder off: it stays on the page, greyed, with its date, and is no longer counted. "Turn back on" restores it. "Silence all" and "Turn all back on" do the same for every reminder of the offering.
+- "I filed this myself" records a Form D the firm filed, with its date and, if the firm has it, the accession number. "Filed" beside a state records that state's notice, and "Record all as filed" records all the offering's state notices with one date.
+- "Options" under an offering: "First sale" confirms another first sale date, "Offering ended" records the date the offering ended, "Recorded as filed" lists what the firm recorded with "Remove" beside each, and "Not filing for this offering" turns the offering's reminders off until "Turn reminders back on".
+- An order is shown with its lines, the amount due and its status. An admin cancels a recorded order with "Cancel order".
+
 ## console-brand
 audience: sponsor
 kind: console
