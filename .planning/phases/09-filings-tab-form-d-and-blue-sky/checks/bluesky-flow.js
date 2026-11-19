@@ -51,7 +51,7 @@ const picker = (F) =>
   }, SEC);
 const filings = (F) => F.fr.evaluate(() => JSON.parse(JSON.stringify(window.CVPortal.state.ws.filings || null)));
 /** Every dollar amount in an element's text. */
-const amounts = (s) => String(s).match(/\$\s?[\d,]+(?:\.\d\d)?/g) || [];
+const amounts = (s) => String(s).match(/\$\s?\d{1,3}(?:,\d{3})*(?:\.\d\d)?/g) || [];
 async function addState(F, code) {
   await F.fr.selectOption(`${SEC} select[name="add"]`, code);
   await F.fr.waitForTimeout(400);
