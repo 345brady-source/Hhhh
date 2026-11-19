@@ -15,6 +15,7 @@ export function openStore(file) {
       /* new store */
     }
   }
+  data.filings = data.filings || {}; data.filingIssuers = data.filingIssuers || {};
   let timer = null;
   const flush = () => {
     if (!file) return;
