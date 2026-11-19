@@ -26,8 +26,12 @@ const L9 = require('./lib9.js');
 const OUT = path.join(Lib.OUT, 'access-flow');
 fs.mkdirSync(OUT, { recursive: true });
 Lib.describeShots([
-  [/-steps\.png$/, 'EDGAR access for an issuer with no account: the seven steps in order, the first marked done with its date.'],
-  [/-existing\.png$/, 'An issuer that already has a CIK: the four application steps are not needed; it starts at the Login.gov sign-in.']
+  [/phone-steps-before\.png$/, 'EDGAR access for an issuer with no account, on the phone: the first steps with their how-to, none done yet.'],
+  [/phone-steps\.png$/, 'The same after Done on the first step: marked done with today\'s date, the next step current.'],
+  [/-existing\.png$/, 'An issuer that already has a CIK: the four application steps are not needed; it starts at the Login.gov sign-in.'],
+  [/desktop-steps\.png$/, 'The steps at 1280x800 with the filing agent\'s CIK configured: three steps done, the delegation step with the agent\'s name, its CIK and Copy.'],
+  [/phone-sheet\.png$/, 'The Form ID answer sheet on the phone, part 2 and 3: the answers from the record with Copy, the single-member question, the administrators.'],
+  [/desktop-sheet\.png$/, 'The Form ID answer sheet at 1280x800 after every answer was typed: label, answer and Copy on one line each.']
 ]);
 
 /** The other sections' part files are answered 404; formd.js loads (its prefill is read by the check). */

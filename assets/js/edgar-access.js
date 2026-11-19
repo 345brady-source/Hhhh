@@ -136,7 +136,7 @@
     const e = edgarOf(ws, o.id);
     const p = progress(e);
     const head = p.existing
-      ? `<div class="fl-acts"><span class="ea-cik">The issuer already has a CIK: ${cikLine(e)}</span>${btn('ea-form', 'Change', ` data-kind="existing" data-id="${h(o.id)}"`)}${btn('ea-new', 'Undo', ` data-id="${h(o.id)}"`)}</div>`
+      ? `<div class="fl-acts"><span class="ea-cik">The issuer already has ${cikLine(e)}</span>${btn('ea-form', 'Change', ` data-kind="existing" data-id="${h(o.id)}"`)}${btn('ea-new', 'Undo', ` data-id="${h(o.id)}"`)}</div>`
       : p.state.granted === 'done'
         ? ''
         : `<div class="fl-acts">${btn('ea-form', 'The issuer already has a CIK', ` data-kind="existing" data-id="${h(o.id)}"`)}</div>`;
