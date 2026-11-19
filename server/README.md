@@ -449,6 +449,58 @@ No answer ever carries a key, a model or provider name, or the text of an error:
 
 **The support contact.** The address a sponsor's people see beside an answer is set where the portal is published, as `window.CVPortalConfig.supportEmail`. Until it is set, a team member sees "Contact your administrator." and an administrator sees no contact line.
 
+## Filings
+
+On a server Carrow & Vale runs, sponsors order a Form D (new or amended) or state notice filings from the portal's Filings tab. Each order is emailed to staff, who work it with their own token and file it by hand. This server never files anything by itself: the Form D file is downloaded by a staff person and uploaded on EDGAR, and state notices are typed into the states' filing system by a staff person. Nothing here talks to that system.
+
+| Setting | What it does |
+| --- | --- |
+| `FILINGS` | `1` turns the module on. Unset, every `/v1/filings` address answers 404 and the rest of the server is unchanged. |
+| `FILINGS_STAFF_TOKEN` | The staff calls' bearer token: at least 24 characters, long and random, and different from `API_TOKEN`, `ADMIN_TOKEN`, `RESULTS_TOKEN`, every sponsor account's token and every invitation's token (otherwise the module is off). Unset, the staff calls answer 404. |
+| `FILINGS_STAFF_EMAIL` | Where each new or changed order is emailed (required). |
+| `FILINGS_CONTACT_NAME`, `FILINGS_CONTACT_PHONE`, `FILINGS_CONTACT_EMAIL` | The filer contact written into every Form D file. |
+| `EDGAR_TRANSPORT` | `staff` (the default and the only value accepted): staff download the file and upload it on EDGAR. Any other value leaves the module off. |
+| `EDGAR_ALLOW_LIVE` | `1` allows LIVE files. Unset, only TEST files are made. LIVE is always refused when `NODE_ENV=test`. |
+
+The module also needs `DATA_KEY` (orders and CCCs are sealed with it) and, outside tests, `API_TOKEN` or at least one sponsor account. When `FILINGS=1` but something is missing, `GET /v1/filings` answers `{ on: false, reason }` with what to set, and every other filings call answers 404. Tests can pass a recorded transport to `createServer({ edgarTransport })`; no setting selects one, so a running server can never report a made-up filing.
+
+**Portal calls** (`API_TOKEN` or a sponsor account's token; an invitation token is refused; bodies up to 1 MB):
+
+| Call | What it does |
+| --- | --- |
+| `GET /v1/filings` | `{ on: true, live }`. |
+| `POST /v1/filings/orders` | `{ workspace, clientId, key, firm: { name }, kind, offering: { id, name }, by, at }`, plus `draft` and `signoff: { by, name, title, at }` for `formd` and `formd-amendment`, or `package` (with `states`) for `bluesky` and `bluesky-renewal` → `201 { id, status, lines, dueCents, openFees }`. `key` is 32 random bytes chosen by the portal (only its SHA-256 is stored). The server checks the notice with the same rules as the portal and works out the lines itself ($100 Form D, $50 amendment, $100 state notice filings, $50 renewals; state and filing system fees are separate lines with no amount until staff record what was paid). The same `clientId` and `key` again answers 200 with the same order; a changed notice or package replaces the stored one while nothing has been filed from it (afterwards 409). Another key, or another kind, answers 409. A notice with errors (with `messages`), a Form D order with no sign-off, or no `by` or `at` answers 422. With a sponsor account's token the order belongs to the account's workspace, whatever `workspace` says. |
+| `POST /v1/filings/orders/:id/status` | `{ key }` → `{ id, kind, status, lines, dueCents, openFees, formD: { status, accession, filedOn, messages }, states: { <code>: { filedOn, efdId, feeCents, renewsOn } }, updatedAt }`. A wrong key, or another account's order, answers 404 exactly as an unknown id. |
+
+**Staff calls** (`Authorization: Bearer <FILINGS_STAFF_TOKEN>`; no other token is accepted; rate limited):
+
+| Call | What it does |
+| --- | --- |
+| `GET /v1/filings/staff/orders[?status=]` | `[{ id, firm, offering, kind, status, formD, dueCents, at }]`. |
+| `GET /v1/filings/staff/orders/:id` | The order with its notice or package, who placed it and the sign-off, each issuer with `cccOnFile`, `edgar: { open, nextOpen }` and `live: { ok, reason }`. |
+| `PUT /v1/filings/staff/issuers/:cik` | `{ ccc, name }` → `{ ok: true }`. `ccc` is exactly 8 characters and is stored only sealed (needs `DATA_KEY`); `name` is the issuer's name exactly as EDGAR shows it, used in the file's signature block. |
+| `GET /v1/filings/staff/orders/:id/file?mode=TEST\|LIVE` | The Form D file as an attachment (`Cache-Control: no-store`). It answers 403 to any request carrying `Origin` or `Sec-Fetch-Mode` (download it with a command-line tool, never from a web page) and 409 naming each CIK with no CCC on file. LIVE answers 403 unless `EDGAR_ALLOW_LIVE=1`, and 409 until a test of the notice as it is now stored was accepted. |
+| `POST /v1/filings/staff/orders/:id/submit` | `{ mode }` → with the staff transport `{ ok: true, pending: 'staff' }` (nothing is sent; upload the file yourself). |
+| `POST /v1/filings/staff/orders/:id/outcome` | `{ step: 'test' \| 'live', result: 'accepted' \| 'suspended', accession, filedOn, messages }` for a Form D order; `{ states: { <code>: { filedOn, efdId, feeCents, renewsOn } }, systemFeeCents }` for a state notice order; `{ cancelled: true }` for an order nothing was filed for. A live outcome answers 409 unless live filing is allowed and a test of the notice was accepted; an accepted live outcome needs an accession number of the form `0001234567-26-000123` and a filed date not in the future. |
+
+Statuses: an order is `received`, `done` or `cancelled`; a Form D order's `formD.status` is `in_review`, `test_passed`, `submitted`, `accepted` or `suspended`. A state notice order is `done` when every state is filed and every fee is recorded.
+
+**Filing a Form D (staff):**
+
+1. The order arrives by email at `FILINGS_STAFF_EMAIL` with its id, the firm, the offering, the service and the amount due.
+2. Open it: `GET /v1/filings/staff/orders/<id>`. Check the notice and the sign-off.
+3. For each issuer without `cccOnFile`, record its CCC and its name exactly as EDGAR shows it: `PUT /v1/filings/staff/issuers/<cik>` with `{ "ccc": "…", "name": "…" }`.
+4. Download the TEST file: `curl -H "Authorization: Bearer $FILINGS_STAFF_TOKEN" -o formd-test.xml "<server>/v1/filings/staff/orders/<id>/file?mode=TEST"`.
+5. On EDGAR Online Forms, choose Transmit XML Submission, send it as a test, and upload the file.
+6. Record the outcome: `POST /v1/filings/staff/orders/<id>/outcome` with `{ "step": "test", "result": "accepted" }`, or `"suspended"` with EDGAR's `messages`. A suspended test keeps LIVE refused; the sponsor corrects the notice in the portal and the order returns to review.
+7. When the test is accepted and `EDGAR_ALLOW_LIVE=1`, download the LIVE file (`?mode=LIVE`), upload it the same way as a live submission, and record `{ "step": "live", "result": "accepted", "accession": "…", "filedOn": "YYYY-MM-DD" }`. The order is done and the portal shows the accession number and date.
+
+**State notices (staff):** open the order, type its package into the states' filing system by hand, and record each state's date, filing ID, fee paid in cents and renewal date with the outcome call (`systemFeeCents` for the filing system's fee). The fees become the order's pass-through lines, at cost.
+
+**EDGAR's hours.** EDGAR takes submissions from 06:00 to 22:00 Eastern on business days (not weekends or federal holidays); a submission begun after 17:30 Eastern is filed the next business day. The order's `edgar` field shows whether EDGAR is open now and, if not, when it next opens.
+
+**What is sealed.** Notices, packages, sign-offs, EDGAR's messages and each issuer's CCC are sealed with `DATA_KEY`. A CCC is entered only by staff and is never returned by any call, emailed, logged or written to an event: it leaves the server only inside the Form D file of the staff file call. The staff email holds the order id, firm, offering, service and amount only.
+
 ## Data protection
 
 Invitations hold investors' personal details, bank details and signed documents, so:
@@ -471,6 +523,8 @@ Invitations hold investors' personal details, bank details and signed documents,
 - Reading: the reading key is read from `CARROWVALE_API_KEY` only (no other key, token, profile or address setting is used, and the service address is fixed), it is built into one client in `lib/model.mjs`, and it never leaves this server. `POST /v1/intake` and `POST /v1/read` sit behind `PORTAL_ORIGIN`, `API_TOKEN`, the rate limit, the size limits and the spend cap. Text inside an uploaded agreement is treated as data: the reading can only choose among places the browser measured on the page, and every field lands on printed geometry.
 - Portal help: `POST /v1/help` uses the same key and client and sits behind `PORTAL_ORIGIN`, a credential (`API_TOKEN` or an invitation link's token), the rate limit, its own hourly limit and both caps. Who is asking comes from the credential, never from the request; the conversation is kept by this server, so a request cannot supply earlier turns; a person's question is treated as a question, never as an instruction, and every answer is checked before it is sent.
 - Invitations: personal data encrypted at rest with `DATA_KEY`, tokens stored only as hashes, links scoped to one investor, submissions deleted after import (see Data protection). SMTP credentials are never sent unencrypted or included in error messages.
+- Filings, the CCC: each issuer's EDGAR filer code is stored only sealed with `DATA_KEY`, entered only through the staff call, and leaves the server only inside the Form D file of the staff file call, which no web page can read (403 to any request with `Origin` or `Sec-Fetch-Mode`); it is in no other answer, email, log line, event or error message.
+- Filings, the live guard: a LIVE file is refused unless `EDGAR_ALLOW_LIVE=1`, always when `NODE_ENV=test`, and until a TEST of the same notice was accepted; only `EDGAR_TRANSPORT=staff` is accepted, so this server never sends a filing by itself.
 
 Before production:
 

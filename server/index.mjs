@@ -52,6 +52,7 @@ import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
 import { createAccounts } from './lib/accounts.mjs';
 import { createBilling } from './lib/billing.mjs';
+import { createFilings } from './lib/filings.mjs';
 import { createIntake } from './lib/intake.mjs';
 import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
 import { createHelp } from './lib/help.mjs';
@@ -169,6 +170,7 @@ export function createServer(opts = {}) {
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   const accounts = createAccounts({ store, now });
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
+  const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
   /**
    * Who is calling a sponsor route: null (refuse), { shared: true } (the shared API_TOKEN, or an open server: no API_TOKEN
    * and no account), or { account } (a sponsor's own token; the call then acts on that account's workspace only).
@@ -847,6 +849,7 @@ export function createServer(opts = {}) {
 
     // Sponsor accounts (ADMIN_TOKEN): below the invitation token's refusal above, so an investor's link never reaches them.
     if (/^\/v1\/admin(\/|$)/.test(path)) return admin(req, res, path);
+    if (/^\/v1\/filings\/staff(\/|$)/.test(path)) return filings.staff(req, res, url);
 
     const auth = path.startsWith('/v1/') && !scope ? sponsorAuth(req) : null;
     if (path.startsWith('/v1/') && !scope && !auth) return send(res, 401, { error: 'Not authorized' });
@@ -950,6 +953,7 @@ export function createServer(opts = {}) {
       return send(res, 200, screeningView(rec.status === 'pending' ? await refreshScreening(rec) : rec));
     }
 
+    if (/^\/v1\/filings(\/|$)/.test(path)) return filings.handle(req, res, url, auth);
     if (await invites.sponsor(req, res, url, auth)) return;
 
     return send(res, 404, { error: 'Not found' });
