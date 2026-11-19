@@ -12,7 +12,14 @@
  *                                  one line per state needing a notice and one for the filing system's fee. An amount
  *                                  comes only from a confirmed row with its source and date; otherwise cents is null.
  *   pack(ws, offering, states)     { issuer: { name, cik }, accession, filedOn, offered, states: [ { code, name, firstSale,
- *                                  sold, investors } ] }: what staff need to file by hand, with no investor's name or address
+ *                                  sold, investors } ], contact }: what staff need to file by hand, with no investor's
+ *                                  name or address
+ *   placeOrder(ws, offering, states, { by, data, renewal })   the order (kind bluesky, or bluesky-renewal at $50), its
+ *                                  package, and each state on the record as ordered (or renewal-ordered) with its quote
+ *   recordResult(ws, offeringId, code, { filedOn, efdId, feeCents, renewsOn, systemFeeCents }, today)
+ *                                  { state, order, difference }: the state filed; the fee paid becomes that state's line
+ *                                  of its order (and systemFeeCents the filing system's line); null when refused
+ *   difference(stateRecord)        fee paid less fee quoted, in cents, when both are known and differ; otherwise null
  * The section (part key states of the Filings tab) is registered only where the tab is loaded (NS.filingsUI).
  * An order records each state's quoted fee (quotedCents) on the record and in the package; its pass-through lines stay
  * without an amount until what was paid is recorded.
@@ -137,7 +144,60 @@
     };
   }
 
-  const API = { problems, pick, fees, pack, latestNotice };
+  /* ---------- Orders and results ---------- */
+  const usd = (cents) => (NS && NS.eligibility ? NS.eligibility.usd(cents) : `${cents} cents`);
+  const offeringIn = (ws, id) => ((ws && ws.offerings) || []).find((x) => x && x.id === id) || null;
+  function placeOrder(ws, o, states, opts) {
+    const op = opts || {};
+    const off = o && offeringIn(ws, o.id);
+    if (!off || !Array.isArray(states) || !states.length) return null;
+    const renewal = !!op.renewal;
+    const q = fees(op.data || (NS && NS.blueskyData), states, NS.filings.facts(ws, off), { renewal });
+    if (!q.lines.some((l) => l.state)) return null;
+    const quoted = {};
+    q.lines.forEach((l) => l.state && (quoted[l.state] = l.cents));
+    const p = pack(ws, off, states.filter((c) => q.none.indexOf(c) < 0));
+    p.states.forEach((x) => (x.quotedCents = own(quoted, x.code) ? quoted[x.code] : null));
+    if (renewal) p.renewal = true;
+    // The pass-through lines carry no amount until what was paid is recorded; the quoted fee is kept per state.
+    const order = NS.filings.addOrder(ws, { kind: renewal ? 'bluesky-renewal' : 'bluesky', offeringId: off.id, by: op.by, passThrough: q.lines.map((l) => Object.assign({ label: l.label, cents: null }, l.state ? { state: l.state } : {})), package: p });
+    if (!order) return null;
+    p.states.forEach((x) => NS.filings.recordState(ws, off.id, x.code, Object.assign({ status: renewal ? 'renewal-ordered' : 'ordered', quotedCents: x.quotedCents }, renewal ? {} : { source: 'portal' })));
+    return order;
+  }
+  const difference = (st) => (st && isCents(st.quotedCents) && isCents(st.feeCents) && st.quotedCents !== st.feeCents ? st.feeCents - st.quotedCents : null);
+  const BLUESKY = ['bluesky', 'bluesky-renewal'];
+  function recordResult(ws, offeringId, code, result, today) {
+    const off = offeringIn(ws, offeringId);
+    const x = result || {};
+    const now = isDay(today) ? today : NS.dates && NS.dates.today ? NS.dates.today() : new Date().toISOString().slice(0, 10);
+    if (!off || !NS.filings.stateName(code) || !isDay(x.filedOn) || x.filedOn > now || !isCents(x.feeCents)) return null;
+    if (x.renewsOn != null && x.renewsOn !== '' && !isDay(x.renewsOn)) return null;
+    if (x.systemFeeCents != null && !isCents(x.systemFeeCents)) return null;
+    const had = stored(ws, offeringId).states;
+    const st = NS.filings.recordState(ws, offeringId, code, Object.assign({ status: 'filed', filedOn: x.filedOn, efdId: String(x.efdId == null ? '' : x.efdId).trim().slice(0, 40), feeCents: x.feeCents, renewsOn: x.renewsOn || '' }, had && had[code] && had[code].source ? {} : { source: 'portal' }));
+    if (!st) return null;
+    // The order the result belongs to: the latest one still open whose line for the state has no amount yet.
+    const mine = ((ws.filings && ws.filings.orders) || []).filter((q) => q && q.offeringId === offeringId && BLUESKY.indexOf(q.kind) >= 0 && q.status !== 'cancelled' && (q.lines || []).some((l) => l.state === code));
+    const order = mine.filter((q) => q.lines.some((l) => l.state === code && l.cents === null)).slice(-1)[0] || mine.slice(-1)[0] || null;
+    if (order) {
+      order.lines.forEach((l) => {
+        if (l.state === code) l.cents = x.feeCents;
+        else if (l.passThrough && !l.state && x.systemFeeCents != null) l.cents = x.systemFeeCents;
+      });
+      order.dueCents = order.lines.reduce((a, l) => a + (l.cents || 0), 0);
+      order.openFees = order.lines.some((l) => l.cents === null);
+      const states = stored(ws, offeringId).states || {};
+      const all = order.lines.filter((l) => l.state).every((l) => states[l.state] && states[l.state].status === 'filed' && states[l.state].filedOn);
+      order.status = all && !order.openFees ? 'done' : 'filed';
+    }
+    const d = difference(st);
+    if (NS.audit && NS.audit.log) NS.audit.log(ws, { action: 'State notice result recorded', fund: offeringId, record: order ? order.id : '', detail: `${off.name}: ${NS.filings.stateName(code)}, filed on ${x.filedOn}${st.efdId ? `, filing ID ${st.efdId}` : ''}, fee paid ${usd(x.feeCents)}${d ? ` (quoted ${usd(st.quotedCents)})` : ''}` });
+    if (NS.workspace) NS.workspace.save(ws);
+    return { state: st, order, difference: d };
+  }
+
+  const API = { problems, pick, fees, pack, latestNotice, placeOrder, recordResult, difference };
   if (NS) NS.bluesky = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 
@@ -161,7 +221,7 @@
     return u.bs[id];
   }
   /** A state already ordered or filed is shown with its result, not in the picker. */
-  const done = (s) => !!(s && (s.filedOn || s.status === 'ordered'));
+  const done = (s) => !!(s && (s.filedOn || s.status === 'ordered' || s.status === 'renewal-ordered'));
   /** The states the picker lists: the states of the sales and those added by hand, less those ordered or filed. */
   function candidates(ws, o, f) {
     const r = stored(ws, o.id);
@@ -219,18 +279,47 @@
     const n = f.unplaced ? f.unplaced.investors : 0;
     return n ? `<p class="fl-note" data-unplaced>${plural(n, 'investor')} with no state on file: their state is not ticked. <a href="#console-investors">Investors</a></p>` : '';
   }
-  /** One state ordered or filed: its status, and once filed its date and filing ID. */
+  /** The form for a state's result, under its row (never a dialog). */
+  function resultFormHTML(ws, o, c) {
+    const u = ui(o.id);
+    if (!u.result || u.result.code !== c) return '';
+    const v = u.result.values || {};
+    const today = NS.dates.today();
+    // The filing system's fee is asked once per order, while its line has no amount.
+    const open = ((ws.filings && ws.filings.orders) || []).filter((q) => q && q.offeringId === o.id && BLUESKY.indexOf(q.kind) >= 0 && q.status !== 'cancelled' && (q.lines || []).some((l) => l.state === c && l.cents === null)).slice(-1)[0];
+    const sys = open && open.lines.some((l) => l.passThrough && !l.state && l.cents === null);
+    const field = (label, name, type, value, more) => `<label class="cs-field">${label}<input type="${type}" name="${name}" value="${h(value || '')}"${more || ''}></label>`;
+    return `<form class="fl-form" data-form="bs-result" data-id="${h(o.id)}" data-code="${h(c)}" novalidate>
+        ${field('Filed on', 'filedOn', 'date', v.filedOn, ` max="${today}"`)}
+        ${field('Filing ID <em>(optional)</em>', 'efdId', 'text', v.efdId, ' autocomplete="off" autocapitalize="off" spellcheck="false"')}
+        ${field('Fee paid ($)', 'fee', 'text', v.fee, ' inputmode="decimal" autocomplete="off"')}
+        ${field('Renews on <em>(optional)</em>', 'renewsOn', 'date', v.renewsOn)}
+        ${sys ? field('Filing system fee paid ($) <em>(optional)</em>', 'systemFee', 'text', v.systemFee, ' inputmode="decimal" autocomplete="off"') : ''}
+        <p class="field-error" role="alert">${u.result.error ? h(u.result.error) : ''}</p>
+        <div class="fl-acts"><button class="cs-btn cs-btn-small cs-btn-primary" type="submit">Save</button>${btn('bs-form-close', 'Cancel', ` data-id="${h(o.id)}"`)}</div>
+      </form>`;
+  }
+  /** One state ordered or filed: its status, its result (date, filing ID, fee paid beside the fee quoted), its renewal. */
   function doneHTML(ws, o) {
     const r = stored(ws, o.id);
     const codes = Object.keys(r.states || {})
       .filter((c) => done(r.states[c]))
       .sort();
     if (!codes.length) return '';
+    const operate = NS.app.can('operate');
+    const configure = NS.app.can('configure');
+    const attrs = (c) => ` data-id="${h(o.id)}" data-code="${h(c)}"`;
     return `<h3>Ordered and filed</h3><ul class="fl-list" data-done>${codes
       .map((c) => {
         const s = r.states[c];
-        const what = s.filedOn ? `Filed ${date(s.filedOn)}${s.efdId ? ` · ID ${h(s.efdId)}` : ''}` : 'Ordered';
-        return `<li class="fl-row" data-state="${h(c)}"><div class="fl-what"><span class="fl-title">${h(nameOf(c))}</span><span class="fl-detail">${what}</span></div></li>`;
+        const quoted = isCents(s.quotedCents);
+        const paid = isCents(s.feeCents);
+        const what = [s.filedOn ? `Filed ${date(s.filedOn)}` : '', s.efdId ? `ID ${h(s.efdId)}` : '', paid && !quoted ? `fee paid ${money(s.feeCents)}` : '', s.status === 'ordered' ? 'Ordered' : s.status === 'renewal-ordered' ? 'Renewal ordered' : '', s.renewsOn ? `renews ${date(s.renewsOn)}` : ''].filter(Boolean).join(' · ');
+        const d = difference(s);
+        const fee = quoted ? `<span class="fl-detail" data-fee>Quoted ${money(s.quotedCents)}${paid ? ` · paid ${money(s.feeCents)}${d ? ` · ${money(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than quoted` : ''}` : ''}</span>` : '';
+        const waiting = s.status === 'ordered' || s.status === 'renewal-ordered';
+        const acts = [waiting && operate ? btn('bs-form', 'Record result', attrs(c)) : '', !waiting && s.renewsOn && configure ? btn('bs-renew', 'Order renewal', attrs(c)) : ''].join('');
+        return `<li class="fl-row" data-state="${h(c)}"><div class="fl-what"><span class="fl-title">${h(nameOf(c))}</span><span class="fl-detail">${what}</span>${fee}</div><div class="fl-acts">${acts}</div>${resultFormHTML(ws, o, c)}</li>`;
       })
       .join('')}</ul>`;
   }
@@ -335,20 +424,62 @@
     const ws = W();
     const o = offeringOf(ws, el.getAttribute('data-id'));
     if (!o) return;
-    const f = FL().facts(ws, o);
     const n = latestNotice(stored(ws, o.id));
-    const codes = ticked(ws, o, f);
+    const codes = ticked(ws, o, FL().facts(ws, o));
     if (!codes.length || !n || !n.accession) return;
-    const q = fees(DATA(), codes, f);
-    const quoted = {};
-    q.lines.forEach((l) => l.state && (quoted[l.state] = l.cents));
-    const p = pack(ws, o, codes.filter((c) => q.none.indexOf(c) < 0));
-    p.states.forEach((s) => (s.quotedCents = own(quoted, s.code) ? quoted[s.code] : null));
-    // The pass-through lines carry no amount until what was paid is recorded; the quoted fee is kept per state.
-    const order = FL().addOrder(ws, { kind: 'bluesky', offeringId: o.id, by: NS.app.actor(), passThrough: q.lines.map((l) => Object.assign({ label: l.label, cents: null }, l.state ? { state: l.state } : {})), package: p });
-    if (!order) return;
-    p.states.forEach((s) => FL().recordState(ws, o.id, s.code, { status: 'ordered', quotedCents: s.quotedCents, source: 'portal' }));
+    if (!placeOrder(ws, o, codes, { by: NS.app.actor(), data: DATA() })) return;
     NS.state.ui.bs[o.id] = { off: {}, added: [] };
+    NS.app.save(true);
+    redraw();
+  };
+  NS.actions['bs-renew'] = (el) => {
+    if (!NS.app.can('configure')) return;
+    const ws = W();
+    const o = offeringOf(ws, el.getAttribute('data-id'));
+    const code = el.getAttribute('data-code');
+    const s = o && (stored(ws, o.id).states || {})[code];
+    if (!s || !s.filedOn || !s.renewsOn || s.status === 'renewal-ordered') return;
+    if (!placeOrder(ws, o, [code], { by: NS.app.actor(), data: DATA(), renewal: true })) return;
+    NS.app.save(true);
+    redraw();
+  };
+  NS.actions['bs-form'] = (el) => {
+    ui(el.getAttribute('data-id')).result = { code: el.getAttribute('data-code'), values: {}, error: '' };
+    redraw();
+  };
+  NS.actions['bs-form-close'] = (el) => {
+    ui(el.getAttribute('data-id')).result = null;
+    redraw();
+  };
+  /** Dollars typed ("300", "1,200.50", "$75") as whole cents, or null when it is not an amount. */
+  const centsOf = (v) => {
+    const t = String(v == null ? '' : v).replace(/[$,\s]/g, '');
+    return /^\d{1,9}(\.\d{1,2})?$/.test(t) ? Math.round(Number(t) * 100) : null;
+  };
+  NS.forms['bs-result'] = (form) => {
+    if (!NS.app.can('operate')) return;
+    const ws = W();
+    const o = offeringOf(ws, form.getAttribute('data-id'));
+    const code = form.getAttribute('data-code');
+    if (!o) return;
+    const u = ui(o.id);
+    const el = form.elements;
+    const values = { filedOn: el.filedOn.value.trim(), efdId: el.efdId.value, fee: el.fee.value, renewsOn: el.renewsOn.value.trim(), systemFee: el.systemFee ? el.systemFee.value : '' };
+    const today = NS.dates.today();
+    const feeCents = centsOf(values.fee);
+    const systemFeeCents = values.systemFee.trim() ? centsOf(values.systemFee) : undefined;
+    let error = '';
+    if (!isDay(values.filedOn)) error = 'Enter the date the notice was filed.';
+    else if (values.filedOn > today) error = 'The date cannot be after today.';
+    else if (feeCents === null) error = 'Enter the fee paid in dollars, for example 300 or 300.50.';
+    else if (values.renewsOn && !isDay(values.renewsOn)) error = 'Enter the renewal date as year, month and day.';
+    else if (systemFeeCents === null) error = 'Enter the filing system fee in dollars, or leave it empty.';
+    const done2 = error ? null : recordResult(ws, o.id, code, { filedOn: values.filedOn, efdId: values.efdId, feeCents, renewsOn: values.renewsOn, systemFeeCents }, today);
+    if (!done2) {
+      u.result = { code, values, error: error || 'The result could not be recorded.' };
+      return redraw();
+    }
+    u.result = null;
     NS.app.save(true);
     redraw();
   };

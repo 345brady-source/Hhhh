@@ -234,7 +234,7 @@ const cases = {
     check('with no quoted fee there is no difference to report', !!r2 && r2.difference === null && B.difference(st().CA) === null);
     check('once every state is filed and every fee known the order is done, at cost: $100 + $350 + $200 + $160 due', ord.openFees === false && ord.status === 'done' && ord.dueCents === 81000 && ord.lines.find((l) => /Filing system fee/.test(l.label)).cents === 16000, ord);
     const d = F.due(ws, '2026-11-12', { states: T }).filter((x) => /^state-/.test(x.kind));
-    check('no first-notice reminder is left; New York\'s renewal is on its date', d.map((x) => x.key).join() === 'state-renewal:o1:NY' && d[0].due === '2027-11-10', d);
+    check('no first-notice reminder is left for New York or California (Texas, not ordered, keeps its own); New York\'s renewal is on its date', d.map((x) => x.key).join() === 'state-first:o1:TX,state-renewal:o1:NY' && d[1].due === '2027-11-10', d);
     const bad = [
       B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-20', feeCents: 1 }, '2026-11-12'),
       B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-10', feeCents: -1 }, '2026-11-12'),
