@@ -139,7 +139,7 @@ function wsC(NS) {
   const held = W.toWithheld(ds.concat([f]).map((d) => W.confirm(d, { by: BY, at: AT })));
   NS.data.recordRun(ws, Object.assign({}, SEPT, { withheld: held }), { by: BY, today: '2026-09-10', id: 'c-sep' });
   NS.data.recordRun(ws, Object.assign({}, SEPT, { date: '2026-12-15', withheld: held }), { by: BY, today: '2026-12-10', id: 'c-dec' });
-  W.addDeposit(ws, { kind: 'backup', year: '2026', cents: 80000, date: '2026-10-15', confirmation: 'EFT-0000000001', by: BY, at: '2026-10-15T16:00:00.000Z' });
+  W.addDeposit(ws, { offeringId: 'f1', kind: 'backup', year: '2026', cents: 80000, date: '2026-10-15', confirmation: 'EFT-0000000001', by: BY, at: '2026-10-15T16:00:00.000Z' });
   return ws;
 }
 /** A CSV text read back into rows of cells (cells in double quotes may hold commas, quotes and line breaks). */
@@ -483,8 +483,8 @@ const cases = {
     check('another offering’s totals are empty', W.totals(ws, { offeringId: 'f2', year: '2026', today: '2027-01-31' }).backup.withheldCents === 0);
     // deposits
     const dep = ws.taxDeposits || [];
-    check('the deposit is stored with kind, year, cents, date, confirmation number, who and when', dep.length === 1 && dep[0].kind === 'backup' && dep[0].year === '2026' && dep[0].cents === 80000 && dep[0].date === '2026-10-15' && dep[0].confirmation === 'EFT-0000000001' && dep[0].by === BY && !!dep[0].at && !!dep[0].id, dep);
-    const good = { kind: 'foreign', year: '2026', cents: 50000, date: '2026-12-20', confirmation: 'EFT-0000000002', by: BY, at: AT };
+    check('the deposit is stored with its offering, kind, year, cents, date, confirmation number, who and when', dep.length === 1 && dep[0].offeringId === 'f1' && dep[0].kind === 'backup' && dep[0].year === '2026' && dep[0].cents === 80000 && dep[0].date === '2026-10-15' && dep[0].confirmation === 'EFT-0000000001' && dep[0].by === BY && !!dep[0].at && !!dep[0].id, dep);
+    const good = { offeringId: 'f1', kind: 'foreign', year: '2026', cents: 50000, date: '2026-12-20', confirmation: 'EFT-0000000002', by: BY, at: AT };
     [
       ['an amount of 0', { cents: 0 }],
       ['a negative amount', { cents: -100 }],
@@ -495,12 +495,17 @@ const cases = {
       ['a missing confirmation number', { confirmation: ' ' }],
       ['a kind that is not one of the record', { kind: 'other' }],
       ['a year not written YYYY', { year: '26' }],
-      ['no name of the person', { by: '' }]
+      ['no name of the person', { by: '' }],
+      ['no offering (a deposit is made for one payer)', { offeringId: '' }],
+      ['an offering that does not exist', { offeringId: 'nope' }]
     ].forEach(([label, o]) => {
       const r = refuses(ws, () => W.addDeposit(ws, Object.assign({}, good, o)));
       check(`addDeposit refuses ${label} and stores nothing`, r.threw && r.unchanged, r.msg);
     });
     W.addDeposit(ws, good);
+    ws.offerings.push({ id: 'f2', name: 'Fund Two', shortName: 'Fund Two', type: 'Private credit', status: 'Active', closeDate: '2025-01-02', distribution: { frequency: 'Quarterly', type: 'Interest' } });
+    W.addDeposit(ws, Object.assign({}, good, { offeringId: 'f2', confirmation: 'EFT-0000000003' }));
+    check('a deposit marked for another offering does not lower this one', W.totals(ws, { offeringId: 'f2', year: '2026', today: '2027-01-31' }).foreign.depositedCents === 50000);
     check('a second deposit of 50,000 for foreign: 100,000 - 50,000 = 50,000 not yet deposited', W.totals(ws, { offeringId: 'f1', year: '2026', today: '2027-01-31' }).foreign.undepositedCents === 50000);
     check('DEPOSIT_RULES holds one sentence and a source for backup and for foreign', ['backup', 'foreign'].every((k) => W.DEPOSIT_RULES[k] && /^[A-Z][^]*\.$/.test(W.DEPOSIT_RULES[k].text) && (W.DEPOSIT_RULES[k].text.match(/\.(\s|$)/g) || []).length === 1 && /Form|Publication|Instructions/.test(W.DEPOSIT_RULES[k].source)), W.DEPOSIT_RULES);
     check('the module works out no due date: no key named due in totals', !/due/i.test(J(Object.keys(T.backup))));
