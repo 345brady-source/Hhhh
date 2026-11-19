@@ -1,5 +1,5 @@
 // gate: browser
-// last "BLUESKY FLOW: PASS (parts run: 1)"
+// last "BLUESKY FLOW: PASS (parts run: 2)"
 // Plan 09-07: the state filings section of the Filings tab, as the owner tests it: inside a sandboxed iframe whose policy
 // refuses every connection, with no server, on a 390x844 touch screen (-phone) and at 1280x800 (-desktop). The part files
 // of the other Filings plans are answered 404, so the section is measured alone.
@@ -7,7 +7,11 @@
 //                   section with both states ticked and the first sale date in each; Texas added by hand; the service fee
 //                   $100 and the state fees and the filing system's fee to be confirmed, with no other amount; a reload at
 //                   the section's address; the admin orders: "$100 due", the fees open, the package on the page
-//   NODE_PATH=$(npm root -g) node bluesky-flow.js [--only order-phone]
+//   order-desktop   the same path at 1280x800, where no Form D is on record yet: the section asks for the date and accession
+//                   number of the notice the sponsor filed before anything can be ordered (angle brackets typed are shown
+//                   as text); an investor with no state on file is said in one line; un-ticking every state leaves nothing
+//                   to order; the package names the admin's contact; a team member sees the section and cannot order
+//   NODE_PATH=$(npm root -g) node bluesky-flow.js [--only order-phone,order-desktop]
 // The last line is "BLUESKY FLOW: PASS (parts run: N)" or "BLUESKY FLOW: FAIL (parts run: N) - <failed parts>". The two
 // marker lines above are read by gate9.sh.
 const path = require('path');
@@ -62,14 +66,23 @@ async function order(size, { check, S }) {
   const F = await L9.framed(S, size, { absent: ABSENT });
   await L9.proveRefused(check, F);
   await L9.sample(F);
-  const seeded = await L9.seed(F, { name: NAME, sales: [{ daysAgo: 30, state: 'NY', funded: true }, { daysAgo: 20, state: 'CA' }, { daysAgo: 10, state: 'NY' }], notices: [{ type: 'D', daysAgo: 25, accession: ACC }] });
+  const desk = size === 'desktop';
+  // On the desktop no Form D is on record yet, and one more sale comes from an investor whose address names no state.
+  const seeded = await L9.seed(F, { name: NAME, sales: [{ daysAgo: 30, state: 'NY', funded: true }, { daysAgo: 20, state: 'CA' }, { daysAgo: 10, state: 'NY' }].concat(desk ? [{ daysAgo: 5, state: 'NY' }] : []), notices: desk ? [] : [{ type: 'D', daysAgo: 25, accession: ACC }] });
   const id = seeded.offeringId;
   const firstNY = seeded.sales[0].date;
   const firstCA = seeded.sales[1].date;
+  if (desk)
+    await F.fr.evaluate((iid) => {
+      const NS = window.CVPortal;
+      NS.state.ws.investors.find((i) => i.id === iid).address = '';
+      NS.app.save(true);
+    }, seeded.sales[3].investorId);
   await L9.press(F, NAV);
   const shown = await openSection(F, id);
   check('the tab shows the offering\'s State filings line, with the states that have sales', /State filings/.test(shown) && /2 states with sales/.test(shown), shown);
   if (!shown) return F.A.context.close();
+  if (desk) await noFormD(F, check, id);
   const at = await F.fr.evaluate(() => ({ hash: location.hash, route: window.CVPortal.state.route, title: ((document.querySelector('.fl-bar-title') || {}).innerText || '').trim() }));
   check('tapping it opens the section at console-filings-states-<offering>, under the bar with Back and the offering\'s name as text', at.hash === `#console-filings-states-${id}` && at.route === 'console-filings' && at.title === NAME && (await F.fr.locator(`${SEC} .fl-bar b`).count()) === 0, at);
   let p = await picker(F);
@@ -88,6 +101,13 @@ async function order(size, { check, S }) {
   check('the screen says state fees and the filing system\'s fee are confirmed when the order is reviewed', /State fees and the filing system.s fee are confirmed when the order is reviewed/.test(note), note);
   check('no amount other than the $100 service fee is anywhere on the section', amounts(all).length >= 1 && amounts(all).every((a) => a === '$100'), amounts(all));
   await F.A.page.screenshot({ path: path.join(OUT, `${size}-picker.png`), fullPage: false });
+  if (desk) {
+    for (const c of ['CA', 'NY', 'TX']) await L9.press(F, `${SEC} [data-picker] input[value="${c}"]`);
+    p = await picker(F);
+    check('un-ticking every state leaves nothing to order: no fee lines and no order control', p.length === 3 && p.every((x) => !x.ticked) && (await F.fr.locator(`${SEC} [data-fees]`).count()) === 0 && (await F.fr.locator(`${SEC} [data-action="bs-order"]`).count()) === 0, p);
+    for (const c of ['CA', 'NY', 'TX']) await L9.press(F, `${SEC} [data-picker] input[value="${c}"]`);
+    check('ticking them again brings the order back', (await picker(F)).every((x) => x.ticked) && (await F.fr.locator(`${SEC} [data-action="bs-order"]`).count()) === 1);
+  }
   // W-3: a reload at the section's address. What is ticked is not stored until it is ordered: the ticks go back to the states
   // with sales.
   await F.reload(`console-filings-states-${id}`);
@@ -113,6 +133,10 @@ async function order(size, { check, S }) {
   check('the section shows the order with "$100 due" and the fees still to be confirmed', /\$100 due/.test(ord) && /fees to be confirmed/.test(ord), ord);
   const pack = await L9.text(F, `${SEC} [data-pack]`);
   check('the package on the page lists the issuer (as text) and the accession number', pack.indexOf(NAME) >= 0 && pack.indexOf(ACC) >= 0 && (await F.fr.locator(`${SEC} [data-pack] b`).count()) === 0, pack);
+  if (desk) {
+    const admin = await F.fr.evaluate(() => (window.CVPortal.state.ws.team || []).find((m) => m.role === 'admin' && m.current) || (window.CVPortal.state.ws.team || []).find((m) => m.role === 'admin') || {});
+    check('the package names the admin\'s contact', !!admin.name && pack.indexOf(admin.name) >= 0 && (!admin.email || pack.indexOf(admin.email) >= 0) && pk.contact && pk.contact.name === admin.name, { admin, contact: pk.contact });
+  }
   check('and each state with its first sale date, amount sold and investors', /New York[^\n]*/.test(pack) && pack.indexOf(L9.label(firstNY)) >= 0 && /\$200,000/.test(pack) && /2 investors/.test(pack) && pack.indexOf(L9.label(firstCA)) >= 0 && /\$100,000/.test(pack) && /1 investor\b/.test(pack) && /Texas/.test(pack), pack);
   await F.A.page.screenshot({ path: path.join(OUT, `${size}-ordered.png`), fullPage: false });
   await F.reload(`console-filings-states-${id}`);
@@ -120,12 +144,42 @@ async function order(size, { check, S }) {
   check('after a reload the order and its package are still on the section', /\$100 due/.test(await L9.text(F, `${SEC} .fl-order`)) && (await L9.text(F, `${SEC} [data-pack]`)).indexOf(ACC) >= 0);
   await L9.wayOut(check, F, 'the section with the order: Back stays on screen', BACK);
   await L9.leak(check, F, 'the section');
+  if (desk) {
+    await L9.role(F, 'team');
+    await L9.goto(F, `console-filings-states-${id}`, SEC);
+    const team = { section: await F.fr.locator(SEC).count(), order: await F.fr.locator(`${SEC} [data-action="bs-order"]`).count(), pack: await L9.text(F, `${SEC} [data-pack]`), controls: await F.fr.evaluate((sec) => Array.from(document.querySelectorAll(`${sec} button`)).map((b) => b.innerText.trim()), SEC) };
+    check('a team member sees the section and its package, and has no order control', team.section === 1 && team.order === 0 && team.pack.indexOf(ACC) >= 0 && !team.controls.some((t) => /^order/i.test(t)), team);
+    await L9.role(F, 'admin');
+  }
   await L9.quiet(check, F);
   await F.A.context.close();
 }
 
+/** Desktop: no Form D on record, an investor with no state on file. */
+async function noFormD(F, check, id) {
+  const un = await F.fr.evaluate((sec) => {
+    const el = document.querySelector(`${sec} [data-unplaced]`);
+    return el ? { text: el.innerText.replace(/\s+/g, ' ').trim(), href: (el.querySelector('a') || { getAttribute: () => '' }).getAttribute('href') } : null;
+  }, SEC);
+  check('one line says an investor has no state on file and is not ticked, with the way to the investor list', !!un && /^1 investor with no state on file: their state is not ticked/.test(un.text) && un.href === '#console-investors', un);
+  const form = `${SEC} form[data-form="bs-formd"]`;
+  check('with no Form D on record the section asks for the date and accession number of the notice the sponsor filed, and offers no order', (await F.fr.locator(form).count()) === 1 && (await F.fr.locator(`${form} [name="filedOn"]`).count()) === 1 && (await F.fr.locator(`${form} [name="accession"]`).count()) === 1 && (await F.fr.locator(`${SEC} [data-action="bs-order"]`).count()) === 0);
+  await F.fr.fill(`${form} [name="filedOn"]`, L9.iso(await F.fr.evaluate(() => window.CVPortal.dates.today()), -25));
+  await F.fr.fill(`${form} [name="accession"]`, '<b>0001234567</b>');
+  await L9.press(F, `${form} button[type=submit]`);
+  const err = await L9.text(F, `${form} .field-error`);
+  const kept = await F.fr.inputValue(`${form} [name="accession"]`).catch(() => '');
+  const notices = await F.fr.evaluate((oid) => (((window.CVPortal.state.ws.filings || {}).offerings || {})[oid] || { formD: [] }).formD.length, id);
+  check('an accession number typed with angle brackets is refused in one sentence, kept in the field as text, and nothing is recorded', err.trim().length > 0 && err.trim().split(/[.!?]\s/).length === 1 && kept === '<b>0001234567</b>' && (await F.fr.locator(`${SEC} b`).count()) === 0 && notices === 0, { err, kept, notices });
+  await F.fr.fill(`${form} [name="accession"]`, ACC);
+  await L9.press(F, `${form} button[type=submit]`);
+  const r = await F.fr.evaluate((oid) => JSON.parse(JSON.stringify(window.CVPortal.state.ws.filings.offerings[oid].formD)), id);
+  check('with the date and the accession number the notice is recorded as the sponsor\'s own, and the order control appears', r.length === 1 && r[0].type === 'D' && r[0].source === 'self' && r[0].accession === ACC && r[0].status === 'accepted' && (await F.fr.locator(`${SEC} [data-action="bs-order"]`).count()) === 1 && (await F.fr.locator(form).count()) === 0, r);
+}
+
 const PARTS = {
-  'order-phone': (ctx) => order('phone', ctx)
+  'order-phone': (ctx) => order('phone', ctx),
+  'order-desktop': (ctx) => order('desktop', ctx)
 };
 
 Lib.runParts(PARTS, { name: 'BLUESKY FLOW', browser: true });
