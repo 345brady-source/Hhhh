@@ -15,10 +15,14 @@
 //              invitation email, every onboarding screen, the done screen, the investor's Home, Account and sign-in pages,
 //              the tax-form-request email and the signed tax form's certificate page. "Brand the investor portal" is
 //              complete only once the sponsor has entered their support contact; what they enter is then shown.
-//   documents  (failure 2) the accepted investor sees only real documents (what the sponsor published and their own tax
-//              form), on Documents, Home and the investment page; an offering with no maturity date prints no maturity, no
-//              1900 and no "Matured" on any investor or sponsor screen; with a date entered, the maturity is shown.
-//   managed    the managed edition is as it was: a client added there keeps the standard contact lines and documents.
+//              The self-serve footer's Help button (plan 07-03) is expected there and only there.
+//   documents  (failure 2) the accepted investor sees only real documents (what the sponsor published, their own tax
+//              form and, once the firm has countersigned, the agreement they signed), on Documents, Home and the investment
+//              page; an offering with no maturity date prints no maturity, no 1900 and no "Matured" on any investor or
+//              sponsor screen; with a date entered, the maturity is shown. Countersign signs the agreement as the firm on
+//              screen when it waits for the firm (plan 06-32), and records at once otherwise.
+//   managed    the managed edition is as it was: a client added there keeps the standard contact lines and documents,
+//              and its footer has no Help button.
 // The sample firm (Kestrel Bay) is read in the contact and documents parts: it shows what it showed before.
 //   NODE_PATH=$(npm root -g) node real-firm.js [--only setup-desktop,setup-phone,shortname-desktop,shortname-phone,contact-desktop,contact-phone,documents-desktop,documents-phone,managed]
 // The last line is "REAL FIRM: PASS (parts run: N)" or "REAL FIRM: FAIL (parts run: N) - <failed parts>".
@@ -327,6 +331,8 @@ const screen = (fr) =>
     hash: location.hash,
     h1: ((document.querySelector('.ivf-form h1') || document.querySelector('h1') || {}).innerText || '').trim(),
     foot: (document.querySelector('.pt-foot') || {}).innerText || '',
+    // the footer's Help button (plan 07-03: the self-serve edition's help, opened from the investor's footer)
+    footHelp: Array.from(document.querySelectorAll('.pt-foot [data-action="help-open"]')).map((b) => b.innerText.trim()),
     text: document.body.innerText
   }));
 /** The investor's W-9 signing view: consent (if asked) and the signature adopted, as ways-out.js signs it. */
@@ -352,6 +358,53 @@ async function signW9(J, investorId) {
     await fr.waitForFunction(() => !document.getElementById('dlg').open);
   }
   return true;
+}
+/**
+ * The firm's signing view that Countersign opens when the investor's agreement waits for the firm (plan 06-32), signed on
+ * screen as signing-documents.js's firmSigns does: agree to sign electronically, adopt the signature on each of the firm's
+ * signature fields, give the signer's name where it is empty, then Finish. Resolves to whether the view says it is
+ * finished, with the firm's fields and the request's status for the report.
+ */
+async function firmSigns(J, investorId) {
+  const { fr, press } = J;
+  if (await fr.locator('#es-consent-box').count()) {
+    await fr.check('#es-consent-box');
+    await press('[data-action="es-consent"]');
+  }
+  await fr.waitForSelector('.es-sign-console .es-doc-sign .es-page img', { timeout: 30000 });
+  const own = await fr.evaluate((id) => {
+    const ws = window.CVPortal.state.ws;
+    const r = (ws.requests || []).filter((x) => x.investorId === id && x.type === 'subscription').pop();
+    const env = r && r.envelopeId ? (ws.envelopes || []).find((e) => e.id === r.envelopeId) : null;
+    const firm = env ? env.signers.find((s) => s.role === 'countersigner') : null;
+    return firm ? env.fields.filter((f) => f.signerId === firm.id).map((f) => ({ id: f.id, type: f.type })) : [];
+  }, investorId);
+  for (const f of own.filter((x) => x.type === 'signature' || x.type === 'initials')) {
+    await press(fr.locator(`.es-doc-sign [data-fid="${f.id}"]`).first());
+    await fr.waitForTimeout(300);
+    if (await fr.evaluate(() => !!(document.getElementById('dlg') || {}).open)) {
+      await press('[data-action="es-adopt"]');
+      await fr.waitForFunction(() => !document.getElementById('dlg').open);
+    }
+  }
+  for (const f of own.filter((x) => x.type === 'name')) {
+    const sel = `.es-doc-sign input[data-fid="${f.id}"]`;
+    if (!(await fr.locator(sel).count()) || (await fr.inputValue(sel))) continue;
+    if (J.vp === 'phone') {
+      await press(sel);
+      await fr.waitForSelector('.sf-tray:not([hidden]) .sf-tray-in', { timeout: 10000 });
+      await fr.fill('.sf-tray-in', `${FIRM.first} ${FIRM.last}`);
+    } else await fr.fill(sel, `${FIRM.first} ${FIRM.last}`);
+    await fr.waitForTimeout(200);
+  }
+  await press('.es-sign-console .es-finish');
+  const finished = await fr.waitForSelector('.es-sign-console .es-done', { timeout: 30000 }).then(
+    () => true,
+    () => false
+  );
+  await fr.waitForTimeout(700);
+  const req = await fr.evaluate((id) => ((window.CVPortal.state.ws.requests || []).filter((x) => x.investorId === id && x.type === 'subscription').pop() || {}).status || '', investorId);
+  return { finished, fields: own.map((f) => f.type), request: req };
 }
 /** The text of the certificate page(s) the portal added to the investor's signed tax form (read with the page's own PDF reader). */
 const certificateText = (fr, investorId) =>
@@ -584,7 +637,11 @@ function contactPart(vp) {
     check(`none of the ${seen.steps.length} onboarding screens shows a phone, hours or disclosure the sponsor did not enter`, seen.steps.length >= 9 && bad.length === 0, bad.length ? bad : seen.steps.map((s) => s.h1));
     const feet = seen.steps.filter((s) => s.foot);
     check('their footer still names who to ask: the team and the email from sign-up, and the firm', feet.length >= 5 && feet.every((s) => /Investor Relations/.test(s.foot) && s.foot.indexOf(FIRM.support) >= 0 && /© \d{4} Harbor Ridge Capital/.test(s.foot)), feet.length ? feet[0].foot : 'no footer seen');
-    check('the footer holds nothing else (team, email, the legal line)', feet.every((s) => s.foot.replace(/\s+/g, ' ').trim() === `Investor Relations ${FIRM.support} © ${new Date().getFullYear()} Harbor Ridge Capital, LLC`), feet.length ? feet[0].foot.replace(/\s+/g, ' ') : '');
+    // This firm is in the self-serve edition (checked at sign-up), whose footer ends the contact row with its Help button
+    // (plan 07-03); the managed part checks that edition's footer has none.
+    const footer = (s) => s.foot.replace(/\s+/g, ' ').trim();
+    const hasHelp = (s) => s.footHelp.length === 1 && s.footHelp[0] === 'Help';
+    check('the footer holds nothing else (team, email, the Help button, the legal line)', feet.every((s) => hasHelp(s) && footer(s) === `Investor Relations ${FIRM.support} Help © ${new Date().getFullYear()} Harbor Ridge Capital, LLC`), feet.length ? { foot: footer(feet[0]), help: feet[0].footHelp, odd: feet.filter((s) => !hasHelp(s) || footer(s) !== footer(feet[0])).map((s) => s.h1) } : '');
     // the done screen
     check('the done screen says who to ask, with no phone', !placeholders(seen.done.text) && /Questions\? Investor Relations at investors@harborridge\.example\./.test(seen.doneText), placeholders(seen.done.text) || seen.doneText.slice(-300));
     // the investor's Home, Account and sign-in pages
@@ -629,7 +686,7 @@ function contactPart(vp) {
     await fr.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await fr.waitForTimeout(300);
     await J.shot('footer-entered');
-    check('and the investor’s footer shows exactly what the sponsor entered', home.foot.replace(/\s+/g, ' ').trim() === `Investor Relations ${ENTERED.phone} ${FIRM.support} ${ENTERED.hours} ${ENTERED.disclosure} © ${new Date().getFullYear()} Harbor Ridge Capital, LLC`, home.foot.replace(/\s+/g, ' '));
+    check('and the investor’s footer shows exactly what the sponsor entered (and the Help button)', hasHelp(home) && footer(home) === `Investor Relations ${ENTERED.phone} ${FIRM.support} ${ENTERED.hours} Help ${ENTERED.disclosure} © ${new Date().getFullYear()} Harbor Ridge Capital, LLC`, { foot: footer(home), help: home.footHelp });
     await J.go('account', '.pt-title');
     const line2 = ((await screen(fr)).text.match(/To change these details[^\n]*/) || [''])[0];
     check('the Account page then gives the phone the sponsor entered', line2 === `To change these details, contact Investor Relations at ${ENTERED.phone}.`, line2);
@@ -653,7 +710,10 @@ function documentsPart(vp) {
     if (!J.seen.reached) return;
     await ownPortal(J);
     const iid = J.inv.investorId;
-    // the sponsor accepts the subscription: Approve, then Countersign
+    // The sponsor accepts the subscription: Approve, then Countersign. When the investor's agreement waits for the firm's
+    // signature, Countersign opens the firm's signing of it and the commitment is recorded once that signing is finished
+    // (plan 06-32), so the firm signs it here on screen; otherwise Countersign records at once.
+    let countersign = 'not pressed (already held)';
     if (!(await fr.evaluate((id) => window.CVPortal.state.ws.investors.find((x) => x.id === id).positions.length, iid))) {
       await asAdmin(J, 'console-requests', '[data-action=req-approve]');
       await press('main [data-action=req-approve]');
@@ -664,16 +724,28 @@ function documentsPart(vp) {
       }
       await fr.waitForSelector('main [data-action=req-funded]', { timeout: 10000 });
       await press('main [data-action=req-funded]');
-      await fr.waitForTimeout(600);
+      await fr.waitForTimeout(900);
+      if (await fr.locator('.es-sign-console').count()) {
+        const signed = await firmSigns(J, iid);
+        countersign = Object.assign({ path: 'the firm’s signing view opened' }, signed);
+        check('Countersign opens the firm’s signing of the agreement, and the firm finishes it on screen', signed.finished && signed.request === 'accepted', signed);
+      } else countersign = 'recorded at once (no signing view)';
     }
     const real = await fr.evaluate((id) => {
       const NS = window.CVPortal;
       const ws = NS.state.ws;
       const inv = ws.investors.find((x) => x.id === id);
-      return { positions: inv.positions.length, docs: NS.ops.docsFor(ws, inv).map((d) => ({ id: d.id, title: d.title })) };
+      const r = (ws.requests || []).filter((x) => x.investorId === id && x.type === 'subscription').pop();
+      const env = r && r.envelopeId ? (ws.envelopes || []).find((e) => e.id === r.envelopeId) : null;
+      return { positions: inv.positions.length, agreement: env ? { id: env.id, status: env.status, title: env.title } : null, docs: NS.ops.docsFor(ws, inv).map((d) => ({ id: d.id, title: d.title, envelopeId: d.envelopeId || '' })) };
     }, iid);
-    check('after Approve and Countersign the investor holds the offering', real.positions === 1, real);
-    check('two real documents exist for the investor: the published summary and their own W-9', real.docs.length === 2 && real.docs.some((d) => d.title === 'Offering summary') && real.docs.some((d) => /^Form W-9/.test(d.title)), real.docs);
+    check('after Approve and Countersign the investor holds the offering', real.positions === 1, Object.assign({ countersign }, real));
+    // The real documents: what the sponsor published, the investor's own W-9 and, once the firm has countersigned (the
+    // agreement completed, plan 06-32), the signed copy of the agreement the investor and the firm signed. Nothing else.
+    const summaryDoc = real.docs.find((d) => d.title === 'Offering summary');
+    const agreed = real.agreement && real.agreement.status === 'completed' ? real.docs.find((d) => d.envelopeId === real.agreement.id && d.title === real.agreement.title) : null;
+    const wantDocs = 2 + (real.agreement && real.agreement.status === 'completed' ? 1 : 0);
+    check('the real documents exist for the investor: the published summary, their own W-9 and, once countersigned, the agreement they and the firm signed; nothing else', real.docs.length === wantDocs && !!summaryDoc && real.docs.some((d) => /^Form W-9/.test(d.title)) && (wantDocs === 2 || !!agreed), { agreement: real.agreement, docs: real.docs });
     const realIds = real.docs.map((d) => d.id).sort();
     const same = (rows) => JSON.stringify(rows.map((r) => r.id).sort()) === JSON.stringify(realIds);
     // Documents
@@ -682,7 +754,7 @@ function documentsPart(vp) {
     const page = await screen(fr);
     const rows = await docRows(fr, '.tbl-docs');
     await J.shot('documents');
-    check('Documents lists exactly those two, and nothing nobody made', same(rows) && !GENERATED_RE.test(page.text), rows.map((r) => r.title));
+    check('Documents lists exactly those, and nothing nobody made', same(rows) && !GENERATED_RE.test(page.text), rows.map((r) => r.title));
     // each one opens as the real file (never a generated page "Prepared for" the investor)
     const opened = [];
     for (const r of rows) {
@@ -699,7 +771,7 @@ function documentsPart(vp) {
     await J.go('overview', '.hm-head');
     const home = await screen(fr);
     const recent = await docRows(fr, 'section[aria-label="Recent documents"]');
-    check('Home’s "Recent documents" lists the same two', same(recent) && !GENERATED_RE.test(home.text), recent.map((r) => r.title));
+    check('Home’s "Recent documents" lists the same ones', same(recent) && !GENERATED_RE.test(home.text), recent.map((r) => r.title));
     const toExit = await fr.evaluate(() => Array.from(document.querySelectorAll('td[data-label="Time to exit"]')).map((td) => td.innerText.trim()));
     check('Home prints no maturity, no 1900 and no "Matured" for the offering', !NINETEEN_RE.test(home.text) && !MATURED_RE.test(home.text) && !MATURITY_RE.test(home.text) && toExit.length === 1 && !toExit[0], { toExit, found: (home.text.match(/[^\n]*(1900|Matur)[^\n]*/i) || [''])[0] });
     // Investments
@@ -724,7 +796,9 @@ function documentsPart(vp) {
     await J.shot('investment');
     // The term section is left out when it has nothing to say (no empty box in its place).
     check('the investment page prints no maturity in its figures or its term (left out, not an empty box), no 1900 and no "Matured", and no date for a key term "Maturity"', !MATURITY_RE.test(parts.figs) && (!parts.term || (!!parts.term.body && !MATURITY_RE.test(parts.term.text))) && !NINETEEN_RE.test(one.text) && !MATURED_RE.test(one.text) && parts.keyTerms.every(([k, v]) => !MATURITY_RE.test(k) || !v), { parts, found: (one.text.match(/[^\n]*(1900|Matur)[^\n]*/gi) || []).slice(0, 4) });
-    check('and lists only the published summary under Documents', there.length === 1 && there[0].title === 'Offering summary' && !GENERATED_RE.test(one.text), there.map((r) => r.title));
+    // the offering's own documents: the published summary and, once countersigned, the agreement the investor signed
+    const offeringIds = [summaryDoc ? summaryDoc.id : 'Offering summary'].concat(agreed ? [agreed.id] : []).sort();
+    check('and lists only the published summary (and, once countersigned, the agreement they signed) under Documents', JSON.stringify(there.map((r) => r.id).sort()) === JSON.stringify(offeringIds) && there.some((r) => r.title === 'Offering summary') && !GENERATED_RE.test(one.text), there.map((r) => r.title));
     // Distributions and Updates
     const others = [];
     for (const h of ['distributions', 'updates']) {
@@ -784,10 +858,12 @@ async function managedPart({ check, S }) {
     const NS = window.CVPortal;
     const t = NS.state.ws.tenant;
     const steps = Array.from(document.querySelectorAll('.cs-steps > li')).map((li) => ({ name: li.querySelector('strong').textContent.trim(), done: li.classList.contains('is-done') }));
-    return { phone: t.support.phone, hours: t.support.hours, disclaimer: t.disclaimer, steps, footer: NS.portalFooter().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ') };
+    const foot = NS.portalFooter();
+    return { phone: t.support.phone, hours: t.support.hours, disclaimer: t.disclaimer, steps, footer: foot.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), help: /data-action="help-open"|\bHelp\b/.test(foot) };
   });
   check('a client added in the managed edition keeps the standard phone, hours and disclosure', made.phone === '(212) 555-0100' && made.hours === 'Mon–Fri, 9:00 a.m.–5:00 p.m. ET' && /\[Regulatory disclosures to be provided by counsel\.\]$/.test(made.disclaimer), made);
-  check('its portal footer prints them, as before', made.footer.indexOf('(212) 555-0100') >= 0 && made.footer.indexOf('Mon–Fri, 9:00 a.m.–5:00 p.m. ET') >= 0 && made.footer.indexOf('[Regulatory disclosures to be provided by counsel.]') >= 0, made.footer);
+  // The footer's Help button is the self-serve edition's (plan 07-03): the managed edition's footer has none.
+  check('its portal footer prints them, as before, with no Help button', made.footer.indexOf('(212) 555-0100') >= 0 && made.footer.indexOf('Mon–Fri, 9:00 a.m.–5:00 p.m. ET') >= 0 && made.footer.indexOf('[Regulatory disclosures to be provided by counsel.]') >= 0 && !made.help, { footer: made.footer, help: made.help });
   check('its "Client setup" list has 5 steps and "Brand the investor portal" is complete from the domain and email given', made.steps.length === 5 && made.steps[0].name === BRAND_STEP && made.steps[0].done, made.steps);
   // an offering and an investor with a position, by the managed edition's own forms
   await J.go('console-offerings', '[data-action=off-add]');
