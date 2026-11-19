@@ -15,3 +15,4 @@
 - C-04: prices $99 full package, $19 identity + screening only, set in server config. Why: about $26 and $17.55 margin per investor at list costs; the owner may change the figures at any time without code changes.
 - C-05: full platform credit when an invitation ends with no check started; none once a check started; card refund on request.
 - C-06: 506(c) accreditation checked at each new subscription with a 90-day validity (already how the portal works); no calendar re-checks. Investors outside the package are re-screened free against the official Treasury list.
+- C-07 (orchestrator, 2026-11-19): plan 08-10 (the two free accreditation methods, built switched off until counsel confirms) is deferred, not built now. Why: it is speculative work nobody can use until a lawyer signs off, and the owner wants nothing built that is not needed. It can be added later without changing the other plans.
