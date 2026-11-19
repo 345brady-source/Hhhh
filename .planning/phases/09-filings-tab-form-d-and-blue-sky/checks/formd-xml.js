@@ -98,7 +98,7 @@ const rel = (f) => path.relative(FIX, f);
 
 const CONTACT = { name: 'Filing Desk', phone: '212-555-0100', email: 'filings@example.com' };
 const CCC = 'abcd#123';
-const ADDRESS = { street1: '100 Main Street', street2: '', city: 'New York', stateOrCountry: 'NY', zipCode: '10001' };
+const ADDRESS = { street1: '100 Main Street', street2: '', city: 'Springfield', stateOrCountry: 'NY', zipCode: '10001' };
 /** An invented new notice with every required item, built from blank(). */
 function invented(FD) {
   const d = FD.blank();
@@ -130,7 +130,7 @@ function invented(FD) {
   o.salesCommissionsFindersFees.findersFees.dollarAmount = '0';
   o.useOfProceeds.grossProceedsUsed.dollarAmount = '0';
   o.signatureBlock.authorizedRepresentative = false;
-  o.signatureBlock.signature.push({ issuerName: 'EXAMPLE FUND I LP', signatureName: 'Jane Example', nameOfSigner: 'Jane Example', signatureTitle: 'Managing Member of the General Partner', signatureDate: '2026-11-10' });
+  o.signatureBlock.signature.push({ issuerName: 'EXAMPLE FUND I LP', signatureName: 'Jane Example', nameOfSigner: 'Jane Example', signatureTitle: 'Signing Officer of the General Partner', signatureDate: '2026-11-10' });
   return d;
 }
 /** obj's value at a path such as 'relatedPersonsList[0].relatedPersonName.firstName' is set to value. */
@@ -416,7 +416,7 @@ const cases = {
       [`${OD}.issuerSize.revenueRange`, '$1 - $2'], ['primaryIssuer.issuerAddress.stateOrCountry', 'ZZ'], [`${P0}.relatedPersonAddress.stateOrCountry`, 'ny'], [`${R0}.statesOfSolicitationList.state`, ['NY', 'ZZ']], ['submissionType', 'D/B'],
       [`${OD}.industryGroup.investmentFundInfo.is40Act`, 'yes'], [`${OD}.durationOfOffering.moreThanOneYear`, 'maybe'], [`${OD}.businessCombinationTransaction.isBusinessCombinationTransaction`, 'no'], [`${OD}.investors.hasNonAccreditedInvestors`, 'some'],
       [`${R0}.foreignSolicitation`, 'maybe'], [`${OD}.typeOfFiling.newOrAmendment.isAmendment`, 'new'], [`${OD}.typesOfSecuritiesOffered.isEquityType`, 'yes'], [`${OD}.salesCommissionsFindersFees.salesCommissions.isEstimate`, 'about'],
-      ['primaryIssuer.yearOfInc.value', '1999'], ['primaryIssuer.yearOfInc.value', '20x6'], [`${OD}.signatureBlock.authorizedRepresentative`, 'x'], ['over100PersonsFlag', 'many'], [`${R0}.recipientAddress.stateOrCountry`, 'New York']
+      ['primaryIssuer.yearOfInc.value', '1999'], ['primaryIssuer.yearOfInc.value', '20x6'], [`${OD}.signatureBlock.authorizedRepresentative`, 'x'], ['over100PersonsFlag', 'many'], [`${R0}.recipientAddress.stateOrCountry`, 'Springfield']
     ].forEach(([p, v]) => rows.push([`${p} set to ${JSON.stringify(v)}`, false, S(p, v)]));
     rows.push(['a net asset value range that is not on the list', false, (d) => at(d, `${OD}.issuerSize`, { revenueRange: '', aggregateNetAssetValueRange: 'Lots' })], ['a net asset value range in place of the revenue range', true, (d) => at(d, `${OD}.issuerSize`, { revenueRange: '', aggregateNetAssetValueRange: 'Decline to Disclose' })]);
     rows.push(['both a revenue range and a net asset value range', false, S(`${OD}.issuerSize.aggregateNetAssetValueRange`, 'Decline to Disclose')], ['neither range', false, S(`${OD}.issuerSize.revenueRange`, '')]);
@@ -562,7 +562,7 @@ const cases = {
     const NAME = 'O\'Neil & Sons <"Fund"> LP';
     d.relatedPersonsList[0].relatedPersonName.lastName = NAME;
     d.offeringData.signatureBlock.signature[0].issuerName = NAME;
-    d.primaryIssuer.issuerAddress.city = '  New York  ';
+    d.primaryIssuer.issuerAddress.city = '  Springfield  ';
     d.relatedPersonsList[0].relationshipClarification = 'Line one\r\nline two\ttabbed';
     d.offeringData.minimumInvestmentAccepted = 250000;
     d.offeringData.salesCompensationList = [];
@@ -576,7 +576,7 @@ const cases = {
     const lines = test.split('\n').filter((l) => l !== '');
     check(`each element is on one line with its value (${lines.length} lines)`, lines.length > 80 && lines.slice(1).every((l) => /^ *(<[A-Za-z0-9]+>[^<>\r\n\t]*<\/[A-Za-z0-9]+>|<\/?[A-Za-z0-9]+>)$/.test(l)));
     check('a value typed over two lines is written on one', test.indexOf('<relationshipClarification>Line one line two tabbed</relationshipClarification>') > 0);
-    check('values are trimmed', test.indexOf('<city>New York</city>') > 0);
+    check('values are trimmed', test.indexOf('<city>Springfield</city>') > 0);
     check('the five XML characters are escaped in the file', test.indexOf('<lastName>O&apos;Neil &amp; Sons &lt;&quot;Fund&quot;&gt; LP</lastName>') > 0);
     const back = FD.fromXml(test);
     check('an ampersand, angle brackets and both quote characters in a name come back unchanged', back.relatedPersonsList[0].relatedPersonName.lastName === NAME && back.offeringData.signatureBlock.signature[0].issuerName === NAME);
@@ -594,7 +594,7 @@ const cases = {
     // facts and rec as plan 09-01 gives them (NS.filings.facts and NS.filings.rec), written out here
     const offering = { id: 'off-1', name: 'Example Fund I LP', structure: { exemption: 'Rule 506(b)' } };
     const facts = { regime: '506b', usd: true, firstSale: '2026-10-05', sold: 1250000, investors: 3, nonAccredited: { count: 2, pending: 1, unanswered: 0 }, total: 50000000, minimum: 250000, byState: { NY: 2, CA: 1 }, outsideUS: 0 };
-    const rec = { firstSale: '2026-10-01', issuer: { street1: '100 Main Street', street2: 'Suite 5', city: 'New York', state: 'NY', zip: '10001', phone: '212-555-0100', entityType: 'Limited Partnership', entityTypeOther: '', yearKind: 'withinFiveYears', yearFormed: '2026', previousNames: [], signerName: 'Jane Example', signerTitle: 'Managing Member' }, edgar: { cik: '1234567890', name: 'EXAMPLE FUND I LP' }, formD: [] };
+    const rec = { firstSale: '2026-10-01', issuer: { street1: '100 Main Street', street2: 'Suite 5', city: 'Springfield', state: 'NY', zip: '10001', phone: '212-555-0100', entityType: 'Limited Partnership', entityTypeOther: '', yearKind: 'withinFiveYears', yearFormed: '2026', previousNames: [], signerName: 'Jane Example', signerTitle: 'Signing Officer' }, edgar: { cik: '1234567890', name: 'EXAMPLE FUND I LP' }, formD: [] };
     const p = FD.prefill(offering, facts, rec);
     const d = p.draft;
     const o = d.offeringData;
@@ -615,9 +615,9 @@ const cases = {
     const noSale = FD.prefill(offering, Object.assign({}, facts, { firstSale: null, sold: 0, investors: 0, nonAccredited: { count: 0, pending: 0, unanswered: 0 } }), Object.assign({}, rec, { firstSale: '' }));
     check('with no sale at all, the first sale is suggested as yet to occur', noSale.draft.offeringData.typeOfFiling.dateOfFirstSale.yetToOccur === true && noSale.draft.offeringData.typeOfFiling.dateOfFirstSale.value === '');
     const i = d.primaryIssuer;
-    check('the issuer\'s address, phone, entity type and year come from the record', same(i.issuerAddress, { street1: '100 Main Street', street2: 'Suite 5', city: 'New York', stateOrCountry: 'NY', zipCode: '10001' }) && i.issuerPhoneNumber === '212-555-0100' && i.entityType === 'Limited Partnership' && same(i.yearOfInc, { kind: 'withinFiveYears', value: '2026' }) && i.issuerPreviousNameList.none === true && p.sources['primaryIssuer.issuerAddress.street1'] === 'record');
+    check('the issuer\'s address, phone, entity type and year come from the record', same(i.issuerAddress, { street1: '100 Main Street', street2: 'Suite 5', city: 'Springfield', stateOrCountry: 'NY', zipCode: '10001' }) && i.issuerPhoneNumber === '212-555-0100' && i.entityType === 'Limited Partnership' && same(i.yearOfInc, { kind: 'withinFiveYears', value: '2026' }) && i.issuerPreviousNameList.none === true && p.sources['primaryIssuer.issuerAddress.street1'] === 'record');
     const g = o.signatureBlock.signature;
-    check('the CIK and the name for the signature come from the record of the EDGAR account, the signer from the issuer\'s record', i.cik === '1234567890' && g.length === 1 && g[0].issuerName === 'EXAMPLE FUND I LP' && g[0].signatureName === 'Jane Example' && g[0].nameOfSigner === 'Jane Example' && g[0].signatureTitle === 'Managing Member' && g[0].signatureDate === '');
+    check('the CIK and the name for the signature come from the record of the EDGAR account, the signer from the issuer\'s record', i.cik === '1234567890' && g.length === 1 && g[0].issuerName === 'EXAMPLE FUND I LP' && g[0].signatureName === 'Jane Example' && g[0].nameOfSigner === 'Jane Example' && g[0].signatureTitle === 'Signing Officer' && g[0].signatureDate === '');
     const fx = FD.prefill(offering, Object.assign({}, facts, { usd: false }), rec);
     const AMOUNTS = ['offeringData.minimumInvestmentAccepted', 'offeringData.offeringSalesAmounts.totalOfferingAmount', 'offeringData.offeringSalesAmounts.totalAmountSold', 'offeringData.offeringSalesAmounts.totalRemaining'];
     const fo = fx.draft.offeringData;
@@ -645,8 +645,8 @@ const cases = {
     b.offeringData.salesCompensationList[0].statesOfSolicitationList.state = ['MA'];
     check('the same snapshot when only a related person\'s address or relationship, the amount sold, the issuer\'s size, the investor total or a recipient\'s address and states differ', same(FD.snapshot(b), s));
     const more = copy(a);
-    more.relatedPersonsList.push(Object.assign(copy(a.relatedPersonsList[0]), { relatedPersonName: { firstName: 'John', middleName: '', lastName: 'Sample' } }));
-    check('a different snapshot when a related person is added', !same(FD.snapshot(more).relatedPersons, s.relatedPersons) && same(FD.snapshot(more).relatedPersons, ['jane|q|example', 'john||sample']) && FD.snapshot(more).material === s.material);
+    more.relatedPersonsList.push(Object.assign(copy(a.relatedPersonsList[0]), { relatedPersonName: { firstName: 'Dana', middleName: '', lastName: 'Sample' } }));
+    check('a different snapshot when a related person is added', !same(FD.snapshot(more).relatedPersons, s.relatedPersons) && same(FD.snapshot(more).relatedPersons, ['dana||sample', 'jane|q|example']) && FD.snapshot(more).material === s.material);
     const changes = {
       'the exemption': (x) => (x.offeringData.federalExemptionsExclusions = ['06c']),
       'the issuer\'s street address': (x) => (x.primaryIssuer.issuerAddress.street1 = '200 Main Street'),
