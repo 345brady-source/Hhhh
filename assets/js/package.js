@@ -18,6 +18,8 @@
 
   /* The server's last answer, kept in memory only (never saved with the workspace). */
   let mem = { key: '', status: 'idle', data: null, error: '', code: '', at: 0, promise: null };
+  /* While a list is being paid for and sent, the answer is held still: the rows paid for are the rows created with the package. */
+  let held = false;
 
   const on = (ws) => !!(E.diy && ws && INV() && INV().serverOn(ws));
   const keyOf = (ws) => {
@@ -32,13 +34,15 @@
   function load(ws, force) {
     if (!on(ws)) return Promise.resolve(null);
     const key = keyOf(ws);
+    if (held && mem.key === key) return Promise.resolve(info(ws));
     if (mem.key === key && mem.promise) return mem.promise;
     if (mem.key === key && !force && mem.status !== 'idle' && Date.now() - mem.at < FRESH_MS) return Promise.resolve(info(ws));
     // Asked again of the same server: the last answer stands until the new one arrives (a box in use does not come and go).
     if (mem.key !== key) mem = { key, status: 'loading', data: null, error: '', code: '', at: 0, promise: null };
     const mine = mem;
     const done = (status, data, error, code) => {
-      if (mem === mine) Object.assign(mem, { status, data, error, code: code || '', at: Date.now(), promise: null });
+      if (mem === mine && held) mem.promise = null;
+      else if (mem === mine) Object.assign(mem, { status, data, error, code: code || '', at: Date.now(), promise: null });
       return info(ws);
     };
     // The server's own sentence and code when it refuses (403 account_required: this token is not a sponsor account's).
@@ -102,5 +106,85 @@
     return { show: true, enabled: true, label, line: '', href: '' };
   }
 
-  NS.pkg = { load, info, tierFor, priceLabel, box };
+
+  /* ---------- The panel on the Integrations page (plan 08-13, D-01) ---------- */
+  const U = () => NS.ui;
+  const TITLE = 'Verification package';
+  const NO_SERVER = 'Checks run once your portal is connected to its server.';
+  const ACCOUNT_REQUIRED = 'account_required';
+  const KINDS = [
+    ['identity', 'Identity check and screening'],
+    ['full', 'Identity check, screening and accreditation']
+  ];
+  const BRANDS = { amex: 'American Express', diners: 'Diners Club', discover: 'Discover', jcb: 'JCB', mastercard: 'Mastercard', unionpay: 'UnionPay', visa: 'Visa' };
+  const brandOf = (b) => BRANDS[String(b || '').toLowerCase()] || (b ? String(b).charAt(0).toUpperCase() + String(b).slice(1) : 'Card');
+  const CHARGE = { card: 'Package', credit: 'Package, paid from credit' };
+  const chargeWord = (c) => (c.type === 'package' ? CHARGE[c.by] || CHARGE.card : c.type === 'credit' ? 'Returned as credit' : c.type === 'refund' ? 'Refund' : c.type === 'dispute' ? 'Disputed' : '');
+  /** The investor's account name for a charge's invitation (the server's id or the console's own), from the console's records. */
+  function accountOf(ws, invitationId) {
+    if (!invitationId) return '';
+    const it = (ws.invitations || []).find((x) => x.serverId === invitationId || x.id === invitationId);
+    const inv = it && (ws.investors || []).find((i) => i.id === it.investorId);
+    return inv ? inv.title || inv.contact || '' : '';
+  }
+  /** A payment the server is still confirming (08-16's unresolved list): one line, or '' when there is none. */
+  function unresolvedLine(list) {
+    const xs = Array.isArray(list) ? list.filter((x) => x && Number(x.cents) > 0) : [];
+    if (!xs.length) return '';
+    if (xs.length === 1) return `A payment of ${priceLabel(xs[0].cents)} on ${U().date(String(xs[0].at || '').slice(0, 10))} is being confirmed.`;
+    return `${xs.length} payments of ${priceLabel(xs.reduce((n, x) => n + Number(x.cents), 0))} in all are being confirmed.`;
+  }
+
+  /** The panel's last action: busy while the server is asked, error one plain sentence. Memory only. */
+  let act = { busy: false, error: '' };
+
+  /** The panel's inside, from what is known now (no request made here). '' when it is not shown. */
+  function panelBody(ws) {
+    const h = U().h;
+    const K = NS.consoleKit;
+    const line = (t, cls) => K.panel(TITLE, `<p class="${cls || 'cs-hint'}" id="pkg-line">${h(t)}</p>`);
+    if (!on(ws)) return line(NO_SERVER);
+    const i = info(ws);
+    if (i.status === 'unreachable') return line(UNREACHABLE, 'cs-error');
+    if (i.status === 'none' && i.code === ACCOUNT_REQUIRED) return line(i.error);
+    if (i.status !== 'ok' || !i.data || i.data.ready !== true) return '';
+    const d = i.data;
+    const prices = KINDS.filter(([t]) => d.available && d.available[t] === true && priceLabel((d.prices || {})[t])).map(([t, name]) => `<div><dt>${h(name)}</dt><dd>${h(priceLabel(d.prices[t]))}</dd></div>`);
+    const c = d.card;
+    const card = c
+      ? `<p id="pkg-card">${h(brandOf(c.brand))} ending ${h(String(c.last4 || ''))} · expires ${h(String(c.expMonth || '').padStart(2, '0'))}/${h(String(c.expYear || ''))}</p>`
+      : '';
+    const credit = Number(d.creditCents) > 0 ? `<p id="pkg-credit">Credit ${h(priceLabel(d.creditCents))}</p>` : '';
+    const waiting = unresolvedLine(d.unresolved);
+    const charges = (Array.isArray(d.charges) ? d.charges : []).filter((x) => x && Number(x.cents) > 0);
+    const table = charges.length
+      ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact" id="pkg-charges"><thead><tr><th scope="col">Date</th><th scope="col">Investor</th><th scope="col">Charge</th><th scope="col" class="num">Amount</th></tr></thead><tbody>${charges
+          .map((x) => `<tr><td data-label="Date">${h(U().date(String(x.at || '').slice(0, 10)))}</td><td data-label="Investor">${h(accountOf(ws, x.invitationId))}</td><td data-label="Charge">${h(chargeWord(x))}</td><td class="num" data-label="Amount">${h(priceLabel(x.cents))}</td></tr>`)
+          .join('')}</tbody></table></div>`
+      : '';
+    const buttons = `<div class="cs-row" id="pkg-actions"><button class="cs-btn" type="button" data-action="pkg-card"${act.busy ? ' disabled aria-busy="true"' : ''}>${c ? 'Replace card' : 'Add card'}</button>${c ? ` <button class="cs-btn" type="button" data-action="pkg-card-remove"${act.busy ? ' disabled' : ''}>Remove</button>` : ''}</div>`;
+    return K.panel(
+      TITLE,
+      `${prices.length ? `<dl class="iv-summary" id="pkg-prices">${prices.join('')}</dl>` : ''}${card}${buttons}${act.error ? `<p class="cs-error" id="pkg-error" role="alert">${h(act.error)}</p>` : ''}${credit}${waiting ? `<p class="cs-hint" id="pkg-unresolved">${h(waiting)}</p>` : ''}${table}`
+    );
+  }
+  /** The panel drawn again in place (no page render: a field on the page may be in use). */
+  function redraw(ws) {
+    const el = document.getElementById('pkg-panel');
+    if (el && NS.state && NS.state.ws === ws) el.innerHTML = panelBody(ws);
+  }
+  /**
+   * The "Verification package" panel for the Integrations page (self-serve edition only). With a server it is drawn from
+   * GET /v1/billing, asked once and drawn again when the answer arrives; with none it is one line and nothing is asked.
+   */
+  function panel(ws) {
+    if (!E.diy || !ws) return '';
+    if (on(ws)) {
+      const i = info(ws);
+      if (i.status === 'idle' || i.status === 'loading' || (!held && Date.now() - mem.at >= FRESH_MS)) load(ws).then(() => redraw(ws));
+    }
+    return `<div id="pkg-panel">${panelBody(ws)}</div>`;
+  }
+
+  NS.pkg = { load, info, tierFor, priceLabel, box, panel };
 })(window.CVPortal);
