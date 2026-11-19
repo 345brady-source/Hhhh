@@ -67,6 +67,14 @@
     return `<strong>${head}</strong><span class="sf-hint">${st.started && nx ? `Next: ${h(where(nx))}` : 'Select Start to begin.'}</span>`;
   }
   const zoom = () => (ZOOMS.indexOf(S().ui.esZoom) >= 0 ? S().ui.esZoom : 1);
+  /** The zoom control (out, the percentage that fits the page again, in): the signing guide's, and the document viewer's. */
+  function zoomHTML(z, action) {
+    return `<div class="sf-zoom" role="group" aria-label="Zoom">
+          <button class="sf-zoom-btn" type="button" data-action="${action}" data-d="-1" aria-label="Zoom out"${z === ZOOMS[0] ? ' disabled' : ''}>${MINUS}</button>
+          <button class="sf-zoom-btn sf-zoom-fit" type="button" data-action="${action}" data-d="0" aria-label="Zoom: ${Math.round(z * 100)}%. Select to fit the page to the width.">${Math.round(z * 100)}%</button>
+          <button class="sf-zoom-btn" type="button" data-action="${action}" data-d="1" aria-label="Zoom in"${z === ZOOMS[ZOOMS.length - 1] ? ' disabled' : ''}>${PLUS}</button>
+        </div>`;
+  }
   function barHTML(env, s, st, o) {
     const con = o.ctx === 'console';
     const cls = (primary, extra) => `${con ? `cs-btn${primary ? ' cs-btn-primary' : ''}` : `btn${primary ? ' btn-primary' : ''}`} ${extra}`;
@@ -80,11 +88,7 @@
           <p class="es-progress sf-count" aria-live="polite">${countHTML(env, s, st, m)}</p>
         </div>
         <div class="sf-tray" hidden><label class="sf-tray-label" for="sf-tray-in"></label><input class="sf-tray-in" id="sf-tray-in" type="text" maxlength="200" autocomplete="off" enterkeyhint="next" data-input="sf-tray"></div>
-        <div class="sf-zoom" role="group" aria-label="Zoom">
-          <button class="sf-zoom-btn" type="button" data-action="sf-zoom" data-d="-1" aria-label="Zoom out"${z === ZOOMS[0] ? ' disabled' : ''}>${MINUS}</button>
-          <button class="sf-zoom-btn sf-zoom-fit" type="button" data-action="sf-zoom" data-d="0" aria-label="Zoom: ${Math.round(z * 100)}%. Select to fit the page to the width.">${Math.round(z * 100)}%</button>
-          <button class="sf-zoom-btn" type="button" data-action="sf-zoom" data-d="1" aria-label="Zoom in"${z === ZOOMS[ZOOMS.length - 1] ? ' disabled' : ''}>${PLUS}</button>
-        </div>
+        ${zoomHTML(z, 'sf-zoom')}
         <div class="sf-acts">
           ${o.back ? `<button class="${cls(false, 'sf-back')}" type="button" data-action="${h(o.back)}">Back</button>` : ''}
           <button class="${cls(m.left > 0, 'sf-next')}" type="button" data-action="es-next"${o.preview || st.busy ? ' disabled' : ''}${m.left || m.open ? '' : ' hidden'}><span>${st.started ? 'Next' : 'Start'}</span>${icon('arrow')}</button>
@@ -361,14 +365,39 @@
     doc.style.setProperty('--es-zoom', z);
     doc.classList.toggle('is-zoomed', z > 1);
     const bar = document.querySelector('.sf-bar');
-    if (!bar) return;
-    const btns = bar.querySelectorAll('.sf-zoom-btn');
+    if (bar) markZoom(bar.querySelectorAll('.sf-zoom-btn'), z);
+  }
+  function markZoom(btns, z) {
     if (btns.length !== 3) return;
     btns[0].disabled = z === ZOOMS[0];
     btns[2].disabled = z === ZOOMS[ZOOMS.length - 1];
     btns[1].textContent = `${Math.round(z * 100)}%`;
     btns[1].setAttribute('aria-label', `Zoom: ${Math.round(z * 100)}%. Select to fit the page to the width.`);
   }
+  /**
+   * The document viewer (esign.js viewPdf, walkthrough failure 10): the same control and steps on the open dialog's pages.
+   * It opens fitting the width; zoomed, the pages scroll sideways inside the dialog, whose head (zoom, Download, Close) stays.
+   */
+  NS.actions['sf-doc-zoom'] = (el) => {
+    const dlg = el.closest('.dlg');
+    const pages = dlg && dlg.querySelector('.doc-pages');
+    const body = pages && pages.closest('.dlg-body');
+    if (!body) return;
+    const now = ZOOMS.indexOf(Number(pages.getAttribute('data-zoom'))) >= 0 ? Number(pages.getAttribute('data-zoom')) : 1;
+    const d = Number(el.getAttribute('data-d'));
+    const z = d ? ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, ZOOMS.indexOf(now) + d))] : 1;
+    if (z === now) return;
+    // The spot in the middle of the viewer stays there while the pages grow or shrink around it.
+    const fx = (body.scrollLeft + body.clientWidth / 2) / body.scrollWidth;
+    const fy = (body.scrollTop + body.clientHeight / 2) / body.scrollHeight;
+    pages.setAttribute('data-zoom', String(z));
+    pages.style.setProperty('--doc-zoom', z);
+    pages.classList.toggle('is-zoomed', z > 1);
+    body.scrollLeft = fx * body.scrollWidth - body.clientWidth / 2;
+    body.scrollTop = fy * body.scrollHeight - body.clientHeight / 2;
+    markZoom(dlg.querySelectorAll('.sf-zoom .sf-zoom-btn'), z);
+    if (el.disabled) (el.parentNode.querySelector('.sf-zoom-btn:not(:disabled)') || el).focus({ preventScroll: true });
+  };
   NS.actions['sf-zoom'] = (el) => {
     const doc = document.querySelector('.es-doc-sign');
     if (!doc) return;
@@ -466,5 +495,5 @@
     document.addEventListener('focusout', () => setTimeout(lift, 0));
   }
 
-  NS.signflow = { barHTML, sync, next, explain };
+  NS.signflow = { barHTML, zoomHTML, sync, next, explain };
 })(window.CVPortal);

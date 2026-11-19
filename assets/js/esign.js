@@ -465,6 +465,10 @@
       pages && pages.length
         ? `<div class="doc-pages" tabindex="0" role="document" aria-label="${h(title)}">${pages.map((p, i) => `<img class="doc-page" src="${p.url}" width="${Math.round(p.w)}" height="${Math.round(p.h)}" alt="Page ${i + 1} of ${pages.length}">`).join('')}</div>`
         : `<p class="empty">This PDF cannot be shown here.${download ? ' Use Download to open it.' : ''}</p>`;
+    // The signing views' zoom control, in the dialog's head beside Download and Close (walkthrough failure 10: on a phone a
+    // page that fits the width is too small to read). The pages open fitting the width.
+    const acts = body.closest('.dlg') && body.closest('.dlg').querySelector('.dlg-actions');
+    if (acts && pages && pages.length && NS.signflow && NS.signflow.zoomHTML && !acts.querySelector('.sf-zoom')) acts.insertAdjacentHTML('afterbegin', NS.signflow.zoomHTML(1, 'sf-doc-zoom'));
   }
   const pageCache = {};
   function loadPages(docId) {
