@@ -1041,6 +1041,7 @@
         `${K.head('Integrations', 'Investors are verified while they onboard: identity, sanctions and PEP screening, and accredited investor status for Rule 506(c) offerings. Plug in the verification services you already use, as many as you need for each check, then set the rules for approval.', `<button class="cs-btn cs-btn-primary" type="button" data-action="iv-save">${c.configured ? 'Save' : 'Save and turn on'}</button>`)}
         ${errs.length ? `<div class="iv-errors" role="alert"><p>Fix these before turning verification on:</p><ul class="cs-errors">${errs.map((e) => `<li>${h(e)}</li>`).join('')}</ul></div>` : ''}
         ${summaryPanel(ws)}
+        ${NS.pkg && NS.pkg.panel ? NS.pkg.panel(ws) : ''}
         ${connectionsPanel(ws)}
         ${K.panel(
           'Approval rules',
