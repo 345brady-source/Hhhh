@@ -117,3 +117,8 @@
 - W1: neither starts before 08-06 is merged (step 0: `test -s $P8/checks/gate.sh && test -s $P8/checks/frame.js`, else stop and report).
 - W3: read `server/index.mjs` and `server/lib/invitations.mjs` by name, not by the plans' line numbers (they moved by about 41 and 4 to 7 lines).
 - I1: the `entitlements` statuses are a contract between the two: 08-14 writes `refunded`, `disputed`, `refunding`; 08-05's gate (N3) accepts only `consumed`.
+
+## After the wave 3 revision (1e89932, 2026-11-19)
+- 08-05 and 08-14 were rewritten and split: 08-05 (package at create, wave 3), 08-14 (deliveries, refunds, disputes, wave 3), 08-15 (check gate, provider reservation, credit where an invitation ends, wave 4), 08-16 (unresolved payments, billing view, operator refund, README, wave 4). Later waves move by one: 08-07 wave 5, 08-08 and 08-09 wave 6, 08-10 wave 7, 08-12 wave 8 (frontmatter corrected by the orchestrator).
+- For 08-13 (addition P8): the package panel shows `GET /v1/billing`'s `unresolved` list in one line when it is not empty ("A payment of $X on <date> is being confirmed."), and nothing when it is empty; a check part covers both.
+- Open: the unusable "Identity check" row is hidden from sponsor accounts only; on the shared token (the operator's own) it still shows. Accepted: the shared token is the operator's.
