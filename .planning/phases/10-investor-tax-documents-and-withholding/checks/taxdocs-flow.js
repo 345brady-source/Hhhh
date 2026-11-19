@@ -1,5 +1,5 @@
 // gate: browser
-// last "TAXDOCS FLOW: PASS (parts run: 7)"
+// last "TAXDOCS FLOW: PASS (parts run: 8)"
 // The Tax documents page of the self-serve console (plan 10-04, D-01, C-06): a CPA's combined Schedule K-1 file is cut
 // into one package per K-1 in the browser, and every match is a person's decision. Every part runs the portal inside a
 // sandboxed frame whose policy refuses every connection and allows scripts from the portal's own address only, with the
@@ -8,7 +8,10 @@
 //                  27-page file of k1-build.js: 12 to confirm, 10 in the together list and 2 one by one, each with the
 //                  K-1's name line and "ending" with four digits; page 1 belongs to no one; nothing delivered; no nine
 //                  digits kept or shown (the search of 10-02 B1, proven able to fail)
-//   import-desktop the same at 1280x800 with the file whose values are left in form fields
+//   import-desktop the same at 1280x800 with the file whose values are left in form fields; the later plans' files were
+//                  asked for and, answered 404, show nothing; a section registered from the check (probe) has its line and
+//                  its page under a bar with Back, and Back and the browser's back return to the list; NS.taxUI.link's line
+//                  is drawn on a confirmed row; a team member imports and confirms; an investor cannot open the address
 //   confirm-phone, confirm-desktop   "Not this one" (Confirm 10 becomes Confirm 9), the 9 confirmed together: hidden
 //                  documents, each its own PDF with its page count and SHA-256, 9 change-log entries; the 3 one by one each
 //                  beside a picture of its K-1; View pages; Set aside and Reopen; the number-only row confirmed for its
@@ -19,6 +22,9 @@
 //                  text: one package per file, no together list, the line about asking the CPA, packages from page ranges
 //   long           120 K-1s (more than 300 pages) at 390x844: 120 packages; prints the time this machine's browser took
 //   published      portal.html at 390x844: the same entry and page
+//   managed        index.html at 1280x800 as staff and as sponsor staff: Documents visible; no Tax documents in the menu;
+//                  console-taxdocs and console-taxdocs-batch-x fall back to the default page; the page names none of this
+//                  plan's files
 // Every part: quiet, leak and a way out on screen; the fund's name (with angle brackets) is shown as text.
 //   NODE_PATH=$(npm root -g) node taxdocs-flow.js [--only part1,part2]
 // The files it builds (the IRS's blank 2025 form, invented partners) go to a folder named with its process id, removed
@@ -53,6 +59,7 @@ async function reframe(A) {
 /** lib10's frame with the shipped libraries only, the later plans' files answered 404 from the first load on. */
 async function open(S, size, opts) {
   const { A } = await T.framed(S, size, Object.assign({ policy: 'self' }, opts || {}));
+  if (opts && opts.asked) A.context.on('request', (r) => LATER.test(new URL(r.url()).pathname) && opts.asked.push(r.url()));
   await A.context.route((u) => u.origin === S.origin && LATER.test(u.pathname), (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'not here' }));
   return { A, fr: await reframe(A) };
 }
@@ -191,7 +198,7 @@ async function noNumbers(check, fr, from, label) {
 
 /* ---------- the parts ---------- */
 async function importPart(check, S, size, opts) {
-  const { A, fr } = await open(S, size);
+  const { A, fr } = await open(S, size, { asked: opts.asked });
   await T.proveRefused(check, A, fr);
   await T.sample(fr, { role: 'admin' });
   const fund = await giveFund(fr, K.PARTNERS);
@@ -350,6 +357,8 @@ async function confirmPart(check, S, size) {
   const pics = await picturesLoaded(fr);
   v = await batchView(fr);
   check('three rows are one by one, each with a picture that has loaded', pics.length === 3 && pics.every((p) => p.loaded), pics);
+  await fr.evaluate(() => document.querySelector('[data-list="single"]').scrollIntoView());
+  await A.page.screenshot({ path: path.join(OUT, `confirm-${size}-one-by-one.png`), fullPage: false });
   const want = [['Maria Lopez', 'Last four and name agree'], ['Priya Raman', PRINTED_BASIS['number only']], ['Lukas Dvorak', PRINTED_BASIS['name only']]];
   const rowsOk = await fr.evaluate(({ want, ids }) => {
     const NS = window.CVPortal;
@@ -494,8 +503,77 @@ const parts = {
     await A.context.close();
   },
   async ['import-desktop']({ check, S }) {
-    const { A, fr } = await importPart(check, S, 'desktop', { flatten: false });
+    const asked = [];
+    const { A, fr: fr1 } = await importPart(check, S, 'desktop', { flatten: false, asked });
+    let fr = fr1;
     await escaped(check, fr, 'the import\'s page');
+    // the later plans' files: asked for beside taxdocs-ui.js, answered 404, nothing shown and no error
+    const names = ['withholding', 'withholding-ui', 'taxdocs-investor', 'taxrecord-ui', 'tax1099', 'tax1099-ui', 'taxlink'];
+    await go(fr, 'console-taxdocs', '#tx-files');
+    const shown = await fr.evaluate(() => ({ parts: document.querySelectorAll('[data-list="parts"] .tx-row').length, api: typeof (window.CVPortal.taxUI || {}).part, link: (window.CVPortal.taxUI || {}).link === null, errorText: /error|undefined|failed/i.test(document.querySelector('.tx').innerText) }));
+    check('the seven files of later plans were asked for beside taxdocs-ui.js and, answered 404, show no section and no error', names.every((n) => asked.some((u) => u.endsWith(`/assets/js/${n}.js`))) && shown.parts === 0 && shown.api === 'function' && shown.link && !shown.errorText, { asked: asked.length, shown });
+    // a section registered from the check
+    await fr.evaluate(() => {
+      const X = window.CVPortal.taxUI;
+      X.part('probe', { order: 1, title: 'Probe section', summary: () => 'Probe summary line', render: () => '<p class="tx-note">Probe page body</p>' });
+      X.refresh();
+    });
+    await fr.waitForTimeout(300);
+    const line = await fr.evaluate(() => {
+      const a = document.querySelector('[data-list="parts"] a[href="#console-taxdocs-probe"]');
+      return { link: !!a, text: a ? a.closest('.tx-row').innerText.replace(/\s+/g, ' ') : '' };
+    });
+    check('a registered section shows its summary line on the list page with a link to its page', line.link && /Probe section/.test(line.text) && /Probe summary line/.test(line.text), line);
+    if (line.link) await T.press(fr, '[data-list="parts"] a[href="#console-taxdocs-probe"]');
+    await fr.waitForTimeout(400);
+    const pg = await fr.evaluate(() => {
+      const bar = document.querySelector('.tx-bar');
+      return { hash: location.hash, body: /Probe page body/.test(document.body.innerText), bar: !!bar && getComputedStyle(bar).position === 'sticky' && /Probe section/.test(bar.innerText), back: !!(bar && bar.querySelector('a[href="#console-taxdocs"]')) };
+    });
+    check('its page opens at console-taxdocs-probe under a bar that stays on screen with Back', pg.hash === '#console-taxdocs-probe' && pg.body && pg.bar && pg.back, pg);
+    if (pg.back) await T.press(fr, '.tx-bar a[href="#console-taxdocs"]');
+    await fr.waitForTimeout(400);
+    const back1 = await fr.evaluate(() => location.hash === '#console-taxdocs' && !!document.querySelector('#tx-files'));
+    await T.press(fr, '[data-list="parts"] a[href="#console-taxdocs-probe"]');
+    await fr.waitForTimeout(400);
+    await fr.evaluate(() => history.back());
+    await fr.waitForTimeout(600);
+    const back2 = await fr.evaluate(() => location.hash === '#console-taxdocs' && !!document.querySelector('#tx-files'));
+    check('Back and the browser\'s back each return to the list', back1 && back2, { back1, back2 });
+    // the link's line on a confirmed document's row
+    const b = (await fr.evaluate(() => window.CVPortal.state.ws.taxdocs.batches.map((x) => x.id)))[0];
+    await fr.evaluate(() => {
+      window.CVPortal.taxUI.link = { connected: () => true, rowLine: (ws, doc) => `<span class="probe-link">Link line for ${doc.id}</span>`, send: () => Promise.resolve(), pull: () => Promise.resolve() };
+    });
+    await go(fr, `console-taxdocs-batch-${b}`, '[data-action=tx-together]');
+    await T.press(fr, '[data-action=tx-together]');
+    await docsReach(fr, 10);
+    await fr.waitForTimeout(500);
+    const lines = await fr.evaluate(() => Array.from(document.querySelectorAll('[data-list="confirmed"] .tx-row')).map((r) => !!r.querySelector('.probe-link')));
+    check('with NS.taxUI.link connected, its rowLine is drawn on each confirmed document\'s row', lines.length === 10 && lines.every(Boolean), lines);
+    await T.wayOut(check, fr);
+    await T.quiet(check, A, fr);
+    // a team member sees the page and can import and confirm
+    await fr.evaluate(() => (window.CVPortal.taxUI.link = null));
+    await T.sample(fr, { role: 'team' });
+    await go(fr, 'console', '.cs-nav');
+    const teamMenu = await fr.locator('.cs-nav a[href="#console-taxdocs"]').count();
+    const fund = await fr.evaluate(() => window.CVPortal.state.ws.offerings[0].id);
+    const built = await K.build(BUILT, { name: 'team.pdf' });
+    const r = await importFiles(fr, { offeringId: fund, year: '2024', files: [{ name: 'team.pdf', bytes: built.bytes }] });
+    const tb = r.batches[0] || {};
+    await go(fr, `console-taxdocs-batch-${tb.id}`, '[data-action=tx-together]');
+    await T.press(fr, '[data-action=tx-together]');
+    await docsReach(fr, 20);
+    const teamDocs = await fr.evaluate((id) => (window.CVPortal.state.ws.docs || []).filter((d) => d.tax && d.tax.batch === id).length, tb.id);
+    check('a team member has the menu entry, imports a file and confirms the together list', teamMenu === 1 && tb.packages === 12 && teamDocs === 10, { teamMenu, packages: tb.packages, teamDocs });
+    // an investor cannot open the address
+    await T.sample(fr, { role: 'investor', investor: (await fr.evaluate(() => window.CVPortal.state.ws.investors.find((i) => /-8001$/.test(i.id)).id)) });
+    await fr.evaluate(() => (location.hash = '#console-taxdocs'));
+    await fr.waitForTimeout(800);
+    const inv = await fr.evaluate(() => ({ route: window.CVPortal.state.route, tx: !!document.querySelector('.tx'), menu: !!document.querySelector('a[href="#console-taxdocs"]') }));
+    check('an investor cannot open the address', inv.route !== 'console-taxdocs' && !inv.tx && !inv.menu, inv);
+    fr = null;
     await A.context.close();
   },
   async ['confirm-phone']({ check, S }) {
@@ -583,6 +661,30 @@ const parts = {
     const v = await batchView(fr);
     check('120 packages are listed', v.together.length + v.single.length === 120, { together: v.together.length, single: v.single.length });
     await T.wayOut(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+  async managed({ check, S }) {
+    const { A, fr } = await open(S, 'desktop', { page: 'index.html' });
+    await T.proveRefused(check, A, fr);
+    const src = fs.readFileSync(path.join(Lib.ROOT, 'index.html'), 'utf8');
+    check('index.html names none of this plan\'s files', !/taxdocs|tax\.css/.test(src), (src.match(/[^"]*(taxdocs|tax\.css)[^"]*/) || [''])[0]);
+    for (const role of ['staff', 'sponsor']) {
+      await T.sample(fr, { role });
+      await go(fr, 'console-docs', '#dup-files');
+      const docs = await fr.evaluate(() => ({ edition: window.CVPortal.EDITION.id, panel: Array.from(document.querySelectorAll('.cs-panel-head h2')).map((x) => x.innerText.trim()) }));
+      check(`${role}: the managed console's Documents page is visible`, docs.edition === 'managed' && docs.panel.indexOf('Publish documents') >= 0 && (await fr.locator('#dup-files').isVisible()), docs);
+      const menu = await fr.evaluate(() => Array.from(document.querySelectorAll('.cs-nav a')).map((a) => a.innerText.trim()));
+      check(`${role}: its menu has no Tax documents entry`, menu.length > 5 && menu.indexOf('Tax documents') < 0, menu.length);
+      for (const addr of ['console-taxdocs', 'console-taxdocs-batch-x']) {
+        await fr.evaluate((a) => (location.hash = '#' + a), addr);
+        await fr.waitForTimeout(800);
+        const at = await fr.evaluate(() => ({ route: window.CVPortal.state.route, tx: !!document.querySelector('.tx'), view: document.getElementById('view').innerText.length, err: !!document.querySelector('#view .cs-error, #view .is-stop') }));
+        check(`${role}: ${addr} falls back to the default page with no error`, at.route !== 'console-taxdocs' && !at.tx && at.view > 50 && !at.err, at);
+      }
+      const scripts = await fr.evaluate(() => Array.from(document.scripts).map((s) => s.src).concat(Array.from(document.querySelectorAll('link[rel=stylesheet]')).map((l) => l.href)).filter((u) => /taxdocs|tax\.css/.test(u)));
+      check(`${role}: none of this plan's files is on the page`, scripts.length === 0, scripts);
+    }
     await T.quiet(check, A, fr);
     await A.context.close();
   },
