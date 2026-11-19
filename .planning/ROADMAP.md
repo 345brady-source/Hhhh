@@ -329,10 +329,21 @@ Plans:
 
 ### Phase 9: Filings tab: Form D and blue sky
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** A self-serve sponsor opens a Filings tab and sees what is due and when (the first Form D within 15 days of the first sale, the annual amendment, state notices and renewals) and can silence any reminder; prepares, reviews and signs off Form D in the portal from what the offering already holds, follows the steps to EDGAR access, and orders the Form D filing or a state notice filing, with each order and its amount due recorded; Carrow & Vale staff receive each order, upload the portal-built Form D on EDGAR (a test first, never a live filing unless the server's explicit setting is on) and record the result, which the tab then shows with the accession number and the next annual date
+**Requirements**: D-01, D-02, D-03, D-04, D-05 (the owner's decisions in 09-CONTEXT.md; this phase has no entries in REQUIREMENTS.md)
 **Depends on:** Phase 8
-**Plans:** 0 plans
+**Plans:** 10 plans
+
+Waves: 1 = 09-01, 09-02 · 2 = 09-03, 09-05 · 3 = 09-04, 09-06, 09-07, 09-08 · 4 = 09-09, 09-10. 09-08 (the EDGAR API route) waits for the owner: the SEC toolkit read and a second technical administrator. 09-10 (state fees) waits for the official fee matrix. Everything else is built and proven against the SEC's published schema, masked real filings and recorded replies; no filing is made, and nothing is called working before the owner's check.
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 9 to break down)
+- [ ] 09-01-PLAN.md — The filings record and the due-date engine: first Form D in 15 days with the weekend and holiday roll, annual and change amendments by the Form D instructions' thresholds, silencing, prices and orders with the amount due; the phase gate script (D-04, D-05) (wave 1)
+- [ ] 09-02-PLAN.md — The Form D builder: pre-fill, validation, the XML file and reading a filed notice back, proven against the SEC schema pinned by SHA-256, both SEC samples and twelve masked real filings (D-02) (wave 1)
+- [ ] 09-03-PLAN.md — The Filings tab in the self-serve console: reminders, silencing, a notice the sponsor filed themselves, orders with the amount due; proven in the sandboxed frame at 390x844 touch and 1280x800; the managed edition untouched; the parts registry later plans plug into (D-01, D-04) (wave 2)
+- [ ] 09-04-PLAN.md — Form D on screen: the pre-filled form by item, errors in plain words, in-page review, the admin's sign-off, the order ($100, amendment $50), an amendment from the last filing (D-02, D-05) (wave 3)
+- [ ] 09-05-PLAN.md — The server filing module: orders, the issuer's CCC sealed, the file rebuilt and validated on the server, the staff upload route and a recorded route for tests, the guard that refuses LIVE, staff calls and the order email, state notice orders and results (D-02, D-03, D-05) (wave 2)
+- [ ] 09-06-PLAN.md — EDGAR access for new issuers: the steps tracker and the Form ID answer sheet the sponsor completes on the SEC dashboard from, with the delegation step naming the filing agent (D-02) (wave 3)
+- [ ] 09-07-PLAN.md — State notices: states picked from where investors live, the order ($100 any number of states, renewal $50, fees passed through at cost), the package staff file from by hand, per-state results, state and renewal reminders; no state fee shown until read from the official matrix (D-03, D-04, D-05) (wave 3)
+- [ ] 09-08-PLAN.md — The EDGAR API route behind the same interface and guard: not autonomous; opens with the owner making the SEC toolkit readable and confirming two technical administrators; tokens only in the server's settings (D-02) (wave 3)
+- [ ] 09-09-PLAN.md — The link between the tab and the server: a signed-off order is sent, staff's results come back, the filed notice shows its accession number and the annual reminder follows; state orders the same way (D-02, D-03) (wave 4)
+- [ ] 09-10-PLAN.md — The state fee table read from the official matrix, each row with its source and date; needs the matrix file from the owner before it can start (D-03, D-04) (wave 4)
