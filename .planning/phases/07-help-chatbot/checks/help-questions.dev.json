@@ -1,0 +1,30 @@
+{
+  "set": "development",
+  "note": "The development set of the help measurement (phase 07, D-06). It may be read and used to tune the guide and the rules. Every must pattern is written from the screen's own text (the files checks/help-screens.js writes), never from the guide, the rules or a model's answer. Every name, number and address in a question is invented.",
+  "cases": [
+    {
+      "id": "sc-invite",
+      "group": "sponsor-covered",
+      "audience": "sponsor",
+      "role": "admin",
+      "page": "console-investors",
+      "step": "",
+      "turns": ["How do I invite an investor?"],
+      "expect": [{ "kind": "answer", "must": ["Invite an investor", "\\bemail\\b"], "mustNot": [] }],
+      "planted": [],
+      "source": { "type": "written", "screen": "console-investors" }
+    },
+    {
+      "id": "ic-tax-next",
+      "group": "investor-covered",
+      "audience": "investor",
+      "role": "investor",
+      "page": "invite",
+      "step": "tax",
+      "turns": ["What happens after I press Continue to the form?"],
+      "expect": [{ "kind": "answer", "must": ["\\bsign", "\\b(check|review)"], "mustNot": ["W-?9 is (the )?(right|correct)", "W-?8 ?BEN(-E)? is (the )?(right|correct)"] }],
+      "planted": [],
+      "source": { "type": "written", "screen": "invite-tax" }
+    }
+  ]
+}
