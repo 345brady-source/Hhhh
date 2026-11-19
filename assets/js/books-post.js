@@ -6,14 +6,30 @@
  * distribution record's (NS.data.runRows, plan 10-01); nothing here decides it again, so the journal and the capital
  * accounts count the same events.
  *
- *   call:<callId>:<investorId>   a capital call payment          [1000 +][3000 - investor]
- *   pos:<investorId>:<date>:<n>  a funded subscription or closing [1000 +][3000 - investor]
- *   run:<runId>                  a paid distribution              [3100 + investor] per investor (gross),
- *                                [1000 -] the total paid by ACH, [1000 - investor] each payment made otherwise
- *   fee:<offeringId>:<YYYY-MM>   the month's management fee       [5000 +][2100 -]
+ *   call:<callId>:<investorId>   a capital call payment, dated the day received   [1000 +][3000 - investor]
+ *   pos:<investorId>:<date>:<n>  a funded subscription or closing (n counts that investor's positions above zero in
+ *                                this offering on that date, from 0, in stored order)   [1000 +][3000 - investor]
+ *   run:<runId>                  a paid distribution: [3100 + investor] gross per investor; [2400 - investor] tax
+ *                                withheld, owed until paid over; [1000 -] the total paid by ACH; [1000 - investor] each
+ *                                payment made otherwise; [3300 +][1000 -] the general partner's share (run.gp)
+ *   req:<requestId>              a redemption at its dealing date                  [3100 + investor][2200 -]
+ *   reqpaid:<requestId>          its payment, on the day paid                       [2200 +][1000 - investor]
+ *   fee:<offeringId>:<YYYY-MM>   the month's management fee, at the month-end      [5000 +][2100 -]
+ *   gp:<offeringId>:<YYYY-MM>    the general partner's share crystallized that month, owed until paid [3300 +][2600 -]
+ * Entries dated before the fund's books start (fund.start) are left out.
  *
- * Amounts are whole cents throughout. The books are written only through NS.books.post, so a src that already has a
- * live entry is never posted twice. Nothing here writes the change log.
+ * sync posts what is missing; reverses (dated its own date) and posts again an entry whose record changed inside an
+ * open period; reverses one whose record no longer calls for it. When the old or the new date is on or before the last
+ * closed month-end nothing is changed for that record and fund.exceptions lists it once:
+ *   { kind: 'closed', src, date, wasDate, was, now, found }   (was or now null when there is no entry on that side)
+ * It also lists, once each: { src, kind: 'stray', investorId, cents } (a distribution line for an investor who does not
+ * hold the fund, posted to 3100), { src, kind: 'overpaid', investorId, cents } (a redemption paid above the engine's
+ * amount, which is what is posted), { src, kind: 'amount', account, value } and { src, kind: 'mismatch', investorId,
+ * cents, recorded } (a record that cannot be posted as it stands; its live entry, if any, is left as it is).
+ *
+ * Amounts are whole cents throughout. The books are written only through NS.books.post and NS.books.reverse (so a src
+ * with a live entry is never posted twice, and a closed period is refused by the journal itself as well). Lines carry
+ * investor ids only. Nothing here writes the change log; sync saves the workspace when something changed.
  */
 (function (root) {
   'use strict';
@@ -38,6 +54,30 @@
     const f = ws && ws.books && ws.books.funds && ws.books.funds[id];
     return f && typeof f.start === 'string' ? f.start : '';
   }
+  /** Record prefixes this module owns; entries with any other prefix (mark:, bank:, open:, man:, rev:, sim:) are never touched. */
+  const MANAGED = /^(call|pos|run|req|reqpaid|fee|gp):/;
+  /** [code, cents, partner, holding] with trailing empty ids left out (the stored form, as books.js compacts a line). */
+  function compact(l) {
+    const out = l.slice();
+    while (out.length < 4) out.push('');
+    if (out[2] == null) out[2] = '';
+    if (out[3] == null) out[3] = '';
+    while (out.length > 2 && out[out.length - 1] === '') out.pop();
+    return out;
+  }
+  const same = (a, b) => JSON.stringify((a || []).map(compact)) === JSON.stringify((b || []).map(compact));
+  /** The fund's live entries with a managed prefix, by src (none is reversed and none is a reversal). */
+  function liveManaged(ws, id) {
+    const out = new Map();
+    const f = ws.books && ws.books.funds && ws.books.funds[id];
+    const j = f && Array.isArray(f.journal) ? f.journal : [];
+    const reversed = new Set();
+    j.forEach((e) => e && e.rev && reversed.add(e.rev));
+    j.forEach((e) => {
+      if (e && !e.rev && !reversed.has(e.id) && typeof e.src === 'string' && MANAGED.test(e.src) && !out.has(e.src)) out.set(e.src, e);
+    });
+    return out;
+  }
   /** Add a listed item to fund.exceptions once (the same item already there is not added again). */
   function note(f, item) {
     const key = JSON.stringify(Object.assign({}, item, { found: undefined }));
@@ -46,7 +86,10 @@
     return true;
   }
 
-  /** { entries, notes } for one offering: notes are the records the books list for a person to look at. */
+  /**
+   * { entries, notes, hold } for one offering: notes are the items the books list for a person to look at; hold names
+   * the records that cannot be posted as they stand (their live entry, if any, is left as it is).
+   */
   function plan(ws, o, opts) {
     opts = opts || {};
     const today = NS.dates.today();
@@ -54,13 +97,14 @@
     if (!o) throw new Error('There is no such offering in this workspace.');
     const L = NS.audit.ledger(ws, o);
     const entries = [];
-    const notes = [];
+    const flagged = [];
+    const flag = (date, item, held) => flagged.push({ date, item, held: !!held });
     const used = new Set();
     const add = (src, date, memo, lines) => {
       used.add(src);
       // A record holding an amount that is not whole cents is not posted; it is listed instead.
       const odd = lines.find((l) => !Number.isSafeInteger(l[1]));
-      if (odd) return notes.push({ src, kind: 'amount', account: odd[0], value: String(odd[1]) });
+      if (odd) return flag(date, { src, kind: 'amount', account: odd[0], value: String(odd[1]) }, true);
       const kept = lines.filter((l) => l[1] !== 0);
       if (kept.length < 2) return;
       entries.push({ src, date, memo, lines: kept });
@@ -105,10 +149,13 @@
         const run = g.run;
         const src = `run:${run.id}`;
         const rows = NS.data.runRows(ws, run).filter((r) => g.gross.has(r.investor.id));
+        // The engine's gross must be the stored line's (both read the same record); otherwise nothing is posted for the run.
+        const off = rows.find((r) => g.gross.get(r.investor.id) !== r.withheldCents + r.netCents || r.withheldCents < 0 || r.netCents < 0);
+        if (off) return flag(run.date, { src, kind: 'mismatch', investorId: off.investor.id, cents: g.gross.get(off.investor.id), recorded: off.withheldCents + off.netCents }, true);
         const lines = [];
         // Gross to each investor's capital; tax withheld owed until it is paid over; then the cash that left the fund.
         rows.forEach((r) => lines.push(ln('3100', g.gross.get(r.investor.id), r.investor.id)));
-        rows.forEach((r) => lines.push(ln('2400', -(g.gross.get(r.investor.id) - r.netCents), r.investor.id)));
+        rows.forEach((r) => lines.push(ln('2400', -r.withheldCents, r.investor.id)));
         let ach = 0;
         const other = [];
         rows.forEach((r) => {
@@ -120,7 +167,7 @@
         other.forEach((l) => lines.push(l));
         // The general partner's share paid with the distribution (carried interest), deducted from nobody's capital.
         if (run.gp > 0) lines.push(ln('3300', run.gp), ln('1000', -run.gp));
-        g.strays.forEach((s) => notes.push({ src, kind: 'stray', investorId: s.investorId, cents: s.cents }));
+        g.strays.forEach((s) => flag(run.date, { src, kind: 'stray', investorId: s.investorId, cents: s.cents }));
         add(src, run.date, `Distribution ${run.id}`, lines);
       });
 
@@ -132,7 +179,7 @@
       add(`req:${q.id}`, x.date, `Redemption ${q.id}: ${id}`, [ln('3100', x.cents, id), ln('2200', -x.cents)]);
       if (q.status === 'paid' && q.paid) {
         add(`reqpaid:${q.id}`, q.paid, `Redemption paid ${q.id}: ${id}`, [ln('2200', x.cents), ln('1000', -x.cents, id)]);
-        if (q.paidCents != null && q.paidCents > x.cents) notes.push({ src: `reqpaid:${q.id}`, kind: 'overpaid', investorId: id, cents: q.paidCents - x.cents });
+        if (q.paidCents != null && q.paidCents > x.cents) flag(q.paid, { src: `reqpaid:${q.id}`, kind: 'overpaid', investorId: id, cents: q.paidCents - x.cents });
       }
     });
 
@@ -147,9 +194,10 @@
 
     // Books started part-way: nothing dated before the start is posted from records.
     const start = startOf(ws, o.id);
-    const kept = start ? entries.filter((e) => e.date >= start) : entries;
-    kept.sort(byDateSrc);
-    return { entries: kept, notes: start ? notes.filter((n) => kept.some((e) => e.src === n.src)) : notes };
+    const after = (x) => !start || x.date >= start;
+    const kept = entries.filter(after).sort(byDateSrc);
+    const fl = flagged.filter(after);
+    return { entries: kept, notes: fl.map((x) => x.item), hold: new Set(fl.filter((x) => x.held).map((x) => x.item.src)) };
   }
 
   /** Every entry the records of offering o call for, by date then src. Reads only. */
@@ -167,11 +215,30 @@
     ((ws && ws.offerings) || []).forEach((o) => {
       if (!o || !o.id) return;
       const P = plan(ws, o, opts);
+      const ct = B.closedThrough(ws, o.id);
+      const closed = (date) => !!ct && date <= ct;
+      const live = liveManaged(ws, o.id);
+      const listClosed = (item) => note(B.fund(ws, o.id), Object.assign({ kind: 'closed' }, item, { found })) && out.exceptions++;
+      const want = new Set();
       P.entries.forEach((d) => {
-        const f = ws.books && ws.books.funds && ws.books.funds[o.id];
-        if (f && B.live(f, d.src)) return;
+        want.add(d.src);
+        const cur = live.get(d.src);
+        if (cur && cur.date === d.date && same(cur.lines, d.lines)) return;
+        // A closed period is never rewritten: the difference is listed with what was and what is now.
+        if ((cur && closed(cur.date)) || closed(d.date)) return listClosed({ src: d.src, date: d.date, wasDate: cur ? cur.date : null, was: cur ? cur.lines.map(compact) : null, now: d.lines });
+        if (cur) {
+          B.reverse(ws, o.id, cur.id, { by: who.by, at: who.at, date: cur.date });
+          out.reversed++;
+        }
         B.post(ws, o.id, d, who);
         out.posted++;
+      });
+      // A record that no longer calls for its entry (cancelled, deleted, no longer counted): reversed, or listed if closed.
+      live.forEach((cur, src) => {
+        if (want.has(src) || P.hold.has(src)) return;
+        if (closed(cur.date)) return listClosed({ src, date: cur.date, wasDate: cur.date, was: cur.lines.map(compact), now: null });
+        B.reverse(ws, o.id, cur.id, { by: who.by, at: who.at, date: cur.date });
+        out.reversed++;
       });
       if (P.notes.length) {
         const f = B.fund(ws, o.id);
