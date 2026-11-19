@@ -22,6 +22,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 4: Signing Inside Onboarding** - A polished, guided signing step for investors and countersigning for sponsors, with no separate tool
 - [ ] **Phase 5: Signed Record** - Final signed PDF with certificate page, audit trail and tamper evidence
 - [ ] **Phase 6: Onboarding forms: W-9 and W-8 collected in the investor onboarding, plus investor-status questions (506(b) non-accredited count of 35, Reg A Tier 2 10 percent investment limit, ERISA 25 percent benefit-plan test)**
+- [ ] **Phase 7: Help chatbot**
+- [ ] **Phase 8: Verification package and ongoing compliance**
+- [ ] **Phase 9: Filings tab: Form D and blue sky**
 
 ## Phase Details
 
@@ -285,3 +288,33 @@ Plans:
 - [ ] 06-22-PLAN.md — Tax forms in server mode: the signed form through the allowlist and vault into the console; forged envelopes dropped
 - [ ] 06-23-PLAN.md — The device deletes every copy holding the full taxpayer ID after a confirmed send; uploads and W-8BEN in server mode
 - [ ] 06-24-PLAN.md — Self-serve tax-form toggle; the owner's set of four real signed forms on unseen answers; the phase's final gate
+
+### Phase 7: Help chatbot
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 7 to break down)
+
+### Phase 8: Verification package and ongoing compliance
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 7
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 8 to break down)
+
+### Phase 9: Filings tab: Form D and blue sky
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 8
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 9 to break down)
