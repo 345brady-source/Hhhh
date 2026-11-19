@@ -95,6 +95,8 @@
     if (!on(ws)) return Object.assign(off, { show: true, line: 'Checks run once your portal is connected to its server.' });
     const i = info(ws);
     if (i.status === 'unreachable') return Object.assign(off, { show: true, line: UNREACHABLE });
+    // The token is not a sponsor account's (the shared token, the operator's own): switched off, with the server's sentence.
+    if (i.status === 'none' && i.code === 'account_required') return Object.assign(off, { show: true, line: i.error });
     if (i.status !== 'ok') return off;
     const d = i.data;
     const t = TIERS.indexOf(tier) >= 0 ? tier : tierFor(ws, offeringId, inv);
