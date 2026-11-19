@@ -208,7 +208,8 @@
     const byNav = fundType === 'Hedge Fund' || fundType === 'Other Investment Fund';
     const code = (x.federalExemptionsExclusions || []).filter((c) => RULE[c])[0] || '';
     const amendment = d.submissionType === 'D/A';
-    const usdNote = w.facts.usd === false ? '' : '';
+    // no exchange rate is applied for a filing: an offering in another currency gives its own dollar figures
+    const usdNote = w.facts.usd === false ? '<p class="fl-note fd-usd">This offering is not in U.S. dollars: enter the amounts in U.S. dollars.</p>' : '';
     const persons = d.relatedPersonsList
       .map((p, k) => {
         const f = `relatedPersonsList[${k}]`;
@@ -274,7 +275,7 @@
         ${x.businessCombinationTransaction.isBusinessCombinationTransaction === true ? input(w, { label: 'Clarification', path: `${P}.businessCombinationTransaction.clarificationOfResponse`, optional: true }) : ''}`)}
       ${item(11, 'Minimum investment', `${usdNote}${input(w, { label: 'Minimum investment accepted from an outside investor, in U.S. dollars', path: `${P}.minimumInvestmentAccepted`, kind: 'money', mode: 'numeric' })}`)}
       ${item(12, 'Sales compensation', `${recipients || '<p data-show="no-recipient">No one is paid to sell.</p>'}${more(x.salesCompensationList.length, MAX_RECIPIENTS, 'fd-rcpt-add', x.salesCompensationList.length ? 'Add another' : 'Add a person paid to sell')}`)}
-      ${item(13, 'Offering and sales amounts', `${usdNote}<div class="fl-grid">
+      ${item(13, 'Offering and sales amounts', `<div class="fl-grid">
         ${input(w, { label: 'Total offering amount (or Indefinite)', path: `${P}.offeringSalesAmounts.totalOfferingAmount`, kind: 'amount' })}
         ${input(w, { label: 'Total amount sold', path: `${P}.offeringSalesAmounts.totalAmountSold`, kind: 'money', mode: 'numeric' })}
         ${input(w, { label: 'Total remaining to be sold (or Indefinite)', path: `${P}.offeringSalesAmounts.totalRemaining`, kind: 'amount' })}
@@ -340,10 +341,35 @@
   /* ---------- Review and sign-off ---------- */
   const base = (o) => `#console-filings-formd-${o.id}`;
   const kindOf = (d) => (d.submissionType === 'D/A' ? 'formd-amendment' : 'formd');
-  function issuesHTML(w, list) {
+  /**
+   * At most one message per field (item and field). Where the SEC schema and an EDGAR rule both speak of one field, the
+   * EDGAR rule's sentence is shown (it says what to do); it is an error if either is.
+   */
+  function onePerField(list) {
+    const by = {};
+    const order = [];
+    list.forEach((m) => {
+      const k = `${m.item}|${m.field}`;
+      if (!own(by, k)) {
+        by[k] = [];
+        order.push(k);
+      }
+      by[k].push(m);
+    });
+    return order.map((k) => {
+      const ms = by[k];
+      const pick = ms.find((m) => m.layer === 'edgar') || ms[0];
+      return Object.assign({}, pick, { level: ms.some((m) => m.level === 'error') ? 'error' : pick.level });
+    });
+  }
+  /** The EDGAR access section's address, when its script has loaded (it registers the part access). */
+  const accessLoaded = () => !!document.querySelector('script[src$="/edgar-access.js"]');
+  function issuesHTML(w, all) {
+    const list = onePerField(all);
     const errors = list.filter((m) => m.level === 'error');
     const warnings = list.filter((m) => m.level !== 'error');
-    const li = (m) => `<li>${h(m.message)} ${actBtn('fd-go', 'Go to it', ` data-id="${h(w.o.id)}" data-item="${h(m.item)}" data-field="${h(m.field || '')}"`)}</li>`;
+    const access = (m) => (m.field === 'primaryIssuer.cik' && accessLoaded() ? ` <a href="#console-filings-access-${h(w.o.id)}">EDGAR access</a>` : '');
+    const li = (m) => `<li>${h(m.message)}${access(m)} ${actBtn('fd-go', 'Go to it', ` data-id="${h(w.o.id)}" data-item="${h(m.item)}" data-field="${h(m.field || '')}"`)}</li>`;
     return `${errors.length ? `<h3>To fix before it can be signed off</h3><ul class="fl-errors">${errors.map(li).join('')}</ul>` : ''}${warnings.length ? `<h3>To look at</h3><ul class="fd-warnings">${warnings.map(li).join('')}</ul>` : ''}`;
   }
   function signoffHTML(w, d) {

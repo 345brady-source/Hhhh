@@ -1,5 +1,5 @@
 // gate: browser
-// last "FORMD FLOW: PASS (parts run: 1)"
+// last "FORMD FLOW: PASS (parts run: 4)"
 // Plan 09-04: the Form D section of the Filings tab, as the owner tests it: inside a sandboxed iframe whose policy refuses
 // every connection, with no server, on a 390x844 touch screen (-phone) and at 1280x800 (-desktop). The section's own two
 // files (formd.js, formd-ui.js) are served from the tree; the other sections' files are answered 404, so the check
