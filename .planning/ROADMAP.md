@@ -378,6 +378,28 @@ Plans:
 
 ### Phase 11: Fund accounting and the CPA year-end package
 
-**Goal:** (set by the planner after research) A double-entry ledger every money event posts to, trial balance, fees and expenses, NAV for open-ended funds, bank reconciliation from an uploaded statement, the financial statements a private fund issues, and a one-click year-end package for the sponsor's CPA
-**Depends on:** Phase 10
-**Plans:** not yet planned
+**Goal:** Each fund keeps one double-entry journal in whole cents that every money event the portal already records posts to once (call payments, subscriptions, distributions with the general partner's share and tax withheld, redemptions, monthly fees), so the sponsor never enters the same thing twice; the sponsor's only new inputs are a bank statement file with a decision for each unmatched line, a fair value per investment at a date, and opening balances once for a fund that existed before; the capital-account engine takes each month's income and gains from the journal, so a real fund shows only recorded figures (sample funds keep theirs through the same ledger) and the journal ties to the capital accounts every month; the Audit page gains the trial balance, general ledger, cash flows, bank reconciliation and financial highlights; a month can be closed with its trial balance fingerprinted; one click gives the sponsor's CPA a workbook and a PDF holding everything for the return, usable without the portal; all in the browser with no server, proven in the owner's iPhone conditions; the statement formats wait on a CPA's read
+**Requirements**: FA-01, FA-02, FA-03, FA-04, FA-05, FA-06, FA-07, FA-08, FA-09, FA-10, FA-11, FA-12, FA-13, FA-14 (defined in 11-RESEARCH.md, "Phase Requirements"; each traces to an owner decision D-01 to D-03 or an orchestrator choice C-01 to C-08 of 11-CONTEXT.md)
+**Depends on:** Phase 10 (10-01's stored distribution record and 10-03's shipped PDF libraries; F-2 and C-02 are delivered there)
+**Plans:** 17 plans
+
+Waves: 1 = 11-01, 11-02, 11-03, 11-04 · 2 = 11-05, 11-06 · 3 = 11-07, 11-08 · 4 = 11-09, 11-10, 11-11 · 5 = 11-12, 11-13 · 6 = 11-14, 11-15 · 7 = 11-16 · 8 = 11-17. Plans in one wave share no file. Wave 1 is new files only and can start before phase 10's plans merge; 11-05 waits for 10-01 (gated by 10-14) and 11-06 for 10-03. 11-17 waits for the owner: a CPA's read of a sample package, Excel and Numbers, and a masked export from his bank. Nothing is called ready before the owner has checked it and a CPA has read a package.
+
+Plans:
+- [ ] 11-01-PLAN.md — The journal: chart of accounts by fund type, balanced entries in whole cents, reversal, trial balance and ledger reads (the report builder's), closing with a trial balance hash; hand-worked fund A written once as the fixture (FA-01, FA-07, FA-11, FA-13) (wave 1)
+- [ ] 11-02-PLAN.md — Bank statement files read in the browser: CSV with a column map, OFX in both layouts, BAI2 with control totals; one statement in five formats and two real BAI2 samples (FA-06, FA-13) (wave 1)
+- [ ] 11-03-PLAN.md — The workbook writer over the repository's zip writer, reopened in openpyxl and LibreOffice (FA-10) (wave 1)
+- [ ] 11-04-PLAN.md — The phase gate script (reference gate, phase 10 and phase 11 checks, server count from the base tree) and the check that every sample fund's audit package stays byte-identical (FA-03, FA-13) (wave 1)
+- [ ] 11-05-PLAN.md — Posting from records: one entry per call payment, subscription, distribution (gross, tax withheld as a liability, cash paid, the GP's share), redemption and monthly fee; open periods follow the records, closed periods report differences (FA-02, FA-07, FA-13, FA-14) (wave 2)
+- [ ] 11-06-PLAN.md — The PDF writer for tables on the libraries 10-03 ships, read back by pdftotext, proven in the sandboxed frame (FA-10) (wave 2)
+- [ ] 11-07-PLAN.md — The engine reads the ledger: journal income and gains for real funds, no unset fee or carry, the GP's share paid with a distribution (F-3), opening balances; journal ties to the capital accounts every month for hand-worked funds A to D (FA-03, FA-04, FA-05, FA-13, FA-14) (wave 3)
+- [ ] 11-08-PLAN.md — Bank reconciliation in the books: lines stored once, matches suggested, unmatched lines decided by account (purchases, sales and split payments included), reconciliation to $0.00 (FA-04, FA-06, FA-13) (wave 3)
+- [ ] 11-09-PLAN.md — Sample funds through the same ledger: one balancing sample entry a month, the journal tied to all 15 sample funds, storage measured (FA-01, FA-03, FA-13) (wave 4)
+- [ ] 11-10-PLAN.md — Valuations, opening balances, finalizing and reopening a month (owner only, logged), a redemption fixed at its finalized month (FA-05, FA-07) (wave 4)
+- [ ] 11-11-PLAN.md — Real funds' Audit statements from the journal with one line per missing input and no invented bank reference; net bank evidence (FA-03, FA-08) (wave 4)
+- [ ] 11-12-PLAN.md — Trial balance, general ledger, cash flows, bank reconciliation and financial highlights on the Audit page; statement ties on every fund; the Audit page in the frame at both sizes and in the managed edition (FA-08, FA-12, FA-13) (wave 5)
+- [ ] 11-13-PLAN.md — The Accounting page (self-serve): entries, investments and values, opening balances, close and reopen; roles; the help guide entry (FA-01, FA-04, FA-05, FA-07, FA-12) (wave 5)
+- [ ] 11-14-PLAN.md — The year-end package's sheets: cover, trial balance, ledger, income and expenses, Schedule L balance sheet, roll-forward, ownership changes, tax details (last four only), distributions by type, fees and waterfall, property inputs, investments, bank reconciliation; the return crosswalk; the report builder's read interface (FA-09, FA-11, FA-13) (wave 6)
+- [ ] 11-15-PLAN.md — The Accounting page's bank section: upload, CSV layout, suggestions, decisions, undo, reconcile, the file kept as evidence (FA-06, FA-12) (wave 6)
+- [ ] 11-16-PLAN.md — The year-end package's files and button: workbook, PDF, README and manifest in one zip, signed tax forms only by the sponsor's tick, every sheet viewable in the page (FA-09, FA-10, FA-11, FA-12, FA-13) (wave 7)
+- [ ] 11-17-PLAN.md — The owner's inputs: a CPA's read of a sample package, Excel and Numbers, a masked export from his bank; each applied when it arrives (FA-06, FA-08, FA-09, FA-10) (wave 8)
