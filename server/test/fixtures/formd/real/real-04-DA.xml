@@ -1,0 +1,187 @@
+<?xml version="1.0"?>
+<edgarSubmission>
+
+    <schemaVersion>X0708</schemaVersion>
+
+    <submissionType>D/A</submissionType>
+
+    <testOrLive>LIVE</testOrLive>
+
+    <primaryIssuer>
+        <cik>9000000001</cik>
+        <entityName>Masked Entity 01</entityName>
+        <issuerAddress>
+            <street1>01 Masked Street</street1>
+            <street2>Suite 01</street2>
+            <city>Masked City 01</city>
+            <stateOrCountry>FL</stateOrCountry>
+            <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+            <zipCode>00001</zipCode>
+        </issuerAddress>
+        <issuerPhoneNumber>(555) 010-0001</issuerPhoneNumber>
+        <jurisdictionOfInc>Masked text 02</jurisdictionOfInc>
+        <issuerPreviousNameList>
+            <value>None</value>
+        </issuerPreviousNameList>
+        <edgarPreviousNameList>
+            <value>None</value>
+        </edgarPreviousNameList>
+        <entityType>Limited Partnership</entityType>
+        <yearOfInc>
+            <withinFiveYears>true</withinFiveYears>
+            <value>2022</value>
+        </yearOfInc>
+    </primaryIssuer>
+
+    <relatedPersonsList>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given01</firstName>
+                <lastName>Family01</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>FL</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Executive Officer</relationship>
+                <relationship>Promoter</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 03</relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given01</firstName>
+                <lastName>Family02</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>FL</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Executive Officer</relationship>
+                <relationship>Promoter</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 04</relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given02</firstName>
+                <lastName>Family03</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>FL</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Executive Officer</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 05</relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given01</firstName>
+                <lastName>Family04</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>FL</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Promoter</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 06</relationshipClarification>
+        </relatedPersonInfo>
+    </relatedPersonsList>
+
+    <offeringData>
+        <industryGroup>
+            <industryGroupType>Pooled Investment Fund</industryGroupType>
+            <investmentFundInfo>
+                <investmentFundType>Venture Capital Fund</investmentFundType>
+                <is40Act>false</is40Act>
+            </investmentFundInfo>
+        </industryGroup>
+        <issuerSize>
+            <revenueRange>Decline to Disclose</revenueRange>
+        </issuerSize>
+        <federalExemptionsExclusions>
+            <item>06c</item>
+            <item>3C</item>
+            <item>3C.1</item>
+        </federalExemptionsExclusions>
+        <typeOfFiling>
+            <newOrAmendment>
+                <isAmendment>true</isAmendment>
+                <previousAccessionNumber>9000000000-00-000001</previousAccessionNumber>
+            </newOrAmendment>
+            <dateOfFirstSale>
+                <value>2022-10-31</value>
+            </dateOfFirstSale>
+        </typeOfFiling>
+        <durationOfOffering>
+            <moreThanOneYear>true</moreThanOneYear>
+        </durationOfOffering>
+        <typesOfSecuritiesOffered>
+            <isEquityType>true</isEquityType>
+            <isPooledInvestmentFundType>true</isPooledInvestmentFundType>
+        </typesOfSecuritiesOffered>
+        <businessCombinationTransaction>
+            <isBusinessCombinationTransaction>false</isBusinessCombinationTransaction>
+            <clarificationOfResponse></clarificationOfResponse>
+        </businessCombinationTransaction>
+        <minimumInvestmentAccepted>32552</minimumInvestmentAccepted>
+        <salesCompensationList></salesCompensationList>
+        <offeringSalesAmounts>
+            <totalOfferingAmount>Indefinite</totalOfferingAmount>
+            <totalAmountSold>64955906</totalAmountSold>
+            <totalRemaining>Indefinite</totalRemaining>
+            <clarificationOfResponse></clarificationOfResponse>
+        </offeringSalesAmounts>
+        <investors>
+            <hasNonAccreditedInvestors>false</hasNonAccreditedInvestors>
+            <totalNumberAlreadyInvested>92</totalNumberAlreadyInvested>
+        </investors>
+        <salesCommissionsFindersFees>
+            <salesCommissions>
+                <dollarAmount>0</dollarAmount>
+            </salesCommissions>
+            <findersFees>
+                <dollarAmount>0</dollarAmount>
+            </findersFees>
+            <clarificationOfResponse></clarificationOfResponse>
+        </salesCommissionsFindersFees>
+        <useOfProceeds>
+            <grossProceedsUsed>
+                <dollarAmount>0</dollarAmount>
+            </grossProceedsUsed>
+            <clarificationOfResponse></clarificationOfResponse>
+        </useOfProceeds>
+        <signatureBlock>
+            <authorizedRepresentative>false</authorizedRepresentative>
+            <signature>
+                <issuerName>Masked Entity 01</issuerName>
+                <signatureName>Masked Signer 01</signatureName>
+                <nameOfSigner>Masked Signer 02</nameOfSigner>
+                <signatureTitle>Masked text 07</signatureTitle>
+                <signatureDate>2026-11-19</signatureDate>
+            </signature>
+        </signatureBlock>
+    </offeringData>
+</edgarSubmission>
