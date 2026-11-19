@@ -1,5 +1,5 @@
 // gate: node
-// last "BLUESKY MATH: PASS (cases run: 4)"
+// last "BLUESKY MATH: PASS (cases run: 6)"
 // Pure checks for plan 09-07 (no browser): the state table (assets/js/bluesky-data.js) and NS.bluesky (assets/js/bluesky.js)
 // with data.js, eligibility.js and filings.js in one sandbox, the way the browser loads them (window.CVPortal).
 //   table    the table's codes are the 52 of the pinned SEC schema; every row has a name; the rule holds for every row
@@ -12,10 +12,16 @@
 //            fee as its own line; open while any line has no amount; the amount due through orderLines
 //   package  the issuer, the latest accession number, each state's first sale, amount sold and investors, the admin's
 //            contact, and no investor's name or address
+//   results  an order keeps each state's quoted fee on the record, its pass-through lines without an amount; a state's
+//            result (date, filing ID, fee paid, renewal date) sets it filed and gives its line the fee paid; a quoted and a
+//            paid fee that differ are both kept and the difference reported; a renewal order is the $50 service fee plus
+//            that state's line
+//   selfcheck an unknown --case name and an empty list exit 1 with FAIL; the gate markers
 //   node bluesky-math.js [--case name1,name2]
 // One PASS or FAIL line per check; the last line is "BLUESKY MATH: PASS (cases run: N)" or
 // "BLUESKY MATH: FAIL (cases run: N) - <failed cases>". The two marker lines above are read by gate9.sh.
 const fs = require('fs');
+const { spawnSync } = require('child_process');
 const path = require('path');
 const vm = require('vm');
 const L = require('../../06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js');
@@ -192,10 +198,74 @@ const cases = {
     check('each state with its first sale date, amount sold and number of investors', s('NY').firstSale === '2026-10-03' && s('NY').sold === 150000 && s('NY').investors === 2 && s('CA').sold === 75000 && s('CA').investors === 1 && s('TX').firstSale === '2026-10-12' && s('TX').sold === 25000 && s('NY').name === 'New York', p.states);
     check('a state ticked by hand with no sale in it is listed with none', s('WA').firstSale === '' && s('WA').sold === 0 && s('WA').investors === 0, s('WA'));
     check('the admin\'s contact', p.contact && p.contact.name === 'Ann Admin' && p.contact.email === 'ann@sample.test' && p.contact.phone === '555 0100', p.contact);
+    const noTeam = sample();
+    delete noTeam.team;
+    noTeam.tenant.support.team = 'Sample Investor Relations';
+    const pc = B.pack(noTeam, noTeam.offerings[0], ['NY']).contact;
+    check('with no team list on record (a workspace never opened at Team), the firm\'s support contact', pc.name === 'Sample Investor Relations' && pc.email === 'admin@sample.test' && pc.phone === '555 0100', pc);
     const text = J(p);
     check('it holds no investor\'s name or address', !/Investor [a-z]|Elm St|Oak Ave|Bay St|Lamar|Albany|Buffalo|Fresno|Austin|Paris|1220|1420|9370|7870/.test(text), text);
     check('and the amount offered (a fee may depend on it)', p.offered === 2000000, p.offered);
     check('making it writes nothing to the workspace', J(ws) === before);
+  },
+
+  results({ check }) {
+    const calls = [];
+    const NS = load({ audit: { log: (w, e) => (calls.push(e), e) } });
+    const B = NS.bluesky;
+    const F = NS.filings;
+    const ws = sample();
+    const o = ws.offerings[0];
+    F.recordFiled(ws, 'o1', { type: 'D', filedOn: '2026-10-20', accession: '0001234567-26-000111', source: 'self' });
+    // A test row for New York (invented source); California stays unconfirmed.
+    const T = copy(NS.blueskyData);
+    Object.assign(T.table.NY, { confirmed: true, noticeRequired: true, fee: { kind: 'fixed', cents: 30000 }, renewal: { months: 12, fee: { kind: 'fixed', cents: 25000 } }, source: 'test row, invented for this check', readOn: '2026-11-01' });
+    const ord = B.placeOrder(ws, o, ['CA', 'NY'], { by: 'Ann Admin', data: T });
+    const pass = ((ord && ord.lines) || []).filter((l) => l.passThrough);
+    check('the order: $100 service, the two states\' lines and the filing system\'s line, every pass-through line with no amount', !!ord && ord.kind === 'bluesky' && ord.lines[0].cents === 10000 && pass.length === 3 && pass.every((l) => l.cents === null) && ord.dueCents === 10000 && ord.openFees === true, ord);
+    const st = () => ws.filings.offerings.o1.states;
+    check('the quoted fee is kept per state on the record and in the package (New York $300; California none)', st().NY.quotedCents === 30000 && st().CA.quotedCents === null && st().NY.status === 'ordered' && st().CA.status === 'ordered' && ord.package.states.find((x) => x.code === 'NY').quotedCents === 30000 && ord.package.states.find((x) => x.code === 'CA').quotedCents === null, { states: st(), pkg: ord && ord.package });
+    const r1 = B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-10', efdId: 'NY-123', feeCents: 35000, renewsOn: '2027-11-10' }, '2026-11-12');
+    check('recording New York\'s result sets it filed with its date, filing ID, fee paid and renewal date', !!r1 && st().NY.status === 'filed' && st().NY.filedOn === '2026-11-10' && st().NY.efdId === 'NY-123' && st().NY.feeCents === 35000 && st().NY.renewsOn === '2027-11-10' && st().NY.source === 'portal', st().NY);
+    check('the quoted fee is kept beside the fee paid, and the difference is reported ($50 more)', st().NY.quotedCents === 30000 && B.difference(st().NY) === 5000 && r1.difference === 5000, { NY: st().NY, r1 });
+    const line = (x, code) => x.lines.find((l) => l.state === code);
+    check('the order\'s New York line now carries the fee paid; the amount due counts it; fees are still open', line(ord, 'NY').cents === 35000 && line(ord, 'CA').cents === null && ord.dueCents === 45000 && ord.openFees === true && ord.status === 'filed', ord);
+    const r2 = B.recordResult(ws, 'o1', 'CA', { filedOn: '2026-11-11', efdId: '', feeCents: 20000, renewsOn: '', systemFeeCents: 16000 }, '2026-11-12');
+    check('with no quoted fee there is no difference to report', !!r2 && r2.difference === null && B.difference(st().CA) === null);
+    check('once every state is filed and every fee known the order is done, at cost: $100 + $350 + $200 + $160 due', ord.openFees === false && ord.status === 'done' && ord.dueCents === 81000 && ord.lines.find((l) => /Filing system fee/.test(l.label)).cents === 16000, ord);
+    const d = F.due(ws, '2026-11-12', { states: T }).filter((x) => /^state-/.test(x.kind));
+    check('no first-notice reminder is left; New York\'s renewal is on its date', d.map((x) => x.key).join() === 'state-renewal:o1:NY' && d[0].due === '2027-11-10', d);
+    const bad = [
+      B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-20', feeCents: 1 }, '2026-11-12'),
+      B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-10', feeCents: -1 }, '2026-11-12'),
+      B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-10', feeCents: 10.5 }, '2026-11-12'),
+      B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-10', feeCents: 1, renewsOn: 'soon' }, '2026-11-12'),
+      B.recordResult(ws, 'o1', 'ZZ', { filedOn: '2026-11-10', feeCents: 1 }, '2026-11-12'),
+      B.recordResult(ws, 'nosuch', 'NY', { filedOn: '2026-11-10', feeCents: 1 }, '2026-11-12')
+    ];
+    check('a future date, a fee that is not whole cents, a renewal date that is not a date, an unknown state or offering are refused and change nothing', bad.every((x) => x === null) && st().NY.feeCents === 35000 && st().NY.filedOn === '2026-11-10', bad);
+    const ren = B.placeOrder(ws, o, ['NY'], { by: 'Ann Admin', data: NS.blueskyData, renewal: true });
+    check('a renewal order: the $50 service fee plus New York\'s line, nothing else, "$50 due"', !!ren && ren.kind === 'bluesky-renewal' && ren.lines.length === 2 && ren.lines[0].cents === 5000 && ren.lines[1].state === 'NY' && ren.lines[1].cents === null && ren.dueCents === 5000 && ren.openFees === true, ren);
+    check('the state stays filed, with its renewal ordered', st().NY.filedOn === '2026-11-10' && st().NY.status === 'renewal-ordered', st().NY);
+    const ren2 = B.placeOrder(ws, o, ['NY'], { by: 'Ann Admin', data: T, renewal: true });
+    check('with a confirmed renewal fee the quote is kept on the record (New York $250), and the line still has no amount', !!ren2 && st().NY.quotedCents === 25000 && ren2.lines[1].cents === null && ren2.lines.length === 2, { NY: st().NY, ren2 });
+    F.cancelOrder(ws, ren2.id);
+    const r3 = B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-12', efdId: 'NY-124', feeCents: 25000, renewsOn: '2027-11-12' }, '2026-11-12');
+    check('the renewal\'s result goes to the renewal order still open (not the cancelled one) and sets the next renewal date', !!r3 && st().NY.status === 'filed' && st().NY.renewsOn === '2027-11-12' && ren.lines[1].cents === 25000 && ren.dueCents === 30000 && ren2.lines[1].cents === null, { ren, ren2, NY: st().NY });
+    check('placing an order with no state, or for an unknown offering, records nothing', B.placeOrder(ws, o, [], { by: 'x', data: T }) === null && B.placeOrder(ws, { id: 'nosuch' }, ['NY'], { by: 'x', data: T }) === null && ws.filings.orders.length === 3);
+    check('each result is in the change log', calls.filter((c) => /State notice result recorded/.test(c.action)).length === 3, calls.map((c) => c.action));
+  },
+
+  selfcheck({ check }) {
+    const run = (args) => spawnSync(process.execPath, [__filename].concat(args), { encoding: 'utf8' });
+    const u = run(['--case', 'nosuchcase']);
+    check('an unknown --case name exits 1 with FAIL', u.status === 1 && /^FAIL /m.test(u.stdout) && /^BLUESKY MATH: FAIL \(cases run: 0\)/m.test(u.stdout), { status: u.status, out: u.stdout.slice(-300) });
+    const e = run(['--case', '']);
+    check('an empty case list exits 1 with FAIL', e.status === 1 && /^FAIL /m.test(e.stdout) && /^BLUESKY MATH: FAIL \(cases run: 0\)/m.test(e.stdout), { status: e.status, out: e.stdout.slice(-300) });
+    const src = fs.readFileSync(__filename, 'utf8').split('\n');
+    check('the gate markers are the first two lines, and the second gives the last line of a full run', src[0] === '// gate: node' && src[1] === `// last "BLUESKY MATH: PASS (cases run: ${Object.keys(cases).length})"`, src.slice(0, 2));
+    const flow = fs.readFileSync(path.join(__dirname, 'bluesky-flow.js'), 'utf8').split('\n');
+    check('the flow check\'s markers say a browser check of four parts', flow[0] === '// gate: browser' && flow[1] === '// last "BLUESKY FLOW: PASS (parts run: 4)"', flow.slice(0, 2));
   }
 };
 

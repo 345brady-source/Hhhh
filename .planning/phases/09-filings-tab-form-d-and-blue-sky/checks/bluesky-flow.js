@@ -1,5 +1,5 @@
 // gate: browser
-// last "BLUESKY FLOW: PASS (parts run: 2)"
+// last "BLUESKY FLOW: PASS (parts run: 4)"
 // Plan 09-07: the state filings section of the Filings tab, as the owner tests it: inside a sandboxed iframe whose policy
 // refuses every connection, with no server, on a 390x844 touch screen (-phone) and at 1280x800 (-desktop). The part files
 // of the other Filings plans are answered 404, so the section is measured alone.
@@ -11,7 +11,13 @@
 //                   number of the notice the sponsor filed before anything can be ordered (angle brackets typed are shown
 //                   as text); an investor with no state on file is said in one line; un-ticking every state leaves nothing
 //                   to order; the package names the admin's contact; a team member sees the section and cannot order
-//   NODE_PATH=$(npm root -g) node bluesky-flow.js [--only order-phone,order-desktop]
+//   results-phone,  before any result the tab's State notices row opens to "State notice: New York", "First sale in the state
+//   results-desktop on <date>", "To file", counted; New York's result recorded on the section (a team member records it on
+//                   the desktop) removes that reminder and shows the state filed with its date and filing ID; the quoted and
+//                   the paid fee are both shown with the difference; a renewal date 20 days ahead shows a renewal reminder
+//                   in the tab with its date; "Order renewal" records an order of kind bluesky-renewal with "$50 due";
+//                   silencing the renewal reminder takes it off the count and keeps it listed
+//   NODE_PATH=$(npm root -g) node bluesky-flow.js [--only order-phone,order-desktop,results-phone,results-desktop]
 // The last line is "BLUESKY FLOW: PASS (parts run: N)" or "BLUESKY FLOW: FAIL (parts run: N) - <failed parts>". The two
 // marker lines above are read by gate9.sh.
 const path = require('path');
@@ -23,7 +29,9 @@ const OUT = path.join(Lib.OUT, 'bluesky-flow');
 fs.mkdirSync(OUT, { recursive: true });
 Lib.describeShots([
   [/-picker\.png$/, 'State filings for an offering with investors in New York and California, Texas added by hand: the service fee $100, and the state fees and the filing system\'s fee to be confirmed.'],
-  [/-ordered\.png$/, 'The same section once the admin ordered: "$100 due" with fees to be confirmed, and the package staff file from by hand.']
+  [/-ordered\.png$/, 'The same section once the admin ordered: "$100 due" with fees to be confirmed, and the package staff file from by hand.'],
+  [/-result\.png$/, 'New York\'s result recorded: filed with its date and filing ID, the fee paid beside the fee quoted with the difference, the renewal date and Order renewal.'],
+  [/-renewal\.png$/, 'The Filings tab once New York renews in 20 days: the renewal reminder with its date, beside California\'s notice still to file.']
 ]);
 
 /** The part files of the other Filings plans: answered 404, so this check measures the state filings section alone. */
@@ -134,8 +142,14 @@ async function order(size, { check, S }) {
   const pack = await L9.text(F, `${SEC} [data-pack]`);
   check('the package on the page lists the issuer (as text) and the accession number', pack.indexOf(NAME) >= 0 && pack.indexOf(ACC) >= 0 && (await F.fr.locator(`${SEC} [data-pack] b`).count()) === 0, pack);
   if (desk) {
-    const admin = await F.fr.evaluate(() => (window.CVPortal.state.ws.team || []).find((m) => m.role === 'admin' && m.current) || (window.CVPortal.state.ws.team || []).find((m) => m.role === 'admin') || {});
-    check('the package names the admin\'s contact', !!admin.name && pack.indexOf(admin.name) >= 0 && (!admin.email || pack.indexOf(admin.email) >= 0) && pk.contact && pk.contact.name === admin.name, { admin, contact: pk.contact });
+    // The admin on the team list; a workspace never opened at Team has none, and the firm's support contact is named.
+    const admin = await F.fr.evaluate(() => {
+      const ws = window.CVPortal.state.ws;
+      const sup = ws.tenant.support || {};
+      const m = (ws.team || []).find((x) => x.role === 'admin' && x.current) || (ws.team || []).find((x) => x.role === 'admin' && x.status !== 'invited');
+      return m ? { name: m.name, email: m.email || sup.email } : { name: sup.team, email: sup.email };
+    });
+    check('the package names the admin\'s contact (the firm\'s support contact when no team list is on record)', !!admin.name && pack.indexOf(admin.name) >= 0 && (!admin.email || pack.indexOf(admin.email) >= 0) && pk.contact && pk.contact.name === admin.name, { admin, contact: pk.contact });
   }
   check('and each state with its first sale date, amount sold and investors', /New York[^\n]*/.test(pack) && pack.indexOf(L9.label(firstNY)) >= 0 && /\$200,000/.test(pack) && /2 investors/.test(pack) && pack.indexOf(L9.label(firstCA)) >= 0 && /\$100,000/.test(pack) && /1 investor\b/.test(pack) && /Texas/.test(pack), pack);
   await F.A.page.screenshot({ path: path.join(OUT, `${size}-ordered.png`), fullPage: false });
@@ -177,9 +191,94 @@ async function noFormD(F, check, id) {
   check('with the date and the accession number the notice is recorded as the sponsor\'s own, and the order control appears', r.length === 1 && r[0].type === 'D' && r[0].source === 'self' && r[0].accession === ACC && r[0].status === 'accepted' && (await F.fr.locator(`${SEC} [data-action="bs-order"]`).count()) === 1 && (await F.fr.locator(form).count()) === 0, r);
 }
 
+const MENU = (F) => F.fr.evaluate((sel) => ((document.querySelector(sel) || { querySelector: () => null }).querySelector('.cs-nav-count') || { textContent: '' }).textContent.trim(), NAV);
+const rowSel = (key) => `.fl-row[data-key="${key}"]`;
+/** The tab with the offering's State notices row open (09-03's tab as built: one row that opens to the states). */
+async function tabStates(F, id) {
+  await L9.goto(F, 'console-filings', '.fl');
+  await F.fr.waitForSelector(line(id), { timeout: 30000 }).catch(() => {});
+  const head = `.fl-off[data-offering="${id}"] [data-action="fl-open"][data-id="states:${id}"]`;
+  if ((await F.fr.locator(head).count()) && (await F.fr.getAttribute(head, 'aria-expanded')) !== 'true') await L9.press(F, head);
+}
+const rowText = (F, key) => L9.text(F, rowSel(key));
+
+/** Per-state results, the renewal and its reminder. On the desktop a team member records the result. */
+async function results(size, { check, S }) {
+  const F = await L9.framed(S, size, { absent: ABSENT });
+  await L9.proveRefused(check, F);
+  await L9.sample(F);
+  const desk = size === 'desktop';
+  const seeded = await L9.seed(F, { name: NAME, sales: [{ daysAgo: 30, state: 'NY', funded: true }, { daysAgo: 20, state: 'CA' }], notices: [{ type: 'D', daysAgo: 25, accession: ACC }] });
+  const id = seeded.offeringId;
+  const today = seeded.today;
+  const firstNY = seeded.sales[0].date;
+  await L9.press(F, NAV);
+  await tabStates(F, id);
+  const ny = `state-first:${id}:NY`;
+  let t = await rowText(F, ny);
+  const pill = await L9.text(F, `${rowSel(ny)} .fl-pill`);
+  check('before any result the tab\'s State notices row opens to "State notice: New York", first sale in the state on its date, "To file", with no due date', /State notice: New York/.test(t) && t.indexOf(`First sale in the state on ${L9.label(firstNY)}`) >= 0 && pill.trim() === 'To file' && !/Due /.test(t), { t, pill });
+  check('it is counted beside Filings (New York and California)', (await MENU(F)) === '2', await MENU(F));
+  // A test row for New York in the page's table (invented source), so a fee is quoted: what plan 09-10's rows will do.
+  await F.fr.evaluate((d) => Object.assign(window.CVPortal.blueskyData.table.NY, { confirmed: true, noticeRequired: true, fee: { kind: 'fixed', cents: 30000 }, source: 'test row, invented for this check', readOn: d }), today);
+  await L9.goto(F, `console-filings-states-${id}`, SEC);
+  await L9.press(F, `${SEC} [data-action="bs-order"]`);
+  let fl = await filings(F);
+  check('the order keeps New York\'s quoted fee on the record, and its line has no amount until the fee paid is recorded', fl.offerings[id].states.NY.quotedCents === 30000 && fl.offerings[id].states.NY.status === 'ordered' && fl.orders.slice(-1)[0].lines.every((l) => !l.passThrough || l.cents === null), { NY: fl.offerings[id].states.NY, lines: fl.orders.slice(-1)[0].lines });
+  if (desk) {
+    await L9.role(F, 'team');
+    await L9.goto(F, `console-filings-states-${id}`, SEC);
+  }
+  const form = `${SEC} form[data-form="bs-result"][data-code="NY"]`;
+  await L9.press(F, `${SEC} [data-action="bs-form"][data-code="NY"]`);
+  check(`${desk ? 'a team member' : 'the admin'} opens New York's result form`, (await F.fr.locator(form).count()) === 1);
+  const filedOn = L9.iso(today, -1);
+  const renewsOn = L9.iso(today, 20);
+  const efd = desk ? 'NY<i>2026</i>-1' : 'NY-2026-1';
+  await F.fr.fill(`${form} [name="filedOn"]`, filedOn);
+  await F.fr.fill(`${form} [name="efdId"]`, efd);
+  await F.fr.fill(`${form} [name="fee"]`, '350');
+  await F.fr.fill(`${form} [name="renewsOn"]`, renewsOn);
+  await L9.press(F, `${form} button[type=submit]`);
+  fl = await filings(F);
+  const st = fl.offerings[id].states.NY;
+  check('the result is recorded: filed, with its date, filing ID, fee paid and renewal date', st.status === 'filed' && st.filedOn === filedOn && st.efdId === efd && st.feeCents === 35000 && st.renewsOn === renewsOn && st.quotedCents === 30000, st);
+  const done = await L9.text(F, `${SEC} [data-done] li[data-state="NY"]`);
+  check('the section shows New York filed with its date and filing ID (typed text shown as text)', done.indexOf(`Filed ${L9.label(filedOn)}`) >= 0 && done.indexOf(efd) >= 0 && (await F.fr.locator(`${SEC} [data-done] i`).count()) === 0, done);
+  check('the quoted and the paid fee are both shown, with the difference', /Quoted \$300/.test(done) && /paid \$350/.test(done) && /\$50 more than quoted/.test(done), done);
+  check(desk ? 'a team member has no order control (no Order renewal)' : 'the admin has Order renewal on the state', (await F.fr.locator(`${SEC} [data-action="bs-renew"][data-code="NY"]`).count()) === (desk ? 0 : 1));
+  await F.A.page.screenshot({ path: path.join(OUT, `${size}-result.png`), fullPage: false });
+  if (desk) await L9.role(F, 'admin');
+  await tabStates(F, id);
+  const ren = `state-renewal:${id}:NY`;
+  t = await rowText(F, ren);
+  check('the tab: New York\'s first-notice reminder is gone; its renewal reminder shows with its date', (await F.fr.locator(rowSel(ny)).count()) === 0 && /State notice renewal: New York/.test(t) && t.indexOf(`Due ${L9.label(renewsOn)}`) >= 0, t);
+  check('the renewal is counted with California\'s notice', (await MENU(F)) === '2', await MENU(F));
+  await F.A.page.screenshot({ path: path.join(OUT, `${size}-renewal.png`), fullPage: false });
+  await L9.wayOut(check, F, 'the tab');
+  await L9.goto(F, `console-filings-states-${id}`, SEC);
+  await L9.press(F, `${SEC} [data-action="bs-renew"][data-code="NY"]`);
+  fl = await filings(F);
+  const r = fl.orders.slice(-1)[0];
+  check('"Order renewal" records an order of kind bluesky-renewal at $50 due: the service fee and New York\'s line', r.kind === 'bluesky-renewal' && r.dueCents === 5000 && r.lines.length === 2 && r.lines[1].state === 'NY' && r.lines[1].cents === null && fl.offerings[id].states.NY.status === 'renewal-ordered', r);
+  const shown = await L9.text(F, `${SEC} .fl-order[data-order="${r.id}"]`);
+  check('the section shows the renewal order with "$50 due"', /\$50 due/.test(shown) && /renewal/i.test(shown), shown);
+  await L9.wayOut(check, F, 'the section with its results: Back stays on screen', BACK);
+  await L9.leak(check, F, 'the section with its results');
+  await tabStates(F, id);
+  await L9.press(F, `${rowSel(ren)} [data-action="fl-silence"]`);
+  const after = await rowText(F, ren);
+  check('silencing the renewal reminder takes it off the count and keeps it listed', (await MENU(F)) === '1' && /Silenced/.test(after) && /State notice renewal: New York/.test(after), { menu: await MENU(F), after });
+  await L9.leak(check, F, 'the tab');
+  await L9.quiet(check, F);
+  await F.A.context.close();
+}
+
 const PARTS = {
   'order-phone': (ctx) => order('phone', ctx),
-  'order-desktop': (ctx) => order('desktop', ctx)
+  'order-desktop': (ctx) => order('desktop', ctx),
+  'results-phone': (ctx) => results('phone', ctx),
+  'results-desktop': (ctx) => results('desktop', ctx)
 };
 
 Lib.runParts(PARTS, { name: 'BLUESKY FLOW', browser: true });
