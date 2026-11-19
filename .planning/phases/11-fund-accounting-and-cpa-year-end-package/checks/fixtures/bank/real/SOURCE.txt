@@ -1,0 +1,17 @@
+Two real BAI2 files, used only as test data by checks/bank-files.js (case bai2-real). They are copied byte for byte
+and not changed.
+
+Project:          moov-io/bai2 (https://github.com/moov-io/bai2), a reader, writer and validator for BAI2 files
+Copyright holder: The Moov Authors (as the project's source file headers state)
+Licence:          Apache License 2.0, as the project's README states ("Apache License 2.0 - See LICENSE for details").
+                  The full licence text is in LICENSE beside this file (copied from apache.org, 11,358 bytes).
+                  The project has no NOTICE file (https://raw.githubusercontent.com/moov-io/bai2/master/NOTICE gave
+                  404 on 2026-11-19).
+
+sample1.txt   from test/testdata/sample1.txt on the master branch
+              SHA-256 0150331e6118e9fc6a1a10871f739b2d317c5cca5159c007622cffbbb64fe00c
+sample2.txt   from test/testdata/sample2.txt on the master branch
+              SHA-256 34ccf04a37e44353e5aac16981201239ae90102c12806aaa739a2e13ae3aee6b
+
+Both SHA-256 values were checked against a fresh download from the project on 2026-11-19. The files are the
+project's published test data; they hold no person's name, address or taxpayer number.
