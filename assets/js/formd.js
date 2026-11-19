@@ -278,6 +278,8 @@
     return n;
   }
   const issuersOf = (d) => [d.primaryIssuer].concat(d.issuerList);
+  /** Is this a filer contact with anything in it? { name, phone, email, notify: [up to three email addresses] } */
+  const hasContact = (c) => !!c && typeof c === 'object' && (clean(c.name) !== '' || clean(c.phone) !== '' || clean(c.email) !== '');
 
   // ---------------------------------------------------------------------------------------------------------------
   // Draft to the file's elements, in the schema's order. Each element is { n: name, v: text } or { n, c: [elements] },
@@ -315,8 +317,8 @@
     const estimate = (n, e, f) => E(n, [V('dollarAmount', e.dollarAmount, `${f}.dollarAmount`), Y('isEstimate', e.isEstimate, `${f}.isEstimate`)], f);
     const x = d.offeringData;
     const P = 'offeringData';
-    const contact = o.contact && typeof o.contact === 'object' ? o.contact : null;
-    const notify = contact ? list(contact.notify).filter((e) => clean(e) !== '') : [];
+    const notify = o.contact && typeof o.contact === 'object' ? list(o.contact.notify).filter((e) => clean(e) !== '') : [];
+    const contact = hasContact(o.contact) || notify.length ? o.contact : null;
     const several = x.signatureBlock.signature.length > 1;
     return E(
       'edgarSubmission',
@@ -609,10 +611,366 @@
     });
   }
 
-  const todo = (name) => () => {
-    throw new Error(`Form D: ${name} is not built yet.`);
+  // ---------------------------------------------------------------------------------------------------------------
+  // validate: the schema's rules (the table above, on the very elements toXml writes) and EDGAR's own rules, which the
+  // schema does not hold (the SEC's Form D XML Technical Specification, sections 3.3, 5 and 6). Every message is a plain
+  // sentence that starts with the item it is about.
+  //   item     1 to 16, or 'signature', 'filer' (the CCC and the filer contact) or 'file'
+  //   field    the draft field, as in sources and missing of prefill ('primaryIssuer.issuerAddress.city')
+  //   level    'error' (EDGAR would suspend the notice) or 'warning' (EDGAR accepts it and says so)
+  //   layer    'schema' or 'edgar'
+  // opts: today ('YYYY-MM-DD'; the signature date may not be later), submission (true when the file is to be filed),
+  // ccc and contact (checked only when the key is passed: the browser never holds a CCC).
+  // ---------------------------------------------------------------------------------------------------------------
+  const HEAD = { signature: 'Signature', filer: 'Filer', file: 'File' };
+  const LABEL = {
+    submissionType: 'the form type',
+    testOrLive: 'the TEST or LIVE setting',
+    contactName: "the contact's name",
+    contactPhoneNumber: "the contact's phone number",
+    contactEmailAddress: "the contact's email address",
+    notificationEmailAddress: 'a notification email address',
+    cik: "the issuer's CIK",
+    ccc: 'the CCC',
+    street1: 'the street address',
+    street2: 'the second street line',
+    city: 'the city',
+    stateOrCountry: 'the state or country',
+    zipCode: 'the postal code',
+    issuerPhoneNumber: 'the phone number',
+    previousName: 'a previous name',
+    entityType: 'the entity type',
+    entityTypeOtherDesc: 'the description of the entity type',
+    'yearOfInc.value': 'the year of formation',
+    firstName: 'the first name',
+    middleName: 'the middle name',
+    lastName: 'the last name',
+    relationship: 'a relationship',
+    relationshipClarification: 'the clarification',
+    industryGroupType: 'the industry group',
+    investmentFundType: 'the type of fund',
+    is40Act: 'the answer on registration under the Investment Company Act',
+    revenueRange: 'the revenue range',
+    aggregateNetAssetValueRange: 'the net asset value range',
+    item: 'an exemption',
+    isAmendment: 'the answer on new notice or amendment',
+    previousAccessionNumber: "the previous notice's accession number",
+    'dateOfFirstSale.value': 'the date of first sale',
+    yetToOccur: 'the yet to occur mark',
+    moreThanOneYear: 'the answer on whether the offering lasts more than one year',
+    descriptionOfOtherType: 'the description of the other type of security',
+    isBusinessCombinationTransaction: 'the answer on a business combination',
+    clarificationOfResponse: 'the clarification',
+    minimumInvestmentAccepted: 'the minimum investment',
+    recipientName: "the recipient's name",
+    recipientCRDNumber: "the recipient's CRD number",
+    associatedBDName: "the name of the recipient's broker or dealer",
+    associatedBDCRDNumber: "the CRD number of the recipient's broker or dealer",
+    state: 'a state of solicitation',
+    foreignSolicitation: 'the answer on solicitation outside the United States',
+    totalOfferingAmount: 'the total offering amount',
+    totalAmountSold: 'the total amount sold',
+    totalRemaining: 'the total remaining to be sold',
+    hasNonAccreditedInvestors: 'the answer on non-accredited investors',
+    numberNonAccreditedInvestors: 'the number of non-accredited investors',
+    totalNumberAlreadyInvested: 'the total number of investors',
+    'salesCommissions.dollarAmount': 'the amount of sales commissions',
+    'findersFees.dollarAmount': "the amount of finders' fees",
+    'grossProceedsUsed.dollarAmount': 'the amount paid to executive officers, directors and promoters',
+    isEstimate: 'the estimate mark',
+    authorizedRepresentative: 'the answer on signing for every issuer',
+    issuerName: "the issuer's name",
+    signatureName: 'the signature',
+    nameOfSigner: "the signer's name",
+    signatureTitle: "the signer's title",
+    signatureDate: 'the date signed'
   };
-  const API = { LISTS, blank, prefill: todo('prefill'), validate: todo('validate'), toXml, fromXml, snapshot: todo('snapshot') };
+  const MANY_OF = { relatedPersonInfo: ['related person', 'related persons'], relationship: ['relationship', 'relationships'], item: ['exemption', 'exemptions'], signature: ['signature', 'signatures'], previousName: ['previous name', 'previous names'], recipient: ['recipient', 'recipients'], issuer: ['additional issuer', 'additional issuers'], notificationEmailAddress: ['notification email address', 'notification email addresses'] };
+  // [when none is given, when two are]
+  const CHOOSE = {
+    yearOfInc: ['say when the issuer was formed', 'give one answer on when the issuer was formed'],
+    issuerSize: ['choose a revenue range or a net asset value range', 'give a revenue range or a net asset value range, not both'],
+    dateOfFirstSale: ['give the date of first sale, or say it has yet to occur', 'give the date of first sale or say it has yet to occur, not both'],
+    statesOfSolicitationList: ['', 'choose All States or list the states, not both'],
+    issuerPreviousNameList: ['', 'list the previous names or say None, not both']
+  };
+  const AMOUNTS = [
+    [11, 'offeringData.minimumInvestmentAccepted', (x) => x.minimumInvestmentAccepted],
+    [13, 'offeringData.offeringSalesAmounts.totalOfferingAmount', (x) => x.offeringSalesAmounts.totalOfferingAmount, true],
+    [13, 'offeringData.offeringSalesAmounts.totalAmountSold', (x) => x.offeringSalesAmounts.totalAmountSold],
+    [13, 'offeringData.offeringSalesAmounts.totalRemaining', (x) => x.offeringSalesAmounts.totalRemaining, true],
+    [14, 'offeringData.investors.numberNonAccreditedInvestors', (x) => x.investors.numberNonAccreditedInvestors],
+    [14, 'offeringData.investors.totalNumberAlreadyInvested', (x) => x.investors.totalNumberAlreadyInvested],
+    [15, 'offeringData.salesCommissionsFindersFees.salesCommissions.dollarAmount', (x) => x.salesCommissionsFindersFees.salesCommissions.dollarAmount],
+    [15, 'offeringData.salesCommissionsFindersFees.findersFees.dollarAmount', (x) => x.salesCommissionsFindersFees.findersFees.dollarAmount],
+    [16, 'offeringData.useOfProceeds.grossProceedsUsed.dollarAmount', (x) => x.useOfProceeds.grossProceedsUsed.dollarAmount]
+  ];
+  const PLAIN = /^[0-9]+$/;
+  const PO_BOX = /\bp\.?\s?o\.?\s?box\b|\bpost\s+office\s+box\b|\bpob\s*\d|^box\s+\d/i;
+  const CARE_OF = /\bc\/o\b|\bin care of\b/i;
+  const RULE_504 = ['04', '04.1', '04.2', '04.3'];
+  function localToday() {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  }
+  function validate(draft, opts) {
+    opts = opts || {};
+    const d = shape(draft);
+    const out = [];
+    const add = (level, layer, item, field, who, text) => out.push({ item, field, level, layer, message: `${typeof item === 'number' ? `Item ${item}` : HEAD[item] || 'File'}: ${who ? `${who}: ` : ''}${text}.` });
+
+    // the schema's rules, on the elements toXml writes
+    (function walk(e, group, up) {
+      const here = { item: e.item != null ? e.item : up.item, who: e.who != null ? e.who : up.who };
+      const model = MODEL[group];
+      const count = {};
+      e.c.forEach((c) => (count[c.n] = (count[c.n] || 0) + 1));
+      const fail = (text, field) => add('error', 'schema', here.item, field || e.f, here.who, text);
+      model.seq.forEach((s) => {
+        const n = count[s[0]] || 0;
+        const words = MANY_OF[s[0]];
+        if (n < s[2]) fail(words ? `add at least one ${words[0]}` : `${LABEL[s[0]] || 'a required part'} is missing`);
+        if (n > s[3]) fail(words ? `there are ${n} ${words[1]}, and the form takes at most ${s[3]}` : `${LABEL[s[0]] || 'a part'} is given more than once`);
+      });
+      (model.one || []).forEach((names) => {
+        const n = names.reduce((a, k) => a + (count[k] || 0), 0);
+        if (n !== 1) fail((CHOOSE[e.n] || ['choose one', 'choose only one'])[n ? 1 : 0]);
+      });
+      (model.most || []).forEach((names) => {
+        if (names.filter((k) => count[k]).length > 1) fail((CHOOSE[e.n] || ['', 'choose only one'])[1]);
+      });
+      e.c.forEach((c) => {
+        const type = entry(group, c.n)[1];
+        if (type.charAt(0) === '@') return walk(c, type.slice(1), here);
+        const why = wrong(type, c.v);
+        if (!why) return undefined;
+        const at = { item: c.item != null ? c.item : here.item, who: here.who };
+        const label = LABEL[`${e.n}.${c.n}`] || LABEL[c.n] || 'a value';
+        const T = TYPES[type];
+        const text = why === 'missing' ? `${label} is missing` : why === 'long' ? `${label} is longer than ${T.max} characters` : why === 'choice' ? `${label} is not one of the form's choices` : `${label} ${T.say || 'is not in the form the SEC accepts'}`;
+        add('error', 'schema', at.item, c.f, at.who, text);
+        if (why === 'missing' && typeof c.raw === 'string' && c.raw !== '') add('error', 'edgar', at.item, c.f, at.who, `${label} holds only spaces`);
+        return undefined;
+      });
+    })(elements(d, opts), 'edgarSubmission', { item: 'file', who: '' });
+
+    // EDGAR's own rules
+    const E = (item, field, text, who) => add('error', 'edgar', item, field, who || '', text);
+    const W = (item, field, text, who) => add('warning', 'edgar', item, field, who || '', text);
+    const x = d.offeringData;
+    const P = 'offeringData';
+    const codes = list(x.federalExemptionsExclusions).map(clean);
+    const claims = (c) => codes.indexOf(c) >= 0;
+    issuersOf(d).forEach((i, k) => {
+      const f = k ? `issuerList[${k - 1}]` : 'primaryIssuer';
+      const who = k ? `additional issuer ${k}` : '';
+      ['street1', 'street2'].forEach((s) => {
+        const line = clean(i.issuerAddress[s]);
+        if (PO_BOX.test(line)) E(2, `${f}.issuerAddress.${s}`, 'a P.O. box cannot be the principal place of business; give the street address', who);
+        else if (CARE_OF.test(line)) W(2, `${f}.issuerAddress.${s}`, 'the principal place of business should be the issuer\'s own street address, not an "in care of" address', who);
+      });
+      if (i.yearOfInc.kind === 'withinFiveYears' && clean(i.yearOfInc.value) === '') E(1, `${f}.yearOfInc.value`, 'give the year the issuer was formed, because it was formed within the last five years', who);
+      if (clean(i.entityType) === 'Other' && clean(i.entityTypeOtherDesc) === '') E(1, `${f}.entityTypeOtherDesc`, 'describe the entity type, because Other was chosen', who);
+      if (i.issuerPreviousNameList.none !== true && !list(i.issuerPreviousNameList.previousName).some((n) => clean(n) !== '')) E(1, `${f}.issuerPreviousNameList`, "list the issuer's previous names of the last five years, or say None", who);
+    });
+    if (d.over100IssuerFlag === true && d.issuerList.length < 99) E(1, 'over100IssuerFlag', 'the more-than-100 mark needs 100 issuers listed');
+    if (d.over100PersonsFlag === true && d.relatedPersonsList.length < 100) E(3, 'over100PersonsFlag', 'the more-than-100 mark needs 100 related persons listed');
+    if (x.over100RecipientFlag === true && x.salesCompensationList.length < 100) E(12, `${P}.over100RecipientFlag`, 'the more-than-100 mark needs 100 recipients listed');
+
+    const fund = x.industryGroup.investmentFundInfo;
+    const fundType = fund ? clean(fund.investmentFundType) : '';
+    if (clean(x.industryGroup.industryGroupType) === 'Pooled Investment Fund' && !fund) E(4, `${P}.industryGroup.investmentFundInfo.investmentFundType`, 'a pooled investment fund must say which type of fund it is');
+    const revenue = clean(x.issuerSize.revenueRange);
+    const nav = clean(x.issuerSize.aggregateNetAssetValueRange);
+    if ((revenue === '') !== (nav === '')) {
+      const byNav = fundType === 'Hedge Fund' || fundType === 'Other Investment Fund';
+      if (byNav && nav === '') E(5, `${P}.issuerSize.aggregateNetAssetValueRange`, 'a hedge fund or other investment fund gives its aggregate net asset value range, not a revenue range');
+      if (!byNav && revenue === '') E(5, `${P}.issuerSize.revenueRange`, 'give the revenue range; only a hedge fund or other investment fund gives a net asset value range instead');
+    }
+    if (claims('06b') && claims('06c')) E(6, `${P}.federalExemptionsExclusions`, 'Rule 506(b) and Rule 506(c) cannot both be claimed in one notice');
+    const pooled = x.typesOfSecuritiesOffered.isPooledInvestmentFundType === true;
+    if (codes.some((c) => c === '3C' || c.indexOf('3C.') === 0) && !pooled) W(6, `${P}.federalExemptionsExclusions`, 'an Investment Company Act Section 3(c) exclusion is claimed, but pooled investment fund interests are not among the types of securities in Item 9');
+
+    const type = clean(d.submissionType);
+    const amendment = x.typeOfFiling.newOrAmendment;
+    const accession = clean(amendment.previousAccessionNumber);
+    if (type === 'D' && (amendment.isAmendment === true || accession !== '')) E(7, `${P}.typeOfFiling.newOrAmendment.previousAccessionNumber`, 'a new notice is not marked as an amendment and carries no previous accession number');
+    if (type === 'D/A' && amendment.isAmendment !== true) E(7, `${P}.typeOfFiling.newOrAmendment.isAmendment`, 'an amendment must be marked as an amendment');
+    if (type === 'D/A' && accession === '') E(7, `${P}.typeOfFiling.newOrAmendment.previousAccessionNumber`, 'an amendment must give the accession number of the notice it amends');
+
+    if (!FLAGS.some((k) => x.typesOfSecuritiesOffered[k] === true)) E(9, `${P}.typesOfSecuritiesOffered`, 'choose at least one type of security');
+    if (x.typesOfSecuritiesOffered.isOtherType === true && clean(x.typesOfSecuritiesOffered.descriptionOfOtherType) === '') E(9, `${P}.typesOfSecuritiesOffered.descriptionOfOtherType`, 'describe the other type of security, because Other was chosen');
+
+    x.salesCompensationList.forEach((r, k) => {
+      const parts = [r.recipientName, r.recipientCRDNumber, r.associatedBDName, r.associatedBDCRDNumber, r.recipientAddress.street1, r.recipientAddress.city, r.recipientAddress.stateOrCountry, r.recipientAddress.zipCode];
+      const empty = parts.filter((p) => clean(p) === '').length;
+      if (empty) E(12, `${P}.salesCompensationList[${k}]`, `every part of a recipient must be filled in except the second street line (${empty} missing; write None where there is no CRD number or no broker or dealer)`, `recipient ${k + 1}`);
+    });
+
+    const total = clean(x.offeringSalesAmounts.totalOfferingAmount);
+    const sold = clean(x.offeringSalesAmounts.totalAmountSold);
+    const remaining = clean(x.offeringSalesAmounts.totalRemaining);
+    AMOUNTS.forEach((a) => {
+      const v = clean(a[2](x));
+      if (v !== '' && !PLAIN.test(v) && !(a[3] && v === 'Indefinite') && wrong(a[3] ? 'amount' : 'money', v) === '') E(a[0], a[1], 'amounts and counts are whole numbers written with the digits 0 to 9 only');
+    });
+    if (total === 'Indefinite' && remaining !== '' && remaining !== 'Indefinite') E(13, `${P}.offeringSalesAmounts.totalRemaining`, 'when the total offering amount is Indefinite, the total remaining is Indefinite too');
+    if (PLAIN.test(total) && PLAIN.test(sold) && remaining !== '') {
+      const left = Number(total) - Number(sold);
+      if (left < 0) E(13, `${P}.offeringSalesAmounts.totalAmountSold`, 'the total amount sold is more than the total offering amount');
+      else if (!PLAIN.test(remaining) || Number(remaining) !== left) E(13, `${P}.offeringSalesAmounts.totalRemaining`, `the total remaining must be the total offering amount minus the total amount sold, which is ${left}`);
+    }
+    if (PLAIN.test(total) && Number(total) === 0) W(13, `${P}.offeringSalesAmounts.totalOfferingAmount`, 'the total offering amount is $0');
+    if (RULE_504.some(claims) && PLAIN.test(total) && Number(total) > 10000000) W(6, `${P}.federalExemptionsExclusions`, 'Rule 504 permits no more than $10,000,000 of securities in a 12-month period');
+    const non = clean(x.investors.numberNonAccreditedInvestors);
+    if (claims('06b') && PLAIN.test(non) && Number(non) > 35) W(14, `${P}.investors.numberNonAccreditedInvestors`, 'no more than 35 non-accredited investors are permitted in a Rule 506(b) offering');
+
+    const today = clean(opts.today) || localToday();
+    const signatures = x.signatureBlock.signature;
+    signatures.forEach((s, k) => {
+      const date = clean(s.signatureDate);
+      if (/^\d{4}-\d\d-\d\d$/.test(date) && date > today) E('signature', `${P}.signatureBlock.signature[${k}].signatureDate`, 'the date signed is in the future', signatures.length > 1 ? `signature ${k + 1}` : '');
+    });
+    const issuers = issuersOf(d).length;
+    if (signatures.length && issuers > 1 && signatures.length !== (x.signatureBlock.authorizedRepresentative === true ? 1 : issuers)) W('signature', `${P}.signatureBlock.signature`, x.signatureBlock.authorizedRepresentative === true ? 'when one person signs for every issuer, the notice carries one signature' : `the notice names ${issuers} issuers and carries ${signatures.length} ${signatures.length === 1 ? 'signature' : 'signatures'}; each issuer signs unless one person signs for all`);
+
+    if (opts.submission) {
+      if ('contact' in opts) {
+        if (!hasContact(opts.contact)) E('filer', 'contact', 'the filer contact is missing, and a notice sent without one is suspended');
+        else if (size(clean(opts.contact.email)) > 80) E('filer', 'contact.email', "the contact's email address is longer than 80 characters");
+      }
+      if ('ccc' in opts) {
+        issuersOf(d).forEach((i, k) => {
+          const ccc = clean(typeof opts.ccc === 'string' ? (k ? '' : opts.ccc) : opts.ccc && typeof opts.ccc === 'object' ? opts.ccc[clean(i.cik)] : '');
+          if (ccc === '') E('filer', 'ccc', k ? 'this issuer needs its own CCC' : "the issuer's CCC is missing", k ? `additional issuer ${k}` : '');
+        });
+      }
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------
+  // prefill: a first draft from what the portal holds. offering is the offering record; facts is NS.filings.facts(ws,
+  // offering) and rec is NS.filings.rec(ws, offeringId), passed in (this file never reads the workspace). Every value
+  // is a suggestion the sponsor confirms. sources says where each filled field came from ('offering', 'investors' or
+  // 'record'); missing lists the fields the portal would fill but holds nothing for. Any field in neither is one the
+  // portal does not hold at all (industry group, related persons, fees), which the sponsor enters.
+  // ---------------------------------------------------------------------------------------------------------------
+  function prefill(offering, facts, rec) {
+    facts = facts || {};
+    rec = rec || {};
+    const code = facts.regime === '506b' ? '06b' : facts.regime === '506c' ? '06c' : '';
+    if (!code) return null;
+    const d = blank();
+    const sources = {};
+    const missing = [];
+    const setAt = (path, value) => {
+      const keys = path.replace(/\[(\d+)\]/g, '.$1').split('.');
+      let o = d;
+      keys.slice(0, -1).forEach((k) => (o = o[k]));
+      o[keys[keys.length - 1]] = value;
+    };
+    /** Fill a field, or list it as missing when there is no value (optional: say nothing). */
+    const put = (path, value, source, optional) => {
+      const none = value == null || (typeof value === 'string' && clean(value) === '');
+      if (none) {
+        if (!optional) missing.push(path);
+        return;
+      }
+      setAt(path, typeof value === 'string' ? clean(value) : value);
+      sources[path] = source;
+    };
+    const whole = (n) => (typeof n === 'number' && isFinite(n) && n >= 0 ? String(Math.round(n)) : typeof n === 'string' && PLAIN.test(clean(n)) ? clean(n) : '');
+    const P = 'offeringData';
+    put(`${P}.federalExemptionsExclusions`, [code], 'offering');
+
+    // amounts are whole US dollars; an offering in another currency is left for the sponsor's own dollar figures
+    const usd = facts.usd !== false;
+    const total = !usd ? '' : facts.total === 'Indefinite' ? 'Indefinite' : whole(facts.total);
+    const sold = usd ? whole(facts.sold) : '';
+    put(`${P}.minimumInvestmentAccepted`, usd ? whole(facts.minimum) : '', 'offering');
+    put(`${P}.offeringSalesAmounts.totalOfferingAmount`, total, 'offering');
+    put(`${P}.offeringSalesAmounts.totalAmountSold`, sold, 'investors');
+    put(`${P}.offeringSalesAmounts.totalRemaining`, total === 'Indefinite' ? 'Indefinite' : total !== '' && sold !== '' && Number(total) >= Number(sold) ? String(Number(total) - Number(sold)) : '', 'offering');
+    put(`${P}.investors.totalNumberAlreadyInvested`, whole(facts.investors), 'investors');
+    const non = facts.nonAccredited ? whole(facts.nonAccredited.count) : '';
+    if (code === '06c') put(`${P}.investors.hasNonAccreditedInvestors`, false, 'offering');
+    else {
+      put(`${P}.investors.numberNonAccreditedInvestors`, non, 'investors');
+      put(`${P}.investors.hasNonAccreditedInvestors`, non !== '' && Number(non) > 0 ? true : null, 'investors');
+    }
+    if (rec.firstSale) put(`${P}.typeOfFiling.dateOfFirstSale.value`, rec.firstSale, 'record');
+    else if (facts.firstSale) put(`${P}.typeOfFiling.dateOfFirstSale.value`, facts.firstSale, 'investors');
+    else if (facts.investors === 0) put(`${P}.typeOfFiling.dateOfFirstSale.yetToOccur`, true, 'investors');
+    else missing.push(`${P}.typeOfFiling.dateOfFirstSale.value`);
+
+    const i = rec.issuer || {};
+    const edgar = rec.edgar || {};
+    put('primaryIssuer.cik', edgar.cik, 'record');
+    put('primaryIssuer.issuerAddress.street1', i.street1, 'record');
+    put('primaryIssuer.issuerAddress.street2', i.street2, 'record', true);
+    put('primaryIssuer.issuerAddress.city', i.city, 'record');
+    put('primaryIssuer.issuerAddress.stateOrCountry', i.state, 'record');
+    put('primaryIssuer.issuerAddress.zipCode', i.zip, 'record');
+    put('primaryIssuer.issuerPhoneNumber', i.phone, 'record');
+    put('primaryIssuer.entityType', i.entityType, 'record');
+    put('primaryIssuer.entityTypeOtherDesc', i.entityTypeOther, 'record', clean(i.entityType) !== 'Other');
+    const kind = YEAR_KINDS.indexOf(i.yearKind) >= 0 ? i.yearKind : '';
+    put('primaryIssuer.yearOfInc.kind', kind, 'record');
+    put('primaryIssuer.yearOfInc.value', i.yearFormed == null ? '' : String(i.yearFormed), 'record', kind !== 'withinFiveYears');
+    const names = Array.isArray(i.previousNames) ? i.previousNames.map(clean).filter(Boolean) : typeof i.previousNames === 'string' && !/^none$/i.test(clean(i.previousNames)) ? i.previousNames.split(/[\n;]+/).map(clean).filter(Boolean) : [];
+    if (names.length) put('primaryIssuer.issuerPreviousNameList.previousName', names, 'record');
+    else if (i.previousNames != null) put('primaryIssuer.issuerPreviousNameList.none', true, 'record');
+    else missing.push('primaryIssuer.issuerPreviousNameList');
+
+    // the signature block names the issuer exactly as EDGAR's record of the CIK does, or the notice is suspended
+    d.offeringData.signatureBlock.signature.push(ROWS.signature());
+    const G = `${P}.signatureBlock.signature[0]`;
+    put(`${G}.issuerName`, edgar.name, 'record');
+    put(`${G}.signatureName`, i.signerName, 'record');
+    put(`${G}.nameOfSigner`, i.signerName, 'record');
+    put(`${G}.signatureTitle`, i.signerTitle, 'record');
+    return { draft: d, sources, missing };
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------
+  // snapshot: the values that decide whether a filed notice needs an amendment. The amounts are numbers (the total may
+  // be the word Indefinite; null when blank), the related persons are names only, and material is one stable text of
+  // everything else whose change calls for an amendment: who the issuer is and where its principal place of business
+  // is, the industry group, the exemptions, the duration, the types of securities, the business combination answer and
+  // who receives sales compensation. It leaves out what the Form D instructions say needs no amendment on its own:
+  // related persons' addresses and relationships, the issuer's size, the addresses and states in Item 12, the amount
+  // sold and remaining, and the total number of investors.
+  // ---------------------------------------------------------------------------------------------------------------
+  function snapshot(draft) {
+    const d = shape(draft);
+    const x = d.offeringData;
+    const number = (v) => (PLAIN.test(clean(v)) ? Number(clean(v)) : null);
+    const low = (v) => clean(v).replace(/\s+/g, ' ').toLowerCase();
+    const total = clean(x.offeringSalesAmounts.totalOfferingAmount);
+    const fund = x.industryGroup.investmentFundInfo;
+    const material = {
+      issuers: issuersOf(d).map((i) => [low(i.cik), low(i.entityType), low(i.entityTypeOtherDesc), i.yearOfInc.kind, low(i.yearOfInc.value), list(i.issuerPreviousNameList.previousName).map(low).filter(Boolean).sort(), [low(i.issuerAddress.street1), low(i.issuerAddress.street2), low(i.issuerAddress.city), low(i.issuerAddress.stateOrCountry), low(i.issuerAddress.zipCode), low(i.issuerPhoneNumber)]]),
+      industry: [low(x.industryGroup.industryGroupType), fund ? low(fund.investmentFundType) : '', fund ? fund.is40Act === true : false],
+      exemptions: list(x.federalExemptionsExclusions).map(clean).sort(),
+      moreThanOneYear: x.durationOfOffering.moreThanOneYear,
+      securities: FLAGS.filter((k) => x.typesOfSecuritiesOffered[k] === true).concat(low(x.typesOfSecuritiesOffered.descriptionOfOtherType)),
+      businessCombination: x.businessCombinationTransaction.isBusinessCombinationTransaction,
+      recipients: x.salesCompensationList.map((r) => [low(r.recipientName), low(r.recipientCRDNumber), low(r.associatedBDName), low(r.associatedBDCRDNumber)].join('|')).sort()
+    };
+    return {
+      minimumInvestment: number(x.minimumInvestmentAccepted),
+      totalOffering: total === 'Indefinite' ? 'Indefinite' : number(total),
+      nonAccredited: number(x.investors.numberNonAccreditedInvestors) || 0,
+      commissions: number(x.salesCommissionsFindersFees.salesCommissions.dollarAmount),
+      findersFees: number(x.salesCommissionsFindersFees.findersFees.dollarAmount),
+      proceedsToInsiders: number(x.useOfProceeds.grossProceedsUsed.dollarAmount),
+      relatedPersons: d.relatedPersonsList.map((p) => [low(p.relatedPersonName.firstName), low(p.relatedPersonName.middleName), low(p.relatedPersonName.lastName)].join('|')).sort(),
+      material: JSON.stringify(material)
+    };
+  }
+
+  const API = { LISTS, blank, prefill, validate, toXml, fromXml, snapshot };
   if (NS) NS.formD = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);
