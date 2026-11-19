@@ -70,5 +70,7 @@
   .tx .cs-btn-small { min-height: var(--control-h); }
   .tx-form .cs-field, .tx-form .cs-field.cs-wide { flex: 1 1 100%; }
   .tx-grid, .tx-review { grid-template-columns: minmax(0, 1fr); }
+  /* a K-1's Part I and the partner's number and name stay in view beside the proposal; View pages shows every page whole */
+  .tx-pic { max-height: 340px; }
   .tx-review dt { margin-top: var(--space-xs); }
 }
