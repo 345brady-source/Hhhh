@@ -343,7 +343,7 @@
     const missing = auto ? holdersOf(ws, b.offeringId).filter((i) => !used.has(i.id)) : [];
     const list = (name, rows) => `<ul class="tx-list" data-list="${name}">${rows}</ul>`;
     const bar = `<div class="tx-bar"><a class="tx-back" href="#${ROUTE}">Back</a><h1>${h(kindLabel(b.kind))} ${h(b.year)}</h1></div>`;
-    const msg = u.msg[b.id] ? `<p class="tx-note is-stop" role="alert">${h(u.msg[b.id])}</p>` : '';
+    const msg = u.working ? '<p class="tx-note" role="status">Working…</p>' : u.msg[b.id] ? `<p class="tx-note is-stop" role="alert">${h(u.msg[b.id])}</p>` : '';
     const scan = b.scan ? `<p class="tx-stop">No text can be read in this file: ask the CPA for the file as the tax software saves it${auto ? ', or make each package from its pages below' : ''}.</p>` : '';
     const loose = b.loose.length
       ? CK().panel(
@@ -463,10 +463,14 @@
       const b = batchOf(ws, el.getAttribute('data-batch'));
       if (!b || u.working || !NS.app.can('operate')) return;
       const p = el.getAttribute('data-id') ? b.packages.find((x) => x.id === el.getAttribute('data-id')) || null : null;
+      // what was typed is read before the page is drawn again
+      const val = (id) => String((document.getElementById(id) || {}).value || '').trim();
+      const typed = { first: val('tx-first'), last: val('tx-last') };
       u.working = true;
       u.msg[b.id] = '';
+      redraw();
       try {
-        await fn(ws, b, p);
+        await fn(ws, b, p, typed);
       } catch (e) {
         u.msg[b.id] = (e && e.message) || 'That could not be done.';
       }
@@ -497,10 +501,7 @@
   NS.actions['tx-single'] = act(async (ws, b, p) => TD().notTogether(ws, b.id, p.id, { by: actor() }));
   NS.actions['tx-aside'] = act(async (ws, b, p) => TD().setAside(ws, b.id, p.id, { by: actor() }));
   NS.actions['tx-reopen'] = act(async (ws, b, p) => TD().reopen(ws, b.id, p.id, { by: actor() }));
-  NS.actions['tx-range'] = act(async (ws, b) => {
-    const val = (id) => String((document.getElementById(id) || {}).value || '').trim();
-    TD().addPackage(ws, b.id, { first: val('tx-first'), last: val('tx-last'), by: actor() });
-  });
+  NS.actions['tx-range'] = act(async (ws, b, p, typed) => TD().addPackage(ws, b.id, { first: typed.first, last: typed.last, by: actor() }));
   NS.actions['tx-view'] = async (el) => {
     const ws = W();
     const b = batchOf(ws, el.getAttribute('data-batch'));
