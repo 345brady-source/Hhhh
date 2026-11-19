@@ -55,3 +55,9 @@
 - W6: load11.js reads `<root>/diy.html` at run time and takes the `src="assets/js/..."` entries in order, from edition.js through operations.js, plus any phase 11 module listed between them; never a list typed into the file. The base side reads the base tree's diy.html, the tree side its own.
 - W7: case `mutate`: when the run has stored lines (after 10-01), add one cent to the first line's grossCents and netCents and to the run's total together; otherwise add one cent to the amount. Call `NS.clearCaches()` when it exists before building. Either way the case must report the mismatch.
 - I1: case `same` is run twice on one side and requires equal hashes (proves the comparison is stable).
+
+## After 11-04 (merged 2026-11-19)
+- gate11.sh: later plans add a check by dropping `<name>.js` in this phase's checks folder with `// gate: node` (or `browser`) and `// last "<exact last line>"` in its first lines; helpers carry `// gate: none`; a new server test file declares `// gate: tests N`. Run as `GATE_OUT=<folder with base-commit.txt> bash .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/gate11.sh`. A direct AUDIT SAME run needs the base's diy.html as well as assets/js.
+- AUDIT SAME passed on its base: 928 schedules and 60 whole packages over 15 funds byte-identical; a one-cent change is caught.
+- The MEASURE failure it reported (the leak search on taxdocs.js line 531) was the IRS Rev. Proc. 2012-17 section 5.08 wording, now on the leak check's allowed list with the reason; the leak search passes on the merged tree. Its EMAIL DIALOG failure passed when run again alone (timing under the shared queue).
+- From 10-01 (merged): one sample fund's current holders change (pb-long-short: a fully redeemed investor no longer counts after the redemption date). A gate whose base predates 10-01 sees that fund differ; gates based on the merged tree do not.
