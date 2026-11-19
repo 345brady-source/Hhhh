@@ -1,0 +1,11 @@
+{
+  "_source": "https://docs.didit.me/integration/verification-statuses",
+  "_status": "unconfirmed: documented shape quoted by search on 2026-11-19; to be confirmed in the sandbox by plan 08-12",
+  "reply": {
+    "status": "In Review",
+    "id_verifications": [{ "status": "Approved" }],
+    "liveness_checks": [{ "status": "Approved" }],
+    "face_matches": [{ "status": "In Review" }],
+    "aml_screenings": [{ "status": "Approved", "hits": [] }]
+  }
+}

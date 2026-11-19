@@ -1,0 +1,8 @@
+{
+  "_source": "https://docs.didit.me/reference/aml-screening-standalone-api",
+  "_status": "unconfirmed: documented shape quoted by search on 2026-11-19; to be confirmed in the sandbox by plan 08-12",
+  "reply": {
+    "request_id": "req-fixture-hit-1",
+    "aml": { "status": "In Review", "hits": [{ "match_score": 96, "risk_score": 80 }] }
+  }
+}
