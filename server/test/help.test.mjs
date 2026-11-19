@@ -615,3 +615,243 @@ test('the guard: an answer that names a vendor or model, holds the marker, an ad
     assert.equal((await ask(base, { message: 'What is this?', role: 'admin' })).body.answer, 'This is the Carrow & Vale portal.');
   });
 });
+
+/* ---------- The money: prices, the caps, the log line, the settings ---------- */
+const bytes = (s) => Buffer.byteLength(s, 'utf8');
+/** A fresh folder with a read log path, removed afterwards. */
+async function withLog(fn) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'help-test-'));
+  try {
+    return await fn(path.join(dir, 'read.log'));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+const rowsOf = (log) => (fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
+/** The service's usage as a first question (the prefix is written to the cache) and as a later one (it is read from it). */
+const WRITE = { input: 40, output: 60, cacheWrite: 9100, cacheRead: 0 };
+const READ = { input: 40, output: 60, cacheWrite: 0, cacheRead: 9100 };
+const cached = () => {
+  let n = 0;
+  return fakeService({ reply: () => Object.assign({ texts: [JSON.stringify(ANSWER)] }, n++ ? READ : WRITE) });
+};
+
+test('prices: the two help models are in the table, cache writes cost their own price where listed, and allow() takes this model\'s rate', async () => {
+  const { PRICES, DEAREST, MODEL, costOf, createBudget } = await import('../lib/model.mjs');
+  assert.deepEqual(PRICES['claude-haiku-5-5'], { input: 0.1, output: 0.5, cacheRead: 0.01, cacheWrite: 0.125 });
+  assert.deepEqual(PRICES['claude-sonnet-5-5'], { input: 2, output: 10, cacheRead: 0.1, cacheWrite: 2.5 });
+  const u = { input_tokens: 1e6, output_tokens: 1e6, cache_creation_input_tokens: 1e6, cache_read_input_tokens: 1e6 };
+  assert.ok(Math.abs(costOf(u, 'claude-haiku-5-5').usd - (0.1 + 0.125 + 0.01 + 0.5)) < 1e-9);
+  assert.ok(Math.abs(costOf(u, 'claude-sonnet-5-5').usd - (2 + 2.5 + 0.1 + 10)) < 1e-9);
+  assert.equal(costOf(u, 'claude-haiku-5-5').flagged, false);
+  assert.ok(Math.abs(costOf({ cache_creation_input_tokens: 9100 }, 'claude-haiku-5-5').usd - (9100 * 0.125) / 1e6) < 1e-12);
+  // Entries without a cache-write price are as before: those tokens are input.
+  assert.equal(MODEL, 'claude-fable-5-2');
+  assert.deepEqual(DEAREST, { input: 10, output: 50 });
+  assert.equal('cacheWrite' in PRICES[MODEL], false);
+  assert.ok(Math.abs(costOf(u, MODEL).usd - 56.2) < 1e-9);
+  assert.deepEqual(costOf(u, 'claude-opus-5'), { usd: 40, flagged: false });
+  assert.deepEqual(costOf(u, 'some-other-model'), { usd: 80, flagged: true });
+
+  // 40,000 input tokens and a 1,024-token reply: $0.4512 at the dearest rate, $0.005512 at this model's.
+  const b = createBudget({ CARROWVALE_SPEND_CAP_USD: '0.05' });
+  assert.equal(b.allow(40000, 1024), false);
+  assert.equal(b.allow(40000, 1024, { input: 0.125, output: 0.5 }), true);
+  assert.equal(b.allow(40000, 1024, { input: 2.5, output: 10 }), false);
+  assert.equal(b.allow(40000, 1024, { input: 'x', output: 0.5 }), false, 'a rate that is not numbers falls back to the dearest');
+  assert.equal(b.allow(40000, 1024, null), false);
+  b.add({ input_tokens: 450000 }, 'claude-haiku-5-5');
+  assert.ok(Math.abs(b.spent() - 0.045) < 1e-9);
+  assert.equal(b.allow(40000, 1024, { input: 0.125, output: 0.5 }), false, '0.045 spent and 0.005512 more is over 0.05');
+  assert.equal(createBudget({}).allow(1e9, 1e9, { input: 0.125, output: 0.5 }), true);
+  assert.equal(createBudget({ CARROWVALE_SPEND_CAP_USD: 'lots' }).allow(1, 1, { input: 0.125, output: 0.5 }), false);
+});
+
+test('the shared spend cap: with CARROWVALE_SPEND_CAP_USD=0.05 help questions are answered at this model\'s price, and 402 spend_cap comes before any request once no room is left', () =>
+  withLog(async (log) => {
+    const env = { CARROWVALE_SPEND_CAP_USD: '0.05', CARROWVALE_READ_LOG: log, CARROWVALE_HELP_DAILY_USD: '100' };
+    const svc = cached();
+    await serve({ svc, env }, async (base) => {
+      let s;
+      for (let n = 1; n <= 5; n++) {
+        const r = await ask(base, { message: `Question ${n}`, session: s });
+        assert.equal(r.status, 200, `question ${n} is within the cap`);
+        s = r.body.session;
+      }
+    });
+    assert.equal(svc.calls.length, 5);
+    const spent = rowsOf(log).reduce((a, r) => a + r.cost, 0);
+    assert.ok(Math.abs(spent - (5 * 40 * 0.1 + 9100 * 0.125 + 4 * 9100 * 0.01 + 5 * 60 * 0.5) / 1e6) < 1e-12, `spent ${spent}`);
+
+    // One dear call (450,000 input tokens: $0.045) leaves no room for the next question's bound.
+    const dear = fakeService({ reply: () => ({ texts: [JSON.stringify(ANSWER)], input: 450000, output: 60 }) });
+    const logs = await captureConsole(() =>
+      serve({ svc: dear, env }, async (base) => {
+        assert.equal((await ask(base, { message: 'One more' })).status, 200);
+        const r = await ask(base, { message: 'And another' });
+        assert.equal(r.status, 402);
+        assert.deepEqual(r.body, { ok: false, reason: 'spend_cap' });
+      })
+    );
+    assert.deepEqual(logs, ['help: spend_cap 402']);
+    assert.equal(dear.calls.length, 1, 'the refused question was never sent');
+    const last = rowsOf(log).pop();
+    assert.equal(last.outcome, 'spend_cap');
+    assert.deepEqual(last.usage, { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 });
+    assert.equal(last.cost, 0);
+
+    // A server started on the same log counts what help already spent, at this model's price.
+    const later = fakeService();
+    await captureConsole(() =>
+      serve({ svc: later, env }, async (base) => {
+        assert.equal((await ask(base, { message: 'After a restart' })).status, 402);
+      })
+    );
+    assert.equal(later.calls.length, 0);
+  }));
+
+test('the daily help cap is on by default at $2: today\'s help rows of the read log count, another day\'s and other routes\' do not; a tiny cap or one that is not a number refuses before any request', () =>
+  withLog(async (log) => {
+    const clock = { t: T0 };
+    const helpRow = (at, usd) => JSON.stringify({ at, route: 'help', model: HELP_MODEL, usage: { input_tokens: Math.round((usd * 1e6) / 0.1), output_tokens: 0 }, cost: usd });
+    const once = async (env, lines) => {
+      fs.writeFileSync(log, lines.map((l) => l + '\n').join(''));
+      const svc = fakeService();
+      let status = 0;
+      await captureConsole(() =>
+        serve({ svc, clock, env: Object.assign({ CARROWVALE_READ_LOG: log }, env) }, async (base) => {
+          const r = await ask(base, { message: 'How do I sign?' });
+          status = r.status;
+          if (status !== 200) assert.deepEqual(r.body, { ok: false, reason: 'spend_cap' });
+        })
+      );
+      return { status, calls: svc.calls.length };
+    };
+    // No setting at all: $2 a day, counted from today's help rows (the clock says 2026-11-10).
+    assert.deepEqual(await once({}, []), { status: 200, calls: 1 });
+    assert.deepEqual(await once({}, [helpRow('2026-11-10T00:00:01.000Z', 1.0), helpRow('2026-11-10T11:00:00.000Z', 0.98)]), { status: 200, calls: 1 }, '$1.98 spent today leaves room');
+    assert.deepEqual(await once({}, [helpRow('2026-11-10T00:00:01.000Z', 1.0), helpRow('2026-11-10T11:00:00.000Z', 0.999)]), { status: 402, calls: 0 }, '$1.999 spent today leaves none');
+    assert.deepEqual(await once({}, [helpRow('2026-11-09T23:59:59.000Z', 50), helpRow('2026-11-11T00:00:00.000Z', 50)]), { status: 200, calls: 1 }, 'another day does not count');
+    assert.deepEqual(await once({}, [JSON.stringify({ at: '2026-11-10T09:00:00.000Z', route: 'read', model: 'claude-fable-5-2', usage: { input_tokens: 5e6 } }), 'not a json line']), { status: 200, calls: 1 }, 'other routes do not count');
+    assert.deepEqual(await once({ CARROWVALE_HELP_DAILY_USD: '' }, [helpRow('2026-11-10T11:00:00.000Z', 1.999)]), { status: 402, calls: 0 }, 'blank is the default');
+    // Set: a tiny cap, zero, and values that are not an amount.
+    assert.deepEqual(await once({ CARROWVALE_HELP_DAILY_USD: '0.0001' }, []), { status: 402, calls: 0 });
+    assert.deepEqual(await once({ CARROWVALE_HELP_DAILY_USD: '0' }, []), { status: 402, calls: 0 });
+    assert.deepEqual(await once({ CARROWVALE_HELP_DAILY_USD: 'plenty' }, []), { status: 402, calls: 0 });
+    assert.deepEqual(await once({ CARROWVALE_HELP_DAILY_USD: '-5' }, []), { status: 402, calls: 0 });
+    assert.deepEqual(await once({ CARROWVALE_HELP_DAILY_USD: '5' }, [helpRow('2026-11-10T11:00:00.000Z', 1.999)]), { status: 200, calls: 1 });
+
+    // Within a run: each call's cost is added, and the count starts again on the next day.
+    fs.writeFileSync(log, '');
+    const svc = fakeService({ reply: () => Object.assign({ texts: [JSON.stringify(ANSWER)] }, WRITE) });
+    const logs = await captureConsole(() =>
+      serve({ svc, clock, env: { CARROWVALE_READ_LOG: log, CARROWVALE_HELP_DAILY_USD: '0.006' } }, async (base) => {
+        assert.equal((await ask(base, { message: 'First today' })).status, 200, 'a bound of about $0.0051 fits in $0.006');
+        assert.equal((await ask(base, { message: 'Second today' })).status, 402, 'the first call\'s cost is counted');
+        clock.t += 24 * 60 * MIN;
+        assert.equal((await ask(base, { message: 'First tomorrow' })).status, 200);
+      })
+    );
+    assert.deepEqual(logs, ['help: spend_cap 402']);
+    assert.equal(svc.calls.length, 2);
+    clock.t = T0;
+  }));
+
+test('the log line: one per question with exactly the contract\'s keys, the cost by this model\'s prices, a bound never below the real input, and no question, answer, name or address', () =>
+  withLog(async (log) => {
+    const KEYS = ['at', 'route', 'ms', 'audience', 'page', 'turn', 'bound', 'outcome', 'stopReason', 'model', 'usage', 'cost', 'guide'];
+    const question = 'I am Zelda Quixote (zelda@investor.example). How do I add the Harbor Ridge documents?';
+    const replies = [
+      Object.assign({ texts: [JSON.stringify({ kind: 'answer', answer: 'Open Documents and choose the SECRET-ANSWER button.' })], thinking: true }, WRITE),
+      Object.assign({ texts: [JSON.stringify({ kind: 'cannot', answer: CANNOT })] }, READ),
+      Object.assign({ texts: [JSON.stringify({ kind: 'answer', answer: 'I am Claude.' })] }, READ),
+      Object.assign({ texts: [], stop: 'refusal' }, READ),
+      { texts: ['{"kind":'], stop: 'max_tokens', input: 40, output: 1024 }
+    ];
+    let n = 0;
+    const svc = fakeService({ reply: () => replies[n++] });
+    const clock = { t: T0 };
+    await captureConsole(() =>
+      serve({ svc, clock, env: { CARROWVALE_READ_LOG: log, CARROWVALE_HELP_PER_HOUR: '5' } }, async (base) => {
+        const first = await ask(base, { message: question, page: 'console-docs', role: 'admin' });
+        const s = first.body.session;
+        for (let i = 1; i < replies.length; i++) await ask(base, { message: question, session: s, page: 'invite', step: 'tax', role: 'admin' });
+        assert.equal((await ask(base, { message: question, session: s })).status, 429, 'the 6th question of the hour');
+        // A question that is not well formed is not a call and leaves no line.
+        assert.equal((await ask(base, { message: '' })).status, 400);
+        assert.equal((await ask(base, { message: 'x'.repeat(501) })).status, 413);
+      })
+    );
+    const text = fs.readFileSync(log, 'utf8');
+    const rows = rowsOf(log);
+    assert.equal(rows.length, 6);
+    for (const r of rows) {
+      assert.deepEqual(Object.keys(r), KEYS);
+      assert.deepEqual(Object.keys(r.usage), ['input_tokens', 'output_tokens', 'cache_creation_input_tokens', 'cache_read_input_tokens']);
+      assert.equal(r.route, 'help');
+      assert.equal(r.at, new Date(T0).toISOString());
+      assert.equal(r.audience, 'sponsor');
+      assert.equal(r.guide, VERSION);
+      assert.match(r.guide, /^[0-9a-f]{12}$/);
+      assert.equal(r.model, HELP_MODEL);
+      assert.equal(Number.isInteger(r.ms) && r.ms >= 0, true);
+    }
+    assert.deepEqual(rows.map((r) => r.outcome), ['answer', 'cannot', 'guarded', 'declined', 'incomplete', 'limit']);
+    assert.deepEqual(rows.map((r) => r.stopReason), ['end_turn', 'end_turn', 'end_turn', 'refusal', 'max_tokens', '']);
+    assert.deepEqual(rows.map((r) => r.turn), [1, 2, 3, 4, 5, 6]);
+    assert.deepEqual(rows.map((r) => r.page), ['console-docs', 'invite/tax', 'invite/tax', 'invite/tax', 'invite/tax', '']);
+    // The cost is the arithmetic of the usage at the published prices, cache writes and reads included.
+    assert.deepEqual(rows[0].usage, { input_tokens: 40, output_tokens: 60, cache_creation_input_tokens: 9100, cache_read_input_tokens: 0 });
+    assert.ok(Math.abs(rows[0].cost - (40 * 0.1 + 9100 * 0.125 + 60 * 0.5) / 1e6) < 1e-12);
+    assert.deepEqual(rows[1].usage, { input_tokens: 40, output_tokens: 60, cache_creation_input_tokens: 0, cache_read_input_tokens: 9100 });
+    assert.ok(Math.abs(rows[1].cost - (40 * 0.1 + 9100 * 0.01 + 60 * 0.5) / 1e6) < 1e-12);
+    assert.ok(Math.abs(rows[4].cost - (40 * 0.1 + 1024 * 0.5) / 1e6) < 1e-12, 'a cut-off reply is paid for and counted');
+    assert.deepEqual(rows[5].usage, { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 });
+    assert.equal(rows[5].cost, 0);
+    // The bound is the bytes of everything sent, so it is never below the tokens the service counted.
+    rows.slice(0, 5).forEach((r, i) => {
+      const sent = svc.calls[i].body;
+      const all = sent.system.map((b) => b.text).concat(sent.messages.map(textOf));
+      assert.equal(r.bound, all.reduce((a, s) => a + bytes(s), 0), `row ${i}`);
+      assert.ok(r.bound >= r.usage.input_tokens + r.usage.cache_creation_input_tokens + r.usage.cache_read_input_tokens, `row ${i}`);
+      assert.ok(r.bound >= bytes(RULES) + bytes(GUIDE.sponsor));
+    });
+    for (const secret of ['Zelda', 'Quixote', 'zelda@', 'Harbor Ridge', 'SECRET-ANSWER', 'I am Claude', CANNOT, PORTAL_ONLY, '[removed]', '127.0.0.1', KEY, MARKER]) assert.equal(text.includes(secret), false, secret);
+  }));
+
+test('settings: CARROWVALE_HELP_MODEL changes the model and the price only within its fixed list; CARROWVALE_HELP_EFFORT accepts low, medium and high', () =>
+  withLog(async (log) => {
+    const one = async (env) => {
+      fs.writeFileSync(log, '');
+      const svc = fakeService({ reply: () => Object.assign({ texts: [JSON.stringify(ANSWER)] }, WRITE) });
+      await serve({ svc, env: Object.assign({ CARROWVALE_READ_LOG: log, CARROWVALE_HELP_DAILY_USD: '100' }, env) }, async (base) => {
+        assert.equal((await ask(base, { message: 'How do I sign?' })).status, 200);
+      });
+      return { model: svc.calls[0].body.model, effort: svc.calls[0].body.output_config.effort, row: rowsOf(log)[0] };
+    };
+    const dflt = await one({});
+    assert.equal(dflt.model, 'claude-haiku-5-5');
+    assert.equal(dflt.effort, 'low');
+    const larger = await one({ CARROWVALE_HELP_MODEL: 'claude-sonnet-5-5' });
+    assert.equal(larger.model, 'claude-sonnet-5-5');
+    assert.equal(larger.row.model, 'claude-sonnet-5-5');
+    assert.ok(Math.abs(larger.row.cost - (40 * 2 + 9100 * 2.5 + 60 * 10) / 1e6) < 1e-12, 'priced at the larger model\'s rates');
+    assert.ok(larger.row.cost > 15 * dflt.row.cost);
+    for (const other of ['claude-opus-5-5', 'claude-fable-5-2', 'claude-haiku-4-5', 'some-model', ' ', 'CLAUDE-SONNET-5-5']) {
+      const r = await one({ CARROWVALE_HELP_MODEL: other });
+      assert.equal(r.model, 'claude-haiku-5-5', other);
+      assert.ok(Math.abs(r.row.cost - dflt.row.cost) < 1e-12, other);
+    }
+    assert.equal((await one({ CARROWVALE_HELP_MODEL: ' claude-sonnet-5-5 ' })).model, 'claude-sonnet-5-5');
+    for (const effort of ['low', 'medium', 'high']) assert.equal((await one({ CARROWVALE_HELP_EFFORT: effort })).effort, effort);
+    for (const other of ['xhigh', 'max', 'none', '', 'HIGH']) assert.equal((await one({ CARROWVALE_HELP_EFFORT: other })).effort, 'low', other);
+    // With the larger model the shared cap's bound uses that model's rate: about $0.10 a question does not fit in $0.05.
+    fs.writeFileSync(log, '');
+    const capped = fakeService();
+    await captureConsole(() =>
+      serve({ svc: capped, env: { CARROWVALE_HELP_MODEL: 'claude-sonnet-5-5', CARROWVALE_SPEND_CAP_USD: '0.05', CARROWVALE_HELP_DAILY_USD: '100' } }, async (base) => {
+        assert.equal((await ask(base, { message: 'How do I sign?' })).status, 402);
+      })
+    );
+    assert.equal(capped.calls.length, 0);
+  }));
