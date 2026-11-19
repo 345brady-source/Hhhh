@@ -151,8 +151,65 @@
       <ol class="fl-steps" data-offering="${h(o.id)}">${KEYS.map((k) => stepHTML(o, e, p, k)).join('')}</ol>`;
   }
 
+  /* ---------- The Form ID answer sheet (parts 1 to 5 in the order of the SEC's Form ID guide) ---------- */
+  /** What the sponsor typed where the record has no place for it: kept on screen while the portal is open, never stored. */
+  function typed(id) {
+    const u = ui();
+    if (!u.typed) u.typed = {};
+    if (!u.typed[id]) u.typed[id] = {};
+    return u.typed[id];
+  }
+  const issuerOf = (ws, id) => {
+    const all = ws.filings && ws.filings.offerings;
+    return (all && own(all, id) && all[id] && all[id].issuer) || {};
+  };
+  /** One answer: its label, its value in a field the sponsor may change, and Copy. record: kept in the issuer record. */
+  function answer(o, key, label, value, opt) {
+    const p = opt || {};
+    const fid = `ea-a-${key}`;
+    const bind = p.record ? ' data-change="ea-issuer"' : ' data-input="ea-typed"';
+    return `<span id="${fid}-l">${h(label)}</span>
+      <span class="cs-field"><input type="${p.type || 'text'}" id="${fid}" name="${key}" value="${h(value == null ? '' : value)}" aria-labelledby="${fid}-l"${bind} data-id="${h(o.id)}"${p.hint ? ` placeholder="${h(p.hint)}"` : ''} autocomplete="off" spellcheck="false"></span>
+      <span class="ea-copy">${copyBtn(fid)}<span class="ea-said" role="status"></span></span>`;
+  }
+  /** An answer that is a choice on the dashboard: shown, with nothing to copy. */
+  const choice = (label, value) => `<span>${h(label)}</span><span>${h(value)}</span><span></span>`;
+  const part = (n, title, body) => `<div class="fl-item" data-sheet-part="${n}"><h3>${h(title)}</h3>${body}</div>`;
+  const grid = (rows) => `<div class="fl-sheet">${rows.join('')}</div>`;
+  const note = (html) => `<p class="fl-note">${html}</p>`;
+  /** Fields and their labels, for the change log. */
+  const ISSUER_LABEL = { street1: 'street', street2: 'street, second line', city: 'city', state: 'state or country', zip: 'ZIP code', phone: 'phone', signerName: 'signer\'s name', signerTitle: 'signer\'s title' };
+  function sheetHTML(ws, o) {
+    const e = edgarOf(ws, o.id);
+    const i = issuerOf(ws, o.id);
+    const t = typed(o.id);
+    const pick = (key, suggestion) => (own(t, key) ? t[key] : suggestion || '');
+    // Account administrators suggested from the team list (admins first); the sponsor changes them to full legal names.
+    // (Not the stand-in "<firm> admin" the team page makes when a portal has no team list: that is not a person.)
+    const standIn = `${(ws.tenant && ws.tenant.shortName) || ''} admin`;
+    const team = (ws.team || []).filter((m) => m && m.status !== 'invited' && m.name && m.name !== standIn).sort((a, b) => (a.role === 'admin' ? 0 : 1) - (b.role === 'admin' ? 0 : 1));
+    const admins = e.singleMember === true ? 1 : 2;
+    const adminRows = [];
+    for (let n = 1; n <= admins; n++) {
+      const m = team[n - 1] || {};
+      adminRows.push(answer(o, `admin${n}Name`, `Administrator ${n}: full legal name`, pick(`admin${n}Name`, m.name)), answer(o, `admin${n}Email`, `Administrator ${n}: email`, pick(`admin${n}Email`, m.email), { type: 'email' }));
+    }
+    const single = (v, label) => `<label><input type="radio" name="singleMember" value="${v}" data-change="ea-single" data-id="${h(o.id)}"${e.singleMember === (v === 'yes') ? ' checked' : ''}> ${label}</label>`;
+    const rec = (key, label) => answer(o, key, label, i[key], { record: true });
+    const steps = `<a href="${address(o)}">Back to the steps</a>`;
+    return `<div class="ea-sheet">
+      ${note(`Form ID is completed on the SEC dashboard; these are its answers, part by part. ${steps}`)}
+      ${part(1, 'Application for EDGAR access', grid([choice('Individual or company', 'Company'), choice('Applicant type', 'Filer'), choice('Non-public draft statements only', 'No'), answer(o, 'applicantName', 'Applicant name', pick('applicantName', o.name))]) + note('Use the name in the issuer\'s charter. EDGAR shortens company names (Company to CO, Corporation to CORP, Incorporated to INC, Limited to LTD, And to &amp;; a first A, An or The is dropped), and an application whose name matches an existing account is suspended.'))}
+      ${part(2, 'Company information', note('Tax identification number: have the issuer\'s EIN ready, or enter 00-0000000 if it has none. Never enter a Social Security number.') + grid([rec('street1', 'Street'), rec('street2', 'Street, second line'), rec('city', 'City'), rec('state', 'State or country'), rec('zip', 'ZIP code'), rec('phone', 'Phone'), answer(o, 'fiscalYearEnd', 'Fiscal year end', pick('fiscalYearEnd', ''), { hint: 'MM/DD' }), choice('In good standing', 'Yes, if its state filings and fees are up to date'), `<span id="ea-single-l">Single-member company: one person is the only owner, director and officer</span><span class="ea-choice" role="radiogroup" aria-labelledby="ea-single-l">${single('yes', 'Yes')} ${single('no', 'No')}</span><span></span>`]))}
+      ${part(3, 'Prospective account administrators', note(`${admins === 1 ? 'One for a single-member company' : 'Two, or one for a single-member company'}: full legal first, middle and last names, each with that person's own email, the one used for Login.gov. The first is the SEC's point of contact. Someone not employed by the issuer or its affiliate also needs a notarized power of attorney.${team.length ? ' Filled from your team list.' : ''}`) + grid(adminRows))}
+      ${part(4, 'Billing information', grid([answer(o, 'billingName', 'Full legal name', pick('billingName', pick('admin1Name', (team[0] || {}).name))), answer(o, 'billingEmail', 'Email', pick('billingEmail', pick('admin1Email', (team[0] || {}).email)), { type: 'email' }), answer(o, 'billingPhone', 'Phone', pick('billingPhone', i.phone))]))}
+      ${part(5, 'Signature', grid([rec('signerName', 'Full legal name'), rec('signerTitle', 'Title')]) + note('Give the signer\'s specific title, such as Managing Member of the General Partner; a general title such as officer or authorized individual is refused. The name and title are those of the person who signs the printout.'))}
+      ${note(`Then print the form with Review &amp; Print to be signed before a notary (the notary must not be one of the account administrators), and name the signed PDF with 32 characters or fewer, in lower case, starting with a letter, with no spaces. ${steps}`)}
+    </div>`;
+  }
+
   function render(ws, o, rest) {
-    return stepsHTML(ws, o);
+    return rest === 'sheet' ? sheetHTML(ws, o) : stepsHTML(ws, o);
   }
 
   /* ---------- Actions ---------- */
@@ -215,6 +272,32 @@
     FL().setEdgar(ws, o.id, { cik, name, steps });
     audit(existing ? 'EDGAR access: the issuer already has a CIK' : 'Issuer CIK recorded', `${o.name}: CIK ${cik}, ${name}`, o.id);
     ui().form = null;
+    save();
+    redraw();
+  };
+  /** A typed answer the record has no place for: kept on screen only. */
+  NS.changes['ea-typed'] = (el) => {
+    typed(el.getAttribute('data-id'))[el.name] = el.value;
+  };
+  /** An issuer detail: saved to the record (the Form D notice reads the same record), once per change. */
+  NS.changes['ea-issuer'] = (el) => {
+    const ws = W();
+    const o = offeringOf(ws, el.getAttribute('data-id'));
+    const key = el.name;
+    if (!o || !own(ISSUER_LABEL, key)) return;
+    const was = issuerOf(ws, o.id)[key] || '';
+    if (String(el.value).trim() === was) return;
+    FL().setIssuer(ws, o.id, { [key]: el.value });
+    audit('Issuer details updated', `${o.name}: ${ISSUER_LABEL[key]}`, o.id);
+    save();
+  };
+  NS.changes['ea-single'] = (el) => {
+    const ws = W();
+    const o = offeringOf(ws, el.getAttribute('data-id'));
+    if (!o) return;
+    const yes = el.value === 'yes';
+    FL().setEdgar(ws, o.id, { singleMember: yes });
+    audit('Single-member company answered', `${o.name}: ${yes ? 'yes, one account administrator' : 'no, two account administrators'}`, o.id);
     save();
     redraw();
   };

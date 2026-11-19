@@ -361,7 +361,7 @@ async function sheetPhone({ check, S }) {
   await F.fr.waitForSelector('.fl-section[data-part="access"] .ea-sheet', { timeout: 20000 }).catch(() => {});
   sh = await sheet(F);
   check('after a reload at the sheet\'s address the sheet is shown with what the record holds, and Back is on screen', sh.parts.length === 5 && value(sh.fields, 'street2') === 'Suite 5' && value(sh.fields, 'signerTitle') === ISSUER.signerTitle && (await F.fr.locator('.fl-bar a.fl-back').count()) === 1, sh.fields.map((f) => `${f.name}=${f.value}`));
-  await L9.press(F, '.ea-sheet a[href^="#console-filings-access-"]');
+  await L9.press(F, '.ea-sheet a[href^="#console-filings-access-"] >> nth=0');
   check('the sheet links back to the steps', (await F.fr.locator('.fl-section[data-part="access"] .fl-steps').count()) === 1, await F.fr.evaluate(() => location.hash));
   await L9.quiet(check, F, 'after the reload');
   await F.A.context.close();
@@ -420,12 +420,25 @@ async function sheetDesktop({ check, S }) {
   const seeded = await L9.seed(F, { name: NAME, sales: [{ daysAgo: 5, state: 'NY' }] });
   const id = seeded.offeringId;
   await setIssuer(F, id, { street1: ISSUER.street1, city: ISSUER.city, state: ISSUER.state, zip: ISSUER.zip });
+  // The team list as a sponsor's sign-up leaves it, plus a team member: the administrators are suggested from it.
+  await F.fr.evaluate(() => {
+    const NS = window.CVPortal;
+    NS.state.ws.team = [
+      { id: 'tm-s', name: `${NS.state.ws.tenant.shortName} admin`, email: 'ir@harbor.example', role: 'admin', status: 'active' },
+      { id: 'tm-a', name: 'Ada Quinn Lovelace', email: 'ada@harbor.example', role: 'admin', owner: true, status: 'active', current: true },
+      { id: 'tm-b', name: 'Ben Ray Okafor', email: 'ben@harbor.example', role: 'team', status: 'active' },
+      { id: 'tm-c', name: 'Cy Invited', email: 'cy@harbor.example', role: 'team', status: 'invited' }
+    ];
+    NS.app.save(true);
+  });
   await F.A.context.addInitScript(acceptingClipboard);
   await F.reload('console-filings');
   await openSheet(F, id);
   let sh = await sheet(F);
   check('parts 1 to 5 in the dashboard\'s order at 1280x800', sh.parts.join('|') === PARTS5.join('|'), sh.parts);
   check('an answer the record does not hold is an empty field the sponsor may type (phone, signer)', value(sh.fields, 'phone') === '' && value(sh.fields, 'signerName') === '' && value(sh.fields, 'street1') === ISSUER.street1, sh.fields.map((f) => `${f.name}=${f.value}`));
+  const suggested = await L9.text(F, '.ea-sheet [data-sheet-part="3"]');
+  check('the account administrators and the billing contact are suggested from the team list (not an invited member, not the "<firm> admin" stand-in), and the sheet says where they came from', value(sh.fields, 'admin1Name') === 'Ada Quinn Lovelace' && value(sh.fields, 'admin1Email') === 'ada@harbor.example' && value(sh.fields, 'admin2Name') === 'Ben Ray Okafor' && value(sh.fields, 'billingName') === 'Ada Quinn Lovelace' && /Filled from your team list/.test(suggested), sh.fields.filter((f) => /^(admin|billing)/.test(f.name)).map((f) => `${f.name}=${f.value}`));
   await L9.press(F, '.ea-sheet [data-action="ea-copy"][data-for="ea-a-applicantName"]');
   await L9.press(F, '.ea-sheet [data-action="ea-copy"][data-for="ea-a-street1"]');
   const got = await copied(F);
