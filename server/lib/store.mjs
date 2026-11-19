@@ -8,6 +8,7 @@ const BLOB_KEY = /^[\w-]{1,120}$/;
 
 export function openStore(file) {
   let data = { verifications: {}, screenings: {}, invitations: {}, outbox: {}, accounts: {}, events: [], seen: [] };
+  Object.assign(data, { billing: {}, entitlements: {}, ledger: {}, payments: {} }); // card payments (lib/billing.mjs)
   if (file) {
     try {
       data = Object.assign(data, JSON.parse(readFileSync(file, 'utf8')));

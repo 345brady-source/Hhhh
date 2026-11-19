@@ -50,6 +50,7 @@ import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
 import { createAccounts } from './lib/accounts.mjs';
+import { createBilling } from './lib/billing.mjs';
 import { createIntake } from './lib/intake.mjs';
 import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
 import { costOf, logLine } from './lib/model.mjs';
@@ -161,6 +162,7 @@ export function createServer(opts = {}) {
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   const accounts = createAccounts({ store, now });
+  const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   /**
    * Who is calling a sponsor route: null (refuse), { shared: true } (the shared API_TOKEN, or an open server: no API_TOKEN
    * and no account), or { account } (a sponsor's own token; the call then acts on that account's workspace only).
@@ -614,7 +616,7 @@ export function createServer(opts = {}) {
     // Referrer-Policy: no-referrer), never the portal's, so PORTAL_ORIGIN would refuse them. Those routes take no token and
     // are reached only through unguessable check ids (a client without a browser can simply leave Origin out), so the Origin
     // check adds nothing there and is skipped; every other route, the API included, still answers PORTAL_ORIGIN only.
-    const ownPage = /^\/(sandbox|hosted)\//.test(path);
+    const ownPage = /^\/(sandbox|hosted|billing)\//.test(path);
     if (!ownPage && !cors(req, res, env.PORTAL_ORIGIN)) return send(res, 403, { error: 'Origin not allowed' });
     if (req.method === 'OPTIONS') return send(res, 204, '');
 
@@ -725,6 +727,7 @@ export function createServer(opts = {}) {
       }
       return send(res, 200, PROVIDERS.sandbox.page(rec), HTML);
     }
+    if (path.startsWith('/billing/')) return req.method === 'POST' && limited(req) ? send(res, 429, { error: 'Too many requests' }) : billing.handle(req, res, url, null); // the hosted card page (lib/billing.mjs); no token reaches it
 
     // Results pushed by a provider or the sponsor's own automation (for "link" checks, or any provider
     // that reports outcomes this way). Off unless RESULTS_TOKEN is set; it has its own token, not API_TOKEN.
@@ -787,6 +790,7 @@ export function createServer(opts = {}) {
     const pin = auth && auth.account ? auth.account.workspace : null;
     const foreign = (rec) => pin !== null && (rec.workspace || '') !== pin;
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
+    if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
 
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
 

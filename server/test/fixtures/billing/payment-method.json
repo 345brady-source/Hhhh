@@ -1,0 +1,16 @@
+{
+  "_source": "https://docs.stripe.com/api/payment_methods/object",
+  "_status": "unconfirmed: the reference page could not be opened from the build environment on 2026-11-19 (the connection was refused); only the id, status, customer and payment method fields and the fields the research names are written here, from general knowledge of the interface, not from the page; to be confirmed in test mode by plan 08-12",
+  "reply": {
+    "id": "pm_fixture1",
+    "object": "payment_method",
+    "type": "card",
+    "customer": "cus_fixture1",
+    "card": {
+      "brand": "visa",
+      "last4": "4242",
+      "exp_month": 12,
+      "exp_year": 2030
+    }
+  }
+}
