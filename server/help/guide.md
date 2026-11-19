@@ -205,7 +205,7 @@ The page's heading is "Investor requests". It lists the redemptions and subscrip
 
 1. Use Open or All above the list to filter.
 2. Choose "Approve" or "Decline" beside a request.
-3. After approving, the same row has "Record payment" for a redemption or "Record funding" for a subscription: choose it when the money has moved. The investor register, capital accounts and audit schedules then update automatically.
+3. After approving, the same row has "Record payment" for a redemption or "Record funding" for a subscription to an open-ended fund: choose it when the money has moved. For a commitment it has "Countersign": when the subscription agreement still waits for the firm's signature, it opens the agreement to sign as the firm, and the commitment goes on the investor register once that signing is finished. The investor register, capital accounts and audit schedules then update automatically.
 
 Redemptions are paid at net asset value on the dealing date, which follows the fund's notice period and lock-up; the payment can be recorded once that month's valuation is final.
 

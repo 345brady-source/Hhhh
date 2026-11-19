@@ -2349,6 +2349,9 @@
     if (!el && document.querySelector('.es-loading')) return;
     S().ui.esFocus = null;
     if (el) el.focus({ preventScroll: true });
+    // The finished card takes the place of a long document: the page returns to its top, so its way out (Back to envelope,
+    // Documents) is on screen with the card, not scrolled away above it.
+    if (el && sel === '.es-done' && el.closest('.es-sign') && el.closest('.es-sign').getBoundingClientRect().top < 0) window.scrollTo(0, 0);
   }
 
   /* =====================================================================
@@ -2756,9 +2759,11 @@
     const n = list.length;
     return `<section class="es-banner" aria-label="Documents to sign"><span class="es-banner-icon">${PEN}</span><div class="es-banner-body"><strong>${n === 1 ? 'A document is' : `${n} documents are`} waiting for your signature</strong><span>${list.map((e) => h(e.title)).join(' · ')}</span></div><a class="btn btn-primary btn-small" href="#sign-${h(list[0].id)}">Review and sign</a></section>`;
   }
+  // Documents for an investor who holds investments: what to sign, and the agreements they signed that wait for the firm (a
+  // copy they signed is never missing from Documents: the fully signed copy joins the table below once the firm signs).
   NS.hooks.documentsTop.push((inv) => {
     const list = inv ? pendingFor(W(), inv.id) : [];
-    return list.length ? waitingHTML(list) : '';
+    return (list.length ? waitingHTML(list) : '') + (inv ? mineHTML(W(), inv) : '');
   });
   NS.actions['es-open-doc'] = (el) => {
     const inv = PK().viewer();
@@ -2794,6 +2799,40 @@
   });
   NS.navCounts = NS.navCounts || {};
   NS.navCounts['console-esign'] = (ws) => countersignDue(ws).length;
+
+  /* ---------- Countersign on Requests (console.js req-funded): the firm signs the subscription agreement ---------- */
+  /**
+   * Walkthrough failure 3: an approved subscription whose agreement still waits for the firm's signature is countersigned by
+   * signing that agreement as the firm, in the view "Sign as sponsor" opens. The request is accepted, and the commitment
+   * goes on the register, only once that signing is finished (the hook below); leaving it unfinished changes nothing.
+   * Returns true when Countersign is handled here (the signing opened, or it is not yet the firm's turn, said in a toast),
+   * false when it records at once as before (no agreement, no field for the firm, or the firm has signed).
+   */
+  function countersign(ws, r) {
+    const o = r ? ws.offerings.find((x) => x.id === r.offeringId) : null;
+    if (!o || r.type !== 'subscription' || r.status !== 'approved' || !r.envelopeId || NS.ops.isOpen(o)) return false;
+    const env = envById(ws, r.envelopeId);
+    const firm = env && env.status === 'sent' ? env.signers.find((s) => s.role === 'countersigner' && s.status !== 'signed' && fieldsOf(env, s).length) : null;
+    if (!firm) return false;
+    if (!isTurn(env, firm)) {
+      const first = currentSigners(env)[0];
+      U.toast(`The subscription agreement is waiting for ${first ? first.name : 'the investor'} to sign first.`);
+      return true;
+    }
+    Object.assign(esUi(), { signAs: env.id, signAsSigner: firm.id, sel: null, tool: null });
+    NS.app.go('console-envelope-' + env.id);
+    window.scrollTo(0, 0);
+    return true;
+  }
+  signedHooks.push((env, s, complete) => {
+    if (!complete || !s || s.role !== 'countersigner') return false;
+    const ws = W();
+    const r = (ws.requests || []).find((x) => x.envelopeId === env.id && x.type === 'subscription' && x.status === 'approved');
+    const o = r ? ws.offerings.find((x) => x.id === r.offeringId) : null;
+    if (!o || NS.ops.isOpen(o) || !NS.ops.markFunded(ws, r)) return false;
+    U.toast('Subscription countersigned. The commitment is on the investor register.');
+    return true;
+  });
 
   /* ---------- Console Documents: removing a signed copy from portals keeps the envelope's file ---------- */
   // The portal listing of a completed envelope shares the envelope's stored file (same id), so the
@@ -3027,9 +3066,13 @@
     if (!inv) return '';
     const ws = W();
     const waiting = pendingFor(ws, inv.id);
-    const mine = awaitingFor(ws, inv.id);
     const signed = signedDocsFor(ws, inv);
-    const sent = mine.length
+    return (waiting.length ? waitingHTML(waiting) : '') + mineHTML(ws, inv) + (signed.length ? signedHTML(signed) : '');
+  }
+  /** "Signed by you": the agreements an investor signed that wait for the firm's countersignature, each with its copy so far. */
+  function mineHTML(ws, inv) {
+    const mine = awaitingFor(ws, inv.id);
+    return mine.length
       ? `<section class="sec es-mine" aria-label="Signed by you">${PK().sec('Signed by you', `<span class="hint">Waiting for ${h(T().shortName)}’s countersignature</span>`)}<div class="tbl-scroll"><table class="tbl tbl-mid"><thead><tr><th scope="col">Signed</th><th scope="col">Document</th></tr></thead><tbody>${mine
           .map((e) => {
             const s = flowSigner(e, inv.id);
@@ -3037,7 +3080,6 @@
           })
           .join('')}</tbody></table></div></section>`
       : '';
-    return (waiting.length ? waitingHTML(waiting) : '') + sent + (signed.length ? signedHTML(signed) : '');
   }
   NS.actions['es-open-mine'] = (el) => {
     const inv = PK().viewer();
@@ -4019,7 +4061,7 @@
   };
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal, firmOnly });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
-  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, viewPdf, lostText, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
+  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, viewPdf, lostText, countersign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
   // How long the upload waits for the reading server before the in-page reading stands (a check may shorten it).
   NS.esign.createFromPdf = createFromPdf;
   NS.esign.SERVER_LIMIT_MS = 330000;
