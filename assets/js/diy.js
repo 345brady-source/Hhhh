@@ -126,7 +126,9 @@
     t.colors = Object.assign({}, t.colors, { primary: f.color || t.colors.primary });
     if (f.logo) t.logo = Object.assign({}, t.logo, { type: 'image', image: f.logo });
     t.domain = `investors.${domain}`;
-    t.support = Object.assign({}, t.support, { email: `investors@${domain}` });
+    // Investors see only what the firm enters: no sample phone, hours or disclosure (Portal and brand fills them in).
+    t.support = Object.assign({}, t.support, { email: `investors@${domain}`, phone: '', hours: '' });
+    t.disclaimer = '';
     t.legalName = /\b(llc|lp|l\.p\.|inc|ltd)\b/i.test(firm) ? firm : `${firm}, LLC`;
     const plain = firm.replace(/,?\s*(LLC|L\.L\.C\.|LP|L\.P\.|Inc\.?|Ltd\.?)$/i, '').trim();
     t.shortName = plain.length <= 24 ? plain : plain.split(/\s+/).slice(0, 2).join(' ');

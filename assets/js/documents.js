@@ -13,7 +13,7 @@
   function head(t, kicker) {
     return `<header class="paper-head">
         <div class="paper-logo">${B.lockup(t)}</div>
-        <div class="paper-from"><strong>${h(t.legalName)}</strong><span>${h(t.support.phone)}</span><span>${h(t.support.email)}</span></div>
+        <div class="paper-from"><strong>${h(t.legalName)}</strong>${t.support.phone ? `<span>${h(t.support.phone)}</span>` : ''}<span>${h(t.support.email)}</span></div>
       </header>
       <div class="paper-rule"></div>
       <p class="paper-kicker">${h(kicker)}</p>`;

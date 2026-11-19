@@ -64,6 +64,14 @@
     const look = (ws.tenant && ws.tenant.look) || 1;
     const before = look < 2;
     ws.tenant = merge(NS.TENANT_TEMPLATE, ws.tenant || {});
+    // A firm that signed itself up before sign-up left them empty still holds the template's sample phone, hours and
+    // disclosure, which it never entered: they are cleared. The managed edition and the sample firms keep theirs.
+    if (NS.EDITION && NS.EDITION.diy && !isBuiltin(ws.tenant.id)) {
+      const T0 = NS.TENANT_TEMPLATE;
+      if (ws.tenant.support.phone === T0.support.phone) ws.tenant.support.phone = '';
+      if (ws.tenant.support.hours === T0.support.hours) ws.tenant.support.hours = '';
+      if (ws.tenant.disclaimer === T0.disclaimer) ws.tenant.disclaimer = '';
+    }
     if (before && ws.tenant.radius === 'sharp') ws.tenant.radius = 'soft';
     const seed = before && NS.TENANTS.find((t) => t.id === ws.tenant.id);
     if (seed && seed.home) ws.tenant.home = merge(ws.tenant.home, seed.home);

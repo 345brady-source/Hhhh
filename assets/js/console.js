@@ -217,7 +217,8 @@
     render() {
       const w = W();
       const t = T();
-      const branded = t.domain && t.domain !== NS.TENANT_TEMPLATE.domain && t.support.email !== NS.TENANT_TEMPLATE.support.email;
+      // Self-serve: sign-up gives the domain and email; the step is complete once the firm has entered its support phone too.
+      const branded = t.domain && t.domain !== NS.TENANT_TEMPLATE.domain && t.support.email !== NS.TENANT_TEMPLATE.support.email && (!E.diy || !!String(t.support.phone || '').trim());
       const allSteps = (E.diy
         ? [
             ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand', true],
@@ -236,7 +237,7 @@
             ['Invite investors', 'Add investors one at a time or import a list. Each receives an activation email.', w.investors.length > 0, 'console-investors'],
             ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
           ]
-      ).filter((s) => (canConfigure() || !s[4]) && NS.views[s[3]]);
+      ).filter((s) => (canConfigure() || !s[4]) && NS.views[s[3].replace(/^console-offering-.+$/, 'console-offering')]);
       // Steps the firm removed from its list (kept by name; Restore brings them back).
       const removed = (t.setupRemoved || []).filter((k) => allSteps.some((s) => s[0] === k));
       const steps = allSteps.filter((s) => removed.indexOf(s[0]) < 0);
@@ -1015,7 +1016,7 @@
           <p>${h(t.shortName)} now shares account information through a secure ${h(t.portalName.toLowerCase())}. Once you activate your account you can see each of your investments, the distributions you have received, projected exit timing, and your statements and tax documents.</p>
           <p>Activation takes about five minutes. You will create a login, confirm your investor details${t.onboarding.accreditation ? ' and accreditation' : ''}, and tell us where to send distributions.</p>
           <p><span class="email-btn">Activate your account</span></p>
-          <p>This link expires on ${by}. Questions? Contact ${h(t.support.team)} at ${h(t.support.phone)}.</p>
+          <p>This link expires on ${by}. Questions? Contact ${h(t.support.team)} at ${h(t.support.phone || t.support.email)}.</p>
         </div>
         <div class="email-foot">${h(t.legalName)} · ${h(t.domain)}</div>
       </article>
@@ -2663,7 +2664,17 @@
     const st = ikState();
     if (!st.profile) return;
     if (path === 'fees.other') v = String(v).split('\n').map((x) => x.trim()).filter(Boolean);
+    // A corrected Name corrects the Short name, until the sponsor types a short name of their own (an existing offering's
+    // counts as theirs unless it is its Name's own short form). Set in place, so typing in the Name is never interrupted.
+    const off = st.profile.offering;
+    const follow = path === 'offering.name' && !st.shortOwn && (st.method !== 'manual' || off.shortName === IK().shortOf(off.name));
+    if (path === 'offering.shortName') st.shortOwn = true;
     NS.app.setPath(st.profile, path, v);
+    if (follow) {
+      off.shortName = IK().shortOf(v);
+      const el = document.getElementById('ik-offering-shortName');
+      if (el) el.value = off.shortName;
+    }
     if (/\.kind$|^offering\.type$|^term\.basis$|^liquidity\.frequency$/.test(path)) NS.app.render();
   };
   /*
