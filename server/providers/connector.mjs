@@ -515,22 +515,27 @@ export function makeConnector(def, env = {}) {
 /* ---------------- Webhook signatures ---------------- */
 
 const MAX_SIG_HEADER = 2048;
-const MATCH_MS = 50;
+// The limit is wall-clock time. A match needs well under 1 ms, but on a busy machine the thread can lose the
+// whole 50 ms window, so only after a timeout is the match tried once more with a longer limit.
+const MATCH_MS = [50, 500];
 const matcher = new vm.Script('Array.from(String(h).matchAll(new RegExp(p, "g")), (m) => m[1]).filter(Boolean).slice(0, all ? 20 : 1)');
 const sandbox = vm.createContext(Object.create(null));
 
 /**
  * The first capture of every match of a sponsor-written pattern (or only the first match), with a time
- * limit: a slow pattern on a header an attacker sends gives no candidates instead of stalling the server.
+ * limit: a slow pattern on a header an attacker sends gives no candidates once its limits (50 ms, then
+ * 500 ms) run out, instead of stalling the server.
  */
 function match(pattern, value, all) {
-  try {
-    Object.assign(sandbox, { h: value, p: pattern, all });
-    const out = matcher.runInContext(sandbox, { timeout: MATCH_MS });
-    return Array.from(out, String);
-  } catch {
-    return [];
+  for (const timeout of MATCH_MS) {
+    try {
+      Object.assign(sandbox, { h: value, p: pattern, all });
+      return Array.from(matcher.runInContext(sandbox, { timeout }), String);
+    } catch (e) {
+      if (e?.code !== 'ERR_SCRIPT_EXECUTION_TIMEOUT') return [];
+    }
   }
+  return [];
 }
 
 /** The core of a secret's base64 form at each of the three byte alignments, so it is found inside a longer base64 value (for example "user:password"). */

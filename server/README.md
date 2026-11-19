@@ -265,7 +265,7 @@ Rules that keep these checks meaningful:
 
 - A timestamp only protects against replays when it is signed, so `timestampHeader` or `timestampPattern` requires `{timestamp}` in `signed`.
 - Duplicates are dropped by a delivery id the signature covers: the `idHeader` value when `signed` includes `{id}`, otherwise the `id` path in the body. When `idHeader` is set but not signed and the body has no `id`, a hash of the exact body is used instead, so a replay with a changed header is still a duplicate.
-- `pattern` and `timestampPattern` run on headers anyone can send, before the signature is checked. They must be simple: a capture group around the value, no repeated groups such as `(a+)+`, no back-references or look-arounds, at most four quantifiers. They run with a 50 ms limit on signature headers of up to 2 KB.
+- `pattern` and `timestampPattern` run on headers anyone can send, before the signature is checked. They must be simple: a capture group around the value, no repeated groups such as `(a+)+`, no back-references or look-arounds, at most four quantifiers. They run with a 50 ms limit on signature headers of up to 2 KB; a match that misses it is tried once more with a 500 ms limit, because a busy machine can miss the first.
 - Deliveries for a provider whose environment variables are not all set (an empty webhook secret, say) are refused.
 
 ## Investor invitations
