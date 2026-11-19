@@ -210,3 +210,174 @@ test('tracer: the paid invitation’s investor starts the package’s identity c
     assert.equal(h.f.calls.length, before, 'no provider call');
   });
 });
+
+const sha = (t) => createHash('sha256').update(String(t)).digest('hex');
+const resend = (h, id) => j(h.base, 'POST', `/v1/invitations/${id}/resend`, { bearer: h.a.token, body: {} });
+
+test('N3 expired then resent: a package returned after its invitation expired cannot be resent or used, even with a fresh link', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('e1');
+    h.clock.t = Date.parse(h.store.get('invitations', p.id).expiresAt) + 1000;
+    h.server.invitations.purge();
+    // Billing's own release over the server's store (a no-op once the invitation code has credited it at expiry).
+    h.billing.release(p.entitlement);
+    assert.equal(h.ent(p.entitlement).status, 'credited');
+    const mails = h.outbox();
+    const r = await resend(h, p.id);
+    assert.equal(r.status, 409, r.text);
+    assert.deepEqual(r.body, { error: RETURNED });
+    assert.equal(h.outbox(), mails, 'nothing is sent');
+    // What a resend would have done: a new token and a new expiry, written directly.
+    const token = randomBytes(32).toString('base64url');
+    h.store.put('invitations', { id: p.id, tokenHash: sha(token), expiresAt: new Date(h.clock.t + 10 * DAY).toISOString() });
+    const calls = h.f.checks();
+    const s = await h.identity(token);
+    assert.equal(s.status, 403, s.text);
+    assert.deepEqual(s.body, { error: REFUSED });
+    assert.equal(h.f.checks(), calls, 'no provider call');
+  });
+});
+
+test('N3 refunded: a refunded, disputed or refunding package starts no check of either kind, and the row reads refunded', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('r1');
+    for (const status of ['refunded', 'disputed', 'refunding']) {
+      h.store.put('entitlements', { id: p.entitlement, status });
+      const s = await h.identity(p.token);
+      assert.equal(s.status, 403, `${status}: ${s.text}`);
+      assert.deepEqual(s.body, { error: REFUSED });
+      const sc = await h.screening(p.token);
+      assert.equal(sc.status, 403, `${status}: ${sc.text}`);
+      assert.deepEqual(sc.body, { error: REFUSED });
+      assert.equal(h.f.checks(), 0, `${status}: no provider call`);
+      assert.deepEqual(await h.row(p.id), { tier: 'identity', status: 'refunded' });
+    }
+  });
+});
+
+test('N3 credited: a package returned to credit while its invitation is open starts nothing; the new invitation paid from that credit does', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('k1');
+    assert.equal(h.billing.release(p.entitlement), true);
+    assert.equal(h.credit(), 1900);
+    const s = await h.identity(p.token);
+    assert.equal(s.status, 403, s.text);
+    assert.deepEqual(s.body, { error: REFUSED });
+    assert.equal(h.f.checks(), 0, 'no provider call');
+    // The same client id again: a new package paid from the credit, no charge.
+    const q = await h.send('k1');
+    assert.equal(h.f.charges(), 1, 'paid from the credit');
+    assert.notEqual(q.entitlement, p.entitlement);
+    const old = await h.identity(p.token);
+    assert.equal(old.status, 403, 'the newest entitlement is not the old invitation’s own');
+    assert.deepEqual(old.body, { error: REFUSED });
+    assert.equal(h.f.checks(), 0);
+    const fresh = await h.identity(q.token);
+    assert.equal(fresh.status, 200, fresh.text);
+    assert.equal(h.f.sessions(), 1);
+  });
+});
+
+test('N3 resend: a returned package is never resent; a paid, unstarted one is resent with no payment and its new link starts the check', async () => {
+  await shop({}, async (h) => {
+    const credited = await h.send('s1');
+    h.billing.release(credited.entitlement);
+    const refunded = await h.send('s2');
+    h.store.put('entitlements', { id: refunded.entitlement, status: 'refunded' });
+    const disputed = await h.send('s3');
+    h.store.put('entitlements', { id: disputed.entitlement, status: 'disputed' });
+    const mails = h.outbox();
+    for (const p of [credited, refunded, disputed]) {
+      const r = await resend(h, p.id);
+      assert.equal(r.status, 409, r.text);
+      assert.deepEqual(r.body, { error: RETURNED });
+      assert.equal(h.outbox(), mails, 'nothing is sent');
+    }
+    const paid = await h.send('s4');
+    const charges = h.f.charges();
+    const before = h.outbox();
+    const r = await resend(h, paid.id);
+    assert.equal(r.status, 200, r.text);
+    assert.equal(h.outbox(), before + 1, 'one new message');
+    assert.equal(h.f.charges(), charges, 'no payment call');
+    const s = await h.identity(r.body.token);
+    assert.equal(s.status, 200, s.text);
+    assert.equal(h.f.sessions(), 1);
+  });
+});
+
+test('N1 account calls: a sponsor account cannot start a package provider directly and does not see them listed', async () => {
+  await shop({}, async (h) => {
+    const acc = accreditCalls.length;
+    const v = await j(h.base, 'POST', '/v1/verifications', { bearer: h.a.token, body: { kind: 'identity', provider: 'idcheck', investor: INVESTOR } });
+    assert.equal(v.status, 403, v.text);
+    assert.deepEqual(v.body, { error: ACCOUNT_SAYS });
+    const s = await j(h.base, 'POST', '/v1/screenings', { bearer: h.a.token, body: { provider: 'idcheck', investor: { id: 'HRC-0007' }, names: ['Zelda Quixote'] } });
+    assert.equal(s.status, 403, s.text);
+    assert.deepEqual(s.body, { error: ACCOUNT_SAYS });
+    const ac = await j(h.base, 'POST', '/v1/verifications', { bearer: h.a.token, body: { kind: 'accreditation', provider: 'accredit', investor: INVESTOR } });
+    assert.equal(ac.status, 403, ac.text);
+    assert.deepEqual(ac.body, { error: ACCOUNT_SAYS });
+    assert.equal(h.f.checks(), 0, 'no provider call');
+    assert.equal(accreditCalls.length, acc, 'no accreditation call');
+    const list = await j(h.base, 'GET', '/v1/connectors', { bearer: h.a.token });
+    assert.equal(list.status, 200, list.text);
+    const ids = list.body.connectors.map((c) => c.id);
+    for (const want of ['sandbox', 'link', 'ofac']) assert.ok(ids.includes(want), `${want} is listed`);
+    assert.ok(!ids.includes('idcheck') && !ids.includes('accredit'), ids.join(','));
+  });
+});
+
+// Recorded trade-off (N1): the shared API_TOKEN and an open server are the operator's own, so they reach the package
+// providers exactly as before this plan. An operator who hands the shared token to a sponsor gives that sponsor the
+// providers for free.
+test('N1 shared token: the shared token and an open server still start and list the identity check', async () => {
+  await shop({ env: { API_TOKEN: API } }, async (h) => {
+    const v = await j(h.base, 'POST', '/v1/verifications', { bearer: API, body: { kind: 'identity', provider: 'idcheck', investor: INVESTOR } });
+    assert.equal(v.status, 200, v.text);
+    assert.equal(h.f.sessions(), 1, 'one session call');
+    const s = await j(h.base, 'POST', '/v1/screenings', { bearer: API, body: { provider: 'idcheck', investor: { id: 'HRC-0007' }, names: ['Zelda Quixote'] } });
+    assert.equal(s.status, 200, s.text);
+    assert.equal(h.f.screens(), 1, 'one screening call');
+    const list = await j(h.base, 'GET', '/v1/connectors', { bearer: API });
+    assert.ok(list.body.connectors.some((c) => c.id === 'idcheck'), 'listed for the shared token');
+  });
+  const f = standIn();
+  const open = { IDCHECK_API_KEY: ENV.IDCHECK_API_KEY, IDCHECK_WORKFLOW: ENV.IDCHECK_WORKFLOW, IDCHECK_WEBHOOK_SECRET: ENV.IDCHECK_WEBHOOK_SECRET, RATE_LIMIT_PER_MIN: '0' };
+  await withServer({ env: open, fetch: f, providers: PROVIDERS }, async (base) => {
+    const v = await j(base, 'POST', '/v1/verifications', { body: { kind: 'identity', provider: 'idcheck', investor: INVESTOR } });
+    assert.equal(v.status, 200, v.text);
+    assert.equal(f.sessions(), 1);
+    const s = await j(base, 'POST', '/v1/screenings', { body: { provider: 'idcheck', investor: { id: 'HRC-0007' }, names: ['Zelda Quixote'] } });
+    assert.equal(s.status, 200, s.text);
+    assert.equal(f.screens(), 1);
+    const list = await j(base, 'GET', '/v1/connectors');
+    assert.ok(list.body.connectors.some((c) => c.id === 'idcheck'), 'listed on an open server');
+  });
+});
+
+test('full tier: the full package starts identity, screening and accreditation, the first start marks it; an identity package cannot start accreditation', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('f1', {}, { verification: { accreditationRequired: true, connections: [], use: {} } });
+    assert.equal((await h.row(p.id)).tier, 'full');
+    const acc = accreditCalls.length;
+    const i = await h.identity(p.token);
+    assert.equal(i.status, 200, i.text);
+    const first = h.ent(p.entitlement).startedAt;
+    assert.ok(first, 'the first start marks the package');
+    h.clock.t += 5 * 60 * 1000;
+    const s = await h.screening(p.token);
+    assert.equal(s.status, 200, s.text);
+    const ac = await h.accreditation(p.token);
+    assert.equal(ac.status, 200, ac.text);
+    assert.equal(accreditCalls.length, acc + 1, 'one accreditation call');
+    assert.deepEqual(h.store.get('verifications', ac.body.id).settings, { firm: FIRM }, 'the firm’s name is the only setting');
+    assert.equal(h.ent(p.entitlement).startedAt, first, 'later starts leave it as it was');
+    assert.deepEqual(await h.row(p.id), { tier: 'full', status: 'started' });
+
+    const q = await h.send('f2');
+    const refused = await h.accreditation(q.token);
+    assert.equal(refused.status, 403, refused.text);
+    assert.equal(accreditCalls.length, acc + 1, 'no call to the accreditation stand-in');
+  });
+});

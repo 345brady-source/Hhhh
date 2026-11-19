@@ -1213,6 +1213,9 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       if (!rec) throw fail(404, 'No invitation with that id');
       if (rec.status === 'completed') throw fail(409, 'This onboarding is already complete');
       if (rec.status === 'cancelled') throw fail(409, 'This invitation was cancelled; send a new one instead');
+      // N3 (08-15): a package returned as credit, refunded or disputed cannot be used again, so its invitation is not resent.
+      const held = packageState(rec);
+      if (held && (held.status === 'credited' || held.status === 'refunded')) throw fail(409, "This invitation's package was returned. Send a new invitation.");
       const snap = unseal(rec, 'snapshot');
       if (!snap) throw fail(410, 'This invitation is no longer available; send a new one');
       if (body.portalUrl !== undefined) {
