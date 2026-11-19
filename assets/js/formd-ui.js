@@ -9,8 +9,10 @@
  * The draft is an entry of NS.filings.rec(ws, id).formD:
  *   { id, type: 'D' | 'D/A', status: 'draft' | 'ordered', draft, signoff: { by, name, title, at } | null, orderId,
  *     touched: [field], replaces: id of the signed entry it was copied from, or '' }
- * saved with the workspace. A signed-off entry is never edited: a later change is made on a copy. Nothing is sent
- * anywhere from here and nothing is charged: signing off records the order with its amount due.
+ * saved with the workspace. A signed-off entry is never edited: a later change is made on a copy, which keeps the
+ * order of the entry it replaces. Once a notice is on file, an amendment (D/A) starts from it: the portal's own notice,
+ * or the file or text of a notice filed elsewhere, read in the page through NS.formD.fromXml. Nothing is sent anywhere
+ * from here and nothing is charged: signing off records the order with its amount due.
  * Registered as the part formd of NS.filingsUI; the managed edition never loads it.
  */
 (function (NS) {
@@ -86,6 +88,14 @@
     list.forEach((n, i) => n && n.status === 'accepted' && (last = i));
     for (let i = list.length - 1; i > last; i--) if (list[i] && (list[i].status === 'draft' || list[i].status === 'ordered')) return list[i];
     return null;
+  }
+  /** The latest notice on record as filed (the portal's or the sponsor's own), D or D/A. */
+  const isFiled = (n) => !!n && n.status === 'accepted' && /^\d{4}-\d\d-\d\d$/.test(String(n.filedOn || ''));
+  const lastFiled = (ws, id) => entries(ws, id).filter(isFiled).reduce((a, b) => (!a || b.filedOn >= a.filedOn ? b : a), null);
+  /** The annual or the change reminder of the offering, when it is due or overdue and not silenced. */
+  function amendDue(ws, o) {
+    const list = FL.due(ws, today(), { states: NS.blueskyData && NS.blueskyData.table }).filter((r) => r.offeringId === o.id && !r.silenced && (r.level === 'due' || r.level === 'overdue'));
+    return list.find((r) => r.kind === 'formd-annual') || list.find((r) => r.kind === 'formd-change') || null;
   }
   function ui() {
     const u = NS.state.ui;
@@ -422,10 +432,27 @@
       ${noticeHTML(e.draft)}
     </div>`;
   }
+  /** Once a notice is on file: an amendment starts from it (the portal's own), or from its file or text (filed elsewhere). */
+  function amendStartHTML(w, last) {
+    const id = h(w.o.id);
+    const err = ui().err[`import:${w.o.id}`] || '';
+    const head = `<p class="fl-note">Last notice filed on ${date(last.filedOn)}${last.accession ? ` · ${h(last.accession)}` : ''}.</p>`;
+    if (last.draft) return `<div class="fd-page fd-amend" data-fd="${id}">${head}<div class="fl-acts">${actBtn('fd-amend', 'Start an amendment', ` data-id="${id}"`, 'cs-btn-primary')}</div></div>`;
+    return `<div class="fd-page fd-amend" data-fd="${id}">${head}
+      <div class="fl-item"><div><h3>Start the amendment from the notice you filed</h3></div>
+        <label class="cs-field">Its file (.xml)<input type="file" accept=".xml,text/xml,application/xml" data-change="fd-file" data-id="${id}"><span class="cs-hint">EDGAR lists it with the filed notice as primary_doc.xml.</span></label>
+        <label class="cs-field">Or its text<textarea name="fd-paste" rows="4" autocomplete="off" spellcheck="false"></textarea></label>
+        <p class="field-error fd-import-error" role="alert">${h(err)}</p>
+        <div class="fl-acts">${actBtn('fd-paste', 'Use the text', ` data-id="${id}"`)}${actBtn('fd-amend', 'Start without the file', ` data-id="${id}"`)}</div>
+      </div>
+    </div>`;
+  }
   function render(ws, o, rest) {
     const w = work(ws, o);
     if (!w) return '<p class="fl-note">Form D is filed for offerings under Rule 506(b) or Rule 506(c).</p>';
     if (w.signed) return signedHTML(ws, w);
+    const last = !w.entry && lastFiled(ws, o.id);
+    if (last) return amendStartHTML(w, last);
     if (rest === 'review') return reviewHTML(w);
     return `<div class="fd-page">${formHTML(w)}<div class="fl-acts"><a class="cs-btn cs-btn-primary" data-go="review" href="${base(o)}-review">Review</a></div></div>`;
   }
@@ -436,7 +463,12 @@
       const order = ((ws.filings && ws.filings.orders) || []).find((x) => x && x.id === e.orderId);
       return h(`Signed off${order ? `: ${money(order.dueCents)} due` : ''}`);
     }
-    if (e) return h('Draft saved: Continue');
+    if (e) return h(`${e.type === 'D/A' ? 'Amendment draft' : 'Draft'} saved: Continue`);
+    // F1: the action for an open amendment reminder is on this line (the reminder rows of the tab do not link here)
+    const a = amendDue(ws, o);
+    if (a) return h(a.due ? `Amendment due ${date(a.due)}: Start` : 'Amendment needed: Start');
+    const last = lastFiled(ws, o.id);
+    if (last) return h(`Filed on ${date(last.filedOn)}`);
     const first = FL.due(ws, today()).find((r) => r.offeringId === o.id && r.kind === 'formd-first');
     return h(first && first.due ? `Due ${date(first.due)}: Start` : 'Start');
   }
@@ -537,6 +569,65 @@
     audit('Form D reopened for changes', o.name, o.id);
     NS.app.save(true);
     redraw();
+  };
+  /**
+   * An amendment draft: the answers of the last filed notice (from), or of the portal's own notice on record, or the
+   * pre-fill; marked as an amendment of that notice. Today's figures are laid over it like any draft (work).
+   */
+  function startAmendment(ws, o, from) {
+    const w = work(ws, o);
+    const last = lastFiled(ws, o.id);
+    if (!w || w.entry || !last) return;
+    const d = clone(from || last.draft || w.pf.draft);
+    d.submissionType = 'D/A';
+    d.offeringData.typeOfFiling.newOrAmendment = { isAmendment: true, previousAccessionNumber: String(last.accession || '').trim() };
+    const sig = d.offeringData.signatureBlock.signature;
+    if (!sig.length) sig.push(FD.blank('signature'));
+    sig.forEach((s) => (s.signatureDate = ''));
+    const r = FL.rec(ws, o.id);
+    r.formD.push({ id: `fd-${Date.now().toString(36)}`, type: 'D/A', status: 'draft', draft: d, signoff: null, orderId: '', touched: [], replaces: '' });
+    ui().err[`import:${o.id}`] = '';
+    audit('Form D amendment started', `${o.name}: amends the notice filed on ${date(last.filedOn)}${from ? ', from its file' : ''}`, o.id);
+    NS.app.save(true);
+    redraw();
+  }
+  /** A filed notice's file or text, read in the page; anything that is not a Form D notice is refused in one sentence. */
+  function importText(o, text) {
+    const ws = W();
+    let d;
+    try {
+      d = FD.fromXml(String(text == null ? '' : text));
+    } catch (e) {
+      ui().err[`import:${o.id}`] = String((e && e.message) || 'This is not a Form D file the portal can read.');
+      return redraw();
+    }
+    const edgar = peek(ws, o.id).edgar || {};
+    if (!String(edgar.cik || '').trim() && /^\d{1,10}$/.test(d.primaryIssuer.cik)) FL.setEdgar(ws, o.id, { cik: d.primaryIssuer.cik });
+    return startAmendment(ws, o, d);
+  }
+  NS.actions['fd-amend'] = (el) => {
+    const ws = W();
+    const o = offeringOf(ws, el.getAttribute('data-id'));
+    if (o) startAmendment(ws, o, null);
+  };
+  NS.actions['fd-paste'] = (el) => {
+    const o = offeringOf(W(), el.getAttribute('data-id'));
+    const area = el.closest('.fd-page') && el.closest('.fd-page').querySelector('textarea[name="fd-paste"]');
+    if (o && area) importText(o, area.value);
+  };
+  NS.changes['fd-file'] = (el) => {
+    const o = offeringOf(W(), el.getAttribute('data-id'));
+    const file = el.files && el.files[0];
+    if (!o || !file) return;
+    const fail = (msg) => {
+      ui().err[`import:${o.id}`] = msg;
+      redraw();
+    };
+    if (file.size > 5000000) return fail('This file is far larger than any Form D notice.');
+    const rd = new FileReader();
+    rd.onload = () => importText(o, rd.result);
+    rd.onerror = () => fail('The file could not be read.');
+    rd.readAsText(file);
   };
   NS.forms['fd-signoff'] = (f) => {
     if (!NS.app.can('configure')) return;

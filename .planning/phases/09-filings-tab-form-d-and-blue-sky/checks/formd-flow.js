@@ -1,5 +1,5 @@
 // gate: browser
-// last "FORMD FLOW: PASS (parts run: 4)"
+// last "FORMD FLOW: PASS (parts run: 6)"
 // Plan 09-04: the Form D section of the Filings tab, as the owner tests it: inside a sandboxed iframe whose policy refuses
 // every connection, with no server, on a 390x844 touch screen (-phone) and at 1280x800 (-desktop). The section's own two
 // files (formd.js, formd-ui.js) are served from the tree; the other sections' files are answered 404, so the check
@@ -569,7 +569,7 @@ async function amend(size, { check, S }) {
   let st = await store(F, id);
   const e = st.rec.formD.filter((x) => x.status === 'draft').pop();
   const shown = { type: await L9.text(F, '#fd-i7 p'), accession: await valueOf(F, `${P}.typeOfFiling.newOrAmendment.previousAccessionNumber`), sold: await valueOf(F, `${P}.offeringSalesAmounts.totalAmountSold`), investors: await valueOf(F, `${P}.investors.totalNumberAlreadyInvested`), minimum: await valueOf(F, `${P}.minimumInvestmentAccepted`), persons: await F.fr.locator('.fl-section .fd-person').count(), industry: await valueOf(F, `${P}.industryGroup.industryGroupType`) };
-  check('a D/A draft holds the last notice\'s answers (its related persons, its industry group) with today\'s figures from the offering laid over them', !!e && e.type === 'D/A' && e.draft.submissionType === 'D/A' && e.draft.offeringData.typeOfFiling.newOrAmendment.isAmendment === true && /^Amendment/.test(shown.type) && shown.persons === REAL_D.relatedPersonsList.length && shown.industry === REAL_D.offeringData.industryGroup.industryGroupType && shown.sold === String(f.sold) && shown.investors === String(f.investors) && shown.minimum === (f.minimum == null ? REAL_D.offeringData.minimumInvestmentAccepted : String(f.minimum)) && shown.sold !== REAL_D.offeringData.offeringSalesAmounts.totalAmountSold, { shown, facts: { sold: f.sold, investors: f.investors, minimum: f.minimum } });
+  check('a D/A draft holds the last notice\'s answers (its related persons, its industry group) with today\'s figures from the offering laid over them', !!e && e.type === 'D/A' && e.draft.submissionType === 'D/A' && e.draft.offeringData.typeOfFiling.newOrAmendment.isAmendment === true && /^Amendment/.test(shown.type) && shown.persons === REAL_D.relatedPersonsList.length && shown.industry === REAL_D.offeringData.industryGroup.industryGroupType && shown.sold === String(f.sold) && shown.investors === String(f.investors) && shown.minimum === (f.minimum == null ? REAL_D.offeringData.minimumInvestmentAccepted : String(f.minimum)) && shown.investors !== REAL_D.offeringData.investors.totalNumberAlreadyInvested, { shown, facts: { sold: f.sold, investors: f.investors, minimum: f.minimum } });
   if (phone) check('the previous accession number is filled from the record', shown.accession === acc, shown.accession);
   else {
     check('the record has no accession number, so it is asked: empty on the form, and Review names it', shown.accession === '', shown.accession);
