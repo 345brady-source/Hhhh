@@ -360,6 +360,7 @@
     ['console-offering-', 'console-offering'],
     ['console-envelope-', 'console-envelope'],
     ['console-filings-', 'console-filings'],
+    ['console-taxdocs-', 'console-taxdocs'],
     ['sign-', 'sign'],
     ['join-', 'join'],
     ['invite-', 'invite']

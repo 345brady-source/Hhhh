@@ -489,26 +489,33 @@
   const sameSlot = (d, investorId, offeringId, kind, year) => d.tax && (d.investors || [])[0] === investorId && d.offeringId === offeringId && d.tax.kind === kind && d.tax.year === String(year);
   const docsIn = (ws, states, investorId, offeringId, kind, year) => (ws.docs || []).filter((d) => sameSlot(d, investorId, offeringId, kind, year) && states.indexOf(d.tax.state) >= 0);
   /**
-   * Confirm in one step every open package proposed on 'number and name' that nobody needs to look at: not marked
-   * (look), not of another partnership, its investor proposed for no other package of the file, with no live document
-   * of that kind and year and no package confirmed for them in another file. Every other package stays open, to be
-   * confirmed one at a time. Returns the number confirmed; each writes its own change-log entry.
+   * The open packages of a file that may be confirmed in one step: proposed on 'number and name' and nobody needs to look
+   * at them: not marked (look), not of another partnership, its investor proposed for no other package of the file, with
+   * no live document of that kind and year and no package confirmed for them in another file. confirmTogether confirms
+   * exactly these, and the page draws its together list from this alone.
    */
-  function confirmTogether(ws, batchId, a) {
+  function togetherIds(ws, batchId) {
     const batch = batchOf(ws, batchId);
-    if (!a || !a.by) refuse('The person confirming must be named.');
-    const at = stamp(a.at);
     const proposedFor = {};
     batch.packages.forEach((p) => {
       if (p.proposed.investorId) proposedFor[p.proposed.investorId] = (proposedFor[p.proposed.investorId] || 0) + 1;
     });
     const confirmedIn = (id) => ensure(ws).batches.some((b) => b.offeringId === batch.offeringId && b.kind === batch.kind && b.year === batch.year && b.packages.some((p) => p.state === 'confirmed' && !p.docId && p.investorId === id));
-    const ready = batch.packages.filter((p) => {
-      const id = p.proposed.investorId;
-      return p.state === 'open' && id && p.proposed.basis === 'number and name' && !p.look && !p.otherPartnership && proposedFor[id] === 1 && !docsIn(ws, LIVE, id, batch.offeringId, batch.kind, batch.year).length && !confirmedIn(id);
-    });
-    ready.forEach((p) => confirm(ws, batchId, p.id, { investorId: p.proposed.investorId, by: a.by, at, together: true }));
-    return ready.length;
+    return batch.packages
+      .filter((p) => {
+        const id = p.proposed.investorId;
+        return p.state === 'open' && id && p.proposed.basis === 'number and name' && !p.look && !p.otherPartnership && proposedFor[id] === 1 && !docsIn(ws, LIVE, id, batch.offeringId, batch.kind, batch.year).length && !confirmedIn(id);
+      })
+      .map((p) => p.id);
+  }
+  /** Confirm every package of togetherIds in one step; every other package stays open. Returns the number confirmed. */
+  function confirmTogether(ws, batchId, a) {
+    const batch = batchOf(ws, batchId);
+    if (!a || !a.by) refuse('The person confirming must be named.');
+    const at = stamp(a.at);
+    const ids = togetherIds(ws, batchId);
+    ids.forEach((id) => confirm(ws, batchId, id, { investorId: pkgOf(batch, id).proposed.investorId, by: a.by, at, together: true }));
+    return ids.length;
   }
 
   /* ---------- consent (Rev. Proc. 2012-17 sections 4 and 5) ---------- */
@@ -713,7 +720,7 @@
     };
   }
 
-  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, reopen, confirm, confirmTogether, toDocument, addGenerated, inEffect, consent, withdrawConsent, deliver, markPaper, bounced, withdraw, opened, notice, lists, availableUntil };
+  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, reopen, confirm, togetherIds, confirmTogether, toDocument, addGenerated, inEffect, consent, withdrawConsent, deliver, markPaper, bounced, withdraw, opened, notice, lists, availableUntil };
   if (NS) NS.taxdocs = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);
