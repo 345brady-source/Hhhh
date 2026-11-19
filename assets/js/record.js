@@ -505,7 +505,7 @@
     if (!env || env.status !== 'completed') throw new Error('This agreement is not completed yet.');
     await ensure(env);
     const blob = env.signedDocId ? await files().get(env.signedDocId) : null;
-    if (!blob) throw new Error('The signed PDF is stored in a different browser.');
+    if (!blob) throw new Error(NS.esign.lostText('the signed PDF'));
     return blob;
   }
   async function download(envId) {

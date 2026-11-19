@@ -2396,7 +2396,7 @@
   NS.actions['kyc-iv-file'] = (el) => {
     OPS()
       .files.get(el.getAttribute('data-id'))
-      .then((blob) => (blob ? U.download(el.getAttribute('data-name'), blob, { mime: blob.type }) : U.toast('This file was uploaded in a different browser.')));
+      .then((blob) => (blob ? U.download(el.getAttribute('data-name'), blob, { mime: blob.type }) : U.toast(NS.esign.lostText('this file'))));
   };
   NS.actions['kyc-approve'] = (el) => {
     const inv = invById(el.getAttribute('data-id'));
