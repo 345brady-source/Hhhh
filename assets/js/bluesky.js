@@ -72,9 +72,25 @@
   /* ---------- Pick, fees, package ---------- */
   const pick = (facts) => Object.keys((facts && facts.byState) || {}).sort();
   const nameOf = (code) => (NS && NS.blueskyData && NS.blueskyData.table[code] && NS.blueskyData.table[code].name) || (NS && NS.filings && NS.filings.stateName(code)) || code;
-  /** A fee's amount for a state, or null when it cannot be worked out from what the table and the facts give. */
-  function amount() {
-    return null;
+  /**
+   * A fee's amount for a state, or null when it cannot be worked out from what the table and the facts give: a fee on the
+   * amount offered of an Indefinite offering, or any amount of an offering in another currency.
+   */
+  function amount(fee, facts, code) {
+    if (!fee || feeProblem(fee)) return null;
+    if (fee.kind === 'fixed') return fee.cents;
+    const by = (facts && facts.byState) || {};
+    const base = fee.basis === 'offered' ? facts && facts.total : own(by, code) ? by[code].sold : 0;
+    if (typeof base !== 'number' || !isFinite(base)) return null;
+    if (fee.kind === 'tiered') {
+      const tiers = fee.tiers.slice().sort((a, b) => (a.upTo === null ? 1 : b.upTo === null ? -1 : a.upTo - b.upTo));
+      const t = tiers.find((x) => x.upTo === null || base <= x.upTo);
+      return t ? t.cents : null;
+    }
+    let c = Math.round(base * 100 * fee.rate);
+    if (isCents(fee.minCents)) c = Math.max(c, fee.minCents);
+    if (isCents(fee.maxCents)) c = Math.min(c, fee.maxCents);
+    return c;
   }
   function fees(data, states, facts, opts) {
     const renewal = !!(opts && opts.renewal);
@@ -103,6 +119,10 @@
     const r = stored(ws, o.id);
     const n = latestNotice(r);
     const e = r.edgar || {};
+    // The person staff contact about the order: the admin signed in, else the firm's first active admin.
+    const team = (ws && ws.team) || [];
+    const me = team.find((m) => m && m.role === 'admin' && m.current) || team.find((m) => m && m.role === 'admin' && m.status !== 'invited') || {};
+    const sup = (ws && ws.tenant && ws.tenant.support) || {};
     return {
       issuer: { name: String(e.name || o.name || ''), cik: String(e.cik || '') },
       accession: n ? String(n.accession || '') : '',
@@ -111,7 +131,8 @@
       states: (states || []).map((code) => {
         const s = own(f.byState, code) ? f.byState[code] : null;
         return { code, name: nameOf(code), firstSale: s ? s.firstSale : '', sold: s ? s.sold : 0, investors: s ? s.investors : 0 };
-      })
+      }),
+      contact: { name: String(me.name || ''), email: String(me.email || sup.email || ''), phone: String(me.phone || sup.phone || '') }
     };
   }
 
@@ -175,12 +196,27 @@
         ${q.lines.map((l) => `<div><span>${h(l.label)}</span><span>${l.cents == null ? 'To be confirmed' : money(l.cents)}</span></div>`).join('')}
         <div class="fl-total"><span>Due</span><span class="fl-due">${money(service.cents + known)}${q.open ? ', fees to be confirmed' : ''}</span></div>
       </div>
-      ${q.open ? '<p class="fl-note" data-fees-note>State fees and the filing system’s fee are confirmed when the order is reviewed.</p>' : ''}`;
+      ${q.open ? '<p class="fl-note" data-fees-note>State fees and the filing system’s fee are confirmed when the order is reviewed.</p>' : ''}
+      ${known && DATA().asOf ? `<p class="cs-muted">State fees as of ${date(DATA().asOf)}</p>` : ''}`;
   }
+  /** The Form D the notices are filed from; with none on record (or none with its number), the form that records it. */
   function formDHTML(ws, o) {
     const n = latestNotice(stored(ws, o.id));
     if (n && n.accession) return `<p class="cs-muted" data-formd>Form D filed on ${date(n.filedOn)}, accession number ${h(n.accession)}</p>`;
-    return '<p class="fl-note" data-formd>State notices are filed from a filed Form D: record it on the Filings tab first.</p>';
+    const u = ui(o.id);
+    const v = u.formD || {};
+    return `<p class="fl-note" data-formd>State notices are filed from the filed Form D. Enter the date and accession number of the notice you filed.</p>
+      <form class="fl-form" data-form="bs-formd" data-id="${h(o.id)}" novalidate>
+        <label class="cs-field">Filed on<input type="date" name="filedOn" value="${h(v.filedOn != null ? v.filedOn : (n && n.filedOn) || '')}" max="${NS.dates.today()}"></label>
+        <label class="cs-field">Accession number<input type="text" name="accession" value="${h(v.accession || '')}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <p class="field-error" role="alert">${v.error ? h(v.error) : ''}</p>
+        <div class="fl-acts"><button class="cs-btn cs-btn-small cs-btn-primary" type="submit">Save</button></div>
+      </form>`;
+  }
+  /** Investors whose state cannot be told from the address on file: said in one line, never ticked for them. */
+  function unplacedHTML(f) {
+    const n = f.unplaced ? f.unplaced.investors : 0;
+    return n ? `<p class="fl-note" data-unplaced>${plural(n, 'investor')} with no state on file: their state is not ticked. <a href="#console-investors">Investors</a></p>` : '';
   }
   /** One state ordered or filed: its status, and once filed its date and filing ID. */
   function doneHTML(ws, o) {
@@ -208,6 +244,7 @@
         ${row('Form D', `${p.filedOn ? `Filed ${date(p.filedOn)}, ` : ''}accession number ${h(p.accession || '')}`)}
         ${offered ? row('Amount offered', offered) : ''}
         ${(p.states || []).map((s) => row(s.name || nameOf(s.code), s.firstSale ? `First sale ${date(s.firstSale)} · ${s.sold == null ? '' : `${money(s.sold * 100)} sold · `}${plural(s.investors, 'investor')}` : 'No sale on record')).join('')}
+        ${p.contact && p.contact.name ? row('Contact', [p.contact.name, p.contact.email, p.contact.phone].filter(Boolean).map(h).join(' · ')) : ''}
       </dl>`;
   }
   const ORDER = { recorded: 'Recorded', received: 'Received', filed: 'Filed', done: 'Done' };
@@ -231,7 +268,8 @@
     const n = latestNotice(stored(ws, o.id));
     const codes = ticked(ws, o, f);
     const canOrder = NS.app.can('configure') && n && n.accession;
-    return `${formDHTML(ws, o)}
+    return `${unplacedHTML(f)}
+      ${formDHTML(ws, o)}
       ${pickerHTML(ws, o, f)}
       ${codes.length ? feesHTML(ws, o, f, codes) : ''}
       ${canOrder && codes.length ? `<div class="fl-acts">${btn('bs-order', `Order state filings (${plural(codes.length, 'state')})`, ` data-id="${h(o.id)}"`, 'cs-btn-primary')}</div>` : ''}
@@ -261,6 +299,34 @@
     const u = ui(el.getAttribute('data-id'));
     if (u.added.indexOf(code) < 0) u.added.push(code);
     delete u.off[code];
+    redraw();
+  };
+  NS.forms['bs-formd'] = (form) => {
+    const ws = W();
+    const o = offeringOf(ws, form.getAttribute('data-id'));
+    if (!o) return;
+    const u = ui(o.id);
+    const filedOn = String(form.elements.filedOn.value || '').trim();
+    const accession = String(form.elements.accession.value || '').trim();
+    const today = NS.dates.today();
+    let error = '';
+    if (!isDay(filedOn)) error = 'Enter the date the notice was filed.';
+    else if (filedOn > today) error = 'The date cannot be after today.';
+    else if (!/^\d{10}-\d{2}-\d{6}$/.test(accession)) error = 'An accession number has 18 digits, written as 10, 2 and 6 with hyphens between.';
+    if (error) {
+      u.formD = { filedOn, accession, error };
+      return redraw();
+    }
+    // A notice already on record without its number is completed; otherwise the sponsor's own notice is recorded.
+    const n = latestNotice(stored(ws, o.id));
+    const saved = n ? FL().recordFiled(ws, o.id, { id: n.id, type: n.type, filedOn, accession }) : FL().recordFiled(ws, o.id, { type: 'D', filedOn, accession, source: 'self' });
+    if (!saved) {
+      u.formD = { filedOn, accession, error: 'The notice could not be recorded.' };
+      return redraw();
+    }
+    u.formD = null;
+    NS.consoleKit.audit(n ? 'Form D accession number recorded' : 'Form D notice recorded as filed', `${o.name}: filed on ${date(filedOn)}, accession number ${accession}`, o.id);
+    NS.app.save(true);
     redraw();
   };
   NS.actions['bs-order'] = (el) => {
