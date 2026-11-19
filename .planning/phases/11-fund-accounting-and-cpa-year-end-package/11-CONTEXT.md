@@ -24,7 +24,7 @@
 - C-02: the PDF writer the signing step already uses is shipped inside the repository (two files, 1.28 MB, both MIT) and no longer fetched from a CDN. Why: the owner's preview has no network; a fetched library fails there.
 - C-03: bank reconciliation by statement file upload only. Why: $0 and it works in the preview; a bank data service needs a server, keys and a monthly cost. Revisit with the NACHA step.
 - C-04: signed W-9 and W-8 files go into the CPA package only when the sponsor ticks a box for that export. Why: they are the only place full taxpayer numbers exist; nothing sensitive leaves by default.
-- C-05: F-2 and F-3 are fixed inside this phase (first wave), not as a separate task. Why: one plan already owns those lines; a separate fix would collide with it.
+- C-05: F-2 (a scheduled distribution becoming paid) is fixed in phase 10's distribution-record plan, which also stores each investor's amounts on the distribution; phase 11's plans depend on that plan and do not edit the same lines. F-3 (the GP's share) is fixed here, in the posting to the journal. Why: phase 10 needs stored per-investor amounts in the very lines F-2 lives in; one plan owns them.
 - C-06: no trial-balance upload for sponsors who keep books elsewhere. Why: not needed for D-01 or D-02; about one more plan; can be added later.
 - C-07: a CPA reads one sample package before the package is called ready (owner item).
 - C-08: real firms' Audit pages change when this ships: generated gains, fees and cash disappear and only recorded figures show, with one line naming each missing input. Why: the current figures are invented, which is wrong for a real fund.
