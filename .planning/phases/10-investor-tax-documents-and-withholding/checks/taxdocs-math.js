@@ -1,5 +1,5 @@
 // gate: node
-// last "TAXDOCS MATH: PASS (cases run: 9)"
+// last "TAXDOCS MATH: PASS (cases run: 10)"
 // The delivery record of phase 10 (assets/js/taxdocs.js): confirming, confirming together, delivery, consent, paper,
 // amended and withdrawn documents, opens, the notice and the dates, against Rev. Proc. 2012-17 sections 4, 5, 7, 8, 9
 // and 10 and the plan's hand-worked example F. No browser and no PDF: packages come from page facts written here.
@@ -141,6 +141,34 @@ const cases = {
     // a package confirmed with no document yet also keeps a second package for that investor open
     const again = T.addBatch(ws, { kind: 'k1-1065', year: '2025', offeringId: B.OFFERING, fileName: 'k1-again.pdf', sourceSha256: SHA, pages: 4, split: T.split(facts([B.PARTNERS[0]])), by: BY, at: AT });
     check('a second file: a package for an investor already confirmed in the first (no document yet) stays open', T.confirmTogether(ws, again.id, { by: BY, at: AT }) === 0 && again.packages[0].state === 'open' && again.packages[0].proposed.basis === 'number and name', again.packages[0].state);
+  },
+
+  single({ check }) {
+    // 10-04 C2: "Not this one" takes a package out of the together list; togetherIds is exactly what confirmTogether confirms.
+    const { T, ws, batch } = setup();
+    const pk = batch.packages;
+    const ids0 = T.togetherIds(ws, batch.id);
+    check('togetherIds lists the 10 packages proposed on number and name', ids0.length === 10 && ids0.every((id) => pk.find((p) => p.id === id).proposed.basis === 'number and name'), ids0.length);
+    check('"Not this one" needs the person named', !!refusal(() => T.notTogether(ws, batch.id, pk[0].id, { at: AT })) && !pk[0].single, pk[0].single);
+    T.notTogether(ws, batch.id, pk[0].id, { by: BY, at: AT });
+    check('the package is marked single with who and when, and logged', pk[0].single === true && pk[0].singleBy === BY && pk[0].singleAt === AT && entries(ws, 'Tax document package taken out of confirm together').length === 1, [pk[0].single, pk[0].singleBy]);
+    const ids = T.togetherIds(ws, batch.id);
+    check('togetherIds leaves it out: 9 remain', ids.length === 9 && ids.indexOf(pk[0].id) < 0, ids.length);
+    const n = T.confirmTogether(ws, batch.id, { by: BY, at: AT });
+    const done = pk.filter((p) => p.state === 'confirmed').map((p) => p.id);
+    check('confirmTogether confirms exactly the set togetherIds gave, and the package marked single stays open', n === 9 && same(done.slice().sort(), ids.slice().sort()) && pk[0].state === 'open', { n, done: done.length, single: pk[0].state });
+    check('"Not this one" on a package that is not open is refused', !!refusal(() => T.notTogether(ws, batch.id, pk[1].id, { by: BY, at: AT })), 'went through');
+    T.setAside(ws, batch.id, pk[0].id, { by: BY, at: AT });
+    T.reopen(ws, batch.id, pk[0].id, { by: BY, at: AT });
+    check('reopen clears the mark', pk[0].state === 'open' && !pk[0].single && !pk[0].singleBy && !pk[0].singleAt, [pk[0].single, pk[0].singleBy]);
+    check('once open again with its investor free, it may be confirmed together again', same(T.togetherIds(ws, batch.id), [pk[0].id]), T.togetherIds(ws, batch.id));
+    // a package made by hand may carry an investor named in the file's name: proposed, never confirmed together
+    const other = T.addBatch(ws, { kind: '1042-s', year: '2025', offeringId: B.OFFERING, fileName: 'INV-1002_1042-S.pdf', sourceSha256: SHA, pages: 2, by: BY, at: AT });
+    const hp = T.addPackage(ws, other.id, { first: 1, last: 2, by: BY, at: AT, proposeId: 'INV-1002' });
+    const hq = T.addBatch(ws, { kind: '1042-s', year: '2025', offeringId: B.OFFERING, fileName: 'x.pdf', sourceSha256: SHA, pages: 1, by: BY, at: AT });
+    const hx = T.addPackage(ws, hq.id, { first: 1, last: 1, by: BY, at: AT, proposeId: 'INV-9001' });
+    check('a package made by hand carries the investor its file names, on the basis "account ID in the file name"; one who does not hold the offering is not proposed', hp.proposed.investorId === 'INV-1002' && hp.proposed.basis === 'account ID in the file name' && hx.proposed.investorId === '', [hp.proposed, hx.proposed]);
+    check('and it is never in the together list', T.togetherIds(ws, other.id).length === 0 && T.confirmTogether(ws, other.id, { by: BY, at: AT }) === 0 && hp.state === 'open', hp.state);
   },
 
   deliver({ check }) {
