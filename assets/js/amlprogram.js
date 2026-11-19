@@ -111,6 +111,19 @@
     const box = f.kind === 'area' ? `<textarea id="${f.id}" name="${f.id}" rows="3" maxlength="4000"${ro}>${h(v)}</textarea>` : `<input id="${f.id}" name="${f.id}" type="${f.kind === 'date' ? 'date' : 'text'}" maxlength="200" value="${h(v)}"${ro}>`;
     return `<label class="cs-field" for="${f.id}"><span>${h(f.label)}</span>${box}</label>`;
   }
+  /** Training and independent review entries: newest first; an admin adds and removes them. */
+  const LISTS = {
+    training: { table: 'aml-training', head: ['Date', 'Who'], cells: (e) => [day(e.on), shown(e.who)], fields: [['aml-training-who', 'who', 'Who', 'text'], ['aml-training-on', 'on', 'Date', 'date']] },
+    reviews: { table: 'aml-reviews', head: ['Date', 'Who', 'Findings'], cells: (e) => [day(e.on), shown(e.who), shown(e.findings)], fields: [['aml-review-who', 'who', 'Who', 'text'], ['aml-review-on', 'on', 'Date', 'date'], ['aml-review-findings', 'findings', 'Findings', 'text']] }
+  };
+  function entries(a, key, edit) {
+    const L = LISTS[key];
+    const list = newest(a[key]);
+    const rows = list.map((e) => `<tr>${L.cells(e).map((c) => `<td>${h(c)}</td>`).join('')}${edit ? `<td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="aml-remove" data-list="${key}" data-id="${h(e.id || '')}">Remove</button></td>` : ''}</tr>`).join('');
+    const tbl = list.length ? `<div class="tbl-scroll"><table id="${L.table}" class="cs-tbl"><thead><tr>${L.head.map((x) => `<th scope="col">${x}</th>`).join('')}${edit ? '<th scope="col"><span class="sr-only">Remove</span></th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="cs-muted">${NONE}</p>`;
+    const add = edit ? `<div class="cs-grid cs-grid-3">${L.fields.map(([id, , label, type]) => `<label class="cs-field" for="${id}"><span>${label}</span><input id="${id}" type="${type}" maxlength="200" value=""></label>`).join('')}</div><div class="cs-row"><button class="cs-btn" type="button" data-action="aml-add" data-list="${key}">Add</button></div>` : '';
+    return tbl + add;
+  }
   NS.views['console-aml'] = {
     mode: 'console',
     edition: 'diy',
@@ -130,7 +143,7 @@
           ${K.panel('Procedures in force', dl(procedures(ws), 'aml-procedures'))}
           ${K.panel('Screening log', logTable(ws))}
           ${K.panel('Escalation', f('aml-escalation'))}
-          ${K.panel('Training and independent review', `<h3 class="aml-sub">Training</h3>${table('aml-training', ['Date', 'Who'], trainingRows(a))}<h3 class="aml-sub">Independent reviews</h3>${table('aml-reviews', ['Date', 'Who', 'Findings'], reviewRows(a))}`)}
+          ${K.panel('Training and independent review', `<h3>Training</h3>${entries(a, 'training', edit)}<h3>Independent reviews</h3>${entries(a, 'reviews', edit)}`)}
           ${K.panel('Retention', `<p id="aml-retention">${RETENTION}</p>`)}
         </form>`,
         'console-aml'
@@ -138,14 +151,50 @@
     }
   };
 
-  /** Writes the typed fields of the form into ws.amlProgram; resolves to the labels of the fields that changed. */
-  function writeTyped(ws, form) {
+  /** A calendar date written YYYY-MM-DD (2026-02-30 is not one). */
+  const realDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(s + 'T00:00:00Z').toISOString().slice(0, 10) === s;
+  /** The value of a date field: { v } or { bad } (the browser could not read what was typed, or it is not a real date). */
+  function dateOf(el) {
+    const v = String((el && el.value) || '').trim();
+    if ((el && el.validity && el.validity.badInput) || (v && !realDate(v))) return { bad: true, v: '' };
+    return { v };
+  }
+  const BAD_DATE = 'Enter a real date.';
+  /** Each field's own error under it (errors: [[id, message]]), the first one focused; earlier errors are cleared. */
+  function showErrors(form, errors) {
+    form.querySelectorAll('.aml-err').forEach((x) => x.remove());
+    form.querySelectorAll('[aria-invalid="true"]').forEach((x) => {
+      x.removeAttribute('aria-invalid');
+      x.removeAttribute('aria-describedby');
+    });
+    errors.forEach(([id, msg]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.setAttribute('aria-invalid', 'true');
+      el.setAttribute('aria-describedby', `${id}-error`);
+      const s = document.createElement('span');
+      s.className = 'cs-error aml-err';
+      s.id = `${id}-error`;
+      s.textContent = msg;
+      el.insertAdjacentElement('afterend', s);
+    });
+    const first = errors.length && document.getElementById(errors[0][0]);
+    if (first) first.focus();
+  }
+  /** The typed fields of the form read into a copy of the record: { a, changed (labels), errors }. Nothing is stored. */
+  function readTyped(ws, form) {
     const a = record(ws);
     const changed = [];
+    const errors = [];
     FIELDS.forEach((f) => {
       const el = form.elements[f.id];
       if (!el) return;
-      const v = String(el.value || '').trim();
+      let v = String(el.value || '').trim();
+      if (f.kind === 'date') {
+        const d = dateOf(el);
+        if (d.bad) return errors.push([f.id, BAD_DATE]);
+        v = d.v;
+      }
       const [k1, k2] = f.path.split('.');
       const was = k2 ? a[k1][k2] : a[k1];
       if (str(was) === v) return;
@@ -153,17 +202,61 @@
       else a[k1] = v;
       changed.push(f.label);
     });
-    ws.amlProgram = a;
-    return changed;
+    return { a, changed, errors };
   }
-  NS.forms['aml-save'] = (form) => {
-    const ws = W();
-    if (!NS.app.can('configure')) return U.toast('Only admins can change this. Ask an admin on your team.');
-    const changed = writeTyped(ws, form);
-    if (changed.length) NS.audit.log(ws, { action: UPDATED, detail: changed.join(', ') });
+  /** Stores a copy of the record made by readTyped and logs what changed. */
+  function commit(ws, a, what) {
+    ws.amlProgram = a;
+    if (what.length) NS.audit.log(ws, { action: UPDATED, detail: what.join('; ') });
     NS.app.save(true);
     NS.app.render();
+  }
+  const ADMINS_ONLY = 'Only admins can change this. Ask an admin on your team.';
+  NS.forms['aml-save'] = (form) => {
+    const ws = W();
+    if (!NS.app.can('configure')) return U.toast(ADMINS_ONLY);
+    const r = readTyped(ws, form);
+    if (r.errors.length) return showErrors(form, r.errors);
+    commit(ws, r.a, r.changed);
     U.toast('Saved');
+  };
+  /** Adds a training or independent review entry (what was typed above is saved with it). */
+  NS.actions['aml-add'] = (el) => {
+    const ws = W();
+    const form = document.getElementById('aml-form');
+    const L = LISTS[el.getAttribute('data-list')];
+    if (!form || !L) return;
+    if (!NS.app.can('configure')) return U.toast(ADMINS_ONLY);
+    const r = readTyped(ws, form);
+    const e = { id: 'aml-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
+    L.fields.forEach(([id, key, , type]) => {
+      const box = document.getElementById(id);
+      if (type === 'date') {
+        const d = dateOf(box);
+        if (d.bad || !d.v) r.errors.push([id, BAD_DATE]);
+        e[key] = d.v;
+      } else e[key] = String((box && box.value) || '').trim();
+    });
+    if (!e.who) r.errors.push([L.fields[0][0], 'Enter a name.']);
+    if (r.errors.length) return showErrors(form, r.errors);
+    const key = el.getAttribute('data-list');
+    r.a[key] = r.a[key].concat([e]);
+    commit(ws, r.a, r.changed.concat([`${key === 'training' ? 'Training' : 'Independent review'} entry added: ${e.who}, ${e.on}`]));
+    U.toast('Added');
+  };
+  NS.actions['aml-remove'] = (el) => {
+    const ws = W();
+    const form = document.getElementById('aml-form');
+    const key = el.getAttribute('data-list');
+    if (!form || !LISTS[key]) return;
+    if (!NS.app.can('configure')) return U.toast(ADMINS_ONLY);
+    const r = readTyped(ws, form);
+    if (r.errors.length) return showErrors(form, r.errors);
+    const e = r.a[key].find((x) => x.id === el.getAttribute('data-id'));
+    if (!e) return;
+    r.a[key] = r.a[key].filter((x) => x !== e);
+    commit(ws, r.a, r.changed.concat([`${key === 'training' ? 'Training' : 'Independent review'} entry removed: ${e.who}, ${e.on}`]));
+    U.toast('Removed');
   };
 
   /* ---------- The export: one self-contained HTML document ---------- */
