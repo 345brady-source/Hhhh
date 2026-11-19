@@ -65,14 +65,39 @@
   const SHAPES = ['\\d{3}[- ]\\d{2}[- ]\\d{4}', '\\d{2}-\\d{7}', '\\d{9}', `${MASK}{3}[- ]?${MASK}{2}[- ]?\\d{4}`, `${MASK}{2}[- ]?${MASK}{3}[- ]?\\d{4}`];
   const EDGE = '0-9A-Za-z*#\\u2022-';
   const numberRe = () => new RegExp(`(^|[^${EDGE}])(${SHAPES.join('|')})(?![${EDGE}])`, 'g');
-  /** The last four digits of every number-shaped piece of a text. Nothing longer than four characters is returned. */
-  function lastFours(text) {
+  /** The digits of every number-shaped piece of a text. Used inside this file only; never returned or stored. */
+  function numberPieces(text) {
     const out = [];
     String(text == null ? '' : text).replace(numberRe(), (all, lead, number) => {
-      out.push(number.replace(/\D/g, '').slice(-4));
+      out.push(number.replace(/\D/g, ''));
       return all;
     });
     return out;
+  }
+  /** The last four digits of every number-shaped piece of a text. Nothing longer than four characters is returned. */
+  const lastFours = (text) => numberPieces(text).map((d) => d.slice(-4));
+  /** Ids and marks carry letters only, so none can ever look like a number. */
+  function letters(n) {
+    let s = '';
+    do {
+      s = String.fromCharCode(97 + (n % 26)) + s;
+      n = Math.floor(n / 26);
+    } while (n > 0);
+    return s;
+  }
+  // A mark tells two numbers apart without keeping either. It is salted afresh each time this file loads, so a mark
+  // cannot be worked back to its number by trying every number; marks are compared within one reading and never stored.
+  const SALT = `${Math.random()}|${Date.now()}`;
+  function mark(digits) {
+    const s = `${SALT}|${digits}`;
+    let h1 = 0x811c9dc5;
+    let h2 = 0x9747b28c;
+    for (let k = 0; k < s.length; k++) {
+      const c = s.charCodeAt(k);
+      h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+      h2 = Math.imul(h2 ^ c, 2246822519) >>> 0;
+    }
+    return letters(h1) + letters(h2);
   }
   /**
    * The last four digits of the one number a text holds: a number of nine digits, or one printed with its first five
@@ -144,61 +169,122 @@
     F: /Name, address, city, state, and ZIP code for partner/,
     G: /General partner or LLC/
   };
+  // A page with fewer characters of text than this is taken for a picture of a page.
+  const MIN_TEXT = 40;
   /**
-   * The facts of one page. A Schedule K-1 (Form 1065) first page carries the code 651123, "Schedule K-1", "Form 1065"
-   * and "Information About the Partner"; on it, item E is what lies between its label and item F's label, item F between
-   * its label and item G's, both in the left half of the page.
+   * The facts of one page, from its text items and the values of its form fields together. A Schedule K-1 (Form 1065)
+   * first page carries the code 651123, "Schedule K-1", "Form 1065" and "Information About the Partner"; on it, item E
+   * is what lies between its label and item F's label, item F between its label and item G's, item A between its label
+   * and item B's, all in the left half of the page. The codes of other K-1s (661117, 671124) are not matched.
    *
-   * Returns { first, last4, numberSeen, name, chars } and never the text of an item: last4 is the last four digits of
-   * item E, numberSeen says item E holds a digit or a masking character at all, name is the first line of item F with
-   * anything number-like taken out.
+   * Returns { first, last4, numberSeen, name, partnership, chars, numbers, lines } and never the text of an item:
+   * last4 is the last four digits of item E; numberSeen says item E holds a digit or a masking character at all; name is
+   * the first line of item F with anything number-like taken out; partnership is a mark of item A's number (see mark).
+   * On any other page, numbers holds { last4, mark } for each number-shaped piece and lines the words of each line with
+   * anything number-like taken out: what the split needs to say a package has a page someone should look at.
    */
-  function pageFacts(textItems) {
-    const items = (textItems || []).filter((it) => it && it.s != null && String(it.s).trim());
+  function pageFacts(textItems, fieldItems) {
+    const items = [].concat(textItems || [], fieldItems || []).filter((it) => it && it.s != null && String(it.s).trim());
     const all = items.map((it) => it.s).join(' ');
-    const out = { first: false, last4: '', numberSeen: false, name: '', chars: all.replace(/\s+/g, '').length };
+    const out = { first: false, last4: '', numberSeen: false, name: '', partnership: '', chars: all.replace(/\s+/g, '').length, numbers: [], lines: [] };
     out.first = /651123/.test(all) && /Schedule\s+K-1/.test(all) && /Form\s+1065/.test(all) && /Information About the Partner\b/.test(all);
-    if (!out.first) return out;
+    if (!out.first) {
+      const lines = linesOf(items);
+      out.numbers = numberPieces(lines.join('\n')).map((d) => ({ last4: d.slice(-4), mark: mark(d) }));
+      out.lines = lines.map((l) => words(clean(l))).filter((w) => w.length);
+      return out;
+    }
     const label = (re) => items.find((it) => re.test(it.s));
     const between = (a, b) => (a && b ? items.filter((it) => it !== a && it !== b && it.x < 300 && it.top >= a.bottom - 2 && it.bottom <= b.top + 3) : []);
     const itemE = linesOf(between(label(LABEL.E), label(LABEL.F))).join(' ');
     out.last4 = last4(itemE);
     out.numberSeen = /[0-9*#•]|[xX]{2}/.test(itemE);
     out.name = clean(linesOf(between(label(LABEL.F), label(LABEL.G)))[0] || '');
+    const a = numberPieces(linesOf(between(label(LABEL.A), label(LABEL.B))).join(' '));
+    out.partnership = a.length ? mark(a[0]) : '';
     return out;
   }
 
+  /** One plain sentence for a file whose pages are pictures. */
+  const SCAN_TEXT = 'This file is a scan: its pages are pictures with no text to read, so no K-1 is found in it. Give each investor their pages by hand.';
   /**
    * Pages (pageFacts results, in order) cut into packages: each runs from a K-1 first page to the page before the next
-   * one. Pages before the first K-1 belong to no one. Page numbers count from 1.
+   * one. Pages before the first K-1 belong to no one. Page numbers count from 1. A file in which no page has text is a
+   * scan: nothing is cut or proposed.
+   *
+   * A package is marked to be looked at (look, with lookWhy: { page, why }) when a page after its K-1 page has no text
+   * ('no text': a picture, perhaps of another partner's K-1) or carries a number whose last four are not the package's
+   * own and that is not the partnership's ('another number'). The test for another holder's name ('another name') needs
+   * the investors, so it is made when the file is taken in (addBatch); `later` carries those pages' words for it and is
+   * never stored.
    */
   function split(pages) {
     const list = pages || [];
+    const scan = list.length > 0 && list.every((p) => !p || (p.chars || 0) < MIN_TEXT);
     const firsts = [];
-    list.forEach((p, i) => {
-      if (p && p.first) firsts.push(i);
-    });
+    if (!scan) {
+      list.forEach((p, i) => {
+        if (p && p.first) firsts.push(i);
+      });
+    }
     const packages = firsts.map((i, k) => {
       const end = (k + 1 < firsts.length ? firsts[k + 1] : list.length) - 1;
-      return { first: i + 1, last: end + 1, last4: list[i].last4 || '', numberSeen: !!list[i].numberSeen, name: list[i].name || '' };
+      const f = list[i];
+      const lookWhy = [];
+      const later = [];
+      for (let n = i + 1; n <= end; n++) {
+        const p = list[n] || {};
+        if ((p.chars || 0) < MIN_TEXT) lookWhy.push({ page: n + 1, why: 'no text' });
+        else if ((p.numbers || []).some((x) => !(f.partnership && x.mark === f.partnership) && x.last4 !== (f.last4 || ''))) lookWhy.push({ page: n + 1, why: 'another number' });
+        else later.push({ page: n + 1, lines: p.lines || [] });
+      }
+      return { first: i + 1, last: end + 1, last4: f.last4 || '', numberSeen: !!f.numberSeen, name: f.name || '', partnership: f.partnership || '', look: lookWhy.length > 0, lookWhy, later };
     });
     const loose = [];
     for (let n = 0; n < (firsts.length ? firsts[0] : list.length); n++) loose.push(n + 1);
-    return { packages, loose, scan: false };
+    return { packages, loose, scan };
+  }
+
+  /* ---------- the proposal (the one rule) ---------- */
+  const holdersOf = (investors, offeringId) => (investors || []).filter((inv) => inv && (inv.positions || []).some((p) => p.offeringId === offeringId));
+  // The last four on record: from the investor's Form W-9 when there is one, else as entered. Never a foreign number.
+  const recordLast4 = (inv) => {
+    const v = String((inv.taxCert && inv.taxCert.tinLast4) || inv.tinLast4 || '');
+    return /^\d{4}$/.test(v) ? v : '';
+  };
+  const sameSet = (a, b) => a.length > 0 && b.length > 0 && a.every((w) => b.indexOf(w) >= 0) && b.every((w) => a.indexOf(w) >= 0);
+  const within = (part, whole) => part.length > 0 && part.every((w) => whole.indexOf(w) >= 0);
+  const namesOf = (inv) => [words(inv.title), words(inv.contact)].filter((w) => w.length);
+  /**
+   * Among the investors holding the offering (redeemed or not): N, those whose last four on record equal the package's;
+   * M, those whose account title or contact name has the same words as the first line of item F. Exactly one in both:
+   * 'number and name'. Otherwise exactly one in N and none in M: 'number only'. Otherwise, when no number is printed at
+   * all, exactly one in M: 'name only'. Anything else: no proposal. A printed number that cannot be read, or that is
+   * read and fits nobody, never lets the name decide alone.
+   */
+  function propose(pkg, investors, offeringId) {
+    const none = { investorId: '', basis: '' };
+    if (!pkg) return none;
+    const holders = holdersOf(investors, offeringId);
+    const own = words(pkg.name);
+    const N = pkg.last4 ? holders.filter((inv) => recordLast4(inv) === pkg.last4) : [];
+    const M = own.length ? holders.filter((inv) => namesOf(inv).some((w) => sameSet(w, own))) : [];
+    const both = N.filter((inv) => M.indexOf(inv) >= 0);
+    if (both.length === 1) return { investorId: both[0].id, basis: 'number and name' };
+    if (N.length === 1 && M.length === 0) return { investorId: N[0].id, basis: 'number only' };
+    if (!pkg.last4 && !pkg.numberSeen && M.length === 1) return { investorId: M[0].id, basis: 'name only' };
+    return none;
+  }
+  /** Pages after the K-1 page that carry the name of a holder other than the proposed one and not part of the package's own name. */
+  function otherNames(pkg, holders, proposedId) {
+    const own = words(pkg.name);
+    const others = holders.filter((inv) => inv.id !== proposedId).map(namesOf).reduce((a, b) => a.concat(b), []).filter((w) => !within(w, own));
+    return (pkg.later || []).filter((pg) => (pg.lines || []).some((line) => others.some((w) => within(w, line)))).map((pg) => ({ page: pg.page, why: 'another name' }));
   }
 
   /* ---------- the workspace's records ---------- */
   const log = (ws, e) => (NS && NS.audit && NS.audit.log ? NS.audit.log(ws, e) : null);
-  // Ids carry letters only, so no id can ever look like a number.
   let serial = 0;
-  function letters(n) {
-    let s = '';
-    do {
-      s = String.fromCharCode(97 + (n % 26)) + s;
-      n = Math.floor(n / 26);
-    } while (n > 0);
-    return s;
-  }
   const newId = (prefix) => `${prefix}-${letters(Date.now())}${letters(serial++)}`;
 
   function ensure(ws) {
@@ -235,7 +321,26 @@
     return i ? `${i.title} (${i.id})` : id;
   };
 
-  /** A combined file taken into the workspace: its packages, all open, none matched to anyone yet. */
+  /** The pages of a file that belong to no package (a package set aside gives its pages back). */
+  function looseOf(batch) {
+    const used = {};
+    batch.packages.forEach((p) => {
+      if (p.state !== 'aside') for (let n = p.first; n <= p.last; n++) used[n] = true;
+    });
+    const out = [];
+    for (let n = 1; n <= batch.pages; n++) if (!used[n]) out.push(n);
+    return out;
+  }
+  const overlaps = (batch, first, last, except) => batch.packages.some((p) => p !== except && p.state !== 'aside' && p.first <= last && first <= p.last);
+  function newPackage(batch, p) {
+    return { id: `${batch.id}-p${batch.packages.length + 1}`, first: p.first, last: p.last, last4: /^\d{4}$/.test(p.last4 || '') ? p.last4 : '', numberSeen: !!p.numberSeen, name: clean(p.name), otherPartnership: false, look: false, lookWhy: [], proposed: { investorId: '', basis: '' }, investorId: '', basis: '', state: 'open', confirmedBy: '', confirmedAt: '', docId: '' };
+  }
+
+  /**
+   * A combined file taken into the workspace: its packages, all open, each with the investor the rule proposes (if
+   * any), none matched to anyone yet. Only a Schedule K-1 (Form 1065) file is cut and proposed; any other kind, and a
+   * scan, is taken in whole and its packages are made by hand (addPackage).
+   */
   function addBatch(ws, a) {
     ensure(ws);
     const K = KINDS[a.kind] || refuse('Unknown kind of tax document.');
@@ -244,13 +349,71 @@
     if (!a.by) refuse('The person adding the file must be named.');
     const at = stamp(a.at);
     const s = a.split || { packages: [], loose: [], scan: false };
-    const batch = { id: newId('tb'), kind: a.kind, year: String(a.year), offeringId: a.offeringId, fileName: clean(a.fileName), sourceSha256: String(a.sourceSha256 || ''), pages: Number(a.pages) || 0, at, by: a.by, scan: !!s.scan, loose: (s.loose || []).slice(), packages: [] };
-    (K.auto ? s.packages || [] : []).forEach((p, k) => {
-      batch.packages.push({ id: `${batch.id}-p${k + 1}`, first: p.first, last: p.last, last4: /^\d{4}$/.test(p.last4) ? p.last4 : '', numberSeen: !!p.numberSeen, name: clean(p.name), otherPartnership: false, proposed: { investorId: '', basis: '' }, investorId: '', basis: '', state: 'open', confirmedBy: '', confirmedAt: '', docId: '' });
+    const found = K.auto && !s.scan ? s.packages || [] : [];
+    const top = found.reduce((m, p) => Math.max(m, p.last || 0), (s.loose || []).reduce((m, n) => Math.max(m, n), 0));
+    const batch = { id: newId('tb'), kind: a.kind, year: String(a.year), offeringId: a.offeringId, fileName: clean(a.fileName), sourceSha256: String(a.sourceSha256 || ''), pages: Number(a.pages) || top, at, by: a.by, scan: !!s.scan, loose: [], packages: [] };
+    const holders = holdersOf(ws.investors, batch.offeringId);
+    // The partnership most packages name; a package naming another one is marked (its K-1 may be in the wrong file).
+    const count = {};
+    found.forEach((p) => {
+      if (p.partnership) count[p.partnership] = (count[p.partnership] || 0) + 1;
     });
+    const most = Math.max(0, ...Object.values(count));
+    const common = Object.keys(count).filter((k) => count[k] === most);
+    found.forEach((p) => {
+      const pkg = newPackage(batch, p);
+      pkg.proposed = propose(pkg, ws.investors, batch.offeringId);
+      pkg.otherPartnership = !!p.partnership && (common.length !== 1 || p.partnership !== common[0]);
+      pkg.lookWhy = (p.lookWhy || []).map((w) => ({ page: w.page, why: w.why })).concat(otherNames(Object.assign({}, p, { name: pkg.name }), holders, pkg.proposed.investorId)).sort((x, y) => x.page - y.page);
+      pkg.look = pkg.lookWhy.length > 0;
+      batch.packages.push(pkg);
+    });
+    batch.loose = looseOf(batch);
     ws.taxdocs.batches.push(batch);
-    log(ws, { action: 'Tax document file added', fund: batch.offeringId, record: batch.id, actor: a.by, at, detail: `${K.label} ${batch.year}: ${batch.fileName}, ${batch.pages} pages, ${batch.packages.length} found; SHA-256 ${batch.sourceSha256}` });
+    const proposed = batch.packages.filter((p) => p.proposed.investorId).length;
+    log(ws, { action: 'Tax document file added', fund: batch.offeringId, record: batch.id, actor: a.by, at, detail: `${K.label} ${batch.year}: ${batch.fileName}, ${batch.pages} pages, ${batch.packages.length} found, ${proposed} with a proposed investor${batch.scan ? '; a scan, nothing read' : ''}; SHA-256 ${batch.sourceSha256}` });
     return batch;
+  }
+
+  /** A package made by hand from a page range of the file. It is open and has no proposal. */
+  function addPackage(ws, batchId, a) {
+    const batch = batchOf(ws, batchId);
+    const first = Number(a && a.first);
+    const last = Number(a && a.last);
+    if (!Number.isInteger(first) || !Number.isInteger(last)) refuse('Give the first and last page as whole page numbers.');
+    if (first < 1 || last > batch.pages || first > last) refuse(`The pages must run forwards within the file's ${batch.pages} pages.`);
+    if (overlaps(batch, first, last)) refuse('Those pages are already in another package.');
+    const pkg = newPackage(batch, { first, last });
+    batch.packages.push(pkg);
+    batch.loose = looseOf(batch);
+    log(ws, { action: 'Tax document package made by hand', fund: batch.offeringId, record: pkg.id, actor: (a && a.by) || undefined, at: a && a.at ? a.at : undefined, detail: `${pagesText(pkg)} of ${batch.fileName}; source SHA-256 ${batch.sourceSha256}` });
+    return pkg;
+  }
+  /** An open package is put aside (not anyone's); its pages belong to no one again. */
+  function setAside(ws, batchId, pkgId, a) {
+    const batch = batchOf(ws, batchId);
+    const pkg = pkgOf(batch, pkgId);
+    if (pkg.state !== 'open') refuse('Only an open package can be set aside.');
+    pkg.state = 'aside';
+    batch.loose = looseOf(batch);
+    log(ws, { action: 'Tax document package set aside', fund: batch.offeringId, record: pkg.id, actor: (a && a.by) || undefined, at: a && a.at ? a.at : undefined, detail: `${pagesText(pkg)} of ${batch.fileName}` });
+    return pkg;
+  }
+  /**
+   * A package set aside, or confirmed with no document made yet, is open again. Refused when its pages are now in
+   * another package, or when its document exists.
+   */
+  function reopen(ws, batchId, pkgId, a) {
+    const batch = batchOf(ws, batchId);
+    const pkg = pkgOf(batch, pkgId);
+    if (pkg.docId) refuse('This package already has its document.');
+    if (pkg.state === 'aside' && overlaps(batch, pkg.first, pkg.last, pkg)) refuse('Its pages are now in another package.');
+    if (pkg.state !== 'aside' && pkg.state !== 'confirmed') refuse('This package is already open.');
+    const was = pkg.state === 'confirmed' ? `confirmed for ${nameOf(ws, pkg.investorId)}` : 'set aside';
+    Object.assign(pkg, { state: 'open', investorId: '', basis: '', confirmedBy: '', confirmedAt: '' });
+    batch.loose = looseOf(batch);
+    log(ws, { action: 'Tax document package opened again', fund: batch.offeringId, record: pkg.id, actor: (a && a.by) || undefined, at: a && a.at ? a.at : undefined, detail: `${pagesText(pkg)} of ${batch.fileName}; it was ${was}` });
+    return pkg;
   }
 
   /** A person confirms that a package is this investor's. Recorded with who, when and on what basis. */
@@ -347,7 +510,7 @@
     return doc;
   }
 
-  const API = { KINDS, NOTICE_SUBJECT, CONSENT, pdfItems, pageFacts, split, last4, ensure, setContact, addBatch, confirm, toDocument, inEffect, consent, deliver, availableUntil };
+  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, reopen, confirm, toDocument, inEffect, consent, deliver, availableUntil };
   if (NS) NS.taxdocs = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);
