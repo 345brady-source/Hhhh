@@ -14,7 +14,8 @@
 //                                overview follow; the choice is still there after a reload
 //   own-phone, own-desktop       one sale counted once; the first sale date and where it came from; a notice the sponsor
 //                                filed; an offering that ended; an order with the amount due; an offering not filing
-//   published                    the published page (portal.html) has the same entry and page
+//   published                    the published page (portal.html) has the same entry and page; with no exemption set
+//                                on any offering (the sample portal), one line that links to each offering's settings
 //   filed-long-ago               twenty states: one row that opens; the notices recorded as filed one by one and together;
 //                                the sponsor's own Form D and amendment recorded; the menu count follows
 //   managed                      the managed edition (index.html) has no Filings entry, route, reminder or file of this phase
@@ -34,6 +35,7 @@ Lib.describeShots([
   [/-own\.png$/, 'After the sponsor recorded a Form D they filed themselves: the annual amendment with its date, and an order with the amount due.'],
   [/-states\.png$/, 'An offering sold in twenty states: one row for the state notices, opened to the states.'],
   [/-filed\.png$/, 'The same offering once its notices are recorded as filed: nothing is counted beside Filings.'],
+  [/-none\.png$/, 'The published page\'s tab on the sample portal, whose offerings name no exemption: one line with the way to each offering\'s settings.'],
   [/-section\.png$/, 'A section\'s own page, scrolled to its middle: the bar with Back and the offering\'s name stays on screen.'],
   [/-team\.png$/, 'The tab as a team member sees it: the reminders and Silence, and no control that orders.']
 ]);
@@ -243,6 +245,22 @@ async function tab(size, { check, S }, page) {
   const F = await L9.framed(S, size, withProbe ? { absent: L9.LATER.slice(0, -1), scripts: { [L9.LATER[L9.LATER.length - 1]]: `(${probe.toString()})();` } } : { absent: L9.LATER, page });
   await L9.proveRefused(check, F);
   await L9.sample(F);
+  if (page) {
+    // C7: the sample portal's offerings name no exemption, so this is what its sponsor sees first.
+    await L9.goto(F, 'console-filings', '.fl');
+    const none = await F.fr.evaluate(() => ({ offerings: window.CVPortal.state.ws.offerings.map((o) => o.id), panels: document.querySelectorAll('.fl-off').length, notes: Array.from(document.querySelectorAll('.fl .fl-note')).map((n) => n.innerText.trim()), links: Array.from(document.querySelectorAll('.fl .fl-note a')).map((x) => x.getAttribute('href')) }));
+    const m0 = await menu(F);
+    check('with no exemption set on any offering the tab says so in one line that links to each offering\'s settings, and nothing is counted', none.panels === 0 && none.notes.length === 1 && /Rule 506\(b\) or Rule 506\(c\)/.test(none.notes[0]) && none.notes[0].split('\n').length === 1 && none.offerings.length >= 1 && none.links.length === none.offerings.length && none.offerings.every((id) => none.links.indexOf(`#console-offering-${id}`) >= 0) && m0.there && m0.count === '', { none, menu: m0 });
+    await F.A.page.screenshot({ path: path.join(OUT, 'published-none.png'), fullPage: false });
+    // A short page on the phone: the menu keeps its own height, so the page starts right under it.
+    const top = await F.fr.evaluate(() => ({ menu: Math.round(document.querySelector('.cs-nav').getBoundingClientRect().height), bar: Math.round(document.querySelector('.fl-bar').getBoundingClientRect().top), note: Math.round(document.querySelector('.fl .fl-note').getBoundingClientRect().bottom), screen: innerHeight }));
+    check('the short page starts right under the menu, with no empty band between them', top.menu < 200 && top.bar < 220 && top.note < top.screen / 2, top);
+    await L9.wayOut(check, F, 'the tab with nothing to list');
+    await L9.press(F, '.fl .fl-note a >> nth=0');
+    const to = await F.fr.evaluate(() => ({ route: window.CVPortal.state.route, param: window.CVPortal.state.param }));
+    check('the link opens that offering\'s settings', to.route === 'console-offering' && to.param === none.offerings[0], to);
+    await L9.goto(F, 'console', '.cs-panel');
+  }
   const seeded = await L9.seed(F, { name: NAME, sales: [{ daysAgo: 20, state: 'NY', funded: true }, { daysAgo: 12, state: 'NY' }, { daysAgo: 3, state: 'NY' }] });
   const first = seeded.sales[0].date;
   const due = firstDue(first);
