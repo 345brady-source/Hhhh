@@ -114,7 +114,7 @@ To invite an investor:
 
 The investor gets one link that walks them through every step. To invite several investors at once, choose "Import a list", upload a CSV or Excel file or paste the list, choose "Check list", then send. "Add manually" is for an investor onboarded offline on paper documents: they are added as an active investor and are not sent the onboarding link.
 
-Under "Invitations", follow each invitation with In progress, Completed and All; ticking "Accept subscriptions automatically once the agreement is countersigned and the investor is verified" accepts a subscription without a separate approval. In the investor table, "View portal" shows the portal as that investor sees it; an investor who has not activated has "Invitation" and "Send reminder" instead. With no integration server connected, the firm sends each invitation from its own email app: the portal prepares the email with the link.
+Under "Invitations", follow each invitation with In progress, Completed and All; the tick box "Accept subscriptions automatically once the agreement is countersigned and the investor is verified" turns that on. An invitation whose agreement waits for the firm's signature has "Countersign". In the investor table, "View portal" shows the portal as that investor sees it; an investor who has not activated has "Invitation" and "Send reminder" instead. With no integration server connected, the firm sends each invitation from its own email app: the portal prepares the email with the link.
 
 ## console-esign
 audience: sponsor
@@ -134,7 +134,7 @@ To send a document for signature:
 5. Choose the "Signing order": "In order" or "Any order".
 6. Choose "Continue to place fields". The envelope's page opens, where the fields are placed and the envelope is sent.
 
-In the Envelopes list, "Open" opens an envelope, "Remind" emails the signers who have not signed, "Void" cancels an envelope that is out for signature, and a completed envelope has "Signed PDF" and "Certificate". An envelope that waits for the firm's signature shows "Countersign". A template is made from an envelope with "Save as template".
+In the Envelopes list, "Open" opens an envelope, "Remind" sends a reminder to the signers who have not signed, "Void" cancels an envelope that is out for signature, and a completed envelope has "Signed PDF" and "Certificate". To countersign, open the envelope and choose "Sign as sponsor". A template is made from an envelope with "Save as template".
 
 ## console-envelope
 audience: sponsor
@@ -188,9 +188,9 @@ Under "New distribution":
 3. Under "Amount", choose "Annualized rate" or "Total amount" and enter the figure.
 4. Optional: change "Bank statement description (10)", up to 10 characters.
 5. Check the table: each investor's share, amount and how they are paid (ACH or check).
-6. Choose "Generate NACHA file" to download the file for the bank, and "Record distribution" to record the payment.
+6. Choose "Generate NACHA file" to build the file for the bank, and "Record distribution" to record the payment.
 
-"History" lists past distributions; "ACH file" beside one downloads its file again. The bank details in the file come from the ACH origination page.
+"History" lists past distributions; "ACH file" beside one builds its file again. The bank details in the file come from the ACH origination page.
 
 ## console-requests
 audience: sponsor
@@ -205,7 +205,7 @@ The page's heading is "Investor requests". It lists the redemptions and subscrip
 
 1. Use Open or All above the list to filter.
 2. Choose "Approve" or "Decline" beside a request.
-3. After approving, record the payment or the funding from the same row when it happens. The investor register, capital accounts and audit schedules then update automatically.
+3. After approving, the same row has "Record payment" for a redemption or "Record funding" for a subscription: choose it when the money has moved. The investor register, capital accounts and audit schedules then update automatically.
 
 Redemptions are paid at net asset value on the dealing date, which follows the fund's notice period and lock-up; the payment can be recorded once that month's valuation is final.
 
@@ -377,5 +377,318 @@ The sign-up page for a firm.
 
 "Explore a sample portal" opens a sample firm's portal to look around. Investors only ever see the firm's own brand.
 
+## overview
+audience: investor
+kind: portal
+title: Home
+menu: Home
+anchor: Capital calls due
+anchor: Recent documents
+
+The first page after signing in. The menu has Home, Investments, Distributions, Documents, Updates and Account, and "Sign out". The firm's contact details are at the bottom of every page. Home shows the account's name and number, then:
+- "Capital calls due": calls waiting for payment, when there are any.
+- "Portfolio": the amounts contributed, committed and distributed, and the current value (unaudited).
+- "Investments": each investment with the amount invested, distributions, value and time to exit. "All investments" opens Investments.
+- "Latest updates" and "Recent documents", with "All updates" and "All documents".
+- "Your requests": requests made and their status, when there are any.
+
+A notice at the top, for example that new documents are available, has "View documents" and "Dismiss".
+
+## investments
+audience: investor
+kind: portal
+title: Investments
+menu: Investments
+anchor: Current investments
+anchor: Completed investments
+
+Every investment in the account, with three totals at the top: invested, distributions received to date and received this year.
+- "Current investments": each investment with the amount invested, distributions received, date invested and time to redemption or exit. Choose an investment's name to open its page.
+- "Completed investments": investments that have ended.
+- "Your requests": requests in progress and their status.
+- "Recent distributions": the last and next distribution of each investment, with "All distributions".
+
+## investment
+audience: investor
+kind: portal
+title: Investment
+menu: Investments, then the investment's name
+anchor: Your capital account
+anchor: Liquidity
+anchor: Distributions from this investment
+
+One investment: the amount invested, distributions received, how often it pays and the projected exit. Below that:
+- "Your capital account": the value of the investment at the latest valuation, unaudited. The quarterly capital account statement is in Documents.
+- "Capital calls": each call with its notice date, due date, amount and status.
+- "Key terms" and "Latest update" from the firm.
+- "Liquidity", on funds that offer it: choose "Request a redemption" or "Add to this investment", enter the amount, type your full name to sign and choose "Sign and submit request". The firm then reviews the request; its status is under "Your requests".
+- "Distributions from this investment" and "Documents" for this investment.
+
+## distributions
+audience: investor
+kind: portal
+title: Distributions
+menu: Distributions
+anchor: Received by year
+anchor: Payment history
+
+Every payment received. The line under the heading says how distributions are paid, for example by ACH to the bank account on file, shown by its last four digits. The totals are total received, received this year and scheduled. "Received by year" is a chart. Under "Payment history", filter with "Year" and "Investment"; each row has the payment date, investment, type, amount and status.
+
+To change the bank account distributions are paid to, open Account and choose "Update bank account".
+
+## documents
+audience: investor
+kind: portal
+title: Documents
+menu: Documents
+anchor: Reports, tax documents, statements and agreements for your account
+anchor: Offering documents
+
+Reports, tax documents, statements and agreements for the account. Documents the firm publishes appear here.
+
+To open or download a document:
+1. Open Documents in the menu.
+2. Narrow the list with "Investment" and "Type" if needed.
+3. Choose "View" beside the document. It opens in a window; choose "Download" there to save it.
+
+"Waiting for your signature" lists documents the firm sent to sign: choose the document's name to open and sign it. "Signed documents" lists what has been signed.
+
+## updates
+audience: investor
+kind: portal
+title: Updates
+menu: Updates
+anchor: News, notices and reports from
+anchor: View investment
+
+News, notices and reports from the firm, newest first. A notice about documents has "View documents"; an investment update has "View investment", which opens that investment's page.
+
+## account
+audience: investor
+kind: portal
+title: Account
+menu: Account
+anchor: Tax and accreditation
+anchor: Update bank account
+anchor: Sign-in and delivery
+
+The account's details.
+- "Investor": account title, type, primary contact, email, phone and mailing address. These cannot be edited on the page: to change them, contact the firm's team named there.
+- "Distribution payments": the payment method and the bank account on file. To change the bank account, choose "Update bank account", enter the new account and choose "Save bank account".
+- "Tax and accreditation": the tax form on file, the last digits of the taxpayer ID and the accreditation on file. When a verification has expired, "Verify again" starts a new one.
+- "Sign-in and delivery": electronic delivery, two-step verification and the date the account was activated.
+- "Appearance": "Light", "Dark" or "Match this device". The choice is saved in this browser.
+
+## preferences
+audience: investor
+kind: portal
+title: Settings
+anchor: Preferences for this device
+anchor: Appearance
+
+Preferences for this device. Under "Appearance", choose "Light", "Dark" or "Match this device", which follows the device's light or dark setting. The choice is saved in this browser only.
+
+## subscribe
+audience: investor
+kind: portal
+title: Subscribe
+anchor: Continue your subscription
+anchor: Subscription documents signed
+
+The page for subscribing to an offering. It shows the offering and one button: "Continue your subscription" goes to the offering's documents and the subscription agreement, and "Continue account setup" shows instead when the account setup is not finished, because the subscription is its last step. After signing, the page says "Subscription documents signed". No money is due at signing: the firm reviews the subscription, and a notice with the amount and wire instructions follows when money is due.
+
+## sign
+audience: investor
+kind: portal
+title: Sign a document
+anchor: Decline to sign
+anchor: Finish
+
+A document the firm sent to sign.
+1. Open it from the notice on Home, or from "Waiting for your signature" on the Documents page.
+2. Choose "Start". It goes to each field that needs you: a signature, initials, a date or a blank to fill in.
+3. Choose "Finish" when the fields are done.
+
+"Decline to sign" tells the firm you will not sign. The signed copy is kept on the Documents page under "Signed documents".
+
+## sign-in
+audience: investor
+kind: portal
+title: Sign in
+anchor: Need help signing in?
+anchor: Forgot your password?
+
+Enter "Email" and "Password" and choose "Sign in". "Forgot your password?" asks for a password reset link to be emailed to the address on file. "First time here? Activate your account" shows for an investor whose account is not active yet and starts the account setup. Under "Need help signing in?" are the contact details of the firm's team.
+
+## join
+audience: investor
+kind: page
+title: Investor sign-up
+anchor: Investor sign-up
+anchor: Create my account
+
+The page an offering's sign-up link opens. It shows the offering and its key terms.
+1. Enter "First name", "Last name" and "Email".
+2. Choose "Investing as": an individual, a joint account, a trust, a company or an IRA.
+3. Tick the box to agree to receive account notices and documents electronically.
+4. Choose "Create my account".
+
+The account setup then opens and goes step by step from the login to the subscription documents.
+
+## invite
+audience: investor
+kind: page
+title: Account setup
+anchor: Your progress is saved. You can come back with your invitation link at any time.
+anchor: This invitation has expired
+anchor: This invitation was cancelled
+
+The account setup opens from the link in the invitation email. It goes one step at a time; the top of the page lists the steps and says which one is open, for example Step 3 of 10. Which steps appear depends on the invitation: an investor already on file is asked only for what is new, and a request for a tax form holds the tax step only. "Back" returns to the previous step. Progress is saved, and the invitation link opens the setup again where it stopped.
+
+When the link does not open the setup, the page says why:
+- "This invitation link does not work here": open the link from the invitation email again, or contact the firm.
+- "This invitation link no longer works", "This invitation was cancelled" or "This invitation has expired": ask the firm for a new link.
+- "We could not find this invitation": open the link from the invitation email again, or contact the firm.
+- "We could not open your invitation": check the connection and try again.
+
+## invite/welcome
+audience: investor
+kind: step
+title: Welcome
+anchor: Consent to electronic records and signatures
+anchor: Get started
+
+The first step. It says which firm sent the invitation and for which offering, then shows "Consent to electronic records and signatures": what signing electronically means, how to ask for paper copies and how to withdraw consent. Tick the box that says you agree to use electronic records and signatures, tick the box about receiving statements, tax documents and notices electronically if it is shown, and choose "Get started".
+
+## invite/login
+audience: investor
+kind: step
+title: Create your login
+anchor: Confirm password
+anchor: At least 10 characters
+
+Check "First name", "Last name" and "Email", enter a "Password" of at least 10 characters, enter it again under "Confirm password" and choose "Continue".
+
+## invite/profile
+audience: investor
+kind: step
+title: Investor information
+anchor: Investing as
+anchor: Country of mailing address
+
+Details of the investor.
+1. Choose "Investing as": an individual, a joint account, a trust, a company or an IRA. The fields below change with the choice.
+2. Enter the legal name as on the government ID, the "Country of mailing address", the address and the "Phone".
+3. For a person, enter the "Date of birth", "Citizenship" and the taxpayer number the page asks for. A trust, company or IRA is asked for its own details instead.
+4. Answer the question about senior political figures and choose "Continue".
+
+## invite/identity
+audience: investor
+kind: step
+title: Identity verification
+anchor: Identity verification
+
+Choose "Verify my identity" and follow the check: a photo of a government-issued ID and a quick selfie, about two minutes. "Identity check" shows the result. When it is done, choose "Continue".
+
+## invite/accreditation
+audience: investor
+kind: step
+title: Accreditation
+anchor: Accredited investor verification
+
+This step is named "Accredited investor verification" when the offering needs a verification. Choose "Verify my accreditation" and follow the check; "Accreditation check" shows the result. It can be shown with income, net worth, a letter from a CPA, attorney or adviser, or an existing verification. Tick the box confirming the information is accurate and choose "Continue". Whether a person qualifies is not something this help can say: that is for the investor's own adviser or the firm.
+
+## invite/status
+audience: investor
+kind: step
+title: Investor status
+anchor: Investor status
+anchor: Benefit plans
+
+The step asks whether the investor is an accredited investor, "Yes" or "No", and may ask more depending on the answer. Under "Benefit plans" it asks whether the investor is a benefit plan investor, with three kinds of "Yes" and "No". Answer and choose "Continue". Whether a person or an account qualifies as any of these is not something this help can say: that is for the investor's own adviser or the firm.
+
+## invite/tax
+audience: investor
+kind: step
+title: Tax certification
+anchor: Change your answers
+anchor: Continue to the form
+
+The step first names the tax form and says it is filled in from the answers given earlier.
+1. Choose "Continue to the form". The filled form opens on the page.
+2. Check the form, sign it on the page and choose "Finish".
+
+"Change your answers" goes back to correct what the form was filled from. Beside "Already have a completed form?", "Upload it instead" takes a form that is already completed. Beside "Not a U.S. person for tax purposes?", "Use the form for foreign investors" changes to the form for foreign investors. Which form or tax status applies to someone is decided by the firm or the investor's own tax adviser, not by this help.
+
+## invite/payment
+audience: investor
+kind: step
+title: Distribution payments
+anchor: Routing number
+anchor: Confirm account number
+
+The bank account distributions are paid to, by direct deposit (ACH) to a U.S. bank account.
+1. Enter the account holder's first and last name, exactly as the bank has it.
+2. Enter the "Routing number": nine digits, printed at the bottom left of a check.
+3. Choose the "Account type", "Checking" or "Savings", and enter the "Account number" twice.
+4. Tick the authorization and choose "Continue".
+
+## invite/subscribe
+audience: investor
+kind: step
+title: Subscription
+anchor: Offering documents
+anchor: Continue to the agreement
+
+The step shows the offering and its "Offering documents": choose a document to read it. Enter the commitment; the page shows the minimum, and an amount set by the firm cannot be changed. Tick the boxes confirming that you have received and read the offering documents and, where it is shown, that your investor status remains accurate. Then choose "Continue to the agreement".
+
+## invite/agreement
+audience: investor
+kind: step
+title: Subscription agreement
+anchor: Subscription agreement
+anchor: Select Start to go to each field that needs you, then Finish.
+
+The subscription agreement opens on the page with the investor's name and commitment filled in.
+1. Choose "Start". It goes to each field: a signature, initials, a tick box or a blank.
+2. Choose "Finish".
+
+The fields marked for the firm are signed by the firm afterwards. "Decline to sign" tells the firm you will not sign.
+
+## invite/done
+audience: investor
+kind: step
+title: Done
+anchor: What happens next
+anchor: Go to your portal
+
+The last step: the account is active. "What happens next" says that the firm reviews the subscription and countersigns the agreement, that its status is shown in the portal under Investments, that a copy of the signed agreement is in Documents and the fully signed copy is added once it is countersigned, and that no money is due now: when capital is called, a notice in the portal gives the amount, the due date and wire instructions. Choose "Go to your portal".
+
+## onboarding
+audience: investor
+kind: page
+title: Update bank account
+anchor: Update bank account
+anchor: Save bank account
+
+The page for changing the bank account distributions are paid to. It opens from the Account page with "Update bank account" and has one step, Distribution payments. "Cancel" leaves without a change.
+
+## onboarding/payment
+audience: investor
+kind: step
+title: Distribution payments
+anchor: Update your bank account
+anchor: Save bank account
+
+The heading is "Update your bank account".
+1. Enter the account holder's first and last name, exactly as the bank has it.
+2. Enter the "Routing number", choose the "Account type" and enter the "Account number" twice.
+3. Tick the authorization and choose "Save bank account".
+
 ## skip
 console-new-client: the managed edition's page for adding a client; the self-serve edition does not have it
+onboarding/login: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
+onboarding/profile: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
+onboarding/identity: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
+onboarding/accreditation: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
+onboarding/review: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
