@@ -1,0 +1,19 @@
+Form D fixtures: where each file came from
+
+schema/   The SEC's Form D schema files, copied byte for byte (CRLF line ends kept):
+            formDSubmission.xsd.xml, formDStateCodes.xsd.xml, statesOfSolicitationCodes.xsd.xml
+          Their SHA-256 pins are in schema/SHA256SUMS and are checked before every run of
+          .planning/phases/09-filings-tab-form-d-and-blue-sky/checks/formd-xml.js.
+samples/  The SEC's own two sample notices from the same archive, copied byte for byte:
+            SampleFormD.xml (a new notice), SampleFormD_A.xml (an amendment)
+real/     Twelve notices filed on EDGAR (six Form D, six Form D/A), taken from EDGAR's list of current
+          Form D filings on the date below. Every name, street line, city, postal code, phone number,
+          CIK, accession number, CRD number and free text in them was replaced by
+          .planning/phases/09-filings-tab-form-d-and-blue-sky/checks/mask-formd.js before they were
+          stored here. The filings they were made from are not named here and are not in this repository.
+
+Archive:        https://www.sec.gov/files/edgar/filer-information/specifications/formdxmltechspec-81_d.zip
+Linked from:    https://www.sec.gov/submit-filings/technical-specifications
+Specification:  EDGAR Form D XML Technical Specification, Version 13, March 2025
+                (the schema file's own version line: X0808)
+Fetched:        2026-11-19

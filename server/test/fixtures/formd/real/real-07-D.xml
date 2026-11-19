@@ -1,0 +1,309 @@
+<?xml version="1.0"?>
+<edgarSubmission>
+
+    <schemaVersion>X0708</schemaVersion>
+
+    <submissionType>D</submissionType>
+
+    <testOrLive>LIVE</testOrLive>
+
+    <primaryIssuer>
+        <cik>9000000001</cik>
+        <entityName>Masked Entity 01</entityName>
+        <issuerAddress>
+            <street1>01 Masked Street</street1>
+            <city>Masked City 01</city>
+            <stateOrCountry>NY</stateOrCountry>
+            <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+            <zipCode>00001</zipCode>
+        </issuerAddress>
+        <issuerPhoneNumber>(555) 010-0001</issuerPhoneNumber>
+        <jurisdictionOfInc>Masked text 02</jurisdictionOfInc>
+        <issuerPreviousNameList>
+            <previousName>Masked Entity 02</previousName>
+        </issuerPreviousNameList>
+        <edgarPreviousNameList>
+            <value>None</value>
+        </edgarPreviousNameList>
+        <entityType>Corporation</entityType>
+        <yearOfInc>
+            <withinFiveYears>true</withinFiveYears>
+            <value>2023</value>
+        </yearOfInc>
+    </primaryIssuer>
+
+    <relatedPersonsList>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given01</firstName>
+                <middleName>Middle01</middleName>
+                <lastName>Family01</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Executive Officer</relationship>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 03</relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given02</firstName>
+                <lastName>Family01</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 04</relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given03</firstName>
+                <lastName>Family02</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Executive Officer</relationship>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 05</relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given04</firstName>
+                <lastName>Family03</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Executive Officer</relationship>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 06</relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given05</firstName>
+                <lastName>Family04</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given06</firstName>
+                <lastName>Family05</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given07</firstName>
+                <lastName>Family06</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given08</firstName>
+                <lastName>Family07</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given09</firstName>
+                <middleName>Middle02</middleName>
+                <lastName>Family08</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given10</firstName>
+                <lastName>Family09</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given11</firstName>
+                <middleName>Middle03</middleName>
+                <lastName>Family10</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>01 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>NY</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+    </relatedPersonsList>
+
+    <offeringData>
+        <industryGroup>
+            <industryGroupType>Other Technology</industryGroupType>
+        </industryGroup>
+        <issuerSize>
+            <revenueRange>Decline to Disclose</revenueRange>
+        </issuerSize>
+        <federalExemptionsExclusions>
+            <item>06b</item>
+        </federalExemptionsExclusions>
+        <typeOfFiling>
+            <newOrAmendment>
+                <isAmendment>false</isAmendment>
+            </newOrAmendment>
+            <dateOfFirstSale>
+                <value>2024-01-24</value>
+            </dateOfFirstSale>
+        </typeOfFiling>
+        <durationOfOffering>
+            <moreThanOneYear>true</moreThanOneYear>
+        </durationOfOffering>
+        <typesOfSecuritiesOffered>
+            <isEquityType>true</isEquityType>
+        </typesOfSecuritiesOffered>
+        <businessCombinationTransaction>
+            <isBusinessCombinationTransaction>false</isBusinessCombinationTransaction>
+            <clarificationOfResponse></clarificationOfResponse>
+        </businessCombinationTransaction>
+        <minimumInvestmentAccepted>78</minimumInvestmentAccepted>
+        <salesCompensationList></salesCompensationList>
+        <offeringSalesAmounts>
+            <totalOfferingAmount>1246089809</totalOfferingAmount>
+            <totalAmountSold>1246089809</totalAmountSold>
+            <totalRemaining>0</totalRemaining>
+            <clarificationOfResponse></clarificationOfResponse>
+        </offeringSalesAmounts>
+        <investors>
+            <hasNonAccreditedInvestors>true</hasNonAccreditedInvestors>
+            <numberNonAccreditedInvestors>35</numberNonAccreditedInvestors>
+            <totalNumberAlreadyInvested>137</totalNumberAlreadyInvested>
+        </investors>
+        <salesCommissionsFindersFees>
+            <salesCommissions>
+                <dollarAmount>0</dollarAmount>
+            </salesCommissions>
+            <findersFees>
+                <dollarAmount>0</dollarAmount>
+            </findersFees>
+            <clarificationOfResponse></clarificationOfResponse>
+        </salesCommissionsFindersFees>
+        <useOfProceeds>
+            <grossProceedsUsed>
+                <dollarAmount>0</dollarAmount>
+            </grossProceedsUsed>
+            <clarificationOfResponse></clarificationOfResponse>
+        </useOfProceeds>
+        <signatureBlock>
+            <authorizedRepresentative>false</authorizedRepresentative>
+            <signature>
+                <issuerName>Masked Entity 01</issuerName>
+                <signatureName>Masked Signer 01</signatureName>
+                <nameOfSigner>Masked Signer 01</nameOfSigner>
+                <signatureTitle>Masked text 07</signatureTitle>
+                <signatureDate>2026-11-19</signatureDate>
+            </signature>
+        </signatureBlock>
+    </offeringData>
+</edgarSubmission>
