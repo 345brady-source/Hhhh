@@ -1,8 +1,8 @@
 // gate: node
-// last "AUDIT SAME: PASS (cases run: 2)"
+// last "AUDIT SAME: PASS (cases run: 4)"
 // T9 of 11-RESEARCH.md, the one definition of "sample funds unchanged" for phase 11 (FA-03): every sample fund's audit
 // package, built by the base tree (P11_ROOT) and by this checkout, compared byte for byte. No browser.
-//   P11_ROOT=<base tree> node audit-same.js [--case same,mutate] [--firm <tenant id>]
+//   P11_ROOT=<base tree> node audit-same.js [--case same,mutate,noroot,selfcheck] [--firm <tenant id>]
 // For each sample firm, each offering, each edition (diy, managed) and the presets 'fy' and 'itd' of NS.audit.presets
 // at 2026-11-19:
 //   - every schedule the base's NS.audit.build(...).list holds is in this tree's list with the same id, and its
@@ -13,7 +13,10 @@
 //     except entries for schedules the base does not have, the "Generated:" line of 00_README.txt, the README and
 //     MANIFEST lines for those entries, and the rows and README lines a readiness check the base does not have adds
 //     (11-CONTEXT W4).
-// Without P11_ROOT it prints FAIL and exits 1: it never compares a tree with itself silently.
+// Without P11_ROOT (or with this checkout as P11_ROOT) it prints FAIL and exits 1: it never compares a tree with itself.
+// Cases: same (the above; then the first edition again in fresh contexts must give the same hashes, I1), mutate (one
+// cent on kb-fund-ii's newest paid distribution must be reported, W7), noroot (the refusal above, as child processes),
+// selfcheck (the --case flag's rules, and the package rules proven on packages rebuilt from one real export).
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -35,6 +38,11 @@ function baseRoot() {
   const b = process.env.P11_ROOT;
   if (!b || !fs.existsSync(path.join(b, 'assets/js/audit.js')) || !fs.existsSync(path.join(b, 'diy.html'))) {
     console.log(`FAIL no base tree: P11_ROOT ${b ? `(${b}) holds no assets/js/audit.js or diy.html` : 'is not set'}; this check never compares a tree with itself`);
+    console.log('AUDIT SAME: FAIL (cases run: 0) - no base tree');
+    process.exit(1);
+  }
+  if (fs.realpathSync(b) === fs.realpathSync(ROOT)) {
+    console.log(`FAIL no base tree: P11_ROOT (${b}) is this checkout; this check never compares a tree with itself`);
     console.log('AUDIT SAME: FAIL (cases run: 0) - no base tree');
     process.exit(1);
   }
@@ -356,14 +364,19 @@ const parts = {
     let schedules = 0;
     let zips = 0;
     let whole = 0;
+    let first = null;
     EDITIONS.forEach((ed) => {
       const r = compare(base, ed);
+      if (!first) first = r;
       funds = Math.max(funds, r.funds);
       schedules += r.schedules;
       zips += r.zips;
       whole += r.zipsWhole;
       check(`${ed}: every schedule, period figure and package entry the base builds is the same in this tree (${r.schedules} schedules, ${r.zips} packages of ${r.funds} funds)`, r.funds > 0 && r.schedules > 0 && !r.mismatches.length, r.mismatches.slice(0, 20));
     });
+    // I1: the same comparison run again in fresh contexts gives the same hashes (the comparison is stable).
+    const again = compare(base, EDITIONS[0]);
+    check(`${EDITIONS[0]} run twice: the same ${first.hashes.length} hashes`, first.hashes.length > 0 && again.hashes.join('\n') === first.hashes.join('\n'), again.hashes.filter((h, i) => h !== first.hashes[i]).slice(0, 3));
     console.log(`compared ${schedules} schedules and ${zips} packages (${whole} byte-identical as whole files) of ${funds} funds`);
   },
   /** The comparison catches one cent on kb-fund-ii's newest paid distribution, naming the fund, period and schedule. */
@@ -378,7 +391,101 @@ const parts = {
     const others = r.found.filter((f) => f.fund !== 'kb-fund-ii');
     check('any other fund reported differs only in the firm-wide change log (schedule log)', others.every((f) => /^kb-/.test(f.fund) && f.schedules.join() === 'log' && f.diff.every((d) => d === 'log' || (f.logFile && d.indexOf(f.logFile) >= 0))), r.mismatches.filter((m) => !/^diy kb-fund-ii /.test(m)).slice(0, 5));
     hit.forEach((f) => console.log(`  caught: ${f.edition} ${f.fund} ${f.period}: ${f.schedules.join(', ')}`));
+  },
+  /** Without a base tree (or with this checkout as its own base) the check prints FAIL and exits 1. */
+  async noroot({ check }) {
+    const env = Object.assign({}, process.env);
+    delete env.P11_ROOT;
+    const runs = [
+      ['P11_ROOT not set', env],
+      ['P11_ROOT is this checkout', Object.assign({}, env, { P11_ROOT: ROOT })],
+      ['P11_ROOT holds no portal', Object.assign({}, env, { P11_ROOT: __dirname })]
+    ];
+    runs.forEach(([what, e]) => {
+      const c = child(['--case', 'same', '--firm', 'kestrel-bay'], e);
+      check(`${what}: a FAIL line and exit 1 (exit ${c.status})`, c.status === 1 && /^FAIL no base tree/m.test(c.out) && !/^PASS /m.test(c.out), c.out.slice(-600));
+    });
+  },
+  /** The flag's rules, and the package rules of compareZip on packages built here from a real export. */
+  async selfcheck({ check }) {
+    const u = child(['--case', 'nosuchcase']);
+    check(`an unknown --case name: a FAIL line and exit 1 (exit ${u.status})`, u.status === 1 && /^FAIL unknown case name: nosuchcase/m.test(u.out), u.out.slice(-400));
+    const n = child(['--case', '']);
+    check(`an empty --case list: a FAIL line and exit 1 (exit ${n.status})`, n.status === 1 && /^FAIL no cases to run/m.test(n.out), n.out.slice(-400));
+    zipRules(check);
   }
 };
+
+/** This check run again as a child process. */
+function child(args, env) {
+  const { spawnSync } = require('child_process');
+  const r = spawnSync(process.execPath, [__filename].concat(args), { env: env || process.env, encoding: 'utf8', timeout: 300000 });
+  return { status: r.status, out: String(r.stdout || '') + String(r.stderr || '') };
+}
+
+/**
+ * compareZip proven on packages rebuilt here from one real export (Kestrel Bay Fund II, fiscal year): what W4 allows
+ * passes, and each change it does not allow is reported.
+ */
+function zipRules(check) {
+  const NS = LD().loadPortal(ROOT, { today: TODAY, edition: 'diy' });
+  const ws = LD().sampleWorkspaces(NS).find((w) => w.tenant.id === 'kestrel-bay');
+  const o = ws.offerings.find((x) => x.id === 'kb-fund-ii');
+  const p = NS.audit.presets(ws, o).find((x) => x.id === 'fy');
+  const X = exportOf(NS, ws, o, p);
+  const enc = (s) => Buffer.from(s, 'utf8');
+  /** files (without MANIFEST) → a package; man(lines) may change the MANIFEST lines before it is written. */
+  const pack = (files, B, man) => {
+    const body = files.filter((f) => f.name !== 'MANIFEST.sha256');
+    let lines = body.map((f) => `${sha(f.data)}  ${f.name}`);
+    if (man) lines = man(lines);
+    const all = body.concat([{ name: 'MANIFEST.sha256', data: enc(lines.join('\n') + '\n') }]);
+    const bytes = NS.audit.zip(all.map((f) => ({ name: f.name, data: new Uint8Array(f.data) })));
+    return { bytes, files: unzip(bytes), B: B || X.B };
+  };
+  const edit = (name, fn) => X.files.map((f) => (f.name === name ? { name, data: enc(fn(f.data.toString('utf8'))) } : f));
+  const readme = (fn) => edit('00_README.txt', (t) => fn(t.split('\r\n')).join('\r\n'));
+  const checksS = X.B.list.find((s) => s.id === 'checks');
+  const firstS = X.B.list.find((s) => s.id !== 'checks');
+  const same = pack(X.files);
+  check('a package rebuilt here from the export\'s own entries is byte-identical to the export (the rebuild is faithful)', Buffer.compare(Buffer.from(same.bytes), Buffer.from(X.bytes)) === 0);
+  const cases = [];
+  // Allowed by W4.
+  cases.push(['a changed "Generated:" line', true, pack(readme((ls) => ls.map((l) => (/^Generated:/.test(l) ? 'Generated:      2031-01-01 00:00:00 UTC' : l))))]);
+  const nf = '99_New_schedule.csv';
+  const withNew = X.files.filter((f) => f.name !== 'MANIFEST.sha256').concat([{ name: nf, data: enc('\uFEFFA,B\r\n1,2\r\n') }]);
+  const addContents = (ls) => {
+    const k = ls.findIndex((l) => l.indexOf('MANIFEST.sha256 ') === 0);
+    return ls.slice(0, k).concat([`${nf.padEnd(48)} New schedule (1 row)`], ls.slice(k));
+  };
+  const newB = { list: X.B.list.concat([{ id: 'new-schedule', file: nf, rows: [[1, 2]] }]), chk: X.B.chk };
+  const withNewReadme = withNew.map((f) => (f.name === '00_README.txt' ? { name: f.name, data: enc(addContents(f.data.toString('utf8').split('\r\n')).join('\r\n')) } : f));
+  cases.push(['a schedule the base lacks, with its CONTENTS and MANIFEST lines', true, pack(withNewReadme, newB)]);
+  const title = 'A new readiness check';
+  const chkFiles = X.files
+    .map((f) => (f.name === checksS.file ? { name: f.name, data: enc(f.data.toString('utf8') + `${title},Pass,Detail of the new check,\r\n`) } : f))
+    .map((f) => {
+      if (f.name !== '00_README.txt') return f;
+      const ls = f.data.toString('utf8').split('\r\n');
+      const last = ls.map((l, i) => (/^\[(PASS| N\/A|OPEN)\] /.test(l) ? i : -1)).filter((i) => i >= 0).pop();
+      const out = ls.slice(0, last + 1).concat([`[PASS] ${title}`], ls.slice(last + 1));
+      return { name: f.name, data: enc(out.map((l) => (l.indexOf(checksS.file.padEnd(48) + ' ') === 0 ? l.replace(/\((\d+) rows?\)$/, (m, k) => `(${Number(k) + 1} rows)`) : l)).join('\r\n')) };
+    });
+  const chkB = { list: X.B.list.map((s) => (s.id === 'checks' ? Object.assign({}, s, { rows: s.rows.concat([[title, 'Pass', 'Detail of the new check', '']]) }) : s)), chk: X.B.chk.concat([{ title, status: 'pass', items: [] }]) };
+  cases.push(['a readiness check the base lacks: its row, its READINESS line and the CONTENTS row count', true, pack(chkFiles, chkB)]);
+  // Not allowed.
+  cases.push([`one changed character in ${firstS.file}`, false, pack(edit(firstS.file, (t) => t.replace(/\d/, (d) => String((Number(d) + 1) % 10))))]);
+  cases.push(['a changed README line other than "Generated:"', false, pack(readme((ls) => ls.map((l, i) => (i === 0 ? l + ' ' : l))))]);
+  cases.push(['a readiness line no new check explains', false, pack(readme((ls) => ls.concat(['[PASS] Unexplained'])))]);
+  cases.push([`${firstS.file} dropped`, false, pack(X.files.filter((f) => f.name !== firstS.file))]);
+  cases.push(['an entry that is not a schedule the base lacks', false, pack(X.files.filter((f) => f.name !== 'MANIFEST.sha256').concat([{ name: 'notes.txt', data: enc('x') }]))]);
+  cases.push(['a wrong MANIFEST line for a new schedule', false, pack(withNewReadme, newB, (ls) => ls.map((l) => (l.slice(66) === nf ? '0'.repeat(64) + l.slice(64) : l)))]);
+  cases.push(['a wrong MANIFEST line for a base entry', false, pack(X.files, null, (ls) => ls.map((l) => (l.slice(66) === firstS.file ? '0'.repeat(64) + l.slice(64) : l)))]);
+  cases.push(['a checks row the base holds, changed', false, pack(edit(checksS.file, (t) => t.replace(/,Pass,/, ',Exception,')))]);
+  cases.forEach(([what, allowed, tree]) => {
+    const m = compareZip(X, tree);
+    check(`${allowed ? 'allowed' : 'reported'}: ${what}`, allowed ? m.length === 0 : m.length > 0, m.slice(0, 4));
+  });
+}
 
 L6.runParts(parts, { name: 'AUDIT SAME', unit: 'cases', flag: '--case' });
