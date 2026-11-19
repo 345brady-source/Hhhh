@@ -248,10 +248,13 @@ const parts = {
     same(check, 'one CSV per sheet', Object.keys(csv).sort(), ['Large', 'Trial balance']);
     const tb = csv['Trial balance'] || [];
     same(check, 'Trial balance heading row', tb[0], ['Account', 'Debit (USD)', 'Credit (USD)', 'Share (%)']);
-    same(check, 'Trial balance row 2: 32000 in column B', tb[1], ['1000 Cash', '32000', '', '0.25']);
-    same(check, 'Trial balance row 3: the text as written, 7500 in column C', tb[2], [TB_TEXT, '', '7500', '0.5']);
-    same(check, 'Trial balance row 4', tb[3], ['Łukasz Ż', '1.23', '0.01', '0.125']);
-    same(check, 'Trial balance total row (row 5): 32001.23 and 7500.01', tb[4], ['Total', '32001.23', '7500.01', '0.875']);
+    // Raw values: the money columns carry no grouping and no fixed decimals (32000, not 32,000.00). LibreOffice writes
+    // a percent-formatted cell with its % sign even in this mode, and without the format's fixed decimals (12.5%, not
+    // 12.50%): the same fractions 0.25, 0.5, 0.125 and 0.875 the sheet was written with (measured 2026-11-19).
+    same(check, 'Trial balance row 2: 32000 in column B', tb[1], ['1000 Cash', '32000', '', '25%']);
+    same(check, 'Trial balance row 3: the text as written, 7500 in column C', tb[2], [TB_TEXT, '', '7500', '50%']);
+    same(check, 'Trial balance row 4', tb[3], ['Łukasz Ż', '1.23', '0.01', '12.5%']);
+    same(check, 'Trial balance total row (row 5): 32001.23 and 7500.01', tb[4], ['Total', '32001.23', '7500.01', '87.5%']);
     same(check, 'Trial balance has five lines', tb.length, 5);
     const lg = csv.Large || [];
     same(check, 'Large has 2,002 lines', lg.length, 2002);
