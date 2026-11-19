@@ -1,0 +1,11 @@
+{
+  "_source": "https://docs.didit.me/sessions-api/retrieve-session",
+  "_status": "unconfirmed: documented shape quoted by search on 2026-11-19; to be confirmed in the sandbox by plan 08-12",
+  "reply": {
+    "status": "Declined",
+    "id_verifications": [{ "status": "Approved" }],
+    "liveness_checks": [{ "status": "Approved" }],
+    "face_matches": [{ "status": "Approved" }],
+    "aml_screenings": [{ "status": "Declined", "hits": [{ "match_score": 97, "risk_score": 88 }] }]
+  }
+}
