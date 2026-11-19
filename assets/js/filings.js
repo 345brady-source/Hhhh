@@ -24,12 +24,32 @@
  *   ensure(ws)                  the record, created once
  *   rec(ws, offeringId)         the offering's entry, created with every key (null for an unknown offering)
  *   applies(offering)           true for a Rule 506(b) or Rule 506(c) offering: the ones that file Form D
- *   facts(ws, offering)         { regime, usd, firstSale, firstSaleSuggested, sold, investors, byState }
+ *   facts(ws, offering)         { regime, usd, firstSale, firstSaleSuggested, sold, investors,
+ *                                 nonAccredited: { count, pending, unanswered }, total: integer | 'Indefinite' | null,
+ *                                 minimum: integer | null, byState: { [code]: group }, outsideUS: group, unplaced: group }
+ *                               group = { firstSale, sold, investors }. count: non-accredited investors who have
+ *                               invested; pending: those whose subscription is not decided yet. unplaced: investors
+ *                               whose state cannot be told from the address on file. Amounts are whole U.S. dollars;
+ *                               an offering in another currency has usd false and null amounts (no rate is applied).
  *   holidays(year)              the federal holidays' observed days that fall in that calendar year, 'YYYY-MM-DD', in order
  *   businessDay(iso)            that day, or the first day after it that is not a Saturday, Sunday or federal holiday
  *   due(ws, today, opts)        [ { key, kind, offeringId, state?, due: 'YYYY-MM-DD' | null, basis, level, silenced } ]
+ *                               opts.states: the state table { [code]: { days, noticeRequired, confirmed } }
  *   count(ws, today, opts)      how many reminders are due or overdue and not silenced
+ *   changeNeeded(last, now)     [ { item, from, to } ]: what in two snapshots needs an amendment (empty: nothing)
+ *   silence(ws, key, by), unsilence(ws, key)      true when the key names a reminder (or offering:<id>) and was changed
+ *   PRICES                      cents per service: formd, formd-amendment, bluesky, bluesky-renewal
+ *   orderLines(kind, { passThrough })             { lines: [ { label, cents, passThrough, state? } ], dueCents, openFees }
+ *   addOrder(ws, { kind, offeringId, by, passThrough, package })   the order, status recorded (null: unknown offering)
+ *   cancelOrder(ws, id)         true when a recorded order was cancelled
+ *   setIssuer(ws, offeringId, patch), setEdgar(ws, offeringId, patch)   the known keys only
  *   recordFiled(ws, offeringId, notice)   an accepted notice: { id?, type, filedOn, accession, snapshot, source, orderId }
+ *   recordState(ws, offeringId, code, patch)      a state's entry; the state counts as filed once filedOn is set
+ * Every writer saves the workspace where NS.workspace is loaded; addOrder and cancelOrder also write the change log.
+ *
+ * snapshot (what a filed notice said, made by the Form D builder and compared by changeNeeded):
+ *   { minimumInvestment, totalOffering: integer | 'Indefinite', nonAccredited, commissions, findersFees,
+ *     proceedsToInsiders, relatedPersons: [ 'first|middle|last' in lower case ], material: text }
  *
  * A sale (one definition, used for every figure): a subscription request that is approved, funded or accepted (its
  * amount, on the day it was decided), or a holding that does not come from such a request (its commitment where it has
@@ -37,9 +57,25 @@
  * counts; declined subscriptions and redemptions never count.
  *
  * Reminder kinds and their basis:
- *   formd-first   due 15 calendar days after the first sale, moved to the next business day; basis { firstSale, confirmed }
+ *   formd-first    due 15 calendar days after the first sale, moved to the next business day; only while no notice is
+ *                  filed. basis { firstSale, confirmed }
+ *   formd-annual   due on the first anniversary of the latest filed notice (D or D/A, the portal's or the sponsor's
+ *                  own), moved the same way. basis { filedOn, type, accession }
+ *   formd-change   the offering's figures (minimum, total offering where the record holds one, non-accredited count)
+ *                  laid over the latest filed snapshot need an amendment; due null. basis { filedOn, reasons }
+ *   state-first    one per state with a sale and no notice filed; with a confirmed row of the state table, due that
+ *                  row's days after the first sale in the state, moved the same way; otherwise due null.
+ *                  basis { firstSale, days? }. A confirmed row with noticeRequired false gives none.
+ *   state-renewal  on the state's renewsOn. basis { renewsOn, filedOn }
+ * The annual and the change reminder stop once rec.ended is set and not after today (the Form D instructions ask for
+ * no amendment after the offering terminates). An offering record with no cap or minimum is not laid over the filed
+ * figures: a blank in the portal is not a change in the offering.
  * Levels: overdue once today is after the due date; due when the calendar deadline is within the reminder's lead
- * (15 days for a first notice, so from the day of the first sale); soon within the lead plus 30 days; later beyond.
+ * (15 days for a first notice, so from the day of the first sale; 30 for an annual amendment and a renewal), and
+ * always when there is no date; soon within the lead plus 30 days; later beyond. Only due and overdue are counted.
+ * Silence keys: formd-first:<offeringId>, formd-annual:<offeringId>, formd-change:<offeringId>,
+ * state-first:<offeringId>:<code>, state-renewal:<offeringId>:<code>, offering:<offeringId> (all of an offering's).
+ * A silenced reminder stays in the list with silenced true and its date unchanged.
  */
 (function (NS) {
   'use strict';
@@ -58,6 +94,12 @@
   };
   const addDays = (iso, n) => isoOf(new Date(utc(iso).getTime() + n * 86400000));
   const daysBetween = (a, b) => Math.round((utc(b) - utc(a)) / 86400000);
+  /** The same calendar day one year later (29 February becomes 28 February). */
+  const anniversary = (iso) => {
+    const p = iso.split('-');
+    return day(`${Number(p[0]) + 1}-${p[1]}-${p[2]}`) || `${Number(p[0]) + 1}-02-28`;
+  };
+  const stamp = () => new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
   const todayIso = () => {
     const n = new Date();
     return `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`;
@@ -114,8 +156,9 @@
   /* ---------- The record ---------- */
   const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const save = (ws) => NS && NS.workspace && NS.workspace.save(ws);
+  const log = (ws, e) => (NS && NS.audit && NS.audit.log ? NS.audit.log(ws, e) : null);
   /** A copy for the record with any key that could hold a secret left out (the record keeps none). */
-  const SECRET = /^ccc$|token|secret|password/i;
+  const SECRET = /ccc|token|secret|password/i;
   function clean(v) {
     if (Array.isArray(v)) return v.map(clean);
     if (!v || typeof v !== 'object') return v;
@@ -252,7 +295,66 @@
       .sort()
       .forEach((k) => (byState[k] = tally(groups[k])));
     const usd = String(o.currency || 'USD') === 'USD';
-    return { regime: regimeOf(o), usd, firstSale: day(r.firstSale) || all.firstSale, firstSaleSuggested: all.firstSale, sold: usd ? all.sold : null, investors: all.investors, byState };
+    // No rate is applied to another currency (the reference rates are for summary screens only): no dollar figure.
+    const money = (t) => (usd ? t : Object.assign(t, { sold: null }));
+    Object.keys(byState).forEach((k) => money(byState[k]));
+    const whole = (v) => (v === '' || v == null || !isFinite(Number(v)) ? null : Math.round(Number(v)));
+    const st = o.structure || {};
+    const cap = whole(st.hardCap) || whole(st.targetSize);
+    const regime = regimeOf(o);
+    const na = NS.eligibility.nonAccredited(ws, o);
+    return {
+      regime,
+      usd,
+      firstSale: day(r.firstSale) || all.firstSale,
+      firstSaleSuggested: all.firstSale,
+      sold: usd ? all.sold : null,
+      investors: all.investors,
+      // Investors who have invested (the figure Form D asks for); those still pending are given apart.
+      nonAccredited: { count: na.accepted.length, pending: na.pending.length, unanswered: na.unanswered },
+      total: usd ? (cap > 0 ? cap : 'Indefinite') : null,
+      minimum: usd ? whole(o.minimum) : null,
+      byState,
+      outsideUS: money(tally(groups.abroad || [])),
+      unplaced: money(tally(groups[''] || []))
+    };
+  }
+
+  /* ---------- The amendment test (Form D General Instructions, "When amendment is not required") ---------- */
+  const isNum = (v) => typeof v === 'number' && isFinite(v);
+  const names = (list) => (Array.isArray(list) ? list.map((x) => String(x).trim().toLowerCase()).filter(Boolean) : null);
+  /**
+   * What differs between the last filed snapshot and the figures now in a way that needs an amendment:
+   * [ { item, from, to } ], empty when nothing does. The 10 percent tests are cumulative since the last filed notice,
+   * which comparing against its snapshot gives. Exempt and so never reported: a higher minimum investment or one lowered
+   * by no more than 10 percent; a lower total offering amount, commissions, finders' fees or proceeds to insiders, or
+   * one raised by no more than 10 percent; a non-accredited count that does not rise above 35. Reported: a total
+   * offering amount that moves between a number and Indefinite, a related person added or no longer named, a different
+   * material text. An item missing from either snapshot is not compared.
+   */
+  function changeNeeded(last, now) {
+    const out = [];
+    if (!last || !now || typeof last !== 'object' || typeof now !== 'object') return out;
+    const add = (item, more) => out.push(Object.assign({ item, from: last[item], to: now[item] }, more || {}));
+    const a = (k) => Math.round(last[k]);
+    const b = (k) => Math.round(now[k]);
+    const both = (k) => isNum(last[k]) && isNum(now[k]);
+    // Written as multiplications, so a base of 0 divides nothing: a rise from 0 is a rise of more than 10 percent.
+    const up = (k) => both(k) && (b(k) - a(k)) * 10 > a(k);
+    if (both('minimumInvestment') && (a('minimumInvestment') - b('minimumInvestment')) * 10 > a('minimumInvestment')) add('minimumInvestment');
+    const indefinite = (v) => v === 'Indefinite';
+    if ((indefinite(last.totalOffering) && isNum(now.totalOffering)) || (isNum(last.totalOffering) && indefinite(now.totalOffering)) || up('totalOffering')) add('totalOffering');
+    if (both('nonAccredited') && b('nonAccredited') > a('nonAccredited') && b('nonAccredited') > 35) add('nonAccredited');
+    ['commissions', 'findersFees', 'proceedsToInsiders'].forEach((k) => up(k) && add(k));
+    const was = names(last.relatedPersons);
+    const is = names(now.relatedPersons);
+    if (was && is) {
+      const added = is.filter((x) => was.indexOf(x) < 0);
+      const removed = was.filter((x) => is.indexOf(x) < 0);
+      if (added.length || removed.length) add('relatedPersons', { added, removed });
+    }
+    if (typeof last.material === 'string' && typeof now.material === 'string' && last.material !== now.material) add('material');
+    return out;
   }
 
   /* ---------- Reminders ---------- */
@@ -268,26 +370,183 @@
     return left <= LEAD[kind] ? 'due' : left <= LEAD[kind] + 30 ? 'soon' : 'later';
   }
   const filedNotices = (r) => r.formD.filter((n) => n && n.status === 'accepted' && day(n.filedOn));
+  const isState = (kind) => kind === 'state-first' || kind === 'state-renewal';
 
   function due(ws, today, opts) {
     const now = day(today) || todayIso();
     const out = [];
+    const quiet = (ws && ws.filings && ws.filings.silenced) || {};
+    const table = opts && opts.states && typeof opts.states === 'object' ? opts.states : null;
     ((ws && ws.offerings) || []).forEach((o) => {
       if (!o || !applies(o)) return;
       const r = peek(ws, o.id);
       if (r.mode === 'none') return;
       const f = facts(ws, o);
-      const add = (kind, key, date, target, basis, more) => out.push(Object.assign({ key, kind, offeringId: o.id }, more || {}, { due: date, basis, level: levelOf(kind, date, target, now), silenced: false }));
-      if (!filedNotices(r).length && f.firstSale) {
-        const target = addDays(f.firstSale, 15);
-        add('formd-first', `formd-first:${o.id}`, businessDay(target), target, { firstSale: f.firstSale, confirmed: !!day(r.firstSale) });
+      const add = (kind, target, basis, code) => {
+        const key = `${kind}:${o.id}${code ? `:${code}` : ''}`;
+        // A renewal is on the date the record gives; every other date is moved off a weekend or holiday.
+        const date = target ? (kind === 'state-renewal' ? target : businessDay(target)) : null;
+        out.push(Object.assign({ key, kind, offeringId: o.id }, code ? { state: code } : {}, { due: date, basis, level: levelOf(kind, date, target, now), silenced: !!(quiet[key] || quiet[`offering:${o.id}`]) }));
+      };
+      const filed = filedNotices(r);
+      const ended = !!day(r.ended) && day(r.ended) <= now;
+      if (!filed.length) {
+        if (f.firstSale) add('formd-first', addDays(f.firstSale, 15), { firstSale: f.firstSale, confirmed: !!day(r.firstSale) });
+      } else if (!ended) {
+        // The latest filed notice, D or D/A (of two filed the same day, the one recorded later).
+        const last = filed.reduce((a, b) => (day(b.filedOn) >= day(a.filedOn) ? b : a));
+        const filedOn = day(last.filedOn);
+        add('formd-annual', anniversary(filedOn), { filedOn, type: last.type, accession: last.accession || '' });
+        if (last.snapshot && typeof last.snapshot === 'object') {
+          const live = Object.assign({}, last.snapshot, { nonAccredited: f.nonAccredited.count });
+          if (isNum(f.minimum)) live.minimumInvestment = f.minimum;
+          if (isNum(f.total)) live.totalOffering = f.total;
+          const reasons = changeNeeded(last.snapshot, live);
+          if (reasons.length) add('formd-change', null, { filedOn, reasons });
+        }
       }
+      Object.keys(f.byState).forEach((code) => {
+        const s = own(r.states, code) ? r.states[code] : null;
+        if (s && day(s.filedOn)) return;
+        const row = table && own(table, code) && table[code] && table[code].confirmed === true ? table[code] : null;
+        if (row && row.noticeRequired === false) return;
+        const first = f.byState[code].firstSale;
+        const days = row && Number.isInteger(row.days) && row.days >= 0 ? row.days : null;
+        if (days != null && first) add('state-first', addDays(first, days), { firstSale: first, days }, code);
+        else add('state-first', null, { firstSale: first }, code);
+      });
+      Object.keys(r.states)
+        .sort()
+        .forEach((code) => {
+          const s = r.states[code];
+          const renewsOn = own(STATES, code) && s ? day(s.renewsOn) : '';
+          if (renewsOn) add('state-renewal', renewsOn, { renewsOn, filedOn: day(s.filedOn) }, code);
+        });
     });
     return out;
   }
   const count = (ws, today, opts) => due(ws, today, opts).filter((x) => !x.silenced && (x.level === 'due' || x.level === 'overdue')).length;
 
+  /* ---------- Silencing ---------- */
+  const KINDS = ['formd-first', 'formd-annual', 'formd-change', 'state-first', 'state-renewal', 'offering'];
+  /** A key names a reminder when its kind is known, its offering is in the workspace and, for a state kind, its state is one. */
+  function validKey(ws, key) {
+    const k = String(key == null ? '' : key);
+    const kind = KINDS.find((x) => k.indexOf(`${x}:`) === 0);
+    if (!kind) return false;
+    const rest = k.slice(kind.length + 1);
+    if (!isState(kind)) return !!offeringOf(ws, rest);
+    const cut = rest.lastIndexOf(':');
+    return cut > 0 && own(STATES, rest.slice(cut + 1)) && !!offeringOf(ws, rest.slice(0, cut));
+  }
+  function silence(ws, key, by) {
+    if (!validKey(ws, key)) return false;
+    ensure(ws).silenced[key] = { at: stamp(), by: String(by == null ? '' : by) };
+    save(ws);
+    return true;
+  }
+  function unsilence(ws, key) {
+    const q = ws && ws.filings && ws.filings.silenced;
+    if (!q || !own(q, key)) return false;
+    delete q[key];
+    save(ws);
+    return true;
+  }
+
+  /* ---------- Prices and orders ---------- */
+  /** Cents. One place, so the server works out an order from the same numbers. */
+  const PRICES = Object.freeze({ formd: 10000, 'formd-amendment': 5000, bluesky: 10000, 'bluesky-renewal': 5000 });
+  const SERVICE = { formd: 'Form D filing, EDGAR access setup included', 'formd-amendment': 'Form D amendment filing', bluesky: 'State notice filings, any number of states', 'bluesky-renewal': 'State notice renewals' };
+  const dollars = (cents) => `$${String(Math.floor(cents / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${cents % 100 ? `.${pad(cents % 100)}` : ''}`;
+  /**
+   * An order's lines: the service at its price, then each pass-through fee as its own line at cost
+   * ({ label, cents, state? }). A fee not yet confirmed has cents null: it adds nothing to dueCents and sets openFees.
+   * An unknown kind, or an amount that is not a whole number of cents, is an error.
+   */
+  function orderLines(kind, opts) {
+    if (typeof kind !== 'string' || !own(PRICES, kind)) throw new Error(`filings: unknown order kind "${kind}"`);
+    const lines = [{ label: SERVICE[kind], cents: PRICES[kind], passThrough: false }];
+    ((opts && opts.passThrough) || []).forEach((l) => {
+      const cents = l && l.cents != null ? l.cents : null;
+      if (cents !== null && !(Number.isInteger(cents) && cents >= 0)) throw new Error('filings: a pass-through amount is a whole number of cents, or null until it is confirmed');
+      lines.push(Object.assign({ label: String((l && l.label) || '').trim(), cents, passThrough: true }, l && l.state ? { state: String(l.state) } : {}));
+    });
+    return { lines, dueCents: lines.reduce((a, l) => a + (l.cents || 0), 0), openFees: lines.some((l) => l.cents === null) };
+  }
+  function addOrder(ws, o) {
+    const q = o || {};
+    const built = orderLines(q.kind, { passThrough: q.passThrough });
+    const off = offeringOf(ws, q.offeringId);
+    if (!off) return null;
+    const f = ensure(ws);
+    const order = { id: newId(f.orders, 'fo'), kind: q.kind, offeringId: off.id, lines: built.lines, dueCents: built.dueCents, openFees: built.openFees, status: 'recorded', at: stamp(), by: String(q.by == null ? '' : q.by), package: q.package ? clean(q.package) : null };
+    f.orders.push(order);
+    log(ws, { action: 'Filing order recorded', fund: off.id, record: order.id, detail: `${SERVICE[order.kind]}: ${dollars(order.dueCents)} due${order.openFees ? ', with fees still to be confirmed' : ''}` });
+    save(ws);
+    return order;
+  }
+  /** Only an order still recorded can be cancelled (one already received or done is with the filing agent). */
+  function cancelOrder(ws, id) {
+    const order = ((ws && ws.filings && ws.filings.orders) || []).find((x) => x && x.id === id);
+    if (!order || order.status !== 'recorded') return false;
+    order.status = 'cancelled';
+    log(ws, { action: 'Filing order cancelled', fund: order.offeringId, record: order.id, detail: `${SERVICE[order.kind] || order.kind}: ${dollars(order.dueCents)} was due` });
+    save(ws);
+    return true;
+  }
+
   /* ---------- Writing the record ---------- */
+  const text = (v) => String(v).trim();
+  /** The issuer details asked once per offering. Only the record's own keys are kept; null or absent leaves a key as it is. */
+  function setIssuer(ws, offeringId, patch) {
+    const r = rec(ws, offeringId);
+    if (!r) return null;
+    const p = patch || {};
+    Object.keys(blankIssuer()).forEach((k) => {
+      if (!own(p, k) || p[k] == null) return;
+      r.issuer[k] = k === 'previousNames' ? (Array.isArray(p[k]) ? p[k] : []).map(text).filter(Boolean) : text(p[k]);
+    });
+    save(ws);
+    return r.issuer;
+  }
+  /** EDGAR access progress: cik, name, singleMember and steps ({ [stepKey]: { done, at } }, merged by key). Nothing else is kept. */
+  function setEdgar(ws, offeringId, patch) {
+    const r = rec(ws, offeringId);
+    if (!r) return null;
+    const p = patch || {};
+    if (p.cik != null) r.edgar.cik = text(p.cik);
+    if (p.name != null) r.edgar.name = text(p.name);
+    if (own(p, 'singleMember')) r.edgar.singleMember = p.singleMember == null ? null : !!p.singleMember;
+    if (p.steps && typeof p.steps === 'object') {
+      Object.keys(p.steps).forEach((k) => {
+        const s = p.steps[k];
+        if (!SECRET.test(k) && s && typeof s === 'object') r.edgar.steps[k] = { done: !!s.done, at: s.at == null ? '' : text(s.at) };
+      });
+    }
+    save(ws);
+    return r.edgar;
+  }
+  const blankState = () => ({ status: '', filedOn: '', efdId: '', feeCents: null, quotedCents: null, renewsOn: '', source: '' });
+  /**
+   * A state's notice: { status, filedOn, efdId, feeCents, quotedCents, renewsOn, source }, the keys given in patch
+   * changed. The state counts as filed once filedOn is set. Null for an unknown offering or state.
+   */
+  function recordState(ws, offeringId, code, patch) {
+    const r = rec(ws, offeringId);
+    if (!r || typeof code !== 'string' || !own(STATES, code)) return null;
+    const s = own(r.states, code) && r.states[code] && typeof r.states[code] === 'object' ? fill(r.states[code], blankState()) : (r.states[code] = blankState());
+    const p = patch || {};
+    const cents = (v) => (Number.isInteger(v) && v >= 0 ? v : null);
+    if (p.status != null) s.status = text(p.status);
+    if (p.filedOn != null) s.filedOn = day(p.filedOn);
+    if (p.efdId != null) s.efdId = text(p.efdId);
+    if (own(p, 'feeCents')) s.feeCents = cents(p.feeCents);
+    if (own(p, 'quotedCents')) s.quotedCents = cents(p.quotedCents);
+    if (p.renewsOn != null) s.renewsOn = day(p.renewsOn);
+    if (p.source != null) s.source = p.source === 'portal' || p.source === 'self' ? p.source : '';
+    save(ws);
+    return s;
+  }
   /**
    * An accepted notice: the entry with notice.id is updated, or a new one is added. notice: { id?, type: 'D' | 'D/A',
    * filedOn, accession, snapshot, source: 'portal' | 'self', orderId }. Returns the entry, or null when the offering is
@@ -316,7 +575,7 @@
     return e;
   }
 
-  const API = { ensure, rec, applies, facts, holidays, businessDay, due, count, recordFiled };
+  const API = { ensure, rec, applies, facts, holidays, businessDay, due, count, changeNeeded, silence, unsilence, PRICES, orderLines, addOrder, cancelOrder, setIssuer, setEdgar, recordFiled, recordState };
   if (NS) NS.filings = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);

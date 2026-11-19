@@ -281,8 +281,8 @@ const cases = {
     yes('non-accredited investors 36 to 37', { nonAccredited: 37 }, 'nonAccredited', Object.assign({}, S, { nonAccredited: 36 }));
     no('non-accredited investors 36 to 35', { nonAccredited: 35 }, Object.assign({}, S, { nonAccredited: 36 }));
     [['commissions', 100000], ['findersFees', 20000], ['proceedsToInsiders', 50000]].forEach(([k, v]) => {
-      no(`${k} up 10 percent`, { [k]: v * 1.1 });
-      yes(`${k} up 11 percent`, { [k]: Math.round(v * 1.11) }, k);
+      no(`${k} up 10 percent`, { [k]: v + v / 10 });
+      yes(`${k} up 11 percent`, { [k]: v + (v * 11) / 100 }, k);
       no(`${k} down`, { [k]: Math.round(v / 2) });
     });
     // A base of 0: nothing is divided by it.
