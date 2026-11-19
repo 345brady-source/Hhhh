@@ -187,6 +187,17 @@ const cases = {
     check('cash ends at 3,280,000', NS.books.balance(ws, oid, '1000', '2026-12-31') === 3280000, NS.books.balance(ws, oid, '1000', '2026-12-31'));
     const P = NS.audit.period(ws, o, '2026-01-01', '2026-12-31');
     check("3100 stays at the gross amounts the engine counts (600,000 and 300,000)", P.inv.every((a) => jsum(NS, ws, oid, '3100', { partner: a.investor.id }) === a.dist) && jsum(NS, ws, oid, '3100', {}) === 900000);
+
+    // A stored line for FA-1003, who is not on the register (11-CONTEXT W3): the engine keeps it in L.strays; it is
+    // posted to 3100 with its investor id, paid otherwise than by ACH, and listed in fund.exceptions.
+    const NS2 = load();
+    const S = fundA(NS2, { others: false, edit: (w) => w.runs[0].lines.push({ investorId: 'FA-1003', grossCents: 50000, withheld: [], netCents: 50000 }) });
+    const e2 = NS2.books.live(S.ws.books.funds[S.oid], 'run:fa-run-1');
+    check('a stray line: [3100 +50,000 FA-1003] and [1000 -50,000 FA-1003] are in the run\'s entry', NS2.audit.ledger(S.ws, S.o).strays.length === 1 && e2 && J(e2.lines) === J([['3100', 600000, 'FA-1001'], ['3100', 300000, 'FA-1002'], ['3100', 50000, 'FA-1003'], ['1000', -600000], ['1000', -300000, 'FA-1002'], ['1000', -50000, 'FA-1003']]), e2 && e2.lines);
+    const ex = S.ws.books.funds[S.oid].exceptions;
+    check("and it is listed once in fund.exceptions as { src, kind: 'stray', investorId, cents }", ex.length === 1 && ex[0].src === 'run:fa-run-1' && ex[0].kind === 'stray' && ex[0].investorId === 'FA-1003' && ex[0].cents === 50000 && S.r.exceptions === 1, ex);
+    const r2 = NS2.books.sync(S.ws, { today: TODAY });
+    check('a second sync does not list it again', r2.exceptions === 0 && S.ws.books.funds[S.oid].exceptions.length === 1, r2);
   },
 
   /** fa-run-1 with gp 100,000 ($1,000.00): the entry adds [3300 +100,000][1000 -100,000]; cash ends at 3,100,000; 3300 at +100,000. */
