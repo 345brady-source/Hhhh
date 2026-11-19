@@ -14,3 +14,23 @@
 - C-03: the EFD system fee is passed through at cost with the state fees. Why: consistent with D-03 (state fees at cost).
 - C-04: Carrow & Vale staff see and work orders by email plus token-protected server calls. Why: the self-serve edition has no staff role, and a staff console is out of scope for this phase.
 - Open for the owner: a second person for Carrow & Vale's EDGAR account (opens the API route); the official NASAA fee matrix (network host blocked from this session).
+
+## Plan-check additions, wave 1 (executors apply these with their plan; checked 2026-11-19, 3 blockers fixed here, 7 warnings)
+
+### 09-01 (filings record and due dates)
+- A1 (blocker): one definition of a sale. A sale is (a) a request with type subscription and status approved, funded or accepted (amount `r.cents / 100`, date `r.decided`), or (b) a position whose ref is not such a request (commitment where present, otherwise amount; date `p.date`). `firstSale`, `sold`, `investors`, `byState` and `outsideUS` are all computed from that one list; a position and its request are never both counted; redeemed positions still count; declined requests and redemptions never count. Case `facts` adds: an approved, unfunded subscription gives `sold` equal to its amount and `investors` 1.
+- A2 (blocker): the non-accredited figure counts only investors who have invested. `nonAccredited: { count: the accepted list's length, pending: the pending list's length, unanswered }` (not `eligibility.nonAccredited().count`, which is accepted plus pending). Case `facts` adds: one accepted and one pending non-accredited investor gives count 1, pending 1.
+- A3: the annual and the change reminders are both absent once `rec.ended` is set and not after today (the Form D instructions exempt a change after the offering terminates), with a case.
+- A4: case `change` adds: commissions, finders' fees and proceeds to insiders (up 10 percent no, up 11 percent yes, down no); non-accredited 36 to 36 no, 36 to 37 yes, 36 to 35 no; total offering between a number and Indefinite, either way, yes; a base of 0 (minimum 0 to any amount no; total, commissions, fees or proceeds 0 to any positive amount yes, with no division by zero).
+- A5: case `holidays` adds: `businessDay('2027-12-31')` is `2028-01-03`, and `holidays(2027)` includes `2027-12-31` (1 January 2028 is a Saturday).
+- A6: `gate9.sh` step 1 drops lines matching `^GATE (ok|FAIL) +server tests [0-9]+$` and does not count them; step 4 adds a fifth stand-in where the tree's test count differs from base plus markers, ending `GATE9 SELF-TEST: PASS (5)`; the verify grep and the done line match.
+- A7: once the last line is known, `gate9.sh` removes `GATE_OUT/gate/base-tree` and `GATE_OUT/gate/shots`.
+- A8: each check loads its module inside each case, so a RED run prints a `FAIL` line and not a bare stack trace.
+
+### 09-02 (Form D builder)
+- B1 (blocker): `fromXml` accepts and drops comments, and on the root element only the two attributes `xmlns:xsi` and `xsi:noNamespaceSchemaLocation`; it refuses any other attribute, a document type or entity declaration, a processing instruction other than the XML declaration, and an unknown root. It never returns a ccc: `ccc`, `contactData`, `notificationAddressList`, `testOrLive` and `returnCopy` are dropped, because they come from `toXml`'s options.
+- B2: `validate(draft, { today, submission, ccc, contact })`; ccc and contact are checked only when passed (09-05 calls the short form).
+- B3 (masking proof): the `real` allow-list also holds the four-digit year in `yearOfInc/value` and the schema's fixed values `None` and `All States`; the case fails on any comment, attribute or processing instruction other than the XML declaration; the masking tool writes every replaced original value of four or more characters to `$O/originals.txt` (never printed, never committed) and the verify runs `! grep -rFqf $O/originals.txt server/test/fixtures/formd/real/`; `SOURCE.txt` and the summary never name the twelve filings' CIKs, accession numbers or addresses; `list.txt` stays in SCRATCH.
+- B4: case `prefill` builds `facts` and `rec` as literals (`assets/js/filings.js` belongs to 09-01 and is not in this worktree).
+- B5: as A8.
+- B6: a notice with several issuers needs one CCC per issuer; that belongs to 09-05. If the plan runs short of room, say what is left in the summary.
