@@ -2178,6 +2178,7 @@
       const w = W();
       const d = dupState();
       const docs = (w.docs || []).slice().sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+      for (let k = docs.length - 1; k >= 0; k--) if (docs[k].tax) docs.splice(k, 1); // a tax document is handled on the Tax documents page only (plan 10-04)
       const matches = d.audience === 'investors' ? d.files.map((f) => ({ f, ids: OPS().matchIds(w, f.name) })) : [];
       const rows = docs
         .map((x) => {
@@ -2278,6 +2279,7 @@
     const w = W();
     const doc = (w.docs || []).find((x) => x.id === el.getAttribute('data-id'));
     if (!doc) return;
+    if (doc.tax) return; // a tax document leaves only by the Tax documents page's logged Withdraw (plan 10-04)
     w.docs = w.docs.filter((x) => x !== doc);
     OPS().files.del(doc.id).catch(() => {});
     audit('Document removed', `${doc.title} (${doc.fileName}) removed from investor portals`, doc.offeringId || '', doc.id);

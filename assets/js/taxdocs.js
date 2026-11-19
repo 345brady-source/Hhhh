@@ -375,7 +375,11 @@
     return batch;
   }
 
-  /** A package made by hand from a page range of the file. It is open and has no proposal. */
+  /**
+   * A package made by hand from a page range of the file. It is open. It has no proposal, unless the page names the
+   * investor whose account id is in the file's name (proposeId): proposed on 'account ID in the file name' when that
+   * investor holds the offering, and confirmed one at a time like every package that is not 'number and name'.
+   */
   function addPackage(ws, batchId, a) {
     const batch = batchOf(ws, batchId);
     const first = Number(a && a.first);
@@ -384,6 +388,7 @@
     if (first < 1 || last > batch.pages || first > last) refuse(`The pages must run forwards within the file's ${batch.pages} pages.`);
     if (overlaps(batch, first, last)) refuse('Those pages are already in another package.');
     const pkg = newPackage(batch, { first, last });
+    if (a && a.proposeId && holds(investorOf(ws, a.proposeId), batch.offeringId)) pkg.proposed = { investorId: a.proposeId, basis: 'account ID in the file name' };
     batch.packages.push(pkg);
     batch.loose = looseOf(batch);
     log(ws, { action: 'Tax document package made by hand', fund: batch.offeringId, record: pkg.id, actor: (a && a.by) || undefined, at: a && a.at ? a.at : undefined, detail: `${pagesText(pkg)} of ${batch.fileName}; source SHA-256 ${batch.sourceSha256}` });
@@ -399,8 +404,18 @@
     log(ws, { action: 'Tax document package set aside', fund: batch.offeringId, record: pkg.id, actor: (a && a.by) || undefined, at: a && a.at ? a.at : undefined, detail: `${pagesText(pkg)} of ${batch.fileName}` });
     return pkg;
   }
+  /** "Not this one": an open package leaves the together list and is confirmed one at a time (who and when kept). */
+  function notTogether(ws, batchId, pkgId, a) {
+    const batch = batchOf(ws, batchId);
+    const pkg = pkgOf(batch, pkgId);
+    if (pkg.state !== 'open') refuse('Only an open package can be taken out of the list.');
+    if (!a || !a.by) refuse('The person taking it out must be named.');
+    Object.assign(pkg, { single: true, singleBy: a.by, singleAt: stamp(a.at) });
+    log(ws, { action: 'Tax document package taken out of confirm together', fund: batch.offeringId, record: pkg.id, actor: a.by, at: pkg.singleAt, detail: `${pagesText(pkg)} of ${batch.fileName}; to be confirmed on its own` });
+    return pkg;
+  }
   /**
-   * A package set aside, or confirmed with no document made yet, is open again. Refused when its pages are now in
+   * A package set aside, or confirmed with no document made yet, is open again; a "Not this one" mark is cleared. Refused when its pages are now in
    * another package, or when its document exists.
    */
   function reopen(ws, batchId, pkgId, a) {
@@ -410,7 +425,7 @@
     if (pkg.state === 'aside' && overlaps(batch, pkg.first, pkg.last, pkg)) refuse('Its pages are now in another package.');
     if (pkg.state !== 'aside' && pkg.state !== 'confirmed') refuse('This package is already open.');
     const was = pkg.state === 'confirmed' ? `confirmed for ${nameOf(ws, pkg.investorId)}` : 'set aside';
-    Object.assign(pkg, { state: 'open', investorId: '', basis: '', confirmedBy: '', confirmedAt: '' });
+    Object.assign(pkg, { state: 'open', investorId: '', basis: '', confirmedBy: '', confirmedAt: '', single: false, singleBy: '', singleAt: '' });
     batch.loose = looseOf(batch);
     log(ws, { action: 'Tax document package opened again', fund: batch.offeringId, record: pkg.id, actor: (a && a.by) || undefined, at: a && a.at ? a.at : undefined, detail: `${pagesText(pkg)} of ${batch.fileName}; it was ${was}` });
     return pkg;
@@ -490,7 +505,7 @@
   const docsIn = (ws, states, investorId, offeringId, kind, year) => (ws.docs || []).filter((d) => sameSlot(d, investorId, offeringId, kind, year) && states.indexOf(d.tax.state) >= 0);
   /**
    * The open packages of a file that may be confirmed in one step: proposed on 'number and name' and nobody needs to look
-   * at them: not marked (look), not of another partnership, its investor proposed for no other package of the file, with
+   * at them: not taken out by "Not this one" (single), not marked (look), not of another partnership, its investor proposed for no other package of the file, with
    * no live document of that kind and year and no package confirmed for them in another file. confirmTogether confirms
    * exactly these, and the page draws its together list from this alone.
    */
@@ -504,7 +519,7 @@
     return batch.packages
       .filter((p) => {
         const id = p.proposed.investorId;
-        return p.state === 'open' && id && p.proposed.basis === 'number and name' && !p.look && !p.otherPartnership && proposedFor[id] === 1 && !docsIn(ws, LIVE, id, batch.offeringId, batch.kind, batch.year).length && !confirmedIn(id);
+        return p.state === 'open' && id && !p.single && p.proposed.basis === 'number and name' && !p.look && !p.otherPartnership && proposedFor[id] === 1 && !docsIn(ws, LIVE, id, batch.offeringId, batch.kind, batch.year).length && !confirmedIn(id);
       })
       .map((p) => p.id);
   }
@@ -720,7 +735,7 @@
     };
   }
 
-  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, reopen, confirm, togetherIds, confirmTogether, toDocument, addGenerated, inEffect, consent, withdrawConsent, deliver, markPaper, bounced, withdraw, opened, notice, lists, availableUntil };
+  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, notTogether, reopen, confirm, togetherIds, confirmTogether, toDocument, addGenerated, inEffect, consent, withdrawConsent, deliver, markPaper, bounced, withdraw, opened, notice, lists, availableUntil };
   if (NS) NS.taxdocs = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);
