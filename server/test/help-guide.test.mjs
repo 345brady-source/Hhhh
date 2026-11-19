@@ -135,6 +135,19 @@ test('white label and sizes: no vendor, model or product name, no forbidden word
   }
 });
 
+test('two facts the paid measurement found missing (07-05): adding a co-investor, and how a taxpayer number is typed', () => {
+  const entry = (k) => SRC.entries.find((e) => e.key === k).text;
+  // Gap 1: a second person on an investor's account is added from the investor's record (coinvestor.js): the row's
+  // "Account" button opens it, "Add co-investor" opens the form with first name, last name and email.
+  assert.match(JS['coinvestor.js'], /data-action="co-record"[^`]*>Account<\/button>/);
+  assert.match(JS['coinvestor.js'], /<span>First name<\/span>[\s\S]*<span>Last name<\/span>[\s\S]*<span>Email<\/span>[\s\S]*'Save co-investor' : 'Add co-investor'/);
+  assert.match(entry('console-investors'), /"Account"[^\n]*"Add co-investor"[^\n]*"First name", "Last name" and "Email"/, 'the sponsor guide does not say how a co-investor is added');
+  // Gap 2: the taxpayer number field holds up to 11 characters and counts digits only, exactly nine (onboarding.js).
+  assert.match(JS['onboarding.js'], /input\('tin', req \? tinLabel[^\n]*max: 11/);
+  assert.match(JS['onboarding.js'], /const tin = digitsOf\(d\.tin\);\n\s*if \(needTin\(d\)\) \{\n\s*if \(tin\.length !== 9/);
+  for (const k of ['invite/profile', 'invite/tax']) assert.match(entry(k), /nine digits, with or without dashes or spaces/, `${k} does not say how the taxpayer number is typed`);
+});
+
 test('audiences: the investor guide holds investor pages only, and the exports have the agreed shape', () => {
   assert.deepEqual(Object.keys(GUIDE), ['sponsor', 'investor']);
   assert.ok(Object.isFrozen(GUIDE) && Object.isFrozen(PAGES));
