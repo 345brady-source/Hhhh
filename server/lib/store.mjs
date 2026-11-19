@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path';
 const BLOB_KEY = /^[\w-]{1,120}$/;
 
 export function openStore(file) {
-  let data = { verifications: {}, screenings: {}, invitations: {}, outbox: {}, events: [], seen: [] };
+  let data = { verifications: {}, screenings: {}, invitations: {}, outbox: {}, accounts: {}, events: [], seen: [] };
   if (file) {
     try {
       data = Object.assign(data, JSON.parse(readFileSync(file, 'utf8')));

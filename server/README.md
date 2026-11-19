@@ -32,6 +32,7 @@ Then, in the portal, open Integrations and enter this server's URL.
 | `PUBLIC_URL` | This server's public https URL, used to build webhook and return URLs (default `http://localhost:PORT`). |
 | `PORTAL_ORIGIN` | Comma-separated origins allowed to call the API from the browser, for example `https://portal.example`. Empty allows any origin (development only). This server's own pages (`/sandbox/…`, `/hosted/…`) are not limited by it, so their forms can post back (see the API table). |
 | `API_TOKEN` | When set, every `/v1/` call except `/v1/results` and the investor's invitation calls needs `Authorization: Bearer <API_TOKEN>`. Required for invitations. |
+| `ADMIN_TOKEN` | Turns on the sponsor account routes (`/v1/admin/…`, see Sponsor accounts) and is the bearer token they require. Unset, they answer 404. |
 | `RESULTS_TOKEN` | Turns on `POST /v1/results` and is the bearer token it requires. Unset, that endpoint answers 404. |
 | `STORE_FILE` | Where records are kept (default `server/data/store.json`). |
 | `RATE_LIMIT_PER_MIN` | Calls per minute per client for calls that create or change records (POST, PUT, DELETE) and for invitation links that fail to authenticate (default 60; 0 turns it off). |
@@ -396,6 +397,26 @@ When a sponsor uploads a subscription agreement and the workspace has this serve
 
 No answer ever carries a key, a model or provider name, or the text of an error. When the browser closes the connection, the reading is stopped. The PDF passes through this server's memory for the reading only and is never stored. Each reading adds one line to `CARROWVALE_READ_LOG` (when set): `{ at, route: "read", ms, pages, candidates, counted, outcome, stopReason, model, usage: { input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens }, cost }`, plus `images` (how many page pictures) when pictures were sent, never any document text. A failure also prints one line to the console with its reason and HTTP status only.
 
+## Sponsor accounts
+
+One server can serve several sponsors, each with its own token. A call made with a sponsor's token acts on that sponsor's workspace only:
+
+- What it creates (invitations, verifications, screenings) is stored in the account's workspace, whatever `workspace` the body names.
+- Lists (`GET /v1/invitations`, `GET /v1/outbox`) return the account's workspace only; the `workspace` query is ignored.
+- Another workspace's invitation, submission, verification, evidence or screening answers 404, exactly as an id that does not exist, and nothing is changed.
+
+The operator manages accounts with `ADMIN_TOKEN` (`Authorization: Bearer <ADMIN_TOKEN>`). These routes answer 404 until `ADMIN_TOKEN` is set, are rate limited, and refuse any call that carries an invitation token.
+
+| Route | What it does |
+| --- | --- |
+| `POST /v1/admin/accounts` | `{ workspace, name }` → `{ id, workspace, name, token }`. `workspace` is 1 to 120 letters, digits, dots, underscores or hyphens (the portal's tenant id) and can have one account; a used or bad one answers 400. |
+| `GET /v1/admin/accounts` | `{ accounts: [{ id, workspace, name, createdAt }] }`. |
+| `POST /v1/admin/accounts/:id/token` | A new token for the account → `{ id, token }`. The old one stops working at once. |
+
+A token (32 random bytes) is shown once, in the answer that makes it; only its SHA-256 is stored, so a lost token is replaced, not recovered. The sponsor enters it in the portal under Integrations where the server's token goes.
+
+On a server with accounts, the shared `API_TOKEN` is the operator's own: it still reaches every workspace, so give it to no sponsor. With no `API_TOKEN` and no account, `/v1/` calls need no token (development); once one account exists, every sponsor call needs a token. An account made for a workspace that already has records reaches those records. Make one account for each workspace in the portal, even for one firm: investor ids repeat from one workspace to the next, and a check is matched to an investor by id within a workspace.
+
 ## Data protection
 
 Invitations hold investors' personal details, bank details and signed documents, so:
@@ -403,7 +424,7 @@ Invitations hold investors' personal details, bank details and signed documents,
 - **Encryption at rest.** Snapshots, submissions, outbox messages and the investor's details on verification and screening records (name, email, address, phone, the names screened) are sealed with AES-256-GCM using `DATA_KEY`, each with a fresh IV and the record id and field bound in as additional data (a sealed value cannot be moved to another record). Offering documents, the agreement PDF and signed PDFs are kept as sealed files in `<STORE_FILE>.blobs/`. The store file keeps only what the console's list needs in plain form: ids, statuses, steps and times. Email addresses quoted in a mail server's refusal are replaced with `[address]` before the error is stored. Without `DATA_KEY` the invitation routes answer 400 (`Set DATA_KEY on the integration server`) unless `NODE_ENV=test` or `ALLOW_PLAINTEXT_STORE=1`. To rotate, set the new key as `DATA_KEY` and the old one as `DATA_KEY_PREVIOUS`.
 - **Tokens.** 32 random bytes, returned once to the console (in the link) and never stored; the server keeps their SHA-256 and compares every stored hash in constant time on each lookup. Resend replaces the token. Links expire after `INVITE_DAYS`.
 - **What is deleted, and when.** A submission is deleted when the console deletes it after importing (it does so straight away), or automatically `SUBMISSION_DAYS` (30) after completion if it was never imported; the sponsor is emailed a reminder a week before that (half-way when `SUBMISSION_DAYS` is 7 or less). The whole invitation (snapshot, documents and record) is deleted `SUBMISSION_DAYS` after it ends: completed, cancelled or expired. Outbox messages are deleted after `OUTBOX_DAYS`. Deletion runs every hour and on requests.
-- **Scope.** The invitation token reaches only its own investor's onboarding, verifications and screenings (the same investor id in the same workspace). Sponsor routes need `API_TOKEN`, which invitations require to be set.
+- **Scope.** The invitation token reaches only its own investor's onboarding, verifications and screenings (the same investor id in the same workspace). Sponsor routes need `API_TOKEN` or a sponsor account's own token (see Sponsor accounts); invitations require one of the two. A sponsor account's token reaches only its own workspace.
 - **Limits.** Request bodies are capped per route (32 MB to create, 40 MB to complete, 16 KB for small calls) and oversized bodies answer 413. Writes and failed tokens are rate limited.
 
 ## Security notes
@@ -421,6 +442,7 @@ Invitations hold investors' personal details, bank details and signed documents,
 Before production:
 
 - Replace `API_TOKEN` with authenticated portal sessions (for example a signed session token checked in `authorize()` in `index.mjs`), so only signed-in sponsors and investors can start checks and only for their own records.
+- With more than one sponsor, give each its own account token (see Sponsor accounts) and keep `API_TOKEN` to yourself. Keep `ADMIN_TOKEN` long and random, different from `API_TOKEN`, out of the portal, and rotate it if it leaks; leave it unset when no account needs making.
 - Replace the JSON-file store (`lib/store.mjs`) with a real database, keeping the same methods (blobs can go to object storage; keep them sealed). With a database, look invitations up by an index on the token hash.
 - Set `DATA_KEY` from your secret store and back it up: sealed records cannot be read without it.
 - Serve over HTTPS (`PUBLIC_URL` must be https for providers to call back), set `PORTAL_ORIGIN`, keep `RATE_LIMIT_PER_MIN` on, and set `TRUST_PROXY=1` only behind your own proxy.

@@ -498,7 +498,8 @@ export function summarize(sub, snap, checks) {
  *   investorPath(method, path)  true for the calls an invitation token may make,
  *   authenticate(req, token)    the invitation record, or throws 401 / 410,
  *   investor(req, res, path, rec)   GET /v1/invite, PUT /v1/invite/progress, POST /v1/invite/complete,
- *   sponsor(req, res, url)      the API_TOKEN routes; false when the path is not one of them,
+ *   sponsor(req, res, url, auth)  the sponsor's routes (API_TOKEN or a sponsor account's token); false when the path is
+ *                               not one of them. With an account (auth.account) every call acts on its workspace only,
  *   purge(nowMs?)               expire, delete old submissions and invitations, trim the outbox,
  *   stop()
  * }
@@ -887,11 +888,14 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     throw fail(404, 'Not found');
   }
 
-  /* --- Sponsor side (API_TOKEN) --- */
+  /* --- Sponsor side (API_TOKEN, or a sponsor account's own token) --- */
 
-  const requireSponsor = () => {
+  /** The workspace a sponsor account's call is pinned to; null for the shared API_TOKEN (the request then names it). */
+  const pinned = (auth) => (auth && auth.account ? auth.account.workspace : null);
+
+  const requireSponsor = (auth) => {
     requireVault();
-    if (!env.API_TOKEN) throw fail(400, 'Set API_TOKEN on the integration server: invitations carry investors’ personal and bank details');
+    if (pinned(auth) === null && !env.API_TOKEN) throw fail(400, 'Set API_TOKEN on the integration server: invitations carry investors’ personal and bank details');
     maybePurge();
   };
 
@@ -938,8 +942,9 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     return { link: url, emailStatus: r.emailStatus, emailError: r.error || '' };
   }
 
-  async function create(req, res) {
+  async function create(req, res, auth) {
     const body = parseObject(await readRaw(req, INVITE_LIMITS.create));
+    const pin = pinned(auth);
     const portalUrl = returnTo(body.portalUrl);
     if (!portalUrl) throw fail(400, 'portalUrl must be the portal page’s address (http or https, on PORTAL_ORIGIN)');
     if (body.notifyEmail && !validAddress(body.notifyEmail)) throw fail(400, 'notifyEmail is not a valid email address');
@@ -961,7 +966,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     // The link is built before anything is stored, so one that cannot be built leaves nothing behind.
     const token = newToken();
     const firstLink = link(portalUrl, token);
-    const rec = { id: id('ivt'), workspace: clip(body.workspace, 120), investorId: inv.id, offeringId: offering ? offering.id : '', status: 'sent', sentAt: iso(), createdAt: iso(), expiresAt: invitation.expiresAt, stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, events: [], hasSubmission: false, submission: null };
+    const rec = { id: id('ivt'), workspace: pin !== null ? pin : clip(body.workspace, 120), investorId: inv.id, offeringId: offering ? offering.id : '', status: 'sent', sentAt: iso(), createdAt: iso(), expiresAt: invitation.expiresAt, stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, events: [], hasSubmission: false, submission: null };
     const blobs = [];
     files.forEach((buf, i) => {
       const key = `${rec.id}-doc-${i}`;
@@ -987,21 +992,22 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     return send(res, 200, Object.assign({ id: rec.id, token, link: out.link, emailStatus: out.emailStatus, expiresAt: rec.expiresAt }, out.emailError ? { emailError: out.emailError } : {}));
   }
 
-  async function sponsor(req, res, url) {
+  async function sponsor(req, res, url, auth) {
     const path = url.pathname;
+    const pin = pinned(auth);
     if (path === '/v1/outbox') {
-      requireSponsor();
+      requireSponsor(auth);
       if (req.method !== 'GET') throw fail(405, 'Use GET');
-      return reply(res, 200, { messages: mailer.outbox({ workspace: url.searchParams.get('workspace') || '', invitationId: url.searchParams.get('invitation') || '' }) });
+      return reply(res, 200, { messages: mailer.outbox({ workspace: pin !== null ? pin : url.searchParams.get('workspace') || '', invitationId: url.searchParams.get('invitation') || '' }) });
     }
     if (path === '/v1/invitations') {
-      requireSponsor();
+      requireSponsor(auth);
       if (req.method === 'POST') {
-        await create(req, res);
+        await create(req, res, auth);
         return true;
       }
       if (req.method !== 'GET') throw fail(405, 'Use GET or POST');
-      const ws = url.searchParams.get('workspace');
+      const ws = pin !== null ? pin : url.searchParams.get('workspace');
       const list = store
         .list('invitations')
         .filter((r) => ws === null || r.workspace === ws)
@@ -1011,9 +1017,10 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     }
     const m = path.match(/^\/v1\/invitations\/([^/]+)(?:\/(submission|resend|cancel))?$/);
     if (!m) return false;
-    requireSponsor();
+    requireSponsor(auth);
     let rec = INVITATION_ID.test(m[1]) ? store.get('invitations', m[1]) : null;
-    if (!rec) throw fail(404, 'No invitation with that id');
+    // Another sponsor's invitation answers as one that does not exist (never 403, which would confirm it does).
+    if (!rec || (pin !== null && rec.workspace !== pin)) throw fail(404, 'No invitation with that id');
     const action = m[2] || '';
 
     if (!action && req.method === 'GET') return reply(res, 200, listView(rec));
