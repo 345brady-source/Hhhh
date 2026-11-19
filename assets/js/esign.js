@@ -3651,6 +3651,8 @@
       const env = makeEnvelope({ id, title: String(src.title || (tpl && tpl.title) || 'Subscription Agreement').trim() || 'Subscription Agreement', fileName, docId, pages: pages.length, pageSizes: pages.map((p) => ({ w: p.w, h: p.h })), sha256Original: tpl ? tpl.sha256 : NS.audit.sha256(bytes), offeringId, templateId: tpl ? tpl.id : null, sequential: true, message: tpl ? tpl.message || '' : '' });
       env.agreementFor = offeringId;
       env.replaceTemplateId = tpl ? tpl.id : null;
+      // Made from a document already on the offering: saving the agreement gives that document the agreement's title.
+      if (!tpl && !src.file && src.docId) env.fromDocId = src.docId;
       makeSigner(env, { investorId: AGR_INVESTOR, name: 'Investor (each subscriber)', email: '', account: '' });
       makeSigner(env, { name: `${T().shortName} (countersigns)`, email: T().support.email || '' });
       if (tpl) applyTemplateFields(env, tpl);
@@ -3893,6 +3895,10 @@
     tpls(w).forEach((t) => t.offeringId === env.agreementFor && (t.subscription = false));
     tpls(w).push(tpl);
     w.envelopes = envs(w).filter((e) => e !== env);
+    // Walkthrough failure 7 (D-11): the offering's document the agreement was made from is titled as the agreement, never by
+    // its file name, which it keeps as its file name.
+    const from = env.fromDocId ? (w.docs || []).find((d) => d.id === env.fromDocId && d.offeringId === env.agreementFor) : null;
+    if (from) from.title = tpl.title;
     const placed = tpl.fields.filter((f) => f.auto).length;
     const settled = tpl.fields.filter((f) => f.auto && !f.review && f.confidence && f.confidence !== 'high').length;
     CK().audit('Subscription agreement saved', `${o ? o.name : env.agreementFor}: ${tpl.title}, ${tpl.fields.length} fields (${tpl.roles.join(', ')})${placed ? `; ${placed} placed by the portal${settled ? `, ${settled} of them confirmed or adjusted by the firm after review` : ''}` : ''}; investors sign it during onboarding`, env.agreementFor, tpl.id);
