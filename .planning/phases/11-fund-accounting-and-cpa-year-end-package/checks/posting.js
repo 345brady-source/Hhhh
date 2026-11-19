@@ -1,5 +1,5 @@
 // gate: node
-// last "POSTING: PASS (cases run: 1)"
+// last "POSTING: PASS (cases run: 13)"
 // Posting from records (plan 11-05, no browser): every money record the portal keeps becomes journal entries once,
 // keyed by the record (assets/js/books-post.js: NS.books.desired and NS.books.sync). The portal is loaded inside each
 // case with load11.js (the scripts diy.html lists, then books.js and books-post.js), today 2027-01-20 unless a case
@@ -8,17 +8,32 @@
 // One PASS or FAIL line per check; the last line is "POSTING: PASS (cases run: N)" or
 // "POSTING: FAIL (cases run: N) - <failed cases>". The two marker lines above are read by the phase gate.
 'use strict';
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const { spawnSync } = require('child_process');
 const L = require('../../06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js');
-const { loadPortal, sampleWorkspaces } = require('./load11.js');
+const { loadPortal, sampleWorkspaces, CHECKOUT } = require('./load11.js');
 
 const TODAY = '2027-01-20';
 const ACTOR = { by: 'Check Runner', at: '2027-01-20T10:00:00.000Z' };
 const AUTO = 'Portal (automatic)';
 const J = (x) => JSON.stringify(x);
 
-/** The portal with the journal and the posting module, inside the case (a missing module prints a FAIL line). */
+/**
+ * The portal with the journal and the posting module, inside the case (a missing module prints a FAIL line).
+ * POSTING_NO_CLEAR=1 (11-CONTEXT W1): books-post.js is run with the one NS.clearCaches() call in sync removed, to prove
+ * cases closed and open-change fail without it; that run is never the gate's.
+ */
 function load(today) {
-  const NS = loadPortal(undefined, { today: today || TODAY, extra: ['books.js', 'books-post.js'] });
+  const noClear = process.env.POSTING_NO_CLEAR === '1';
+  const NS = loadPortal(undefined, { today: today || TODAY, extra: noClear ? ['books.js'] : ['books.js', 'books-post.js'] });
+  if (noClear) {
+    const src = fs.readFileSync(path.join(CHECKOUT, 'assets/js/books-post.js'), 'utf8');
+    const CLEAR = "if (typeof NS.clearCaches === 'function') NS.clearCaches();";
+    if (src.split(CLEAR).length !== 2) throw new Error('POSTING_NO_CLEAR: the clear in sync is not in books-post.js exactly once');
+    vm.runInNewContext(src.replace(CLEAR, '/* W1 run: clear removed */'), { window: { CVPortal: NS } }, { filename: 'books-post.js (clear removed)' });
+  }
   if (!NS.books || typeof NS.books.desired !== 'function' || typeof NS.books.sync !== 'function') throw new Error('assets/js/books-post.js did not add NS.books.desired and NS.books.sync');
   return NS;
 }
@@ -339,6 +354,118 @@ const cases = {
     check('ws.audit has the same length and the same last entry (and its hash)', n > 0 && ws.audit.length === n && J(ws.audit[n - 1]) === last, { n, now: ws.audit.length });
     check('NS.audit.log was not called', logs === 0, logs);
     check('the workspace without ws.books is exactly as before', J(Object.assign({}, ws, { books: undefined })) === rest);
+  },
+
+  /** T13: a second sync of fund A and of a sample firm posts nothing, reverses nothing and leaves ws.books identical. */
+  repeat: ({ check }) => {
+    const NS = load();
+    const { ws, oid } = fundA(NS);
+    const before = J(ws.books);
+    const r = NS.books.sync(ws, { today: TODAY });
+    check('fund A: a second sync posts nothing, reverses nothing and lists nothing', r.posted === 0 && r.reversed === 0 && r.exceptions === 0, r);
+    check('fund A: JSON.stringify(ws.books) is identical', J(ws.books) === before);
+    NS.books.desired(ws, oid, { today: TODAY }).forEach((e) => NS.books.post(ws, oid, e, ACTOR));
+    check('fund A: posting every desired entry again through NS.books.post adds nothing', J(ws.books) === before);
+    const day = '2026-11-19';
+    const NS2 = load(day);
+    const w = sampleWorkspaces(NS2).find((x) => x.tenant.id === 'kestrel-bay');
+    const r1 = NS2.books.sync(w, { today: day });
+    const b2 = J(w.books);
+    const r2 = NS2.books.sync(w, { today: day });
+    check(`kestrel-bay: the first sync posted ${r1.posted}; the second posts nothing, reverses nothing, and ws.books is identical`, r1.posted > 0 && r2.posted === 0 && r2.reversed === 0 && r2.exceptions === 0 && J(w.books) === b2, r2);
+  },
+
+  /**
+   * T14, a closed period: closed through 2026-06-30, FA-1002's call payment moved from 2026-01-15 to 2026-01-16: no entry
+   * changes (the journal's JSON is identical) and fund.exceptions holds one item for call:fa-call-1:FA-1002 with both
+   * dates; syncing again adds no second item. A run cancelled with its date in a closed period also changes nothing and
+   * adds one item with now null.
+   */
+  closed: ({ check }) => {
+    const NS = load();
+    const { ws, oid, o } = fundA(NS);
+    NS.books.close(ws, oid, '2026-06-30', ACTOR);
+    const f = ws.books.funds[oid];
+    const before = J(f.journal);
+    const was = NS.books.live(f, 'call:fa-call-1:FA-1002').lines;
+    NS.audit.period(ws, o, '2026-01-01', '2026-12-31'); // the page reads the engine before the record is edited
+    ws.calls[0].items.find((i) => i.investorId === 'FA-1002').received = '2026-01-16';
+    const r = NS.books.sync(ws, { today: TODAY });
+    check('the payment moved inside the closed period: no entry changes (the journal\'s JSON is identical)', J(f.journal) === before && r.posted === 0 && r.reversed === 0, r);
+    const ex = f.exceptions;
+    const want = { kind: 'closed', src: 'call:fa-call-1:FA-1002', date: '2026-01-16', wasDate: '2026-01-15', was, now: [['1000', 15000000], ['3000', -15000000, 'FA-1002']], found: TODAY };
+    check('fund.exceptions holds one item for call:fa-call-1:FA-1002 with both dates, what was and what is now', ex.length === 1 && r.exceptions === 1 && J(ex[0]) === J(want), ex);
+    const r2 = NS.books.sync(ws, { today: TODAY });
+    check('syncing again adds no second item and changes no entry', ex.length === 1 && r2.exceptions === 0 && r2.posted === 0 && r2.reversed === 0 && J(f.journal) === before, r2);
+
+    const NS2 = load();
+    const S = fundA(NS2);
+    NS2.books.close(S.ws, S.oid, '2026-12-31', ACTOR);
+    const f2 = S.ws.books.funds[S.oid];
+    const b2 = J(f2.journal);
+    const was2 = NS2.books.live(f2, 'run:fa-run-1').lines;
+    NS2.data.cancelRun(S.ws, 'fa-run-1', { by: 'Check Runner', at: ACTOR.at, why: 'Recorded in error' });
+    const r3 = NS2.books.sync(S.ws, { today: TODAY });
+    check('a run cancelled with its date in a closed period changes no entry', J(f2.journal) === b2 && r3.posted === 0 && r3.reversed === 0, r3);
+    const ex2 = f2.exceptions;
+    check('and adds one item with now null', ex2.length === 1 && J(ex2[0]) === J({ kind: 'closed', src: 'run:fa-run-1', date: '2026-12-15', wasDate: '2026-12-15', was: was2, now: null, found: TODAY }), ex2);
+    NS2.books.sync(S.ws, { today: TODAY });
+    check('syncing again adds no second item', ex2.length === 1 && J(f2.journal) === b2);
+  },
+
+  /**
+   * T14, an open period: cancelRun on fa-run-1 (December is open): sync posts one reversal; 3100 ends at 0; cash ends at
+   * 4,100,000 (3,200,000 + 900,000). A run saved before 10-01 (no stored lines) whose holders change inside the open
+   * period (FA-1002 gains a position of 150,000.00 dated 2026-11-01, so 300,000 : 300,000): one reversal and one new run
+   * entry [3100 +450,000 FA-1001][3100 +450,000 FA-1002][1000 -450,000][1000 -450,000 FA-1002]; T4 holds again.
+   */
+  'open-change': ({ check }) => {
+    const NS = load();
+    const { ws, oid, o } = fundA(NS);
+    const f = ws.books.funds[oid];
+    const runE = NS.books.live(f, 'run:fa-run-1');
+    NS.audit.period(ws, o, '2026-01-01', '2026-12-31'); // the page reads the engine before the record changes
+    NS.data.cancelRun(ws, 'fa-run-1', { by: 'Check Runner', at: ACTOR.at, why: 'Recorded in error' });
+    const n = f.journal.length;
+    const r = NS.books.sync(ws, { today: TODAY });
+    check('the cancelled run: one reversal, nothing posted', r.reversed === 1 && r.posted === 0 && f.journal.length === n + 1, r);
+    const rev = f.journal[f.journal.length - 1];
+    check("the reversal names the run's entry, is dated its date and is by the portal", rev && runE && rev.rev === runE.id && rev.src === 'rev:' + runE.id && rev.date === '2026-12-15' && rev.by === AUTO, rev);
+    check('3100 ends at 0', NS.books.balance(ws, oid, '3100', '2026-12-31') === 0);
+    check('cash ends at 4,100,000', NS.books.balance(ws, oid, '1000', '2026-12-31') === 4100000, NS.books.balance(ws, oid, '1000', '2026-12-31'));
+    check('run:fa-run-1 has no live entry', !NS.books.live(f, 'run:fa-run-1'));
+
+    const NS2 = load();
+    const S = fundA(NS2, {
+      others: false,
+      edit: (w) => {
+        const run = w.runs[0];
+        ['lines', 'linesBasis', 'linesAt', 'linesBy'].forEach((k) => delete run[k]);
+      }
+    });
+    const f2 = S.ws.books.funds[S.oid];
+    check('a run saved before 10-01: runLines answers stored false', NS2.data.runLines(S.ws, S.ws.runs[0]).stored === false);
+    const old = NS2.books.live(f2, 'run:fa-run-1');
+    check("its entry holds the lines worked out from the register (the fixture's)", old && J(old.lines) === J(fixture().recordEntries.find((e) => e.src === 'run:fa-run-1').lines), old && old.lines);
+    const P0 = NS2.audit.period(S.ws, S.o, '2026-01-01', '2026-12-31'); // the page reads the engine before the edit
+    check('T4 holds before the edit', P0.inv.every((a) => jsum(NS2, S.ws, S.oid, '3100', { partner: a.investor.id }) === a.dist));
+    S.ws.investors.find((i) => i.id === 'FA-1002').positions.push({ offeringId: S.oid, amount: 150000, commitment: 0, date: '2026-11-01' });
+    const r2 = NS2.books.sync(S.ws, { today: TODAY });
+    check('the position edit gives one reversal and one new run entry', r2.reversed === 1 && r2.posted === 1, r2);
+    const now = NS2.books.live(f2, 'run:fa-run-1');
+    check('the new entry holds the recomputed lines: 450,000 each', now && J(now.lines) === J([['3100', 450000, 'FA-1001'], ['3100', 450000, 'FA-1002'], ['1000', -450000], ['1000', -450000, 'FA-1002']]), now && now.lines);
+    NS2.clearCaches();
+    const P = NS2.audit.period(S.ws, S.o, '2026-01-01', '2026-12-31');
+    check('T4 holds again: each investor\'s 3100 lines equal the engine\'s distribution (450,000)', P.inv.every((a) => a.dist === 450000 && jsum(NS2, S.ws, S.oid, '3100', { partner: a.investor.id }) === a.dist), P.inv.map((a) => [a.investor.id, a.dist]));
+  },
+
+  /** The check's own rules: an unknown case name and an empty list each exit 1 with a FAIL line. */
+  selfcheck: ({ check }) => {
+    const run = (args) => spawnSync(process.execPath, [__filename].concat(args), { encoding: 'utf8', env: Object.assign({}, process.env, { POSTING_NO_CLEAR: '' }) });
+    const a = run(['--case', 'no-such-case']);
+    const b = run(['--case', '']);
+    check('an unknown --case name exits 1 with a FAIL line', a.status === 1 && /^FAIL unknown case name: no-such-case/m.test(a.stdout) && /POSTING: FAIL \(cases run: 0\)/.test(a.stdout), a.stdout);
+    check('an empty list exits 1 with a FAIL line', b.status === 1 && /^FAIL no cases to run/m.test(b.stdout) && /POSTING: FAIL \(cases run: 0\)/.test(b.stdout), b.stdout);
   }
 };
 
