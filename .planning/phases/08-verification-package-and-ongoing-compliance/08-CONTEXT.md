@@ -40,3 +40,42 @@
 - C3: `gate.sh` sets `P6_OUT=$P8_OUT/checks-out` exactly (the owner's folder step writes beside it).
 - C4: no existing text on the invite form is reworded (phase 07's guide check quotes it); nothing under `server/help/` is touched.
 - C5: if the plan runs short of room, `gate.sh` is the piece to hand to a follow-up; say so in the summary.
+
+## Plan-check additions, wave 2 (executors apply these with their plan; checked 2026-11-19 against 1a4ebf5; 4 blockers fixed here, 10 warnings)
+
+### 08-04 (charging the sponsor's card)
+- M1 (blocker): a payment attempt is recorded before the provider is called.
+  - New store table `payments` (with the other three): id `pay_…`, account, items [{ key, tier, cents }], cardCents, method, attempt, idempotencyKey, status `pending` | `succeeded` | `failed` | `unresolved`, chargeRef, at.
+  - entitle writes the pending record and calls `store.flush()` before the charge call, and flushes again after the commit.
+  - The idempotency key is the SHA-256 of the account id, the sorted card-paid keys, the payment method id and the attempt number. The attempt number is the count of failed payments for that key set.
+  - A definite refusal (declined, authentication required) marks the payment failed, so the next try uses a new key. An unknown outcome (timeout, network error, provider 5xx) leaves it pending and answers 409 billing_unavailable.
+  - Before working out any new payment, entitle settles the account's pending payment: younger than 23 hours (injected `now`), it repeats that exact call with the stored key and form and commits its entitlements if it succeeded; older, it marks it `unresolved`, writes the store event `payment_unresolved` (account and payment id only) and never repeats it.
+  - A key whose newest entitlement is `credited` or `refunded` is a new purchase: credit first, new entitlement, `find` returns the newest.
+  - The provider's page on idempotent requests could not be read from here: the key lifetime and the replay-of-errors rule go in `ASSUMED` for 08-12.
+  - Tests: (a) timeout then the same list: two provider calls with one key, one set of entitlements; (b) timeout then a longer list: the stored call is repeated first, then one charge for the added keys only; (c) declined, card replaced, retry: a different key and the charge is recorded; (d) k1 released then entitled again: paid from the credit, no provider call, credit back to 0; (e) the pending record is in the store before the mock provider is called.
+- M2 (blocker; carried into 08-05): entitle for a key that already has a paid or consumed entitlement of a different tier answers 409 `{ code: "tier_mismatch", error: "This invitation's package was paid at another level. Nothing was charged." }` and makes no provider call. Test in `billing.test.mjs`. For 08-05: `rec.package.tier` is the entitlement's tier, and create refuses when it differs from the tier the server worked out.
+- M3 (blocker, with P1): a paid entitlement not consumed within 24 hours of `paidAt` is released to credit by billing itself, once, when entitle or view next runs for that account (injected `now`; no timer). Test: paid, 25 hours later `GET /v1/billing` shows the credit and one credit ledger line; a second read adds nothing; consumed within the 24 hours is untouched.
+- M4: exact server count. Step 0 writes the base's `# tests` number to `$O/base-count.txt`; Task 2's verify requires base + the number of top-level `test(` calls in `server/test/billing.test.mjs` and prints `COUNTS: base N + own M = T; run T`.
+- M5: Task 2's verify loops over `server/test/fixtures/billing/*.json` and requires `_source` to start with `https://` and `_status` to be non-empty; where the page was not read in this run, `_status` starts with `unconfirmed`. The summary lists which pages were read.
+- M6: read `server/index.mjs` by name, not by the plan's line numbers (createServer and `sponsorAuth`, `route` and `ownPage`, the invite-token refusal, the admin line, the `auth` line, the rate limit). `send`, `readRaw` and `parseJson` come from `server/lib/http.mjs`; `billing.mjs` writes its own `parseObject`. The `/billing/` hook line applies `limited(req)` to POSTs before calling `billing.handle`. The `/v1/billing` hook goes below the `auth` line and its handler takes the account only from `auth.account`.
+- M7: `POST /v1/billing/card/setup` stores the request's Origin in the session (it has already passed `cors`); the card page's `frame-ancestors` and its postMessage target are that origin. Test with two origins configured.
+- M8: the authentication-required sentence is "The card's bank asks for confirmation. Replace the card on the Integrations page, then try again."
+- M9: `view()` takes each charge's `invitationId` from its entitlement. Test: entitle, consume, then `GET /v1/billing` shows the id.
+- M10: a price that is not a whole number of cents of at least 50 makes `ready()` false and the POST routes answer 409 billing_unavailable. Test.
+- M11: if the plan runs short of room, `DELETE /v1/billing/card` and the reverify price are what is handed to a follow-up, never a money rule; say so first in the summary.
+- M12: "no reply contains the vendor's domain" is scoped to JSON replies, events and the card page's visible text (the page's own script tag must name it). A card-only field with no wallet or one-click button. Replacing a card detaches the old one at the provider.
+- Shared lines: `store.mjs` tables are added on their own new line after the defaults, leaving the defaults line untouched (09-05 does the same); in `index.mjs`, one line per hook, nothing else moved.
+
+### 08-11 (the AML program record)
+- R1 (blocker): files also include `server/help/guide.md` and `server/lib/help-guide.mjs`. Task 1 step 3 adds a section `## console-aml` (audience sponsor, kind console, title `AML program`, menu `Report, then AML program`, at least one `anchor:` that is text `assets/js/amlprogram.js` holds verbatim, 40 or more characters, every quoted name exactly as on the screen), adds "AML program" to the Report list in the `## console` section, then runs `node server/help/build.mjs`. No existing on-screen text is reworded. Task 1's verify also runs `(cd server && node --test test/help-guide.test.mjs)` and requires `# fail 0`.
+- R2: step 0 measures the base's `# tests` into `$O/base-count.txt`; the gate is run as `P8_SERVER_TESTS=$(cat $O/base-count.txt) P8_OUT=$O bash …/gate.sh` (the plan adds no server test); the summary quotes the COUNTS line.
+- R3: the NAV entry goes on its own line after `console-kyc`; phase 09 adds Filings after it (order: AML/KYC, AML program, Filings). The script tag goes on its own line. The generated guide module is never hand-merged.
+
+### 08-13 (the package panel and the list payment)
+- P1 (blocker): the rows in the list payment are exactly the rows whose invitation will carry the package: one function (08-06's `packageBox`, enabled) decides the payment's items, the label's total and `package: true` in create. Check part `list` includes one investor on file and asserts their key is not in the entitlements body and not in the total.
+- P2: as R2.
+- P3: closing the card dialog by any route reads `GET /v1/billing` again.
+- P4: the plan may change the one line of `create` in `assets/js/invitations.js` to `const id = o.id || uid('invt');` and nothing else in create; the list action makes each id with `uid('invt')` before paying.
+- P5: with more than 200 package rows the list is paid in groups of 200 in order; each group's invitations are sent before the next group is paid; a refused group stops the list there with the server's sentence. A check part asserts the 200 boundary with stubbed replies.
+- P6: if the plan runs short of room, Task 3 (the list form) is the piece to hand over.
+- P7: one sentence about the package panel in the guide's `console-integrations` entry, then `node server/help/build.mjs`.
