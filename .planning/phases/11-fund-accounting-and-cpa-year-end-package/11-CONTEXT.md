@@ -33,3 +33,25 @@
 ## From phase 10's plan check (2026-11-19)
 - The audit engine's bank evidence (the "Distribution reconciliation to bank records" schedule) stays at gross after 10-01, while the ACH file pays net once tax is withheld (10-07). This phase's bank work compares like with like: net paid against the bank, tax withheld as a liability.
 - `holdersAt` ignoring fully redeemed positions is traced and, if confirmed, fixed in 10-01 (its addition A8); this phase's tie-outs assume the fixed behaviour.
+
+## Plan-check additions, wave 1 (executors apply these with their plan; checked 2026-11-19 against 2163866; 1 blocker fixed here, 7 warnings)
+
+### 11-01 (journal core)
+- I4: `check()` requires `Number.isSafeInteger` for every amount (not only `Number.isInteger`), so a hand-edited workspace cannot hold 1e300.
+
+### 11-02 (bank files)
+- W1: case `bai2-bad` also reads three more copies of fund-a.bai, built inside the case from its text: the 49 record count +1, the 98 control total +1 cent, and the 99 record count +1. Each throws a sentence naming its trailer ("account", "group", "file"), and nothing is returned.
+- W2: `fixtures/bank/real/LICENSE` holds the full Apache License 2.0 text, copied from `/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/r11/license/LICENSE-2.0.txt` (fetched by the orchestrator from apache.org, 11,358 bytes, 202 lines). SOURCE.txt names the project, the original paths, the copyright holder from the moov-io repository and the two SHA-256 values.
+- I2: `LIMITS.bytes` counts UTF-8 bytes; say so in the module.
+- I3: duplicate-import detection belongs to 11-08; this plan gives stable ids only.
+
+### 11-03 (workbook writer)
+- B1 (blocker): case `libre` converts with `timeout 120 soffice --headless -env:UserInstallation=file://<tmp>/lo --convert-to 'csv:Text - txt - csv (StarCalc):44,34,76,1,,0,false,true,false,false,false,-1' --outdir <tmp> <file>` (the last field, -1, writes one CSV per sheet; `false` at position 9 writes raw values, not as shown). Expected: the Trial balance CSV's row 2 holds 32000 in column B, and its total row (row 5) holds exactly 32001.23 and 7500.01. The large sheet's last line holds 20010. If LibreOffice writes the values another way, the executor records the exact output in the summary and compares with what the hand-worked sheet says. The expected values are never loosened.
+- W3: case `selfcheck` (or a new part counted in the seven) asserts that `assets/js/filesout.js` contains none of: `fetch(`, `XMLHttpRequest`, `import(`, `require(`, `new Worker`, `createElement('script')`, `http://`, `https://` (the parts' XML namespace strings are the only exceptions, listed by value). Byte conversion uses its own UTF-8 encoder (`NS.audit` exports only zip, crc32 and sha256). Plan 11-16 owns the in-preview download proof.
+
+### 11-04 (gate11 and AUDIT SAME)
+- W4: audit-same also calls `NS.audit.exportPackage` on a deep copy of each side's workspace (Date fixed by load11, a download stub if needed), unzips it in the check and requires every entry to be byte-identical between base and tree, except entries for schedules the base does not have, the "Generated:" line of 00_README.txt, and the MANIFEST lines for those entries. If exportPackage cannot run in the vm, call readme through the same path the export uses, or record why in the summary as a deviation.
+- W5: gate11 step 3 also sets `P10_ROOT` to the root of the base tree the reference step extracted, as phase 10's `dist-record.js` case `sample` expects (10-CONTEXT A3). The self-test control proves the variable is passed.
+- W6: load11.js reads `<root>/diy.html` at run time and takes the `src="assets/js/..."` entries in order, from edition.js through operations.js, plus any phase 11 module listed between them; never a list typed into the file. The base side reads the base tree's diy.html, the tree side its own.
+- W7: case `mutate`: when the run has stored lines (after 10-01), add one cent to the first line's grossCents and netCents and to the run's total together; otherwise add one cent to the amount. Call `NS.clearCaches()` when it exists before building. Either way the case must report the mismatch.
+- I1: case `same` is run twice on one side and requires equal hashes (proves the comparison is stable).
