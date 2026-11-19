@@ -22,7 +22,7 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 ## Mechanics
 - Worktree base: latest claude/refract-reskin. Push only to wip/<branch>; never push claude/refract-reskin; never touch STATE.md or ROADMAP.md (planners may edit their own phase's section of ROADMAP.md).
 - Commit trailer lines, exactly:
-  Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_01XxJmbg45ft458R18eVN2W2
 - RED-first: every behaviour change has a check that fails before and passes after. The full gate is .planning/checks/gate-reference.sh (a copy of the last passing gate: server tests, status-math, form-maps, forms-flow, status-flow, server-mode, two-persons, owner walks and leak (SCRATCH/owner-set/measure.js), email-dialog, agreement-name, tax-request-leave, ways-out, no-network, embed-data, safari-finish, phase-4 signing-step and phase-5 record-check compared with the base). Counts follow the merged tree; keep them exact and honest.
 - Browser checks go through SCRATCH/exec-011/heavy.sh (shared queue). Link server/node_modules from /home/user/Hhhh for runs only; never stage it. Run commands containing $(git ...) from script files; use tail -n N.
@@ -32,4 +32,5 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 ## Model (owner, 2026-11-19, verbatim: "when you run out of fable usage switch to opus 5.5")
 - Work runs on the session's current model until its usage is exhausted. When an agent stops on a usage limit for that model, the orchestrator relaunches it on Opus 5.5 (the Agent tool's model override) from the last commit it pushed, and launches every later agent the same way. Nothing is restarted from scratch that was already pushed to a wip branch.
 - The orchestrator cannot change the main session's own model; the owner does that with /model claude-opus-5-5.
+- 2026-11-19: the Fable limit was reached (it resets Nov 26, 05:00 UTC). From now on every agent runs on Opus 5.5 and commits with the Opus trailer above. An agent that stopped on the limit is continued by a new agent working in the same worktree, from its commits and uncommitted files; nothing already done is redone.
 
