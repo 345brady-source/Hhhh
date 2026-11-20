@@ -610,6 +610,13 @@ const parts = {
     });
     await go(fr, 'console-investors', 'table');
     check('an uploaded completed W-9 with the last four offers "W-9 signed on paper" too', (await fr.locator(btn).count()) === 1);
+    // an IRA is never proposed backup withholding, so its record offers no paper signature (the upload line stays as it was)
+    await T.ws(fr, (w) => {
+      w.investors.find((x) => x.id === 'A-1001').type = 'ira';
+      return true;
+    });
+    await go(fr, 'console-investors', 'table');
+    check('an IRA with the same uploaded W-9 is offered no "W-9 signed on paper"', (await fr.locator(btn).count()) === 0);
     await T.wayOut(check, fr);
     // quiet is read here: switching to the other sample firms below loads each firm's own typefaces from the font host
     await T.quiet(check, A, fr);

@@ -335,8 +335,11 @@
   /* ---------- a W-9 signed on paper (plan-check D2, C-10) ---------- */
   const cert = (i) => (i && i.taxCert && typeof i.taxCert === 'object' ? i.taxCert : null);
   const last4 = (i) => /^\d{4}$/.test(String((cert(i) || {}).tinLast4 || i.tinLast4 || ''));
-  /** A W-9 on record with the last four that the portal holds no signature record for, and that it did not ask to be signed. */
-  const paperable = (i) => i.taxForm === 'W-9' && last4(i) && (cert(i) || {}).signed !== true && !(cert(i) || {}).envelopeId;
+  /**
+   * A W-9 on record with the last four that the portal holds no signature record for, and that it did not ask to be signed;
+   * never for an IRA or a payee marked exempt, for whom backup withholding is never proposed (withholding.js payee).
+   */
+  const paperable = (i) => i.type !== 'ira' && !i.exempt1099 && i.taxForm === 'W-9' && last4(i) && (cert(i) || {}).signed !== true && !(cert(i) || {}).envelopeId;
   function paperLine(ws, i) {
     const c = cert(i);
     if (c && c.source === 'paper' && c.signed === true) {
