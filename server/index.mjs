@@ -935,7 +935,7 @@ export function createServer(opts = {}) {
       const rules = scope ? invites.scopeRules(scope) : null;
       if (rules && !rules.providers.aml.includes(body.provider)) return send(res, 403, { error: 'This screening is not one the firm uses' });
       pkg.gate(scope, auth, body.provider, 'aml'); // a package provider: only from the invitation holding its own paid package (08-15)
-      const names = Array.from(new Set((rules ? rules.names : []).concat(scope && pkg.isPackage(body.provider) ? [] : body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25); // a package screening from a link: only the invitation's names (R11)
+      const names = Array.from(new Set((rules ? rules.names : []).concat(scope && pkg.isPackage(body.provider) ? invites.roleNames(scope) : body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25); // a package screening from a link: the invitation's names plus its stored role names, never the body's (R11, R12)
       if (!names.length) return send(res, 400, { error: 'names are required' });
       const inv = cleanInvestor(body.investor);
       if (scope && inv.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only screen its own investor' });
@@ -948,7 +948,7 @@ export function createServer(opts = {}) {
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });
       store.event({ type: 'screening', provider: body.provider, id: rec.id, hits: (saved.hits || []).length });
-      return send(res, 200, { id: saved.id, status: saved.status, hits: saved.hits || [] });
+      return send(res, 200, { id: saved.id, status: saved.status, hits: saved.hits || [], screened: names.length });
     }
 
     const scr = path.match(/^\/v1\/screenings\/(scr_[\w-]+)$/);

@@ -136,6 +136,24 @@ function cleanInvestor(x) {
   }
   return out;
 }
+/**
+ * R12 (plan 08-19): the role names the investor's own onboarding holds (an entity's beneficial owners and control person,
+ * a joint account's second holder), as the investor's device reports them before a package screening. Each a string,
+ * trimmed and clipped; empty ones, the invitation's own names (own) and repeats dropped without letter case; at most 5, so
+ * one package screening costs at most the invitation's names plus 5.
+ */
+const ROLE_LIMIT = 5;
+function cleanRoles(x, own) {
+  const seen = new Set((own || []).map((n) => String(n || '').trim().toLowerCase()));
+  const out = [];
+  for (const v of Array.isArray(x) ? x : []) {
+    const n = typeof v === 'string' ? clip(v, 120).trim() : '';
+    if (!n || seen.has(n.toLowerCase())) continue;
+    seen.add(n.toLowerCase());
+    out.push(n);
+  }
+  return out.slice(0, ROLE_LIMIT);
+}
 /** Plan 06-26: the official form a tax-form request is for, by the investor type the sponsor chose (D-09). */
 export const taxFormOf = (investor) => ({ 'foreign-individual': 'W-8BEN', 'foreign-entity': 'W-8BEN-E' })[investor && investor.taxType] || 'W-9';
 /** D-01, D-08 (1): benefit plan answers as known fields only (assets/js/onboarding.js erisaFrom): plan, planPct (0 to 100 or null). */
@@ -904,6 +922,16 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const names = snap && snap.investor ? [snap.investor.contact, snap.investor.title].map((n) => String(n || '').trim()).filter(Boolean) : [];
     return { providers, names: [...new Set(names)] };
   }
+  /** R12: the role names the investor's device stored on this invitation (sealed), or none when there are none or they cannot be read. */
+  function roleNames(rec) {
+    let list = null;
+    try {
+      list = rec ? unseal(store.get('invitations', rec.id) || rec, 'roleNames') : null;
+    } catch {
+      list = null;
+    }
+    return Array.isArray(list) ? list.filter((n) => typeof n === 'string' && n).slice(0, ROLE_LIMIT) : [];
+  }
   function confirmChecks(investor, rec) {
     // This server keeps every check it ran, so an old one (a verification from last year, say) must not stand behind a new
     // result: only checks created once this invitation existed count. A record without a valid time counts for nothing.
@@ -1076,6 +1104,11 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       const body = parseObject(await readRaw(req, INVITE_LIMITS.small));
       rec = current(rec);
       if (rec.status === 'completed') throw fail(409, 'This onboarding is already complete');
+      // R12: a roles-only report (sent right before a package screening) stores the role names, sealed, and nothing else.
+      if (body.roles !== undefined && body.stepKey === undefined) {
+        store.put('invitations', { id: rec.id, roleNames: seal(rec, 'roleNames', cleanRoles(body.roles, scopeRules(rec).names)) });
+        return send(res, 200, { ok: true });
+      }
       const stepKey = String(body.stepKey || '');
       if (!/^[\w-]{1,40}$/.test(stepKey)) throw fail(400, 'stepKey is required (letters, digits, dashes)');
       const stepCount = Math.round(numIn(body.stepCount, NaN, 1, 50));
@@ -1407,6 +1440,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     investorPath,
     authenticate,
     scopeRules,
+    roleNames,
     investor,
     sponsor,
     purge,
