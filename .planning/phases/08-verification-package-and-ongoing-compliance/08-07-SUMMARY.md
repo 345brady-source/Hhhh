@@ -65,6 +65,25 @@ PACKAGE FLOW: FAIL (parts run: 1) - leak
 ```
 (every other check line of that run passed: the scan fails on the planted price and on nothing else). No code was needed for Task 3: the package adds no step and no field (D-30), and the phone and preview parts pass on Task 2's code.
 
+## Final verify (verify-3: the whole server suite, then the full phase gate)
+`npm --prefix server test` alone first: `# tests 368`, `# pass 368`, `# fail 0` (duration 16.9 s).
+verify-3: the suite again at the base count (`# tests 368`, `# fail 0`), then `P8_SERVER_TESTS=368 P8_OUT=$O bash checks/gate.sh`. Every gate step ok (0 GATE FAIL lines), among them `GATE ok   phase-8 gate checks found (4)`, `GATE ok   PACKAGE FLOW (7)`, `GATE ok   PACKAGE INVITE (12)`, `GATE ok   PACKAGE PANEL (7)`, `GATE ok   AML RECORD (7)`. The gate's last lines:
+```
+GATE ok   base is an ancestor of HEAD and HEAD moved
+GATE ok   signing: base and plan each have PASS lines
+GATE ok   signing: no FAIL the base lacks
+signing: base 75 PASS / 0 FAIL; plan 75 PASS / 0 FAIL
+GATE ok   record: base and plan each have PASS lines
+GATE ok   record: no FAIL the base lacks
+record: base 40 PASS / 0 FAIL; plan 40 PASS / 0 FAIL
+# tests 368
+# pass 368
+# fail 0
+COUNTS server tests 368; AML RECORD 7; PACKAGE FLOW 7; PACKAGE INVITE 12; PACKAGE PANEL 7
+GATE_EXIT=0
+```
+verify-3 exit 0 (gate run on eb47bca). The gate's leak part scanned 18 investor screens, 5 investor emails, 6 GET /v1/invite replies, 8 console screens and 8 account replies.
+
 ## Deviations from plan
 
 ### Auto-fixed issues
