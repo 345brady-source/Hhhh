@@ -18,7 +18,11 @@ const OUT = () => L12.work('reports-flow');
 Lib.describeShots([
   ['phone-list.png', 'Reports, tab Investor reports, on the phone: the 506 line, New report and the saved templates'],
   ['phone-preview.png', 'A blank quarterly letter for Kestrel Bay Fund II previewed for its first investor, on the phone'],
-  ['phone-pdf.png', 'The same report drawn as a PDF inside the page (See the PDF), on the phone']
+  ['phone-pdf.png', 'The same report drawn as a PDF inside the page (See the PDF), on the phone'],
+  ['phone-editor.png', 'The editor on the phone: section switches, Move up and Move down, the letter in rich text with its toolbar'],
+  ['desktop-cover.png', 'The editor at 1280x800 after Save: sections, the disclosures with their counsel line, version 2'],
+  ['phone-ways.png', 'The PDF panel on the phone (ways-out part)'],
+  ['desktop-ways.png', 'The PDF panel at 1280x800 (ways-out part)']
 ]);
 
 /** The frame at a size, signed in to Kestrel Bay as a role, with the clock at CLOCK and the policy refusing connections. */
@@ -358,6 +362,19 @@ const parts = {
       return { v: t.version, holdings: t.sections.find((s) => s.key === 'holdings').on, order: t.sections.map((s) => s.key), letter: window.CVPortal.reports.plain(t.sections.find((s) => s.key === 'letter').text) };
     });
     check('the stored template keeps Holdings off, the new order and the letter', kept.v === 2 && kept.holdings === false && kept.order.indexOf('performance') < kept.order.indexOf('distributions') && /^Dear \{first_name\}/.test(kept.letter) && /First point/.test(kept.letter), kept);
+    // unsaved changes are not lost by a tap on Back
+    await T.press(fr, '.rb-sec[data-key=fees] label.rb-switch');
+    await T.press(fr, '[data-action=rb-back]');
+    await fr.waitForTimeout(250);
+    const ask = await fr.evaluate(() => ({ editor: !!document.querySelector('.rb-edit'), line: (document.querySelector('.rb-leave .rb-msg') || { innerText: '' }).innerText.trim() }));
+    check("Back with a change not saved stays in the editor and says 'Changes are not saved.'", ask.editor && ask.line === 'Changes are not saved.', ask);
+    await T.press(fr, '[data-action=rb-leave]');
+    await fr.waitForSelector('.rb-home', { timeout: 10000 });
+    const left = await fr.evaluate(() => {
+      const t = window.CVPortal.state.ws.reports.templates.find((x) => x.name === 'Letter test');
+      return { v: t.version, fees: t.sections.find((s) => s.key === 'fees').on };
+    });
+    check("'Leave without saving' goes back to the list and keeps the stored version as it was", left.v === 2 && left.fees === true, left);
     await T.quiet(check, A, fr);
     await T.leak(check, fr);
     await A.context.close();
