@@ -45,6 +45,7 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 
 ## Usage window (owner, 2026-11-20: "You will likely run out of usage in 24 hrs")
 - Priority while usage lasts (default chosen at 15 min if the owner does not answer): the preview first. Finish the 06-34..06-39 fixes, add the gate lines, run the full gate on the merged tree, rebuild, walk Filings, AML program and Tax documents, then publish, so the owner can check. Builds already running are merged as they report. New waves start only with spare capacity. Steps 7-16 are not planned before the cutoff.
+- Owner's answer (verbatim): "Yeah don't start any new builds just finish what you have started, feel free to preform fixes". So: no new plan builds and no new waves (11-09 onward, 10-10 onward, 08-07 onward, steps 7-16 all wait). Finish what is running: 11-07, 09-09, 10-06, 10-07, 10-08, 10-09, 06-35, 06-36, 06-38. Fixes go ahead: 06-34, 06-37 and 06-39 (the walkthrough fixes and the co-investor sign-in), any failure found in merges or the full gate, then the preview rebuild, walk and publish.
 - "State now" is kept current after every merge round, so the next session resumes without redoing work.
 
 ## State now (updated 2026-11-20)
