@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The reference gate: the debug finish-notfound-safari gate grown by later fixes: HELP CHAT (10), REAL FIRM (9), SIGNING
-# DOCUMENTS (8), PHONE LAYOUT (8), BANK STEP TYPING (2). The server test count is exact when GATE_SERVER_TESTS is given.
+# DOCUMENTS (8), PHONE LAYOUT (8), BANK STEP TYPING (2), RECORD AND LOST AGREEMENT (7), SCREEN EDGES (5), TITLES AND EDITOR (4), PRESS AND CO-INVESTOR (7), HELP PREVIEW (6). The server test count is exact when GATE_SERVER_TESTS is given.
 # two persons, owner walks and leak search, the owner's folder, phase-4 signing and phase-5 record checks on the base tree
 # and on this tree) plus email-dialog, agreement-name, tax-request-leave and this plan's ways-out. Every step runs, but a
 # rerun into the same output folder keeps each step that passed under exactly the same key (.planning/checks/gate-lib.sh:
@@ -53,6 +53,11 @@ gate_run helpchat $O/helpchat.txt 'HELP CHAT (10)' "grep -qx 'HELP CHAT: PASS (p
 gate_run realfirm $O/realfirm.txt 'REAL FIRM (9)' "grep -qx 'REAL FIRM: PASS (parts run: 9)' $O/realfirm.txt" -- env NODE_PATH=$GN $H node $P/checks/real-firm.js
 gate_run sigdocs $O/sigdocs.txt 'SIGNING DOCUMENTS (8)' "grep -qx 'SIGNING DOCUMENTS: PASS (parts run: 8)' $O/sigdocs.txt" -- env NODE_PATH=$GN $H node $P/checks/signing-documents.js
 gate_run phone $O/phone.txt 'PHONE LAYOUT (8)' "grep -qx 'PHONE LAYOUT: PASS (parts run: 8)' $O/phone.txt" -- env NODE_PATH=$GN $H node $P/checks/phone-layout.js
+gate_run record $O/record.txt 'RECORD AND LOST AGREEMENT (7)' "grep -qx 'RECORD AND LOST AGREEMENT: PASS (parts run: 7)' $O/record.txt" -- env NODE_PATH=$GN $H node $P/checks/record-and-lost-agreement.js
+gate_run edges $O/edges.txt 'SCREEN EDGES (5)' "grep -qx 'SCREEN EDGES: PASS (parts run: 5)' $O/edges.txt" -- env NODE_PATH=$GN $H node $P/checks/screen-edges.js
+gate_run titles $O/titles.txt 'TITLES AND EDITOR (4)' "grep -qx 'TITLES AND EDITOR: PASS (parts run: 4)' $O/titles.txt" -- env NODE_PATH=$GN $H node $P/checks/titles-and-editor.js
+gate_run pressco $O/pressco.txt 'PRESS AND CO-INVESTOR (7)' "grep -qx 'PRESS AND CO-INVESTOR: PASS (parts run: 7)' $O/pressco.txt" -- env NODE_PATH=$GN $H node $P/checks/press-and-co-investor.js
+gate_run helpprev $O/helpprev.txt 'HELP PREVIEW (6)' "grep -qx 'HELP PREVIEW: PASS (parts run: 6)' $O/helpprev.txt" -- env NODE_PATH=$GN $H node .planning/phases/07-help-chatbot/checks/help-preview.js
 BASE=$(cat $O/base-commit.txt)
 HEADC=$(git rev-parse HEAD)
 ok 'base is an ancestor of HEAD and HEAD moved' "git merge-base --is-ancestor $BASE HEAD && test '$BASE' != '$HEADC'"
