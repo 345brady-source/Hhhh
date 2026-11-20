@@ -1,5 +1,5 @@
 ---
-status: investigating
+status: awaiting_human_verify
 trigger: "Final merged tree (claude/refract-reskin a178206), phase 9/10 checks rerun: A. phone long console pages lose every way out partway down (dist-flow record-phone, withheld-phone; taxdocs-flow import-phone; withholding-flow propose-phone, foreign, cancel). B. filings-flow published: empty band between menu and short page {menu:120,bar:285,note:449,screen:844}. C. withholding-flow managed: git shows index.html changed since the plan's base."
 created: 2026-11-20
 updated: 2026-11-20
@@ -23,7 +23,7 @@ reasoning_checkpoint:
     - "code (06-35): the preview bar's way out moved into the page's flow"
     - "check/data: B's absolute thresholds and C's commit filter assume the tree as it was when written"
   and_gate: "yes for A: needs both the unpinned menu (old) and the bar no longer fixed (06-35); either alone would leave a way out in the preview. B and C: single cause each (out-of-date assertion)."
-next_action: add sticky menu row on phones (console.css + console.js pinMenu), then fix B and C assertions
+next_action: orchestrator merges wip/debug-phone and runs the full gate; owner checks on the iPhone that a long console page (Distributions, History "Show all") keeps the menu row (Overview, Notifications, ...) at the top while scrolling, and the preview bar still sits at the top and scrolls away
 
 ## Symptoms
 
@@ -69,5 +69,11 @@ started: after today's merges (each passed when its plan merged)
 
 root_cause: "A (product): the console's menu (.cs-nav, console.css:525 at <=900 px; diy.css:243 position relative) was never kept on screen on a phone, AND 06-35 (console.css:113-124, a7feb14) put the preview bar, whose sponsor/role controls were the only way out at mid/end, into the page's flow at the top; so partway down a long console page on a phone nothing that leaves the view is on screen; B (check): filings-flow.js:256-257 measures from the screen's top and counts the preview bar above the menu (06-35) as a band; C (check): withholding-flow.js:694-696 counts every commit since 10-07's base, and 11-07's 6f838bc touched index.html"
 fix: "A: console.css (<=640 px) `.cs > .cs-nav` sticky with top = safe area - --cs-nav-lift (the firm's name, bell and Help scroll away; the 40 px menu row stays), z-index sticky-nav; .fl-bar/.tx-bar top under the row (--cs-nav-pin); scroll-padding-top on the console page; console.js pinMenu() measures lift/pin after each shell render (microtask), on resize and when fonts are ready. B: distances from the menu's top with the same limits, plus the menu must start where the preview bar ends (0 without one). C: only commits whose subject is <type>(10-07): count."
-verification: pending (runs in scratchpad debug-phone/v-*.txt)
+verification:
+  target_test: { result: pass, lines: ["DIST FLOW: PASS (parts run: 7) (110 PASS, 0 FAIL)", "TAXDOCS FLOW: PASS (parts run: 14) (349 PASS, 0 FAIL)", "WITHHOLDING FLOW: PASS (parts run: 9) (157 PASS, 0 FAIL)", "FILINGS FLOW: PASS (parts run: 9) (168 PASS, 0 FAIL)"] }
+  mutation_check: { result: skipped, reason_if_skipped: "no Stryker for CSS/browser checks; stand-ins: A differential (06-35 base console.css: n=1 from the fixed bar only; HEAD before fix n=0; after fix n=3 from the menu row); B mutant (band-mutant.txt): as is PASS, band under the menu FAIL (bar 252), band above the menu FAIL (at 243 vs above 153), menu stretched FAIL (menu 260); C: the filter matches all 9 (10-07) commits and not 6f838bc" }
+  no_op_deletion: { result: pass, deletion_justified_by_rca: true, note: "A adds behaviour; B keeps its three limits with the origin at the menu's top and adds one (menu starts where the preview bar ends); C narrows to the plan's own commits per its D6 comment" }
+  adjacent_tests: { result: pass, lines: ["SCREEN EDGES: PASS (parts run: 5) (145 PASS, 0 FAIL)", "PHONE LAYOUT: PASS (parts run: 8) (209 PASS, 0 FAIL)", "WAYS OUT: PASS (parts run: 7) (102 PASS, 0 FAIL)", "server: # tests 368 # pass 368 # fail 0"], skipped: "status-flow --only lean: not touched (investor onboarding at desktop; the change is console at <=640 px)" }
+  revert_and_reconfirm: { result: pass, note: "RED on a178206 (no fix): record-phone/published/managed FAIL; with the fix: PASS" }
+  guardrail_verdict: accepted
 files_changed: [assets/css/console.css, assets/js/console.js, .planning/phases/09-filings-tab-form-d-and-blue-sky/checks/filings-flow.js, .planning/phases/10-investor-tax-documents-and-withholding/checks/withholding-flow.js]
