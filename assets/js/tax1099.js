@@ -132,12 +132,49 @@
    * leftOut: [ { investorId, code, reason, cents } ], stops: [ { code, text, runId } ], totalCents }. While any stop
    * stands, forms is empty. f: { today }.
    */
+  const STOP_TEXT = {
+    reporting: 'Form 1099-INT is prepared here only for a fund whose tax reporting type is notes; ask your CPA which tax forms this fund’s investors receive.',
+    registered: 'Confirm that the notes are in registered form or of a type offered to the public, or ask your CPA, because otherwise the threshold for Form 1099-INT is another one ($2,000 from tax year 2026).',
+    'in-money': 'Confirm that interest was paid in money and not added to principal, because interest added to principal, or notes issued at a discount, is original issue discount on Form 1099-OID, which your CPA prepares.',
+    kind: (r) => `Say whether the ${r.type || 'untyped'} payment of ${r.date} is interest (ask your CPA if you are not sure); until then no Form 1099-INT is prepared.`,
+    stored: (r) => `The investors’ amounts of the interest payment of ${r.date} were not stored when it was recorded; confirm them on that distribution, or ask your CPA, before any Form 1099-INT is prepared.`,
+    'other-withholding': (r, name, kind) => `The payment of ${r.date} to ${name} carries tax withheld of another kind than backup withholding (${kind}), which box 4 does not hold; ask your CPA how it is reported.`,
+    'backup-not-interest': (r) => `Backup withholding is stored on the ${r.type || 'untyped'} payment of ${r.date}, which is not interest; ask your CPA how it is reported before any Form 1099-INT is prepared.`
+  };
+  /** Why an investor gets no form, one sentence each (code -> text; no-form takes the W-8 facts). */
+  const LEFT_TEXT = {
+    ira: 'An IRA is an exempt recipient: no Form 1099-INT.',
+    exempt: 'You marked this investor as an exempt recipient: no Form 1099-INT.',
+    foreign: 'A foreign investor with a valid W-8: Form 1042-S from your CPA.',
+    'under-10': 'Interest under $10 with nothing withheld: no Form 1099-INT is required.',
+    'no-w9': 'No signed W-9 on file: a Form 1099-INT is still due, so record the signed W-9 or ask your CPA how to file without the number.',
+    'no-form': (f) => `No valid W-8 or signed W-9 on file (the ${f.form || 'W-8'} ${f.signed ? `expired on ${f.validUntil || 'a date not on record'}` : 'is not signed'}): ask your CPA whether this investor gets Form 1099-INT or Form 1042-S.`
+  };
   function figuresInt(ws, offering, year, f) {
     f = f || {};
     const y = yearOf(year);
     const today = f.today;
+    const stops = [];
+    const stop = (code, text, runId) => {
+      if (!stops.some((s) => s.code === code && s.runId === runId)) stops.push(Object.assign({ code, text }, runId ? { runId } : {}));
+    };
+    if (W().reporting(offering) !== 'notes') stop('reporting', STOP_TEXT.reporting);
+    const payer = payerOf(offering);
+    if (payer.registeredForm !== true) stop('registered', STOP_TEXT.registered);
+    if (payer.paidInMoney !== true) stop('in-money', STOP_TEXT['in-money']);
     const runs = interestRuns(ws, offering, y, today);
-    const counted = runs.filter((r) => r.counts === 'interest');
+    runs.forEach((r) => {
+      if (r.counts === 'ask') stop('kind', STOP_TEXT.kind(r.run), r.run.id);
+      else if (r.counts === 'interest' && !r.stored) stop('stored', STOP_TEXT.stored(r.run), r.run.id);
+    });
+    const countsOf = {};
+    runs.forEach((r) => (countsOf[r.run.id] = r.counts));
+    const yearLines = D().paidLines(ws, { offeringId: offering.id, from: `${y}-01-01`, to: `${y}-12-31`, today });
+    // backup withholding on a payment that does not count as interest would make box 4 more than the form's own
+    yearLines.forEach((p) => {
+      if (countsOf[p.run.id] === 'not-interest' && (p.line.withheld || []).some((w) => w.kind === 'backup')) stop('backup-not-interest', STOP_TEXT['backup-not-interest'](p.run), p.run.id);
+    });
+    const counted = runs.filter((r) => r.counts === 'interest' && r.stored);
     const ids = counted.map((r) => r.run.id);
     const per = {};
     const order = [];
@@ -162,14 +199,147 @@
       totalCents += x.box1Cents;
       const i = (ws.investors || []).find((v) => v.id === id);
       const box4Cents = W().withheldFor(ws, { investorId: id, offeringId: offering.id, year: y, kind: 'backup', today });
+      const out = (code, reason) => leftOut.push({ investorId: id, code, reason, cents: x.box1Cents });
+      // the payee as of the last interest payment of the year (a W-8 valid then was valid at every earlier one)
       const kind = i ? W().payee(i, x.last) : 'undocumented';
-      if (kind === 'foreign') {
-        leftOut.push({ investorId: id, code: 'foreign', reason: 'A foreign investor with a valid W-8: Form 1042-S from your CPA.', cents: x.box1Cents });
-        return;
+      if (kind === 'ira' || kind === 'exempt' || kind === 'foreign') return out(kind, LEFT_TEXT[kind]);
+      if (x.box1Cents < 1000 && box4Cents === 0) return out('under-10', LEFT_TEXT['under-10']);
+      if (kind !== 'us') {
+        const w8 = i ? W().w8(i, x.last) : { foreign: false };
+        return w8.foreign ? out('no-form', LEFT_TEXT['no-form'](w8)) : out('no-w9', LEFT_TEXT['no-w9']);
       }
+      // an included investor: tax withheld of any kind but backup has no box on this form
+      yearLines.forEach((p) => {
+        if (p.line.investorId !== id) return;
+        const odd = (p.line.withheld || []).find((w) => w.kind !== 'backup');
+        if (odd) stop('other-withholding', STOP_TEXT['other-withholding'](p.run, (i && (i.title || i.contact)) || id, odd.kind), p.run.id);
+      });
       forms.push({ investorId: id, box1Cents: x.box1Cents, box4Cents, runIds: x.runIds.slice() });
     });
-    return { forms, leftOut, stops: [], totalCents };
+    return { forms: stops.length ? [] : forms, leftOut, stops, totalCents };
+  }
+
+  /* ---------- a person's answers ---------- */
+  const runOf = (ws, runId) => {
+    const r = (ws.runs || []).find((x) => x.id === runId);
+    if (!r) throw new Error('No distribution with this id is recorded.');
+    return r;
+  };
+  /** A person says whether a payment whose type does not settle it is interest. opts: { by, at }. */
+  function setInterest(ws, runId, yes, opts) {
+    opts = opts || {};
+    const run = runOf(ws, runId);
+    const by = who(opts.by, 'Saying whether a payment is interest');
+    if (INTEREST_TYPES.indexOf(run.type) >= 0 || NOT_INTEREST_TYPES.indexOf(run.type) >= 0) throw new Error(`A payment of type ${run.type} is settled by its type.`);
+    if (typeof yes !== 'boolean') throw new Error('Whether a payment is interest is yes or no.');
+    run.tax = Object.assign({}, run.tax || {}, { interest: yes, by, at: opts.at || nowIso() });
+    log(ws, { action: 'Payment marked for Form 1099-INT', record: run.id, fund: run.offeringId, detail: `The ${run.type || 'untyped'} payment of ${run.date} ${yes ? 'is' : 'is not'} interest`, actor: by });
+    return run.tax;
+  }
+  const yearRec = (o, y) => {
+    o.tax = o.tax || {};
+    o.tax.years = o.tax.years || {};
+    const r = (o.tax.years[y] = o.tax.years[y] || {});
+    r.confirmed = r.confirmed || {};
+    r.copyB = r.copyB || {};
+    r.filed = r.filed || [];
+    return r;
+  };
+  /** The sponsor confirms an investor's two box amounts against the bank: stored with who and when. opts: { by, at, today }. */
+  function confirmTotals(ws, offeringId, year, investorId, opts) {
+    opts = opts || {};
+    const y = yearOf(year);
+    const o = offeringOf(ws, offeringId);
+    const by = who(opts.by, 'Confirming the totals of a Form 1099-INT');
+    const F = figuresInt(ws, o, y, { today: opts.today });
+    if (F.stops.length) throw new Error(F.stops[0].text);
+    const form = F.forms.find((x) => x.investorId === investorId);
+    if (!form) throw new Error('This investor has no Form 1099-INT for the year.');
+    const entry = { box1Cents: form.box1Cents, box4Cents: form.box4Cents, by, at: opts.at || nowIso() };
+    yearRec(o, y).confirmed[investorId] = entry;
+    log(ws, { action: 'Form 1099-INT totals confirmed', record: investorId, fund: o.id, detail: `${y}: box 1 $${money(form.box1Cents)}, box 4 $${money(form.box4Cents)}`, actor: by });
+    return entry;
+  }
+  /** True while the confirmed amounts equal the form's figures; false again once they differ. */
+  function confirmed(ws, offering, year, form) {
+    const c = (((((offering || {}).tax || {}).years || {})[yearOf(year)] || {}).confirmed || {})[form && form.investorId];
+    return !!c && c.box1Cents === form.box1Cents && c.box4Cents === form.box4Cents;
+  }
+
+  /* ---------- the recipient's number, from the signed W-9 (held by the caller, never stored) ---------- */
+  /** The pinned blank W-9's own rectangles for the lines and number boxes the reading needs (points, top left). */
+  async function w9Rects(L, blankBytes, map, opts) {
+    opts = opts || {};
+    const hash = opts.sha256 || (NS.audit && NS.audit.sha256);
+    if (typeof hash !== 'function') throw new Error('No SHA-256 function is available to check the form file.');
+    if (String(await hash(blankBytes)).toLowerCase() !== String(map.sha256).toLowerCase()) throw Object.assign(new Error(`The ${map.form} file does not match its pinned fingerprint (${map.revision}).`), { pin: true });
+    const pdf = await L.PDFDocument.load(blankBytes, { updateMetadata: false });
+    const form = pdf.getForm();
+    const h = pdf.getPage(0).getHeight();
+    const rect = (k) => {
+      const r = form.getField(map.fields[k].name).acroField.getWidgets()[0].getRectangle();
+      return { x: r.x, top: h - r.y - r.height, w: r.width, h: r.height };
+    };
+    return { name: rect('name'), business: rect('business'), address: rect('address'), cityStateZip: rect('cityStateZip'), ssn: map.groups.ssn.map(rect), ein: map.groups.ein.map(rect) };
+  }
+  /**
+   * What a signed, flattened W-9's page 1 shows in its own boxes: items are the page's text items ({ s, x, w, top,
+   * bottom }, see textItems), rects come from w9Rects. tin is nine digits from exactly one of the two number boxes, or ''.
+   */
+  function readW9(items, rects) {
+    const inside = (it, r) => {
+      if (it.rot) return false; // a filled value is written left to right; the form's sideways margin label is not one
+      const cx = it.x + (it.w || 0) / 2;
+      const cy = (it.top + it.bottom) / 2;
+      return cx >= r.x - 1 && cx <= r.x + r.w + 1 && cy >= r.top - 1 && cy <= r.top + r.h + 1;
+    };
+    const text = (r) =>
+      (items || [])
+        .filter((it) => inside(it, r))
+        .sort((a, b) => a.top - b.top || a.x - b.x)
+        .map((it) => it.s)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const digits = (rs) => rs.map((r) => text(r).replace(/\D/g, '')).join('');
+    const ssn = digits(rects.ssn);
+    const ein = digits(rects.ein);
+    let tin = '';
+    let tinType = '';
+    if (/^\d{9}$/.test(ssn) && !ein) [tin, tinType] = [ssn, 'SSN'];
+    else if (/^\d{9}$/.test(ein) && !ssn) [tin, tinType] = [ein, 'EIN'];
+    return { name: text(rects.name), business: text(rects.business), address: text(rects.address), cityStateZip: text(rects.cityStateZip), tin, tinType };
+  }
+  /** A number read or typed, accepted only as nine digits ending in the four on record: { ok, why, digits }. */
+  function checkTin(digits, last4) {
+    const s = String(digits == null ? '' : digits).trim();
+    if (!/^\d{4}$/.test(String(last4 == null ? '' : last4))) return { ok: false, why: 'No last four digits of a U.S. taxpayer number are on record for this investor, so the number cannot be checked.' };
+    if (/[^\d\s-]/.test(s)) return { ok: false, why: 'A taxpayer number holds digits only (dashes and spaces may stand between them).' };
+    const d = s.replace(/[\s-]/g, '');
+    if (d.length !== 9) return { ok: false, why: `A taxpayer number has nine digits; this one has ${d.length}.` };
+    if (d.slice(5) !== String(last4)) return { ok: false, why: 'The number does not end in the four digits on record; check it against the signed W-9.' };
+    return { ok: true, why: '', digits: d };
+  }
+  /** A proposal for the IRS's name cells from the W-9's name line, which the sponsor corrects: plain letters only. */
+  function splitName(line) {
+    const plain = String(line == null ? '' : line)
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^A-Za-z -]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const w = plain ? plain.split(' ') : [];
+    const suffix = w.length > 2 && /^(jr|sr|ii|iii|iv|v)$/i.test(w[w.length - 1]) ? w.pop() : '';
+    const first = w.shift() || '';
+    const last = w.pop() || '';
+    return { first, middle: w.join(' '), last, suffix };
+  }
+  /** A proposal for city, state and ZIP from the W-9's city line ("Austin, TX 78701-1234"). */
+  function splitCityStateZip(line) {
+    const s = String(line == null ? '' : line).trim();
+    const m = /^(.*?)[\s,]+([A-Za-z]{2})[\s,]+(\d{5})(?:-?(\d{4}))?$/.exec(s);
+    if (!m) return { city: s, state: '', zip: '' };
+    return { city: m[1].replace(/,\s*$/, '').trim(), state: m[2].toUpperCase(), zip: m[3] + (m[4] || '') };
   }
 
   /* ---------- numbers ---------- */
@@ -320,9 +490,10 @@
   }
 
   /* ---------- reading a page's text ---------- */
-  /** The reader's text items of one page as { s, x, w, top, bottom } in points from the top left. */
+  /** The reader's text items of one page as { s, x, w, top, bottom, rot } in points from the top left. */
   function textItems(height, items) {
-    return (items || []).filter((it) => it && it.str && it.str.trim()).map((it) => ({ s: it.str, x: it.transform[4], w: it.width || 0, top: height - it.transform[5] - (it.height || 0), bottom: height - it.transform[5] }));
+    // rot: the item is not written left to right on the line (a margin label printed sideways, for example)
+    return (items || []).filter((it) => it && it.str && it.str.trim()).map((it) => Object.assign({ s: it.str, x: it.transform[4], w: it.width || 0, top: height - it.transform[5] - (it.height || 0), bottom: height - it.transform[5] }, Math.abs(it.transform[1]) > 0.01 || Math.abs(it.transform[2]) > 0.01 ? { rot: true } : {}));
   }
 
   const API = {
@@ -334,6 +505,16 @@
     payerOf,
     last4Of,
     figuresInt,
+    STOP_TEXT,
+    LEFT_TEXT,
+    setInterest,
+    confirmTotals,
+    confirmed,
+    w9Rects,
+    readW9,
+    checkTin,
+    splitName,
+    splitCityStateZip,
     truncate,
     dashed,
     copyBAnswers,

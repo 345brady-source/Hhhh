@@ -323,7 +323,7 @@ const cases = {
       check('exactly six are left out', (F.leftOut || []).length === 6, (F.leftOut || []).map((x) => x.investorId));
       check('the expired W-8 is not left out as foreign: it is listed as having no valid form on file', lo['B-EXP'] && lo['B-EXP'].code !== 'foreign' && /no valid/i.test(lo['B-EXP'].reason));
       check('every reason is one sentence', (F.leftOut || []).every((x) => /^[^.]+(\.[^.]+)*\.$/.test(x.reason) && x.reason.length < 220), (F.leftOut || []).map((x) => x.reason));
-      check('the sum of forms and left out is the whole interest paid', F.totalCents === 253998 && (F.forms || []).reduce((a, f) => a + f.box1Cents, 0) + (F.leftOut || []).reduce((a, x) => a + x.cents, 0) === 253998, F.totalCents);
+      check('the forms and the left out add up to the whole interest paid: 5 x 50,000 + 999 + 1,000 + 999 = 252,998', F.totalCents === 252998 && (F.forms || []).reduce((a, f) => a + f.box1Cents, 0) + (F.leftOut || []).reduce((a, x) => a + x.cents, 0) === 252998, F.totalCents);
       // Copy B for $9.99 and $2.40
       const a = T.copyBAnswers(F.forms.find((f) => f.investorId === 'B-SMALLBK'), payerObj(), Object.assign({ tin: '000' + '66' + '5555' }, RECIPIENT['A-1002']), '2026');
       check("B-SMALLBK's Copy B answers show box 1 9.99 and box 4 2.40", a.box1 === '9.99' && a.box4 === '2.40', [a.box1, a.box4]);
