@@ -563,6 +563,114 @@ const cases = {
       const d = TIN['A-1001'];
       check('the search finds a planted number as digits, dashed, and first five beside last four', planted(d) && planted(dashedSsn(d)) && planted(`${d.slice(0, 5)} ${d.slice(5)}`) && planted(dashedEin(W9_EIN)));
     });
+  },
+
+  // The upload file's rows and files (TAX-12, C-01).
+  async rows({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const cols = NS.tax1099data.IRIS.columns['1099-INT'];
+    const head = T.iris.header('1099-INT');
+    check('the header has 66 names in the IRS order, A to BN, Form Type first and State 2 - Special Data Entries last', head.length === 66 && head[0] === 'Form Type' && head[65] === 'State 2 - Special Data Entries' && cols.every((c, k) => c.col === letters(k)), head.length);
+    check('every column carries its source and its rule', cols.every((c) => /1099-INT Template Formatting Guidelines/.test(c.source) && typeof c.rule === 'string' && c.rule.length > 5), cols.filter((c) => !c.rule).map((c) => c.col));
+    check('headerPinned and centsConfirmed are false, the rules are for tax year 2025, read 2026-11-19', NS.tax1099data.IRIS.headerPinned === false && NS.tax1099data.IRIS.centsConfirmed === false && NS.tax1099data.IRIS.taxYearOfRules === '2025' && NS.tax1099data.IRIS.read === '2026-11-19');
+    const ws = wsD(NS);
+    const F = T.figuresInt(ws, ws.offerings[0], '2026', { today: TODAY });
+    const f2 = F.forms.find((f) => f.investorId === 'A-1002');
+    const r2 = T.iris.row('1099-INT', '2026', f2, payerObj(), recipientObj('A-1002'));
+    const filled = (r) => r.map((v, k) => (v !== '' ? letters(k) : '')).filter(Boolean).join(' ');
+    check("A-1002's row fills exactly the form type, year, payer, recipient (an individual) and the two amounts", filled(r2) === 'A B C D E F L M O P Q R S T U V Y AA AC AD AE AF AG AH AN AQ', filled(r2));
+    check('an individual has name type I with first and last names and no business name', r2[col('V')] === 'I' && r2[col('Y')] === 'Avery' && r2[col('AA')] === 'Example' && r2[col('W')] === '');
+    check('the payer: EIN, name type B, its name, US, its address and a domestic phone', r2[col('E')] === 'B' && r2[col('F')] === 'Fund One Notes LLC' && r2[col('L')] === 'US' && r2[col('P')] === 'TX' && r2[col('Q')] === '75201' && r2[col('R')] === 'D' && r2[col('S')] === '214-555-0100');
+    const ent = { tinType: 'EIN', tin: W9_EIN, nameType: 'B', name: 'Example Holdings LLC', name2: 'Example Lending', country: 'US', address1: '77 Market St Ste 5', address2: '', city: 'Boston', state: 'MA', zip: '02110' };
+    const re = T.iris.row('1099-INT', '2026', f2, payerObj(), ent);
+    check('an entity has name type B with its business name lines and no first or last name', re[col('V')] === 'B' && re[col('W')] === 'Example Holdings LLC' && re[col('X')] === 'Example Lending' && re[col('Y')] === '' && re[col('AA')] === '' && re[col('T')] === 'EIN' && re[col('U')] === dashedEin(W9_EIN));
+    check('both rows pass every rule', T.iris.validate('1099-INT', [r2, re]).length === 0, T.iris.validate('1099-INT', [r2, re]));
+    let files = [];
+    await block(check, 'files', () => {
+      files = T.iris.files('1099-INT', [r2, re]);
+      check('two rows: one file of 2 rows, the header line first', files.length === 1 && files[0].rows === 2 && files[0].text.split('\r\n')[0] === head.join(','), files.map((x) => x.rows));
+      const many = Array.from({ length: 237 }, (_, k) => T.iris.row('1099-INT', '2026', f2, payerObj(), Object.assign({}, recipientObj('A-1002'), { tin: '000' + String(k + 1).padStart(6, '0') })));
+      const big = T.iris.files('1099-INT', many);
+      check('237 rows: three files of 100, 100 and 37 rows, each starting with the header line', big.length === 3 && big.map((x) => x.rows).join(',') === '100,100,37' && big.every((x) => x.text.split('\r\n')[0] === head.join(',')), big.map((x) => x.rows));
+      check('each file has its header line and one line per row, every line 66 cells', big.every((x) => { const ls = x.text.split('\r\n').filter(Boolean); return ls.length === x.rows + 1 && ls.every((l) => l.split(',').length === 66); }));
+      check('the files have distinct names naming the form, the year and the part', new Set(big.map((x) => x.name)).size === 3 && big.every((x) => /^1099-INT-2026-part-[1-3]-of-3\.csv$/.test(x.name)), big.map((x) => x.name));
+      const all = big.map((x) => x.text).join('');
+      check('no quotation mark and no asterisk anywhere in a file', !/["*]/.test(all));
+      const tinCells = [].concat(...big.map((x) => x.text.split('\r\n').slice(1).filter(Boolean).map((l) => { const c = l.split(','); return [c[col('D')], c[col('U')]]; })));
+      check('every taxpayer number in the files is digits and dashes: no letter X or other mask standing in for a digit', tinCells.length === 474 && tinCells.every((v) => /^[0-9-]+$/.test(v) && /\d{4}$/.test(v)));
+      const bad = r2.slice();
+      bad[col('AH')] = '7870';
+      check('iris.files refuses to build while a fault stands', refuses(ws, () => T.iris.files('1099-INT', [r2, bad])).threw);
+    });
+    await block(check, 'filed', () => {
+      const h = 'ab'.repeat(32);
+      check('markFiled needs a named person and a receipt id', refuses(ws, () => T.markFiled(ws, 'f1', '2026', { receiptId: 'Receipt-A1', date: '2027-02-10', sha256: h, rows: 2, at: AT })).threw && refuses(ws, () => T.markFiled(ws, 'f1', '2026', { date: '2027-02-10', sha256: h, rows: 2, by: BY, at: AT })).threw);
+      T.markFiled(ws, 'f1', '2026', { receiptId: 'Receipt-A1', date: '2027-02-10', sha256: h, rows: 2, by: BY, at: AT });
+      const got = (((ws.offerings[0].tax.years || {})['2026'] || {}).filed || [])[0] || {};
+      check('markFiled stores the form, receipt id, date, the file fingerprint, the row count, who and when', got.form === '1099-int' && got.receiptId === 'Receipt-A1' && got.date === '2027-02-10' && got.sha256 === h && got.rows === 2 && got.by === BY && got.at === AT, Object.keys(got));
+    });
+  },
+
+  // Each deliberate fault is caught and named by row and column; the files are refused while it stands.
+  async faults({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const head = T.iris.header('1099-INT');
+    const ws = wsD(NS);
+    const F = T.figuresInt(ws, ws.offerings[0], '2026', { today: TODAY });
+    const f2 = F.forms.find((f) => f.investorId === 'A-1002');
+    const good = T.iris.row('1099-INT', '2026', f2, payerObj(), recipientObj('A-1002'));
+    const ent = T.iris.row('1099-INT', '2026', f2, payerObj(), { tinType: 'EIN', tin: W9_EIN, nameType: 'B', name: 'Example Holdings LLC', name2: '', country: 'US', address1: '77 Market St Ste 5', address2: '', city: 'Boston', state: 'MA', zip: '02110' });
+    check('the two good rows pass', T.iris.validate('1099-INT', [good, ent]).length === 0);
+    const list = [
+      ['an accented letter in a first name', good, 'Y', 'Avéry'],
+      ['a period in a last name', good, 'AA', 'Ex.ample'],
+      ['a comma in a business name', ent, 'W', 'Example, Holdings'],
+      ['a business name of 41 characters', ent, 'W', 'A'.repeat(41)],
+      ['a first name of 21 characters', good, 'Y', 'A'.repeat(21)],
+      ['an address line of 36 characters', good, 'AD', 'A'.repeat(36)],
+      ['an address line with a character the rule does not list', good, 'AD', '22 Oak Ave #4'],
+      ['a digit in a city', good, 'AF', 'Austin2'],
+      ['a state of three letters', good, 'AG', 'TXS'],
+      ['a ZIP of four digits', good, 'AH', '7870'],
+      ['a ZIP with a dash', good, 'AH', '78701-1234'],
+      ['a doubled space', good, 'AD', '22  Oak Ave'],
+      ['a leading space', good, 'Y', ' Avery'],
+      ["a recipient number not in its type's pattern", good, 'U', TIN['A-1002']],
+      ['a required cell left empty', good, 'AD', ''],
+      ['a negative amount', good, 'AN', '-5.00'],
+      ['an amount with three decimals', good, 'AN', '13333.321'],
+      ['an amount in scientific notation', good, 'AN', '1.045E+5'],
+      ['a cell that starts with an equals sign', good, 'AE', '=1+1'],
+      ['a cell that starts with a plus sign', good, 'AE', '+1 Floor'],
+      ['a cell that starts with a minus sign', good, 'AE', '-1 Floor'],
+      ['a cell that starts with an at sign', good, 'AE', '@Floor']
+    ];
+    list.forEach(([what, base, c, v]) => {
+      const bad = base.slice();
+      bad[col(c)] = v;
+      const rows = [base === good ? ent : good, bad];
+      const faults = T.iris.validate('1099-INT', rows);
+      const hit = faults.find((x) => x.row === 2 && x.col === c);
+      check(`${what}: caught on row 2, column ${c} (${head[col(c)]}), with a plain reason`, !!hit && hit.name === head[col(c)] && typeof hit.why === 'string' && hit.why.length > 10 && faults.every((x) => x.row === 2 && x.col === c), faults);
+      check(`${what}: iris.files refuses to build`, refuses(ws, () => T.iris.files('1099-INT', rows)).threw);
+    });
+  },
+
+  // Both checks: an unknown name and an empty list exit 1 with FAIL.
+  async selfcheck({ check: raw }) {
+    const check = masked(raw);
+    const { spawnSync } = require('child_process');
+    const run = (file, args) => spawnSync(process.execPath, [path.join(__dirname, file)].concat(args), { encoding: 'utf8' });
+    [['tax-1099.js', '--case'], ['tax-forms.js', '--only']].forEach(([file, flag]) => {
+      const a = run(file, [flag, 'nosuch']);
+      check(`${file}: an unknown name exits 1 with a FAIL line`, a.status === 1 && /^FAIL unknown/m.test(a.stdout) && /: FAIL \(\w+ run: 0\)/.test(a.stdout), a.stdout);
+      const b = run(file, [flag, ',']);
+      check(`${file}: an empty list exits 1 with a FAIL line`, b.status === 1 && /^FAIL no /m.test(b.stdout), b.stdout);
+    });
   }
 };
 
