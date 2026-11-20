@@ -247,8 +247,18 @@
     save(ws);
     return r;
   }
-  /** A subscription whose e-signature agreement the investor has not signed (esign.js sets signedAt when they do). */
-  const unsignedAgreement = (r) => !!r && r.type === 'subscription' && !!r.envelopeId && !r.signedAt;
+  /**
+   * A subscription signed through an e-signature agreement that the investor has not signed. The investor's own signer on the
+   * envelope decides: esign.js sets the request's signedAt only once everyone has signed (the firm countersigns after
+   * approving), so a request without signedAt whose investor has signed is a normal one waiting for approval. A request whose
+   * envelope is not here counts as signed only with a signedAt (the console's import sets it from the investor's signature).
+   */
+  function unsignedAgreement(ws, r) {
+    if (!r || r.type !== 'subscription' || !r.envelopeId || r.signedAt) return false;
+    const env = ((ws && ws.envelopes) || []).find((e) => e.id === r.envelopeId);
+    const me = env ? env.signers.find((s) => s.investorId === r.investorId) : null;
+    return !(me && me.status === 'signed');
+  }
   const NOT_SIGNED = 'The subscription agreement is not signed yet.';
   function decide(ws, r, approve, note) {
     const o = ws.offerings.find((x) => x.id === r.offeringId);
@@ -256,7 +266,7 @@
     if (!o || !inv || r.status !== 'pending') return false;
     // Plan 06-34 (plan-check B2): a subscription signed through an agreement the investor has not signed yet ("Continue and
     // sign later", walkthrough failure 1) is never approved; declining it stays possible.
-    if (approve && unsignedAgreement(r)) {
+    if (approve && unsignedAgreement(ws, r)) {
       if (NS.ui && NS.ui.toast) NS.ui.toast(NOT_SIGNED);
       return false;
     }
@@ -294,7 +304,7 @@
     const inv = ws.investors.find((x) => x.id === r.investorId);
     if (r.type !== 'subscription' || r.status !== 'approved' || !o || !inv) return false;
     // Plan 06-34 (B2): never funded or accepted while its agreement is unsigned.
-    if (unsignedAgreement(r)) {
+    if (unsignedAgreement(ws, r)) {
       if (NS.ui && NS.ui.toast) NS.ui.toast(NOT_SIGNED);
       return false;
     }

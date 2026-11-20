@@ -760,12 +760,15 @@ function lostPart(dev) {
         await fr.waitForTimeout(500);
       }
       st = await subscription(fr, inv.investorId);
-      check('the investor signs it: the envelope has their signature and the subscription records it', !!st.env && st.env.investor === 'signed' && !!st.req && !!st.req.signedAt, st);
+      // (the request's signedAt is set once everyone has signed, after the firm countersigns: esign.js finishSigning)
+      check('the investor signs it: their signer on the new envelope is signed, the envelope waits for the firm', !!st.env && st.env.investor === 'signed' && st.env.status === 'sent', st);
     }
 
     // 5. Approve now works, and the firm countersigns.
     await requestsPage(fr);
     await toasts(fr);
+    const row2 = st.req ? await rowText(fr, st.req.id) : '';
+    check('once signed, the Requests row no longer reads "Agreement not signed"', !!row2 && !/Agreement not signed/.test(row2) && /E-signed by/.test(row2), row2);
     if (st.req) await approve(fr, dev, st.req.id);
     st = await subscription(fr, inv.investorId);
     check('B2: once the investor has signed, Approve works', !!st.req && st.req.status === 'approved', { status: st.req && st.req.status, said: await toasts(fr) });

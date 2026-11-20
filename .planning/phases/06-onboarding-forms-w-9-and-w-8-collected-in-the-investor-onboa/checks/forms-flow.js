@@ -752,7 +752,8 @@ async function unsignedCase({ check, S }) {
         overlays: NS.taxmaps['W-9 2024-03'].overlays,
         blank: NS.taxmaps['W-9 2024-03'].file,
         ndocs: docs.length,
-        pdf: await b64(docs[0] ? await NS.ops.files.get(docs[0].id) : null),
+        // plan 06-34: the finished form stays with its envelope (its completed copy), not as a Documents entry
+        pdf: await b64(env && env.signedDocId ? await NS.ops.files.get(env.signedDocId) : null),
         filled: await b64(env ? await NS.ops.files.get(env.docId) : null),
         log: (ws.audit || []).filter((e) => e.record === invId).map((e) => `${e.action} :: ${e.detail}`)
       };
@@ -762,7 +763,10 @@ async function unsignedCase({ check, S }) {
   const tc = got.taxCert || {};
   check('the record says W-9, not signed, no signer (taxCert.signed false)', got.taxForm === 'W-9' && tc.form === 'W-9' && tc.signed === false && tc.signedBy === '', { taxForm: got.taxForm, taxCert: tc });
   check('the change log says the form was completed without a signature', got.log.some((l) => /^Tax form completed without a signature :: /.test(l)), got.log.slice(-4));
-  check('the finished form is kept in Documents (one entry)', got.ndocs === 1 && !!got.pdf, got.ndocs);
+  // Plan 06-34 (walkthrough-2 N1): this used to require one Documents entry, which listed the form under "Signed documents"
+  // with a "_signed" file name although nobody signed it (the duplicate the walkthrough reported). A form finished without a
+  // signature is not a signed document: it is not listed, and its finished copy stays with its envelope.
+  check('the finished form is not listed in Documents (not signed), and its finished copy is kept with its envelope', got.ndocs === 0 && !!got.pdf, { ndocs: got.ndocs, pdf: !!got.pdf });
   if (got.pdf && got.filled) {
     const finFile = path.join(dir, 'finished.pdf');
     const filledFile = path.join(dir, 'filled.pdf');
