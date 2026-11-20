@@ -25,8 +25,9 @@
 //   offline-framed  inside the frame that refuses every connection, at 390x844, with a server address set: Send says in
 //                one plain line that the server could not be reached; the order stays recorded; no error is thrown
 //   states       a state notice order for New York and California (NS.bluesky.placeOrder) sent with its package; staff
-//                record each state's result; Check now: both states filed with date, filing ID and fee paid, New York's
-//                renewal reminder with its date, the order done
+//                record New York's result only: Check now reads "Partly filed (1 of 2)" with California still open (the
+//                server still says received); staff record California's: both states filed with date, filing ID and fee
+//                paid, New York's renewal reminder with its date, the order done
 //   NODE_PATH=$(npm root -g) node filings-server.js [--only send-phone,send-desktop,outcome,suspended,guard,offline-framed,states]
 // The last line is "FILINGS SERVER: PASS (parts run: N)" or "FILINGS SERVER: FAIL (parts run: N) - <failed parts>". The
 // two marker lines above are read by gate9.sh. A CCC is never printed: every check about one reports only true or false.
@@ -669,7 +670,16 @@ async function statesPart({ check, S }) {
     const codes = one.body && one.body.package && Array.isArray(one.body.package.states) ? one.body.package.states.map((x) => x.code).sort() : [];
     check('Send: the server holds the order with its package (both states)', !!fid && one.body.kind === 'bluesky' && codes.join() === 'CA,NY' && /Received/.test(await remoteText(F, id)), { fid, codes });
     const renewsOn = L9.iso(localToday(), 20);
-    const r = await staffOutcome(srv, fid, { states: { NY: { filedOn: PINNED, efdId: 'NY-EFD-1001', feeCents: 30000, renewsOn }, CA: { filedOn: PINNED, efdId: 'CA-EFD-2002', feeCents: 25000 } }, systemFeeCents: 15000 });
+    // New York first: the server still holds the order as received, so the tab must not read filed or done.
+    const r0 = await staffOutcome(srv, fid, { states: { NY: { filedOn: PINNED, efdId: 'NY-EFD-1001', feeCents: 30000, renewsOn } } });
+    check('staff record New York\'s result only; the server still holds the order as received', r0.status === 200 && r0.body.status === 'received', { status: r0.status, order: r0.body && r0.body.status });
+    const partly = await checkNow(F, id, "o.status === 'partly-filed'");
+    const total0 = await L9.text(F, `${orderSel(id)} .fl-total`);
+    const card0 = await L9.text(F, orderSel(id));
+    check('after Check now the order reads "Partly filed (1 of 2)", not filed or done', partly && /Partly filed \(1 of 2\)/.test(total0) && !/\b(Filed|Done)\b/.test(total0.replace(/Partly filed/, '')), { partly, total: total0 });
+    check('the state still open (California) is listed on the order', /Still open: California\b/.test(card0) && !/Still open:[^.]*New York/.test(card0), card0.slice(0, 600));
+    await F.A.page.screenshot({ path: path.join(OUT, 'desktop-states-partly.png'), fullPage: false });
+    const r = await staffOutcome(srv, fid, { states: { CA: { filedOn: PINNED, efdId: 'CA-EFD-2002', feeCents: 25000 } }, systemFeeCents: 15000 });
     check('staff record each state\'s result (date, filing ID, fee paid, a renewal date 20 days ahead for New York)', r.status === 200 && r.body.status === 'done', r.status);
     const done = await checkNow(F, id, "o.status === 'done'");
     const st = await F.fr.evaluate((o) => {
