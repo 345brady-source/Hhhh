@@ -50,4 +50,14 @@ hand-sent link (the "Co-investor sign-in email" dialog, a local token that works
 the server, nothing is emailed, the link on another device is "not valid". cosign-desktop and cosign-phone stop at
 "ran to the end" because the preview dialog stays open over the console. Raw output: SCRATCH/exec-06-39/red.txt.
 
+## Task 1 verify (tree f7c5e59)
+
+```
+CO-INVESTOR SERVER: PASS (parts run: 2)        (t1.txt: cosign-desktop, cosign-phone; 81 PASS, 0 FAIL)
+```
+One check change after RED, before it passed: the check closes the Account window left open by "Add co-investor" before
+inviting (the first fix run stopped there: `page.click: Timeout` on "Invite an investor" under the open window). Then a
+check addition: the account investor adopts a signature too, and the copy the co-investor receives must carry the same
+number of pictures as the console's own copy (the re-stamped W2 copy keeps the investor's signature).
+
 <!-- gsd:write-continue -->
