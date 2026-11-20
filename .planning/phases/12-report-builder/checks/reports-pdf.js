@@ -256,7 +256,8 @@ const parts = {
     });
     // the line chart's points: a marker in the accent color under each shown value
     charts[1].shown.forEach((s) => {
-      const w = words.find((x) => x.text === s);
+      // the last word with this text: the top tick label reads the same as the last point's value and is drawn first
+      const w = words.filter((x) => x.text === s).pop();
       const hit = w && scan(file, w.page, (w.xMin + w.xMax) / 2, w.yMax + 1, w.yMax + 12, ACC);
       check(`the line chart's point under ${s} is drawn`, !!hit, w);
     });
