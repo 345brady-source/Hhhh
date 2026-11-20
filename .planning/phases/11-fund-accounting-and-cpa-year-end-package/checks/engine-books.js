@@ -245,6 +245,65 @@ const cases = {
     console.log(`  probe after (this tree), fiscal 2025: income ${usd(g.income)}, gains ${usd(g.gain)}, fees ${usd(g.fee)}, carry ${usd(g.carry)}, ending capital ${g.ends.map((x) => x[0] + ' ' + usd(x[1])).join(', ')}`);
     check('fiscal 2025: income 0, gain 0, fee 0, carry 0', g.income === 0 && g.gain === 0 && g.fee === 0 && g.carry === 0, g);
     check('ending capital 10,000,000 and 30,000,000', J(g.ends) === J([['PR-1', 10000000], ['PR-2', 30000000]]), g.ends);
+  },
+
+  /**
+   * FA-14, F-3: fund C's carried interest paid with a distribution is the general partner's distribution in May: it
+   * leaves capital and the accrued share; the journal and the capital accounts tie at every 2026 month-end.
+   */
+  'fund-c': ({ check }) => {
+    const NS = load();
+    const F = fixture('fund-c');
+    const { ws, oid, o } = build(NS, F);
+    const Lg = NS.audit.ledger(ws, o);
+    Object.keys(F.expect.months).forEach((k) => {
+      const W = F.expect.months[k];
+      const M = Lg.byKey[k];
+      const r = M && M.rows['C-1001'];
+      const got = r && { pre: r.pre, gain: r.gain, carryEnd: r.carryEnd, end: r.end, gpOut: M.gpOut, gpRun: M.gpRun, carry: r.carry, nav: M.endCap + M.gpEnd };
+      check(`${k}: capital before carry, gain, accrued carry, ending capital, the GP's distribution (of it paid with a run), carry allocated, NAV`, J(got) === J(W), { got, want: W });
+    });
+    const bad = t3(NS, ws, oid, o, MONTHS_2026);
+    check("T3: at every 2026 month-end the journal's net assets = capital + the GP's accrued share", !bad.length, bad);
+    const P = NS.audit.period(ws, o, '2026-01-01', '2026-12-31');
+    const y = { contrib: P.fund.contrib, dist: P.fund.dist, gain: P.fund.gain, carry: P.fund.carry, gpOut: P.fund.gpOut, end: P.fund.end, gpEnd: P.fund.gpEnd };
+    check('2026: contributions 10,000,000; distributions 14,000,000; gains 5,000,000; carried interest 1,000,000; the GP\'s distributions 1,000,000; both ends 0', J(y) === J(F.expect.year), y);
+    const roll = NS.audit.checks(ws, P, { verify: NS.audit.verify(ws) }).find((c) => c.id === 'roll');
+    check("the capital accounts roll forward (the engine's own readiness check)", roll && roll.status === 'pass', roll);
+    const T = t7(NS, ws, oid, o, '2026-01-01', '2026-12-31');
+    check("T7: the investors' allocation plus the GP's carry = the journal's 2026 results (5,000,000)", T.engine === T.journal && T.journal === 5000000, { engine: T.engine, journal: T.journal });
+    const runE = NS.books.live(ws.books.funds[oid], 'run:fc-run-1');
+    check("the run's entry carries the GP's share: [3300 +1,000,000][1000 -1,000,000]", runE && J(runE.lines) === J(F.expect.runLines), runE && runE.lines);
+    const gpE = NS.books.entries(ws, oid, { src: 'gp:' });
+    check('no gp: entry is posted (May: 1,000,000 out - 1,000,000 paid with the run = 0)', gpE.length === 0, gpE);
+  },
+
+  /** Opening balances: fund D existed before its books; the opening entry sets each investor's capital from 2025-12-31. */
+  'fund-d': ({ check }) => {
+    const NS = load();
+    const F = fixture('fund-d');
+    const { ws, oid, o } = build(NS, F);
+    const Lg = NS.audit.ledger(ws, o);
+    const early = Lg.keys.filter((k) => k < '2025-12');
+    const off = early.filter((k) => Object.keys(F.expect.untilNov2025).some((id) => Lg.byKey[k].rows[id].end !== F.expect.untilNov2025[id]));
+    check(`through November 2025 (${early.length} months from March 2023) capital stays 60,000,000 and 30,000,000`, early.length === 33 && !off.length, off.slice(0, 3).map((k) => [k, Lg.byKey[k].rows['D-1001'].end, Lg.byKey[k].rows['D-1002'].end]));
+    const pick = (k, f) => {
+      const M = Lg.byKey[k];
+      const out = {};
+      if (M) ['D-1001', 'D-1002'].forEach((id) => (out[id] = M.rows[id][f]));
+      return out;
+    };
+    const dec = Lg.byKey['2025-12'];
+    check('December 2025 ends 70,000,000 and 35,000,000', J(pick('2025-12', 'end')) === J(F.expect.dec2025.end), pick('2025-12', 'end'));
+    check('December 2025 gains 10,000,000 and 5,000,000', J(pick('2025-12', 'gain')) === J(F.expect.dec2025.gain) && dec && dec.gain === 15000000, pick('2025-12', 'gain'));
+    check('December 2025 NAV 105,000,000 = the journal', dec && dec.endCap + dec.gpEnd === F.expect.dec2025.nav && netAssets(NS, ws, oid, '2025-12-31') === F.expect.dec2025.nav, { engine: dec && dec.endCap + dec.gpEnd, journal: netAssets(NS, ws, oid, '2025-12-31') });
+    check('June 2026: the dividend splits 2,000,000 / 1,000,000', J(pick('2026-06', 'income')) === J(F.expect.jun2026.income), pick('2026-06', 'income'));
+    const jun = Lg.byKey['2026-06'];
+    check('June 2026: capital 72,000,000 and 36,000,000; NAV 108,000,000 = the journal', J(pick('2026-06', 'end')) === J(F.expect.jun2026.end) && jun.endCap + jun.gpEnd === F.expect.jun2026.nav && netAssets(NS, ws, oid, '2026-06-30') === F.expect.jun2026.nav, { end: pick('2026-06', 'end'), journal: netAssets(NS, ws, oid, '2026-06-30') });
+    const bad = t3(NS, ws, oid, o, ['2025-12'].concat(MONTHS_2026));
+    check("T3 from December 2025 to December 2026: the journal's net assets = capital", !bad.length, bad);
+    const pre = ws.books.funds[oid].journal.filter((e) => e.date < '2026-01-01').map((e) => e.src);
+    check('no entry dated before 2026-01-01 other than the opening entry (no contribution posted: before the start)', J(pre) === J(['open:' + oid]), pre);
   }
 };
 
