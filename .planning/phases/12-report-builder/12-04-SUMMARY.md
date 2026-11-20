@@ -62,3 +62,17 @@ GATE12 SELF-TEST: FAIL - control (control) p11 only
 ```
 The control failed because no "GATE ok   ELEVEN STAND IN" line was printed (no phase 11 step); the only-run printed
 the reference step and the server test line and ended "GATE_EXIT=0 (stand-in)".
+
+## Task 3 verify (the plan's command, verbatim; VERIFY rc=0)
+
+```
+SELF-TEST ok   a phase-12-only run ends 'GATE_EXIT=0 (phase 12 checks only)' with no reference step and no server test line, and 'GATE_EXIT=1' when a phase 12 check fails
+GATE12 SELF-TEST: PASS (8)
+GATE ok   REPORTS RECORD
+GATE_EXIT=0 (phase 12 checks only)
+```
+SCRATCH/exec-12-04/gate/base-tree is gone after the run. A rerun into the same folder keeps the step:
+```
+GATE ok   REPORTS RECORD (kept from 2026-11-20 16:29:53 UTC)
+GATE_EXIT=0 (phase 12 checks only)
+```
