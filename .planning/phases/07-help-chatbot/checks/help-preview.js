@@ -13,6 +13,9 @@
 //                     firm as the contact, the product's name in an answer replaced
 //   no-adapter        the portal's own diy.html (no preview lines) with window.claude present: the one sentence, unchanged
 //   server-wins       the preview page with a server address saved: the server answers, `sample` is never called
+//   consent           the first question of a view: when the viewer has not yet allowed the page, the preview asks
+//                     once (permissions.request) and only then calls `sample`; a viewer who declines gets the one
+//                     sentence and the contact, and `sample` is not called
 //   files             the preview page loads help-data.js and help-preview.js right before help.js; the product's pages
 //                     do not; help-data.js matches the server's guide (its generator's --verify passes)
 //   NODE_PATH=$(npm root -g) node help-preview.js [--only preview-sponsor,...]
@@ -49,7 +52,7 @@ const REFUSAL_NOTICE = /Refused to connect|Content Security Policy/;
  * The stand-in for the artifact's runtime: window.claude.use('sample') resolves a function that records each call (its
  * turns, its options without the signal, whether a signal came) in window.__samples and answers window.__next: an
  * object { kind, answer } (sent back as JSON text), { text } (sent as is) or { fail: code } (rejected with that code).
- * Every other capability resolves null, as in a view that does not grant it.
+ * permissions resolves only when window.__perm is set; every other capability resolves null.
  */
 const STUB = `(() => {
   window.__samples = [];
@@ -65,7 +68,20 @@ const STUB = `(() => {
     const text = n && typeof n.text === 'string' ? n.text : JSON.stringify({ kind: n.kind, answer: n.answer });
     return new Promise((r) => setTimeout(() => r({ text, truncated: false, modelApplied: o.model }), 150));
   };
-  window.claude = { use: (name) => Promise.resolve(name === 'sample' ? sample : null) };
+  // window.__perm: null (no permissions namespace) or { state, answer }: state() resolves state, request() records the
+  // names asked in window.__permAsked and resolves answer for them.
+  window.__perm = null;
+  window.__permAsked = [];
+  const permissions = {
+    state: (n) => Promise.resolve(window.__perm ? window.__perm.state : 'granted'),
+    request: (names) => {
+      window.__permAsked.push(names);
+      const o = {};
+      (names || []).forEach((k) => (o[k] = window.__perm.answer));
+      return new Promise((r) => setTimeout(() => r(o), 300));
+    }
+  };
+  window.claude = { use: (name) => Promise.resolve(name === 'sample' ? sample : name === 'permissions' && window.__perm ? permissions : null) };
 })();`;
 
 /** The preview page's own script lines that come before help.js and are not the product's (help-data.js, help-preview.js). */
@@ -421,6 +437,42 @@ const parts = {
     } finally {
       await A.context.close();
       await X.close();
+    }
+  },
+
+  consent: async ({ check, S }) => {
+    const T = await framed(S, 'desktop', { init: withSupport(SUPPORT) });
+    const { A, fr } = T;
+    const want = `Contact support at ${SUPPORT}.`;
+    try {
+      await samplePortal(fr);
+      await Lib.consoleRoute(fr, '#console-investors', '.cs-nav');
+      await openHelp(T);
+      await fr.evaluate(() => (window.__perm = { state: 'prompt', answer: 'granted' }));
+      await askQ(T, 'How do I invite an investor?', { kind: 'answer', answer: 'Open Investors.' });
+      let s = await talk(fr);
+      let asked = await fr.evaluate(() => window.__permAsked.slice());
+      let calls = await samples(fr);
+      check('not yet allowed: the preview asks once for `sample`, then asks the question; the answer shows', same(asked, [['sample']]) && calls.length === 1 && s.items[0].a === 'Open Investors.', { asked, calls: calls.length, item: s.items[0] });
+      await fr.evaluate(() => (window.__perm = { state: 'granted', answer: 'granted' }));
+      await askQ(T, 'And the tax forms?', { kind: 'answer', answer: 'Open Tax documents.' });
+      asked = await fr.evaluate(() => window.__permAsked.slice());
+      calls = await samples(fr);
+      check('allowed: it does not ask again', asked.length === 1 && calls.length === 2, { asked, calls: calls.length });
+      await fr.evaluate(() => (window.__perm = { state: 'prompt', answer: 'denied' }));
+      await askQ(T, 'And the distributions?', { kind: 'answer', answer: 'never shown' });
+      s = await talk(fr);
+      calls = await samples(fr);
+      check(`declined: "${NOT_NOW}" and the contact; \`sample\` is not called`, s.items[0].a === NOT_NOW && s.items[0].contact === want && calls.length === 2, { item: s.items[0], calls: calls.length });
+      await fr.evaluate(() => (window.__perm = { state: 'denied', answer: 'denied' }));
+      await askQ(T, 'Once more?', { kind: 'answer', answer: 'never shown' });
+      s = await talk(fr);
+      asked = await fr.evaluate(() => window.__permAsked.slice());
+      calls = await samples(fr);
+      check('denied earlier: no new ask, no call, the same sentence', s.items[0].a === NOT_NOW && asked.length === 2 && calls.length === 2, { asked, calls: calls.length });
+      await ending(check, T, [await Lib.screenText(fr)]);
+    } finally {
+      await A.context.close();
     }
   },
 
