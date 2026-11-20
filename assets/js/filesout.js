@@ -56,7 +56,7 @@
   function clean(s) {
     return String(s)
       .replace(BAD, '')
-      .replace(LONE, (m) => (m.length === 2 ? m[0] + '�' : '�'));
+      .replace(LONE, (m) => (m.length === 2 ? m[0] + '\uFFFD' : '\uFFFD'));
   }
   /** Text for element content or an attribute value: & < > " escaped, a carriage return kept as a reference. */
   function esc(s) {

@@ -53,8 +53,10 @@ for f in files:
     if f.endswith('.js'):
         dst = os.path.join(out, f)
         b = open(dst, 'rb').read()
-        if any(c < 32 and c not in (9, 10, 13) for c in b):
-            open(dst, 'wb').write(re.sub(rb'[\x00-\x08\x0b\x0c\x0e-\x1f]', lambda m: b'\\x%02x' % m.group(0)[0], b))
+        if any(c < 32 and c not in (9, 10, 13) for c in b) or b'\xef\xbf\xbd' in b:
+            b = re.sub(rb'[\x00-\x08\x0b\x0c\x0e-\x1f]', lambda m: b'\\x%02x' % m.group(0)[0], b)
+            b = b.replace(b'\xef\xbf\xbd', b'\\uFFFD')
+            open(dst, 'wb').write(b)
             escaped.append(f)
 for f in ('help-data.js', 'help-preview.js'):
     shutil.copy2(T + f, os.path.join(out, f))
