@@ -546,6 +546,7 @@ const FLOWS = {
       const { it, B } = R;
       const p = C.cp;
       let d = await kycDetails(p, it.investorId);
+      await showDetail(p);
       await p.screenshot({ path: path.join(SHOTS, 'letter-waiting-desktop.png') });
       check('the AML/KYC details read "Accreditation: waiting for the result"', /^Accreditation: waiting for the result/.test(d.acc), d.open ? d.acc : d);
       check(`the AML/KYC details show the line "${WAIT}"`, d.acc.indexOf(WAIT) >= 0, d.acc);
@@ -563,6 +564,7 @@ const FLOWS = {
       }, it.investorId);
       const given = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
       const capDay = new Date(Date.now() + Number(rec.validDays || 90) * 864e5).toISOString().slice(0, 10);
+      await showDetail(p);
       await p.screenshot({ path: path.join(SHOTS, 'letter-verified-desktop.png') });
       check('with no button pressed, the details turn to "Accreditation: verified"', ok && /^Accreditation: verified/.test(d.acc), d.acc);
       check('"valid until" shows the stand-in\'s date, or the firm\'s cap if earlier', rec.status === 'verified' && (rec.expiresAt === given || (rec.expiresAt === capDay && capDay < given)) && d.acc.indexOf(`valid until ${rec.shown}`) >= 0, { rec, given, capDay, line: d.acc });
@@ -609,7 +611,7 @@ const FLOWS = {
       check('the console\'s window is 390x844 with touch', size.width === 390 && size.height === 844 && (await p.evaluate(() => navigator.maxTouchPoints > 0)), size);
       const { it } = await rule506c(C, check, WHO7, 'desktop');
       let d = await kycDetails(p, it.investorId);
-      await p.locator('tr.kyc-detail').scrollIntoViewIfNeeded().catch(() => {});
+      await showDetail(p);
       await p.screenshot({ path: path.join(SHOTS, 'letter-waiting-phone.png') });
       check(`the waiting line reads "${WAIT}" at the phone size`, d.acc.indexOf(WAIT) >= 0, d.acc);
       check('the waiting line fits the width (no sideways scroll)', await fitsWidth(p, '.kyc-detail .kyc-wait'), await widths(p, '.kyc-detail .kyc-wait'));
@@ -619,7 +621,7 @@ const FLOWS = {
       await kycDetails(p, it.investorId);
       const ok = await verifiedOnScreen(p);
       d = await details(p);
-      await p.locator('.kyc-detail [data-action=kyc-evidence]').first().scrollIntoViewIfNeeded().catch(() => {});
+      await showDetail(p);
       await p.screenshot({ path: path.join(SHOTS, 'letter-verified-phone.png') });
       check('the result arrives with no button pressed: "Accreditation: verified" and one "Download letter"', ok && /^Accreditation: verified/.test(d.acc) && d.letters === 1, { acc: d.acc, letters: d.letters });
       check('the verified details fit the width (no sideways scroll)', await fitsWidth(p, '.kyc-detail .kyc-match'), await widths(p, '.kyc-detail .kyc-match'));
@@ -757,6 +759,14 @@ async function kycDetails(p, investorId) {
   // What the investor's row offers, for the record when the details did not open.
   if (!d.open) d.row = await p.evaluate((id) => Array.from(document.querySelectorAll('table.cs-tbl tbody tr')).filter((r) => (r.innerText || '').indexOf(id) >= 0).map((r) => r.innerText.replace(/\s+/g, ' ').trim()), investorId);
   return d;
+}
+/** The details row in the middle of the window, the notices faded, for the owner's screenshot. */
+async function showDetail(p) {
+  await p.evaluate(() => {
+    const d = document.querySelector('tr.kyc-detail');
+    if (d) d.scrollIntoView({ block: 'center' });
+  });
+  await p.waitForFunction(() => !document.querySelector('#toasts .toast'), null, { timeout: 8000 }).catch(() => {});
 }
 /** The details turn to verified by themselves (the page's own polling), or the time is up (the server reads the provider at most every 20 s). */
 const verifiedOnScreen = (p) =>
