@@ -85,8 +85,11 @@ test('records: one DKIM TXT record holding the key sent to the provider, DMARC o
     // Private parts only: the key's first ~380 base64 characters hold the modulus, which the public record carries too.
     for (const s of [sent.privateKey.slice(400, 460), sent.privateKey.slice(-70, -10)]) assert.ok(!JSON.stringify(out).includes(s), 'the private key is not in what setup returns');
     // A DMARC record already published (in two pieces) means none is offered.
-    const out2 = await ses.setup('ridgeline.example', Object.assign({ resolver: fakeResolver({ '_dmarc.ridgeline.example': [['v=DMARC1; p=quarantine; ', 'rua=mailto:d@ridgeline.example']] }) }, base));
+    const out2 = await ses.setup('ridgeline.example', Object.assign({ resolver: fakeResolver({ '_dmarc.ridgeline.example': [['v=DMA', 'RC1; p=quarantine; rua=mailto:d@ridgeline.example']] }) }, base));
     assert.deepEqual(out2.records.map((r) => r.purpose), ['dkim']);
+    // A lookup that times out proves nothing: no DMARC record is offered (a second DMARC record would break the first).
+    const out3 = await ses.setup('timeout.example', Object.assign({ resolver: fakeResolver({}, { fail: 'ETIMEOUT' }) }, base));
+    assert.deepEqual(out3.records.map((r) => r.purpose), ['dkim']);
     // A refused call: the error holds no key or secret.
     fake.fail = { code: 403 };
     const err = await ses.setup('third.example', Object.assign({ resolver: fakeResolver({}) }, base)).catch((e) => e);

@@ -37,6 +37,12 @@ test('check ready: SPF on the root, DKIM at the given selector (in two pieces) a
   const st = await smtp.status('harborridge.example', { resolver: fakeResolver(full()), selector: 'k1' });
   assert.equal(st.state, 'ready');
   assert.doesNotMatch(st.detail, VENDOR);
+  // Pieces split anywhere (some DNS hosts split before "p=" or inside a tag) are joined before comparing.
+  const split = full();
+  split['k1._domainkey.harborridge.example'] = [['v=DKIM1; k=rsa; ', KEY.slice(16)]];
+  split['_dmarc.harborridge.example'] = [['v=DMA', 'RC1; p=none']];
+  split['harborridge.example'] = [['v=sp', 'f1 include:_spf.mailhost.example ~all']];
+  assert.equal((await smtp.status('harborridge.example', { resolver: fakeResolver(split), selector: 'k1' })).state, 'ready');
   // With no selector given, the common selectors are tried.
   assert.equal((await smtp.status('harborridge.example', { resolver: fakeResolver(full()) })).state, 'ready');
 });
