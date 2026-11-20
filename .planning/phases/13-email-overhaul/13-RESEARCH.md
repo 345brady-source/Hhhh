@@ -35,6 +35,30 @@ No 13-CONTEXT.md exists (discuss-phase has not run). The binding inputs are the 
 
 <!-- Notes as I go: CONTEXT.md absent; owner decision 5a is the governing direction. -->
 
+## Summary
+
+The product sends or pretends to send **31 kinds of email**: 13 message types (28 wording variants) built and sent by the server's own SMTP client in `server/lib/mail.mjs` (invitations, resends, sponsor notifications and reminders, filing orders to staff), and 18 client-side paths that are either `mailto:` drafts or simulated toasts (manual invitations, co-investor sign-in, notices, capital calls, e-sign, tax document notices, forgot password, team invitations). The server's message layout is sound (firm-branded, text + HTML, escaped, no platform names, no taxpayer or bank data), but the system around it is not: the browser and the server keep **two separate template sets**, so the console's "The email your integration server sends" preview shows different words from what the server sends; one global `MAIL_FROM` is shared by every sponsor on a multi-sponsor server (a white-label and DMARC-alignment failure); nothing records delivery, bounces or complaints; notices, capital calls, e-sign and tax document notices have no server path at all, even though a bounced tax notice has a legal consequence (paper within 30 days under Rev. Proc. 2012-17); and the no-server preview uses five different "not really sent" wordings plus one toast that falsely says a team invitation was sent.
+
+The fix is one shared renderer (`assets/js/emails.js`, loaded by the browser and by the server through `createRequire`, exactly as the server already loads `formd.js`), a per-sponsor sender on the sponsor's own verified domain, a sealed per-investor sent log with bounce/complaint states and suppression, one server route for the messages that have none, a console page previewing every message, investor preferences with one-click unsubscribe only where CAN-SPAM's commercial rules may apply, and one honest "(simulated in this demo)" sentence everywhere without a server.
+
+For sending, Amazon SES is the only outside option that fits the owner's cost limit (about $1-2 a month at 40 sponsors x 300 messages, pay per use, no minimum, 10,000 domains per region, bounce/complaint events); Postmark is the quality runner-up at about $15-19 a month. SMTP stays the only send path, so the code is provider-neutral: changing provider changes settings, and a small adapter handles domain records and delivery events.
+
+**Primary recommendation:** Build `assets/js/emails.js` first and make both the server and the console render through it; then add per-sponsor senders, the sent log and events (SES adapter, SMTP send path unchanged); prove every message with golden renders, banned-word and sensitive-pattern scans, preview-equals-server parity and phone-size checks; live delivery waits for one owner checkpoint (AWS account), marked "To be confirmed" until then.
+
+## Architectural Responsibility Map
+
+| Capability | Primary Tier | Secondary Tier | Rationale |
+|------------|-------------|----------------|-----------|
+| Message wording and layout (all kinds) | Shared module (`assets/js/emails.js`, plain data) | Browser + API both call it | One source of truth; preview must equal what is sent |
+| Sending, sender choice, refusal of unready domains | API / Backend (`server/lib/mail.mjs`) | Outside provider (SMTP) | Credentials and the sponsor's domain status live on the server |
+| Domain records and status | API / Backend (`server/mailers/*`) | Console shows them | Provider API calls need secrets |
+| Delivery events (bounce, complaint) | API / Backend (webhook) | Console shows status | Provider posts to the server; signature checked there |
+| Sent log | API / Backend (sealed store) | Browser workspace (simulated/manual entries) | Addresses never stored in plain text on the server |
+| Free-text screening (TIN/bank) | Browser (immediate message) | API (authoritative 422) | The server must not trust the browser |
+| Preview of every message | Browser (console page) | - | Renders locally, works with no server |
+| Preferences and unsubscribe | API / Backend (token route, honoured at send) | Browser (portal Account page) | Must work from the email with no sign-in |
+| Honest no-server behaviour | Browser | - | No network allowed on that path |
+
 ## 1. Inventory: every email the product sends today
 
 Every file below was opened with Read/sed this session. Line numbers are on tree c8b65e7.
@@ -328,9 +352,281 @@ Ownership rule: a file is edited by one plan per wave; files many earlier plans 
 | 3 | **13-06 Notices and capital calls** | `data.js` templates -> `emails.js` kinds (merge fields incl. `call_number`, `call_amount`, `due_date`; given-name fix), `console.js` notice preview + send through the server when connected, honest wording in console.js (915, 1059, 1727, C-04 managed text kept), `operations.js` capital-call notices | `assets/js/console.js`, `assets/js/data.js`, `assets/js/operations.js` | 13-01, 13-04 (route contract only; can stub until merged) |
 | 3 | **13-08 E-sign, team, password, portal preferences** | `esign.js` simulated helper + server notices when connected; `diy.js` team-invite honesty; `portal.js` forgot-password honesty + Account "Email" preferences (optional notices) | `assets/js/esign.js`, `assets/js/diy.js`, `assets/js/portal.js` | 13-01, 13-04 |
 | 4 | **13-07 Tax document notices** | `taxdocs.js` `notice()` through `emails.js` (subject words unchanged), `taxdocs-ui.js` sets the server link (`API.link`) so connected workspaces send through `POST /v1/messages`; hard bounce -> "notice came back" -> paper due date | `assets/js/taxdocs.js`, `assets/js/taxdocs-ui.js` | 13-04 |
-| 4 | **13-09 Console Emails page + Email sending setup** | `assets/js/emails-ui.js` (preview every kind at phone/desktop + text), Integrations "Email sending" (from address, DNS records, Check, status, "To be confirmed" until live), firm postal address brand field, nav entry | `assets/js/emails-ui.js` (new), `assets/js/integrations.js`, `assets/js/brand.js` (postal address field) [ASSUMED owner of brand settings - planner to confirm], one nav line in `console.js` (after 13-06 merged) | 13-01, 13-03, 13-06 |
+| 4 | **13-09 Console Emails page + Email sending setup** | `assets/js/emails-ui.js` (preview every kind at phone/desktop + text), Integrations "Email sending" (from address, DNS records, Check, status, "To be confirmed" until live), firm postal address brand field, nav entry | `assets/js/emails-ui.js` (new), `assets/js/integrations.js`, `assets/js/console.js` (the "Portal and brand" view `console-brand` for the postal address field, and one nav line; console.js:56, :65) - after 13-06 has merged. `assets/js/brand.js` is the colour engine with WCAG contrast math: reuse its formula, do not edit it | 13-01, 13-03, 13-06 |
 | 5 | **13-10 Proof and owner check** | browser checks `emails-preview.js`, `emails-honest.js`, gate lines and exact `GATE_SERVER_TESTS`, preview rebuild + phone walkthrough, owner checkpoint: AWS account + live sends to real inboxes (Gmail/Outlook/iCloud) + owner's iPhone check | `.planning/phases/13-email-overhaul/checks/*`, `.planning/checks/gate-reference.sh` (lines only) | all |
 
 Parallelism: wave 1 two plans; wave 2 two; wave 3 three; wave 4 two; wave 5 one. Each sized to about 100k tokens; 13-01 is the largest (every kind) and may be split into 13-01a (investor kinds) and 13-01b (sponsor/staff/notice kinds) if the planner measures it over budget - both in wave 1, same new file, so split by kind into `emails.js` + `emails-sponsor.js` only if needed.
 
 <!-- section 5 done -->
+
+## Standard Stack
+
+### Core
+| Component | Version | Purpose | Why |
+|-----------|---------|---------|-----|
+| Node.js built-ins (`node:net`, `node:tls`, `node:crypto`, `node:dns/promises`) | Node >= 18 declared; v22.23.4 installed here | SMTP send (existing), SigV4 HMAC, SNS signature check (`X509Certificate`, `crypto.verify`), DNS record checks | The server is zero-dependency by design; everything needed is built in |
+| Existing `server/lib/mail.mjs` SMTP client + MIME builder | in repo | the only send path | Tested (14 tests), STARTTLS/implicit TLS, header-injection safe |
+| `assets/js/emails.js` (new, UMD like `formd.js`) | in repo | all wording and layout | One renderer for browser and server |
+| `node --test` | built in | server tests | Existing runner (368 tests) |
+| Playwright (global) | installed at /opt/node22/lib/node_modules | browser checks | Existing check harness |
+
+### Outside service (not a package)
+| Service | Role | Default? |
+|---------|------|----------|
+| Amazon SES (SMTP endpoint + SES v2 API + SNS) | sending, domain identities, delivery events | **Default** (owner to confirm the account) |
+| Postmark | same | documented second adapter |
+| The sponsor's own SMTP | sending only, no events | kept (single-sponsor/self-hosted) |
+
+**Installation:** none. No npm package is added in this phase.
+
+## Package Legitimacy Audit
+
+No external package is installed by this phase (all code uses Node built-ins and in-repo modules). Audit not applicable. **Packages removed:** none. **Packages flagged:** none. If a planner proposes an email library (for example an MJML or SMTP package), it must go through the legitimacy gate first; this research recommends against it (the in-repo client and `compose()` already cover the need).
+
+## Architecture Patterns
+
+### System architecture
+
+```
+ Console (browser)                         Integration server                          Outside
+ ------------------                        ------------------                          -------
+ sponsor action ──► NS.emails.render ──┐
+ (invite, notice,     (same module)    │ preview / mailto / "simulated" + sent-log entry (no server)
+  tax notice, ...)                     │
+                                       └─► POST /v1/invitations | /v1/messages ──► screen free text (422 on TIN/bank)
+                                                                                    │
+                                                                emails.js render ◄──┘ (createRequire, same words)
+                                                                       │
+                                                  sender for workspace ? ready ──no──► outbox + reason to console
+                                                                       │yes
+                                                  suppressed address ? ──yes──► skip, log "suppressed"
+                                                                       │no
+                                                  buildMessage + smtpSend ───────────► provider SMTP (SES) ──► inbox
+                                                                       │                         │
+                                                  sealed sent log (link redacted)               │ bounce/complaint
+                                                                       ▲                         ▼
+                                                  POST /v1/mail/events ◄── adapter verifies signature (SNS)
+                                                                       │
+                                                  status -> investor row, invitations list, tax "notice came back"
+ Investor inbox ──► one-click unsubscribe (POST, signed token) ──► preferences honoured on next send
+```
+
+### Recommended structure
+```
+assets/js/emails.js          # every kind: subject, preheader, text, html; guard patterns; greeting; contrast; NS.emails.log
+assets/js/emails-ui.js       # console "Emails" page (preview every kind) + Email sending setup panel
+server/lib/mail.mjs          # transport (SMTP), MIME, createMailer(sender per workspace); builders become thin wrappers
+server/lib/maillog.mjs       # sealed sent log, suppression list
+server/lib/messages.mjs      # POST /v1/messages, unsubscribe route
+server/mailers/index.mjs     # adapter registry
+server/mailers/smtp.mjs      # generic: DNS guidance + checks, no events
+server/mailers/ses.mjs       # SES v2 identities (SigV4) + SNS events
+```
+
+### Pattern 1: one UMD renderer loaded on both sides
+**What:** `emails.js` touches nothing at load, exports `{ KINDS, render, guard, greeting, log }`; browser reads `window.CVPortal.emails`, server `createRequire(import.meta.url)(join(dir, 'emails.js'))`.
+**When:** every message.
+**Example (the in-repo precedent, verbatim):**
+```js
+// assets/js/formd.js (tail)
+const API = { LISTS, blank, prefill, validate, toXml, fromXml, snapshot };
+if (NS) NS.formD = API;
+if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
+// server/lib/filings.mjs:69-72
+const dir = assetsDir || fileURLToPath(new URL('../../assets/js/', import.meta.url));
+const require = createRequire(import.meta.url);
+formd = require(join(dir, 'formd.js'));
+```
+
+### Pattern 2: sensitive-data guard shared with help
+**Example (in-repo patterns, verbatim, server/lib/help.mjs:43-44):**
+```js
+/** Tax-number shapes (two-seven and three-two-four digits) and any run of 8 or more digits. */
+const NUMBERS = [/\b\d{2}-\d{7}\b/, /\b\d{3}[- ]?\d{2}[- ]?\d{4}\b/, /\d{8,}/];
+```
+Move these into `emails.js` (exported), add a password shape (`/\bpass(word|code)?\s*[:=]/i`), and use them to **refuse** sponsor free text (not silently strip it: the sponsor must know).
+
+### Pattern 3: adapter interface (mirrors `server/providers/`)
+```js
+// server/mailers/<id>.mjs  [ASSUMED shape - planner fixes the final names]
+export default {
+  id: 'ses',
+  configured(env) {},                 // true when its settings are present
+  async records(domain, env) {},      // [{ type: 'CNAME'|'TXT'|'MX', name, value, purpose }]
+  async status(domain, env) {},       // 'pending' | 'ready' | 'failed'
+  async events(req, rawBody, env) {}  // [{ messageId, type: 'delivered'|'bounced'|'complained', permanent, at }] or throws 401
+};
+```
+
+### Anti-patterns to avoid
+- **Two template sets** (today's root bug). Never add wording in invitations.js/coinvestor.js/console.js again; call `NS.emails`.
+- **Falling back to a platform domain** when the sponsor's domain is not ready: white-label leak and DMARC failure. Keep in outbox, say why.
+- **Open/click tracking or link rewriting**: vendor domain in the message.
+- **Attachments**: signed documents carry TINs. Portal links only.
+- **Emailing a hard-bounced address again**: hurts the shared sending reputation of every sponsor.
+- **Trusting an SNS post without signature check, or fetching a `SubscribeURL`/`SigningCertURL` on any host**: SSRF and spoofed bounces. Only `https://sns.<region>.amazonaws.com/` hosts.
+
+## Don't Hand-Roll
+
+| Problem | Don't build | Use instead | Why |
+|---------|-------------|-------------|-----|
+| Delivering mail to inboxes (IP reputation, retries, feedback loops) | your own MTA / direct-to-MX sending | an outside provider over SMTP (SES default) | Reputation, retries, ISP feedback loops are the provider's job |
+| SMTP client / MIME | a new library | the existing `mail.mjs` | Already built and tested (14 tests) |
+| Bounce parsing from DSN mails | parsing returned mail | provider events (SNS/webhook JSON) | DSN formats vary; providers normalise |
+| WCAG contrast | a new formula | the formula already in `assets/js/brand.js` ("Color math ... WCAG contrast") | Already in the product |
+| TIN/digit patterns | new regexes in each file | one export in `emails.js` from help.mjs's list | One definition, tested once |
+| Templates engine (MJML, Handlebars) | a template language | plain functions in `emails.js` like `compose()` | No dependency, escaping already right |
+
+**Key insight:** the hard parts of email are reputation, authentication and feedback, which belong to the provider and the sponsor's DNS; the product's job is truthful wording, one renderer, the right sender, and listening to bounces.
+
+## Common Pitfalls
+
+### Pitfall 1: preview drifts from the sent message again
+**What goes wrong:** a later plan adds wording in a UI file. **Avoid:** the parity check (4.2-6) in the gate. **Warning sign:** any string literal subject outside `emails.js`.
+
+### Pitfall 2: golden files updated blindly
+**What goes wrong:** an executor regenerates goldens to make a test pass and a wording regression ships. **Avoid:** goldens regenerate only with an explicit flag; SUMMARY must paste the golden diff.
+
+### Pitfall 3: SES sandbox mistaken for "working"
+**What goes wrong:** sends to verified test addresses succeed, real investors get nothing (sandbox: 200/day, verified recipients only). **Avoid:** the console shows "To be confirmed" until production access is granted and a send to an unverified address succeeds.
+
+### Pitfall 4: DKIM records hard-coded
+**What goes wrong:** SES DKIM hosted zones differ per region and identity; hard-coded CNAME targets fail. **Avoid:** build records from the API's returned tokens and `SigningHostedZone` [CITED: AWS docs excerpt].
+
+### Pitfall 5: the free-text guard blocks normal text
+**What goes wrong:** `/\d{8,}/` would also catch a long reference number a sponsor legitimately types. **Avoid:** refuse with a sentence that says what to remove ("Remove the long number: emails never carry account or tax numbers") and keep the pattern list identical to help.mjs so behaviour is predictable.
+
+### Pitfall 6: managed edition changed by accident
+**What goes wrong:** `console.js` notice preview is shared by both editions; switching it to `emails.js` changes managed output. **Avoid:** managed edition golden of C-04/C-05/notice preview compared with the base tree (status-math C-03 slice guard).
+
+### Pitfall 7: the no-server path makes a request
+**What goes wrong:** a "send" helper calls fetch with no server. **Avoid:** no-network check over every simulated path (4.2-8).
+
+### Pitfall 8: logo formats
+**What goes wrong:** SVG/WebP logos silently drop to text. **Avoid:** rasterise in the console to PNG before the invitation snapshot, or show "Your logo appears as your firm's name in emails" on the Emails page.
+
+## Code Examples
+
+The current shared layout to extend (verbatim signature, server/lib/mail.mjs:435-436):
+```js
+/** Shared layout: text and HTML from the same parts. parts: { greeting, paras, note, rows, button, after }. */
+function compose(firm, subject, parts) {
+```
+The current mailer call contract to keep (verbatim, server/lib/invitations.mjs:1194):
+```js
+const r = await mailer.send(Object.assign({ kind: kind === 'resend' ? 'invitation_resent' : 'invitation', invitationId: rec.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.investor.email, toName: snap.investor.contact }, msg));
+```
+The tax notice subject that must not change (verbatim, assets/js/taxdocs.js:28-29):
+```js
+// Rev. Proc. 2012-17 section 7.01: these words, in capital letters, on the notice (the subject line of an email).
+const NOTICE_SUBJECT = 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE';
+```
+
+## State of the Art
+
+| Old approach | Current approach | When changed | Impact |
+|--------------|------------------|--------------|--------|
+| Any authentication optional | Gmail: SPF or DKIM for all senders; SPF+DKIM+DMARC aligned for bulk | 2024, enforcement progressive [CITED: Google sender guidelines excerpt] | Sponsor domains must be authenticated |
+| Exchange Online SMTP basic auth | off by default for existing tenants end of Dec 2026; OAuth needed | revised Jan 2026 [CITED: Microsoft Tech Community excerpt] | "Send through your Microsoft 365 mailbox" stops working without XOAUTH2 |
+| SendGrid free plan | retired May 2025 | [CITED: third-party] | Not a $0 option |
+| SES flat $0.10/1,000 | plans (Essentials $0.16/1,000 default for new accounts), à la carte still selectable | 2026-07-21 [CITED: AWS what's-new excerpt] | Still cheapest |
+
+## Assumptions Log
+
+| # | Claim | Section | Risk if wrong |
+|---|-------|---------|---------------|
+| A1 | CAN-SPAM opt-out timing (10 business days) and 30-day mechanism life | 2.6 | Low: design honours opt-outs at once |
+| A2 | Invitations to a new offering may be "commercial" under CAN-SPAM; the rest transactional | 2.6 | Medium: counsel may classify differently; design supports both (unsubscribe only on flagged kinds) |
+| A3 | State anti-spam laws preempted except for falsity | 2.6 | Low |
+| A4 | Gmail one-click unsubscribe + 0.3% spam threshold for bulk senders | 2.7 | Low (sponsors rarely bulk) |
+| A5 | Email client behaviours (Outlook padding, `<style>` stripping, Gmail 102 KB clipping) | 2.4 | Low: checks cover rendering |
+| A6 | Postmark unlimited domains; ZeptoMail domain/webhook support; Mailgun per-domain SMTP; SMTP2GO paid price | 3.2 | Low: only affects the alternatives |
+| A7 | SES notifications carry the original Message-ID (`mail.commonHeaders.messageId`) for correlation | 3.3 | Medium: else store the SES message id from the SMTP `250 Ok <id>` reply (smtpSend already returns the reply text) |
+| A8 | Google Workspace 2,000/day SMTP limit | 3.2 | Low |
+| A9 | Adapter shape names in Pattern 3 | Architecture | None (planner decides) |
+| A10 | SES production access is granted for a platform sending on behalf of sponsors | 3.3 | Medium: if refused, Postmark adapter is the fallback ($15+/month) |
+| A11 | Sent-log retention default (see Open Question 7) | 2.8 | Low |
+
+## Open Questions (each with the default to use if the owner does not answer)
+
+1. **Which sending provider?** Default: **Amazon SES** on one platform account (pay per use, about $1-2/month at 40 sponsors). Build and test against fakes now; the owner creates the AWS account and requests production access at the phase's owner checkpoint; live email marked "To be confirmed" until then. Fallback if AWS refuses production access: Postmark adapter.
+2. **CAN-SPAM classification.** Default: treat invitations to a new offering (S-02 and new-investor invitations with no commitment) and custom notices the sponsor marks "offering news" as possibly commercial: postal address in the footer, one-click unsubscribe from offering invitations; all other messages transactional with no unsubscribe. Shown in the help guide as "To be confirmed with counsel".
+3. **Password reset and team invitation emails** (no server identity service exists; accounts.mjs is token-only). Default: templates and console previews now (EM-12), honest "simulated in this demo" toasts now (EM-13); real sending lands with the security step's sign-in accounts.
+4. **E-sign emails on the server.** Default: request/reminder/voided/completed as notices with a portal link (no per-envelope token links); the co-investor's own signing link stays the existing invitation `coSign` path.
+5. **Managed (Carrow & Vale) edition.** Default: unchanged output (its texts already say no email is sent); `emails.js` loads there but managed renders stay byte-identical (C-03 slice guard).
+6. **Firm postal address.** Default: new optional brand field; required only before a possibly-commercial message is sent (the server refuses those without it, with a sentence); printed in every footer when present.
+7. **Sent-log retention.** Default: kept while the investor/workspace exists, capped by a server setting `MAIL_LOG_DAYS` defaulting to 2,555 days (7 years) [ASSUMED common records period]; texts kept with personal links redacted.
+8. **Automatic investor reminders before a link expires.** Default: not built in phase 13 (the sponsor resends; fewer unsolicited emails); revisit after launch.
+9. **Investor confirmation email (EM-10).** Default: build it (one message; replaces a false promise).
+10. **Open/click tracking.** Default: off (white label; no value over the portal's own "opened" step).
+
+## Environment Availability
+
+| Dependency | Required by | Available | Version | Fallback |
+|------------|-------------|-----------|---------|----------|
+| Node.js | server, tests | yes | v22.23.4 | - |
+| Playwright (global) | browser checks | yes | /opt/node22/lib/node_modules/playwright | - |
+| Shared check queue | browser checks | yes | SCRATCH/exec-011/heavy.sh | - |
+| server/node_modules | server tests | link from /home/user/Hhhh/server/node_modules (SAVE-RULES 7) | - | - |
+| Amazon SES account | live sending, live domain records | **no** | - | Fakes for all automated tests; owner checkpoint; outbox meanwhile |
+| Outbound network to vendor/law sites | research | partial (ftc.gov, law.cornell.edu not reachable from this session) | - | Search excerpts; claims tagged |
+| Disk | builds/checks | 4.7 GB free | - | delete outputs after runs (AUTOPILOT) |
+
+**Missing with no fallback:** none for building and testing. **Missing with fallback:** the SES account (live proof only).
+
+## Security Domain
+
+`security_enforcement: true`, ASVS level 1.
+
+### Applicable ASVS categories
+| Category | Applies | Control |
+|----------|---------|---------|
+| V2 Authentication | yes (webhook, unsubscribe) | SNS signature verification; HMAC-signed unsubscribe tokens (`node:crypto`), constant-time compare (`safeEqual` in crypto.mjs) |
+| V3 Session | no | - |
+| V4 Access control | yes | sponsor token pins workspace (existing `pinned(auth)` pattern); sent log readable only by its workspace |
+| V5 Input validation | yes | header values via `oneLine`; HTML escaped; free-text TIN/bank guard (422); address validation `validAddress` |
+| V6 Cryptography | yes | SigV4 HMAC-SHA256; vault seal for the sent log (existing `vault.seal`); never hand-roll ciphers |
+| V7 Errors and logging | yes | credentials scrubbed (existing `scrub`), recipient addresses redacted (`redactAddresses`) |
+| V8 Data protection | yes | sent log sealed; personal links redacted; no attachments; no TIN/bank in any message |
+| V13 API | yes | webhook body size limit, method checks, rate limit on `/v1/messages` |
+
+### Known threat patterns
+| Pattern | STRIDE | Mitigation |
+|---------|--------|------------|
+| Spoofed bounce/complaint webhook | Spoofing/Tampering | Verify SNS signature; cert URL host must be `sns.<region>.amazonaws.com`; reject unsigned |
+| SSRF via `SubscribeURL`/`SigningCertURL` | Elevation | Fetch only exact allowed hosts over https |
+| Header injection via names/subjects | Tampering | Existing `oneLine` + encoded-words (tested) |
+| HTML/script injection via sponsor note | Tampering | `esc()` on every value (tested) |
+| Mail-bombing through `/v1/messages` | DoS | Per-workspace rate limit and recipient cap; only the workspace's own investors |
+| Unsubscribe token forgery / enumeration | Spoofing/Info disclosure | HMAC token over (workspace, investor, kind); same response for valid/invalid |
+| Phishing look-alike (links to other domains) | Spoofing | Only the portal link and `mailto:` support; no tracking redirects |
+| PII in logs | Info disclosure | Sealed log, redacted addresses in errors |
+
+## Sources
+
+### Primary (in-repo, read this session)
+- server/lib/mail.mjs (whole file), server/lib/invitations.mjs (77-102, 496-600, 800-860, 1100-1210), server/lib/filings.mjs (49, 69-85, 150-250), server/lib/help.mjs (38-52), server/lib/accounts.mjs (1-40), server/README.md (Email, Sponsor accounts), server/package.json, server/test/mail.test.mjs (216-236)
+- assets/js/invitations.js (276-330, 2425-2470, 2532-2626), coinvestor.js (86-113, 345, 410-420), console.js (905-918, 1020-1062, 1600-1630, 1715-1730, 2400-2415), data.js (305-384), operations.js (130-150, 600-625), esign.js (180-190, 684-734, 993, 1395-1450), taxdocs.js (20-40, 685-720), taxdocs-ui.js (205-225, 600-612, 640-713), portal.js (1266), diy.js (1-30, 140-160, 324-369), package.js (1-40), tenants.js (40-70), formd.js (head, tail), brand.js (head)
+- .planning/ROADMAP.md (Phase 13), .planning/AUTOPILOT.md, .planning/SAVE-RULES.md, .planning/phases/01.4-*/01.4-RESUME.md (lines 98-125, 166-170), .planning/config.json
+
+### Secondary (web search excerpts this session; vendor/official pages)
+- [uscode.house.gov 15 U.S.C. 7702](https://uscode.house.gov/us/usc/119-121/t15/s7702/), [eCFR 16 CFR 316.3](https://www.ecfr.gov/current/title-16/chapter-I/subchapter-C/part-316/section-316.3), [FDIC manual VIII-4](https://www.fdic.gov/consumer-compliance-examination-manual/viii-4-controlling-assault-non-solicited-pornography-and)
+- [Google sender guidelines](https://support.google.com/a/answer/81126), [Google sender FAQ](https://support.google.com/a/answer/14229414)
+- [Amazon SES pricing](https://aws.amazon.com/ses/pricing/), [SES pricing plans announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-ses-pricing-plans/), [SES quotas](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/quotas.html)
+- [Postmark pricing](https://postmarkapp.com/pricing), [Postmark Domains API](https://postmarkapp.com/developer/api/domains-api)
+- [Resend pricing](https://resend.com/pricing), [ZeptoMail pricing](https://www.zoho.com/zeptomail/pricing.html)
+- [Microsoft: SMTP AUTH basic auth timeline](https://techcommunity.microsoft.com/blog/exchange/updated-exchange-online-smtp-auth-basic-authentication-deprecation-timeline/4489835)
+
+### Tertiary (third-party summaries, LOW)
+- costbench.com, usecarly.com, automationatlas.io (SendGrid/Mailgun prices), dev.to and classmethod.jp (SES plan rates), sendlayer.com / emailvendorselection.com (SMTP2GO, Brevo, MailerSend free tiers), reply.io / nylas (Gmail SMTP app passwords)
+
+## Metadata
+
+**Confidence breakdown:**
+- Inventory and findings: HIGH - every builder and caller read this session; server test count measured (368).
+- Architecture (one renderer, per-sponsor sender, adapters): HIGH for fit with the codebase (precedents read); MEDIUM for SES adapter details (to be proven against fakes, then live).
+- Provider prices: MEDIUM/LOW - search excerpts; re-check vendor pages before the owner pays.
+- Law: MEDIUM for the CAN-SPAM transactional/commercial split (statute excerpts); LOW for timing details and state law (training); classification needs counsel.
+
+**Research date:** 2026-11-20
+**Valid until:** 2026-12-20 for prices and vendor terms; in-repo findings valid until the files change.
