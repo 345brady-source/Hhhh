@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The phase 8 gate: every step of .planning/checks/gate-reference.sh (the last passing gate) with the same expected last
+# The phase 8 gate: every step of .planning/checks/gate-reference.sh (the orchestrator adds a reference step here when it adds one there) (the last passing gate) with the same expected last
 # lines and counts, then every phase-8 gate check found in this folder. Later plans add a check by dropping a file here
 # whose first five lines hold "// GATE CHECK: <NAME>" and whose last line is "<NAME>: PASS (parts run: N)"; nobody edits
 # this script.
@@ -71,6 +71,18 @@ gate_run waysout $O/waysout.txt 'WAYS OUT (7)' "grep -qx 'WAYS OUT: PASS (parts 
 gate_run nonet $O/nonet.txt 'NO NETWORK (3)' "grep -qx 'NO NETWORK: PASS (parts run: 3)' $O/nonet.txt" -- heavy node $P/checks/no-network.js
 gate_run embed $O/embed.txt 'EMBED DATA (3)' "grep -qx 'EMBED DATA: PASS (files: 3)' $O/embed.txt" -- node $P/checks/embed-data.js --verify
 gate_run safari $O/safari.txt 'SAFARI FINISH (6)' "grep -qx 'SAFARI FINISH: PASS (parts run: 6)' $O/safari.txt" -- heavy node $P/checks/safari-finish.js
+gate_run bank $O/bank.txt 'BANK STEP TYPING (2)' "grep -qx 'BANK STEP TYPING: PASS (parts run: 2)' $O/bank.txt" -- heavy node $P/checks/bank-step-typing.js
+gate_run helpchat $O/helpchat.txt 'HELP CHAT (10)' "grep -qx 'HELP CHAT: PASS (parts run: 10)' $O/helpchat.txt" -- heavy node .planning/phases/07-help-chatbot/checks/help-chat.js
+gate_run realfirm $O/realfirm.txt 'REAL FIRM (9)' "grep -qx 'REAL FIRM: PASS (parts run: 9)' $O/realfirm.txt" -- heavy node $P/checks/real-firm.js
+gate_run sigdocs $O/sigdocs.txt 'SIGNING DOCUMENTS (8)' "grep -qx 'SIGNING DOCUMENTS: PASS (parts run: 8)' $O/sigdocs.txt" -- heavy node $P/checks/signing-documents.js
+gate_run phone $O/phone.txt 'PHONE LAYOUT (8)' "grep -qx 'PHONE LAYOUT: PASS (parts run: 8)' $O/phone.txt" -- heavy node $P/checks/phone-layout.js
+gate_run record $O/record.txt 'RECORD AND LOST AGREEMENT (7)' "grep -qx 'RECORD AND LOST AGREEMENT: PASS (parts run: 7)' $O/record.txt" -- heavy node $P/checks/record-and-lost-agreement.js
+gate_run edges $O/edges.txt 'SCREEN EDGES (5)' "grep -qx 'SCREEN EDGES: PASS (parts run: 5)' $O/edges.txt" -- heavy node $P/checks/screen-edges.js
+gate_run walk3 $O/walk3.txt 'WALK3 FIXES (9)' "grep -qx 'WALK3 FIXES: PASS (parts run: 9)' $O/walk3.txt" -- heavy node $P/checks/walk3-fixes.js
+gate_run titles $O/titles.txt 'TITLES AND EDITOR (4)' "grep -qx 'TITLES AND EDITOR: PASS (parts run: 4)' $O/titles.txt" -- heavy node $P/checks/titles-and-editor.js
+gate_run pressco $O/pressco.txt 'PRESS AND CO-INVESTOR (10)' "grep -qx 'PRESS AND CO-INVESTOR: PASS (parts run: 10)' $O/pressco.txt" -- heavy node $P/checks/press-and-co-investor.js
+gate_run coserver $O/coserver.txt 'CO-INVESTOR SERVER (5)' "grep -qx 'CO-INVESTOR SERVER: PASS (parts run: 5)' $O/coserver.txt" -- heavy node $P/checks/co-investor-server.js
+gate_run helpprev $O/helpprev.txt 'HELP PREVIEW (6)' "grep -qx 'HELP PREVIEW: PASS (parts run: 6)' $O/helpprev.txt" -- heavy node .planning/phases/07-help-chatbot/checks/help-preview.js
 
 # ---- every phase-8 gate check found (marker in the first five lines) ----
 P8_NAMES=()
