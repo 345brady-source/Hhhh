@@ -96,3 +96,24 @@ REPORTS FLOW: PASS (parts run: 6)
 VERIFY-2 EXIT=0
 ```
 Before it passed, one run (t2a) failed on two mistakes in my own check, not the screens: 'Move up' was asserted against a 'Distributions' table that this period does not have (no distribution was paid in Q4 2026, so the section shows a line and its 'Totals' table), and the PDF's offered name was read from the saved copy instead of the name the page offered. Both assertions were corrected (now 'Totals', and the exact offered name 'Kestrel_Bay_Quarterly_report_Q4_2026_KBC_1001.pdf').
+
+### Task 3 verify, first run (on 576b0f9, the merged tree with 12-05, 12-07 and 11-09): FAILED in the reference gate, stopped
+
+REPORTS FLOW on the merged tree: `REPORTS FLOW: PASS (parts run: 8)` (123 PASS lines, 0 FAIL, 0 kept).
+The full gate then failed one reference step:
+
+```
+GATE FAIL HELP PREVIEW (6)
+FAIL preview-sponsor the request carries the rules and the sponsor's guide, and not the investor's guide :: {"len":49958}
+FAIL preview-sponsor the rules and the sponsor's guide still go with it
+FAIL files help-data.js matches the server guide (make-help-data.mjs --verify passes) :: help-data.js: STALE (server guide 21883f5cfd44); run node .planning/tools/preview/make-help-data.mjs
+```
+Cause: my guide step changed the server guide, and the preview's copy of it (.planning/tools/preview/help-data.js) is built from it by make-help-data.mjs. Fixed by running that tool (ee5cc61). Every other reference step passed (27 ok), the server tests were `GATE ok   server tests 387 = base 387 + 0 declared`, and the ten phase 10 checks that finished passed (DIST FLOW, DIST RECORD, K1 SPLIT, SHIPPED LIBS, TAX 1099, TAX FORMS, TAX MATH, TAXDOCS FLOW, TAXDOCS MATH, TAXRECORD FLOW). I stopped the run during WITHHOLDING FLOW (its 'managed' part shows 'Target page, context or browser has been closed', which is my stop, not a failure), because the gate could no longer pass and its 7,000-second limit would have cut it off.
+
+### red-4 (a gap I found: Back threw away unsaved edits; Rule 2), on c1e7b2e
+
+```
+FAIL editor-phone Back with a change not saved stays in the editor and says 'Changes are not saved.' :: {"editor":false,"line":""}
+FAIL editor-phone ran to the end :: locator.scrollIntoViewIfNeeded: Timeout 30000ms exceeded.
+REPORTS FLOW: FAIL (parts run: 1) - editor-phone
+```
