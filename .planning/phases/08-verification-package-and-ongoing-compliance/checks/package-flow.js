@@ -12,8 +12,16 @@
 //             delivery arrives; the step reads "Verified" without a reload; the investor finishes; the invitation's
 //             names are screened through the package, one call per name, after the session; the console imports; its
 //             AML/KYC row shows the identity verified and no matches; the investor's browser never called a payment address
+//   refused   the provider refuses the session start (402): the step shows exactly "This check could not start. Please
+//             try again later." with no status number, "answered", "integration server", "Provider" or vendor word, and
+//             keeps it (not only a toast) until the next start; "Verify my identity" again works (a new session, then
+//             Verified); the package still reads paid (no credit, no second charge). A returned package (its payment
+//             refunded): a start shows "This check is not part of this invitation" and the firm's contact, the world
+//             records no session; reloading the page clears the line
+//   start-limit three accepted identity starts; the fourth shows "This check was already started." and the firm's
+//             contact as the investor's page holds it; the world holds exactly three sessions; nothing on screen holds 409
 // Every part ends with the leak scan of the investor's screens it saw (phase 6's leak check and frame.js's vendor scan).
-//   NODE_PATH=$(npm root -g) node package-flow.js [--only identity]
+//   NODE_PATH=$(npm root -g) node package-flow.js [--only identity,refused,start-limit]
 // The last line is "PACKAGE FLOW: PASS (parts run: N)" or "PACKAGE FLOW: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -45,7 +53,15 @@ Lib.describeShots([
 ]);
 
 const SECURE = 'A secure page opens in a new tab for this step.';
+const COULD_NOT_START = 'This check could not start. Please try again later.';
+const NOT_PART = 'This check is not part of this invitation';
+const LIMIT = 'This check was already started.';
+// What a refusal on the investor's screen never holds.
+const NEVER = ['502', '403', '409', 'answered', 'integration server', 'Provider'];
 const WHO = { first: 'Odalys', last: 'Vantongeren', email: 'odalys.vantongeren@example.net' };
+const WHO2 = { first: 'Teodor', last: 'Halvorsen', email: 'teodor.halvorsen@example.net' };
+const WHO3 = { first: 'Marisol', last: 'Achterberg', email: 'marisol.achterberg@example.net' };
+const WHO4 = { first: 'Ingrid', last: 'Nakashima', email: 'ingrid.nakashima@example.net' };
 
 /** The console on a sponsor account of the real server, wired to a fresh world. */
 async function boot(S, check) {
@@ -225,6 +241,25 @@ function noPayment(check, B) {
   check('the investor\'s browser made no call to a payment address', pay.length === 0, pay);
 }
 
+/** The firm's contact as the investor's page holds it (the workspace the invitation gave it), never a typed value. */
+const firmContact = (ip) => ip.evaluate(() => Object.assign({}, window.CVPortal.state.ws.tenant.support));
+/** The sentence and the firm's contact, as the step shows them for a refusal the investor cannot retry. */
+const withContact = (sentence, c) => `${sentence}${/[.!?]$/.test(sentence) ? '' : '.'} Contact ${c.team} at ${c.email}.`;
+/** A screen's text holds none of NEVER and no vendor. */
+function plain(check, label, text) {
+  const hits = NEVER.filter((x) => text.indexOf(x) >= 0);
+  check(`${label}: no status number, "answered", "integration server" or "Provider" on screen`, hits.length === 0, hits);
+  const v = F.vendorScan(text);
+  check(`${label}: no vendor on screen`, v.ok, v.hits);
+}
+/** The server's word on an invitation's package (account token): { tier, status } or null. */
+async function packageWord(C, serverId) {
+  const r = await C.srv.call('GET', '/v1/invitations?workspace=kestrel-bay', undefined, C.srv.token);
+  const rows = Array.isArray(r.body) ? r.body : (r.body && r.body.invitations) || [];
+  const row = rows.find((x) => x.id === serverId);
+  return row ? row.package || null : null;
+}
+
 const PARTS = {
   async identity({ check, S }) {
     const C = await boot(S, check);
@@ -298,6 +333,99 @@ const PARTS = {
       noPayment(check, B);
       worldClean(check, C);
       check('no script error in the console or on the investor\'s device', C.A.errors.length === 0 && B.errors.length === 0, { console: C.A.errors, investor: B.errors });
+      F.leakFree(check, 'every investor screen of this part', B.screens.join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+  async refused({ check, S }) {
+    const C = await boot(S, check);
+    try {
+      const it = await sendPackage(C, check, WHO2);
+      const { B, ip, wk } = await investor(C, it, WHO2, 'desktop');
+      check('the investor reaches the identity step', wk.reached && /Identity verification/.test(wk.at || ''), wk);
+      C.w.refuseNextSession(402);
+      const st = await startCheck(B, ip, false);
+      let pn = await idPanel(ip);
+      let text = await Lib.screenText(ip);
+      B.screens.push(text);
+      check('the provider was asked once and refused (402)', C.w.count('session') === 1 && C.w.sessions.length === 0, C.w.calls.map((c) => c.kind));
+      check(`the step shows exactly "${COULD_NOT_START}"`, pn.refusal.length === 1 && pn.refusal[0] === COULD_NOT_START, pn.refusal);
+      check('the tab that opened for the check is closed again (no page to show)', st.opened && st.address === '', st);
+      plain(check, 'the refused start', text);
+      await ip.waitForTimeout(4600);
+      pn = await idPanel(ip);
+      check('the line stays on the step once the toast has gone (not only a toast)', pn.refusal.length === 1 && pn.refusal[0] === COULD_NOT_START && (await ip.locator('#toasts .toast').count()) === 0, pn.refusal);
+      // Retrying works: a new session, then Verified.
+      const st2 = await startCheck(B, ip, false);
+      pn = await idPanel(ip);
+      B.screens.push(await Lib.screenText(ip));
+      check('"Verify my identity" again starts a new session, its page in a new tab', C.w.sessions.length === 1 && /^https:\/\//.test(st2.address), { sessions: C.w.sessions.length });
+      check('the next start clears the refusal line', pn.refusal.length === 0, pn.refusal);
+      const code = await C.w.deliver(C.srv.base, C.w.sessions[0], 'Approved');
+      const ok = await waitVerified(ip);
+      B.screens.push(await Lib.screenText(ip));
+      check('the signed result arrives and the step shows "Verified"', code === 200 && ok, { code, ok });
+      const word = await packageWord(C, it.serverId);
+      const bill = await C.srv.call('GET', '/v1/billing', undefined, C.srv.token);
+      check('the package still reads paid: no credit, no second charge', !!word && ['paid', 'started'].indexOf(word.status) >= 0 && C.w.count('charge') === 1 && !!bill.body && bill.body.creditCents === 0, { word, charges: C.w.count('charge'), credit: bill.body && bill.body.creditCents });
+
+      // A returned package: its payment refunded (as 08-14's delivery leaves the entitlement).
+      const it3 = await sendPackage(C, check, WHO3);
+      const rec = C.srv.server.store.get('invitations', it3.serverId);
+      const ent = rec && rec.package ? rec.package.entitlement : '';
+      if (ent) C.srv.server.store.put('entitlements', { id: ent, status: 'refunded' });
+      check('the second invitation\'s package is set to refunded on the server', !!ent && ((await packageWord(C, it3.serverId)) || {}).status === 'refunded');
+      const sessionsBefore = C.w.count('session');
+      const R = await investor(C, it3, WHO3, 'desktop');
+      check('the second investor reaches the identity step', R.wk.reached && /Identity verification/.test(R.wk.at || ''), R.wk);
+      const contact = await firmContact(R.ip);
+      await startCheck(R.B, R.ip, false);
+      pn = await idPanel(R.ip);
+      text = await Lib.screenText(R.ip);
+      R.B.screens.push(text);
+      check(`a start shows "${NOT_PART}" followed by the firm's contact as its settings hold it`, !!contact.team && !!contact.email && pn.refusal.length === 1 && pn.refusal[0] === withContact(NOT_PART, contact), { refusal: pn.refusal, contact });
+      check('the world records no session for the returned package', C.w.count('session') === sessionsBefore, C.w.calls.map((c) => c.kind));
+      plain(check, 'the returned package', text);
+      await R.ip.reload();
+      await R.ip.waitForSelector('.ivf-form h1', { timeout: 30000 });
+      await R.ip.waitForTimeout(500);
+      pn = await idPanel(R.ip);
+      R.B.screens.push(await Lib.screenText(R.ip));
+      check('reloading the page clears the line', pn.refusal.length === 0, pn);
+      noPayment(check, B);
+      noPayment(check, R.B);
+      worldClean(check, C);
+      check('no script error on either investor\'s device', B.errors.length === 0 && R.B.errors.length === 0, { a: B.errors, b: R.B.errors });
+      F.leakFree(check, 'every investor screen of this part', B.screens.concat(R.B.screens).join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+  async 'start-limit'({ check, S }) {
+    const C = await boot(S, check);
+    try {
+      const it = await sendPackage(C, check, WHO4);
+      const { B, ip, wk } = await investor(C, it, WHO4, 'desktop');
+      check('the investor reaches the identity step', wk.reached && /Identity verification/.test(wk.at || ''), wk);
+      const contact = await firmContact(ip);
+      for (let k = 1; k <= 3; k++) {
+        const st = await startCheck(B, ip, false);
+        const pn = await idPanel(ip);
+        B.screens.push(await Lib.screenText(ip));
+        check(`start ${k} is accepted: session ${k}, its page in a new tab, then "Start again"`, C.w.sessions.length === k && /^https:\/\//.test(st.address) && pn.refusal.length === 0 && pn.button === 'Start again', { sessions: C.w.sessions.length, button: pn.button, refusal: pn.refusal });
+      }
+      await startCheck(B, ip, false);
+      const pn = await idPanel(ip);
+      const text = await Lib.screenText(ip);
+      B.screens.push(text);
+      check(`the fourth start shows "${LIMIT}" followed by the firm's contact as the page holds it`, !!contact.team && !!contact.email && pn.refusal.length === 1 && pn.refusal[0] === withContact(LIMIT, contact), { refusal: pn.refusal, contact });
+      check('the world holds exactly three sessions', C.w.count('session') === 3 && C.w.sessions.length === 3, C.w.calls.map((c) => c.kind));
+      check('nothing on screen holds "409"', text.indexOf('409') < 0);
+      plain(check, 'the fourth start', text);
+      noPayment(check, B);
+      worldClean(check, C);
+      check('no script error on the investor\'s device', B.errors.length === 0, B.errors);
       F.leakFree(check, 'every investor screen of this part', B.screens.join('\n'));
     } finally {
       await C.close();
