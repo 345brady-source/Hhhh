@@ -433,10 +433,10 @@ const parts = {
     let out = '';
     let ok = false;
     try {
-      out = execFileSync(process.execPath, [path.join(PREVIEW_DIR, 'make-help-data.mjs'), '--verify'], { cwd: Lib.ROOT, encoding: 'utf8' });
+      out = execFileSync(process.execPath, [path.join(PREVIEW_DIR, 'make-help-data.mjs'), '--verify'], { cwd: Lib.ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
       ok = true;
     } catch (e) {
-      out = String((e && (e.stdout || e.message)) || e);
+      out = String((e && (e.stdout || e.stderr || e.message)) || e).split('\n').slice(0, 3).join(' ');
     }
     check('help-data.js matches the server guide (make-help-data.mjs --verify passes)', ok, out.trim());
     const src = fs.readFileSync(path.join(Lib.ROOT, 'assets', 'js', 'help.js'), 'utf8');
