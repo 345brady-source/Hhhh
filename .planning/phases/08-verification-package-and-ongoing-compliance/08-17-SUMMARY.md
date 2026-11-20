@@ -26,3 +26,22 @@ PASS package-used every screen of this part: no provider name or address (vendor
 PACKAGE CONSOLE: PASS (parts run: 1)
 VERIFY1_EXIT=0
 ```
+
+## Task 2 RED (red2.txt, against Task 1's commit b1c0ea8, 44 PASS / 7 FAIL)
+```
+FAIL credit-owed the single form: the box shown, switched off, unticked, with the server's price in its label :: {"present":true,"shown":true,"disabled":false,...}
+FAIL credit-owed the single form: its one line is the server's sentence word for word :: {"line":"","OWED":"A refunded payment left an amount owed. Settle it before adding packages."}
+FAIL credit-owed the single form: it cannot be ticked :: {... "disabled":false,"checked":true ...}
+FAIL credit-owed "Send invitation" still sends: without the package (no flag, no client id), the real server holds it with none :: {"one":{"ticked":true, ... "emailStatus":"failed","emailError":"A refunded payment left a...
+FAIL credit-owed the list form: the box shown, switched off, unticked, with the same sentence word for word :: {"shown":true,"disabled":false,...,"label":"Add verification package to 2 invitations ($38)","line":""}
+FAIL returned the toast is the server's sentence alone, word for word :: {"shown":[..., "Could not resend: This invitation's package was returned. Send a new invitation."], ...}
+FAIL returned the invitation's row shows the server's sentence alone, word for word :: {"line":[],"row":"... Sent Not opened yet ... In the server outbox Copy link Resend Cancel"}
+PACKAGE CONSOLE: FAIL (parts run: 3) - credit-owed, returned
+```
+An earlier red2 run (red2-first.txt) failed credit-owed's probe on a check bug (the direct POST lacked firm.name; the server answered 400). Fixed in the check, then red2.txt was run again; the lines above are from that second run.
+
+tier-mismatch already passed on Task 1's code (the row already shows `it.emailError`), so it is a guard. Mutation run (red2-mutation.txt: the row's Email column with `it.emailError` removed, reverted after):
+```
+FAIL tier-mismatch the invitation's row shows the server's sentence word for word and still reads "Not sent yet" :: Ottilie Varga ... Not sent yet The email could not be sent ... Could not send Resend Cancel
+PACKAGE CONSOLE: FAIL (parts run: 1) - tier-mismatch
+```
