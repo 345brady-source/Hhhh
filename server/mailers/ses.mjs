@@ -97,8 +97,8 @@ const defaultTransport = httpsTransport();
 
 function settings(env = {}) {
   const region = String(env.SES_REGION || '');
-  if (!REGION.test(region)) throw fail(500, 'SES_REGION is not set to a valid region on the integration server.');
-  if (!env.SES_ACCESS_KEY_ID || !env.SES_SECRET_ACCESS_KEY) throw fail(500, 'SES_ACCESS_KEY_ID and SES_SECRET_ACCESS_KEY must be set on the integration server.');
+  if (!REGION.test(region)) throw fail(500, 'The mail service settings on the integration server are missing or not valid (region).');
+  if (!env.SES_ACCESS_KEY_ID || !env.SES_SECRET_ACCESS_KEY) throw fail(500, 'The mail service settings on the integration server are missing or not valid (access keys).');
   return { region, host: env.SES_API_HOST || `email.${region}.amazonaws.com`, accessKeyId: String(env.SES_ACCESS_KEY_ID), secretAccessKey: String(env.SES_SECRET_ACCESS_KEY) };
 }
 
