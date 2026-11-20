@@ -46,3 +46,16 @@ PASS start-limit every investor screen of this part: no provider name or address
 PACKAGE FLOW: PASS (parts run: 3)
 ```
 verify-2 exit 0.
+
+## Task 3 (phone, preview, leak)
+The four new parts run against Task 2's code first ($O/red3-guards.txt): all four already pass, so they are guards, not RED:
+```
+PACKAGE FLOW: PASS (parts run: 4)
+PASS leak the price scan catches a planted "$19", a tier and an amount in cents, and passes a clean screen
+PASS leak scanned 18 investor screens, 5 investor emails, 6 GET /v1/invite replies, 8 console screens, 8 account replies (each above zero)
+PASS leak the new tabs' own addresses (6) are the one place outside the portal and the server: https, on neither origin
+PASS leak the typed taxpayer number is in no world record
+PASS leak the typed taxpayer number is in no server output (event log, anything this process printed)
+PASS leak the typed taxpayer number is in no file this part writes
+```
+As the plan says for this case, the leak part carries the planted-price proof first and is shown failing on a planted copy (PACKAGE_FLOW_PLANT=price adds "Your verification package ($19) is paid." to one investor screen; GATE_FRESH=1 so no kept result is reused), $O/red3.txt:
