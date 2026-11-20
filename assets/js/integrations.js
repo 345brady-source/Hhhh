@@ -469,13 +469,13 @@
       return true;
     });
   }
-  const names1 = (n) => `${n} name${n === 1 ? '' : 's'} screened`;
+  const nScreened = (n) => `${n} name${n === 1 ? '' : 's'} screened`;
   /** The count the change log gives: the server's when the screenings that report one agree, each one's when they differ. */
   function screenedText(names, results) {
     const told = results.filter((r) => Number.isInteger(r.screened));
-    if (!told.length) return names1(names.length);
-    if (told.every((r) => r.screened === told[0].screened)) return names1(told[0].screened);
-    return told.map((r) => `${r.via}: ${names1(r.screened)}`).join('; ');
+    if (!told.length) return nScreened(names.length);
+    if (told.every((r) => r.screened === told[0].screened)) return nScreened(told[0].screened);
+    return told.map((r) => `${r.via}: ${nScreened(r.screened)}`).join('; ');
   }
   /** Sanctions, PEP and adverse media screening of the investor, every joint owner and every beneficial owner, through every screening connection on. */
   async function screen(ws, inv, pre) {
