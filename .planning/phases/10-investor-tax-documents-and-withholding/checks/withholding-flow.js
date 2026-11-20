@@ -9,6 +9,25 @@
 //                   its reason); both buttons wait with one line; Confirm; the table shows $3,333.33, $800.00 withheld and
 //                   $2,533.33 net; the ACH file pays A-1002 253,333 cents, $9,200.00 in all; the recorded run stores the
 //                   withheld entry with the signed-in person and the net
+//   type            the offering's page: an admin sets Tax reporting (Not set and the four labels), saved with who and when
+//                   and logged; a team member sees the label and no select; not set, partnership and other propose nothing
+//   propose-desktop propose-phone at 1280x800; Remove frees the buttons with nothing withheld; a new total after Confirm
+//                   drops the decision; with A-1001's W-9 taken off file a second line of $1,200.00 with its own reason
+//   foreign         390x844: A-1003's row "W-8BEN valid until Dec 31, 2028"; $1,666.67 entered proposes $500.00 at 30%; a
+//                   rate of 10 makes it $166.67, the CPA's rate; more than the share is refused in one line; an expired
+//                   W-8 says so and since when; each line waits for Confirm
+//   stops           a partnership fund: the foreign row and Add tax withheld, never a backup line; the four kinds the
+//                   portal never proposes, each with its one stop sentence and the investor, an amount and a reason, no
+//                   rate; an entered line is confirmed like any other
+//   netfile         both lines of example B confirmed: the file pays 500,000, 253,333 and 116,667 cents ($8,700.00); the
+//                   record stores gross, each withheld entry in full and net; A-1002's Distributions page shows the
+//                   amount, the tax withheld and the amount paid, the headline gross with "Tax withheld $800.00" under it;
+//                   after A-1003's position changes, ACH file on that run builds the same three entries
+//   cancel          390x844: Cancel on a History row asks for a reason, then the row reads Cancelled, the investor no
+//                   longer sees the payment and the change log has it; a team member has no Cancel
+//   paper-w9        a W-9 with the last four and no signature record draws a 24% line; "W-9 signed on paper" (who, when,
+//                   logged, can be undone) takes it away; an uploaded W-9 with the last four offers the same; every sample
+//                   investor of every firm is run through the proposal with every offering set to notes (counts printed)
 //   NODE_PATH=$(npm root -g) node withholding-flow.js [--only part1,part2]
 // The last line is "WITHHOLDING FLOW: PASS (parts run: N)" or "WITHHOLDING FLOW: FAIL (parts run: N) - <failed parts>".
 //
@@ -193,8 +212,443 @@ async function proposeAt(size, ctx, more) {
   await A.context.close();
 }
 
+/* ---------- helpers of the later parts ---------- */
+const rowsOf = (fr, sel) => fr.evaluate((sel) => Array.from(document.querySelectorAll(sel)).map((tr) => tr.innerText.replace(/\s+/g, ' ').trim()), sel);
+const longDay = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+/** The change-log entries whose action is `action` (newest last). */
+const logged = (fr, action) => fr.evaluate((a) => (window.CVPortal.state.ws.audit || []).filter((e) => e.action === a).map((e) => ({ detail: e.detail, actor: e.actor || '' })), action);
+/** Press a draft's line by kind and investor; resolves to whether it was there. */
+async function decideLine(fr, kind, investor, how) {
+  const s = await screen(fr);
+  const x = s.rows.find((r) => r.kind === kind && r.investor === investor && r.confirm);
+  if (!x) return false;
+  await T.press(fr, `[data-action=wh-${how}][data-key="${x.key}"]`);
+  await fr.waitForTimeout(300);
+  return true;
+}
+/** A foreign investor's row: what it says and its two inputs. */
+const fxRow = (fr, id) =>
+  fr.evaluate((id) => {
+    const el = Array.from(document.querySelectorAll('#ds-tax [data-wh-fx]')).find((x) => x.getAttribute('data-wh-fx') === id);
+    if (!el) return null;
+    return { text: el.innerText.replace(/\s+/g, ' ').trim(), subject: !!el.querySelector('[data-wh-fx-subject]'), rate: !!el.querySelector('[data-wh-fx-rate]'), err: Array.from(el.querySelectorAll('.cs-error')).map((x) => x.innerText.trim()) };
+  }, id);
+/** Types into one of A foreign row's inputs and leaves it (the value is taken when the field is left). */
+async function fxType(fr, id, which, value) {
+  const sel = `#ds-tax [data-wh-fx-${which}="${id}"]`;
+  await fr.fill(sel, value);
+  await fr.dispatchEvent(sel, 'change');
+  await fr.waitForTimeout(400);
+}
+/** History rows of the Distributions page with their Cancel and ACH file buttons. */
+async function history(fr) {
+  if (await fr.locator('[data-action=hist-all]').count()) await T.press(fr, '[data-action=hist-all]');
+  return fr.evaluate(() => {
+    const p = Array.from(document.querySelectorAll('.cs-panel')).find((x) => (x.querySelector('.cs-panel-head h2') || {}).innerText === 'History');
+    return p ? Array.from(p.querySelectorAll('tbody tr')).map((tr) => ({ text: tr.innerText.replace(/\s+/g, ' ').trim(), cancel: (tr.querySelector('[data-action=dist-cancel]') || { dataset: {} }).dataset.id || '', file: (tr.querySelector('[data-action=dist-load]') || { dataset: {} }).dataset.id || '' })) : [];
+  });
+}
+/** Records example B as drafted now (no tax line decided), for the parts that need a run. */
+async function recordPlain(fr) {
+  await draftB(fr, '10000.00');
+  await fr.waitForFunction(() => !document.querySelector('[data-action=dist-record]').disabled, null, { timeout: 8000 }).catch(() => {});
+  return pressRecord(fr);
+}
+const setReporting = (fr, key) =>
+  T.ws(
+    fr,
+    (w, key) => {
+      const o = w.offerings.find((x) => x.id === 'p10-b');
+      if (key) o.tax = { reporting: key, setBy: 'Plan 10-07 check', setAt: '2026-11-19T15:00:00.000Z' };
+      else delete o.tax;
+      return true;
+    },
+    key
+  );
+
 const parts = {
-  'propose-phone': (ctx) => proposeAt('phone', ctx)
+  'propose-phone': (ctx) => proposeAt('phone', ctx),
+
+  'propose-desktop': (ctx) =>
+    proposeAt('desktop', ctx, async ({ check, fr }) => {
+      // Remove: nothing withheld and both buttons free
+      await draftB(fr, '10000.00');
+      check('a new draft proposes the line again', await decideLine(fr, 'backup', 'A-1002', 'remove'));
+      let s = await screen(fr);
+      check('after Remove the line reads Removed, both buttons can be pressed and nothing is withheld', /Removed/.test(s.block) && !proposed(s).length && !s.fileOff && !s.recOff && !s.alloc.some((t) => /\$800\.00/.test(t)) && (s.alloc.find((t) => /A-1002/.test(t)) || '').indexOf('$2,533.33') < 0, s);
+      // Confirm, then a new total: the decision goes and the buttons wait again
+      await draftB(fr, '10000.00');
+      await decideLine(fr, 'backup', 'A-1002', 'confirm');
+      await fr.fill('#ds-total', '9000.00');
+      await fr.waitForTimeout(400);
+      s = await screen(fr);
+      const p = proposed(s);
+      check('a new total after Confirm drops the decision: a line of $720.00 (24% of $3,000.00) waits and both buttons wait', p.length === 1 && p[0].investor === 'A-1002' && /\$720\.00/.test(p[0].text) && s.fileOff && s.recOff && s.why.some((x) => /waiting/i.test(x)), s);
+      // A-1001's W-9 taken off file: a second line with its own reason
+      await T.ws(fr, (w) => {
+        const i = w.investors.find((x) => x.id === 'A-1001');
+        i.taxForm = '';
+        delete i.taxCert;
+        return true;
+      });
+      await draftB(fr, '10000.00');
+      s = await screen(fr);
+      const a = proposed(s).find((r) => r.investor === 'A-1001') || { text: '' };
+      check('with A-1001’s W-9 taken off file a second line is proposed: $1,200.00 for A-1001, its reason no tax form on file', proposed(s).length === 2 && /\$1,200\.00/.test(a.text) && /no tax form is on file/.test(a.text) && !/item 2/.test(a.text), s.rows);
+    }),
+
+  async type({ check, S }) {
+    const { A, fr } = await open(S, 'desktop');
+    await T.proveRefused(check, A, fr);
+    await T.sample(fr, { role: 'admin' });
+    await T.ws(fr, seedExampleB, { reporting: '' });
+    await go(fr, 'console-offering-p10-b', '.cs-split-main');
+    const field = await fr.evaluate(() => {
+      const el = document.getElementById('of-tax-reporting');
+      return el ? { value: el.value, options: Array.from(el.options).map((o) => o.text.trim()) } : null;
+    });
+    const labels = await fr.evaluate(() => Object.keys(window.CVPortal.withholding.REPORTING).map((k) => window.CVPortal.withholding.REPORTING[k].label));
+    check('an admin sees Tax reporting with Not set and the four labels', !!field && field.value === '' && J(field.options) === J(['Not set'].concat(labels)), { field, labels });
+    if (field) {
+      await fr.selectOption('#of-tax-reporting', 'notes');
+      await fr.waitForTimeout(400);
+    }
+    const saved = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const o = NS.state.ws.offerings.find((x) => x.id === 'p10-b');
+      const key = Object.keys(localStorage).find((k) => /ws:kestrel-bay$/.test(k)) || '';
+      const s = JSON.parse(localStorage.getItem(key) || 'null');
+      return { tax: o.tax || null, actor: NS.app.actor(), stored: s && (s.offerings.find((x) => x.id === 'p10-b') || {}).tax };
+    });
+    check('choosing Notes saves it with who and when', !!saved.tax && saved.tax.reporting === 'notes' && saved.tax.setBy === saved.actor && /^2026-11-19T/.test(saved.tax.setAt || '') && !!saved.stored && saved.stored.reporting === 'notes', saved);
+    const log = await logged(fr, 'Tax reporting type set');
+    check('and writes one change-log entry', log.length === 1 && /Notes: Form 1099-INT/.test(log[0].detail) && log[0].actor === saved.actor, log);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    // a team member: the label, no select
+    await T.sample(fr, { role: 'team' });
+    await go(fr, 'console-offering-p10-b', '.cs-split-main');
+    const team = await fr.evaluate(() => ({ select: !!document.getElementById('of-tax-reporting'), text: document.querySelector('.cs-split-main').innerText }));
+    check('a team member sees the chosen label and no select', !team.select && /Tax reporting/.test(team.text) && /Notes: Form 1099-INT/.test(team.text), { select: team.select });
+    await T.wayOut(check, fr);
+    // not set, partnership, other: nothing proposed for the same draft
+    await T.sample(fr, { role: 'admin' });
+    for (const key of ['', 'partnership', 'other']) {
+      await setReporting(fr, key);
+      await draftB(fr, '10000.00');
+      const s = await screen(fr);
+      check(`with the fund ${key ? `set to ${key}` : 'not set'} no backup line is proposed and the buttons do not wait`, !s.rows.some((r) => r.kind === 'backup') && !s.recOff, s.rows);
+    }
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+
+  async foreign({ check, S }) {
+    const { A, fr } = await open(S, 'phone');
+    await T.proveRefused(check, A, fr);
+    await T.sample(fr, { role: 'admin' });
+    await T.ws(fr, seedExampleB, { reporting: 'notes' });
+    await draftB(fr, '10000.00');
+    let row = await fxRow(fr, 'A-1003');
+    check('A-1003’s row says "W-8BEN valid until Dec 31, 2028" and has the amount subject to withholding and the CPA’s rate', !!row && /W-8BEN valid until Dec 31, 2028/.test(row.text) && row.subject && row.rate && /Amount subject to withholding/.test(row.text) && /Rate from your CPA/.test(row.text), row);
+    check('nothing is withheld from A-1003 before an amount is entered', !(await screen(fr)).rows.some((r) => r.investor === 'A-1003'));
+    await fxType(fr, 'A-1003', 'subject', '1666.67');
+    let s = await screen(fr);
+    let f = proposed(s, 'foreign');
+    check('$1,666.67 entered proposes $500.00 at 30% for A-1003', f.length === 1 && f[0].investor === 'A-1003' && /\b30%/.test(f[0].text) && /\$500\.00/.test(f[0].text) && !/rate from your CPA/.test(f[0].text), s.rows);
+    check('the line waits for Confirm and so do both buttons', s.fileOff && s.recOff, s);
+    await fxType(fr, 'A-1003', 'rate', '10');
+    s = await screen(fr);
+    f = proposed(s, 'foreign');
+    check('a rate of 10 entered makes it $166.67, marked as the CPA’s rate', f.length === 1 && /\b10%/.test(f[0].text) && /\$166\.67/.test(f[0].text) && /rate from your CPA/.test(f[0].text), s.rows);
+    await fxType(fr, 'A-1003', 'rate', '');
+    await fxType(fr, 'A-1003', 'subject', '2000.00');
+    row = await fxRow(fr, 'A-1003');
+    s = await screen(fr);
+    check('an amount above the investor’s share is refused with one line, and no line is proposed', !!row && row.err.length === 1 && /more than the payment/.test(row.err[0]) && !proposed(s, 'foreign').length, row);
+    await fxType(fr, 'A-1003', 'subject', '1666.67');
+    await A.page.screenshot({ path: path.join(OUT, 'phone-foreign.png') });
+    check('Confirm on the 30% line', await decideLine(fr, 'foreign', 'A-1003', 'confirm'));
+    s = await screen(fr);
+    check('with the backup line still undecided both buttons wait', s.fileOff && s.recOff && proposed(s).length === 1, s.rows);
+    await decideLine(fr, 'backup', 'A-1002', 'confirm');
+    s = await screen(fr);
+    const r3 = s.alloc.find((t) => /A-1003/.test(t)) || '';
+    check('with both confirmed the buttons are free and A-1003 shows $500.00 withheld and $1,166.67 net', !s.fileOff && !s.recOff && r3.indexOf('$500.00') >= 0 && r3.indexOf('$1,166.67') >= 0, { r3, s });
+    // the W-8 dated so that it has expired
+    await T.ws(fr, (w) => {
+      w.investors.find((x) => x.id === 'A-1003').taxCert.validUntil = '2025-12-31';
+      return true;
+    });
+    await draftB(fr, '10000.00');
+    row = await fxRow(fr, 'A-1003');
+    check('with the W-8 expired the row says expired and on what date', !!row && /W-8BEN expired/.test(row.text) && /Dec 31, 2025/.test(row.text) && !/valid until/.test(row.text), row);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+
+  async stops({ check, S }) {
+    const { A, fr } = await open(S, 'desktop');
+    await T.proveRefused(check, A, fr);
+    await T.sample(fr, { role: 'admin' });
+    await T.ws(fr, seedExampleB, { reporting: 'partnership' });
+    await draftB(fr, '10000.00');
+    let s = await screen(fr);
+    check('a partnership fund: no backup line even for A-1002', !s.rows.some((r) => r.kind === 'backup'), s.rows);
+    check('the block still has A-1003’s foreign row and Add tax withheld', !!(await fxRow(fr, 'A-1003')) && (await fr.locator('#ds-tax [data-action=wh-add-open]').count()) === 1);
+    await T.press(fr, '#ds-tax [data-action=wh-add-open]');
+    await fr.waitForSelector('#wh-add-kind');
+    const kinds = await fr.evaluate(() => {
+      const WH = window.CVPortal.withholding;
+      const sel = document.getElementById('wh-add-kind');
+      return { options: Array.from(sel.options).filter((o) => o.value).map((o) => [o.value, o.text.trim()]), want: ['partnership', 'real-property', 'fatca', 'state'].map((k) => [k, WH.KINDS[k].label]) };
+    });
+    check('Add tax withheld offers exactly the four kinds the portal never proposes', J(kinds.options) === J(kinds.want), kinds);
+    for (const [k] of kinds.want) {
+      await fr.selectOption('#wh-add-kind', k);
+      await fr.waitForTimeout(300);
+      const form = await fr.evaluate((k) => {
+        const box = document.querySelector('#ds-tax .wh-add');
+        const stops = box ? Array.from(box.querySelectorAll('.tx-stop')).map((x) => x.innerText.trim()) : [];
+        const labels = box ? Array.from(box.querySelectorAll('.cs-field > span:first-child')).map((x) => x.innerText.trim()) : [];
+        return { stops, want: window.CVPortal.withholding.STOPS[k], labels, investor: !!document.getElementById('wh-add-investor'), amount: !!document.getElementById('wh-add-amount'), why: !!document.getElementById('wh-add-why') };
+      }, k);
+      check(`${k}: its one stop sentence, the investor, an amount and a reason, and no rate`, form.stops.length === 1 && form.stops[0] === form.want && form.investor && form.amount && form.why && !form.labels.some((l) => /rate/i.test(l)), form);
+    }
+    await fr.selectOption('#wh-add-kind', 'state');
+    await fr.waitForTimeout(300);
+    await fr.selectOption('#wh-add-investor', 'A-1001');
+    await fr.fill('#wh-add-amount', '150.00');
+    await T.press(fr, '#ds-tax [data-action=wh-add]');
+    await fr.waitForTimeout(300);
+    const err = await fr.evaluate(() => Array.from(document.querySelectorAll('#ds-tax .wh-add .cs-error')).map((x) => x.innerText.trim()));
+    check('without a reason the line is refused in one line', err.length === 1 && /reason/i.test(err[0]) && !(await screen(fr)).rows.some((r) => r.kind === 'state'), err);
+    await fr.fill('#wh-add-why', 'State withholding worked out by the CPA');
+    await T.press(fr, '#ds-tax [data-action=wh-add]');
+    await fr.waitForTimeout(300);
+    s = await screen(fr);
+    const st = proposed(s, 'state');
+    check('the entered line is listed for A-1001 at $150.00, entered, waiting for Confirm with both buttons waiting', st.length === 1 && st[0].investor === 'A-1001' && /\$150\.00/.test(st[0].text) && /State withholding/.test(st[0].text) && !/%/.test(st[0].text) && s.fileOff && s.recOff, s.rows);
+    await A.page.screenshot({ path: path.join(OUT, 'desktop-stops.png') });
+    await decideLine(fr, 'state', 'A-1001', 'confirm');
+    s = await screen(fr);
+    const r1 = s.alloc.find((t) => /A-1001/.test(t)) || '';
+    check('confirmed, it is withheld like any other: A-1001 $150.00 withheld, $4,850.00 net, both buttons free', r1.indexOf('$150.00') >= 0 && r1.indexOf('$4,850.00') >= 0 && !s.recOff, { r1, s });
+    const r = await pressRecord(fr);
+    const w = (lineOf(r.run, 'A-1001') || { withheld: [] }).withheld[0] || {};
+    check('the record stores it: state, 15,000 cents, entered, no rate, the reason, who', w.kind === 'state' && w.cents === 15000 && w.source === 'entered' && w.ratePct === null && /worked out by the CPA/.test(w.why) && w.confirmedBy === r.actor, w);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+
+  async netfile({ check, S }) {
+    const { A, fr } = await open(S, 'desktop');
+    await T.proveRefused(check, A, fr);
+    await T.sample(fr, { role: 'admin' });
+    await T.ws(fr, seedExampleB, { reporting: 'notes' });
+    await draftB(fr, '10000.00');
+    await decideLine(fr, 'backup', 'A-1002', 'confirm');
+    await fxType(fr, 'A-1003', 'subject', '1666.67');
+    await decideLine(fr, 'foreign', 'A-1003', 'confirm');
+    await T.press(fr, '[data-action=nacha-build]');
+    await fr.waitForFunction(() => !!(window.CVPortal.state.ui.dist && window.CVPortal.state.ui.dist.file), null, { timeout: 10000 }).catch(() => {});
+    const f = await fileOf(fr);
+    check('the ACH file’s entries are 500,000, 253,333 and 116,667 cents', !!f && J(['A-1001', 'A-1002', 'A-1003'].map((id) => f.entries[id])) === J([500000, 253333, 116667]), f && f.entries);
+    check('its total credits are $8,700.00', !!f && f.credit === 870000 && f.shown === '$8,700.00', f && { credit: f.credit, shown: f.shown });
+    const r = await pressRecord(fr);
+    const L = (id) => lineOf(r.run, id) || { withheld: [] };
+    const full = (w) => !!w && ['kind', 'cents', 'basisCents', 'ratePct', 'source', 'why', 'confirmedBy', 'confirmedAt'].every((k) => k in w) && w.confirmedBy === r.actor && /^2026-11-19T/.test(w.confirmedAt) && !!w.why;
+    const b = L('A-1002').withheld[0];
+    const x = L('A-1003').withheld[0];
+    check('the record stores gross, withheld and net for each investor (500,000; 333,333 less 80,000; 166,667 less 50,000)', J(['A-1001', 'A-1002', 'A-1003'].map((id) => [L(id).grossCents, L(id).withheld.reduce((a, w) => a + w.cents, 0), L(id).netCents])) === J([[500000, 0, 500000], [333333, 80000, 253333], [166667, 50000, 116667]]), r.run && r.run.lines);
+    check('each withheld entry holds kind, cents, basis, rate, source, reason, who and when', full(b) && b.kind === 'backup' && b.basisCents === 333333 && b.ratePct === 24 && b.source === 'rule' && full(x) && x.kind === 'foreign' && x.basisCents === 166667 && x.ratePct === 30 && x.source === 'rule', { b, x });
+    // A-1002 on their Distributions page
+    await T.sample(fr, { role: 'investor', investor: 'A-1002' });
+    await go(fr, 'distributions', '.tbl');
+    const rows = await rowsOf(fr, '.tbl tbody tr');
+    const mine = rows.find((t) => t.indexOf(longDay(TODAY)) >= 0) || '';
+    check('A-1002’s Distributions page shows $3,333.33, Tax withheld $800.00 and Amount paid $2,533.33', mine.indexOf('$3,333.33') >= 0 && /Tax withheld \$800\.00/.test(mine) && /Amount paid \$2,533\.33/.test(mine), mine || rows);
+    const head = await fr.evaluate(() => {
+      const dt = Array.from(document.querySelectorAll('.figs dt')).find((x) => x.innerText.trim() === 'Total received');
+      const fig = dt && dt.parentElement;
+      return fig ? { value: fig.querySelector('dd').innerText.trim(), under: Array.from(fig.querySelectorAll('span')).map((x) => x.innerText.trim()) } : null;
+    });
+    check('the headline stays gross ($3,333.33) with one line under it, "Tax withheld $800.00"', !!head && head.value === '$3,333.33' && head.under.filter((t) => /^Tax withheld \$800\.00$/.test(t)).length === 1, head);
+    await A.page.screenshot({ path: path.join(OUT, 'desktop-investor.png') });
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    // A-1003's position changes; ACH file on that run pays the stored nets
+    await T.sample(fr, { role: 'admin' });
+    await T.ws(fr, (w, a, NS) => {
+      w.investors.find((i) => i.id === 'A-1003').positions[0].amount = 200000;
+      NS.clearCaches();
+      return true;
+    });
+    await go(fr, 'console-distributions', '[data-action=dist-record]');
+    const h = await history(fr);
+    const mineRow = h.find((x) => r.run && x.file === r.run.id);
+    if (mineRow) await T.press(fr, `[data-action=dist-load][data-id="${r.run.id}"]`);
+    await fr.waitForFunction(() => !!(window.CVPortal.state.ui.dist && window.CVPortal.state.ui.dist.file), null, { timeout: 10000 }).catch(() => {});
+    const g = await fileOf(fr);
+    check('after A-1003’s position is edited, ACH file on that run builds the same three entries', !!g && J(['A-1001', 'A-1002', 'A-1003'].map((id) => g.entries[id])) === J([500000, 253333, 116667]) && g.credit === 870000, g);
+    await T.wayOut(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+
+  async cancel({ check, S }) {
+    const { A, fr } = await open(S, 'phone');
+    await T.proveRefused(check, A, fr);
+    await T.sample(fr, { role: 'admin' });
+    await T.ws(fr, seedExampleB, { reporting: '' });
+    const r = await recordPlain(fr);
+    check('a distribution of example B is recorded', r.added === 1 && !!r.run, { added: r.added, said: r.said });
+    if (!r.run) return A.context.close();
+    let h = (await history(fr)).find((x) => x.file === r.run.id);
+    check('an admin has Cancel on its History row', !!h && h.cancel === r.run.id, h);
+    if (h && h.cancel) await T.press(fr, `[data-action=dist-cancel][data-id="${r.run.id}"]`);
+    await fr.waitForSelector('#dist-cancel-why', { timeout: 5000 }).catch(() => {});
+    const asked = await fr.evaluate(() => !!document.getElementById('dist-cancel-why') && !!document.querySelector('#dlg[open]'));
+    check('Cancel asks for a reason in a dialog', asked);
+    if (asked) {
+      await T.press(fr, '[data-action=dist-cancel-go]');
+      await fr.waitForTimeout(300);
+      const err = await fr.evaluate(() => Array.from(document.querySelectorAll('#dlg .cs-error')).map((x) => x.innerText.trim()));
+      const still = await fr.evaluate((id) => !window.CVPortal.state.ws.runs.find((x) => x.id === id).cancelled, r.run.id);
+      check('without a reason nothing is cancelled and one line says a reason is needed', still && err.length === 1 && /reason/i.test(err[0]), err);
+      await fr.fill('#dist-cancel-why', 'Recorded by mistake');
+      await T.press(fr, '[data-action=dist-cancel-go]');
+      await fr.waitForTimeout(500);
+    }
+    const run = await fr.evaluate((id) => {
+      const NS = window.CVPortal;
+      return { c: NS.state.ws.runs.find((x) => x.id === id).cancelled || null, actor: NS.app.actor() };
+    }, r.run.id);
+    check('the run is cancelled with the reason and the signed-in person', !!run.c && run.c.why === 'Recorded by mistake' && run.c.by === run.actor, run);
+    h = (await history(fr)).find((x) => x.text.indexOf('Example Fund B') >= 0);
+    check('its History row reads Cancelled, with no Cancel and no ACH file', !!h && /\bCancelled\b/.test(h.text) && !h.cancel && !h.file, h);
+    const log = await logged(fr, 'Distribution cancelled');
+    check('the change log has the entry with the reason', log.length === 1 && /Recorded by mistake/.test(log[0].detail) && log[0].actor === run.actor, log);
+    await A.page.screenshot({ path: path.join(OUT, 'phone-cancelled.png') });
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.sample(fr, { role: 'investor', investor: 'A-1001' });
+    await go(fr, 'distributions', '.cs-main, main, .tbl, .figs');
+    const rows = await rowsOf(fr, '.tbl tbody tr');
+    check('the investor no longer sees that payment', !rows.some((t) => t.indexOf(longDay(TODAY)) >= 0 && t.indexOf('$5,000.00') >= 0), rows);
+    // a team member: no Cancel on any row
+    await T.sample(fr, { role: 'team' });
+    await go(fr, 'console-distributions', '[data-action=dist-record]');
+    h = await history(fr);
+    check('a team member sees no Cancel on any History row', h.length > 0 && !h.some((x) => x.cancel), h.slice(0, 3));
+    await T.wayOut(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+
+  async 'paper-w9'({ check, S }) {
+    const { A, fr } = await open(S, 'desktop');
+    await T.proveRefused(check, A, fr);
+    await T.sample(fr, { role: 'admin' });
+    await T.ws(fr, seedExampleB, { reporting: 'notes' });
+    // A-1001: a W-9 and the last four on record, no signature record (as an investor added in the console)
+    await T.ws(fr, (w) => {
+      const i = w.investors.find((x) => x.id === 'A-1001');
+      i.taxForm = 'W-9';
+      i.tinLast4 = '0101';
+      delete i.taxCert;
+      return true;
+    });
+    await draftB(fr, '10000.00');
+    let s = await screen(fr);
+    const a = proposed(s).find((r) => r.investor === 'A-1001') || { text: '' };
+    check('a W-9 with the last four and no signature record draws a 24% line ($1,200.00)', /\b24%/.test(a.text) && /\$1,200\.00/.test(a.text) && /no record of the W-9/.test(a.text), s.rows);
+    await go(fr, 'console-investors', 'table');
+    const btn = '[data-action=wh-paper][data-id="A-1001"]';
+    check('the investor’s tax record offers "W-9 signed on paper"', (await fr.locator(btn).count()) === 1 && /W-9 signed on paper/.test(await fr.locator(btn).innerText()));
+    if (await fr.locator(btn).count()) await T.press(fr, btn);
+    await fr.waitForTimeout(400);
+    const rec = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const i = NS.state.ws.investors.find((x) => x.id === 'A-1001');
+      return { cert: i.taxCert || null, actor: NS.app.actor() };
+    });
+    check('it records the W-9 as signed on paper, with who and when', !!rec.cert && rec.cert.signed === true && rec.cert.source === 'paper' && !!rec.cert.paper && rec.cert.paper.by === rec.actor && /^2026-11-19T/.test(rec.cert.paper.at || ''), rec);
+    let log = await logged(fr, 'W-9 recorded as signed on paper');
+    check('the change log has the entry', log.length === 1 && /A-1001/.test(log[0].detail) && log[0].actor === rec.actor, log);
+    const line = await fr.evaluate(() => {
+      const tr = Array.from(document.querySelectorAll('table tbody tr')).find((x) => x.innerText.indexOf('Example investor A-1001') >= 0);
+      return tr ? tr.innerText.replace(/\s+/g, ' ') : '';
+    });
+    check('the row says the W-9 was signed on paper and offers Undo', /W-9 signed on paper/.test(line) && (await fr.locator('[data-action=wh-paper-undo][data-id="A-1001"]').count()) === 1, line);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await draftB(fr, '10000.00');
+    s = await screen(fr);
+    check('after "W-9 signed on paper" A-1001 draws no line', !s.rows.some((r) => r.investor === 'A-1001'), s.rows);
+    // changeable: undo brings the line back
+    await go(fr, 'console-investors', 'table');
+    if (await fr.locator('[data-action=wh-paper-undo][data-id="A-1001"]').count()) await T.press(fr, '[data-action=wh-paper-undo][data-id="A-1001"]');
+    await fr.waitForTimeout(400);
+    log = await logged(fr, 'W-9 paper signature removed');
+    await draftB(fr, '10000.00');
+    s = await screen(fr);
+    check('Undo takes the record away (logged) and the 24% line is proposed again', log.length === 1 && proposed(s).some((r) => r.investor === 'A-1001'), { log, rows: s.rows });
+    // an uploaded completed W-9 that carries the last four offers the same action
+    await T.ws(fr, (w) => {
+      const i = w.investors.find((x) => x.id === 'A-1001');
+      i.taxCert = { form: 'W-9', uploaded: true, fileId: 'tax-A-1001-abc', fileName: 'w9.pdf', at: '2026-10-01T15:00:00.000Z' };
+      return true;
+    });
+    await go(fr, 'console-investors', 'table');
+    check('an uploaded completed W-9 with the last four offers "W-9 signed on paper" too', (await fr.locator(btn).count()) === 1);
+    await T.wayOut(check, fr);
+    // quiet is read here: switching to the other sample firms below loads each firm's own typefaces from the font host
+    await T.quiet(check, A, fr);
+    // every sample investor of every firm, every offering set to notes
+    const counts = await fr.evaluate(async (today) => {
+      const NS = window.CVPortal;
+      const out = [];
+      const back = NS.state.clientId;
+      for (const id of ['kestrel-bay', 'ashwell-ridge', 'greywater', 'pellbrook']) {
+        try {
+          NS.app.setClient(id, 'console');
+        } catch (e) {
+          out.push({ id, err: String(e.message || e) });
+          continue;
+        }
+        const w = NS.state.ws;
+        if (!w || w.tenant.id !== id) {
+          out.push({ id, err: 'not loaded' });
+          continue;
+        }
+        const sampleInv = w.investors.filter((i) => !/^A-100\d$/.test(i.id));
+        const drew = new Set();
+        w.offerings.forEach((o) => {
+          const notes = Object.assign({}, o, { tax: { reporting: 'notes' } });
+          const lines = sampleInv.filter((i) => (i.positions || []).some((p) => p.offeringId === o.id)).map((i) => ({ investorId: i.id, grossCents: 100000 }));
+          NS.withholding.propose(w, notes, lines, { date: today }).forEach((d) => drew.add(d.investorId));
+        });
+        const withW9 = Array.from(drew).filter((x) => {
+          const i = w.investors.find((y) => y.id === x);
+          return i.taxForm === 'W-9' && /^\d{4}$/.test(String((i.taxCert && i.taxCert.tinLast4) || i.tinLast4 || ''));
+        });
+        out.push({ id, investors: sampleInv.length, drew: drew.size, withW9: withW9.length, noForm: Array.from(drew).filter((x) => !w.investors.find((y) => y.id === x).taxForm).length });
+      }
+      NS.app.setClient(back, 'console');
+      return out;
+    }, TODAY);
+    counts.forEach((c) => console.log(`MEASURED paper-w9: ${c.id}: ${c.err ? `not measured (${c.err})` : `${c.drew} of ${c.investors} sample investors still draw a backup line with every offering set to notes (${c.noForm} with no tax form, ${c.withW9} with a W-9 and its last four)`}`));
+    check('every firm was measured, and no sample investor with a W-9 and its last four draws a line', counts.length === 4 && counts.every((c) => !c.err && c.withW9 === 0), counts);
+    const errors = A.errors.slice();
+    check('no script error while the firms were measured', errors.length === 0, errors);
+    await A.context.close();
+  }
 };
 
 Lib.runParts(parts, { name: 'WITHHOLDING FLOW', unit: 'parts', flag: '--only', browser: true });
