@@ -76,7 +76,6 @@
     if (String(location.hash).indexOf('#' + ROUTE) !== 0) forget();
   });
 
-  const offeringOf = (ws, id) => (ws.offerings || []).find((o) => o.id === id) || null;
   const investorOf = (ws, id) => (ws.investors || []).find((i) => i.id === id) || null;
   const notesFunds = (ws) => (ws.offerings || []).filter((o) => WH().reporting(o) === 'notes');
   /** The years offered for a fund: the year before this one and every year it has a payment. */
@@ -436,13 +435,13 @@
     const u = ui();
     u.offeringId = el.value;
     u.year = '';
-    u.msg = null;
+    Object.assign(u, { msg: null, faults: [], deliver: false, rowMsg: {} });
     redraw();
   };
   NS.changes['t99-year'] = (el) => {
     const u = ui();
     u.year = el.value;
-    u.msg = null;
+    Object.assign(u, { msg: null, faults: [], deliver: false, rowMsg: {} });
     redraw();
   };
   NS.changes['t99-nametype'] = (el) => {
