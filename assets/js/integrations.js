@@ -297,8 +297,22 @@
     if (body) headers['Content-Type'] = 'application/json';
     if (s.token) headers.Authorization = `Bearer ${s.token}`;
     const res = await fetch(serverUrl(ws) + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-    if (res.status === 401) throw new Error('The integration server did not accept the access token.');
-    if (!res.ok) throw new Error(`The integration server answered ${res.status}.`);
+    if (!res.ok) {
+      // The server's own sentence (plan 08-07): its refusals are written for the person reading them; the status and
+      // code travel with it. The two older sentences remain for a reply without one.
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = null;
+      }
+      const said = data && typeof data.error === 'string' && data.error.trim() ? data.error.trim() : '';
+      const err = new Error(said || (res.status === 401 ? 'The integration server did not accept the access token.' : `The integration server answered ${res.status}.`));
+      err.status = res.status;
+      err.code = data && typeof data.code === 'string' ? data.code : '';
+      err.server = !!said;
+      throw err;
+    }
     return res.json();
   }
   function investorPayload(ws, inv, extra) {
@@ -385,7 +399,9 @@
     log(ws, inv, RESULT[kind][outcome], `${v.via || 'Unknown connection'}${v.method ? `, ${v.method}` : ''}${v.ref ? ` (ref ${v.ref})` : ''}${v.expiresAt && outcome === 'verified' ? `; valid until ${date(v.expiresAt)}` : ''}${d.note ? `; note: ${d.note}` : ''}`, actor);
     if (kind === 'identity' && outcome === 'passed' && vOf(inv).aml.status !== 'clear') {
       // A connector on for identity and screening that screened with this check: use that result instead of calling again.
-      const pre = d.screening && d.screening.status && ensure(ws).use.aml.indexOf(v.connection) >= 0 ? { connection: v.connection, screening: d.screening } : null;
+      // Not for a package connection (plan 08-07): its names are screened through the server, which keeps the screening
+      // record the import is confirmed against (a result carried on the identity check has none).
+      const pre = d.screening && d.screening.status && ensure(ws).use.aml.indexOf(v.connection) >= 0 && !(conn(ws, v.connection) || {}).package ? { connection: v.connection, screening: d.screening } : null;
       await screen(ws, inv, pre);
     }
     decide(ws, inv);
@@ -763,6 +779,8 @@
         (x, i) => `<li class="iv-option"><div class="iv-option-text"><span class="iv-option-name">${h(x.name)}</span>${x.note ? `<span class="hint">${h(x.note)}</span>` : x.builtin === 'sandbox' ? '<span class="hint">Simulated, for trying the flow</span>' : x.builtin === 'manual' ? `<span class="hint">Upload a document for ${h(W().tenant.support.team)} to review</span>` : ''}</div><button class="btn${primary && i === 0 ? ' btn-primary' : ''}" type="button" data-action="iv-start" data-kind="${kind}" data-connection="${h(x.id)}">Continue with ${h(x.name)}</button></li>`
       )
       .join('')}</ul>`;
+  // The last start the server refused, per investor and check, in memory only (cleared by the next start or a reload).
+  const refusals = {};
   /** The verification panel inside the onboarding identity or accreditation step. */
   function stepPanel(ws, inv, kind) {
     const opts = options(ws, kind);
@@ -774,7 +792,8 @@
     const what = kind === 'identity'
       ? 'Take a photo of your government-issued ID and a quick selfie. It takes about two minutes.'
       : 'Show that you are an accredited investor: income, net worth, a letter from your CPA, attorney or adviser, or an existing verification.';
-    const handled = (x) => (x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
+    // The verification package (D-01, C-01): the provider's own page is seen only in the new tab, so the step names no one.
+    const handled = (x) => (x.package ? 'A secure page opens in a new tab for this step.' : x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
     const one = opts.length === 1 ? opts[0] : null;
     const url = v.status === 'pending' ? safeUrl(v.url) : '';
     // While an attempt through another connection (perhaps one since removed) is open, do not describe the remaining option as if it ran.
@@ -788,6 +807,7 @@
       ${v.status === 'pending' && v.how === 'server' ? `<p class="hint iv-note">Finish in the tab that opened. This page updates when you are done.${url ? ` <a href="${h(url)}" target="_blank" rel="noopener">Open it again</a>` : ''}</p>` : ''}
       ${v.status === 'failed' || v.status === 'rejected' ? `<p class="field-error">We could not complete this check. Try again, or contact ${h(t.support.team)} at ${h(t.support.email)}.</p>` : ''}
       ${one ? `<button class="btn ${done ? '' : 'btn-primary'}" type="button" data-action="iv-start" data-kind="${kind}" data-connection="${h(one.id)}">${done ? 'Start again' : startLabel(kind)}</button>` : `<p class="iv-choose">${done ? 'Start again with' : 'Choose how to verify'}</p>${optionRows(kind, opts, !done)}`}
+      ${refusals[`${inv.id}:${kind}`] ? `<p class="field-error iv-refused" role="alert">${h(refusals[`${inv.id}:${kind}`])}</p>` : ''}
     </div>`;
   }
   function canContinue(ws, inv, kind) {
@@ -878,6 +898,7 @@
     const id = el.getAttribute('data-connection');
     if (!id && opts.length > 1) return chooserDialog(kind, opts, back);
     const x = opts.find((y) => y.id === id) || opts[0];
+    delete refusals[`${inv.id}:${kind}`]; // a new start clears the last refusal
     // Open the tab while the click still counts as the investor's, so the browser does not block it.
     const tab = x.type === 'server' || x.type === 'link' ? window.open('', '_blank') : null;
     if (tab) tab.opener = null;
@@ -893,7 +914,14 @@
       NS.app.render();
     } catch (e) {
       if (tab) tab.close();
-      U.toast(`Could not start the check: ${e.message}`);
+      if (e && e.server) {
+        // The server's own sentence, alone (plan 08-07). Nothing the investor can retry (a returned package, the start
+        // limit) also gives the firm's contact. The line stays on the step until the next start.
+        const firm = e.status === 403 || e.status === 409 ? ` Contact ${ws.tenant.support.team} at ${ws.tenant.support.email}.` : '';
+        refusals[`${inv.id}:${kind}`] = `${e.message}${firm && !/[.!?]$/.test(e.message) ? '.' : ''}${firm}`;
+        U.toast(e.message);
+        NS.app.render();
+      } else U.toast(`Could not start the check: ${e.message}`);
     }
   };
   NS.actions['iv-sandbox-finish'] = async (el) => {
