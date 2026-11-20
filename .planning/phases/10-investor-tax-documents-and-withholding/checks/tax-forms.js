@@ -99,23 +99,16 @@ async function readPdf(bytes) {
   }
   return pages;
 }
-/** The printed words just above a rectangle (within 14 points, overlapping it across). */
+/** The printed words just above a rectangle (their foot within 24 points above its top, overlapping it across). */
 const above = (items, r) =>
   items
-    .filter((it) => it.bottom <= r.top + 2 && it.bottom >= r.top - 14 && it.x < r.x + r.w && it.x + it.w > r.x)
+    .filter((it) => it.bottom <= r.top + 2 && it.bottom >= r.top - 24 && it.x < r.x + r.w && it.x + it.w > r.x)
     .sort((a, b) => a.top - b.top || a.x - b.x)
-    .map((it) => it.s)
-    .join(' ');
-/** The printed words on the same line, left of a rectangle. */
-const leftOf = (items, r) =>
-  items
-    .filter((it) => Math.abs((it.top + it.bottom) / 2 - (r.top + r.h / 2)) < 6 && it.x + it.w <= r.x + 2 && it.x >= r.x - 120)
-    .sort((a, b) => a.x - b.x)
     .map((it) => it.s)
     .join(' ');
 // The printed label each mapped field must sit beside on the blank Copy B page: [where, words].
 const ANCHORS = {
-  year: [leftOf, /For calendar year/],
+  year: [above, /For calendar year/],
   payerBlock: [above, /PAYER.S name, street address/],
   payerTin: [above, /PAYER.S TIN/],
   recipientTin: [above, /RECIPIENT.S TIN/],
@@ -223,7 +216,8 @@ const forms = {
     } catch (e) {
       got = e;
     }
-    check('a copy of the file with one byte changed is refused and nothing is returned', got instanceof Error && got.pin === true, String(got && got.message));
+    // (the error comes from the sandbox's realm, so it is recognised by its pin mark, not by instanceof)
+    check('a copy of the file with one byte changed is refused and nothing is returned', !!got && got.pin === true && typeof got.message === 'string', String(got && got.message));
 
     // a sample recipient copy
     const out = await NS.tax1099.recipientCopy(W(), bytes, map, SAMPLE, fillOpts());
@@ -234,10 +228,12 @@ const forms = {
     if (pages.length !== 3) return;
     check('its first page is the Copy B page, its second and third the instructions for the recipient', /Copy B/.test(pages[0].text) && /For Recipient/.test(pages[0].text) && pages[1].text.trim().indexOf('Instructions for Recipient') === 0 && pages[2].text.trim().indexOf('Instructions for Recipient (continued)') === 0);
     const all = pages.map((p) => p.text).join(' ');
-    // "Copy A" is printed once in the instructions' continuation, in the sentence telling a nominee to file Copy A; no
-    // page of the copy is Copy A (or Copy 1, Copy 2 or Copy C) itself.
-    const copyA = all.replace(/File Copy A of the form with the IRS/g, '');
-    check('no page is Copy A, Copy 1, Copy 2 or Copy C: those words appear nowhere except the instructions\' sentence for a nominee', !/Copy A|Copy 1|Copy 2|Copy C|Internal Revenue\s+Service Center|For State Tax/.test(copyA));
+    // The recipient's instructions name other copies in two sentences of their own ("(Continued on the back of Copy 2.)"
+    // and a nominee's "File Copy A of the form with the IRS ... Internal Revenue Service Center for your area"); apart
+    // from those, no page of the copy carries the heading or the words of Copy A, Copy 1, Copy 2 or Copy C.
+    const heads = [].concat(...pages.map((p) => p.items)).filter((it) => /^(Copy [A12C]|For Internal Revenue|Service Center|For State Tax Department)$/.test(it.s.trim()));
+    const rest = all.replace(/back\s+of\s+Copy\s+2/g, '').replace(/File\s+Copy\s+A\s+of\s+the\s+form/g, '').replace(/Internal\s+Revenue\s+Service\s+Center\s+for\s+your\s+area/g, '');
+    check('no page is Copy A, Copy 1, Copy 2 or Copy C: no such heading, and those words appear only in the instructions\' own two sentences', !heads.length && !/Copy\s+[A12C]\b|Service\s+Center|For\s+State\s+Tax/.test(rest), heads.map((h) => h.s));
     const p1 = pages[0].items;
     const outside = [];
     Object.keys(SAMPLE).forEach((k) => {

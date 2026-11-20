@@ -110,7 +110,7 @@ const w9 = (last4, crossed) => ({ taxType: 'us-individual', taxForm: 'W-9', tinL
 /** A signed W-8BEN as the onboarding leaves it. */
 const w8ben = (more) => ({ taxType: 'foreign-individual', taxForm: 'W-8BEN', tinLast4: '', taxCert: Object.assign({ form: 'W-8BEN', revision: 'October 2021', envelopeId: 'env-w8', at: '2025-03-02T10:00:00.000Z', signed: true, signedBy: 'Signer', country: 'Canada', citizenship: 'Canada', ftinLast4: '5521', noFtin: false, treatyCountry: 'Canada', validUntil: '2028-12-31' }, more || {}) });
 /** What the sponsor stores about the payer: never the full number, only its last four. */
-const PAYER_STORED = { name: 'Fund One Notes LLC', name2: '', address1: '100 Main St', address2: '', city: 'Dallas', state: 'TX', zip: '75201', phone: '2145550100', tinLast4: '4321', registeredForm: true, paidInMoney: true };
+const PAYER_STORED = { name: 'Fund One Notes LLC', name2: '', address1: '100 Main St', address2: '', city: 'Dallas', state: 'TX', zip: '75201', phone: '214-555-0100', tinLast4: '4321', registeredForm: true, paidInMoney: true };
 /** Invented numbers, in ranges the IRS never issues. */
 const PAYER_TIN = '00' + '7654321';
 const TIN = { 'A-1001': '000' + '41' + '4821', 'A-1002': '000' + '55' + '7310' };
