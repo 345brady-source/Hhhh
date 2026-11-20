@@ -130,6 +130,30 @@
     );
   }
   const stopsHTML = (F) => F.stops.map((s) => `<p class="tx-stop" data-stop="${h(s.code)}">${h(s.text)}</p>`).join('');
+  /**
+   * What a person answers so a stop goes: "Is this payment interest?" for a payment whose type does not say (never
+   * guessed), and Confirm amounts, with the shares worked out from the positions, for an interest payment saved before
+   * amounts were stored (plan 10-01).
+   */
+  function answersHTML(ws, c) {
+    const runs = X().interestRuns(ws, c.o, c.year, today());
+    const can = NS.app.can('operate');
+    const ask = runs
+      .filter((r) => r.counts === 'ask')
+      .map(({ run }) => `<li class="tx-row" data-id="${h(run.id)}"><div class="tx-what"><span class="tx-title">Is this payment interest?</span><span class="tx-detail">${h(U.date(run.date, 'long'))} · ${h(run.type || 'No type')} · ${money(run.total)}</span></div>${can ? `<div class="tx-acts"><button type="button" class="cs-btn cs-btn-small" data-action="t99-interest" data-run="${h(run.id)}" data-yes="1">Yes</button><button type="button" class="cs-btn cs-btn-small" data-action="t99-interest" data-run="${h(run.id)}" data-yes="0">No</button></div>` : ''}</li>`)
+      .join('');
+    const unstored = runs
+      .filter((r) => r.counts === 'interest' && !r.stored)
+      .map(({ run }) => {
+        const shares = NS.data
+          .runLines(ws, run)
+          .lines.map((l) => `${h((investorOf(ws, l.investorId) || {}).title || l.investorId)} · ${h(l.investorId)} ${money(l.grossCents)}`)
+          .join('<br>');
+        return `<li class="tx-row" data-id="${h(run.id)}"><div class="tx-what"><span class="tx-title">${h(U.date(run.date, 'long'))} · ${h(run.type)} · ${money(run.total)}</span><span class="tx-detail">${shares}</span></div>${can ? `<div class="tx-acts"><button type="button" class="cs-btn cs-btn-small" data-action="t99-lines" data-run="${h(run.id)}">Confirm amounts</button></div>` : ''}</li>`;
+      })
+      .join('');
+    return (ask ? `<ul class="tx-list" data-list="ask">${ask}</ul>` : '') + (unstored ? `<ul class="tx-list" data-list="unstored">${unstored}</ul>` : '');
+  }
   /** One form, its values in the form's own order (also what is keyed on the IRS site by hand). */
   function formRow(ws, c, f) {
     const inv = investorOf(ws, f.investorId) || {};
@@ -137,7 +161,10 @@
     const conf = (yearRecOf(c.o, c.year).confirmed || {})[f.investorId];
     const filed = ok ? filedOn(c.o, c.year, f.investorId) : '';
     const pill = (ok ? `<span class="tx-pill is-ok">Confirmed by ${h(conf.by)}</span>` : '<span class="tx-pill is-wait">Not confirmed</span>') + (filed ? `<span class="tx-pill is-ok">Filed ${h(U.date(filed, 'long'))}</span>` : '');
-    const acts = !ok && NS.app.can('operate') ? `<div class="tx-acts"><button type="button" class="cs-btn cs-btn-small cs-btn-primary" data-action="t99-confirm" data-id="${h(f.investorId)}">Confirm</button></div>` : '';
+    const btns = [];
+    if (!ok && NS.app.can('operate')) btns.push(`<button type="button" class="cs-btn cs-btn-small cs-btn-primary" data-action="t99-confirm" data-id="${h(f.investorId)}">Confirm</button>`);
+    if (admin()) btns.push(`<button type="button" class="cs-btn cs-btn-small" data-action="t99-exempt" data-id="${h(f.investorId)}">Exempt recipient</button>`);
+    const acts = btns.length ? `<div class="tx-acts">${btns.join('')}</div>` : '';
     return `<li class="tx-row" data-id="${h(f.investorId)}"><div class="tx-what"><span class="tx-title">${h(inv.title || f.investorId)} · ${h(f.investorId)}</span>
       <dl class="tx-review">
         <dt>Recipient’s number</dt><dd>${ending(X().last4Of(inv))}</dd>
@@ -154,7 +181,8 @@
     const rows = F.leftOut
       .map((x) => {
         const inv = investorOf(ws, x.investorId) || {};
-        return `<li class="tx-row" data-id="${h(x.investorId)}"><div class="tx-what"><span class="tx-title">${h(inv.title || x.investorId)} · ${h(x.investorId)}</span><span class="tx-detail">${h(x.reason)} · ${money(x.cents)}</span></div></li>`;
+        const undo = x.code === 'exempt' && admin() ? `<div class="tx-acts"><button type="button" class="cs-btn cs-btn-small" data-action="t99-unexempt" data-id="${h(x.investorId)}">Not exempt</button></div>` : '';
+        return `<li class="tx-row" data-id="${h(x.investorId)}"><div class="tx-what"><span class="tx-title">${h(inv.title || x.investorId)} · ${h(x.investorId)}</span><span class="tx-detail">${h(x.reason)} · ${money(x.cents)}</span></div>${undo}</li>`;
       })
       .join('');
     return CK().panel(`Left out <span class="cs-count">${F.leftOut.length}</span>`, `<ul class="tx-list" data-list="leftout">${rows}</ul>`);
@@ -399,7 +427,8 @@
       .catch(() => {});
     const F = figures(ws, c);
     const steps = admin() && ready(ws, c, F) ? `${numbersHTML(ws, c, F)}${copiesHTML(ws, c, F)}${fileHTML(ws, c)}` : '';
-    return `${pickerHTML(c)}${payerHTML(c)}${stopsHTML(F)}${formsHTML(ws, c, F)}${leftHTML(ws, F)}${steps}`;
+    const stops = F.stops.length ? CK().panel('', `${said('answers')}${stopsHTML(F)}${answersHTML(ws, c)}`) : '';
+    return `${pickerHTML(c)}${payerHTML(c)}${stops}${formsHTML(ws, c, F)}${leftHTML(ws, F)}${steps}`;
   }
 
   /* ---------- picking and acting ---------- */
@@ -572,6 +601,28 @@
     'configure'
   );
 
+  NS.actions['t99-interest'] = act('answers', (ws, c, el) => {
+    X().setInterest(ws, el.getAttribute('data-run'), el.getAttribute('data-yes') === '1', { by: actor() });
+    NS.clearCaches();
+  });
+  NS.actions['t99-lines'] = act('answers', (ws, c, el) => {
+    const run = NS.data.confirmLines(ws, el.getAttribute('data-run'), { by: actor() });
+    CK().audit('Distribution amounts confirmed', `${c.o.shortName || c.o.name}: the ${run.type} payment of ${run.date}, ${run.lines.length} investors, ${money(run.total)} in all, as worked out from the positions`, c.o.id, run.id);
+  });
+  NS.actions['t99-exempt'] = act(
+    'forms',
+    (ws, c, el) => {
+      WH().markExempt(ws, el.getAttribute('data-id'), { by: actor() });
+    },
+    'configure'
+  );
+  NS.actions['t99-unexempt'] = act(
+    'forms',
+    (ws, c, el) => {
+      WH().unmarkExempt(ws, el.getAttribute('data-id'), { by: actor() });
+    },
+    'configure'
+  );
   NS.actions['t99-payer'] = act(
     'payer',
     (ws, c) => {
@@ -650,6 +701,6 @@
     'configure'
   );
 
-  NS.taxUI.part(KEY, { order: 30, title: 'Form 1099', summary, render });
+  NS.taxUI.part(KEY, { order: 30, title: 'Form 1099', summary, render, shown: (ws) => notesFunds(ws).length > 0 });
   NS.taxUI.refresh();
 })(window.CVPortal);

@@ -17,7 +17,8 @@
  *
  * Sections later plans add (withholding, the investor's tax record, Form 1099, the link to the server) are their own
  * scripts beside this one, registered with NS.taxUI.part(key, { order, title, summary(ws) -> html or '',
- * render(ws, rest) -> html }): the list page draws each summary line with a link to console-taxdocs-<key>, and that
+ * render(ws, rest) -> html, shown(ws) -> boolean (optional; false: no line on the list) }): the list page draws each
+ * summary line with a link to console-taxdocs-<key>, and that
  * address draws render() under the bar with Back. The scripts are a fixed list (PARTS), added in their order when this
  * file loads; one that does not load is left out for that visit and nothing is shown for it. No file name comes from data
  * or from the address.
@@ -160,7 +161,7 @@
   const load = { settled: false, waiting: false };
   function part(key, spec) {
     if (!/^[a-z0-9]+$/.test(String(key)) || key === 'batch' || !spec || typeof spec.render !== 'function') return false;
-    parts[key] = { key, order: Number(spec.order) || 0, title: String(spec.title || ''), summary: typeof spec.summary === 'function' ? spec.summary : null, render: spec.render };
+    parts[key] = { key, order: Number(spec.order) || 0, title: String(spec.title || ''), summary: typeof spec.summary === 'function' ? spec.summary : null, render: spec.render, shown: typeof spec.shown === 'function' ? spec.shown : null };
     return true;
   }
   /** One script from beside this file; resolves to whether it loaded. */
@@ -223,7 +224,8 @@
   const linkLine = (ws, doc) => (doc && connected(ws) && typeof API.link.rowLine === 'function' ? from(API.link.rowLine, ws, doc) : '');
   const sorted = () => Object.values(parts).sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
   function partsHTML(ws) {
-    const list = sorted();
+    // a section may say it has nothing for this workspace (shown(ws) false): no line on the list then (plan 10-10)
+    const list = sorted().filter((x) => !x.shown || from(x.shown, ws));
     return list.length ? CK().panel('', `<ul class="tx-list" data-list="parts">${list.map((x) => `<li class="tx-row"><div class="tx-what"><a class="tx-title" href="#${ROUTE}-${x.key}">${h(x.title)}</a>${x.summary ? `<span class="tx-detail">${from(x.summary, ws)}</span>` : ''}</div></li>`).join('')}</ul>`) : '';
   }
   /** A section's page: console-taxdocs-<key>[-<rest>]; null when no such section is registered. */
