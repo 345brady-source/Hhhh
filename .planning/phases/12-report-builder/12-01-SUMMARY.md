@@ -36,6 +36,21 @@ FAIL fees ran to the end :: TypeError: D.fees is not a function
 FAIL noi ran to the end :: TypeError: D.noi is not a function
 REPORTS MATH: FAIL (cases run: 8) - statement, consolidated, distribution, holdings, fees, noi
 ```
+### red-3 (Task 3 cases written before their adapters)
+
+```
+FAIL tax ran to the end :: TypeError: D.taxYear is not a function
+FAIL activity ran to the end :: TypeError: D.activity is not a function
+FAIL series ran to the end :: TypeError: D.series is not a function
+FAIL readonly fund A: every adapter leaves JSON.stringify(ws) unchanged and none throws :: {"activity":"threw: D.activity is not a function","series":"threw: D.series is not a function","seriesFund":"threw: D.series is not a function","taxYear":"threw: D.taxYear is not a function","taxDocs":"threw: D.taxDocs is not a function","firm":"threw: D.firm is not a function","investor":"threw: D.investor
+FAIL readonly kestrel-bay: every adapter leaves JSON.stringify(ws) unchanged and none throws :: {"activity":"threw: D.activity is not a function", ... same list}
+FAIL readonly ran to the end :: TypeError: D.firm is not a function
+PASS selfcheck an unknown --case name exits 1 with a FAIL line
+PASS selfcheck an empty list exits 1 with a FAIL line
+REPORTS MATH: FAIL (cases run: 5) - tax, activity, series, readonly
+```
+selfcheck tests the check's own runner, so it passes before any adapter exists. The readonly lines already show that none of the Task 1-2 adapters wrote to ws (only the missing functions are listed).
+
 Case performance passed at RED because Task 1 built performance() (the plan orders statement, distribution and performance into Task 1); its RED is red-1.
 
 ## Verify lines
