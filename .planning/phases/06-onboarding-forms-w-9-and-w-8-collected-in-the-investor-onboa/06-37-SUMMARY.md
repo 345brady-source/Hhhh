@@ -69,4 +69,58 @@ PRESS AND CO-INVESTOR: PASS (parts run: 3)
 this run.) Check change after RED, before any product change was tested: `investorsPage` closes a window left open first (on the
 base the Account window stayed open and covered the page, which stopped the part with "ran to the end").
 
+## Task 2: the real background redraw on the console-link path (render-sources.txt)
+
+A scratch run (not committed: SCRATCH/exec-06-37/render-sources.js) repeated the walkthrough's sequence (Edit fields, Save, the
+bar to the investor, back to Admin) on desktop and phone, recording every call to the portal's render and every rewrite of
+`#view` with its stack and the event it ran in. Result:
+
+- **No call through `NS.app.render` at all** on this path (no file, timer or page-drawing completion).
+- **Every redraw is app.js's own `hashchange` render** (`render < onRoute`, event `hashchange`), one per action: Save calls
+  `go('console-offering-…')`, which only sets the address; the whole page is redrawn a task later, when the browser delivers
+  `hashchange`. The walkthrough's script found the Investors link on the field editor's page right after Save, and that queued
+  redraw replaced the page under it ("Element is not attached to the DOM").
+- So the source is **the navigation queued by the press before** (on a slow phone, a quick second tap right after Save).
+  Under the plan's rule `hashchange` is not a user-input event, so this redraw is held under a pending press like any other.
+
+press-nav-* got this real sequence as part (a): the Investors link pressed down on the field editor, Save run by code during
+the press (its navigation redraws a task later), released. Part (b) is the plan's timer redraw.
+
+A check problem found on the first fix run: **press-tax-phone failed on the fix** because, with the CPU slowed four times,
+drawing all six W-9 pages after the release took longer than the guard's 1 s press limit: the check held the finger down far
+longer than any tap, the press ended at 1 s and the held redraw ran under the finger. The check now draws every page but the
+last before the press and lets only the last go during it; measured press length after the change: desktop 210 ms, phone
+362 ms. The 1 s limit in the product is as the plan set it.
+
+### RED of the revised press parts on the base tree (SCRATCH/exec-06-37/red-press-v2.txt)
+
+```
+NOTE desktop: Finish held down for 228 ms (all pages but the last drawn before: true)
+FAIL press-tax-desktop the step after the tax step (Distribution payments) is on screen after this one press :: {"at":"Tax certification","press":{"label":"Finish","upConnected":false,"clickConnected":null,"clickOnIt":null,"clicks":0}}
+FAIL press-tax-desktop the Finish pressed was still in the page when the mouse button was released and its click landed on it :: {"label":"Finish","upConnected":false,"clickConnected":null,"clickOnIt":null,"clicks":0}
+NOTE phone: Finish held down for 399 ms (all pages but the last drawn before: true)
+FAIL press-tax-phone the step after the tax step (Distribution payments) is on screen after this one press :: {"at":"Tax certification","press":{"label":"Finish","upConnected":null,"clickConnected":false,"clickOnIt":false,"clicks":1}}
+FAIL press-tax-phone the Finish pressed was still in the page when the finger lifted and its click landed on it :: {"label":"Finish","upConnected":null,"clickConnected":false,"clickOnIt":false,"clicks":1}
+FAIL press-tax-phone ran to the end :: TypeError: Cannot read properties of null (reading 'x')
+FAIL press-nav-desktop pressed while the editor’s Save navigates (a redraw a task later): the agreement is saved and Investors is open after this one press :: {"hash":"#console-offering-kb-fund-ii","during":"#console-offering-kb-fund-ii","saved":true,"press":{"label":"Investors","upConnected":false,...
+FAIL press-nav-desktop that link stayed in the page until its click and the click landed on it :: {"label":"Investors","upConnected":false,"clickConnected":null,"clickOnIt":null,"clicks":0}
+FAIL press-nav-desktop Investors is open after this one press on the console’s Investors link :: {"hash":"#console","press":{"label":"Investors","upConnected":false,"clickConnected":null,"clickOnIt":null,"clicks":0}}
+FAIL press-nav-desktop the link pressed stayed in the page until its click and the click landed on it :: {"label":"Investors","upConnected":false,"clickConnected":null,"clickOnIt":null,"clicks":0}
+FAIL press-nav-phone pressed while the editor’s Save navigates (a redraw a task later): the agreement is saved and Investors is open after this one press :: {"hash":"#console-notifications","during":"#console-offering-kb-fund-ii","saved":true,"press":{"label":"Investors","upConnected":null,"clickConnected":false,...
+FAIL press-nav-phone that link stayed in the page until its click and the click landed on it :: {"label":"Investors","upConnected":null,"clickConnected":false,"clickOnIt":false,"clicks":1}
+FAIL press-nav-phone Investors is open after this one press on the console’s Investors link :: {"hash":"#console-notifications","press":{"label":"Investors","upConnected":null,"clickConnected":false,"clickOnIt":false,"clicks":1}}
+FAIL press-nav-phone the link pressed stayed in the page until its click and the click landed on it :: {"label":"Investors","upConnected":null,"clickConnected":false,"clickOnIt":false,"clicks":1}
+PRESS AND CO-INVESTOR: FAIL (parts run: 4) - press-tax-desktop, press-tax-phone, press-nav-desktop, press-nav-phone
+```
+(The base's "ran to the end" on press-tax-phone: after the lost tap the first form stayed on screen and the second investor's
+Finish could not be found; it does not occur on the fix.)
+
+## Task 2 verify (on the fix)
+
+```
+PRESS AND CO-INVESTOR: PASS (parts run: 4)          (t2.txt; NOTE desktop 210 ms, phone 362 ms held)
+BANK STEP TYPING: PASS (parts run: 2)               (bank.txt)
+```
+W3, base tree 12c55c9: phase-2 field editor `104/104 passed`, phase-3 signatures `70/70 passed` (no FAIL line on the base).
+
 <!-- gsd:write-continue -->
