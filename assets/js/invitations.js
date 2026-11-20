@@ -642,8 +642,11 @@
       try {
         const r = await api(ws, 'POST', `/v1/invitations/${encodeURIComponent(it.serverId)}/resend`, { sendEmail: true, portalUrl: portalPage() });
         Object.assign(it, { link: String(r.link || it.link), emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent' });
+        delete it.resendError;
       } catch (e) {
         it.emailError = e.message;
+        // The server refused (a returned package, a closed invitation): its sentence stays on the row until a resend goes.
+        if (e.status) it.resendError = e.message;
         NS.app.save(true);
         return { emailStatus: 'failed', error: e.message };
       }
@@ -2563,7 +2566,7 @@
     const r = await resend(w, it);
     NS.app.render();
     if (r.emailStatus === 'manual') return showEmail(it.id);
-    U.toast(r.error ? `Could not resend: ${r.error}` : r.emailStatus === 'outbox' ? `New link for ${inv.title} saved in the server outbox.` : `New invitation emailed to ${inv.contact}.`);
+    U.toast(r.error ? r.error : r.emailStatus === 'outbox' ? `New link for ${inv.title} saved in the server outbox.` : `New invitation emailed to ${inv.contact}.`);
   };
   NS.actions['inv8-cancel'] = (el) => {
     const it = itById(el);
@@ -2684,7 +2687,7 @@
           <td data-label="Offering">${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
           <td data-label="Progress">${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
           <td class="inv8-activity" data-label="Activity">${activity}</td>
-          <td data-label="Email">${em}</td>
+          <td data-label="Email">${em}${it.resendError && OPEN.concat(['expired']).indexOf(it.status) >= 0 ? `<span class="sub cs-error-text inv8-refused">${h(it.resendError)}</span>` : ''}</td>
           <td class="cs-row-actions">${acts.join('')}</td>
         </tr>`;
       })

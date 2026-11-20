@@ -15,6 +15,8 @@
   const TIERS = ['identity', 'full', 'reverify'];
   const UNREACHABLE = 'The integration server could not be reached.';
   const NOT_OFFERED = 'The verification package is not offered on this integration server.';
+  // The integration server's credit_owed sentence (lib/billing.mjs), word for word: no new package while an amount is owed.
+  const CREDIT_OWED = 'A refunded payment left an amount owed. Settle it before adding packages.';
 
   /* The server's last answer, kept in memory only (never saved with the workspace). */
   let mem = { key: '', status: 'idle', data: null, error: '', code: '', at: 0, promise: null };
@@ -103,6 +105,8 @@
     const price = priceLabel((d.prices || {})[t]);
     if (!(d.available && d.available[t] === true) || !price) return off;
     const label = `${LABEL} (${price})`;
+    // 08-16 (R9): while the account owes an amount (owedCents) the server refuses every new package; switched off, its sentence.
+    if (Number(d.owedCents) > 0) return Object.assign(off, { show: true, label, line: CREDIT_OWED });
     // A balance that covers the price pays for it; otherwise a card must be on file.
     if (!d.card && !(Number(d.creditCents) >= Number(d.prices[t]))) return Object.assign(off, { show: true, label, line: 'Add a card on the Integrations page to use it.', href: '#console-integrations' });
     // tier and cents: the package this invitation would be paid for (plan 08-13: a list pays for exactly these).
