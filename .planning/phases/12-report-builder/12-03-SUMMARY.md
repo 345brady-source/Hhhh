@@ -21,3 +21,11 @@ REPORTS PDF: FAIL (cases run: 1) - compose
 ```
 
 ## Verify lines
+
+### Task 1 verify (exit 0)
+
+```
+PASS compose each page carries 'Page n of N'
+PASS compose the recipient and the firm print with their accents and Polish letters
+REPORTS PDF: PASS (cases run: 1)
+```
