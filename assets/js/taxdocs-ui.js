@@ -712,7 +712,8 @@
       try {
         TD().deliver(ws, d.id, { by: actor(), how, replaces: e ? e.id : '' });
         delete dv().replace[d.id];
-        if (d.tax.state === 'delivered') sent.push(d);
+        // plan 10-12: with the server connected, a document waiting for consent is sent too (its link asks for consent)
+        if (d.tax.state === 'delivered' || (d.tax.state === 'waiting' && connected(ws))) sent.push(d);
       } catch (err) {
         if (refused.indexOf(err.message) < 0) refused.push(err.message);
       }
@@ -774,6 +775,14 @@
   NS.actions['tx-withdraw-go'] = docAct(async (ws, doc, t) => {
     TD().withdraw(ws, doc.id, { by: actor(), why: t.why });
     dv().row = null;
+    // plan 10-12 (B3): also off the server; a server error never undoes the withdrawal here
+    if (connected(ws) && typeof API.link.withdraw === 'function') {
+      try {
+        await API.link.withdraw(ws, doc);
+      } catch (e) {
+        if (window.console) console.error(e);
+      }
+    }
   }, 'configure');
   NS.actions['tx-paper'] = docAct(async (ws, doc, t) => {
     TD().markPaper(ws, doc.id, { sentOn: t.sent, by: actor() });
@@ -815,14 +824,13 @@
     })();
     // Plan 10-12: the investor's link screen (#taxdoc-<token>) is taxlink.js's, which loads after the page. Until it has,
     // its address shows this line instead of falling back to another page; if it never loads, one line says so.
-    if (!NS.views.taxdoc) {
-      NS.views.taxdoc = {
-        standalone: true,
-        edition: 'diy',
-        title: 'Your tax document',
-        render: () => `<div class="pt pt-auth txl"><main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ivf-msg"><p class="lede" role="status">${load.settled ? 'This tax document cannot be opened on this page. Try the link again later.' : 'Opening your tax document…'}</p></div></main></div>`
-      };
-    }
+    const linkWaits = {
+      standalone: true,
+      edition: 'diy',
+      title: 'Your tax document',
+      render: () => `<div class="pt pt-auth txl"><main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ivf-msg"><p class="lede" role="status">${load.settled ? 'This tax document cannot be opened on this page. Try the link again later.' : 'Opening your tax document…'}</p></div></main></div>`
+    };
+    if (!NS.views.taxdoc) NS.views.taxdoc = linkWaits;
   }
   NS.taxUI = API;
 })(window.CVPortal);

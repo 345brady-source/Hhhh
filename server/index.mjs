@@ -32,6 +32,12 @@
  *   PUT  /v1/invite/progress      …reports the step it is on
  *   POST /v1/invite/complete      …sends back the finished paperwork; the sponsor is emailed
  *
+ * Tax documents on the investor's own device (lib/taxdocs.mjs, plan 10-12; see README.md):
+ *   POST /v1/taxdocs              the console sends one delivered tax document, sealed; this server emails the link
+ *   GET  /v1/taxdocs              statuses and opens; POST /v1/taxdocs/:id/withdraw, …/resend
+ *   GET  /v1/taxdoc               the investor's page: the firm, the title and what is needed (X-Doc-Token)
+ *   POST /v1/taxdoc/open          …the document, with the last four digits of the tax number on record
+ *
  * No verification vendor is built in: sponsors plug in the services they use
  * (declarative connectors, code plug-ins, or hosted links plus the results
  * API; see README.md), as many per check as they like.
