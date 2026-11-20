@@ -795,11 +795,16 @@ test('the daily help cap is on by default at $2: today\'s help rows of the read 
     assert.deepEqual(await once({ CARROWVALE_HELP_DAILY_USD: '5' }, [helpRow('2026-11-10T11:00:00.000Z', 1.999)]), { status: 200, calls: 1 });
 
     // Within a run: each call's cost is added, and the count starts again on the next day.
+    // The cap holds one question's worst case (the rules and the sponsor guide, as sent, plus a short note and question)
+    // with $0.0006 to spare, less than the first call's real cost ($0.00117 by WRITE), so the second question cannot fit.
+    // It follows the guide's size, so a guide that grows within its 48,000-byte limit does not break this test.
     fs.writeFileSync(log, '');
+    const sys = Buffer.byteLength(RULES) + Buffer.byteLength(GUIDE.sponsor);
+    const cap = (sys * 0.125 + 1024 * 0.5) / 1e6 + 0.0006;
     const svc = fakeService({ reply: () => Object.assign({ texts: [JSON.stringify(ANSWER)] }, WRITE) });
     const logs = await captureConsole(() =>
-      serve({ svc, clock, env: { CARROWVALE_READ_LOG: log, CARROWVALE_HELP_DAILY_USD: '0.006' } }, async (base) => {
-        assert.equal((await ask(base, { message: 'First today' })).status, 200, 'a bound of about $0.0051 fits in $0.006');
+      serve({ svc, clock, env: { CARROWVALE_READ_LOG: log, CARROWVALE_HELP_DAILY_USD: cap.toFixed(6) } }, async (base) => {
+        assert.equal((await ask(base, { message: 'First today' })).status, 200, `one question's worst case fits in $${cap.toFixed(6)}`);
         assert.equal((await ask(base, { message: 'Second today' })).status, 402, 'the first call\'s cost is counted');
         clock.t += 24 * 60 * MIN;
         assert.equal((await ask(base, { message: 'First tomorrow' })).status, 200);
