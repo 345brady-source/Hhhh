@@ -641,7 +641,9 @@
     el.innerHTML = html;
     if (!Object.keys(kept).length) return;
     el.querySelectorAll('[data-keep]').forEach((n) => {
-      const old = kept[n.getAttribute('data-keep')];
+      const key = n.getAttribute('data-keep');
+      const old = kept[key];
+      delete kept[key]; // one node for one key, even if a drawing repeated it
       if (!old || old.tagName !== n.tagName) return;
       Array.from(old.attributes).forEach((a) => !n.hasAttribute(a.name) && old.removeAttribute(a.name));
       Array.from(n.attributes).forEach((a) => old.getAttribute(a.name) !== a.value && old.setAttribute(a.name, a.value));
