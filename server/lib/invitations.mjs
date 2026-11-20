@@ -190,7 +190,9 @@ function cleanInvitation(x, nowMs, maxDays) {
   // access: a link for an investor already on file (added by the firm from paper documents) to open their portal: nothing to fill in.
   // taxRequest (plan 06-26): a link for an investor already on file to complete their tax form again, nothing else.
   // includeTax (plan 06-27, D-10): an invitation to subscribe for an investor already on file that also holds the tax step.
-  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, i.existing === true && i.taxRequest === true ? { taxRequest: true } : {}, i.existing === true && i.includeTax === true ? { includeTax: true } : {}, { expiresAt: new Date(expires).toISOString() });
+  // coSign (plan 06-38): a link for the co-investor of an account on file to sign one agreement (envelopeId); create checks it
+  // and refuses it without an account on file, with an offering, or for an agreement it does not carry.
+  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, i.existing === true && i.taxRequest === true ? { taxRequest: true } : {}, i.existing === true && i.includeTax === true ? { includeTax: true } : {}, i.coSign === true ? { coSign: true, envelopeId: typeof i.envelopeId === 'string' ? i.envelopeId : '' } : {}, { expiresAt: new Date(expires).toISOString() });
 }
 function cleanEsign(x) {
   const e = obj(x);
@@ -202,6 +204,20 @@ function cleanEsign(x) {
     if (!isPdf(pdf)) throw fail(400, 'esign.pdf is not a PDF');
   }
   return { esign: { template, pdf: pdf ? { size: pdf.length, sha256: sha256Hex(pdf) } : null }, pdf };
+}
+/**
+ * Plan 06-38 (W2): the account investor's taxpayer number never reaches the co-investor. In a co-investor sign-in's template,
+ * a field value that is not the co-investor's own and holds a full SSN or EIN (dashed, spaced or nine bare digits) is
+ * blanked and marked withheld; the console keeps its own copy of those fields (only the co-investor's come back, see
+ * coSignEnvelope).
+ */
+const TIN = /\b\d{3}-\d{2}-\d{4}\b|\b\d{3} \d{2} \d{4}\b|\b\d{2}-\d{7}\b|(^|\D)\d{9}(\D|$)/;
+function withholdTins(template) {
+  const coIds = new Set((Array.isArray(template.signers) ? template.signers : []).filter((s) => obj(s) && s.co === true).map((s) => String(s.id)));
+  (Array.isArray(template.fields) ? template.fields : []).forEach((f) => {
+    if (obj(f) && !coIds.has(String(f.signerId)) && typeof f.value === 'string' && TIN.test(f.value)) Object.assign(f, { value: '', withheld: true });
+  });
+  return template;
 }
 
 /* ---------- What the investor's browser sends back ---------- */
@@ -748,7 +764,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
           out.reminders++;
           const snap = unseal(rec, 'snapshot');
           if (snap && snap.notifyEmail) {
-            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing), taxRequest: !!(snap.invitation && snap.invitation.taxRequest) });
+            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing), taxRequest: !!(snap.invitation && snap.invitation.taxRequest), coSign: !!(snap.invitation && snap.invitation.coSign) });
             const rid = rec.id;
             if (!(snap.invitation && snap.invitation.access && !snap.offering)) mailer
               .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
@@ -976,7 +992,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       firm: snap.firm,
       investor: snap.investor,
       offering: snap.offering ? Object.assign({}, snap.offering, { documents }) : null,
-      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, snap.invitation.taxRequest ? { taxRequest: true } : {}, snap.invitation.includeTax ? { includeTax: true } : {}, { expiresAt: rec.expiresAt }),
+      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, snap.invitation.taxRequest ? { taxRequest: true } : {}, snap.invitation.includeTax ? { includeTax: true } : {}, snap.invitation.coSign ? { coSign: true, envelopeId: snap.invitation.envelopeId } : {}, { expiresAt: rec.expiresAt }),
       verification: snap.verification || {},
       esign
     };
@@ -1128,6 +1144,20 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const inv = cleanInvestor(body.investor);
     const { offering, files } = cleanOffering(body.offering);
     const invitation = cleanInvitation(body.invitation, now(), INVITE_DAYS);
+    // Plan 06-38: a co-investor sign-in is for an account on file and one agreement already sent (no offering). It carries
+    // the account's name and the co-investor's name and email only: no amount, no status flags or tax details of the account
+    // investor, and none of the other kinds of link (access, tax-form request, included tax form, verification package).
+    if (invitation.coSign) {
+      if (!invitation.existing) throw fail(400, 'A co-investor sign-in is only for an account already on file.');
+      if (offering) throw fail(400, 'A co-investor sign-in has no offering: the co-investor signs the agreement already sent.');
+      delete invitation.access;
+      delete invitation.taxRequest;
+      delete invitation.includeTax;
+      Object.assign(invitation, { cents: 0, cls: '' });
+      delete inv.existing;
+      delete inv.taxType;
+      delete inv.taxPrefill;
+    } else delete invitation.envelopeId;
     // Plan 06-26: a tax-form request is for an investor already on file and has no offering; only it carries the form's
     // pre-fill (an invitation to subscribe, or to a new investor, never carries an address).
     if (!(invitation.existing && invitation.taxRequest && !offering)) delete invitation.taxRequest;
@@ -1138,10 +1168,18 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     // Plan 08-05 (D-01): the verification package the sponsor ticked, and the console's own id for this invitation. Never on
     // a portal link or a tax-form request (W5). Neither value is written into the snapshot's invitation.
     const asked = obj(body.invitation) || {};
-    const wantsPackage = asked.package === true && asked.access !== true && asked.taxRequest !== true;
+    const wantsPackage = asked.package === true && asked.access !== true && asked.taxRequest !== true && !invitation.coSign;
     const clientId = typeof asked.clientId === 'string' ? asked.clientId : '';
-    const verification = cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
+    // Plan 06-38: no verification runs on a co-investor sign-in, so its snapshot holds none.
+    const verification = invitation.coSign ? {} : cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
     const { esign, pdf } = cleanEsign(body.esign);
+    // Plan 06-38: the agreement the co-investor signs is the one the snapshot carries, with its current copy (the work copy
+    // holding the investor's signature).
+    if (invitation.coSign) {
+      if (!/^[\w.-]{1,70}$/.test(invitation.envelopeId) || !esign || String(esign.template.id) !== invitation.envelopeId) throw fail(400, 'invitation.envelopeId must be the id of the agreement sent in esign.template.');
+      if (!pdf) throw fail(400, 'A co-investor sign-in needs the agreement’s current copy as a PDF (esign.pdf).');
+      withholdTins(esign.template);
+    }
     const consoleUrl = returnTo(body.consoleUrl) || `${portalUrl.split('#')[0]}#console-investors`;
     // With the shared or open token (the operator's own) nothing is dropped.
     if (auth && auth.account) stripReserved(verification);
