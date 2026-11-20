@@ -116,7 +116,7 @@ The investor gets one link that walks them through every step. To invite several
 
 Under "Invitations", follow each invitation with In progress, Completed and All; the tick box "Accept subscriptions automatically once the agreement is countersigned and the investor is verified" turns that on. An invitation whose agreement waits for the firm's signature has "Countersign". In the investor table, "View portal" shows the portal as that investor sees it; an investor who has not activated has "Invitation" and "Send reminder" instead. With no integration server connected, the firm sends each invitation from its own email app: the portal prepares the email with the link.
 
-A second person on an investor's account, for example a spouse investing jointly, is a co-investor, and one can be added to an investor already on file: choose "Account" beside the investor in the table, then "Add co-investor", fill in "First name", "Last name" and "Email" (their own email, not the investor's) and choose "Add co-investor". An account has one co-investor, who signs their own places on the account's agreements with their own sign-in.
+A second person on an investor's account, for example a spouse investing jointly, is a co-investor, and one can be added to an investor already on file: choose "Account" beside the investor in the table, then "Add co-investor", fill in "First name", "Last name" and "Email" (their own email, not the investor's) and choose "Add co-investor". An account has one co-investor, who signs their own places on the account's agreements with their own sign-in. After "Add co-investor" the "Co-investor sign-in email" opens with the co-investor's own link, which opens only their places: send it from your own email app with "Open in your email app" (or "Copy link"), then choose "Mark as sent"; the row says "Sign-in link ready to send" until then, and "Sign-in link" in the "Account" window opens the email again. A changed email gives a new link, and the earlier one stops working.
 
 An agreement still out for signature that has places for a co-investor gets them as a signer, after the investor and before the firm; the investor does not sign again. An agreement everyone has already signed stays as it is. The "Account" window also has "Change co-investor" and "Remove co-investor". When an offering's agreement has places for a co-investor and the account has none, the row says "Agreement has places for a co-investor", and the "Account" window has "This investor has no co-investor" to say there is none.
 
@@ -772,6 +772,7 @@ The heading is "Update your bank account".
 3. Tick the authorization and choose "Save bank account".
 
 ## skip
+co: the co-investor's sign-in link; it signs the co-investor in and opens their agreement on its signing page, with no screen of its own beyond two plain messages for a link that does not work
 console-new-client: the managed edition's page for adding a client; the self-serve edition does not have it
 onboarding/login: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
 onboarding/profile: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
