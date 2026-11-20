@@ -305,4 +305,7 @@ const cases = {
   }
 };
 
+// Every run measures afresh: a case kept from an earlier run on the same tree would replay its PASS lines without the
+// speed line, which is measured, never carried over. The whole check runs in well under a minute.
+process.env.GATE_FRESH = '1';
 L.runParts(cases, { name: 'REPORTS RUN', unit: 'cases', flag: '--case' });
