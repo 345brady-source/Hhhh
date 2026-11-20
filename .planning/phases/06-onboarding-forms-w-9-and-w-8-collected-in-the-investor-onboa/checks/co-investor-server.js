@@ -421,6 +421,7 @@ async function coSigns(S, F, dev, link, opts) {
 }
 /** The console's own "Check now"; resolves once the co-investor's signer on the account's agreement is signed (or ms passed). */
 async function consoleChecks(cp, invId, ms) {
+  await cp.evaluate(() => window.CVPortal.ui.closeDialog());
   await L.consoleRoute(cp, 'console-investors', '[data-action=inv8-check]');
   await cp.click('[data-action=inv8-check]');
   return cp
@@ -739,6 +740,7 @@ const parts = {
       // The same submission again: the co-investor already signed.
       const replay = async () => {
         F.srv.server.store.put('invitations', { id: si.serverId, status: 'completed', hasSubmission: true, submission: { plain: JSON.parse(JSON.stringify(stored)) } });
+        await F.cp.evaluate(() => window.CVPortal.ui.closeDialog());
         await L.consoleRoute(F.cp, 'console-investors', '[data-action=inv8-check]');
         await F.cp.click('[data-action=inv8-check]');
         await F.cp.waitForTimeout(2500);
