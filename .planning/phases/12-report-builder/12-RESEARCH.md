@@ -312,4 +312,99 @@ Small edits elsewhere (one line each, named in the plan): audit.js export of `cl
 - Drag-and-drop as the only way to reorder.
 - Any wording that calls a report "audited", "ILPA compliant" or a tax form.
 
+## Part 4. Validation Architecture
+
+`workflow.nyquist_validation` is true in .planning/config.json, so this section is required.
+
+### 4.1 Test framework (existing; nothing to install)
+
+| Property | Value |
+|---|---|
+| Framework | Plain Node scripts with the phase 6 harness `runParts` (.planning/phases/06-*/checks/lib.js) and phase 11's loader `load11.js` (runs the portal's own scripts in a vm context, today fixed, edition chosen); Playwright (Chromium) for page checks through the shared queue `SCRATCH/exec-011/heavy.sh` |
+| Independent readers | `pdftotext -layout`, `pdfinfo`, `pdftotext -bbox` (poppler 24.02.0, present); `python3 -I .planning/phases/11-*/checks/read-xlsx.py <file>` (openpyxl 3.1.5, present) |
+| Fixture with hand-worked figures | `.planning/phases/11-*/checks/fixtures/fund-a.js` (exports `records, entries, recordEntries, expect`): two investors, FA-1001 and FA-1002; capital at 2026-12-31 `'FA-1001': 34500000` and `'FA-1002': 17250000` (cents); LP capital per month `lpCapital: [44850000, ... 51750000]`; distributions on 2026-12-15 of 600,000 and 300,000 cents (fund-a.js:205-227 and 11-14-PLAN.md hand-worked package) |
+| Config file | none; each check starts with `// gate: node` or `// gate: browser` and `// last "<NAME>: PASS (...)"` (phase 11 convention) |
+| Quick run command | `node .planning/phases/12-report-builder/checks/reports-math.js --case <name>` |
+| Full suite command | `bash .planning/phases/12-report-builder/checks/gate12.sh` then the reference gate `.planning/checks/gate-reference.sh` with the new lines added |
+
+### 4.2 How each report's figures are proven (whole cents)
+
+Two independent anchors, both required:
+1. **Hand-worked anchor (fund A):** every figure the T1, T2, T5 and T6 reports print for fund A is compared with the number written by hand in fund-a.js `expect` (or worked in the check's comments from it), not with the engine. Example: FA-1001's year statement ends at 34500000 cents; begins at 0; contributions 30000000; distributions 600000; DPI = 600000 / 30000000 = 0.02; TVPI = (600000 + 34500000) / 30000000 = 1.17; ownership 2 : 1 (66.6667% / 33.3333%).
+2. **Engine anchor (every sample firm, every fund, every investor):** for each report the model's cents equal `NS.audit.period(...)` / `NS.ops.capital(...)` / `NS.data.runRows(...)` / `NS.books.trialBalance(...)` exactly (`===` on integers), and fund totals in a consolidated or fund report equal the sum of the investor rows exactly. IRR and multiples (floats) are compared to the engine's values rounded the way the report prints them (e.g. 0.1 percentage point, 2 decimals for multiples) and, for fund A, to an IRR recomputed in the check by a different method (Newton iteration on the same flows) to 4 decimals.
+3. **Identity checks on every statement:** begin + contributions - distributions + income + gain - fees - carry = end, to the cent, per investor and per fund; consolidated summary row per fund equals that fund's own section; a report period ending after today shows the snapped month-end.
+
+### 4.3 PDF read-back and white label
+
+- Every generated PDF is read with `pdftotext -layout`; the check finds every money string of the model in the text (formatted as the model formatted it), the investor's name, the period, the firm's legal name, "Page n of N" on every page (`pdfinfo` Pages = N).
+- `pdfinfo` Producer, Creator and Title equal the firm's name or report title; never `pdf-lib`, `fontkit`, a vendor, model or platform name. (pdf-lib writes its own Producer unless set; filesout.js sets it at lines 551-553, the composer must too.)
+- A banned-words scan over the PDF text, the preview HTML, the spreadsheet's shared text and every new screen: no vendor or library names (pdf-lib, fontkit, DejaVu, pdf.js, openpyxl, Claude, Anthropic, Carrow & Vale in the self-serve edition's investor-facing output) and never the word "basic" (case-insensitive, whole word). The font's internal name inside the PDF font dictionary (`DejaVuSans`, shown by `pdffonts`) is not page text; whether it counts as "a name a sponsor sees" is an open question (below).
+- Characters the font lacks: the composer counts them like filesout (`bytes.missing`); a report with missing characters is refused with a plain message. A test investor name with `Ł` and an accented firm name proves the Unicode path.
+- Logo and photos: `pdfimages -list` (poppler, same package as pdftotext `[ASSUMED]` present; check at plan time) shows the logo image and each photo on the expected pages.
+
+### 4.4 Spreadsheet reopened
+
+- `python3 -I read-xlsx.py` opens every exported workbook: sheet names, every money cell is a number equal to the model's cents / 100 with the money format, raw formulas 0, no cell starts with `=`, `+`, `-` or `@` as text from a typed wording block (formula injection: the writer stores text as inline strings, filesout.js header lines 9-11, which a spreadsheet never reads as a formula; the check proves it with a wording block that starts with `=HYPERLINK(`).
+
+### 4.5 Phone conditions (owner's iPhone)
+
+- reports-flow.js runs in the sandboxed iframe with connect-src blocked (pattern: 06 checks no-network.js, safari-finish.js), at 390x844 with touch and at 1280x800: open Reports > Investor reports, start from a starter template, turn a section off, move one up, edit the letter (bold and a list), pick a period, preview, generate for one fund's investors, see the PDF drawn in the page, download, deliver; then sign in as an investor and open the report from Documents (opens count 1). No refused connection, no error on screen, a way out visible on every view (ways-out.js), the dialog scrolls (email-dialog.js).
+- The batch speed on the phone frame is printed (no threshold) so the owner sees a measured number, never an estimate.
+- Managed edition unchanged: the C-03 slice guard in status-math stays green; the builder's tab appears only in the self-serve edition unless a plan says otherwise.
+
+### 4.6 Phase requirements to test map (IDs from Part 5)
+
+| Req | Behaviour | Type | Automated command | File exists? |
+|---|---|---|---|---|
+| RB-01 | Six report types with starter templates per fund type | unit | `node checks/reports-math.js --case starters` | Wave 0 |
+| RB-02 | Template editing: sections on/off, order, wording, cover, disclosures; saved per firm/offering | unit + flow | `node checks/reports-math.js --case template`; `reports-flow.js --part editor-phone` | Wave 0 |
+| RB-03 | Merge fields filled; unknown field blocks generation | unit | `--case merge` | Wave 0 |
+| RB-04 | T1 figures equal engine and fund A by hand, to the cent | unit | `--case statement,fund-a` | Wave 0 |
+| RB-05 | Consolidated statement: one section per fund, totals per currency | unit | `--case consolidated` | Wave 0 |
+| RB-06 | T2 distribution notice equals runRows (gross, withheld, net) | unit | `--case distribution` | Wave 0 |
+| RB-07 | T3/T4 letters by fund type: sections per type, figures from engine | unit | `--case letters` | Wave 0 |
+| RB-08 | T5 performance and holdings equal engine; net only | unit | `--case performance` | Wave 0 |
+| RB-09 | T6 tax summary: cash and withholding from runs, documents' states from phase 10 | unit | `--case tax` | Wave 0 |
+| RB-10 | PDF read back: text, pages, metadata, logo, photos, Unicode | node + poppler | `node checks/reports-pdf.js` | Wave 0 |
+| RB-11 | Spreadsheet reopened: numbers to the cent, no formulas | node + openpyxl | `node checks/reports-xlsx.js` | Wave 0 |
+| RB-12 | Preview equals PDF text | browser | `reports-flow.js --part preview` | Wave 0 |
+| RB-13 | Delivery, consent list, opens, withdraw, replace, change log | unit + flow | `--case deliver`; `reports-flow.js --part deliver-phone,investor-phone` | Wave 0 |
+| RB-14 | Phone frame, no network, ways out | browser | `reports-flow.js --part nocdn,phone,desktop` | Wave 0 |
+| RB-15 | White label and no "basic" | node + browser | `node checks/reports-pdf.js --case brand`; flow banned-words part | Wave 0 |
+| RB-16 | Archive: runs re-download byte-identical (sha256) | unit | `--case archive` | Wave 0 |
+
+### 4.7 Sampling rate
+- Per task commit: the plan's own case (`--case <name>`), under 30 seconds in Node.
+- Per wave merge: gate12.sh (all reports checks) plus the steps of the reference gate the plan touches.
+- Phase gate: the full reference gate on the merged tree with the new lines, then the owner-path walkthrough in the phone conditions before a preview is published.
+
+### 4.8 Wave 0 gaps
+- [ ] checks/reports-math.js (cases above), using load11.js with `extra: ['books.js', 'books-post.js', 'reports-data.js', 'reports.js']`
+- [ ] checks/reports-pdf.js and reports-xlsx.js (copy the folder-per-process and clean-up pattern of phase 11's pdf-out.js)
+- [ ] checks/reports-flow.js (Playwright parts; phone and desktop; no-network frame)
+- [ ] checks/gate12.sh and the new reference-gate lines
+- [ ] A multi-fund, multi-currency sample investor for RB-05 (check whether a sample firm already holds such an investor; else a fixture beside fund A)
+
+## Security Domain
+
+`security_enforcement` is true (ASVS level 1, block on high).
+
+| ASVS category | Applies | Control |
+|---|---|---|
+| V2 Authentication | no (no new sign-in) | existing |
+| V3 Session management | no | existing |
+| V4 Access control | yes | Building and generating: the sponsor's team per the existing role check (`NS.app.can`, app.js:428); delivering and withdrawing: admins, as on the Tax documents page; an investor sees only `ws.docs` entries that list them (`docsFor`, operations.js:517-520). A consolidated report for investor A must never include investor B's rows: the check asserts every investor-facing model holds only its recipient's ids. |
+| V5 Input validation | yes | Rich text stored as the block model (no HTML), escaped on render (`NS.brand.esc`); merge fields from a fixed list; photos redrawn through a canvas (strips metadata such as GPS EXIF and any non-image payload); colors through `NS.brand.normHex`; text lengths capped. |
+| V6 Cryptography | yes (integrity only) | SHA-256 of each PDF with the existing `NS.audit.sha256`; no hand-rolled crypto. |
+| V8 Data protection | yes | Investor reports carry no taxpayer number, bank number or date of birth; the investor register schedule (masked TIN, KYC) is never an investor-facing section; photos lose EXIF location by redraw. |
+| V12 Files | yes | Downloads only of generated bytes; uploads limited to images and redrawn. |
+
+| Threat | STRIDE | Mitigation |
+|---|---|---|
+| Report for one investor delivered to another (wrong id in a batch) | Information disclosure | Recipient id written into the model and into the doc record from the same loop variable; the check generates a batch and reads every PDF back for exactly one investor name. |
+| Script in a wording block or an investor name | Tampering | Block model, escaping, no innerHTML of stored text. |
+| Formula injection in the spreadsheet | Tampering | Inline strings only (filesout.js), proven by a check. |
+| A delivered report changed afterwards without trace | Repudiation | Run snapshot, SHA-256 per file, change log entries for generate, deliver, withdraw and replace. |
+| Photo with GPS location of a property owner's home | Information disclosure | Canvas redraw drops EXIF. |
+
 <!-- gsd:write-continue -->
