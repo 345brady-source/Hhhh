@@ -6,7 +6,7 @@
 // sandboxed iframe whose policy refuses every connection (P9/lib9.js framed), at 390x844 with touch (-phone) or at
 // 1280x800 (-desktop), on the Kestrel Bay sample as its admin.
 //   targets-phone     failure 9: EDGAR access's "Open the answer sheet" and the offering link in ACH origination's
-//                     "Paying entity by offering" (an offering named "New offering", one line) each have a touch area of at
+//                     "Paying entity by offering" (an offering with a short name, "Fund 7", on one line) each have a touch area of at
 //                     least 24 px high, and a tap 3 px above the text still lands on the link
 //   money             failure 11: the foreign withholding line's reason and the deposit's change-log line print every
 //                     amount as the portal's money formatter does (NS.ui.usdc: "$5,000.00", never "$5000.00")
@@ -84,7 +84,8 @@ async function targetsPhone({ check, S }) {
   const F = await L9.framed(S, 'phone');
   await L9.proveRefused(check, F);
   await L9.sample(F);
-  const seeded = await L9.seed(F, { name: 'New offering', shortName: 'New offering', sales: [{ daysAgo: 5, state: 'TX' }] });
+  // a name short enough to stay on one line in the ACH table (the walk's "New offering" was 85x17 px there)
+  const seeded = await L9.seed(F, { name: 'Fund 7', shortName: 'Fund 7', sales: [{ daysAgo: 5, state: 'TX' }] });
   const id = seeded.offeringId;
   await L9.goto(F, `console-filings-access-${id}`, '.fl-section[data-part="access"] .fl-steps');
   const sheet = await measureLink(F, '.fl-section[data-part="access"] .fl-steps a[href$="-sheet"]');
@@ -96,7 +97,7 @@ async function targetsPhone({ check, S }) {
   const sel = `.cs-tbl a[href="#console-offering-${id}"]`;
   const ach = await measureLink(F, sel);
   await shot(F, 'targets-ach');
-  check('ACH origination: the one-line offering link "New offering" has a touch area of at least 24 px high', !!ach && ach.text === 'New offering' && ach.lines === 1 && ach.hit >= 24, ach);
+  check('ACH origination: the one-line offering link "Fund 7" has a touch area of at least 24 px high', !!ach && ach.text === 'Fund 7' && ach.lines === 1 && ach.hit >= 24, ach);
   check('ACH origination: a tap 3 px above and 3 px below the offering link lands on it', !!ach && ach.above && ach.below, ach);
   // every offering link in that table, whatever its length
   const all = await F.fr.evaluate(
@@ -129,9 +130,8 @@ async function money({ check, S }) {
     const entered = W.foreignDraft({ investorId: 'X-1', grossCents: 123456789 }, { subjectCents: 123456789, ratePct: 15 });
     const small = W.foreignDraft({ investorId: 'X-1', grossCents: 99999 }, { subjectCents: 99999 });
     const o = ws.offerings[0];
-    const n = (ws.audit || []).length;
     W.addDeposit(ws, { offeringId: o.id, kind: 'foreign', year: '2026', cents: 100000, date: '2027-01-15', confirmation: 'W3-DEP', by: 'Walk 3 check' });
-    const log = (ws.audit || []).slice(n).map((e) => e.detail || '');
+    const log = (ws.audit || []).filter((e) => e.action === 'Tax deposit marked' && /W3-DEP/.test(e.detail || '')).map((e) => e.detail);
     return { rule: rule.why, entered: entered.why, small: small.why, log, usdc: [U.usdc(500000), U.usdc(123456789), U.usdc(99999), U.usdc(100000)] };
   });
   const raw = /\$\d{4,}\.\d\d/;
@@ -254,10 +254,12 @@ async function deliver(check, S, size) {
 /* ---------- e: no request for a file that is not shipped ---------- */
 async function partsLoad({ check, S }) {
   const F = await L9.framed(S, 'phone');
+  await L9.sample(F);
+  // from here on every answer is watched: a reload of the framed page loads every script again
   const missing = [];
   F.A.context.on('response', (res) => res.status() === 404 && missing.push(new URL(res.url()).pathname));
+  F.A.errors.length = 0;
   await F.reload();
-  await L9.sample(F);
   await F.fr.waitForTimeout(2500);
   check('a page load asks for no file that is not there (no 404)', missing.length === 0, missing);
   await L9.goto(F, 'console-taxdocs', '.tx');
