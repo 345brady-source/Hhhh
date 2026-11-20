@@ -155,7 +155,7 @@
   const HERE = (document.currentScript && document.currentScript.src) || '';
   // Only files that are shipped: a part not in the build would be asked for, and refused, on every page load
   // (06-WALKTHROUGH-3 failure 4). Plan 10-10 adds 'tax1099-ui.js' back after 'tax1099.js', plan 10-12 adds 'taxlink.js' last.
-  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js']);
+  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js', 'taxlink.js']);
   const parts = {};
   const load = { settled: false, waiting: false };
   function part(key, spec) {
@@ -218,6 +218,23 @@
     } catch (e) {
       if (window.console) console.error(e);
       return false;
+    }
+  }
+  // Plan 10-12 (B3): each time the Tax documents page is opened, the link reads the server's list (opens on the investor's
+  // device, a consent given at the link). A failure changes nothing: the rows keep their last line.
+  const pulled = { key: null };
+  window.addEventListener('hashchange', () => (pulled.key = null));
+  function pullOnOpen(ws, param) {
+    const k = String(param || '');
+    if (pulled.key === k || !connected(ws) || !API.link || typeof API.link.pull !== 'function') return;
+    pulled.key = k;
+    try {
+      Promise.resolve(API.link.pull(ws)).then(
+        (changed) => changed && refresh(),
+        () => {}
+      );
+    } catch (e) {
+      /* the row keeps its last line */
     }
   }
   const linkLine = (ws, doc) => (doc && connected(ws) && typeof API.link.rowLine === 'function' ? from(API.link.rowLine, ws, doc) : '');
@@ -695,7 +712,8 @@
       try {
         TD().deliver(ws, d.id, { by: actor(), how, replaces: e ? e.id : '' });
         delete dv().replace[d.id];
-        if (d.tax.state === 'delivered') sent.push(d);
+        // plan 10-12: with the server connected, a document waiting for consent is sent too (its link asks for consent)
+        if (d.tax.state === 'delivered' || (d.tax.state === 'waiting' && connected(ws))) sent.push(d);
       } catch (err) {
         if (refused.indexOf(err.message) < 0) refused.push(err.message);
       }
@@ -757,6 +775,14 @@
   NS.actions['tx-withdraw-go'] = docAct(async (ws, doc, t) => {
     TD().withdraw(ws, doc.id, { by: actor(), why: t.why });
     dv().row = null;
+    // plan 10-12 (B3): also off the server; a server error never undoes the withdrawal here
+    if (connected(ws) && typeof API.link.withdraw === 'function') {
+      try {
+        await API.link.withdraw(ws, doc);
+      } catch (e) {
+        if (window.console) console.error(e);
+      }
+    }
   }, 'configure');
   NS.actions['tx-paper'] = docAct(async (ws, doc, t) => {
     TD().markPaper(ws, doc.id, { sentOn: t.sent, by: actor() });
@@ -776,6 +802,7 @@
       edition: 'diy',
       render(param) {
         const ws = W();
+        pullOnOpen(ws, param);
         const m = /^batch-(.+)$/.exec(String(param || ''));
         const b = m ? batchOf(ws, m[1]) : null;
         if (b) return CK().shell(batchHTML(ws, b), ROUTE);
@@ -793,7 +820,17 @@
       for (const name of PARTS) await script(name);
       load.settled = true;
       refresh();
+      if (S().route === 'taxdoc') NS.app.render();
     })();
+    // Plan 10-12: the investor's link screen (#taxdoc-<token>) is taxlink.js's, which loads after the page. Until it has,
+    // its address shows this line instead of falling back to another page; if it never loads, one line says so.
+    const linkWaits = {
+      standalone: true,
+      edition: 'diy',
+      title: 'Your tax document',
+      render: () => `<div class="pt pt-auth txl"><main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ivf-msg"><p class="lede" role="status">${load.settled ? 'This tax document cannot be opened on this page. Try the link again later.' : 'Opening your tax document…'}</p></div></main></div>`
+    };
+    if (!NS.views.taxdoc) NS.views.taxdoc = linkWaits;
   }
   NS.taxUI = API;
 })(window.CVPortal);

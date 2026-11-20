@@ -17,6 +17,7 @@ export function openStore(file) {
     }
   }
   data.filings = data.filings || {}; data.filingIssuers = data.filingIssuers || {};
+  data.taxdocs = data.taxdocs || {}; // tax documents delivered to the investor's own device (lib/taxdocs.mjs, plan 10-12)
   let timer = null;
   const flush = () => {
     if (!file) return;

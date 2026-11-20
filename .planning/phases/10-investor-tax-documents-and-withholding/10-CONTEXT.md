@@ -144,3 +144,10 @@ Waves: 1 = 10-01 (distribution record, gate10.sh), 10-02 (K-1 split core) · 2 =
 - W1 (10-12 Task 2): the access-period purge runs inside server/lib/taxdocs.mjs, throttled (`if (now() - lastPurge >= 60000) purge()` at the top of `investor()` and `sponsor()`). invitations.mjs stays unchanged; test "period" calls `purge()` directly.
 - W2 (10-12 interfaces): the invitation-token block in server/index.mjs is now at lines 838-848, and module setup is at line 170. Find them by name (`inviteToken`), not by line.
 - Parallel: after these, the two plans share only taxdocs-ui.js line 158.
+
+## After 10-12 (merged 2026-11-20; server tests 403 on the merged tree)
+- Returned tax notices bounce to the server's MAIL_FROM, not the sponsor's mailbox (the firm's contact is the reply-to). Phase 13's per-sponsor sender (13-03) is where bounces reach the sponsor; until then the sponsor records a returned notice with "Notice came back".
+- Replaced documents keep opening on the server until their own available-until date (C-09). Withdrawn documents stop at once and their file is removed.
+- The consent screen shows eight disclosures (NS.taxdocs.CONSENT.lines).
+- When 10-10 merges, PARTS in taxdocs-ui.js reads [..., 'tax1099.js', 'tax1099-ui.js', 'taxlink.js']; rebuild help-guide.mjs and regenerate .planning/tools/preview/help-data.js after the guide merge. walk3-fixes.js accepts tax1099-ui.js once its file exists.
+- Sponsor guide 46,698 of 48,000 bytes.
