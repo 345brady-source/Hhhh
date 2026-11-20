@@ -1,5 +1,5 @@
 // gate: browser
-// last "TAX1099 FLOW: PASS (parts run: 6)"
+// last "TAX1099 FLOW: PASS (parts run: 8)"
 // The Form 1099 section of the Tax documents page (plan 10-10, D-02, C-01, C-05, TAX-07, TAX-08, TAX-10, TAX-11, TAX-12):
 // the sponsor of a notes fund reviews the Form 1099-INT figures the portal's records prove, confirms each against the
 // bank, has each recipient's number read from the signed W-9 or types it, makes the recipients' copies and delivers them
@@ -35,6 +35,15 @@
 //                  cell for correction and builds no file; corrected, the file downloads with no asterisk in any cell; Record
 //                  the IRS receipt (number and date) marks both forms filed with that date, logged; a missing number or date
 //                  is refused
+//   stops          1280x800: with no fund set to notes, or one set to partnership, no Form 1099 line and the address shows
+//                  nothing to pick; after a confirmed form's payments change (one more interest payment) its confirmation is
+//                  gone; a Distribution payment shows "Is this payment interest?" with its date and amount and no Confirm on
+//                  any form until a named person answers (No adds nothing, Yes counts it); a payment saved without stored
+//                  amounts shows Confirm amounts with the worked-out shares and counts once confirmed; a stored line with
+//                  foreign withholding on an included investor shows that stop's sentence
+//   roles          1280x800: an admin marks A-1001 as an exempt recipient (left out with that reason) and unmarks it (back);
+//                  a team member confirms totals and sees no control for the payer's details, the exempt mark, the numbers,
+//                  the copies or the file; an investor cannot open the address; portal.html at 390x844 has the same section
 // Every part: quiet, leak and a way out on screen.
 //   NODE_PATH=$(npm root -g) node tax1099-flow.js [--only part1,part2]
 // The last line is "TAX1099 FLOW: PASS (parts run: N)" or "TAX1099 FLOW: FAIL (parts run: N) - <parts>".
@@ -279,7 +288,7 @@ async function shot(A, fr, sel, name) {
     if (!el) return false;
     el.scrollIntoView({ block: 'start' });
     window.scrollBy(0, -70);
-    const typed = Array.from(document.querySelectorAll('input')).some((i) => /\d{5}/.test(i.value || ''));
+    const typed = Array.from(document.querySelectorAll('#t99-payer-tin, input[id^="t99-tin-"]')).some((i) => !!i.value);
     return /ending \d{4}/.test(el.innerText) && !typed;
   }, sel);
   if (ok) await A.page.screenshot({ path: path.join(OUT, name), fullPage: false });
@@ -665,6 +674,144 @@ const parts = {
     await T.leak(check, fr);
     await T.quiet(check, A, fr);
     await A.context.close();
+  },
+  async stops({ check: raw, S }) {
+    const check = masked(raw);
+    const { A, fr } = await open(S, 'desktop');
+    await T.proveRefused(check, A, fr);
+    await T.sample(fr, { role: 'admin' });
+    // no fund set to notes (the sample sets none), then one set to partnership
+    const line = async () => {
+      await go(fr, 'console-taxdocs', '.tx');
+      await fr.waitForTimeout(600);
+      return has(fr, 'a[href="#console-taxdocs-1099"]');
+    };
+    check('with every fund not set, the Tax documents page has no Form 1099 line', !(await line()));
+    await T.ws(fr, (w, by, NS) => NS.withholding.setReporting(w, w.offerings[0].id, 'partnership', { by }) && true, BY);
+    check('with a fund set to partnership, still no Form 1099 line', !(await line()));
+    await go(fr, 'console-taxdocs-1099', '.tx');
+    const empty = await fr.evaluate(() => ({ pick: !!document.querySelector('#t99-fund, #t99-year'), forms: !!document.querySelector('[data-list="forms"]'), stop: (document.querySelector('[data-stop="reporting"]') || {}).innerText || '' }));
+    check('the address console-taxdocs-1099 shows nothing to pick, only the sentence naming the CPA', !empty.pick && !empty.forms && /CPA/.test(empty.stop), empty);
+    await T.wayOut(check, fr);
+    // example D, both forms confirmed, then one more interest payment: the confirmations are gone
+    await seatD(fr);
+    await openSection(fr);
+    await confirmAll(fr);
+    check('both forms confirmed', (await forms(fr)).every((x) => /Confirmed by/.test(x.text)));
+    await T.ws(fr, (w, by, NS) => NS.data.recordRun(w, { offeringId: 'exd-notes', date: '2026-12-28', type: 'Interest', total: 1000000 }, { by, today: '2026-12-28', id: 'exd-late' }) && true, BY);
+    await openSection(fr);
+    let f = await forms(fr);
+    const a1 = f.find((x) => x.id === 'A-1001') || {};
+    check("after one more interest payment, A-1001's figure is $25,000.00 and its confirmation is gone", a1.box1 === '$25,000.00' && /Not confirmed/.test(a1.text) && a1.confirm, a1);
+    check('no copy and no file while a confirmation is gone', !(await has(fr, '[data-action=t99-copies]')) && !(await has(fr, '[data-action=t99-file]')));
+    // a payment of type Distribution: asked, never guessed
+    await T.ws(fr, (w, by, NS) => NS.data.recordRun(w, { offeringId: 'exd-notes', date: '2026-11-02', type: 'Distribution', total: 30000 }, { by, today: '2026-11-02', id: 'exd-dist' }) && true, BY);
+    await openSection(fr);
+    let st = await stops(fr);
+    let ask = await rowsOf(fr, 'ask');
+    check('a Distribution payment in the year shows its stop sentence and "Is this payment interest?" with its date and amount', st.some((s) => s.code === 'kind' && /CPA/.test(s.text)) && ask.length === 1 && /Is this payment interest\?/.test(ask[0].text) && /November 2, 2026/.test(ask[0].text) && /\$300\.00/.test(ask[0].text), { st, ask });
+    check('no Confirm on any form until it is answered', !(await has(fr, '[data-action=t99-confirm]')));
+    await T.press(fr, '[data-list="ask"] [data-action=t99-interest][data-yes="0"]');
+    await fr.waitForTimeout(500);
+    const tax1 = await fr.evaluate(() => JSON.parse(JSON.stringify(window.CVPortal.state.ws.runs.find((r) => r.id === 'exd-dist').tax || null)));
+    check('answered No by a named person: stored with who and when, the stop is gone and Confirm is back', !!tax1 && tax1.interest === false && !!tax1.by && !!tax1.at && (await stops(fr)).length === 0 && (await has(fr, '[data-action=t99-confirm]')), tax1);
+    f = await forms(fr);
+    check('a payment that is not interest adds nothing: A-1001 is still $25,000.00', (f.find((x) => x.id === 'A-1001') || {}).box1 === '$25,000.00', f.map((x) => x.box1));
+    await T.ws(fr, (w, by, NS) => NS.data.recordRun(w, { offeringId: 'exd-notes', date: '2026-11-03', type: 'Distribution', total: 600 }, { by, today: '2026-11-03', id: 'exd-dist2' }) && true, BY);
+    await openSection(fr);
+    await T.press(fr, '[data-list="ask"] [data-action=t99-interest][data-yes="1"]');
+    await fr.waitForTimeout(500);
+    f = await forms(fr);
+    check('answered Yes, the payment counts: A-1001 is $25,003.00', (f.find((x) => x.id === 'A-1001') || {}).box1 === '$25,003.00', f.map((x) => x.box1));
+    const logAsk = await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((e) => e.action === 'Payment marked for Form 1099-INT').length);
+    check('both answers are in the change log', logAsk === 2, logAsk);
+    // a payment saved before amounts were stored
+    await T.ws(fr, (w) => {
+      w.runs.push({ id: 'exd-old', offeringId: 'exd-notes', date: '2026-10-15', type: 'Interest', total: 60000, status: 'paid', source: 'history' });
+      return true;
+    });
+    await openSection(fr);
+    st = await stops(fr);
+    const un = await rowsOf(fr, 'unstored');
+    check('a payment saved without stored amounts shows its stop and Confirm amounts with the worked-out shares', st.some((s) => s.code === 'stored') && un.length === 1 && /October 15, 2026/.test(un[0].text) && /\$300\.00/.test(un[0].text) && /\$200\.00/.test(un[0].text) && /\$100\.00/.test(un[0].text) && (await has(fr, '[data-list="unstored"] [data-action=t99-lines]')), { st, un });
+    check('no Confirm on any form while it stands', !(await has(fr, '[data-action=t99-confirm]')));
+    await T.press(fr, '[data-list="unstored"] [data-action=t99-lines]');
+    await fr.waitForTimeout(500);
+    const old = await fr.evaluate(() => {
+      const r = window.CVPortal.state.ws.runs.find((x) => x.id === 'exd-old');
+      return { basis: r.linesBasis, by: r.linesBy, n: (r.lines || []).length };
+    });
+    f = await forms(fr);
+    check('once confirmed, its amounts are stored with who and the forms count it: A-1001 is $25,303.00', old.basis === 'confirmed' && !!old.by && old.n === 3 && (f.find((x) => x.id === 'A-1001') || {}).box1 === '$25,303.00', { old, f: f.map((x) => x.box1) });
+    // a stored line with foreign withholding on an included investor
+    await T.ws(fr, (w, by, NS) => {
+      const held = { 'A-1001': [{ kind: 'foreign', cents: 150, basisCents: 500, ratePct: 30, source: 'entered', why: 'Entered by the sponsor.', confirmedBy: by, confirmedAt: '2026-11-10T09:00:00.000Z' }] };
+      NS.data.recordRun(w, { offeringId: 'exd-notes', date: '2026-11-10', type: 'Interest', total: 1000, withheld: held }, { by, today: '2026-11-10', id: 'exd-odd' });
+      return true;
+    }, BY);
+    await openSection(fr);
+    st = await stops(fr);
+    check("a stored line with foreign withholding on an included investor shows that stop's sentence and no Confirm", st.some((s) => s.code === 'other-withholding' && /CPA/.test(s.text) && /foreign/.test(s.text)) && !(await has(fr, '[data-action=t99-confirm]')), st);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+  async roles({ check: raw, S }) {
+    const check = masked(raw);
+    const { A, fr } = await open(S, 'desktop');
+    await T.sample(fr, { role: 'admin' });
+    await seatD(fr);
+    await openSection(fr);
+    await T.press(fr, '[data-list="forms"] .tx-row[data-id="A-1001"] [data-action=t99-exempt]');
+    await fr.waitForTimeout(500);
+    let f = await forms(fr);
+    let left = await rowsOf(fr, 'leftout');
+    check('an admin marks A-1001 as an exempt recipient: it moves to the left-out list with that reason', f.map((x) => x.id).join() === 'A-1002' && left.some((r) => r.id === 'A-1001' && /exempt recipient/i.test(r.text)), { f: f.map((x) => x.id), left });
+    await T.press(fr, '[data-list="leftout"] .tx-row[data-id="A-1001"] [data-action=t99-unexempt]');
+    await fr.waitForTimeout(500);
+    f = await forms(fr);
+    left = await rowsOf(fr, 'leftout');
+    check('unmarking brings the form back', f.map((x) => x.id).join() === 'A-1001,A-1002' && !left.some((r) => r.id === 'A-1001'), { f: f.map((x) => x.id) });
+    const log = await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((e) => /^(Marked exempt from backup withholding|Exempt mark removed)$/.test(e.action) && e.record === 'A-1001').length);
+    check('both are in the change log', log === 2, log);
+    // a team member
+    await T.sample(fr, { role: 'team' });
+    await go(fr, 'console-taxdocs', '.tx');
+    await until(fr, 'a[href="#console-taxdocs-1099"]', 15000);
+    check('a team member has the Form 1099 line', await has(fr, 'a[href="#console-taxdocs-1099"]'));
+    await openSection(fr);
+    check('a team member sees no control for the payer\'s details or the exempt mark', !(await has(fr, '#t99-p-name')) && !(await has(fr, '[data-action=t99-payer]')) && !(await has(fr, '[data-action=t99-exempt]')) && !(await has(fr, '[data-action=t99-unexempt]')));
+    await confirmAll(fr);
+    const conf = (await yearRec(fr)) || {};
+    check('a team member can Confirm a total', !!(conf.confirmed || {})['A-1001'] && !!(conf.confirmed || {})['A-1002'] && (await forms(fr)).every((x) => /Confirmed by/.test(x.text)), conf.confirmed);
+    await fr.waitForTimeout(800);
+    check('with every form confirmed, a team member sees no numbers, no copies and no file', !(await has(fr, '[data-panel="numbers"]')) && !(await has(fr, '#t99-payer-tin')) && !(await has(fr, '[data-action=t99-copies]')) && !(await has(fr, '[data-action=t99-file]')) && !(await has(fr, '[data-action=t99-filed]')));
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    // an investor
+    await T.sample(fr, { role: 'investor', investor: 'A-1002' });
+    await fr.evaluate(() => (location.hash = '#console-taxdocs-1099'));
+    await fr.waitForTimeout(1200);
+    const inv = await fr.evaluate(() => ({ forms: !!document.querySelector('[data-list="forms"]'), h1: Array.from(document.querySelectorAll('h1')).map((x) => x.innerText.trim()), route: window.CVPortal.state.route }));
+    check('an investor cannot open the address', !inv.forms && inv.h1.indexOf('Form 1099') < 0 && inv.route !== 'console-taxdocs', inv);
+    await A.context.close();
+    // the published page
+    const P = await open(S, 'phone', { page: 'portal.html' });
+    await T.proveRefused(check, P.A, P.fr);
+    await T.sample(P.fr, { role: 'admin' });
+    await seatD(P.fr);
+    await go(P.fr, 'console-taxdocs', '.tx');
+    await until(P.fr, 'a[href="#console-taxdocs-1099"]', 15000);
+    check('portal.html at 390x844: Tax documents has the Form 1099 line', await has(P.fr, 'a[href="#console-taxdocs-1099"]'));
+    await openSection(P.fr);
+    const pf = await forms(P.fr);
+    check('portal.html: the same two forms with example D\'s amounts', pf.map((x) => `${x.id} ${x.box1} ${x.box4}`).join('|') === 'A-1001 $20,000.00 |A-1002 $13,333.32 $1,600.00', pf.map((x) => `${x.id} ${x.box1} ${x.box4}`));
+    await T.wayOut(check, P.fr);
+    await T.leak(check, P.fr);
+    await T.quiet(check, P.A, P.fr);
+    await P.A.context.close();
   }
 };
 
