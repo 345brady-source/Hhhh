@@ -1,12 +1,68 @@
 ---
 phase: 12-report-builder
 plan: 05
-status: in progress
+subsystem: report builder (starter templates, end-to-end proof)
+tags: [reports, starters, xlsx, pdf, white-label, wording]
+status: complete
+requires: ["12-01 NS.reportsData", "12-02 NS.reports (addStarter, startFrom, resolve, sheets)", "12-03 NS.reportsPdf.compose", "filesout.js NS.files.workbook"]
+provides: ["assets/js/reports-templates.js (18 starters)", "checks/reports-starters.js (REPORTS STARTERS, 8 cases)", "checks/reports-xlsx.js (REPORTS XLSX, 4 cases)"]
+affects: ["12-06 (loads reports-templates.js after reports.js; asset-item editor needs holding ids)", "12-07 (batch runs on starters)", "12-08 (starter picker applies pe/vc)", "12-09 (walkthrough)"]
+tech-stack:
+  added: []
+  patterns: ["starters carry only added disclosure paragraphs; startFrom keeps the tenant disclaimer first (B2)", "PDF read back in two orders (pdftotext -layout and -raw) so cells wrapped in their column count"]
+key-files:
+  created: [assets/js/reports-templates.js, .planning/phases/12-report-builder/checks/reports-starters.js, .planning/phases/12-report-builder/checks/reports-xlsx.js, .planning/phases/12-report-builder/12-05-deferred-items.md]
+  modified: [assets/js/reports.js (startFrom, B2: 2 lines), assets/js/tenants.js (one Pellbrook sample sentence)]
+decisions:
+  - "Cover and disclosures are on in every starter; dn-notice's cover is the plain style"
+  - "dn-letter is letter + notice: the catalogue has no distributions section for a distribution notice"
+  - "q-open's disclosure says net of fees and incentive allocation; q-firm's says it is for investors in the funds named in it (no investor is named on a letter to everyone)"
+  - "Letters promise only sections that always print (no 'update on each property': the asset section is empty until the sponsor types it)"
+  - "Default wording is marked in every blurb (sponsor-facing only): 'Default wording, not yet read by counsel.'"
+metrics:
+  completed: 2026-11-20
+actuals:
+  tokens: 16000      # chars/4 over the files changed (58,902 chars + 5 changed lines), this SUMMARY excluded
+  tasks: 3
+  commits: 10        # MEASURED: git rev-list --count da1ce23..HEAD before this SUMMARY's own commit
+plan_head_before: da1ce239c472d3a0a287571b7b953d0eac780ac8
+plan_head_after: f2463e99b82ba1a19e397f5ad07aa8400daad802
 ---
 
-# Phase 12 Plan 05: starter templates and spreadsheets (in progress)
+# Phase 12 Plan 05: starter templates and spreadsheets Summary
 
-Evidence is pasted here as it is produced (SAVE-RULES rule 5). Base commit: da1ce239c472d3a0a287571b7b953d0eac780ac8.
+18 starter templates (assets/js/reports-templates.js) run end to end for the first time through the real figures, the
+model and the PDF composer: fund A's hand-worked figures print to the cent, every starter prints for every matching fund
+of all four sample firms (336 PDFs) with only its recipient's data, and every report type's spreadsheet reopens with money
+as numbers equal to the model's cents. Measured in Node only. Nothing here is on a page yet (12-06 wires it in). The
+wording is default text that neither the owner nor any counsel has read, and nothing here is ready until the owner has
+checked it.
+
+## Failures and open items (first)
+
+1. **Task 3's cases had no true RED.** All five passed on their first run because they test what wave 1 and Tasks 1-2
+   had already built. red-3.txt holds the same cases failing on four temporary mutations instead (details under red-3).
+2. **Asset updates cannot attach to any holding today** (12-05-deferred-items.md item 1). Every holding row of all 15
+   sample funds and of fund A has `id: ''` (generated rows until 11-11 moves holdings onto the journal), and `normalise`
+   drops asset items with no holding id. The four starters with an asset section (q-realestate, q-spv, a-realestate,
+   p-property) print it only once holdings carry ids. The inject case wraps the real figures to give holding rows ids.
+   Recheck both checks after 11-11 merges; 12-06's asset editor needs the same ids.
+3. **The sample Pellbrook disclaimer said "estimates until audited"**, and B2 rightly prints the tenant disclaimer first on
+   every report, so every Pellbrook report said "audited". Reworded the one sample sentence in assets/js/tenants.js
+   ("estimates until the annual financial statements are final"). A real sponsor's disclaimer prints as typed, with no
+   warning (deferred item 2). mobile/src/core/tenants.js keeps the old sentence (separate app, deferred item 3).
+4. **Wording faults I made and fixed before commit** (found by reading PDFs by eye): q-firm said "each fund named on the
+   cover", but the cover reads "All investments" for an investor across funds; the real estate, SPV and annual real estate
+   letters promised "an update on each property", which prints only when the sponsor types one.
+5. **Chart line-up (After 12-03):** every columns and line chart in the 336 models lines up with its ticks (case
+   every-sample asserts it), so the model was not changed. They would not line up for a series with a negative value: the
+   composer clamps negatives to zero while the ticks start at the least value. No sample series is negative today.
+6. **Verify commands run with one recorded change each:** Task 2's empty-folder test excludes `.parts` (12-CONTEXT,
+   "After 12-03"). All three ran from script files, because the worktree guard refuses inline `$(git ...)`.
+7. Not checked here: the look of these pages on an iPhone (12-06 and 12-09 cover the phone frame). The sample firms'
+   disclaimers end with "[Regulatory disclosures to be provided by counsel.]", which prints on every sample report.
+
+Base commit: da1ce239c472d3a0a287571b7b953d0eac780ac8. Evidence was pasted below as it was produced (SAVE-RULES rule 5).
 
 ## RED outputs
 
@@ -118,3 +174,128 @@ REPORTS XLSX: FAIL (cases run: 3) - types, inject
 ```
 The whole-dollar mutation does not show on the fund A workbooks because fund A's figures are whole dollars; it shows on
 Ashwell Ridge and Kestrel Bay. The selfcheck cases test the shared runner and pass with or without any mutation.
+
+### Task 3 verify (the plan's gate; SCRATCH/exec-12-05/verify-3.sh, the plan's command unchanged, run with GATE_FRESH=1)
+
+```
+==> .../exec-12-05/st.txt <==
+PASS selfcheck an empty --case list exits 1 with a FAIL line
+REPORTS STARTERS: PASS (cases run: 8)
+
+==> .../exec-12-05/xl.txt <==
+PASS selfcheck an empty --case list exits 1 with a FAIL line
+REPORTS XLSX: PASS (cases run: 4)
+GATE ok   REPORTS MATH
+GATE ok   REPORTS MODEL
+GATE ok   REPORTS PDF
+GATE ok   REPORTS RECORD
+GATE ok   REPORTS STARTERS
+GATE ok   REPORTS XLSX
+GATE_EXIT=0 (phase 12 checks only)
+VERIFY-3 EXIT=0
+```
+REPORTS STARTERS 123 PASS, REPORTS XLSX 49 PASS, 0 FAIL, 0 KEPT. No gate step was kept from a cache (0 "kept from" lines).
+diy.html, portal.html, index.html and console.js are unchanged from the base (part of the command). The full reference
+gate was not run, as instructed: this plan adds files no page loads.
+
+Measured build time (case speed: q-pe for each of kb-fund-ii's 14 holders, resolve then compose, timed with Date.now(),
+no threshold):
+```
+speed: 14 reports, 2846 ms, 203 ms per report
+```
+(The first run of the same case, before the mutations, measured `speed: 14 reports, 2321 ms, 166 ms per report`.)
+
+### Server tests (server/node_modules linked for the run, removed afterwards)
+
+```
+1..387
+# tests 387
+# pass 387
+# fail 0
+```
+
+## Starters as built (assets/js/reports-templates.js)
+
+Cover and disclosures are on in all of them. Every other catalogue section of the type is present and off.
+
+| id | name | type | fund type | sections on (print order) | chart |
+|----|------|------|-----------|---------------------------|-------|
+| st-capital | Capital account statement | statement | any | capital (ytd), commitment (activity), distributions, chart | dist |
+| st-consolidated | Consolidated statement | statement | any | summary, capital, commitment, distributions, chart | allocation |
+| st-yearend | Year-end statement | statement | any | letter, capital (itd), commitment, distributions, performance | none |
+| dn-notice | Distribution notice | distribution | any | notice (plain cover) | none |
+| dn-letter | Distribution notice with cover letter | distribution | any | letter, notice | none |
+| q-realestate | Quarterly letter: real estate | quarterly | realestate | letter, capital, distributions, performance, assets, fees, chart, outlook | dist |
+| q-credit | Quarterly letter: private credit or income | quarterly | credit | letter, capital, distributions, performance, holdings, fees, chart, outlook | dist |
+| q-pe | Quarterly letter: venture or private equity | quarterly | pe (12-08 offers it for vc) | letter, capital, commitment, performance, holdings, fees, chart, outlook | capital |
+| q-spv | Quarterly letter: single asset | quarterly | spv | letter, capital, distributions, assets, performance, chart | dist |
+| q-open | Quarterly letter: open-ended fund | quarterly | open | letter, capital, performance, holdings, fees, chart, outlook | capital |
+| q-firm | Quarterly letter: every fund | quarterly | any | letter, summary, capital, performance, chart, outlook | allocation |
+| a-review | Annual review | annual | any | letter, capital (itd), distributions, performance, holdings, fees, statements, chart, outlook | capital |
+| a-realestate | Annual review: real estate | annual | realestate | as a-review plus assets | capital |
+| a-rega | Annual report to investors (Regulation A) | annual | any | as a-review; title from the model (C-09) | capital |
+| p-summary | Performance and holdings summary | performance | any | performance, holdings, fees, chart | allocation |
+| p-property | Property summary | performance | realestate | holdings, assets, performance | none |
+| t-season | Tax-season summary | tax | any | letter, taxsummary, taxdocs (expected '') | none |
+| t-documents | Tax documents notice | tax | any | taxdocs | none |
+
+Disclosures, in order: the tenant's disclaimer, then "Figures are unaudited and prepared from the fund’s books as of the
+date shown.", then "Performance is shown net of fees and carried interest. Past performance does not guarantee future
+results." (q-open: "net of fees and incentive allocation"), then "This report is for the investor named on it and is not
+an offer to sell or a solicitation of an offer to buy any security." (q-firm: "for investors in the funds named in it").
+Statements and tax summaries add "Book capital, not tax capital. Your tax documents are authoritative for tax purposes."
+
+Letters use only {first_name}, {investment}, {distributions_period}, {period_end} and {firm}. Investor fields appear only
+in statement, notice and tax letters, which always go to one investor. q-firm uses only {period_end} and {firm}. No letter
+is longer than three paragraphs, and none forecasts anything or asks for more investment. Outlook sections are on but
+empty: the sponsor writes them, and an empty outlook prints nothing.
+
+**Neither the owner nor any counsel has read this wording.** It is default text the sponsor edits. Each starter's blurb
+(seen by the sponsor, never by investors) ends with "Default wording, not yet read by counsel."
+
+## Deviations from Plan
+
+1. **[B2, planned] reports.js startFrom** (2 lines): a starter's disclosures are added after the tenant's disclaimer
+   instead of replacing it. Case catalogue checks that the disclaimer comes first for every starter on every sample firm.
+2. **[Rule 3] assets/js/tenants.js: one Pellbrook sample sentence reworded** so that no report says "audited" (C-13).
+   every-sample and words prove it.
+3. **[Plan text] dn-letter is letter + notice.** The plan also lists a distributions section, but the catalogue has none
+   for the distribution type, so normalise would drop it.
+4. **[Plan order] q-spv and p-property print their sections in the order the plan lists** (q-spv: assets before
+   performance; p-property: holdings, assets, performance). The sections that are on fill the catalogue places of the
+   sections that are on, in the listed order; the check works out the same order on its own.
+5. **[Wording rule: every sentence true] two disclosure variants:** q-open (incentive allocation) and q-firm (no investor
+   is named).
+6. **[Rule 1, check] wrapped table cells:** the checks read each PDF with both pdftotext -layout and -raw, and a string
+   counts as present if either reading holds it (see the red-2 note).
+7. **[Interface] case inject wraps the real figures** so that holding rows have ids, because no holding has one before
+   11-11 (open item 2).
+8. selfcheck was added in Task 3. Its RED is the runner's own behaviour, as in 12-01 to 12-03. The `.parts` results store
+   is kept on purpose (12-CONTEXT).
+
+## Threat surface
+
+Nothing new beyond the plan's threat model. T-12-21: every-sample runs othersIn and searches every PDF for the names of
+the firm's other investors (336 PDFs, none found). T-12-22: case words and the wording rules. T-12-23: case inject
+(= + - @). T-12-24: lib12 leak on every PDF's text and pdfinfo; Author, Producer and Creator are the firm's name in every
+PDF.
+
+## Commits (wip/12-05)
+
+- b0fa2eb test(12-05): RED checks for the starters and their workbooks, case fund-a
+- a87512f feat(12-05): starter templates tracer - st-capital, dn-notice, p-summary, t-season
+- 5dfe7e6, 5a19e8e, f6adf9f, 44617af, 6f02a3c wip(12-05): save
+- e15028a feat(12-05): all 18 starters, tenant disclaimer kept first, every sample firm end to end
+- baa5d14 wip(12-05): save
+- f2463e9 test(12-05): workbooks of every report type, typed labels kept as text, measured build time
+- this SUMMARY's commit follows
+
+## Known Stubs
+
+None. Outlook text is empty on purpose: the sponsor writes it, and an empty outlook prints nothing. taxdocs `expected` is
+'' on purpose: the sponsor types when the documents are expected.
+
+## Self-Check: PASSED
+
+- FOUND: assets/js/reports-templates.js, checks/reports-starters.js, checks/reports-xlsx.js, 12-05-deferred-items.md
+- FOUND commits b0fa2eb, a87512f, e15028a, f2463e9 on HEAD (`git log da1ce23..HEAD`: 10 commits before this SUMMARY's)
