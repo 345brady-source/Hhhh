@@ -88,3 +88,9 @@
 - books-bank.js ships after books.js, books-post.js and bankfiles.js when 11-15's screen loads it. Stored line ids are `'<account id>:' + reader id`.
 - filesout.js `NS.files.pdf` (11-06) prints sheets that are too wide in parts ("part k of K"), repeating the investor id and name. Producer and Creator are set to the firm's name. Money that is not whole cents throws.
 - Fees for a real fund use the engine's default rate until 11-07 lands.
+
+## After 11-07 (merged 2026-11-20)
+- A real fund's capital accounts now come from its journal (income, gains, fees and carry), with the cache keyed on journal length (B2). The three pages load books.js and books-post.js after operations.js.
+- Still invented for a real fund: holdings, cash and bank references come from weights until 11-11. Two engine rules can still put a figure that is not in the journal into a real fund's capital: the exit true-up (the exit month's gain is forced so capital equals accrued carry) and the floor at zero when a loss exceeds capital. A later plan must take both from the journal, or show them as adjustments the sponsor posts.
+- AUDIT SAME and ENGINE BOOKS case terms need P11_ROOT (the base tree); run them through gate11.sh, not alone.
+- events() also returns strays. A real fund gets no generated side-pocket return.
