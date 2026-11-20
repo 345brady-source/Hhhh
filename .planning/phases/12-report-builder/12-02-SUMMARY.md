@@ -18,3 +18,12 @@ FAIL resolve ran to the end :: Error: ENOENT: no such file or directory, open '/
 ...
 REPORTS MODEL: FAIL (cases run: 1) - resolve
 ```
+
+### Task 1 verify (verbatim tail, VERIFY_EXIT=0)
+
+```
+PASS resolve the last blocks are the disclosures with the tenant disclaimer
+PASS resolve no HTML anywhere in the model
+REPORTS MODEL: PASS (cases run: 1)
+VERIFY_EXIT=0
+```
