@@ -84,6 +84,16 @@ started: same on 50d2d63 and on eb0d1f1 (after 06-36) — predates today's work
   found: {"reached":true,"mine":12,"boxes":12,"want":12,"missing":[],"extra":[],"count":"Ready to finish"}: the invited investor reaches the agreement in onboarding; all 12 of their fields are drawn as theirs; every field's type, page, x, y, w, h equals exactly what the editor saved; none missing, none extra. Only the count clause fails.
   implication: H2 CONFIRMED. No launch-blocking bug: the sponsor's edited agreement reaches the investor with every field where the editor left it. The bar says "Ready to finish" because of D-30.
 
+- timestamp: 2026-11-20T02:05Z
+  checked: full editor.js on the worktree at 6ae20a8 (scratch dbg-editor/run1.txt)
+  found: "104/104 passed"; line 55 "PASS EDIT-03 required or optional: the box is ticked and the field is marked required (a signature given to the firm); one click on the box makes it optional", line 59 "PASS EDIT-05 typing a label is one step: one undo clears the whole label, not a letter", line 83 "PASS the saved agreement still signs: ...". Touch and 1024px passes unchanged and green.
+  implication: the updated assertions match the product; the mutation run (scratch copy) is still queued for a browser slot.
+
+- timestamp: 2026-11-20T02:06Z
+  checked: the owner's save rule (git stash create + force push to save/debug-editor)
+  found: the force push was refused by the permission classifier. Worktree clean; origin/wip/debug-editor == HEAD 6ae20a8.
+  implication: nothing unsaved; each edit round is saved by commit + push to wip/debug-editor instead.
+
 ## Resolution
 
 root_cause: "No product fault; three stale expectations in editor.js. (1)+(2) esign.js:2249-2253 (5f8db30, plan 01.4-69, 01.4-69-SUMMARY deviation 2) makes an investor's signature given to the firm required, on top of D-30 (46b1b66, plan 01.4-63) which had left it required:false; the check's text->signature->firm sequence therefore reaches the Required box already ticked, and its click unticks it (editor.js:414 wanted !wasReq && required true; editor.js:425 wanted required true after the label undo). (3) esign.js:174 isReq (46b1b66, D-30) makes no investor field required, so signflow.js:58 countHTML shows 'Ready to finish', never 'N of M left' (editor.js:616 / left$/). Every field reaches the investor exactly where the editor left it (DBG3)."
