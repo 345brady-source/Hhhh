@@ -20,6 +20,13 @@
     if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
     return NS.dates.isoOf(NS.dates.parse(s)) === s;
   }
+  /** The day after an ISO date. */
+  function nextDay(s) {
+    const d = NS.dates.parse(s);
+    d.setUTCDate(d.getUTCDate() + 1);
+    return NS.dates.isoOf(d);
+  }
+  const isMonthEnd = (s) => isDate(s) && nextDay(s).slice(8) === '01';
   /** Cents as dollars for a memo, by integer arithmetic only. */
   function dollars(c) {
     const a = Math.abs(c);
@@ -71,5 +78,74 @@
     return clone(mark);
   }
 
-  Object.assign(B, { value });
+  /* ---------- Opening balances ---------- */
+  const holdsOffering = (ws, partner, offeringId) =>
+    ((ws && ws.investors) || []).some((i) => i && i.id === partner && Array.isArray(i.positions) && i.positions.some((p) => p && p.offeringId === offeringId));
+  function opening(ws, offeringId, o, who) {
+    o = o || {};
+    who = who || {};
+    const src = 'open:' + offeringId;
+    const f0 = stored(ws, offeringId);
+    if (f0 && B.live(f0, src)) throw new Error('The opening balances of this fund are already entered; correct them with an entry, or reverse the opening entry first.');
+    if (!isDate(o.date)) throw new Error('The date is not a real calendar date written YYYY-MM-DD.');
+    const ct = B.closedThrough(ws, offeringId);
+    if (ct && o.date <= ct) throw new Error(closedSentence(ct));
+    const lines = Array.isArray(o.lines) ? o.lines : [];
+    const accts = B.accounts(ws, offeringId);
+    const type = {};
+    accts.forEach((a) => (type[a.code] = a.type));
+    let capital = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (!Array.isArray(l)) continue; // check() names it below
+      const code = String(l[0]);
+      // A balance sheet: results of earlier years are in each partner's capital, never in an income, expense or gain account.
+      if (type[code] && type[code] !== 'asset' && type[code] !== 'liability' && type[code] !== 'equity') throw new Error(`Line ${i + 1}: account ${code} is not on a balance sheet; opening balances hold assets, liabilities and partners' capital only.`);
+      if (code === '3900') {
+        capital++;
+        if (typeof l[2] !== 'string' || !l[2]) throw new Error(`Line ${i + 1}: each 3900 capital line names the partner whose capital it is.`);
+        if (!holdsOffering(ws, l[2], offeringId)) throw new Error(`Line ${i + 1}: ${l[2]} does not hold this offering.`);
+      }
+    }
+    const entry = { date: o.date, memo: 'Opening balances', src, lines };
+    const why = B.check(Object.assign({}, entry, { lines: lines.map((l) => (Array.isArray(l) ? l.slice() : l)) }), accts);
+    if (why) throw new Error(why);
+    if (!capital) throw new Error("Opening balances need each investor's capital on a 3900 line.");
+    const posted = B.post(ws, offeringId, entry, who);
+    // The books start the day after: nothing dated earlier is posted from records from now on (books-post.js).
+    B.fund(ws, offeringId).start = nextDay(o.date);
+    return posted;
+  }
+
+  /* ---------- Closing a month (finalizing its NAV, FA-07) ---------- */
+  function ownerOnly(what) {
+    const app = NS.app;
+    if (app && typeof app.can === 'function' && !app.can('configure')) throw new Error(`Only an owner can ${what}.`);
+  }
+  const logAs = (by) => (typeof by === 'string' && by.trim() ? { actor: by } : {});
+  function finalize(ws, offeringId, through, who) {
+    who = who || {};
+    ownerOnly('close the books');
+    // The same refusals as the journal's close, before anything is changed.
+    if (!isMonthEnd(through)) throw new Error('A period can be closed only through the last day of a month.');
+    const ct = B.closedThrough(ws, offeringId);
+    if (ct && through <= ct) throw new Error(`The books are already closed through ${ct}; choose a later month-end.`);
+    if (typeof who.by !== 'string' || !who.by.trim()) throw new Error('Closing a period needs the name of the person closing it.');
+    // The books are brought up to date from the records first, so what is locked is what the records call for.
+    if (typeof B.sync === 'function') B.sync(ws);
+    const rec = B.close(ws, offeringId, through, { by: who.by, at: who.at });
+    if (NS.audit && typeof NS.audit.log === 'function') NS.audit.log(ws, Object.assign({ action: 'Books closed', fund: offeringId, record: through, detail: 'Trial balance SHA-256 ' + rec.tb }, logAs(who.by)));
+    else if (NS.workspace && typeof NS.workspace.save === 'function') NS.workspace.save(ws);
+    return rec;
+  }
+  function reopenBooks(ws, offeringId, who) {
+    who = who || {};
+    ownerOnly('reopen the books');
+    const rec = B.reopen(ws, offeringId, { why: who.why, by: who.by, at: who.at });
+    if (NS.audit && typeof NS.audit.log === 'function') NS.audit.log(ws, Object.assign({ action: 'Books reopened', fund: offeringId, record: rec.through, detail: rec.reopened.why }, logAs(who.by)));
+    else if (NS.workspace && typeof NS.workspace.save === 'function') NS.workspace.save(ws);
+    return rec;
+  }
+
+  Object.assign(B, { value, opening, finalize, reopenBooks });
 })(typeof window !== 'undefined' ? window : globalThis);
