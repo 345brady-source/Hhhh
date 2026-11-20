@@ -115,6 +115,30 @@ touch "$T/fail"; : > "$T/log"; GATE_FRESH=1 gate > "$T/g6.txt" 2>&1; rm -f "$T/f
 grep -qx 'GATE FAIL TWO' "$T/g6.txt" && [ "$(tail -n 1 "$T/g6.txt")" = GATE_EXIT=1 ] && [ "$(ran)" = two ] && grep -qE '^GATE ok   ONE \(kept from ' "$T/g7.txt" && [ "$(tail -n 1 "$T/g7.txt")" = GATE_EXIT=0 ]
 S_=$?; case_ "gate: a failed step runs again, the passed one is kept (ran: $(ran))" $S_ "$T/g7.txt"
 
+# ===== base commit: a step that compares with a base and the extracted base tree =====
+cat > "$R/dummy-base.sh" <<'EOF'
+#!/usr/bin/env bash
+T="$1"; O="$T/bout"
+cd "$T/repo" || exit 9
+. .planning/checks/gate-lib.sh || exit 1
+mkdir -p "$O"; gate_init "$O"; FAIL=0
+B=$(cat "$T/base")
+gate_base_tree "$O/base-tree" "$B"
+gate_step cmp "$O/cmp.txt" --base "$B" -- bash -c "echo cmp >> '$T/log'; cat '$O/base-tree/a.txt'"
+gate_ok 'CMP' "test -s '$O/cmp.txt'"
+gate_end
+echo "GATE_EXIT=$FAIL"
+EOF
+(cd "$R" && git add dummy-base.sh a.txt && git commit -qm second && git rev-parse HEAD~1 > "$T/base")
+: > "$T/log"; bash "$R/dummy-base.sh" "$T" > "$T/b1.txt" 2>&1
+: > "$T/log"; bash "$R/dummy-base.sh" "$T" > "$T/b2.txt" 2>&1
+[ -z "$(ran)" ] && grep -q '^base tree kept: ' "$T/b2.txt" && grep -qE '^GATE ok   CMP \(kept from ' "$T/b2.txt" && grep -qx first "$T/bout/cmp.txt"
+S_=$?; case_ "base: a rerun with the same base keeps the base tree and the step (ran: $(ran))" $S_ "$T/b2.txt"
+(cd "$R" && git rev-parse HEAD > "$T/base")
+: > "$T/log"; bash "$R/dummy-base.sh" "$T" > "$T/b3.txt" 2>&1
+[ "$(ran)" = cmp ] && ! grep -q '^base tree kept: ' "$T/b3.txt" && grep -qx 'GATE ok   CMP' "$T/b3.txt" && ! grep -qx first "$T/bout/cmp.txt"
+S_=$?; case_ "base: another base commit rebuilds the base tree and runs the step (ran: $(ran))" $S_ "$T/b3.txt"
+
 # ===== part level =====
 export DUMMY_LOG="$T/log" DUMMY_BLOCK="$T/block" P6_OUT="$T/pout" P6_SHOTS="$T/pshots"
 check() { (cd "$R" && node "$P6REL/dummy-parts.js"); }
@@ -134,7 +158,7 @@ S_=$?; case_ "parts: a changed tree runs both (ran: $(ran))" $S_ "$T/p2.txt"
 [ "$(ran)" = 'a b' ] && ! grep -q '^KEPT' "$T/p3.txt" && [ "$(tail -n 1 "$T/p3.txt")" = 'DUMMY PARTS: PASS (parts run: 2)' ]
 S_=$?; case_ "parts: GATE_FRESH=1 runs both (ran: $(ran))" $S_ "$T/p3.txt"
 
-rm -rf "$T"
+[ -n "$GATE_SELFTEST_KEEP" ] || rm -rf "${T:?}"
 if [ -z "$BADS" ]; then echo "GATE RESUME SELF-TEST: PASS ($N)"; exit 0; fi
 echo "GATE RESUME SELF-TEST: FAIL -$BADS"
 exit 1

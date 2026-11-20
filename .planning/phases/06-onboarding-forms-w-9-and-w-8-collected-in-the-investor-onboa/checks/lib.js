@@ -561,10 +561,88 @@ function leakCheck(text) {
 function reporter(prefix) {
   const results = [];
   const check = (name, ok, info) => {
-    results.push({ name, ok: !!ok });
-    console.log(`${ok ? 'PASS' : 'FAIL'} ${prefix ? prefix + ' ' : ''}${name}${info !== undefined && !ok ? ' :: ' + (typeof info === 'string' ? info : JSON.stringify(info)).slice(0, 1500) : ''}`);
+    const line = `${ok ? 'PASS' : 'FAIL'} ${prefix ? prefix + ' ' : ''}${name}${info !== undefined && !ok ? ' :: ' + (typeof info === 'string' ? info : JSON.stringify(info)).slice(0, 1500) : ''}`;
+    results.push({ name, ok: !!ok, line });
+    console.log(line);
   };
   return { check, results, failed: () => results.filter((r) => !r.ok).length };
+}
+
+/*
+ * Part-level resume (a container restart mid-check loses no finished part). Each part's PASS/FAIL lines are written,
+ * the moment the part ends, to OUT/.parts/<check>-<checkout hash>/<part>.json (temporary name, then renamed), stamped
+ * with the key it ran under: the checkout's folder, HEAD, the hash of "git status --porcelain" + "git diff HEAD" + the
+ * untracked files (.planning/checks/gate-key.sh, shared with the gates), the check file's own hash and its command line
+ * (without the part selection, which does not change what a part does; parts are independent, as --only requires).
+ * A rerun into the same OUT prints "KEPT <part> (from <time>)" and the part's stored lines instead of running a part
+ * that passed under exactly the same key; it still counts in "(<unit> run: N)". A failed part, or any difference in the
+ * key, runs again. GATE_FRESH=1 runs every part. Nothing is kept for a tree without a key (a base tree made by git
+ * archive) or when the tree changed while the part ran.
+ */
+function partKeyBase(flag) {
+  const crypto = require('crypto');
+  const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
+  let tree = '';
+  const treeKey = () => {
+    try {
+      return require('child_process')
+        .execFileSync('bash', [path.join(ROOT, '.planning/checks/gate-key.sh'), ROOT], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 28 })
+        .trim();
+    } catch (e) {
+      return '';
+    }
+  };
+  tree = treeKey();
+  if (!tree) return null;
+  const file = path.resolve(process.argv[1] || '');
+  let fileHash = '';
+  try {
+    fileHash = sha(fs.readFileSync(file));
+  } catch (e) {
+    return null;
+  }
+  const argv = process.argv.slice(2);
+  const cmd = [];
+  for (let k = 0; k < argv.length; k++) {
+    if (argv[k] === flag) {
+      k++;
+      continue;
+    }
+    cmd.push(argv[k]);
+  }
+  const dir = path.join(OUT, '.parts', `${path.basename(file, '.js').replace(/[^A-Za-z0-9._-]+/g, '_')}-${sha(ROOT).slice(0, 10)}`);
+  return {
+    tree,
+    treeKey,
+    dir,
+    key: (part) => JSON.stringify({ tree, file, fileHash, cmd, part }),
+    fileOf: (part) => path.join(dir, `${String(part).replace(/[^A-Za-z0-9._-]+/g, '_')}-${sha(part).slice(0, 8)}.json`)
+  };
+}
+function keptPart(K, part) {
+  if (!K || process.env.GATE_FRESH === '1') return null;
+  try {
+    const r = JSON.parse(fs.readFileSync(K.fileOf(part), 'utf8'));
+    return r && r.key === K.key(part) && r.ok === true && Array.isArray(r.lines) && r.lines.length ? r : null;
+  } catch (e) {
+    return null;
+  }
+}
+function savePart(K, part, ok, lines) {
+  if (!K) return;
+  try {
+    if (K.treeKey() !== K.tree) {
+      console.log(`NOTE the tree changed while part ${part} ran; its result is not kept for a rerun`);
+      return;
+    }
+    fs.mkdirSync(K.dir, { recursive: true });
+    const f = K.fileOf(part);
+    const tmp = `${f}.part.${process.pid}`;
+    fs.writeFileSync(tmp, JSON.stringify({ key: K.key(part), part, ok, at: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'), lines }, null, 1));
+    fs.renameSync(tmp, f);
+  } catch (e) {
+    console.log(`NOTE the result of part ${part} could not be saved: ${e && e.message}`);
+  }
 }
 
 /**
@@ -572,6 +650,7 @@ function reporter(prefix) {
  * check's NAME, unit: 'parts' | 'cases' | 'checks', flag: '--only' | '--case', browser: true to start the check browser }.
  * An unknown name in the flag, or a run with no part, prints FAIL and exits 1. A missing vendor file prints NOT RUN and
  * exits 2. The last line is "<NAME>: PASS (<unit> run: N)" or "<NAME>: FAIL (<unit> run: N) - <failed parts>".
+ * Parts that passed under the same key are kept (see partKeyBase); kept parts count as run.
  */
 async function runParts(parts, opts) {
   const NAME = opts.name;
@@ -598,8 +677,11 @@ async function runParts(parts, opts) {
     console.log(`${NAME}: FAIL (${unit} run: 0) - none`);
     process.exit(1);
   }
+  const K = partKeyBase(flag);
+  const kept = {};
+  names.forEach((n) => (kept[n] = keptPart(K, n)));
   let S = null;
-  if (opts.browser) {
+  if (opts.browser && names.some((n) => !kept[n])) {
     const miss = missingVendor();
     if (miss) {
       console.log(`NOT RUN: the vendor file ${miss} is missing`);
@@ -613,8 +695,13 @@ async function runParts(parts, opts) {
   shotRun.check = NAME;
   shotRun.slug = NAME.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   for (const n of names) {
-    const R = reporter(n);
     ran++;
+    if (kept[n]) {
+      console.log(`KEPT ${n} (from ${kept[n].at})`);
+      kept[n].lines.forEach((l) => console.log(l));
+      continue;
+    }
+    const R = reporter(n);
     shotRun.part = n;
     shotRun.taken[n] = [];
     try {
@@ -624,6 +711,7 @@ async function runParts(parts, opts) {
     }
     if (R.failed() || !R.results.length) failed.push(n);
     summary.push({ part: n, ok: !(R.failed() || !R.results.length), failed: R.results.filter((r) => !r.ok).map((r) => r.name) });
+    savePart(K, n, !(R.failed() || !R.results.length), R.results.map((r) => r.line));
   }
   shotRun.part = '';
   if (opts.browser) {
