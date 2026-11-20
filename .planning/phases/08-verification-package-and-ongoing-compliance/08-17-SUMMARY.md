@@ -53,3 +53,20 @@ PASS returned every screen of this part: no provider name or address (vendor sca
 PACKAGE CONSOLE: PASS (parts run: 4)
 VERIFY2_EXIT=0
 ```
+
+## Task 3 RED (red3.txt)
+The three new parts passed on Task 2's code (red3-run.txt: `PACKAGE CONSOLE: PASS (parts run: 3)`, 81 PASS): phone, preview-desktop and preview-phone needed no code. So, as the plan allows, red3.txt also holds a mutation run with the owed state removed from package.js `box` (reverted after; `git status` clean):
+```
+FAIL phone an amount owed: the box switched off, unticked, its line the server's sentence word for word :: {"present":true,"shown":true,"disabled":false,"checked":false,"label":"Add verification package ($99)","line":"",...}
+FAIL phone a tap does not tick it :: {... "disabled":false,"checked":true ...}
+(7 more FAIL lines follow from the box having been ticked)
+PACKAGE CONSOLE: FAIL (parts run: 1) - phone
+```
+
+## Server suite alone before the gate (`npm --prefix server test`)
+```
+1..368
+# tests 368
+# pass 368
+# fail 0
+```
