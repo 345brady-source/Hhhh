@@ -17,6 +17,9 @@
  *   fee:<offeringId>:<YYYY-MM>   the month's management fee, at the month-end      [5000 +][2100 -]
  *   gp:<offeringId>:<YYYY-MM>    the general partner's share crystallized that month, less what was paid with a
  *                                distribution that month (already in its run: entry), owed until paid [3300 +][2600 -]
+ *   sim:<offeringId>:<YYYY-MM>   sample funds only (NS.audit.generated): the generator's income [4090 -] and gain
+ *                                [6100 -], and the balance sheet moved to the one the Audit page shows at the month-end;
+ *                                left out and listed ({ src, kind: 'unbalanced', cents }) when it does not balance (sample())
  * Entries dated before the fund's books start (fund.start) are left out.
  *
  * sync posts what is missing; reverses (dated its own date) and posts again an entry whose record changed inside an
@@ -55,8 +58,8 @@
     const f = ws && ws.books && ws.books.funds && ws.books.funds[id];
     return f && typeof f.start === 'string' ? f.start : '';
   }
-  /** Record prefixes this module owns; entries with any other prefix (mark:, bank:, open:, man:, rev:, sim:) are never touched. */
-  const MANAGED = /^(call|pos|run|req|reqpaid|fee|gp):/;
+  /** Record prefixes this module owns; entries with any other prefix (mark:, bank:, open:, man:, rev:) are never touched. */
+  const MANAGED = /^(call|pos|run|req|reqpaid|fee|gp|sim):/;
   /** [code, cents, partner, holding] with trailing empty ids left out (the stored form, as books.js compacts a line). */
   function compact(l) {
     const out = l.slice();
@@ -202,13 +205,109 @@
     const start = startOf(ws, o.id);
     const after = (x) => !start || x.date >= start;
     const kept = entries.filter(after).sort(byDateSrc);
+    const held = new Set(flagged.filter((x) => x.held && after(x)).map((x) => x.item.src));
+    const unbalanced = NS.audit.generated(o) ? sample(ws, o, L, kept, flag, after, held) : [];
+    kept.sort(byDateSrc);
     const fl = flagged.filter(after);
-    return { entries: kept, notes: fl.map((x) => x.item), hold: new Set(fl.filter((x) => x.held).map((x) => x.item.src)) };
+    return { entries: kept, unbalanced, notes: fl.map((x) => x.item), hold: new Set(fl.filter((x) => x.held).map((x) => x.item.src)) };
   }
 
-  /** Every entry the records of offering o call for, by date then src. Reads only. */
+  /**
+   * What the fund's journal holds once sync has run, other than sample entries: every live entry a person or another
+   * module made (mark:, bank:, man:, open:, any prefix this module does not own), and for each record this module posts
+   * the entry sync leaves live (the one in list, or the live one when its period is closed or its record is held).
+   */
+  function projected(ws, o, list, hold) {
+    const f = ws.books && ws.books.funds && ws.books.funds[o.id];
+    const j = f && Array.isArray(f.journal) ? f.journal : [];
+    const reversed = new Set();
+    j.forEach((e) => e && e.rev && reversed.add(e.rev));
+    const ct = B.closedThrough(ws, o.id);
+    const closed = (date) => !!ct && date <= ct;
+    const out = [];
+    const mine = new Map();
+    j.forEach((e) => {
+      if (!e || e.rev || reversed.has(e.id) || !Array.isArray(e.lines) || typeof e.date !== 'string') return;
+      const src = typeof e.src === 'string' ? e.src : '';
+      if (!MANAGED.test(src)) out.push(e);
+      else if (!/^sim:/.test(src) && !mine.has(src)) mine.set(src, e);
+    });
+    const want = new Set();
+    list.forEach((d) => {
+      want.add(d.src);
+      const cur = mine.get(d.src);
+      if (cur && cur.date === d.date && same(cur.lines, d.lines)) return out.push(cur);
+      if ((cur && closed(cur.date)) || closed(d.date)) return cur && out.push(cur);
+      out.push(d);
+    });
+    mine.forEach((cur, src) => !want.has(src) && (hold.has(src) || closed(cur.date)) && out.push(cur));
+    return out.sort(byDateSrc);
+  }
+
+  /**
+   * A sample fund (NS.audit.generated): one entry per month k of the engine's ledger, dated endOf(k), src
+   * sim:<offeringId>:<k>. It credits the generator's income (4090) and gain (6100) and moves each balance-sheet account to
+   * the balance the Audit page shows at that month-end (the holdings of NS.audit.period for the month): the line is the
+   * target less the account's balance at endOf(k) over every live entry of the fund other than sample entries for month k
+   * and later (11-CONTEXT W1: what sync leaves in the journal, so entries a person made count too). Zero lines are left
+   * out. An entry whose lines do not sum to zero is not added: it is returned as { src, sum } and listed for a person to
+   * look at. No line is ever added to make it balance. A month on or before the last closed month-end keeps its live
+   * sample entry, which later months count. Adds to list (the fund's other entries); returns the unbalanced items.
+   */
+  function sample(ws, o, L, list, flag, after, hold) {
+    const unbalanced = [];
+    if (!L.keys.length) return unbalanced;
+    const CODES = ['1000', '1100', '1150', '2300', '2100', '2200', '2500', '2600'];
+    const bal = {};
+    CODES.forEach((c) => (bal[c] = 0));
+    const move = (lines) => lines.forEach((l) => bal[l[0]] !== undefined && (bal[l[0]] += l[1]));
+    const base = projected(ws, o, list, hold);
+    const ct = B.closedThrough(ws, o.id);
+    const closed = (date) => !!ct && date <= ct;
+    const liveSim = new Map();
+    liveManaged(ws, o.id).forEach((e, src) => /^sim:/.test(src) && liveSim.set(src, e));
+    let at = 0;
+    L.keys.forEach((k) => {
+      const end = endOf(k);
+      for (; at < base.length && base[at].date <= end; at++) move(base[at].lines);
+      const src = `sim:${o.id}:${k}`;
+      const cur = liveSim.get(src);
+      // A closed month: the journal keeps its live sample entry (sync lists any difference); later months count it.
+      const keep = closed(end) || (cur && closed(cur.date));
+      const F = L.byKey[k];
+      const H = NS.audit.period(ws, o, k + '-01', end).hold;
+      const target = { 1000: H.cash, 1100: H.longCost, 1150: H.longFV - H.longCost, 2300: -H.shortFV, 2100: -H.feePayable, 2200: -H.redemptionsPayable, 2500: -H.debt, 2600: 0 };
+      const lines = [ln('4090', -F.income), ln('6100', -F.gain)];
+      CODES.forEach((c) => lines.push(ln(c, target[c] - bal[c])));
+      const kept = lines.filter((l) => l[1] !== 0);
+      const e = { src, date: end, memo: `Sample fund: ${monthLabel(k)}`, lines: kept };
+      let ok = false;
+      if (kept.length && after(e)) {
+        const sum = kept.reduce((a, l) => a + l[1], 0);
+        if (sum !== 0 || kept.some((l) => !Number.isSafeInteger(l[1]))) {
+          unbalanced.push({ src, sum });
+          flag(end, { src, kind: 'unbalanced', cents: sum });
+        } else {
+          list.push(e);
+          ok = true;
+        }
+      }
+      if (keep) {
+        if (cur) move(cur.lines);
+      } else if (ok) move(kept);
+    });
+    return unbalanced;
+  }
+
+  /**
+   * Every entry the records of offering o call for, by date then src. Reads only. The list's unbalanced property names
+   * the sample entries left out because their lines do not sum to zero ({ src, sum }; empty for every other fund).
+   */
   function desired(ws, o, opts) {
-    return plan(ws, offeringOf(ws, o), opts).entries;
+    const P = plan(ws, offeringOf(ws, o), opts);
+    const out = P.entries;
+    out.unbalanced = P.unbalanced;
+    return out;
   }
 
   /** Bring every fund's journal in step with its records. Returns counts { posted, reversed, exceptions }. */
