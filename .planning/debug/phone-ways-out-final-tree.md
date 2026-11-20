@@ -67,7 +67,7 @@ started: after today's merges (each passed when its plan merged)
 
 ## Resolution
 
-root_cause:
-fix:
-verification:
-files_changed: []
+root_cause: "A (product): the console's menu (.cs-nav, console.css:525 at <=900 px; diy.css:243 position relative) was never kept on screen on a phone, AND 06-35 (console.css:113-124, a7feb14) put the preview bar, whose sponsor/role controls were the only way out at mid/end, into the page's flow at the top; so partway down a long console page on a phone nothing that leaves the view is on screen; B (check): filings-flow.js:256-257 measures from the screen's top and counts the preview bar above the menu (06-35) as a band; C (check): withholding-flow.js:694-696 counts every commit since 10-07's base, and 11-07's 6f838bc touched index.html"
+fix: "A: console.css (<=640 px) `.cs > .cs-nav` sticky with top = safe area - --cs-nav-lift (the firm's name, bell and Help scroll away; the 40 px menu row stays), z-index sticky-nav; .fl-bar/.tx-bar top under the row (--cs-nav-pin); scroll-padding-top on the console page; console.js pinMenu() measures lift/pin after each shell render (microtask), on resize and when fonts are ready. B: distances from the menu's top with the same limits, plus the menu must start where the preview bar ends (0 without one). C: only commits whose subject is <type>(10-07): count."
+verification: pending (runs in scratchpad debug-phone/v-*.txt)
+files_changed: [assets/css/console.css, assets/js/console.js, .planning/phases/09-filings-tab-form-d-and-blue-sky/checks/filings-flow.js, .planning/phases/10-investor-tax-documents-and-withholding/checks/withholding-flow.js]
