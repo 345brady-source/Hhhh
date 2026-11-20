@@ -520,15 +520,18 @@
    * navigation queued by the press before) redraws between a finger or mouse button going down and its click, the pressed
    * control is replaced: with a mouse the click then reaches no control at all; with touch it lands on whatever the new page
    * has under the finger. So from a primary pointerdown until that press's click has been dispatched (or pointercancel, or
-   * POINTER_UP_WAIT after pointerup with no click, or PRESS_MAX after pointerdown) a press is pending, and a render asked for
+   * POINTER_UP_WAIT after pointerup with no click, or PRESS_MAX after pointerdown; at pointerup already when the pointer moved
+   * more than TAP_SLOP, a drag, or the control pressed was redrawn by the person's own input: no click to keep then) a press
+   * is pending, and a render asked for
    * outside a user input event is held. When the press ends the held render runs once, on the next task, unless a render ran
    * since (the click's own handler drew the current state). Renders inside user input events (typing, the field editor's
    * dragging, the signature pad, every data-action handler) run at once, as before. Only trusted events count: a click made
    * by code is not a person's press. */
   const PRESS_MAX = 1000;
   const POINTER_UP_WAIT = 500;
+  const TAP_SLOP = 10;
   const USER_INPUT = /^(pointer|mouse|touch|click|dblclick|auxclick|contextmenu|key|input|beforeinput|change|submit|focus|blur)/;
-  const press = { pending: false, held: false, heldAt: 0, renders: 0, timer: 0, upTimer: 0, afterHeld: null };
+  const press = { pending: false, held: false, heldAt: 0, renders: 0, timer: 0, upTimer: 0, afterHeld: null, x: 0, y: 0, target: null };
   const inUserInput = () => {
     const e = window.event;
     return !!e && USER_INPUT.test(e.type);
@@ -563,6 +566,7 @@
         clearTimeout(press.timer);
         clearTimeout(press.upTimer);
         press.pending = true;
+        Object.assign(press, { x: e.clientX, y: e.clientY, target: e.target });
         press.timer = setTimeout(pressEnd, PRESS_MAX);
       },
       true
@@ -572,6 +576,9 @@
       (e) => {
         if (!e.isTrusted || !e.isPrimary || !press.pending) return;
         clearTimeout(press.upTimer);
+        const dragged = Math.hypot(e.clientX - press.x, e.clientY - press.y) > TAP_SLOP || !(press.target && press.target.isConnected);
+        press.target = null;
+        if (dragged) return pressEnd();
         press.upTimer = setTimeout(pressEnd, POINTER_UP_WAIT);
       },
       true
