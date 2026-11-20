@@ -107,3 +107,9 @@
 - 11-11's statement labels rest on C-01, which no CPA has confirmed. Its summary says "statement format per C-01, assumption recorded; CPA read pending (C-07)".
 - The businessDays fix is a separate small plan after 11-10 merges (11-10's verify requires exactly one change hunk in operations.js). It moves seeded calls' notice dates (operations.js:564), so AUDIT SAME needs an expected-difference list built from the base, naming only the 'Capital call issued' change-log rows (audit.js:926) and their MANIFEST lines. Every other byte stays identical, so a one-cent change is still caught. Also fix the comment at books-bank.js:62.
 - Parallel: 11-09 (books-post.js), 11-10 (books-hold.js, operations.js redemptionAmount only) and 11-11 (audit.js) share no file.
+
+## After 11-09 (merged 2026-11-20)
+- All 15 sample funds post sample entries (sim:<fund>:<month>) to the journal, and each of 743 fund-month-ends ties to the Audit page to the cent. A second sync posts nothing.
+- Known limit: an expense or income entered by hand in a sample fund leaves that month and every later month out of the sample entries (listed in desired().unbalanced and fund.exceptions as kind 'unbalanced'). No balancing line is ever forced. Entries that only move the balance sheet tie fully. Sample funds are demonstration data, so this stays listed, not fixed.
+- Sizes: the four sample workspaces measure 758,989 bytes together (books 104-179 KB per firm). Sync on the largest takes 119-205 ms the first time and 64-94 ms after (Node).
+- Browser storage in the iPhone preview is not measured (assumed about 5 MB).
