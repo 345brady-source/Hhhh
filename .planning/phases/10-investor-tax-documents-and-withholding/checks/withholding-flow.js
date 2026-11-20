@@ -695,9 +695,9 @@ const parts = {
     // journal and the posting module", two script lines), merged later, touches index.html by its own plan. D6 is about this
     // plan's commits: those whose subject is "<type>(10-07): ...".
     const log = g(['log', '--format=%H %s', '--no-merges', `${base}..HEAD`, '--', 'index.html']);
-    const mine = log.stdout.split('\n').filter((l) => /^[0-9a-f]{40} \w+\(10-07\):/.test(l));
+    const ours = log.stdout.split('\n').filter((l) => /^[0-9a-f]{40} \w+\(10-07\):/.test(l));
     const dirty = g(['diff', '--quiet', 'HEAD', '--', 'index.html']);
-    check('git shows index.html unchanged since the plan’s base (no commit of the plan, no change in the working tree)', log.status === 0 && mine.length === 0 && dirty.status === 0, { mine: mine.slice(0, 5), others: log.stdout.slice(0, 300), status: log.status, dirty: dirty.status });
+    check('git shows index.html unchanged since the plan’s base (no commit of the plan, no change in the working tree)', log.status === 0 && ours.length === 0 && dirty.status === 0, { ours: ours.slice(0, 5), others: log.stdout.slice(0, 300), status: log.status, dirty: dirty.status });
     await T.wayOut(check, fr);
     const text = await fr.evaluate(() => document.body.innerText);
     const hits = text.split('\n').map((l) => l.replace(/Carrow\s*&\s*Vale/gi, '')).filter((l) => Lib.VENDORS.test(l) || Lib.VENDOR_RE.test(l) || Lib.WORD_RE.test(l));
