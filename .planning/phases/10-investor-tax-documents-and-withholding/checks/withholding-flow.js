@@ -1,5 +1,5 @@
 // gate: browser
-// last "WITHHOLDING FLOW: PASS (parts run: 1)"
+// last "WITHHOLDING FLOW: PASS (parts run: 9)"
 // Tax withheld at a distribution on screen (plan 10-07, D-04, C-03, TAX-07, TAX-14), the way the owner sees it: the portal
 // inside a sandboxed frame whose policy refuses every connection and allows scripts from the portal's own address only, at
 // 390x844 with touch or 1280x800, on the Kestrel Bay sample with the page's clock on 19 November 2026 (a Thursday). The
@@ -28,6 +28,9 @@
 //   paper-w9        a W-9 with the last four and no signature record draws a 24% line; "W-9 signed on paper" (who, when,
 //                   logged, can be undone) takes it away; an uploaded W-9 with the last four offers the same; every sample
 //                   investor of every firm is run through the proposal with every offering set to notes (counts printed)
+//   managed         index.html at 1280x800: Record distribution as before; no Tax reporting field; no tax withheld block for
+//                   a fund whose investor has a crossed-out W-9, recorded with nothing withheld; Cancel for Carrow & Vale
+//                   staff and not for the sponsor's staff; neither withholding file named or asked for; index.html unchanged
 //   NODE_PATH=$(npm root -g) node withholding-flow.js [--only part1,part2]
 // The last line is "WITHHOLDING FLOW: PASS (parts run: N)" or "WITHHOLDING FLOW: FAIL (parts run: N) - <failed parts>".
 //
@@ -647,6 +650,48 @@ const parts = {
     check('every firm was measured, and no sample investor with a W-9 and its last four draws a line', counts.length === 4 && counts.every((c) => !c.err && c.withW9 === 0), counts);
     const errors = A.errors.slice();
     check('no script error while the firms were measured', errors.length === 0, errors);
+    await A.context.close();
+  },
+
+  async managed({ check, S }) {
+    const { A, fr } = await open(S, 'desktop', { page: 'index.html' });
+    const asked = [];
+    A.context.on('request', (r) => /\/assets\/js\/withholding(-ui)?\.js$/.test(new URL(r.url()).pathname) && asked.push(r.url()));
+    await T.proveRefused(check, A, fr);
+    await T.sample(fr, { role: 'staff' });
+    await go(fr, 'console-distributions', '[data-action=dist-record]');
+    check('the Distributions page shows Record distribution', await fr.locator('[data-action=dist-record]').first().isVisible());
+    await T.ws(fr, seedExampleB, { reporting: 'notes' });
+    await go(fr, 'console-offering-p10-b', '.cs-split-main');
+    const off = await fr.evaluate(() => ({ select: !!document.getElementById('of-tax-reporting'), text: document.querySelector('.cs-split-main').innerText }));
+    check('an offering’s page has no Tax reporting field', !off.select && !/Tax reporting/.test(off.text), { select: off.select });
+    await draftB(fr, '10000.00');
+    const s = await screen(fr);
+    check('a draft for the fund whose investor has a crossed-out W-9 shows no tax withheld block and nothing waits', !(await fr.locator('#ds-tax').count()) && !s.rows.length && !/Tax withheld/.test(await fr.evaluate(() => document.body.innerText)) && !s.recOff, s);
+    const r = await pressRecord(fr);
+    check('it records as before: the lines add up to $10,000.00 with nothing withheld', r.added === 1 && J(['A-1001', 'A-1002', 'A-1003'].map((id) => { const x = lineOf(r.run, id); return x && [x.grossCents, x.withheld.length, x.netCents]; })) === J([[500000, 0, 500000], [333333, 0, 333333], [166667, 0, 166667]]), r.run && r.run.lines);
+    let h = await history(fr);
+    const mine = h.find((x) => r.run && x.file === r.run.id);
+    check('History has Cancel for Carrow & Vale staff', !!mine && mine.cancel === r.run.id, mine);
+    await T.wayOut(check, fr);
+    await T.sample(fr, { role: 'sponsor' });
+    await go(fr, 'console-distributions', '[data-action=dist-record]');
+    h = await history(fr);
+    check('and none for the sponsor’s staff', h.length > 0 && !h.some((x) => x.cancel), h.slice(0, 3));
+    const src = await fr.evaluate(() => ({ scripts: Array.from(document.scripts).map((x) => x.src || ''), html: document.documentElement.outerHTML.indexOf('withholding') >= 0 }));
+    check('the page names neither withholding.js nor withholding-ui.js and never asked for them', !src.scripts.some((x) => /withholding/.test(x)) && !src.html && asked.length === 0, { scripts: src.scripts.filter((x) => /withholding/.test(x)), asked });
+    // index.html: no commit of this plan touches it and the working tree holds no change to it (D6)
+    const { spawnSync } = require('child_process');
+    const g = (args) => spawnSync('git', args, { cwd: Lib.ROOT, encoding: 'utf8' });
+    const base = '6061fce0b5d43bced41eb84c3c7c6375d1d97f27';
+    const log = g(['log', '--format=%H', '--no-merges', `${base}..HEAD`, '--', 'index.html']);
+    const dirty = g(['diff', '--quiet', 'HEAD', '--', 'index.html']);
+    check('git shows index.html unchanged since the plan’s base (no commit of the plan, no change in the working tree)', log.status === 0 && log.stdout.trim() === '' && dirty.status === 0, { log: log.stdout.slice(0, 200), status: log.status, dirty: dirty.status });
+    await T.wayOut(check, fr);
+    const text = await fr.evaluate(() => document.body.innerText);
+    const hits = text.split('\n').map((l) => l.replace(/Carrow\s*&\s*Vale/gi, '')).filter((l) => Lib.VENDORS.test(l) || Lib.VENDOR_RE.test(l) || Lib.WORD_RE.test(l));
+    check('no vendor, model or library name other than the managed firm’s own, and no forbidden word, on screen', hits.length === 0, hits.map((l) => l.trim().slice(0, 160)));
+    await T.quiet(check, A, fr);
     await A.context.close();
   }
 };
