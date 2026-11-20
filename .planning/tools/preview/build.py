@@ -46,10 +46,20 @@ files = [f for f in subprocess.check_output(['git', 'ls-files', 'assets'], text=
 for f in files:
     os.makedirs(os.path.join(out, os.path.dirname(f)), exist_ok=True)
     shutil.copy2(f, os.path.join(out, f))
+# The artifact host refuses text files carrying raw control bytes. In shipped minified libraries they sit inside string
+# and regex literals, where a \xHH escape is the same character, so the build copy writes them escaped.
+escaped = []
+for f in files:
+    if f.endswith('.js'):
+        dst = os.path.join(out, f)
+        b = open(dst, 'rb').read()
+        if any(c < 32 and c not in (9, 10, 13) for c in b):
+            open(dst, 'wb').write(re.sub(rb'[\x00-\x08\x0b\x0c\x0e-\x1f]', lambda m: b'\\x%02x' % m.group(0)[0], b))
+            escaped.append(f)
 for f in ('help-data.js', 'help-preview.js'):
     shutil.copy2(T + f, os.path.join(out, f))
     files.append(f)
 missing = [p for p in css + js if not os.path.exists(os.path.join(out, p))]
 assert not missing, f'missing: {missing}'
 open(os.path.join(out, 'files.txt'), 'w').write('\n'.join(files) + '\n')
-print(f'built {out}: page + {len(files)} files; css {len(css)}, js {len(js)} (+2 preview)')
+print(f'built {out}: page + {len(files)} files; css {len(css)}, js {len(js)} (+2 preview); control bytes escaped in: {escaped or "none"}')
