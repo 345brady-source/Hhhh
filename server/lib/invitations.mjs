@@ -144,6 +144,7 @@ function cleanInvestor(x) {
  */
 const ROLE_LIMIT = 5;
 function cleanRoles(x, own) {
+  if (!Array.isArray(x)) throw fail(400, 'roles must be a list');
   const seen = new Set((own || []).map((n) => String(n || '').trim().toLowerCase()));
   const out = [];
   for (const v of Array.isArray(x) ? x : []) {
@@ -1106,6 +1107,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       if (rec.status === 'completed') throw fail(409, 'This onboarding is already complete');
       // R12: a roles-only report (sent right before a package screening) stores the role names, sealed, and nothing else.
       if (body.roles !== undefined && body.stepKey === undefined) {
+        if (!obj(rec.package)) return send(res, 200, { ok: true }); // stored only on an invitation that holds a package
         store.put('invitations', { id: rec.id, roleNames: seal(rec, 'roleNames', cleanRoles(body.roles, scopeRules(rec).names)) });
         return send(res, 200, { ok: true });
       }
