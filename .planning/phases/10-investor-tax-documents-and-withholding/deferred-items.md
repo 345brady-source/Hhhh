@@ -13,3 +13,7 @@
 - 2026-11-19, 10-03: the page's typography stylesheets (diy.html, index.html, brand.js, and signature.js's handwriting
   faces) come from fonts.googleapis.com. They are not PDF libraries and the frame's policy does not block styles; offline
   they do not load (10-03 did not measure what the page shows instead; in the taxform part the check browser answered them with an empty stylesheet and the signature was adopted and signed). Named here so the owner's iPhone check is read with this in mind.
+- 2026-11-20, quick fix walk3-fixes (06-WALKTHROUGH-3 failure 4): NS.taxUI.PARTS in assets/js/taxdocs-ui.js no longer
+  lists tax1099-ui.js and taxlink.js, so a page load asks for no file that is not shipped. Plan 10-10 must add
+  'tax1099-ui.js' back after 'tax1099.js', and plan 10-12 must add 'taxlink.js' last, in the same commit as the file
+  (10-10's interface note "tax1099.js and tax1099-ui.js are in NS.taxUI.PARTS" holds only once 10-10 adds it).

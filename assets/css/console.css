@@ -117,7 +117,11 @@ body.has-demo .cs-main { padding-bottom: 104px; }
   .demo-bar > * { flex: 1 1 auto; }
   .demo-bar .demo-role { min-width: 0; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--cv-line-strong) 88%, var(--cv-ink)); }
   .demo-bar .demo-role:has(#demo-sponsor) { flex-basis: 100%; }
-  .demo-bar .demo-role select, .demo-bar .demo-role:only-child select { flex: 1 1 auto; max-width: none; }
+  /* Each label stands over its menu, so the menu has the row's whole width and a long name is shown whole ("Admin · Harbor
+     Ridge Capital" was cut, 06-WALKTHROUGH-3 failure 8); the menu's text lines up with its label. */
+  .demo-bar .demo-role { flex-wrap: wrap; row-gap: 0; padding-top: var(--space-xs); border-radius: var(--cv-r-inner); }
+  .demo-bar .demo-role > span { flex: 1 0 100%; }
+  .demo-bar .demo-role select, .demo-bar .demo-role:only-child select { flex: 1 1 calc(100% + var(--space-xs)); max-width: none; margin-left: calc(var(--space-xs) * -1); }
   .demo-bar .demo-start { flex: none; box-shadow: var(--cv-edge-light); }
   body.has-demo #view { padding-bottom: 0; }
   body.has-demo .cs-main { padding-bottom: var(--space-xl); }
@@ -309,7 +313,7 @@ a.cs-link::after { content: ""; position: absolute; inset: -12px 0; }
 .cs-field { display: flex; flex-direction: column; gap: var(--space-2xs); min-width: 0; margin: 0; padding: 0; border: 0; font-family: var(--cv-font); font-size: var(--text-xs); font-weight: 500; line-height: 1.5; color: var(--cv-ink-2); }
 .cs-field legend { padding: 0 0 var(--space-2xs); }
 .cs-field em { font-style: normal; font-weight: 400; color: var(--cv-ink-3); }
-.cs-field input[type="text"], .cs-field input[type="email"], .cs-field input[type="number"], .cs-field input[type="date"], .cs-field input:not([type]), .cs-field select, .cs-field textarea {
+.cs-field input[type="text"], .cs-field input[type="email"], .cs-field input[type="tel"], .cs-field input[type="number"], .cs-field input[type="date"], .cs-field input:not([type]), .cs-field select, .cs-field textarea {
   width: 100%; min-height: var(--control-h); padding: var(--space-xs) var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); font-weight: 400; line-height: 1.4; transition: border-color var(--dur-micro) var(--ease-out);
 }
 .cs-field textarea { resize: vertical; line-height: 1.5; }
@@ -582,8 +586,8 @@ a.cs-link::after { content: ""; position: absolute; inset: -12px 0; }
   .cs-stack .cs-row-actions { justify-content: flex-start; }
   /* Small links get a touch area at least 24px high laid over them, as .cs-link already has (nothing moves); the lines of
      an ACH file, which touch one another, are 24px high. */
-  .cs-list a:not([class]), .cs-muted a:not([class]), .cs-hint a:not([class]), .aud-check summary { position: relative; }
-  .cs-list a:not([class])::after, .cs-muted a:not([class])::after, .cs-hint a:not([class])::after { content: ""; position: absolute; inset: -5px 0; }
+  .cs-list a:not([class]), .cs-muted a:not([class]), .cs-hint a:not([class]), .cs-tbl td > a:not([class]), .aud-check summary { position: relative; }
+  .cs-list a:not([class])::after, .cs-muted a:not([class])::after, .cs-hint a:not([class])::after, .cs-tbl td > a:not([class])::after { content: ""; position: absolute; inset: -5px 0; }
   .aud-check summary::after { content: ""; position: absolute; inset: -2px 0; }
   .nl { line-height: 2; }
 }

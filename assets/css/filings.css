@@ -9,6 +9,9 @@
 .fl-bar { position: sticky; top: 0; z-index: var(--z-raised); display: flex; align-items: center; gap: var(--space-md); min-height: 56px; margin-top: calc(var(--space-xs) * -1); padding: var(--space-xs) 0; background: var(--cv-bg); border-bottom: 1px solid var(--cv-line); }
 .fl-bar h1, .fl-bar-title { min-width: 0; margin: 0; font-family: var(--cv-font-display); font-size: var(--text-xl); font-weight: 400; letter-spacing: var(--cv-tracking); line-height: 1.15; color: var(--cv-ink); overflow-wrap: anywhere; }
 .fl-bar-title { font-size: var(--text-lg); }
+/* A section's bar: its name as the heading, the offering's name in a smaller line under it. */
+.fl-bar-head { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; }
+.fl-bar-head .fl-bar-title { font-family: var(--cv-font); font-size: var(--text-sm); font-weight: 400; letter-spacing: 0; line-height: 1.4; color: var(--cv-ink-2); }
 .fl-back, .cs a.fl-back { flex: none; display: inline-flex; align-items: center; gap: var(--space-xs); min-height: var(--control-h); padding: 0 var(--space-md) 0 var(--space-sm); border: 1px solid var(--cv-line); border-radius: var(--cv-r-pill); background: var(--cv-panel); color: var(--cv-ink); font-size: var(--text-sm); font-weight: 500; text-decoration: none; white-space: nowrap; }
 .fl-back:hover, .cs a.fl-back:hover { border-color: var(--cv-line-strong); background: var(--cv-panel-2); color: var(--cv-ink); }
 .fl-back:active, .cs a.fl-back:active { background: var(--cv-panel-3); }
@@ -108,6 +111,7 @@
   .fl-states { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fl-states label, .fl-steps > li { min-height: var(--control-h); }
 }
-/* Links inside a note line keep their place and get a 24 px touch area (17 px text box + 4 px above and below). */
-.fl-note a { position: relative; }
-.fl-note a::after { content: ""; position: absolute; inset: -4px 0; }
+/* Links inside a note line, or a step's how-to line (EDGAR access: "Open the answer sheet"), keep their place and get a
+   24 px touch area (17 px text box + 4 px above and below). */
+.fl-note a, .fl-detail a { position: relative; }
+.fl-note a::after, .fl-detail a::after { content: ""; position: absolute; inset: -4px 0; }

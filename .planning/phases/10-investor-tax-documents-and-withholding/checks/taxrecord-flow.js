@@ -360,7 +360,7 @@ const parts = {
     const dep = await fr.evaluate(() => (window.CVPortal.state.ws.taxDeposits || []).slice(-1)[0] || null);
     check('the deposit is stored: fund, foreign, 2026, 100,000 cents, 2027-01-15, DEP-JAN-B, who and when', !!dep && dep.offeringId === fund.offeringId && dep.kind === 'foreign' && dep.year === '2026' && dep.cents === 100000 && dep.date === '2027-01-15' && dep.confirmation === 'DEP-JAN-B' && !!dep.by && !!dep.at, dep);
     const log = await logSince(fr, before.log);
-    check('the change log has the entry', log.length === 1 && log[0].action === 'Tax deposit marked' && log[0].record === (dep || {}).id && /\$1000\.00 deposited 2027-01-15, confirmation DEP-JAN-B/.test(log[0].detail), log);
+    check('the change log has the entry', log.length === 1 && log[0].action === 'Tax deposit marked' && log[0].record === (dep || {}).id && /\$1,000\.00 deposited 2027-01-15, confirmation DEP-JAN-B/.test(log[0].detail), log);
     await go(fr, 'console-taxdocs', '[data-list="parts"]');
     const line = await fr.evaluate(() => {
       const a = document.querySelector('[data-list="parts"] a[href="#console-taxdocs-withheld"]');

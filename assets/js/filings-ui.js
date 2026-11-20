@@ -149,7 +149,12 @@
       if (window.console) console.error(e);
       body = '<p class="fl-note" role="alert">This section could not be shown.</p>';
     }
-    return `<div class="fl fl-section" data-part="${h(sec.part.key)}">${barHTML(sec.offering.name)}${body}</div>`;
+    // The bar names the section in the tab's own pattern (an h1, as "Filings"), with the offering's name under it
+    // (06-WALKTHROUGH-3 failure 10: Form D, EDGAR access and State filings said only the offering's name).
+    const bar = sec.part.title
+      ? `<div class="fl-bar"><a class="fl-back" href="#console-filings">${U.icon('back')}Back</a><div class="fl-bar-head"><h1>${h(sec.part.title)}</h1><span class="fl-bar-title">${h(sec.offering.name)}</span></div></div>`
+      : barHTML(sec.offering.name);
+    return `<div class="fl fl-section" data-part="${h(sec.part.key)}">${bar}${body}</div>`;
   }
   /** Each registered section's line under an offering, in the sections' order. */
   function partsHTML(ws, o) {

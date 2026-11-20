@@ -153,7 +153,9 @@
 
   /* ---------- sections other files add (NS.taxUI) ---------- */
   const HERE = (document.currentScript && document.currentScript.src) || '';
-  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js', 'tax1099-ui.js', 'taxlink.js']);
+  // Only files that are shipped: a part not in the build would be asked for, and refused, on every page load
+  // (06-WALKTHROUGH-3 failure 4). Plan 10-10 adds 'tax1099-ui.js' back after 'tax1099.js', plan 10-12 adds 'taxlink.js' last.
+  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js']);
   const parts = {};
   const load = { settled: false, waiting: false };
   function part(key, spec) {
@@ -346,7 +348,7 @@
     const missing = auto ? holdersOf(ws, b.offeringId).filter((i) => !used.has(i.id)) : [];
     const list = (name, rows) => `<ul class="tx-list" data-list="${name}">${rows}</ul>`;
     const bar = `<div class="tx-bar"><a class="tx-back" href="#${ROUTE}">Back</a><h1>${h(kindLabel(b.kind))} ${h(b.year)}</h1></div>`;
-    const msg = u.working ? '<p class="tx-note" role="status">Working…</p>' : u.msg[b.id] ? `<p class="tx-note is-stop" role="alert">${h(u.msg[b.id])}</p>` : '';
+    const msg = u.working ? '<p class="tx-note" role="status">Working…</p>' : u.msg[b.id] && !atDeliver(b) ? `<p class="tx-note is-stop" role="alert">${h(u.msg[b.id])}</p>` : '';
     const scan = b.scan ? `<p class="tx-stop">No text can be read in this file: ask the CPA for the file as the tax software saves it${auto ? ', or make each package from its pages below' : ''}.</p>` : '';
     const loose = b.loose.length
       ? CK().panel(
@@ -473,6 +475,7 @@
       const typed = { first: val('tx-first'), last: val('tx-last') };
       u.working = true;
       u.msg[b.id] = '';
+      (u.msgBy || (u.msgBy = {}))[b.id] = el.getAttribute('data-action') || '';
       redraw();
       try {
         await fn(ws, b, p, typed);
@@ -640,12 +643,16 @@
             : '';
     return `<li class="tx-row" data-id="${h(p.id)}">${head}${facts.length ? `<span class="tx-detail">${h(facts.join(' · '))}</span>` : ''}${linkLine(ws, doc)}${tick}${acts.length ? `<div class="tx-acts">${acts.join('')}</div>` : ''}${form}</div><div class="tx-when"><span class="tx-pill ${cls}">${label}</span></div></li>`;
   }
+  // A refusal of Deliver (or of Deliver to these) is said under its button, where the person pressed it: on a phone the
+  // top of the page is out of view and the press looked dead (06-WALKTHROUGH-3 failure 6). Other refusals stay at the top.
+  const atDeliver = (b) => /^tx-deliver/.test((ui().msgBy || {})[b.id] || '');
   /** Deliver: first the list of who receives what (D-01), then one action. Only confirmed documents are offered. */
   function deliverHTML(ws, b, made) {
     const ready = made.filter(({ doc }) => doc && doc.tax.state === 'confirmed').map(({ doc }) => doc);
     const own = made.some(({ doc }) => doc && doc.tax.state === 'delivered') && !connected(ws) ? '<p class="tx-note">No server is connected, so you send each notice from your own email: choose Notice on its row.</p>' : '';
-    if (!NS.app.can('operate') || !ready.length) return own;
-    if (!dv().list[b.id]) return `<div class="cs-row">${btn('tx-deliver', `Deliver ${ready.length}`, on(b), 'cs-btn-primary')}</div>${own}`;
+    const why = !ui().working && ui().msg[b.id] && atDeliver(b) ? `<p class="tx-note is-stop" role="alert">${h(ui().msg[b.id])}</p>` : '';
+    if (!NS.app.can('operate') || !ready.length) return why + own;
+    if (!dv().list[b.id]) return `<div class="cs-row">${btn('tx-deliver', `Deliver ${ready.length}`, on(b), 'cs-btn-primary')}</div>${why}${own}`;
     const rows = ready
       .map((doc) => {
         const inv = investorOf(ws, doc.investors[0]);
@@ -653,7 +660,7 @@
         return `<li class="tx-row" data-id="${h(doc.id)}"><div class="tx-what"><span class="tx-title">${inv ? `${h(inv.title)} · ${h(inv.id)}` : h(doc.investors[0])}</span><span class="tx-detail">${h(kindLabel(doc.tax.kind))} ${h(doc.tax.year)}${e ? ` · replaces the document delivered on ${h(longDay(givenOn(e)))}` : ''}</span></div></li>`;
       })
       .join('');
-    return `<ul class="tx-list" data-list="recipients">${rows}</ul><div class="cs-row">${btn('tx-deliver-go', `Deliver to these ${ready.length}`, on(b), 'cs-btn-primary')}${btn('tx-deliver-cancel', 'Cancel', on(b))}</div>${own}`;
+    return `<ul class="tx-list" data-list="recipients">${rows}</ul><div class="cs-row">${btn('tx-deliver-go', `Deliver to these ${ready.length}`, on(b), 'cs-btn-primary')}${btn('tx-deliver-cancel', 'Cancel', on(b))}</div>${why}${own}`;
   }
   NS.changes['tx-replaces'] = (el) => {
     dv().replace[el.getAttribute('data-id')] = !!el.checked;
@@ -665,6 +672,8 @@
     const val = (k) => String((document.getElementById(`tx-c-${k}`) || {}).value || '').trim();
     TD().setContact(ws, { name: val('name'), address: val('address'), phone: val('phone'), email: val('email') });
     ui().msg.main = '';
+    // a refusal of Deliver for want of the contact no longer holds once it is saved
+    Object.keys(ui().msg).forEach((k) => /^Before delivering, save the Contact/.test(ui().msg[k] || '') && (ui().msg[k] = ''));
     NS.app.save(true);
     redraw();
   };
@@ -715,6 +724,7 @@
       const typed = { date: val('tx-bounce-date'), why: val('tx-why'), sent: val(`tx-paper-${doc.id}`) };
       u.working = true;
       u.msg[key] = '';
+      (u.msgBy || (u.msgBy = {}))[key] = el.getAttribute('data-action') || '';
       redraw();
       try {
         await fn(ws, doc, typed);
