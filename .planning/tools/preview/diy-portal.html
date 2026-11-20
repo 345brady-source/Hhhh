@@ -22,14 +22,15 @@
 <link rel="stylesheet" href="assets/css/esign.css">
 <link rel="stylesheet" href="assets/css/diy.css">
 <link rel="stylesheet" href="assets/css/filings.css">
+<link rel="stylesheet" href="assets/css/tax.css">
 <div id="app"></div>
 <script>
 // One-time reset of this preview: clears what was entered before, so it opens as a first-time sponsor sign-up. Runs once per browser.
 try {
-  if (localStorage.getItem('cv-preview-reset') !== 'fresh-5') {
+  if (localStorage.getItem('cv-preview-reset') !== 'fresh-6') {
     Object.keys(localStorage).filter(function (k) { return k.indexOf('sdesk1:') === 0; }).forEach(function (k) { localStorage.removeItem(k); });
     try { indexedDB.deleteDatabase('cvp-documents'); } catch (e) {}
-    localStorage.setItem('cv-preview-reset', 'fresh-5');
+    localStorage.setItem('cv-preview-reset', 'fresh-6');
     if (location.hash) history.replaceState(null, '', location.pathname + location.search);
   }
 } catch (e) {}
@@ -50,10 +51,13 @@ try {
 <script src="assets/js/structures.js"></script>
 <script src="assets/js/audit.js"></script>
 <script src="assets/js/operations.js"></script>
+<script src="assets/js/books.js"></script>
+<script src="assets/js/books-post.js"></script>
 <script src="assets/js/eligibility.js"></script>
 <script src="assets/js/reader.js"></script>
 <script src="assets/js/intake.js"></script>
 <script src="assets/js/console.js"></script>
+<script src="assets/js/amlprogram.js"></script>
 <script src="assets/js/anchors.js"></script>
 <script src="assets/js/placement.js"></script>
 <script src="assets/js/meaning.js"></script>
@@ -76,3 +80,5 @@ try {
 <script src="assets/js/help.js"></script>
 <script src="assets/js/filings.js"></script>
 <script src="assets/js/filings-ui.js"></script>
+<script src="assets/js/taxdocs.js"></script>
+<script src="assets/js/taxdocs-ui.js"></script>
