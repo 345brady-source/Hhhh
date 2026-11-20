@@ -41,12 +41,20 @@ function figures(m) {
 const flat = (s) => String(s).replace(/\s+/g, ' ');
 
 let seq = 0;
-/** Composes the model and reads the PDF back: { file, text, info, pages }. */
+/** pdftotext -raw: the text in the order it is drawn (a table cell wrapped onto two lines reads as one run). */
+function rawText(file) {
+  const r = require('child_process').spawnSync('pdftotext', ['-raw', '-enc', 'UTF-8', file, '-'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  if (r.status !== 0) throw new Error(`pdftotext -raw exited ${r.status}`);
+  return r.stdout;
+}
+/** Composes the model and reads the PDF back: { file, text (-layout), raw (-raw), info, pages }. */
 async function paper(L, model, name) {
   const bytes = await L.NS.reportsPdf.compose(model, { kit: L.kit, images: {} });
   const file = T.save(T.work('reports-starters'), `${name}-${++seq}.pdf`, bytes);
-  return { file, text: T.text(file), info: T.info(file), pages: bytes.pages };
+  return { file, text: T.text(file), raw: rawText(file), info: T.info(file), pages: bytes.pages };
 }
+/** The strings found in neither reading of the PDF (layout, or drawing order for cells wrapped inside their column). */
+const lostIn = (P, list) => missingIn(P.raw, missingIn(P.text, list));
 
 /** A stored copy of a starter (B1/B2: the as-built startFrom), or throws naming the starter. */
 function template(NS, ws, id) {
@@ -65,9 +73,9 @@ async function report(L, ws, id, spec, rid, check, what) {
 
 /** Checks that every string is in the PDF text and that none of `absent` is. */
 function holds(check, what, P, want, absent) {
-  const lost = missingIn(P.text, want);
+  const lost = lostIn(P, want);
   check(`${what}: the PDF holds ${want.length} hand-worked strings`, lost.length === 0, lost);
-  const fig = missingIn(P.text, figures(P.model));
+  const fig = lostIn(P, figures(P.model));
   check(`${what}: the PDF holds every table cell and tile value of its model (${figures(P.model).length})`, fig.length === 0, fig.slice(0, 10));
   const seen = (absent || []).filter((s) => flat(P.text).indexOf(s) >= 0);
   check(`${what}: no other investor's name in the PDF`, seen.length === 0, seen);
@@ -369,10 +377,10 @@ const parts = {
           continue;
         }
         made++;
-        const lost = missingIn(P.text, figures(j.model));
+        const lost = lostIn(P, figures(j.model));
         if (lost.length) bad.figures.push({ what: j.what, lost: lost.slice(0, 5) });
         const me = F.ws.investors.find((i) => i.id === j.rid);
-        const text = flat(P.text);
+        const text = flat(P.text) + " | " + flat(P.raw);
         if (!me || text.indexOf(me.title) < 0) bad.name.push(j.what);
         const oth = R.othersIn(F.ws, j.model);
         if (oth.length) bad.others.push({ what: j.what, others: oth });
@@ -416,13 +424,13 @@ const parts = {
     const year = await report(L, ws, 'a-rega', Object.assign({ audience: aud }, Y2026), rid, check, 'a-rega 2026');
     if (year) {
       check("2026: titled 'Annual report to investors'", year.model.title === 'Annual report to investors', year.model.title);
-      const lost = missingIn(year.text, ['Annual report to investors', 'Year ended December 31, 2026', SEC]);
+      const lost = lostIn(year, ['Annual report to investors', 'Year ended December 31, 2026', SEC]);
       check('2026: the PDF holds the title, the period and the SEC line', lost.length === 0, lost);
     }
     const half = await report(L, ws, 'a-rega', { from: '2026-01-01', to: '2026-06-30', audience: aud }, rid, check, 'a-rega H1 2026');
     if (half) {
       check("2026-01-01 to 2026-06-30: titled 'Semiannual report to investors'", half.model.title === 'Semiannual report to investors', half.model.title);
-      const lost = missingIn(half.text, ['Semiannual report to investors', 'Six months ended June 30, 2026', SEC]);
+      const lost = lostIn(half, ['Semiannual report to investors', 'Six months ended June 30, 2026', SEC]);
       check('six months: the PDF holds the title, the period and the SEC line', lost.length === 0, lost);
     }
     const plain = await report(L, ws, 'a-review', Object.assign({ audience: { kind: 'investor', investorId: rid, offeringId: 'kb-harlow' } }, Y2026), rid, check, 'a-review kb-harlow 2026');
@@ -484,12 +492,12 @@ const parts = {
     check('Summary (EUR) total ending capital = kb-harlow, shown with €', !!E && last(E).v === eur && /^−?€/.test(last(E).s), { got: last(E), want: eur });
     const usdS = NS.reports.fmt.money(usd, 'USD');
     const eurS = NS.reports.fmt.money(eur, 'EUR');
-    const lost = missingIn(P.text, [usdS, eurS, 'Summary (USD)', 'Summary (EUR)']);
+    const lost = lostIn(P, [usdS, eurS, 'Summary (USD)', 'Summary (EUR)']);
     check(`the PDF holds the USD total ${usdS} and the EUR total ${eurS}`, lost.length === 0, lost);
     const names = ['Kestrel Bay Fund II, L.P.', 'Harlow Precision Co-Investment, LLC', 'Kestrel Bay Senior Note 2024-A'];
     const h1 = P.model.blocks.filter((b) => b.k === 'h1').map((b) => b.text);
     check('one heading per fund name', J(h1.slice().sort()) === J(names.slice().sort()), h1);
-    check('each fund name is in the PDF', missingIn(P.text, names).length === 0, missingIn(P.text, names));
+    check('each fund name is in the PDF', lostIn(P, names).length === 0, lostIn(P, names));
     const all = usd + eur;
     const mixed = ['USD', 'EUR'].map((c) => NS.reports.fmt.money(all, c)).filter((s) => flat(P.text).indexOf(s) >= 0);
     const anyTotal = P.model.blocks.filter((b) => b.k === 'table' && b.total).some((b) => b.total.some((c) => c.v === all));
