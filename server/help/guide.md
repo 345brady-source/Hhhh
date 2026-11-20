@@ -277,6 +277,15 @@ To confirm:
 
 "Pages with no package" and "No K-1 in this file" list what is left.
 
+To deliver:
+1. Under "Contact for tax documents", enter the "Mailing address" and choose "Save".
+2. In the import, choose "Deliver", check the list, then "Deliver to these".
+3. "Notice" on a delivered row gives the notice to copy or email.
+
+"Send on paper" lists documents owed on paper: enter the date and choose "Mark sent on paper". "Notice came back" on a row adds one there.
+
+To withdraw a document, an admin chooses "Withdraw", enters a "Reason" and chooses "Withdraw document". For an amended document, tick "This replaces the document delivered on" before delivering.
+
 ## console-reports
 audience: sponsor
 kind: console
@@ -523,6 +532,8 @@ To open or download a document:
 
 "Waiting for your signature" lists documents the firm sent to sign: choose the document's name to open and sign it. "Signed documents" lists what has been signed.
 
+"Electronic delivery of tax documents" is optional: without it, tax documents are sent to you on paper and everything else works the same. To receive them here, choose "Review and consent", read the terms and choose "I consent"; a tax document waiting for you then appears in the list. An opened tax document shows the date it leaves the portal. To stop, choose "Withdraw consent": the date is shown, and "Consent again" restarts it.
+
 A second person who signs too, for example a joint owner, is added to the account by the firm as its co-investor: ask the firm's team. The co-investor has their own sign-in and is asked only for their own places, under "Waiting for your signature".
 
 ## updates
@@ -630,7 +641,7 @@ title: Welcome
 anchor: Consent to electronic records and signatures
 anchor: Get started
 
-The first step. It says which firm sent the invitation and for which offering, then shows "Consent to electronic records and signatures": what signing electronically means, how to ask for paper copies and how to withdraw consent. Tick the box that says you agree to use electronic records and signatures, tick the box about receiving statements, tax documents and notices electronically if it is shown, and choose "Get started".
+The first step. It says which firm sent the invitation and for which offering, then shows "Consent to electronic records and signatures": what signing electronically means, how to ask for paper copies and how to withdraw consent. Tick the box that says you agree to use electronic records and signatures, tick the box about receiving statements and notices electronically if it is shown, and choose "Get started".
 
 ## invite/login
 audience: investor

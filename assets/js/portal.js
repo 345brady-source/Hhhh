@@ -1051,7 +1051,7 @@
   }
   function openUploaded(doc) {
     U.dialog(
-      `<div class="dlg-head"><div><h2>${h(doc.title)}</h2><p>${date(doc.date)} · ${h(doc.fileName)} · ${(doc.size / 1024).toFixed(0)} KB</p></div>
+      `<div class="dlg-head"><div><h2>${h(doc.title)}</h2><p>${date(doc.date)} · ${h(doc.fileName)} · ${(doc.size / 1024).toFixed(0)} KB</p>${NS.runHooks('documentOpened', doc)}</div>
         <div class="dlg-actions"><button class="btn btn-small" type="button" data-action="up-download" data-id="${h(doc.id)}">${icon('download')}Download</button><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <div class="dlg-body"><p class="empty">Loading…</p></div>`,
       'dlg-doc'

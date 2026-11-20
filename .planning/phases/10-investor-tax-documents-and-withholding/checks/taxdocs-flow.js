@@ -1,5 +1,5 @@
 // gate: browser
-// last "TAXDOCS FLOW: PASS (parts run: 8)"
+// last "TAXDOCS FLOW: PASS (parts run: 14)"
 // The Tax documents page of the self-serve console (plan 10-04, D-01, C-06): a CPA's combined Schedule K-1 file is cut
 // into one package per K-1 in the browser, and every match is a person's decision. Every part runs the portal inside a
 // sandboxed frame whose policy refuses every connection and allows scripts from the portal's own address only, with the
@@ -25,6 +25,25 @@
 //   managed        index.html at 1280x800 as staff and as sponsor staff: Documents visible; no Tax documents in the menu;
 //                  console-taxdocs and console-taxdocs-batch-x fall back to the default page; the page names none of this
 //                  plan's files
+// Plan 10-06 (delivery and consent; taxdocs-investor.js served, the other later files 404 except in nocdn):
+//   deliver-phone  390x844: the contact starts from the support details; Deliver refused with one line while the mailing
+//                  address is empty; one investor consented; Deliver lists the 10 recipients by name, then delivers: that
+//                  investor's K-1 Delivered with its available-until date, the others wait; the notice (section 7.01
+//                  subject, Copy, Email link) and the one line about the sponsor's own email; as that investor the K-1 is
+//                  listed, opens with its pages and its date; not listed for two other investors; the row reads opened once
+//   deliver-desktop the same at 1280x800, then: the unconfirmed packages offered to nobody; a team member delivers and has
+//                  no Withdraw; the send-on-paper list, Mark sent on paper; Notice came back 2027-03-20 gives paper due
+//                  2027-04-19; Withdraw asks a reason, the K-1 leaves the list, the row keeps opened once, logged; Form 8805
+//   consent-phone, consent-desktop   waiting and nothing of it; the other controls and pages work without consent; the
+//                  eight disclosures with the firm's contact; consent delivers at once, stores date, version and text, logs;
+//                  kept after a reload; Withdraw consent with the date (withdrawalConfirmed); the next document waits;
+//                  Consent again; nothing waiting: one line. Desktop adds: the generated tax entry for sample firms only, and
+//                  the self-serve welcome step's tick box without "tax documents" (the managed one untouched)
+//   amended        390x844: a second file's K-1 for the same investor refused until "This replaces the document delivered
+//                  on <date>" is ticked; then Replaced beside the amended one, both open, a new notice; gone once the
+//                  clock passes the earlier one's available-until date
+//   nocdn          390x844, every later file served: import, confirm, deliver, consent, open with pages drawn; no request
+//                  to either outside host attempted and the reader and writer loaded from the portal's own address
 // Every part: quiet, leak and a way out on screen; the fund's name (with angle brackets) is shown as text.
 //   NODE_PATH=$(npm root -g) node taxdocs-flow.js [--only part1,part2]
 // The files it builds (the IRS's blank 2025 form, invented partners) go to a folder named with its process id, removed
@@ -496,7 +515,556 @@ async function confirmOnly(fr, batchId, pick) {
   }, batchId);
 }
 
+/* ---------- delivery and consent (plan 10-06) ---------- */
+// The same frame, with assets/js/taxdocs-investor.js served (the investor's side of delivery); the other later files 404.
+const LATER6 = /\/assets\/js\/(withholding|withholding-ui|taxrecord-ui|tax1099|tax1099-ui|taxlink)\.js$/;
+async function open6(S, size, opts) {
+  const o = Object.assign({ policy: 'self' }, opts || {});
+  const { A } = await T.framed(S, size, o);
+  if (!o.serveAll) await A.context.route((u) => u.origin === S.origin && LATER6.test(u.pathname), (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'not here' }));
+  const fr = await reframe(A);
+  await fr.waitForFunction(() => !!(window.CVPortal.hooks.documentOpened || []).length, null, { timeout: 15000 }).catch(() => {});
+  return { A, fr };
+}
+/** The sample firm, the twelve partners, the printed file imported and its together list confirmed: 10 documents. */
+async function seat(check, fr, opts) {
+  opts = opts || {};
+  await T.sample(fr, { role: 'admin' });
+  const fund = await giveFund(fr, K.PARTNERS);
+  const built = await K.build(BUILT, { name: `seat-${process.pid}-${Date.now()}.pdf`, flatten: true });
+  const r = await importFiles(fr, { offeringId: fund.offeringId, kind: opts.kind, files: [{ name: 'k1-2025.pdf', bytes: built.bytes }] });
+  const b = r.batches[0] || {};
+  await go(fr, `console-taxdocs-batch-${b.id}`, '[data-list="together"]');
+  const n0 = await fr.evaluate(() => (window.CVPortal.state.ws.docs || []).filter((d) => d.tax).length);
+  await T.press(fr, '[data-action=tx-together]');
+  await docsReach(fr, n0 + 10);
+  await fr.waitForTimeout(400);
+  const ids = await pkgIds(fr, b.id);
+  const docs = await taxDocs(fr);
+  check('the printed file is imported and its together list confirmed: 10 confirmed documents', docs.filter((d) => d.batch === b.id && d.state === 'confirmed').length === 10, docs.length);
+  const holders = await fr.evaluate((oid) => window.CVPortal.state.ws.investors.filter((i) => i.positions.some((p) => p.offeringId === oid)).map((i) => i.id), fund.offeringId);
+  return { fund, b, ids, others: holders.filter((id) => fund.ids.indexOf(id) < 0) };
+}
+/** Every tax document: id, investor, state, hidden, title, the dates, opens, notice and paper. */
+const taxDocs = (fr) =>
+  fr.evaluate(() =>
+    (window.CVPortal.state.ws.docs || [])
+      .filter((d) => d.tax)
+      .map((d) => ({ id: d.id, batch: d.tax.batch, investor: d.investors[0], state: d.tax.state, hidden: d.hidden, title: d.title, kind: d.tax.kind, until: d.tax.availableUntil, deliveredAt: d.tax.deliveredAt, opens: d.tax.opens, notice: d.tax.notice, paper: d.tax.paper, replaces: d.tax.replaces, replacedBy: d.tax.replacedBy || '', withdrawn: d.tax.withdrawn }))
+  );
+/** The rows of a list on the page by data-list, with their data-id and text. */
+const listRows = (fr, name) => fr.evaluate((name) => Array.from(document.querySelectorAll(`[data-list="${name}"] .tx-row`)).map((r) => ({ id: r.getAttribute('data-id') || '', text: r.innerText.replace(/\s+/g, ' ').trim() })), name);
+/** The refusal or message line on the page now (role=alert), or ''. */
+const alertLine = (fr) => fr.evaluate(() => Array.from(document.querySelectorAll('.tx [role=alert]')).map((x) => x.innerText.trim()).join(' | '));
+/** The firm's contact on the Tax documents page: fields as given (blank ones left as drawn), then Save. */
+async function saveContact(fr, c) {
+  for (const k of ['name', 'address', 'phone', 'email']) if (c[k] != null) await fr.fill(`#tx-c-${k}`, c[k]);
+  await T.press(fr, '[data-action=tx-contact]');
+  await fr.waitForTimeout(400);
+}
+const ADDRESS = '1 Market Street, Wilmington, DE 19801';
+/** Deliver on an import's page: the list of recipients, then Deliver to them. Resolves to the recipients' rows. */
+async function deliverAll(fr, batchId) {
+  await go(fr, `console-taxdocs-batch-${batchId}`, '.tx');
+  await T.press(fr, '[data-action=tx-deliver]');
+  await fr.waitForTimeout(400);
+  const rows = await listRows(fr, 'recipients');
+  if (await fr.locator('[data-action=tx-deliver-go]').count()) {
+    await T.press(fr, '[data-action=tx-deliver-go]');
+    await fr.waitForTimeout(600);
+  }
+  return rows;
+}
+/** As an investor: the Documents page's rows (title text), and whether a tax document of that title is listed. */
+async function investorDocs(fr, investorId) {
+  await T.sample(fr, { role: 'investor', investor: investorId });
+  await go(fr, 'documents', '#view');
+  await fr.waitForTimeout(300);
+  return fr.evaluate((id) => {
+    const NS = window.CVPortal;
+    const w = NS.state.ws;
+    const inv = w.investors.find((i) => i.id === id);
+    return { listed: NS.ops.docsFor(w, inv).filter((d) => d.tax).map((d) => d.id), rows: Array.from(document.querySelectorAll('.tbl-docs tbody tr')).map((r) => r.innerText.replace(/\s+/g, ' ').trim()), text: document.querySelector('#view').innerText };
+  }, investorId);
+}
+/** As the investor on Documents: open a document by id; resolves to the dialog's head text and pages drawn. */
+async function openDoc(fr, docId) {
+  await T.press(fr, `.tbl-docs [data-action=open-doc][data-id="${docId}"]`);
+  await fr.waitForFunction(() => {
+    const imgs = Array.from(document.querySelectorAll('#dlg[open] .dlg-body img.doc-page'));
+    return (imgs.length > 0 && imgs.every((i) => i.complete && i.naturalWidth > 0)) || /cannot be shown/.test((document.querySelector('#dlg .dlg-body') || {}).innerText || '');
+  }, null, { timeout: 60000, polling: 300 }).catch(() => {});
+  const r = await fr.evaluate(() => {
+    const d = document.getElementById('dlg');
+    return { open: !!(d && d.open), head: d ? d.querySelector('.dlg-head').innerText.replace(/\s+/g, ' ') : '', pages: d ? Array.from(d.querySelectorAll('.dlg-body img.doc-page')).filter((i) => i.complete && i.naturalWidth > 0).length : 0 };
+  });
+  await T.press(fr, '#dlg [data-action=close-dialog]');
+  await fr.waitForTimeout(300);
+  return r;
+}
+const longDate = (fr, iso) => fr.evaluate((iso) => window.CVPortal.ui.date(iso, 'long'), iso);
+
+/** deliver-phone and deliver-desktop: Deliver with its list, one investor in the portal, opens on the sponsor's row. */
+async function deliverPart(check, S, size) {
+  const { A, fr } = await open6(S, size);
+  await T.proveRefused(check, A, fr);
+  const { fund, b, ids, others } = await seat(check, fr);
+  const maria = fund.ids[0];
+  const robert = fund.ids[7];
+  // the contact: name, telephone and email start from the firm's support details; the mailing address is empty
+  await go(fr, 'console-taxdocs', '#tx-files');
+  const drawn = await fr.evaluate(() => {
+    const v = (k) => (document.getElementById(`tx-c-${k}`) || {}).value;
+    const sup = window.CVPortal.state.ws.tenant.support || {};
+    return { name: v('name'), address: v('address'), phone: v('phone'), email: v('email'), sup };
+  });
+  check('the contact for tax documents starts from the firm\'s support details, with the mailing address empty', drawn.name === drawn.sup.team && drawn.phone === drawn.sup.phone && drawn.email === drawn.sup.email && drawn.address === '', drawn);
+  await saveContact(fr, {});
+  // Deliver refused with one line while the mailing address is empty
+  await deliverAll(fr, b.id);
+  let docs = await taxDocs(fr);
+  const refusal = await alertLine(fr);
+  check('Deliver is refused with one line while the firm\'s mailing address is empty, and nothing is delivered', /mailing address/i.test(refusal) && refusal.split(' | ').length === 1 && docs.every((d) => d.state === 'confirmed'), { refusal, states: docs.map((d) => d.state) });
+  await go(fr, 'console-taxdocs', '#tx-files');
+  await saveContact(fr, { address: ADDRESS });
+  const contact = await fr.evaluate(() => window.CVPortal.state.ws.taxdocs.contact);
+  check('Save keeps the four parts of the contact', contact.address === ADDRESS && !!contact.name && !!contact.phone && !!contact.email, Object.keys(contact).filter((k) => contact[k]));
+  // one investor consents (as their own page would), then Deliver lists the recipients by name
+  await T.ws(fr, (w, id, NS) => NS.taxdocs.consent(w, id, { where: 'portal' }) && true, maria);
+  const rows = await deliverAll(fr, b.id);
+  const titles = await fr.evaluate((oid) => window.CVPortal.state.ws.investors.filter((i) => i.positions.some((p) => p.offeringId === oid)).map((i) => [i.id, i.title]), fund.offeringId);
+  const named = (id) => (titles.find((t) => t[0] === id) || [])[1];
+  const confirmedIds = Object.values(ids).filter((p) => p.proposed && fund.ids.indexOf(p.proposed) >= 0 && ['number and name'].indexOf(p.basis) >= 0).map((p) => p.proposed);
+  check('Deliver first lists the 10 recipients by name with what each receives', rows.length === 10 && confirmedIds.every((id) => rows.some((r) => r.text.indexOf(named(id)) >= 0 && /Schedule K-1 \(Form 1065\) 2025/.test(r.text))), rows.map((r) => r.text.slice(0, 80)));
+  docs = await taxDocs(fr);
+  const dm = docs.find((d) => d.investor === maria);
+  check('confirmed, the investor with consent has the document Delivered with its available-until date; the others wait for consent', !!dm && dm.state === 'delivered' && !dm.hidden && /^\d{4}-\d{2}-\d{2}$/.test(dm.until) && docs.filter((d) => d.investor !== maria).every((d) => d.state === 'waiting' && d.hidden), docs.map((d) => d.state));
+  const untilText = dm ? await longDate(fr, dm.until) : 'x';
+  let row = (await listRows(fr, 'confirmed')).find((r) => r.id === (ids['Maria Lopez'] || {}).id) || { text: '' };
+  check('its row on the import\'s page reads Delivered with the date it is available until', /Delivered/.test(row.text) && row.text.indexOf(untilText) >= 0, row.text);
+  // the notice: the words of section 7.01 as its subject, how to open and print it, Copy and an Email link
+  await T.press(fr, `[data-list="confirmed"] .tx-row[data-id="${(ids['Maria Lopez'] || {}).id}"] [data-action=tx-notice]`);
+  await fr.waitForTimeout(400);
+  const notice = await fr.evaluate(() => {
+    const n = document.querySelector('.tx-notice');
+    const mail = n && n.querySelector('a[href^="mailto:"]');
+    return { text: n ? n.innerText : '', copy: !!(n && n.querySelector('[data-action=tx-notice-copy]')), mail: mail ? decodeURIComponent(mail.getAttribute('href')) : '', line: Array.from(document.querySelectorAll('.tx-note')).map((x) => x.innerText).filter((t) => /own email/i.test(t)) };
+  });
+  check('the notice shown has IMPORTANT TAX RETURN DOCUMENT AVAILABLE as its subject and says how to open and print it', /Subject\s*IMPORTANT TAX RETURN DOCUMENT AVAILABLE/.test(notice.text) && /open/i.test(notice.text) && /print/i.test(notice.text), notice.text.slice(0, 200));
+  check('it has Copy and an Email link addressed to the investor with that subject', notice.copy && /^mailto:partner1@example\.com\?subject=IMPORTANT TAX RETURN DOCUMENT AVAILABLE/.test(notice.mail), notice.mail.slice(0, 90));
+  check('with no server connected, one line says the notice is sent from the sponsor\'s own email', notice.line.length === 1, notice.line);
+  await T.wayOut(check, fr);
+  await T.leak(check, fr);
+  await T.quiet(check, A, fr);
+  // as that investor: the K-1 is listed, opens with its pages drawn and shows the date it leaves the portal
+  const seen = await investorDocs(fr, maria);
+  check('as that investor, Documents lists the K-1', !!dm && seen.listed.length === 1 && seen.listed[0] === dm.id && seen.rows.some((r) => /Schedule K-1 \(Form 1065\) 2025/.test(r)), seen.rows);
+  const o = dm ? await openDoc(fr, dm.id) : { head: '', pages: 0 };
+  check('opening it draws its pages and shows the date it leaves the portal', o.pages >= 1 && o.head.indexOf(untilText) >= 0 && /until/i.test(o.head), o);
+  await T.wayOut(check, fr);
+  await T.quiet(check, A, fr);
+  // as other investors of the fund: not listed
+  for (const id of [robert, others[0]]) {
+    const s2 = await investorDocs(fr, id);
+    check(`as another investor of the fund (${id}), the K-1 is not listed and no tax document of theirs is shown`, !!dm && s2.listed.length === 0 && !s2.rows.some((r) => /Schedule K-1 \(Form 1065\)/.test(r)), s2.rows);
+  }
+  // back as admin: opened once, with the date
+  await T.sample(fr, { role: 'admin' });
+  await go(fr, `console-taxdocs-batch-${b.id}`, '[data-list="confirmed"]');
+  docs = await taxDocs(fr);
+  const dm2 = docs.find((d) => d.investor === maria);
+  const openText = dm2 && dm2.opens.first ? await longDate(fr, dm2.opens.first.slice(0, 10)) : 'x';
+  row = (await listRows(fr, 'confirmed')).find((r) => r.id === (ids['Maria Lopez'] || {}).id) || { text: '' };
+  check('back as admin, the row reads opened once with the date', !!dm2 && dm2.opens.count === 1 && /Opened once/i.test(row.text) && row.text.indexOf(openText) >= 0, { row: row.text, opens: dm2 && dm2.opens });
+  const log = await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((e) => /^Tax document (delivered|waiting for consent|opened)$/.test(e.action)).map((e) => e.action));
+  check('the change log has each delivery, each wait and the open', log.filter((x) => x === 'Tax document delivered').length === 1 && log.filter((x) => x === 'Tax document waiting for consent').length === 9 && log.filter((x) => x === 'Tax document opened').length === 1, log.length);
+  await T.wayOut(check, fr);
+  await T.leak(check, fr);
+  await T.quiet(check, A, fr);
+  return { A, fr, fund, b, ids, others };
+}
+
+/** A row of the send-on-paper list by its document id, or null. */
+const paperRow = async (fr, docId) => (await listRows(fr, 'paper')).find((r) => r.id === docId) || null;
+const CONTACT6 = { name: 'Kestrel Bay Investor Relations', address: ADDRESS, phone: '(212) 555-0148', email: 'tax@example.invalid' };
+/** The contact set and every confirmed document of the import delivered (nobody has consented: all wait). */
+async function deliverWaiting(fr, b) {
+  await T.ws(fr, (w, c, NS) => NS.taxdocs.setContact(w, c) && true, CONTACT6);
+  await deliverAll(fr, b.id);
+}
+/** The investor's consent block on Documents: its text, its buttons, whether the disclosure is open. */
+const block = (fr) =>
+  fr.evaluate(() => {
+    const el = document.querySelector('[data-txi=block]');
+    return { there: !!el, text: el ? el.innerText.replace(/\s+/g, ' ') : '', buttons: el ? Array.from(el.querySelectorAll('button')).map((x) => x.innerText.trim()) : [], disclosure: !!(el && el.querySelector('[data-txi=disclosure]')) };
+  });
+
+/** consent-phone and consent-desktop: separate, optional, complete in its disclosures, withdrawable, given again. */
+async function consentPart(check, S, size) {
+  const { A, fr: fr0 } = await open6(S, size);
+  let fr = fr0;
+  await T.proveRefused(check, A, fr);
+  const { fund, b, others } = await seat(check, fr);
+  const maria = fund.ids[0];
+  await deliverWaiting(fr, b);
+  let docs = await taxDocs(fr);
+  const dm = docs.find((d) => d.investor === maria);
+  check('with nobody consented, every delivered document waits, hidden', docs.length === 10 && docs.every((d) => d.state === 'waiting' && d.hidden), docs.map((d) => d.state));
+  // as Maria: a tax document is waiting and nothing of it
+  let s = await investorDocs(fr, maria);
+  let k = await block(fr);
+  check('the investor sees that a tax document is waiting', k.there && /A tax document is waiting for you/.test(k.text) && k.buttons.indexOf('Review and consent') >= 0, k);
+  check('and no title or page of it: nothing listed, no K-1 named anywhere on the page', s.listed.length === 0 && !/Schedule K-1 \(Form 1065\)/.test(s.text) && !(await fr.locator('#view img.doc-page').count()), { listed: s.listed, rows: s.rows.length });
+  // every other control works without consenting
+  const before = s.rows.length;
+  const cat = await fr.evaluate(() => Array.from(document.querySelectorAll('#d-cat option')).map((o) => o.value).find((v) => v !== 'all'));
+  await fr.selectOption('#d-cat', cat);
+  await fr.waitForTimeout(400);
+  const filtered = await fr.evaluate(() => document.querySelectorAll('.tbl-docs tbody tr').length);
+  await fr.selectOption('#d-cat', 'all');
+  await fr.waitForTimeout(400);
+  const firstDoc = await fr.evaluate(() => (document.querySelector('.tbl-docs [data-action=open-doc]') || {}).getAttribute && document.querySelector('.tbl-docs [data-action=open-doc]').getAttribute('data-id'));
+  let opened = false;
+  if (firstDoc) {
+    await T.press(fr, `.tbl-docs [data-action=open-doc][data-id="${firstDoc}"]`);
+    await fr.waitForTimeout(500);
+    opened = await fr.evaluate(() => !!document.getElementById('dlg').open);
+    await T.press(fr, '#dlg [data-action=close-dialog]');
+    await fr.waitForTimeout(300);
+  }
+  check('without consenting, the Type filter and opening another document work', before > 0 && filtered > 0 && filtered <= before && opened, { before, filtered, opened });
+  const pages = [];
+  for (const r of ['overview', 'portfolio', 'distributions', 'account']) {
+    await fr.evaluate((r) => (location.hash = '#' + r), r);
+    await fr.waitForTimeout(500);
+    pages.push(await fr.evaluate(() => ({ route: window.CVPortal.state.route, block: !!document.querySelector('[data-txi=block]'), asks: /consent to electronic delivery of tax documents/i.test(document.querySelector('#view').innerText), len: document.querySelector('#view').innerText.length })));
+  }
+  check('no other page asks for it or waits for it', pages.every((p) => !p.block && !p.asks && p.len > 50), pages);
+  // Review and consent: the disclosures of sections 5.01 to 5.08, the 5.05 one with the firm's contact
+  await go(fr, 'documents', '#view');
+  await T.press(fr, '[data-txi=block] [data-action=txi-review]');
+  await fr.waitForTimeout(400);
+  const want = await fr.evaluate(() => window.CVPortal.taxdocs.CONSENT.lines(window.CVPortal.state.ws.taxdocs.contact).map((l) => ({ rule: l.rule, text: l.text })));
+  k = await block(fr);
+  const shown = await fr.evaluate(() => (document.querySelector('[data-txi=disclosure]') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
+  check('each sentence of the disclosure (sections 5.01 to 5.08) is on screen', want.length === 8 && want.every((l) => shown.indexOf(l.text.replace(/\s+/g, ' ')) >= 0), want.filter((l) => shown.indexOf(l.text) < 0).map((l) => l.rule));
+  const w505 = (want.find((l) => l.rule === '5.05') || { text: '' }).text;
+  check('the 5.05 one names the firm\'s contact: name, mailing address, telephone and email', [CONTACT6.name, CONTACT6.address, CONTACT6.phone, CONTACT6.email].every((x) => w505.indexOf(x) >= 0 && shown.indexOf(x) >= 0), w505.length);
+  await A.page.screenshot({ path: path.join(OUT, `consent-${size}.png`), fullPage: false });
+  await T.wayOut(check, fr);
+  await T.leak(check, fr);
+  const logFrom = await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).length);
+  await T.press(fr, '[data-txi=block] [data-action=txi-consent]');
+  await fr.waitForTimeout(600);
+  s = await fr.evaluate((id) => {
+    const NS = window.CVPortal;
+    const w = NS.state.ws;
+    return { listed: NS.ops.docsFor(w, w.investors.find((i) => i.id === id)).filter((d) => d.tax).map((d) => d.id), rows: Array.from(document.querySelectorAll('.tbl-docs tbody tr')).map((r) => r.innerText.replace(/\s+/g, ' ')) };
+  }, maria);
+  docs = await taxDocs(fr);
+  const dm2 = docs.find((d) => d.investor === maria);
+  check('consenting makes the document appear at once, with its notice recorded', !!dm && s.listed.length === 1 && s.listed[0] === dm.id && s.rows.some((r) => /Schedule K-1 \(Form 1065\) 2025/.test(r)) && dm2.state === 'delivered' && !!(dm2.notice && dm2.notice.at), { listed: s.listed, state: dm2 && dm2.state });
+  const td = await fr.evaluate((id) => {
+    const NS = window.CVPortal;
+    const i = NS.state.ws.investors.find((x) => x.id === id);
+    return { td: i.taxDelivery, version: NS.taxdocs.CONSENT.version, text: NS.taxdocs.CONSENT.lines(NS.state.ws.taxdocs.contact).map((l) => l.text).join('\n\n') };
+  }, maria);
+  check('the date, the version and the exact text agreed to are stored on the investor', !!td.td && /^\d{4}-\d{2}-\d{2}T/.test(td.td.at) && td.td.version === td.version && td.td.text === td.text && td.td.withdrawnAt === '', td.td && Object.keys(td.td));
+  const logged = await fr.evaluate((from) => (window.CVPortal.state.ws.audit || []).slice(from).map((e) => e.action), logFrom);
+  check('a change-log entry records the consent', logged.indexOf('Tax document consent given') >= 0 && logged.indexOf('Tax document delivered') >= 0, logged);
+  // after a reload it is still so
+  fr = await reframe(A);
+  await fr.waitForFunction(() => !!(window.CVPortal.hooks.documentOpened || []).length, null, { timeout: 15000 }).catch(() => {});
+  s = await investorDocs(fr, maria);
+  k = await block(fr);
+  const atText = await longDate(fr, td.td.at.slice(0, 10));
+  check('after a reload the document is still listed and the block says when consent was given', !!dm && s.listed[0] === dm.id && k.text.indexOf(`You consented on ${atText}`) >= 0 && k.buttons.indexOf('Withdraw consent') >= 0, k);
+  // withdraw: the date in writing; the next document waits; the earlier one stays
+  await T.press(fr, '[data-txi=block] [data-action=txi-withdraw]');
+  await fr.waitForTimeout(500);
+  k = await block(fr);
+  const wd = await fr.evaluate((id) => window.CVPortal.state.ws.investors.find((x) => x.id === id).taxDelivery, maria);
+  const wText = await longDate(fr, String(wd.withdrawnAt).slice(0, 10));
+  check('Withdraw consent shows "You withdrew consent on" with the date, and Consent again', k.text.indexOf(`You withdrew consent on ${wText}`) >= 0 && k.buttons.indexOf('Consent again') >= 0, k);
+  check('the withdrawal is confirmed in the portal: withdrawalConfirmed { at, how: portal }', !!wd.withdrawalConfirmed && wd.withdrawalConfirmed.at === wd.withdrawnAt && wd.withdrawalConfirmed.how === 'portal', wd.withdrawalConfirmed);
+  const next = await T.ws(fr, (w, id, NS) => {
+    const o = w.offerings[0];
+    NS.taxdocs.addGenerated(w, { kind: 'k1-1065', year: '2024', offeringId: o.id, investorId: id, id: 'txd-nextone', size: 1, sha256: 'ef'.repeat(32), fileName: 'k1-2024.pdf', title: 'Schedule K-1 (Form 1065) 2024', confirmedBy: 'Check Admin' });
+    return NS.taxdocs.deliver(w, 'txd-nextone', { by: 'Check Admin', how: 'own email' }).tax.state;
+  }, maria);
+  s = await investorDocs(fr, maria);
+  k = await block(fr);
+  check('the next document delivered to them waits while the earlier one stays', next === 'waiting' && !!dm && s.listed.length === 1 && s.listed[0] === dm.id && /waiting for you/.test(k.text), { next, listed: s.listed });
+  // Consent again restores it
+  await T.press(fr, '[data-txi=block] [data-action=txi-review]');
+  await fr.waitForTimeout(400);
+  k = await block(fr);
+  const again = k.disclosure;
+  await T.press(fr, '[data-txi=block] [data-action=txi-consent]');
+  await fr.waitForTimeout(500);
+  s = await investorDocs(fr, maria);
+  const on = await fr.evaluate((id) => window.CVPortal.taxdocs.inEffect(window.CVPortal.state.ws.investors.find((x) => x.id === id)), maria);
+  check('Consent again shows the disclosure once more and restores it: the waiting document is delivered', again && on && s.listed.length === 2 && s.listed.indexOf('txd-nextone') >= 0, { again, on, listed: s.listed });
+  await T.wayOut(check, fr);
+  await T.leak(check, fr);
+  // an investor with nothing waiting: one line with Review and consent
+  const free = others[0];
+  await investorDocs(fr, free);
+  k = await block(fr);
+  check('an investor with nothing waiting sees one line with Review and consent', k.there && /Receive your tax documents here instead of on paper/.test(k.text) && !/waiting/.test(k.text) && k.buttons.length === 1 && k.buttons[0] === 'Review and consent', k);
+  await T.wayOut(check, fr);
+  await T.quiet(check, A, fr);
+  return { A, fr };
+}
+
+/** generated (inside consent-desktop): the generated tax entry for sample firms only; the welcome step's tick box. */
+async function generatedPart(check, fr) {
+  const inv = (await T.sample(fr, { role: 'investor' })).viewer;
+  const ids = async () => {
+    await go(fr, 'documents', '#view');
+    await fr.waitForTimeout(300);
+    return fr.evaluate(() => Array.from(document.querySelectorAll('.tbl-docs [data-action=open-doc]')).map((b) => b.getAttribute('data-id')));
+  };
+  const a = await ids();
+  check('the Kestrel Bay sample: the generated entry of kind tax is in an investor\'s Documents', a.some((id) => /^tax-/.test(id)), { inv, n: a.length });
+  await T.ws(fr, (w) => (w.tenant.sample = false) || true);
+  const b2 = await ids();
+  check('with the firm marked as not a sample it is gone, and the other generated entries are still there', !b2.some((id) => /^tax-/.test(id)) && b2.some((id) => /^(qr|sub|stmt|final)-/.test(id)) && b2.length === a.filter((id) => !/^tax-/.test(id)).length, { before: a.length, after: b2.length });
+  await T.ws(fr, (w) => (w.tenant.sample = true) || true);
+  const src = fs.readFileSync(path.join(Lib.ROOT, 'assets/js/onboarding.js'), 'utf8');
+  // the self-serve welcome step is the one with id="ivf-consent"; the managed edition's step (a C-03 slice) is not changed
+  const tick = (src.slice(src.indexOf('id="ivf-consent"')).match(/check\('edelivery', `([^`]*)`\)/) || [])[1] || '';
+  const managed = (src.match(/check\('edelivery', `([^`]*)`\)/) || [])[1] || '';
+  check('in the self-serve welcome step the general tick box no longer names tax documents', src.indexOf('id="ivf-consent"') > 0 && tick.length > 20 && !/tax documents/i.test(tick) && /statements/.test(tick), tick.slice(0, 120));
+  check('the managed edition\'s sentence is not touched', managed !== tick && /statements, tax documents and notices/.test(managed), managed.slice(0, 80));
+}
+
+/** deliver-desktop's further steps: the unconfirmed, a team member, paper, a notice that came back, withdraw, Form 8805. */
+async function deliverMore(check, S, r) {
+  const { A, fr, fund, b, ids } = r;
+  const maria = fund.ids[0];
+  const robert = fund.ids[7];
+  const priya = ids['Priya Raman'];
+  const lukas = ids['Lukas Dvorak'];
+  let docs = await taxDocs(fr);
+  const unconf = [priya.proposed, lukas.proposed];
+  const seenBy = await fr.evaluate((list) => {
+    const NS = window.CVPortal;
+    const w = NS.state.ws;
+    return list.map((id) => NS.ops.docsFor(w, w.investors.find((i) => i.id === id)).filter((d) => d.tax).length);
+  }, unconf);
+  check('the two packages left unconfirmed were not offered by Deliver and are in no investor\'s list', docs.length === 10 && !docs.some((d) => unconf.indexOf(d.investor) >= 0) && seenBy.every((n) => n === 0), { docs: docs.length, seenBy });
+  // as admin, confirm the number-only package; a team member delivers it and has no Withdraw control
+  await go(fr, `console-taxdocs-batch-${b.id}`, '[data-list="single"]');
+  await T.press(fr, `${rowOf(fr, priya.id)} [data-action=tx-confirm]`);
+  await docsReach(fr, 11);
+  await T.sample(fr, { role: 'team' });
+  await go(fr, `console-taxdocs-batch-${b.id}`, '[data-list="confirmed"]');
+  const teamWithdraw = await fr.locator('[data-action=tx-withdraw]').count();
+  const rows = await deliverAll(fr, b.id);
+  docs = await taxDocs(fr);
+  const dp = docs.find((d) => d.investor === priya.proposed);
+  check('a team member sees Deliver with the one new recipient and delivers it (it waits for consent)', rows.length === 1 && !!dp && dp.state === 'waiting', { rows: rows.length, state: dp && dp.state });
+  check('a team member has no Withdraw control', teamWithdraw === 0 && (await fr.locator('[data-action=tx-withdraw]').count()) === 0, teamWithdraw);
+  await T.sample(fr, { role: 'admin' });
+  // the send-on-paper list: each investor waiting for consent
+  await go(fr, 'console-taxdocs', '#tx-files');
+  let paper = await listRows(fr, 'paper');
+  const waiting = docs.filter((d) => d.state === 'waiting');
+  const names = await fr.evaluate((list) => list.map((id) => window.CVPortal.state.ws.investors.find((i) => i.id === id).title), waiting.map((d) => d.investor));
+  check('the send-on-paper list names each investor waiting for consent', paper.length === waiting.length && waiting.length === 10 && names.every((n) => paper.some((p) => p.text.indexOf(n) >= 0)) && paper.every((p) => /No consent to electronic delivery/.test(p.text)), { paper: paper.length, waiting: waiting.length });
+  const dr = docs.find((d) => d.investor === robert);
+  await fr.fill(`#tx-paper-${dr.id}`, '2027-02-01');
+  await T.press(fr, `[data-list="paper"] .tx-row[data-id="${dr.id}"] [data-action=tx-paper]`);
+  await fr.waitForTimeout(500);
+  paper = await listRows(fr, 'paper');
+  docs = await taxDocs(fr);
+  const dr2 = docs.find((d) => d.investor === robert);
+  check('Mark sent on paper with a date takes that investor off the list', paper.length === 9 && !paper.some((p) => p.id === dr.id) && dr2.state === 'paper' && dr2.paper && dr2.paper.sentOn === '2027-02-01', { paper: paper.length, state: dr2.state });
+  const sr = await investorDocs(fr, robert);
+  check('and that investor still sees nothing of it', sr.listed.length === 0 && !sr.rows.some((x) => /Schedule K-1 \(Form 1065\)/.test(x)), sr.listed);
+  await T.sample(fr, { role: 'admin' });
+  // a notice that came back: on the list with paper due 30 days later
+  const dm = docs.find((d) => d.investor === maria);
+  await go(fr, `console-taxdocs-batch-${b.id}`, '[data-list="confirmed"]');
+  await T.press(fr, `[data-list="confirmed"] .tx-row[data-id="${ids['Maria Lopez'].id}"] [data-action=tx-bounce]`);
+  await fr.waitForTimeout(300);
+  await fr.fill('#tx-bounce-date', '2027-03-20');
+  await T.press(fr, '[data-action=tx-bounce-go]');
+  await fr.waitForTimeout(500);
+  await go(fr, 'console-taxdocs', '#tx-files');
+  const pm = await paperRow(fr, dm.id);
+  const due = await longDate(fr, '2027-04-19');
+  check('Notice came back on 2027-03-20 puts the delivered document on the send-on-paper list with paper due by 2027-04-19', !!pm && pm.text.indexOf(`paper due by ${due}`) >= 0 && /Notice came back/.test(pm.text), pm);
+  // withdraw as admin: a reason is asked for; the document leaves the list; the row keeps "opened once"; logged
+  await go(fr, `console-taxdocs-batch-${b.id}`, '[data-list="confirmed"]');
+  await T.press(fr, `[data-list="confirmed"] .tx-row[data-id="${ids['Maria Lopez'].id}"] [data-action=tx-withdraw]`);
+  await fr.waitForTimeout(300);
+  await T.press(fr, '[data-action=tx-withdraw-go]');
+  await fr.waitForTimeout(400);
+  const asked = await alertLine(fr);
+  docs = await taxDocs(fr);
+  check('Withdraw asks for a reason: without one it is refused with one line and nothing changes', /why/i.test(asked) && docs.find((d) => d.investor === maria).state === 'delivered', asked);
+  if (!(await fr.locator('#tx-why').count())) await T.press(fr, `[data-list="confirmed"] .tx-row[data-id="${ids['Maria Lopez'].id}"] [data-action=tx-withdraw]`);
+  await fr.fill('#tx-why', 'sent before the CPA corrected it');
+  await T.press(fr, '[data-action=tx-withdraw-go]');
+  await fr.waitForTimeout(500);
+  docs = await taxDocs(fr);
+  const dw = docs.find((d) => d.investor === maria);
+  const row = (await listRows(fr, 'confirmed')).find((x) => x.id === ids['Maria Lopez'].id) || { text: '' };
+  check('the document is withdrawn and its row reads Withdrawn and still opened once', dw.state === 'withdrawn' && /Withdrawn/.test(row.text) && /Opened once/.test(row.text) && dw.opens.count === 1, row.text);
+  const wlog = await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((e) => e.action === 'Tax document withdrawn').map((e) => e.detail));
+  check('the change log has the entry with the reason', wlog.length === 1 && /sent before the CPA corrected it/.test(wlog[0]), wlog.length);
+  const sm = await investorDocs(fr, maria);
+  check('it leaves the investor\'s list', sm.listed.length === 0 && !sm.rows.some((x) => /Schedule K-1 \(Form 1065\)/.test(x)), sm.listed);
+  await T.sample(fr, { role: 'admin' });
+  // a Form 8805 import shows its one line about the CPA
+  const f = await textPdf('8805_2025.pdf', [['Form 8805 (invented for the check)', 'Partner: Robert Chen']]);
+  const r8 = await importFiles(fr, { offeringId: fund.offeringId, kind: '8805', files: [f] });
+  const b8 = r8.batches[0] || {};
+  await confirmOnly(fr, b8.id, robert);
+  await go(fr, `console-taxdocs-batch-${b8.id}`, '.tx');
+  const line = await fr.evaluate(() => Array.from(document.querySelectorAll('.tx-note')).map((x) => x.innerText.trim()).filter((t) => /Form 8805/.test(t)));
+  check('a Form 8805 import shows its one line: Ask your CPA whether Form 8805 may be delivered electronically.', line.length === 1 && line[0] === 'Ask your CPA whether Form 8805 may be delivered electronically.', line);
+  await go(fr, 'console-taxdocs', '#tx-files');
+  await T.wayOut(check, fr);
+  await T.leak(check, fr);
+  await T.quiet(check, A, fr);
+}
+
+/** amended: refused until the box is ticked; then the earlier one is Replaced and stays until its access period ends. */
+async function amendedPart(check, S, size) {
+  const { A, fr: fr0 } = await open6(S, size);
+  let fr = fr0;
+  await T.proveRefused(check, A, fr);
+  const { fund, b, ids } = await seat(check, fr);
+  const maria = fund.ids[0];
+  await T.ws(fr, (w, a, NS) => NS.taxdocs.setContact(w, a.c) && NS.taxdocs.consent(w, a.id, { where: 'portal' }) && true, { c: CONTACT6, id: maria });
+  await deliverAll(fr, b.id);
+  let docs = await taxDocs(fr);
+  const first = docs.find((d) => d.investor === maria);
+  await investorDocs(fr, maria);
+  await openDoc(fr, first.id);
+  await T.sample(fr, { role: 'admin' });
+  // a second file for the same fund, kind and year with Maria's K-1, confirmed for her
+  const built = await K.build(BUILT, { name: `amended-${size}.pdf`, partners: [K.PARTNERS[0]] });
+  const r2 = await importFiles(fr, { offeringId: fund.offeringId, files: [{ name: 'k1-2025-amended.pdf', bytes: built.bytes }] });
+  const b2 = r2.batches[0] || {};
+  const one = await confirmOnly(fr, b2.id);
+  check('a second file for the same fund, kind and year is imported and its K-1 confirmed for the investor who has one delivered', !!one && one.investor === maria && b2.packages === 1, one);
+  const p2 = (await fr.evaluate((id) => window.CVPortal.state.ws.taxdocs.batches.find((x) => x.id === id).packages[0].id, b2.id));
+  await deliverAll(fr, b2.id);
+  docs = await taxDocs(fr);
+  const second = docs.find((d) => d.batch === b2.id);
+  const refused = await alertLine(fr);
+  check('Deliver refuses it with one line until the box saying it replaces the earlier one is ticked', second.state === 'confirmed' && /replaces/i.test(refused) && docs.find((d) => d.id === first.id).state === 'delivered', { state: second.state, refused });
+  const tick = await fr.evaluate(() => {
+    const el = document.querySelector('[data-change=tx-replaces]');
+    return el ? el.closest('label').innerText.trim() : '';
+  });
+  const onText = await longDate(fr, first.deliveredAt.slice(0, 10));
+  check('the box says: This replaces the document delivered on <that date>', tick === `This replaces the document delivered on ${onText}`, tick);
+  await fr.locator('[data-change=tx-replaces]').check();
+  await fr.waitForTimeout(400);
+  const rows = await deliverAll(fr, b2.id);
+  docs = await taxDocs(fr);
+  const a1 = docs.find((d) => d.id === first.id);
+  const a2 = docs.find((d) => d.id === second.id);
+  check('ticked, Deliver lists it as replacing that document, and delivers it as the replacement', rows.length === 1 && rows[0].text.indexOf(`replaces the document delivered on ${onText}`) >= 0 && a2.state === 'delivered' && a2.replaces === first.id && a1.state === 'replaced' && a1.replacedBy === second.id, { rows: rows.map((x) => x.text), a1: a1.state, a2: a2.state });
+  await T.press(fr, `[data-list="confirmed"] .tx-row[data-id="${p2}"] [data-action=tx-notice]`);
+  await fr.waitForTimeout(400);
+  const notice = await fr.evaluate(() => (document.querySelector('.tx-notice') || { innerText: '' }).innerText);
+  check('a new notice is shown, saying it replaces the one posted earlier', /IMPORTANT TAX RETURN DOCUMENT AVAILABLE/.test(notice) && /replaces the one posted earlier/.test(notice), notice.slice(0, 160));
+  await go(fr, `console-taxdocs-batch-${b.id}`, '[data-list="confirmed"]');
+  const row1 = (await listRows(fr, 'confirmed')).find((x) => x.id === ids['Maria Lopez'].id) || { text: '' };
+  check('the earlier row reads Replaced and keeps its opens', /Replaced/.test(row1.text) && /Opened once/.test(row1.text), row1.text);
+  // as the investor: both, the earlier one marked Replaced and still opening
+  let s = await investorDocs(fr, maria);
+  check('the investor sees the amended document and the earlier one beside it marked replaced', s.listed.length === 2 && s.rows.filter((x) => /Schedule K-1 \(Form 1065\) 2025/.test(x)).length === 2 && s.rows.some((x) => /\(replaced\)/.test(x)), s.rows);
+  const o1 = await openDoc(fr, first.id);
+  check('the earlier one still opens, its pages drawn, saying it was replaced and until when', o1.pages >= 1 && /Replaced by a later document/.test(o1.head) && /until/.test(o1.head), o1);
+  const o2 = await openDoc(fr, second.id);
+  check('the amended one opens with its pages and its own date', o2.pages >= 1 && /until/.test(o2.head) && !/Replaced/.test(o2.head), o2);
+  await T.wayOut(check, fr);
+  await T.leak(check, fr);
+  await T.quiet(check, A, fr);
+  // once the clock passes the earlier one's available-until date, it is gone; the amended one stays
+  const until = a1.until;
+  const after = await fr.evaluate((d) => {
+    const t = new Date(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10) + 1));
+    return t.toISOString().slice(0, 10);
+  }, until);
+  fr = await A.setClock(after);
+  s = await investorDocs(fr, maria);
+  await fr.waitForTimeout(600);
+  s = await investorDocs(fr, maria);
+  check(`once the clock passes ${until}, the earlier one is gone and the amended one stays`, s.listed.length === 1 && s.listed[0] === second.id && !s.rows.some((x) => /\(replaced\)/.test(x)), { after, listed: s.listed });
+  docs = await taxDocs(fr);
+  check('the earlier one keeps its record of opens', docs.find((d) => d.id === first.id).opens.count >= 1, docs.find((d) => d.id === first.id).opens);
+  await T.wayOut(check, fr);
+  await T.quiet(check, A, fr);
+  return { A };
+}
+
 const parts = {
+  async ['deliver-phone']({ check, S }) {
+    const { A } = await deliverPart(check, S, 'phone');
+    await A.context.close();
+  },
+  async ['deliver-desktop']({ check, S }) {
+    const r = await deliverPart(check, S, 'desktop');
+    await deliverMore(check, S, r);
+    await r.A.context.close();
+  },
+  async ['consent-phone']({ check, S }) {
+    const { A } = await consentPart(check, S, 'phone');
+    await A.context.close();
+  },
+  async ['consent-desktop']({ check, S }) {
+    const { A, fr } = await consentPart(check, S, 'desktop');
+    await generatedPart(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+  async amended({ check, S }) {
+    const { A } = await amendedPart(check, S, 'phone');
+    await A.context.close();
+  },
+  async nocdn({ check, S }) {
+    // the owner's conditions: every connection refused, scripts from the portal's own address only, every file of the
+    // portal served as published (no later file answered 404 by the check)
+    const { A, fr: fr0 } = await open6(S, 'phone', { serveAll: true });
+    let fr = fr0;
+    const cdn = [];
+    const shipped = [];
+    A.context.on('request', (r) => {
+      const u = r.url();
+      if (/^https:\/\/(cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net)\//.test(u)) cdn.push(u);
+      if (u.startsWith(S.origin + '/assets/vendor/')) shipped.push(new URL(u).pathname);
+    });
+    await T.proveRefused(check, A, fr);
+    const { fund, b } = await seat(check, fr);
+    const maria = fund.ids[0];
+    await deliverWaiting(fr, b);
+    await investorDocs(fr, maria);
+    await T.press(fr, '[data-txi=block] [data-action=txi-review]');
+    await fr.waitForTimeout(300);
+    await T.press(fr, '[data-txi=block] [data-action=txi-consent]');
+    await fr.waitForTimeout(500);
+    const docs = await taxDocs(fr);
+    const dm = docs.find((d) => d.investor === maria);
+    const o = dm ? await openDoc(fr, dm.id) : { pages: 0, head: '' };
+    check('the whole path: imported, confirmed, delivered, consented, and the K-1 opened with its pages drawn', !!dm && dm.state === 'delivered' && o.pages >= 1 && /until/.test(o.head), { state: dm && dm.state, pages: o.pages });
+    check('no request to either outside host was attempted', cdn.length === 0 && !A.p10.outside.some((u) => /cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net/.test(u)), cdn.concat(A.p10.outside).slice(0, 5));
+    check('the reader and the writer were loaded from the portal\'s own address', shipped.some((x) => /\/assets\/vendor\/pdfview\//.test(x)) && shipped.some((x) => /\/assets\/vendor\/pdfwrite\//.test(x)), Array.from(new Set(shipped)));
+    const fetched = await fr.evaluate(() => (window.__cspv || []).filter((v) => /^connect-src/.test(v)));
+    check('no fetch was made on the way', fetched.length === 0, fetched);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    fr = null;
+    await A.context.close();
+  },
   async ['import-phone']({ check, S }) {
     const { A, fr } = await importPart(check, S, 'phone', { flatten: true });
     await escaped(check, fr, 'the import\'s page');
