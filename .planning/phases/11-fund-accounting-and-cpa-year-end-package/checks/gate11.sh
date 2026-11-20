@@ -27,6 +27,11 @@
 # GATE11_STANDIN=1, and a stand-in run that passes ends "GATE_EXIT=0 (stand-in)", never the passing line of a real gate.
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 ROOT="$PWD"
+# Resumable steps (.planning/checks/gate-lib.sh): a rerun into the same GATE_OUT keeps every step that passed under
+# exactly the same key (HEAD, the uncommitted changes, the base commit, the command line) and prints its line as
+# "GATE ok   <name> (kept from <time>)"; a step killed part-way, a failed step or a changed tree runs again.
+# GATE_FRESH=1 runs every step. The reference gate keeps its own steps the same way, in the same folder.
+. "$ROOT/.planning/checks/gate-lib.sh" || { echo "GATE FAIL $ROOT/.planning/checks/gate-lib.sh could not be loaded"; echo "GATE_EXIT=1"; exit 1; }
 S=/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad
 P=.planning/phases/11-fund-accounting-and-cpa-year-end-package
 P10=.planning/phases/10-investor-tax-documents-and-withholding
@@ -124,15 +129,22 @@ reference() {
   CDL="cd $(quote "$ROOT") || exit 9" OL="O=$(quote "$G")" awk '/^cd .+ \|\| exit [0-9]+$/ { print ENVIRON["CDL"]; next } /^O=/ { print ENVIRON["OL"]; next } { print }' "$REF" > "$G/reference-run.sh"
   bash "$G/reference-run.sh" > "$G/reference.txt" 2>&1
   # Its GATE lines and its counts, without its own server test count (step 2) and without its GATE_EXIT line.
-  grep -E '^(GATE (ok|FAIL)|NEW FAIL|signing: |record: |# (tests|pass|fail) )' "$G/reference.txt" | grep -vE '^GATE (ok|FAIL) +server tests [0-9]+$'
-  if grep -E '^GATE FAIL' "$G/reference.txt" | grep -qvE '^GATE FAIL +server tests [0-9]+$'; then FAIL=1; fi
+  grep -E '^(GATE (ok|FAIL)|NEW FAIL|signing: |record: |# (tests|pass|fail) )' "$G/reference.txt" | grep -vE '^GATE (ok|FAIL) +server tests [0-9]+( \(kept from [^)]*\))?$'
+  if grep -E '^GATE FAIL' "$G/reference.txt" | grep -qvE '^GATE FAIL +server tests [0-9]+( \(kept from [^)]*\))?$'; then FAIL=1; fi
   grep -qE '^GATE_EXIT=[01]$' "$G/reference.txt" || bad "the reference gate did not run to its end (no GATE_EXIT line; see $G/reference.txt)"
-  grep -E '^GATE ok' "$G/reference.txt" | grep -qvE '^GATE ok +server tests [0-9]+$' || bad "the reference gate passed no step (see $G/reference.txt)"
+  grep -E '^GATE ok' "$G/reference.txt" | grep -qvE '^GATE ok +server tests [0-9]+( \(kept from [^)]*\))?$' || bad "the reference gate passed no step (see $G/reference.txt)"
 }
 
 # ---------- 2. the server test count ----------
 tests_in() { sed -nE 's/^# tests ([0-9]+)$/\1/p' "$1" 2>/dev/null | tail -n 1; }
 marker() { head -n 3 | sed -nE 's#^// gate: tests ([0-9]+)$#\1#p' | head -n 1; }
+# The base tree's own server tests, with server/node_modules linked for the run.
+base_tests() {
+  local BL=0
+  [ -e "$G/base-tree/server/node_modules" ] || { ln -s "$(readlink -f "$ROOT/server/node_modules")" "$G/base-tree/server/node_modules"; BL=1; }
+  npm --prefix "$G/base-tree/server" test
+  [ "$BL" = 1 ] && rm -f "$G/base-tree/server/node_modules"
+}
 count() {
   if [ -n "$COUNTS" ]; then
     set -- $COUNTS
@@ -140,14 +152,13 @@ count() {
   else
     TREE=$(tests_in "$G/server.txt")
     BASEN=
+    BASE=$(cat "$GATE_OUT/base-commit.txt")
+    gate_base_tree "$G/base-tree" "$BASE" > /dev/null
     if [ -d "$G/base-tree/server" ]; then
-      BL=0
-      [ -e "$G/base-tree/server/node_modules" ] || { ln -s "$(readlink -f "$ROOT/server/node_modules")" "$G/base-tree/server/node_modules"; BL=1; }
-      npm --prefix "$G/base-tree/server" test > "$G/server-base.txt" 2>&1
-      [ "$BL" = 1 ] && rm -f "$G/base-tree/server/node_modules"
+      gate_step base-server-tests "$G/server-base.txt" --base "$BASE" -- base_tests
+      gate_end "[ -n \"\$(tests_in '$G/server-base.txt')\" ]"
       BASEN=$(tests_in "$G/server-base.txt")
     fi
-    BASE=$(cat "$GATE_OUT/base-commit.txt")
     DELTA=0
     while IFS= read -r f; do
       [ -n "$f" ] || continue
@@ -163,6 +174,7 @@ count() {
 # ---------- 3 and 4. the phase 10 and phase 11 checks ----------
 run_checks() { # folder, prefix of the output files; sets RAN
   GN=$(npm root -g 2>/dev/null)
+  BASEC=$(cat "$GATE_OUT/base-commit.txt")
   RAN=0
   for f in "$1"/*.js; do
     [ -e "$f" ] || continue
@@ -177,18 +189,16 @@ run_checks() { # folder, prefix of the output files; sets RAN
     RAN=$((RAN + 1))
     OUTF="$G/$2$NAME.txt"
     if [ "$KIND" = browser ]; then
-      env -u P10_ROOT NODE_PATH="$GN" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" bash "$S/exec-011/heavy.sh" node "$f" > "$OUTF" 2>&1
+      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT NODE_PATH="$GN" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" bash "$S/exec-011/heavy.sh" node "$f"
     else
-      env -u P10_ROOT P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" node "$f" > "$OUTF" 2>&1
+      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" node "$f"
     fi
     GOT=$(tail -n 1 "$OUTF")
-    if [ "$GOT" = "$LAST" ]; then
-      ok "${LAST%%:*}"
-    else
-      bad "${LAST%%:*}"
+    if ! gate_ok "${LAST%%:*}" "test $(quote "$GOT") = $(quote "$LAST")"; then
       echo "  $NAME.js: the last line should be: $LAST"
       echo "  $NAME.js: the last line was:       $GOT"
     fi
+    gate_end
   done
 }
 checks10() {
@@ -209,8 +219,8 @@ GATE_OUT=$(cd "$GATE_OUT" && pwd)
 G="$GATE_OUT/gate"
 [ -s "$GATE_OUT/base-commit.txt" ] || { bad "no base commit: $GATE_OUT/base-commit.txt is missing or empty; nothing was run"; finish; }
 cp "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"
-# A base tree left by an earlier run may belong to another base commit.
-rm -rf "$G/base-tree" "$G/shots"
+# A base tree left by an earlier run is reused only while its stamp names this base commit (gate_base_tree).
+gate_init "$G" || { bad "GATE_OUT/gate/.gate-steps cannot be created"; finish; }
 if [ "$STANDIN" = 0 ] && [ ! -e server/node_modules ]; then
   ln -s /home/user/Hhhh/server/node_modules server/node_modules
   LINKED=1
