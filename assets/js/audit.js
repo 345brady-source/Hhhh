@@ -78,13 +78,24 @@
     }
     return null;
   }
+  /**
+   * A sample firm's own fund (its offering is one of tenants.js's seeds): only these keep the generated valuations and
+   * the profiles' default terms. Every other fund's income and gains come from its journal, and a fee, carried interest
+   * or preferred return the sponsor has not set is not charged.
+   */
+  function generated(o) {
+    return !!(o && seedConfig(o));
+  }
   function settings(o) {
     const type = NS.OFFERING_TYPES[o.type] || NS.OFFERING_TYPES.Other;
     const key = PROFILES[type.profile] ? type.profile : 'other';
     const P = PROFILES[key];
     const a = o.accounting || {};
-    const cfg = seedConfig(o) || {};
+    const seed = seedConfig(o);
+    const cfg = seed || {};
     const num = (v, d) => (v === '' || v == null || isNaN(Number(v)) ? d : Number(v) / 100);
+    // An unset term is no term, except for a sample firm's own fund.
+    const dflt = (v) => (seed ? v : 0);
     let yld = P.yield;
     if (cfg.seed && cfg.seed.rate) yld = cfg.seed.rate;
     else {
@@ -96,10 +107,10 @@
       label: P.label,
       structure: P.structure,
       open: P.structure === 'open',
-      mgmtFee: num(a.mgmtFee, P.mgmtFee),
+      mgmtFee: num(a.mgmtFee, dflt(P.mgmtFee)),
       feeBasis: FEE_BASIS[a.feeBasis] ? a.feeBasis : P.feeBasis,
-      carry: num(a.carry, P.carry),
-      pref: num(a.pref, P.pref),
+      carry: num(a.carry, dflt(P.carry)),
+      pref: num(a.pref, dflt(P.pref)),
       mu: P.mu,
       vol: P.vol,
       marks: P.marks,
@@ -167,7 +178,10 @@
   }
 
   function ledger(ws, o) {
-    const ckey = ws.tenant.id + ':' + o.id;
+    // A fund that is not a sample fund reads its journal, which only grows (a reversal is a new entry): its length is in
+    // the key, so an entry posted after the engine was read is seen without clearing the caches.
+    const fb = ws.books && ws.books.funds && ws.books.funds[o.id];
+    const ckey = ws.tenant.id + ':' + o.id + (generated(o) ? '' : ':' + ((fb && fb.journal) || []).length);
     if (cache.has(ckey)) return cache.get(ckey);
     const S = settings(o);
     const now = D.today();
@@ -221,10 +235,36 @@
     const endKey = exitKey && exitKey < lastDone ? exitKey : lastDone;
     for (let k = keyOf(L.inception); k <= endKey; k = nextKey(k)) L.keys.push(k);
 
-    // Valuation returns: quarterly marks for private funds, monthly NAV for open-ended funds.
+    // Valuation returns: quarterly marks for private funds, monthly NAV for open-ended funds. A fund that is not a sample
+    // fund takes each month's amounts from its journal instead (whole cents, no rate): income is minus the month's lines
+    // on income accounts and on expense accounts other than the management fee (5000, which this engine works out), gain
+    // minus its lines on gain accounts; the first month also takes everything dated before it. Zero with no books.
+    const gen = generated(o);
     const R = rng(hashStr(o.id + ':returns'));
     const ret = {};
-    L.keys.forEach((k) => {
+    if (!gen) {
+      const B = NS.books;
+      const f = ws.books && ws.books.funds && ws.books.funds[o.id];
+      const zero = () => L.keys.map(() => 0);
+      let incM = zero();
+      let gainM = zero();
+      if (B && f && Array.isArray(f.journal) && f.journal.length) {
+        const accts = B.accounts(ws, o.id);
+        const incCodes = accts.filter((a) => a.type === 'income' || (a.type === 'expense' && a.code !== '5000')).map((a) => a.code);
+        const gainCodes = accts.filter((a) => a.type === 'gain').map((a) => a.code);
+        const from = L.keys[0] + '-01';
+        const to = endOf(L.keys[L.keys.length - 1]);
+        const prior = endOf(prevKey(L.keys[0]));
+        const read = (codes) => {
+          const s = B.series(ws, o.id, codes, from, to).map((x) => 0 - x.cents);
+          s[0] -= B.balance(ws, o.id, codes, prior);
+          return s;
+        };
+        incM = read(incCodes);
+        gainM = read(gainCodes);
+      }
+      L.keys.forEach((k, i) => (ret[k] = { income: 0, gain: 0, sleeves: null, incomeCents: incM[i], gainCents: gainM[i] }));
+    } else L.keys.forEach((k) => {
       const m = Number(k.slice(5, 7));
       const income = S.yield / 12;
       let gain = 0;
@@ -302,9 +342,12 @@
     }
     const RS = rng(hashStr(o.id + ':sidepocket'));
     const spRet = {};
-    L.keys.forEach((k) => (spRet[k] = SPc && k > spKey && Number(k.slice(5, 7)) % 3 === 0 ? (Number(SPc.mu) || 0.1) / 4 + (Number(SPc.vol) || 0.06) * Math.sqrt(3) * gauss(RS) : 0));
+    // (A fund that is not a sample fund has no generated side-pocket return: its gains are the journal's, allocated above.)
+    L.keys.forEach((k) => (spRet[k] = gen && SPc && k > spKey && Number(k.slice(5, 7)) % 3 === 0 ? (Number(SPc.mu) || 0.1) / 4 + (Number(SPc.vol) || 0.06) * Math.sqrt(3) * gauss(RS) : 0));
     L.sidePocket = SPc ? { cfg: SPc, key: spKey, frac: spFrac } : null;
 
+    // Journal amounts of a month in which no investor has capital wait for the next month with capital.
+    const held = { income: 0, gain: 0 };
     L.keys.forEach((k, idx) => {
       const mNum = Number(k.slice(5, 7));
       const end = endOf(k);
@@ -314,8 +357,18 @@
       const exitNow = exitKey === k;
       const bases = invs.map((i) => st[i.id].cap + (cBy[i.id + '|' + k] || 0));
       const baseSum = bases.reduce((a, b) => a + b, 0);
-      const incs = largest(Math.round(r.income * baseSum), bases);
-      const gains = largest(Math.round(r.gain * baseSum), bases);
+      let incs;
+      let gains;
+      if (gen) {
+        incs = largest(Math.round(r.income * baseSum), bases);
+        gains = largest(Math.round(r.gain * baseSum), bases);
+      } else {
+        held.income += r.incomeCents;
+        held.gain += r.gainCents;
+        incs = largest(baseSum > 0 ? held.income : 0, bases);
+        gains = largest(baseSum > 0 ? held.gain : 0, bases);
+        if (baseSum > 0) held.income = held.gain = 0;
+      }
       const rows = {};
       const F = { key: k, end, begin: 0, contrib: 0, dist: 0, income: 0, gain: 0, fee: 0, carry: 0, gpOut: 0, endCap: 0, gpBegin: 0, gpEnd: 0, sp: 0, r };
       invs.forEach((i, n) => {
@@ -1476,6 +1529,7 @@
     PROFILES,
     FEE_BASIS,
     settings,
+    generated,
     ledger,
     period,
     presets,
