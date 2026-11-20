@@ -90,3 +90,31 @@ FAIL consolidated Summary (USD) total ending capital = kb-fund-ii + kb-note-24a 
 FAIL consolidated the PDF holds the USD total $473,742.73 and the EUR total €102,092.95 :: ["$473,742.73","Summary (USD)"]
 REPORTS STARTERS: FAIL (cases run: 2) - words, consolidated
 ```
+
+### red-3 (Task 3: cases speed, selfcheck of REPORTS STARTERS and types, inject, selfcheck of REPORTS XLSX)
+
+Not a true RED, stated plainly: on their first run all five new cases passed (`speed: 14 reports, 2321 ms, 166 ms per
+report`; REPORTS STARTERS: PASS (cases run: 2); REPORTS XLSX: PASS (cases run: 3)). They test behaviour that wave 1 (the
+workbook writer and `NS.reports.sheets`) and Tasks 1-2 had already built, so Task 3 had nothing left to build. Instead,
+red-3.txt holds the same cases run against four temporary mutations, reverted with `git checkout` (status empty after):
+a label starting with `=` written as a formula (filesout.js), a `docProps/app.xml` part naming an application
+(filesout.js), money rounded to whole dollars in `sheets()` (reports.js), and the q-pe starter missing. FAIL lines and
+last lines, cut at 260 characters:
+
+```
+FAIL speed ran to the end :: Error: No such starter
+REPORTS STARTERS: FAIL (cases run: 2) - speed
+FAIL types st-capital: no document-properties part naming an application :: ["[Content_Types].xml","_rels/.rels","xl/workbook.xml","xl/_rels/workbook.xml.rels","xl/styles.xml","docProps/app.xml",...
+FAIL types dn-notice: no document-properties part naming an application :: [...,"docProps/app.xml",...
+FAIL types q-realestate: every money cell (45) is a number equal to the model's cents / 100 in #,##0.00;(#,##0.00); every percent cell (3) is the model's fraction :: [{"sheet":"Your capital account","ref":"B2","want":107525.65,"got":{"v":107526,"t":"n",...
+FAIL types q-realestate: no document-properties part naming an application :: [...
+FAIL types a-review: every money cell (94) is a number equal to the model's cents / 100 in #,##0.00;(#,##0.00); every percent cell (11) is the model's fraction :: [{"sheet":"Your capital account","ref":"B2","want":343419.96,"got":{"v":343420,"t":"n",...
+FAIL types a-review: no document-properties part naming an application :: [...
+FAIL types p-summary: no document-properties part naming an application :: [...
+FAIL types t-season: no document-properties part naming an application :: [...
+FAIL inject the label "=HYPERLINK(\"http://x\",\"y\")" is a text cell equal to the typed text :: {"v":"=HYPERLINK(\"http://x\",\"y\")","t":"f","fmt":"General","f":true,"b":false}
+FAIL inject raw formulas stay 0 :: 1
+REPORTS XLSX: FAIL (cases run: 3) - types, inject
+```
+The whole-dollar mutation does not show on the fund A workbooks because fund A's figures are whole dollars; it shows on
+Ashwell Ridge and Kestrel Bay. The selfcheck cases test the shared runner and pass with or without any mutation.
