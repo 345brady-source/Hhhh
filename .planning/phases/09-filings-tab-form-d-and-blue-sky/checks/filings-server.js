@@ -233,7 +233,7 @@ async function signOff(F, offeringId, firstSale) {
         s.signatureTitle = signer.title;
       });
       const errors = NS.formD.validate(d, { today: pinned, submission: true }).filter((m) => m.level === 'error').map((m) => m.message);
-      NS.filings.setEdgar(ws, oid, { cik, name: d.primaryIssuer.entityName });
+      NS.filings.setEdgar(ws, oid, { cik });
       const order = NS.filings.addOrder(ws, { kind: 'formd', offeringId: oid, by: NS.app.actor() });
       const r = NS.filings.rec(ws, oid);
       const entryId = `fd-check-${r.formD.length + 1}`;
@@ -345,8 +345,10 @@ async function sendPhone({ check, S }) {
     check('the TEST file staff download validates against the SEC schema (xmllint)', file.status === 200 && v.ok, { status: file.status, xmllint: v.out });
     check('the TEST file holds the CCC under the issuer\'s CIK', new RegExp(`<cik>${CIK}</cik>\\s*<ccc>[^<]{8}</ccc>`).test(file.text) && (await holdsCcc(file.text)));
     const contact = [k.ENV.FILINGS_CONTACT_NAME, k.ENV.FILINGS_CONTACT_EMAIL].every((x) => file.text.indexOf(x) >= 0);
-    const answers = ['<entityName>Masked Entity 01</entityName>', `<value>${p.seeded.sales[0].date}</value>`, `<nameOfSigner>${SIGNER.name}</nameOfSigner>`, '<testOrLive>TEST</testOrLive>', `<issuerName>${EDGAR_NAME}</issuerName>`].every((x) => file.text.indexOf(x) >= 0);
-    check('the TEST file holds the filer contact the server added and the sponsor\'s answers (issuer, first sale, signer, EDGAR\'s name)', contact && answers, { contact, answers });
+    // What is missing is named by the expectation, never by the file's text.
+    const phone = (/<issuerPhoneNumber>([^<]+)<\/issuerPhoneNumber>/.exec(fs.readFileSync(NOTICE, 'utf8')) || [])[1];
+    const missing = [`<cik>${CIK}</cik>`, `<issuerPhoneNumber>${phone}</issuerPhoneNumber>`, `<value>${p.seeded.sales[0].date}</value>`, `<nameOfSigner>${SIGNER.name}</nameOfSigner>`, '<testOrLive>TEST</testOrLive>', `<issuerName>${EDGAR_NAME}</issuerName>`].filter((x) => file.text.indexOf(x) < 0);
+    check('the TEST file holds the filer contact the server added and the sponsor\'s answers (issuer, first sale, signer, EDGAR\'s name)', contact && !missing.length, { contact, missing });
 
     const out = fid ? await srv.staff('POST', `/v1/filings/staff/orders/${fid}/outcome`, { step: 'test', result: 'accepted' }) : { status: 0 };
     check('staff record the test as accepted', out.status === 200 && out.body.formD.status === 'test_passed', out.status);
