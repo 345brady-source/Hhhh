@@ -837,17 +837,27 @@
   function companyName(ws, o) {
     return (o.achOverride && o.achOverride.companyName) || ws.tenant.ach.companyName || ws.tenant.shortName;
   }
+  /** What was paid on a distribution line: net of tax withheld (gross when no net amount is stored). */
+  const paidOf = (r) => (Number.isSafeInteger(r.netCents) ? r.netCents : r.cents);
   function runEvidence(ws, o, run) {
     const rows = NS.data.runRows(ws, run).filter((r) => r.cents > 0);
     const ach = rows.filter((r) => r.investor.payment && r.investor.payment.method === 'ach' && r.investor.payment.bank);
     const chk = rows.filter((r) => ach.indexOf(r) < 0);
-    const slug = String(companyName(ws, o)).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
-    const file = run.source === 'console' ? run.file || '' : `${slug}_${run.date.replace(/-/g, '')}_A.ach`;
-    const odfi8 = String(ws.tenant.ach.odfiRouting || '00000000').slice(0, 8);
     const traces = {};
-    ach.forEach((r, n) => (traces[r.investor.id] = odfi8 + String(n + 1).padStart(7, '0')));
     const checks = {};
-    chk.forEach((r) => (checks[r.investor.id] = String(10000 + (hashStr(run.id + r.investor.id) % 89999))));
+    let file;
+    if (generated(o)) {
+      const slug = String(companyName(ws, o)).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+      file = run.source === 'console' ? run.file || '' : `${slug}_${run.date.replace(/-/g, '')}_A.ach`;
+      const odfi8 = String(ws.tenant.ach.odfiRouting || '00000000').slice(0, 8);
+      ach.forEach((r, n) => (traces[r.investor.id] = odfi8 + String(n + 1).padStart(7, '0')));
+      chk.forEach((r) => (checks[r.investor.id] = String(10000 + (hashStr(run.id + r.investor.id) % 89999))));
+    } else {
+      // A fund that is not a sample fund: only what was recorded. The file is the one the portal made for the run, if
+      // any; no file name, trace number or check number is made up.
+      file = run.file || '';
+    }
+    // What the bank paid: net of tax withheld (gross for a run with no stored lines, as runRows gives).
     return {
       rows,
       ach,
@@ -855,8 +865,8 @@
       file,
       traces,
       checks,
-      achCents: ach.reduce((a, r) => a + r.cents, 0),
-      chkCents: chk.reduce((a, r) => a + r.cents, 0),
+      achCents: ach.reduce((a, r) => a + paidOf(r), 0),
+      chkCents: chk.reduce((a, r) => a + paidOf(r), 0),
       allocated: rows.reduce((a, r) => a + r.cents, 0),
       missingFile: ach.length > 0 && !file
     };
@@ -1177,6 +1187,35 @@
     const soi = H.rows.reduce((a, r) => a + (r.fv > 0 ? r.fv : 0), 0) === H.longFV && H.cash >= 0;
     add('soi', 'Schedule of investments agrees to the balance sheet', soi, H.rows.length ? `${H.rows.length} positions, ${money(H.longFV)} at fair value${H.shortFV ? `, ${money(H.shortFV)} sold short` : ''}; cash ${money(H.cash)}.` : 'No investments held at period end.', soi ? [] : ['Schedule of investments does not agree, or cash is negative']);
 
+    // A fund that is not a sample fund: its statements show only what is recorded, so each missing input is named.
+    if (!generated(o)) {
+      const fb = booksOf(ws, o) || {};
+      const bank = fb.bank || {};
+      const accts = (Array.isArray(bank.accounts) ? bank.accounts : []).filter((a) => a && a.id);
+      const recs = Array.isArray(bank.recs) ? bank.recs : [];
+      const items = [];
+      if (extra && extra.syncError) items.push(`The books could not be brought up to date (${String(extra.syncError).replace(/\.$/, '')}).`);
+      if (!accts.length) items.push('No bank account added.');
+      accts.forEach((a) => {
+        if (!recs.some((r) => r && r.account === a.id && typeof r.asOf === 'string' && r.asOf >= P.to)) items.push(`${a.name}${a.last4 ? ` ending ${a.last4}` : ''}: not reconciled through ${dateLong(P.to)}.`);
+      });
+      const undecided = (Array.isArray(bank.lines) ? bank.lines : []).filter((l) => l && !l.match && !l.entry && typeof l.date === 'string' && l.date <= P.to).length;
+      if (undecided) items.push(`${undecided} bank lines not yet decided.`);
+      if (NS.books)
+        ((Array.isArray(fb.holdings) && fb.holdings) || []).forEach((h) => {
+          if (!h || !h.id || !NS.books.balance(ws, o.id, '1100', P.to, { holding: h.id })) return;
+          if (!valuesOf(ws, o, h.id, P.from, P.to).length) items.push(`${h.name || h.id}: no value in this period; shown at cost.`);
+        });
+      const terms = o.accounting || {};
+      if (terms.mgmtFee === '' || terms.mgmtFee == null) items.push('Management fee terms not set.');
+      const ex = (Array.isArray(fb.exceptions) ? fb.exceptions : []).filter(Boolean);
+      const closedChanges = ex.filter((x) => x.kind === 'closed').length;
+      if (closedChanges) items.push(`${closedChanges} changes to records inside a closed period are not applied.`);
+      const unposted = ex.filter((x) => x.kind === 'amount' || x.kind === 'mismatch' || x.kind === 'overpaid').length;
+      if (unposted) items.push(`${unposted} records could not be posted to the books as recorded.`);
+      add('books', 'Books recorded for the period', !items.length, items.length ? 'The statements show only what is recorded; each line names an input that is missing.' : `Every bank account is reconciled through ${dateLong(P.to)}, every bank line is decided, each investment has a value in the period and the fee terms are set.`, items);
+    }
+
     const ownSum = P.inv.reduce((a, x) => a + x.own, 0);
     add('own', 'Ownership totals 100%', f.end <= 0 || Math.abs(ownSum - 1) < 1e-9, f.end > 0 ? `Ending capital percentages total ${(ownSum * 100).toFixed(4)}%.` : 'No capital outstanding at period end.', [], f.end <= 0);
 
@@ -1426,6 +1465,12 @@
     const evid = {};
     P.L.dists.filter((d) => d.date >= P.from && d.date <= P.to).forEach((d) => {
       const E = (evid[d.run.id] = evid[d.run.id] || runEvidence(ws, o, d.run));
+      if (!generated(o)) {
+        // Only what was recorded: the run's file for an ACH payment (or 'No file'), 'Check' for a check, no number.
+        const viaAch = E.ach.some((r) => r.investor.id === d.inv.id);
+        act.push([d.date, d.inv.id, d.inv.title, `Distribution: ${d.run.type}`, 0, -d.cents, d.run.id, viaAch ? 'ACH' : 'Check', viaAch ? E.file || 'No file' : 'Check']);
+        return;
+      }
       const ach = E.traces[d.inv.id];
       act.push([d.date, d.inv.id, d.inv.title, `Distribution: ${d.run.type}`, 0, -d.cents, d.run.id, ach ? 'ACH' : 'Check', ach ? `${E.file || 'No file'} · trace ${ach}` : `Check ${E.checks[d.inv.id] || ''}`]);
     });
