@@ -81,9 +81,17 @@ function instrument() {
     done: 0,
     need: 0,
     errors: [],
+    calls: 0,
+    only: 0,
     release() {
       sim.on = false;
-      held.splice(0).forEach((f) => f());
+      held.splice(0).forEach((x) => x.go());
+    },
+    // Let every image but the k-th go (and hold only that one from now on): the press then lasts as long as a tap.
+    prime(k) {
+      sim.only = k;
+      held.splice(0).forEach((x) => (x.n === k ? held.push(x) : x.go()));
+      sim.held = held.length;
     }
   });
   window.addEventListener('unhandledrejection', (e) => sim.errors.push(String(e.reason && (e.reason.name + ': ' + e.reason.message))));
@@ -102,9 +110,10 @@ function instrument() {
           }
         ].concat(rest)
       );
-    if (!sim.on) return go();
+    const n = ++sim.calls;
+    if (!sim.on || (sim.only && n !== sim.only)) return go();
     sim.held++;
-    held.push(go);
+    held.push({ n, go });
   };
   const rec = (window.__press = { down: null, label: '', upConnected: null, clickConnected: null, clickOnIt: null, clicks: 0 });
   window.addEventListener(
@@ -245,7 +254,12 @@ async function toTaxForm(check, A, fr, dev, portal, name, cdp) {
   check(`${name}: the W-9 is still drawing ("Loading document...") with Finish on screen`, loading.placeholder && loading.images === 0 && loading.pages > 0, loading);
   return loading.placeholder ? inv : null;
 }
-/** Let the held images go and wait until the drawing has ended and asked for its redraw. */
+/** Every page image but the last drawn, before the press (the last one is let go during it). */
+async function allButLast(fr) {
+  await fr.evaluate(() => window.__slow.prime(window.__slow.need));
+  return fr.waitForFunction(() => window.__slow.done >= window.__slow.need - 1, null, { timeout: 120000 }).then(() => true, () => false);
+}
+/** Let the held image go and wait until the drawing has ended and asked for its redraw. */
 async function releaseAndAsk(fr, before) {
   await fr.evaluate(() => window.__slow.release());
   const drawn = await fr.waitForFunction(() => window.__slow.need > 0 && window.__slow.done >= window.__slow.need, null, { timeout: 120000 }).then(() => true, () => false);
@@ -266,12 +280,15 @@ function pressTax(dev) {
     // 1. One press on Finish while the redraw arrives.
     const inv = await toTaxForm(check, A, fr, dev, portal, dev === IPHONE ? 'Rosalind Achterberg' : 'Casimir Oyelaran', cdp);
     if (!inv) return A.context.close();
+    const ready = await allButLast(fr);
     const asks = await countAsks(fr);
     const p = await centre(fr, '.ivf-tax-sign .es-finish');
+    const t0 = Date.now();
     await down(A, cdp, dev, p);
     const r1 = await releaseAndAsk(fr, asks);
     const during = await fr.evaluate(() => ({ loading: !!document.querySelector('.ivf-tax-sign .es-loading') }));
     await up(A, cdp, dev);
+    console.log(`NOTE ${tag}: Finish held down for ${Date.now() - t0} ms (all pages but the last drawn before: ${ready})`);
     const moved = await fr
       .waitForFunction(() => {
         const h = document.querySelector('.ivf-form h1');
@@ -290,6 +307,7 @@ function pressTax(dev) {
     // 2. A press on Finish that does not become a click, while the redraw is asked for: the pages are drawn soon after.
     const inv2 = await toTaxForm(check, A, fr, dev, portal, dev === IPHONE ? 'Benedikt Szalai' : 'Ottilie Brannagh', cdp);
     if (inv2) {
+      await allButLast(fr);
       const asks2 = await countAsks(fr);
       const p2 = await centre(fr, '.ivf-tax-sign .es-finish');
       await down(A, cdp, dev, p2);
