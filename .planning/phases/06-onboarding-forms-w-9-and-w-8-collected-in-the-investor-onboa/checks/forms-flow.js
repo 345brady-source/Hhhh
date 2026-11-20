@@ -854,6 +854,7 @@ async function flowTaxEnv(page, invId) {
         // plan 06-34: the finished copy is read from its envelope (a form finished without a signature is not listed in
         // Documents any more; a signed form's listing shares this same file)
         finished: await b64(env && env.signedDocId ? await NS.ops.files.get(env.signedDocId) : doc ? await NS.ops.files.get(doc.id) : null),
+        debug: env ? { status: env.status, signedDocId: env.signedDocId || '', voidReason: env.voidReason || '', fl: fl.taxEnvelopeId || '' } : { none: id },
         taxForm: i.taxForm || '',
         taxCert: JSON.parse(JSON.stringify(i.taxCert || null)),
         blank: NS.taxmaps['W-9 2024-03'].file,
@@ -1088,7 +1089,7 @@ async function backupCase({ check, S }) {
     fs.writeFileSync(finFile, Buffer.from(after.finished, 'base64'));
     const finInk = st.lines.map((s) => inkBetween(blankFile, finFile, band(s), DPI));
     check('the stored finished form keeps the cross-out', st.lines.every((s, n) => finInk[n] > 0.25 * lenPx(s)), finInk);
-  } else check('the stored finished form keeps the cross-out', false, 'no stored form');
+  } else check('the stored finished form keeps the cross-out', false, { stored: 'none', envId: after.envId, docId: after.docId, taxCert: after.taxCert, debug: after.debug });
   check('no script error in the browser', A.errors.length === 0, A.errors);
   check('no request left the check server', A.net.external.length === 0, A.net.external);
   await A.context.close();
