@@ -44,4 +44,41 @@ FAIL hint-desktop the firm’s countersign view: Finish presses :: locator.click
 sign-touch-phone and blanks-phone PASS on the base. bar-desktop PASS (it recorded `bar-desktop-base.json` on the base in the
 first debugging run).
 
+## What the walkthrough measured, and what a finger hits (N3 and the signing-view half of failures 9 and 11)
+
+Both parts passed on the base, so nothing was changed for them (signflow.js is not in any commit).
+
+- **N3, the signature fields (sign-touch-phone, 390x844, touch).** The walkthrough's 146x12 px is the button's drawn box.
+  Around every signer field lies a touch layer of max(44 px, the field's height). The browser's hit test at the middle and
+  20 px above and below, then a finger's tap 20 px off the middle that opened the signature dialog (the signature was adopted
+  and filled the field):
+
+  | Signing view | Drawn box | Touch layer | Tap that opened the dialog |
+  |---|---|---|---|
+  | W-9 (U.S. individual) | 146x11.6 px | 146x44 px | 20 px below the middle |
+  | W-8BEN (foreign individual) | 179x6.8 px | 179x44 px | 20 px below |
+  | W-8BEN-E (foreign entity) | 126x13.6 px | 126x44 px | 20 px below |
+  | Investor's agreement | 130x20.3 px | 130x44 px | 20 px above (the Name line is nearer the point 20 px below, and a tap there is the Name line's) |
+  | Firm's countersign view | 133x20.8 px | 133x44 px | 20 px above (the same: the firm's name line lies just below) |
+
+  The envelope's field rectangles and the page's boxes were the same before and after on every view: nothing printed changed.
+- **Failures 9 and 11 on the signing views (blanks-phone).** The 4.7 to 6.3 px the walkthrough counted are the page's drawn
+  blanks (7 px here). On the phone they are read-only with no keyboard of their own; a tap moves the typing into the tray
+  above the keyboard, at 16 px. On the agreement all 5 of the investor's blanks: tapped, each opened in the tray at 16 px with
+  its own label ("Commitment amount (optional)", "Investor name", "Mailing address", "Name", "Title"), what was typed there
+  filled the blank, every touch layer 44 px tall; 3 were also tapped 18 px off the middle (into the tray as well), 2 lie
+  closer than 18 px to another field on both sides and were tapped on themselves only. **The W-9 has no blank the investor
+  types:** all its text fields are filled in for the investor from the answers and locked (0 unlocked blanks), so the small
+  text the walkthrough measured on the W-9 is printed values, not places to type.
+
+## Decisions
+
+- Failure 13, as planned: at 640 px and under the bar stands in the page's flow at the top (above the portal's own header)
+  and scrolls away; its three controls wrap onto three rows on the console (sponsor picker; "Signed in as"; New sign-up),
+  every word of each select's choice visible. 641 px and over keep the floating bar exactly as it was (bar-desktop: the
+  same box and bottom padding as the base on four screens).
+- Failure 14's rest: the hint wraps at every size; on the desktop the bar grows by one line where the sentence needs it
+  ("Nothing is required. Start goes to each / empty field.").
+- N3 and failures 9/11 on the signing views: no product change (both proved on the base).
+
 <!-- gsd:write-continue -->
