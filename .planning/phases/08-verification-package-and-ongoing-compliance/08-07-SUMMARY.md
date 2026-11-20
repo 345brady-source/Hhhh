@@ -59,7 +59,11 @@ PASS leak the typed taxpayer number is in no server output (event log, anything 
 PASS leak the typed taxpayer number is in no file this part writes
 ```
 As the plan says for this case, the leak part carries the planted-price proof first and is shown failing on a planted copy (PACKAGE_FLOW_PLANT=price adds "Your verification package ($19) is paid." to one investor screen; GATE_FRESH=1 so no kept result is reused), $O/red3.txt:
-(RED3 lines pasted here when the run ends)
+```
+FAIL leak investor screens: none of $19, $99, 1900, 9900, tier, entitlement :: ["Your verification package ($19) is paid."]
+PACKAGE FLOW: FAIL (parts run: 1) - leak
+```
+(every other check line of that run passed: the scan fails on the planted price and on nothing else). No code was needed for Task 3: the package adds no step and no field (D-30), and the phone and preview parts pass on Task 2's code.
 
 ## Deviations from plan
 
