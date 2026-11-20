@@ -350,7 +350,7 @@ async function coSigns(S, F, dev, link, opts) {
   };
   await p.goto(link);
   await p.waitForSelector('.ivf-form h1, .ivf-msg h1', { timeout: 30000 });
-  R.welcome = { h1: await p.locator('.ivf-form h1, .ivf-msg h1').first().innerText(), text: await L.screenText(p), consent: await p.locator('#ob-esignConsent').count() };
+  R.welcome = { h1: await p.locator('.ivf-form h1, .ivf-msg h1').first().innerText(), text: await L.screenText(p), consent: await p.locator('#ob-esignConsent').count(), back: await p.locator('[data-action=ivf-leave]').count() };
   R.texts.push(R.welcome.text);
   await p.screenshot({ path: path.join(OUT, `${tag}-co-welcome.png`), fullPage: true });
   if (!R.welcome.consent) return R;
@@ -519,6 +519,7 @@ async function receivedChecks(check, F, st, R) {
 function deviceChecks(check, F, st, R, dev) {
   const w = R.welcome || {};
   check('the co-investor’s link opens a welcome to the co-investor with the consent to electronic records and signatures', /^Welcome, /.test(w.h1 || '') && (w.h1 || '').indexOf(F.coFirst) >= 0 && w.consent === 1 && /Consent to electronic records and signatures/.test(w.text || '') && (w.text || '').indexOf(`sign the subscription agreement for ${F.who.title} as co-investor`) >= 0, { h1: w.h1, consent: w.consent, text: (w.text || '').slice(0, 400) });
+  check('the welcome offers no way into a portal (the co-investor has none: this device holds only the agreement)', w.back === 0, { back: w.back });
   const a = R.agreement || {};
   const coIds = (st.env && st.env.coFields.map((f) => f.id)) || [];
   check('the agreement opens signed in as the co-investor, the consent recorded on the co-investor’s signer and not asked twice', a.h1 === 'Subscription agreement' && a.role === 'investor' && a.co === true && !!a.env && !!a.env.coConsent && !R.askedTwice, { h1: a.h1, role: a.role, co: a.co, consent: a.env && a.env.coConsent, twice: !!R.askedTwice });

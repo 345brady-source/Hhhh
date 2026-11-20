@@ -3462,7 +3462,7 @@
       // A tax-form request (plan 06-26) is opened from the portal and starts on its tax step (or Welcome): Back on that first
       // step returns to the portal, so the pre-filled form can be left without finishing it (the page has no menu). The same
       // for an investor on file's invitation to subscribe (plan 06-29): its Welcome returns to the portal that offers it.
-      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n === 0 && (c.it.taxRequest || c.it.existing) && key !== 'done' ? '<button class="btn" type="button" data-action="ivf-leave">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
+      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n === 0 && (c.it.taxRequest || c.it.existing) && !c.it.coSign && key !== 'done' ? '<button class="btn" type="button" data-action="ivf-leave">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
       const submit = { welcome: c.it.coSign ? 'Continue to the agreement' : 'Get started', tax: key === 'tax' && !upView && taxKey(c, o.d) ? 'Continue to the form' : '', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';
       const inner =
@@ -3661,7 +3661,8 @@
   /** Back on the first step of a tax-form request or an investor on file's invitation: to the portal it is offered on (its done screen goes there too). */
   NS.actions['ivf-leave'] = () => {
     const c = fctx();
-    if (!c || !(c.it.taxRequest || c.it.existing) || ob().busy) return;
+    // Plan 06-39: a co-investor's sign-in has no portal behind it (this device holds only the agreement to sign).
+    if (!c || !(c.it.taxRequest || c.it.existing) || c.it.coSign || ob().busy) return;
     NS.app.go('overview');
   };
   NS.actions['ivf-taxanswers'] = () => {
