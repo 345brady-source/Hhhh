@@ -15,9 +15,10 @@
  *   node:dns/promises, node:https, an https GET of the certificate, a new RSA key pair)
  * MAIL_PROVIDER picks one (smtp when unset).
  */
+import smtp from './smtp.mjs';
 import ses from './ses.mjs';
 
-export const MAILERS = { ses };
+export const MAILERS = { smtp, ses };
 
 /** The adapter MAIL_PROVIDER names (smtp when unset). */
 export function pick(env = {}) {

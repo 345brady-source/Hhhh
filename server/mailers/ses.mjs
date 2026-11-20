@@ -14,7 +14,7 @@
 // host:port in place of email.<region>.amazonaws.com).
 import https from 'node:https';
 import dnsPromises from 'node:dns/promises';
-import { createHash, createHmac, generateKeyPairSync, randomInt } from 'node:crypto';
+import { createHash, createHmac, generateKeyPairSync, randomInt, verify, X509Certificate } from 'node:crypto';
 
 const REGION = /^[a-z]{2}(-[a-z]+)+-\d{1,2}$/;
 const DOMAIN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
@@ -207,7 +207,151 @@ export default {
     return { state: 'pending', detail: 'Waiting for the DNS records to appear.' };
   },
 
-  async events() {
-    return [];
+  /**
+   * events(req, rawBody, ctx) → [{ relayId, messageId, type, permanent, at }] from one signed notification message.
+   * Refused before anything else: a body over 256 KB (413). Then: not JSON or no Type (400); a signature that does not
+   * verify with a certificate from an https sns.<region>.amazonaws.com address ending .pem, a topic other than
+   * MAIL_EVENTS_TOPIC_ARN, or a Timestamp more than an hour away (401). A subscription is confirmed by one GET of its
+   * SubscribeURL, only at such an address, through ctx.transport.
+   */
+  async events(req, rawBody, ctx = {}) {
+    const raw = Buffer.isBuffer(rawBody) ? rawBody : Buffer.from(String(rawBody === undefined || rawBody === null ? '' : rawBody), 'utf8');
+    if (raw.length > MAX_EVENT) throw fail(413, 'The event body is too large.');
+    let m;
+    try {
+      m = JSON.parse(raw.toString('utf8'));
+    } catch {
+      throw fail(400, 'The event body is not JSON.');
+    }
+    if (!m || typeof m !== 'object' || typeof m.Type !== 'string' || !m.Type) throw fail(400, 'The event has no Type.');
+    if (!SIGNED[m.Type]) throw fail(400, 'The event Type is not known.');
+    await verifyMessage(m, ctx);
+    if (m.Type === 'SubscriptionConfirmation') {
+      const u = allowedUrl(m.SubscribeURL);
+      if (!u) throw fail(401, 'The subscription address is not allowed.');
+      const res = await (ctx.transport || defaultTransport)({ method: 'GET', host: u.host, path: `${u.pathname}${u.search}`, headers: { host: u.host } }).catch(() => null);
+      if (!res || res.status !== 200) throw fail(502, 'The subscription could not be confirmed.');
+      return [];
+    }
+    if (m.Type !== 'Notification') return [];
+    let e;
+    try {
+      e = JSON.parse(m.Message);
+    } catch {
+      throw fail(400, 'The event message is not JSON.');
+    }
+    return mapEvent(e, m.Timestamp);
   }
 };
+
+/* ---------- Delivery events ---------- */
+
+const MAX_EVENT = 256 * 1024;
+const SNS_HOST = /^sns\.[a-z0-9-]+\.amazonaws\.com$/;
+// The fields each message type's signature covers, in the documented order ("Verifying the signatures of Amazon SNS
+// messages"); Subject only when the message has one.
+const SIGNED = {
+  Notification: ['Message', 'MessageId', 'Subject', 'Timestamp', 'TopicArn', 'Type'],
+  SubscriptionConfirmation: ['Message', 'MessageId', 'SubscribeURL', 'Timestamp', 'Token', 'TopicArn', 'Type'],
+  UnsubscribeConfirmation: ['Message', 'MessageId', 'SubscribeURL', 'Timestamp', 'Token', 'TopicArn', 'Type']
+};
+
+/** The URL when it is https on an sns.<region>.amazonaws.com host with no port or user part, otherwise null. */
+function allowedUrl(s, pem = false) {
+  let u;
+  try {
+    u = new URL(String(s));
+  } catch {
+    return null;
+  }
+  if (u.protocol !== 'https:' || u.port !== '' || u.username !== '' || u.password !== '' || u.host !== u.hostname || !SNS_HOST.test(u.hostname)) return null;
+  if (pem && !/\.pem$/.test(u.pathname)) return null;
+  return u;
+}
+
+/** An https GET with a 64 KB cap, for the signing certificate (the URL is checked before this is called). */
+const httpsGetText = (url) =>
+  new Promise((resolve, reject) => {
+    const r = https.get(url, { timeout: 10000 }, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        return reject(new Error('status'));
+      }
+      const chunks = [];
+      let size = 0;
+      res.on('data', (c) => {
+        size += c.length;
+        if (size > 65536) res.destroy(new Error('too large'));
+        else chunks.push(c);
+      });
+      res.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      res.on('error', reject);
+    });
+    r.on('timeout', () => r.destroy(new Error('timeout')));
+    r.on('error', reject);
+  });
+
+// Certificates by URL, one cache per fetcher (tests inject their own).
+const certCaches = new WeakMap();
+async function certificate(url, ctx) {
+  const fetchCert = ctx.fetchCert || httpsGetText;
+  if (!certCaches.has(fetchCert)) certCaches.set(fetchCert, new Map());
+  const cache = certCaches.get(fetchCert);
+  if (cache.has(url)) return cache.get(url);
+  let cert;
+  try {
+    cert = new X509Certificate(await fetchCert(url));
+  } catch {
+    throw fail(401, 'The signing certificate could not be read.');
+  }
+  cache.set(url, cert);
+  if (cache.size > 20) cache.delete(cache.keys().next().value);
+  return cert;
+}
+
+async function verifyMessage(m, ctx) {
+  const env = ctx.env || {};
+  if (!env.MAIL_EVENTS_TOPIC_ARN || typeof m.TopicArn !== 'string' || m.TopicArn !== String(env.MAIL_EVENTS_TOPIC_ARN)) throw fail(401, 'The event is not for this server.');
+  if (typeof m.Signature !== 'string' || !m.Signature) throw fail(401, 'The event is not signed.');
+  const alg = m.SignatureVersion === '1' ? 'sha1' : m.SignatureVersion === '2' ? 'sha256' : '';
+  if (!alg) throw fail(401, 'The event signature version is not known.');
+  const now = (ctx.now || Date.now)();
+  const at = Date.parse(m.Timestamp);
+  if (!Number.isFinite(at) || Math.abs(now - at) > 3600e3) throw fail(401, 'The event is too old.');
+  const certUrl = allowedUrl(m.SigningCertURL, true);
+  if (!certUrl) throw fail(401, 'The signing certificate address is not allowed.');
+  let text = '';
+  for (const k of SIGNED[m.Type]) {
+    if (k === 'Subject' && m.Subject === undefined) continue;
+    if (typeof m[k] !== 'string') throw fail(401, 'The event is missing a signed field.');
+    text += `${k}\n${m[k]}\n`;
+  }
+  const cert = await certificate(certUrl.href, ctx);
+  const t = new Date(now);
+  if (!(new Date(cert.validFrom) <= t && t <= new Date(cert.validTo))) throw fail(401, 'The signing certificate is not valid now.');
+  let good = false;
+  try {
+    good = verify(alg, Buffer.from(text, 'utf8'), cert.publicKey, Buffer.from(m.Signature, 'base64'));
+  } catch {
+    good = false;
+  }
+  if (!good) throw fail(401, 'The event signature does not verify.');
+}
+
+/** One provider event → [] or [{ relayId, messageId, type, permanent, at }]. Other kinds (Send, Reject, ...) give []. */
+function mapEvent(e, fallbackAt) {
+  if (!e || typeof e !== 'object') throw fail(400, 'The event message is not an object.');
+  const kind = e.eventType || e.notificationType;
+  const mail = e.mail && typeof e.mail === 'object' ? e.mail : {};
+  const relayId = typeof mail.messageId === 'string' ? mail.messageId : '';
+  const ch = mail.commonHeaders && typeof mail.commonHeaders === 'object' ? mail.commonHeaders : {};
+  const messageId = typeof ch.messageId === 'string' ? ch.messageId : '';
+  const when = (o) => {
+    const t = Date.parse((o && o.timestamp) || fallbackAt);
+    return Number.isFinite(t) ? new Date(t).toISOString() : '';
+  };
+  if (kind === 'Bounce') return [{ relayId, messageId, type: 'bounced', permanent: !!(e.bounce && e.bounce.bounceType === 'Permanent'), at: when(e.bounce) }];
+  if (kind === 'Complaint') return [{ relayId, messageId, type: 'complained', permanent: false, at: when(e.complaint) }];
+  if (kind === 'Delivery') return [{ relayId, messageId, type: 'delivered', permanent: false, at: when(e.delivery) }];
+  return [];
+}
