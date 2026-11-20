@@ -1,5 +1,5 @@
 // gate: browser
-// last "TAXLINK FLOW: PASS (parts run: 1)"
+// last "TAXLINK FLOW: PASS (parts run: 6)"
 // A tax document delivered to the investor's own device through the firm's server (plan 10-12, C-04, TAX-04 to TAX-06).
 // The real server code (server/index.mjs) runs in this check's process (P6/lib.js serverPortal); the console is a normal
 // page connected to it, and the investor's device is a second browser context at 390x844 with touch and no portal data.
