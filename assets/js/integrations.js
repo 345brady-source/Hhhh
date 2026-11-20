@@ -297,8 +297,22 @@
     if (body) headers['Content-Type'] = 'application/json';
     if (s.token) headers.Authorization = `Bearer ${s.token}`;
     const res = await fetch(serverUrl(ws) + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-    if (res.status === 401) throw new Error('The integration server did not accept the access token.');
-    if (!res.ok) throw new Error(`The integration server answered ${res.status}.`);
+    if (!res.ok) {
+      // The server's own sentence (plan 08-07): its refusals are written for the person reading them; the status and
+      // code travel with it. The two older sentences remain for a reply without one.
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = null;
+      }
+      const said = data && typeof data.error === 'string' && data.error.trim() ? data.error.trim() : '';
+      const err = new Error(said || (res.status === 401 ? 'The integration server did not accept the access token.' : `The integration server answered ${res.status}.`));
+      err.status = res.status;
+      err.code = data && typeof data.code === 'string' ? data.code : '';
+      err.server = !!said;
+      throw err;
+    }
     return res.json();
   }
   function investorPayload(ws, inv, extra) {
@@ -385,7 +399,9 @@
     log(ws, inv, RESULT[kind][outcome], `${v.via || 'Unknown connection'}${v.method ? `, ${v.method}` : ''}${v.ref ? ` (ref ${v.ref})` : ''}${v.expiresAt && outcome === 'verified' ? `; valid until ${date(v.expiresAt)}` : ''}${d.note ? `; note: ${d.note}` : ''}`, actor);
     if (kind === 'identity' && outcome === 'passed' && vOf(inv).aml.status !== 'clear') {
       // A connector on for identity and screening that screened with this check: use that result instead of calling again.
-      const pre = d.screening && d.screening.status && ensure(ws).use.aml.indexOf(v.connection) >= 0 ? { connection: v.connection, screening: d.screening } : null;
+      // Not for a package connection (plan 08-07): its names are screened through the server, which keeps the screening
+      // record the import is confirmed against (a result carried on the identity check has none).
+      const pre = d.screening && d.screening.status && ensure(ws).use.aml.indexOf(v.connection) >= 0 && !(conn(ws, v.connection) || {}).package ? { connection: v.connection, screening: d.screening } : null;
       await screen(ws, inv, pre);
     }
     decide(ws, inv);
@@ -774,7 +790,8 @@
     const what = kind === 'identity'
       ? 'Take a photo of your government-issued ID and a quick selfie. It takes about two minutes.'
       : 'Show that you are an accredited investor: income, net worth, a letter from your CPA, attorney or adviser, or an existing verification.';
-    const handled = (x) => (x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
+    // The verification package (D-01, C-01): the provider's own page is seen only in the new tab, so the step names no one.
+    const handled = (x) => (x.package ? 'A secure page opens in a new tab for this step.' : x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
     const one = opts.length === 1 ? opts[0] : null;
     const url = v.status === 'pending' ? safeUrl(v.url) : '';
     // While an attempt through another connection (perhaps one since removed) is open, do not describe the remaining option as if it ran.
