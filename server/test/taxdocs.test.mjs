@@ -355,11 +355,13 @@ test('period: created 2027-03-10 with availableUntil 2027-12-31, it opens on 202
     clock.t = Date.parse('2027-12-31T23:30:00Z');
     assert.equal((await open(base, token, { last4: LAST4 })).status, 200, 'on its last day');
     clock.t = Date.parse('2028-01-01T00:30:00Z');
-    assert.equal((await look(base, token)).status, 410);
-    assert.equal((await open(base, token, { last4: LAST4 })).status, 410);
+    const past = await open(base, token, { last4: LAST4 });
+    assert.equal(past.status, 410, 'the day after its available-until date');
+    assert.ok(!('pdf' in past.body));
     server.taxdocs.purge();
     assert.equal(server.store.get('taxdocs', r.body.id), null, 'the record is removed');
     assert.equal(server.store.getBlob(key), null, 'the file is removed');
+    assert.equal((await look(base, token)).status, 404, 'once removed, the link is not known at all');
   }));
 
 test("workspaces: a sponsor account's document is stored in its own workspace whatever the body names; another account cannot list, withdraw or resend it", () =>
@@ -387,7 +389,7 @@ test('limits: over 10 MB answers 413; not a PDF, a different SHA-256, a bad emai
     assert.equal((await create(base, { pdf: text.toString('base64'), sha256: sha(text) })).status, 400);
     assert.equal((await create(base, { sha256: 'a'.repeat(64) })).status, 400);
     for (const email of ['zelda@investor', 'zelda investor@example.com', '']) assert.equal((await create(base, { investor: { id: 'HRC-0007', name: 'Zelda Quixote', email, last4: LAST4 } })).status, 400, email);
-    for (const last4 of ['678', '67890', '67a9', '', 6789]) assert.equal((await create(base, { investor: { id: 'HRC-0007', name: 'Zelda Quixote', email: 'zelda@investor.example', last4 } })).status, 400, String(last4));
+    for (const [k, last4] of ['678', '67890', '67a9', '', 6789].entries()) assert.equal((await create(base, { investor: { id: 'HRC-0007', name: 'Zelda Quixote', email: 'zelda@investor.example', last4 } })).status, 400, `bad last4 number ${k + 1}`);
     assert.equal(server.store.list('taxdocs').length, 0, 'nothing stored');
     assert.equal((await outbox(base)).length, 0, 'nothing sent');
   }));

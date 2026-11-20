@@ -101,8 +101,22 @@ export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = 
       `It stays available until ${longDay(rec.availableUntil)}.`,
       `Questions: ${contactLine(s.firm.contact)}.`
     ];
-    return { subject: 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE', text: paras.join('\n\n'), html: paras.map((p) => `<p>${esc(p).replace(esc(url), `<a href="${esc(url)}">${esc(url)}</a>`)}</p>`).join('') };
+    return { subject: 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE', text: paras.join('\n\n'), html: htmlOf(paras, url) };
   }
+  const htmlOf = (paras, url) => paras.map((p) => `<p>${esc(p).replace(esc(url), `<a href="${esc(url)}">${esc(url)}</a>`)}</p>`).join('');
+  /** Without consent in effect the first message asks for it (Rev. Proc. 2012-17 section 4.01); it is not the notice. */
+  function consentMessage(rec, s, url) {
+    const firm = s.firm.name;
+    const paras = [
+      `${firm} has a tax document for you: ${rec.title}. It can be delivered to you electronically only with your consent.`,
+      `To read how electronic delivery works and give your consent, use this link on any device: ${url}`,
+      `You will be asked for the last four digits of the tax number you gave ${firm}. Once you consent, the document opens there; use Save to keep a copy, and print the saved file.`,
+      'If you do not consent, the document will be sent to you on paper.',
+      `Questions: ${contactLine(s.firm.contact)}.`
+    ];
+    return { subject: 'Your consent to receive tax documents electronically', text: paras.join('\n\n'), html: htmlOf(paras, url) };
+  }
+  const firstMessage = (rec, s, url) => (rec.consentNeeded && !rec.consent ? consentMessage(rec, s, url) : noticeMessage(rec, s, url));
   async function mail(rec, s, msg) {
     const r = await mailer.send(Object.assign({ kind: 'taxdoc', invitationId: rec.id, workspace: rec.workspace, fromName: s.firm.name, replyTo: s.firm.contact.email, to: s.investor.email, toName: s.investor.name }, msg));
     return { emailStatus: r.emailStatus, emailError: r.error || '' };
@@ -126,7 +140,7 @@ export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = 
       fileName: fileName(body.fileName, 'tax-document.pdf'),
       availableUntil: DAY_RE.test(String(body.availableUntil)) ? String(body.availableUntil) : '',
       investor: { name: clip(inv.name, 200), email: clip(inv.email, 254).trim() },
-      check: String(inv.last4 === undefined || inv.last4 === null ? '' : inv.last4),
+      check: typeof inv.last4 === 'string' ? inv.last4 : '',
       firm: { name: clip(firm.name, 200).trim(), contact: { name: clip(contact.name, 200), address: clip(contact.address, 400), phone: clip(contact.phone, 60), email: clip(contact.email, 254) } },
       consentNeeded: consent.inEffect !== true,
       consentVersion: clip(consent.version, 40),
@@ -192,7 +206,7 @@ export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = 
     store.event({ type: 'taxdoc_created', id: rid });
     const url = link(portalUrl, token);
     let out = { emailStatus: 'not_sent', emailError: '' };
-    if (body.sendEmail !== false) out = await mail(rec, unseal(rec), noticeMessage(rec, unseal(rec), url));
+    if (body.sendEmail !== false) out = await mail(rec, unseal(rec), firstMessage(rec, unseal(rec), url));
     rec = store.put('taxdocs', { id: rid, emailStatus: out.emailStatus, emailError: out.emailError });
     return reply(res, 200, Object.assign({ id: rid, link: url, emailStatus: out.emailStatus }, out.emailError ? { emailError: out.emailError } : {}));
   }
@@ -204,7 +218,11 @@ export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = 
     if (pinned(auth) === null && !env.API_TOKEN) throw fail(400, 'Set API_TOKEN on the integration server: tax documents carry investors’ tax data');
   };
 
-  async function sponsor(req, res, url, auth) {
+  /** Past its available-until date (section 9): it stops opening, and purge removes it. */
+  const ended = (rec) => !!rec.availableUntil && today() > rec.availableUntil;
+  const statusOf = (rec) => (rec.status !== 'withdrawn' && ended(rec) ? 'expired' : rec.status);
+
+  async function sponsorCalls(req, res, url, auth) {
     const path = url.pathname;
     const pin = pinned(auth);
     requireSponsor(auth);
@@ -215,20 +233,55 @@ export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = 
       const documents = store
         .list('taxdocs')
         .filter((r) => ws === null || r.workspace === ws)
-        .map(listView);
+        .map((r) => listView(Object.assign({}, r, { status: statusOf(r) })));
       return reply(res, 200, { documents });
     }
-    throw fail(404, 'Not found');
+    const m = path.match(/^\/v1\/taxdocs\/([^/]+)\/(withdraw|resend)$/);
+    if (!m) throw fail(404, 'Not found');
+    if (req.method !== 'POST') throw fail(405, 'Use POST');
+    const rec = TAXDOC_ID.test(m[1]) ? store.get('taxdocs', m[1]) : null;
+    // Another sponsor's document answers as one that does not exist (never 403, which would confirm it does).
+    if (!rec || (pin !== null && rec.workspace !== pin)) throw fail(404, 'No tax document with that id');
+    const body = parseObject(await readRaw(req, TAXDOC_LIMITS.small));
+    if (m[2] === 'withdraw') {
+      if (rec.blob) store.removeBlob(rec.blob);
+      store.put('taxdocs', { id: rec.id, status: 'withdrawn', blob: '', withdrawnAt: rec.withdrawnAt || iso() });
+      store.event({ type: 'taxdoc_withdrawn', id: rec.id });
+      return reply(res, 200, { id: rec.id, status: 'withdrawn' });
+    }
+    // resend: a new token (the old one stops), tries back to 0, the same message as the first time
+    if (rec.status === 'withdrawn') throw fail(409, 'This document was withdrawn; deliver it again instead');
+    if (ended(rec)) throw fail(410, 'This document is past its available-until date');
+    let portalUrl = rec.portalUrl;
+    if (body.portalUrl !== undefined) {
+      portalUrl = returnTo ? returnTo(body.portalUrl) : String(body.portalUrl || '');
+      try {
+        new URL(portalUrl);
+      } catch {
+        throw fail(400, 'portalUrl must be the portal page’s address (http or https, on PORTAL_ORIGIN)');
+      }
+    }
+    const token = newToken();
+    let cur = store.put('taxdocs', { id: rec.id, tokenHash: hashToken(token).toString('hex'), tries: 0, status: rec.opens && rec.opens.count ? 'opened' : 'sent', portalUrl, resentAt: iso() });
+    store.event({ type: 'taxdoc_resent', id: rec.id });
+    const url2 = link(portalUrl, token);
+    let out = { emailStatus: 'not_sent', emailError: '' };
+    if (body.sendEmail !== false) out = await mail(cur, unseal(cur), firstMessage(cur, unseal(cur), url2));
+    cur = store.put('taxdocs', { id: rec.id, emailStatus: out.emailStatus, emailError: out.emailError });
+    return reply(res, 200, Object.assign({ id: rec.id, link: url2, status: cur.status, emailStatus: out.emailStatus }, out.emailError ? { emailError: out.emailError } : {}));
   }
 
   /* --- Investor side (X-Doc-Token) --- */
+  const TRIES = 5;
   function investorPath(method, path) {
     return (method === 'GET' && path === '/v1/taxdoc') || (method === 'POST' && path === '/v1/taxdoc/open');
   }
-  async function investor(req, res, path, token) {
+  async function investorCalls(req, res, path, token) {
     requireVault();
-    const rec = findByToken(token);
+    let rec = findByToken(token);
     if (!rec) throw fail(404, 'This link does not open any document.');
+    if (rec.status === 'withdrawn' || ended(rec)) throw fail(410, 'This document is no longer available.');
+    if (rec.status === 'locked') throw fail(423, 'This link is locked after five wrong tries. Ask the firm for a new link.');
     const s = unseal(rec);
     if (req.method === 'GET' && path === '/v1/taxdoc') {
       return reply(res, 200, {
@@ -241,23 +294,73 @@ export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = 
     if (req.method === 'POST' && path === '/v1/taxdoc/open') {
       const body = parseObject(await readRaw(req, TAXDOC_LIMITS.small));
       const want = Buffer.from(String(s.check || ''));
-      const got = Buffer.from(String(body.last4 === undefined || body.last4 === null ? '' : body.last4));
+      const got = Buffer.from(typeof body.last4 === 'string' ? body.last4 : '');
       const right = want.length === 4 && got.length === want.length && timingSafeEqual(got, want);
-      if (!right) throw fail(403, 'Those four digits do not match the tax number on record.');
+      if (!right) {
+        rec = store.put('taxdocs', { id: rec.id, tries: (rec.tries || 0) + 1 });
+        if (rec.tries >= TRIES) {
+          store.put('taxdocs', { id: rec.id, status: 'locked', lockedAt: iso() });
+          store.event({ type: 'taxdoc_locked', id: rec.id });
+          return reply(res, 423, { error: 'This link is now locked after five wrong tries. Ask the firm for a new link.', triesLeft: 0 });
+        }
+        return reply(res, 403, { error: 'Those four digits do not match the tax number on record.', triesLeft: TRIES - rec.tries });
+      }
+      let notice = false;
+      if (rec.consentNeeded && !rec.consent) {
+        if (body.consent !== true) return reply(res, 409, { error: 'Consent to electronic delivery is needed before the document opens here. Without it the document is sent on paper.', needs: { consent: true } });
+        rec = store.put('taxdocs', { id: rec.id, consent: { at: iso(), version: rec.consentVersion } });
+        store.event({ type: 'taxdoc_consent', id: rec.id });
+        notice = true;
+      }
       const buf = getBlob(rec.blob);
       if (!buf) throw fail(410, 'This document is no longer available.');
       const at = iso();
       const o = rec.opens || { first: '', last: '', count: 0 };
-      store.put('taxdocs', { id: rec.id, status: 'opened', opens: { first: o.first || at, last: at, count: (o.count || 0) + 1 } });
+      rec = store.put('taxdocs', { id: rec.id, status: 'opened', tries: 0, opens: { first: o.first || at, last: at, count: (o.count || 0) + 1 } });
       store.event({ type: 'taxdoc_opened', id: rec.id });
+      // Consent given here: the notice of section 7.01 follows, with the link the investor is using.
+      if (notice) {
+        const r = await mail(rec, s, noticeMessage(rec, s, link(rec.portalUrl, token)));
+        store.put('taxdocs', { id: rec.id, noticeStatus: r.emailStatus });
+      }
       return reply(res, 200, { fileName: rec.fileName, pdf: buf.toString('base64') });
     }
     throw fail(404, 'Not found');
   }
 
+  /** Records and files past their available-until date are removed (Rev. Proc. 2012-17 section 9; withdrawn ones too). */
+  let lastPurge = 0;
   function purge() {
-    return { removed: 0 };
+    lastPurge = now();
+    let removed = 0;
+    for (const rec of store.list('taxdocs')) {
+      if (!ended(rec)) continue;
+      if (rec.blob) store.removeBlob(rec.blob);
+      store.remove('taxdocs', rec.id);
+      store.event({ type: 'taxdoc_purged', id: rec.id });
+      removed++;
+    }
+    return { removed };
   }
+  /** W1: throttled to once a minute, after the call is answered (a link past its date answers 410 before it is removed). */
+  const maybePurge = () => {
+    if (now() - lastPurge < 60000) return;
+    try {
+      purge();
+    } catch (e) {
+      store.event({ type: 'taxdoc_purge_failed' });
+    }
+  };
+  const after = (fn) =>
+    async function (...a) {
+      try {
+        return await fn(...a);
+      } finally {
+        maybePurge();
+      }
+    };
+  const timer = setInterval(maybePurge, 3600e3);
+  if (timer.unref) timer.unref();
 
-  return { investorPath, investor, sponsor, purge, stop: () => {} };
+  return { investorPath, investor: after(investorCalls), sponsor: after(sponsorCalls), purge, stop: () => clearInterval(timer) };
 }
