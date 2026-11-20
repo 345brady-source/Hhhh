@@ -8,3 +8,4 @@ Owner, 2026-11-20: "you must save everything as you go, as if you can loose usag
 4. Checkers, verifiers, debuggers: append each finding to your output file in the scratchpad (or your debug file) the moment you have it.
 5. Evidence: paste RED outputs and verify lines into your SUMMARY as they are produced, not only at the end.
 6. Long runs: save first (rule 2), then start. Background commands use timeout 7200000. Gate steps and check parts keep their results per tree once the gate-resume change is merged: rerun into the same output folder instead of a fresh one.
+7. A fresh worktree has no server/node_modules: link it (`ln -s /home/user/Hhhh/server/node_modules server/node_modules`, gitignored) before running server tests, stage only your own paths while it exists, and remove it before you finish.
