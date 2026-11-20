@@ -1,15 +1,15 @@
 ---
-status: investigating
+status: awaiting_human_verify
 trigger: "Phase 2 field editor check (.planning/phases/02-field-editor/checks/editor.js) ends 101 PASS / 104 with 3 FAIL lines (EDIT-03 required box; EDIT-05 label one undo; saved agreement still signs for the invited investor), same on 50d2d63 and after 06-36."
 created: 2026-11-20T00:00:00Z
-updated: 2026-11-20T00:00:00Z
+updated: 2026-11-20T02:50Z
 ---
 
 ## Current Focus
 
 bug_class: Bohrbug (deterministic: same 3 FAILs on 50d2d63 and eb0d1f1)
 status_note: H1 and H2 CONFIRMED by the instrumented run (see Evidence 01:40Z, 01:48Z). All three are out-of-date checks, no product fault.
-next_action: update only the three assertions in editor.js (with comments citing 5f8db30/01.4-69 and 46b1b66/01.4-63), run editor.js in full, then a mutation run (Required box ignored; investor fields required again) on a scratch copy to prove the new assertions bite
+next_action: owner/coordinator check; on confirmation move this file to .planning/debug/resolved/ and add the knowledge-base entry
 reasoning_checkpoint:
   hypothesis: "Items 1+2 fail because esign.js:2253 (5f8db30, 01.4-69) makes an investor signature given to the firm required, so the check's click unticks a ticked box; item 3 fails only because D-30 (46b1b66, 01.4-63, esign.js:174) leaves the investor nothing required, so the bar reads 'Ready to finish'."
   confirming_evidence:
@@ -99,10 +99,21 @@ started: same on 50d2d63 and on eb0d1f1 (after 06-36) — predates today's work
   found: "FAIL EDIT-03 required or optional ... :: {wasReq:true, preDom:'... is-req ...', nowReq:true, rqDom:'... is-req ...'}" and "FAIL EDIT-05 typing a label is one step ... (required key absent)". Knock-on FAILs from the shifted undo history (lines 60-67) and the pass stopped at a 30s waitForSelector before the save, so item 3 was NOT reached: M2 is unproven by this run.
   implication: the updated items 1 and 2 bite on a broken Required box. Item 3 needs its own run with M2 alone.
 
+- timestamp: 2026-11-20T02:48Z
+  checked: mutation run 2, the scratch copy with M2 only (investor fields required again), desktop pass (scratch dbg-editor/mut2.txt)
+  found: "83/84 passed"; the only FAIL is item 3 :: {"reached":true,"mine":12,"boxes":12,"want":12,"lost":[],"count":"6 of 9 left","hint":"Select Start to begin."}
+  implication: the updated item 3 bites when D-30 is broken, and only then; the old / left$/ clause would have passed on this mutant, so it was asserting the product as it was before D-30.
+
 ## Resolution
 
 root_cause: "No product fault; three stale expectations in editor.js. (1)+(2) esign.js:2249-2253 (5f8db30, plan 01.4-69, 01.4-69-SUMMARY deviation 2) makes an investor's signature given to the firm required, on top of D-30 (46b1b66, plan 01.4-63) which had left it required:false; the check's text->signature->firm sequence therefore reaches the Required box already ticked, and its click unticks it (editor.js:414 wanted !wasReq && required true; editor.js:425 wanted required true after the label undo). (3) esign.js:174 isReq (46b1b66, D-30) makes no investor field required, so signflow.js:58 countHTML shows 'Ready to finish', never 'N of M left' (editor.js:616 / left$/). Every field reaches the investor exactly where the editor left it (DBG3)."
 fix: "editor.js only: item 1 asserts box ticked + is-req before the click, then required false, box unticked, is-opt after; item 2 asserts label 'Title', required false and the firm as signer after one undo (exactly one step back); item 3 replaces / left$/ with count 'Ready to finish' and hint /^Nothing is required\\./ (as signing-step.js was changed in 01.4-63), and adds boxes and the list of lost field keys to the printed detail. Each change carries a comment citing the commit and plan."
 oracle_type: specified (D-30 / 01.4-69 decisions and the matching signing-step.js expectations)
-verification: "(pending) full editor.js run on the worktree; mutation run (M1 Required box ignored in fieldeditor.js setProp, M2 investor fields required again in esign.js isReq) on a scratch copy must turn the three updated checks FAIL"
+verification:
+  signal_repro: "before: 101/104 on eb0d1f1 (run0.txt) with the three FAIL lines; instrumented run (dbg1.txt) showed the exact states"
+  signal_fixed: "after (6ae20a8): editor.js 104/104 passed (run1.txt), the three lines PASS, touch and 1024px passes unchanged"
+  signal_mutation: "M1 (Required box ignored, fieldeditor.js setProp): items 1 and 2 FAIL (mut1.txt). M2 alone (investor fields required again, esign.js isReq): only item 3 FAILs, count '6 of 9 left', 83/84 (mut2.txt). The old / left$/ clause would have PASSED on M2: it asserted the pre-D-30 product."
+  signal_scope: "no product file changed; only editor.js assertions (3) and their printed detail; no other check imports editor.js except earlier.js, which runs it whole and passes on exit 0"
+  not_run: "SIGNING DOCUMENTS, TITLES AND EDITOR, REAL FIRM and server tests: the brief asks for them when product code is fixed; none was changed, so they cannot move"
+guardrail_verdict: accepted
 files_changed: [.planning/phases/02-field-editor/checks/editor.js]
