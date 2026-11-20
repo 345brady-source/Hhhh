@@ -34,3 +34,18 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 - The orchestrator cannot change the main session's own model; the owner does that with /model claude-opus-5-5.
 - 2026-11-19: the Fable limit was reached (it resets Nov 26, 05:00 UTC). From now on every agent runs on Opus 5.5 and commits with the Opus trailer above. An agent that stopped on the limit is continued by a new agent working in the same worktree, from its commits and uncommitted files; nothing already done is redone.
 
+
+## Save as you go (owner, 2026-11-20, verbatim: "You have to be prepare to run out of usage, always save when possible")
+- Executors push their `wip/<plan>` branch after every commit. Work is never left only in a worktree.
+- Planners commit and push each PLAN file as soon as it is finished, on claude/refract-reskin, one commit per finished plan. The owner's earlier rule still holds: a plan that is not finished is never committed, by the planner or the orchestrator.
+- Researchers write RESEARCH.md in sections and commit and push each finished section.
+- Plan checkers and verifiers append each finding to a file in the scratchpad as it is found (`checks-<plan>.md`), so a stop loses nothing already found.
+- Orchestrator: merges and pushes as soon as a plan reports; records every decision and open item in CONTEXT files and pushes them at once; keeps "State now" below current after each merge round.
+- A stopped agent is continued from its pushed branch plus any files in its worktree (SCRATCH/continue-brief.md).
+
+## State now (updated 2026-11-20)
+- Merged today: 09-04, 09-06, 09-07, Filings guide entries; 10-04; 11-05, 11-06, 11-08. Server tests 358.
+- Building: 11-07 (wip/11-07), 09-09 (wip/09-09), 10-06, 10-07, 10-08, 10-09 (wip/10-0x).
+- Plan check running: 06-34..06-39 (walkthrough 2 fixes plus the co-investor sign-in). Afterwards: build 06-34..06-38 in parallel, then 06-39; add six gate lines to gate-reference.sh; run one full gate on the merged tree; rebuild the preview from the current tree; walk Filings, AML program and Tax documents; publish to https://claude.ai/artifact/GPhQRgiF3Kkne2A5VHqDxP.
+- Next to plan-check: phase 11 wave 4 (11-09..11-11) after 11-07 merges; phase 10 wave 4 (10-10, 10-12) after wave 3; phase 08 wave 5 (08-07, 08-17) when the browser queue allows.
+- Owner's help chat page: https://claude.ai/artifact/Sbf9kfcoaqJd3svbb7tezj (source in the scratchpad's help-chat/; refresh guide.json from server/lib/help-guide.mjs after guide merges).
