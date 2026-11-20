@@ -1,7 +1,9 @@
 /*
  * Tax documents page (self-serve console, D-01, C-06): the CPA's file is taken in, a combined Schedule K-1 file is cut
- * into one package per K-1 in this browser, and a person confirms whose each package is. Nothing here delivers a
- * document: a confirmed document stays hidden from every investor until it is delivered on this page by a later step.
+ * into one package per K-1 in this browser, and a person confirms whose each package is. A confirmed document stays
+ * hidden from every investor until it is delivered (plan 10-06): Deliver first lists who receives what, then hands each
+ * document to NS.taxdocs.deliver, which refuses one nobody confirmed and holds one back while its investor has not
+ * consented to electronic delivery (the send-on-paper list).
  *
  * Every decision about a page or a match is made by NS.taxdocs (taxdocs.js): this file reads each page's text items and
  * field values with the PDF reader, hands them over, and draws what it returns. Only packages NS.taxdocs.togetherIds
@@ -275,7 +277,8 @@
   }
   function listHTML(ws) {
     const batches = ((ws.taxdocs || {}).batches || []).slice().reverse();
-    return `<div class="tx">${CK().head('Tax documents', '')}${importHTML(ws)}${partsHTML(ws)}${batches.length ? CK().panel(`Imports <span class="cs-count">${batches.length}</span>`, `<ul class="tx-list">${batches.map((b) => batchRow(ws, b)).join('')}</ul>`) : ''}</div>`;
+    const msg = ui().msg.main ? `<p class="tx-note is-stop" role="alert">${h(ui().msg.main)}</p>` : '';
+    return `<div class="tx">${CK().head('Tax documents', '')}${msg}${importHTML(ws)}${paperHTML(ws)}${partsHTML(ws)}${batches.length ? CK().panel(`Imports <span class="cs-count">${batches.length}</span>`, `<ul class="tx-list">${batches.map((b) => batchRow(ws, b)).join('')}</ul>`) : ''}${contactHTML(ws)}</div>`;
   }
 
   /* ---------- one import ---------- */
@@ -360,7 +363,9 @@
       ${single.length ? CK().panel(`One by one <span class="cs-count">${single.length}</span>`, list('single', single.map((p) => singleRow(ws, b, p)).join(''))) : ''}
       ${loose}
       ${aside.length ? CK().panel(`Set aside <span class="cs-count">${aside.length}</span>`, list('aside', aside.map((p) => `<li class="tx-row" data-id="${h(p.id)}"><div class="tx-what"><span class="tx-title">${pkgTitle(b, p)}</span><span class="tx-detail">${pagesText(p)}</span></div><div class="tx-acts">${btn('tx-reopen', 'Reopen', on(b, p))}</div></li>`).join(''))) : ''}
-      ${made.length ? CK().panel(`Confirmed <span class="cs-count">${made.length}</span>`, list('confirmed', made.map(({ p, doc }) => `<li class="tx-row" data-id="${h(p.id)}"><div class="tx-what"><span class="tx-title">${invLine(ws, p.investorId)}</span><span class="tx-detail">${pagesText(p)} · ${h(BASIS[p.basis] || p.basis)} · ${h(p.confirmedBy)}</span>${linkLine(ws, doc)}</div><div class="tx-when"><span class="tx-pill is-wait">Not delivered</span></div></li>`).join(''))) : ''}
+      ${made.length && b.kind === '8805' ? '<p class="tx-note">Ask your CPA whether Form 8805 may be delivered electronically.</p>' : ''}
+      ${made.some(({ doc }) => doc && doc.tax.state === 'confirmed') && missingContact(ws).length ? contactHTML(ws) : ''}
+      ${made.length ? CK().panel(`Confirmed <span class="cs-count">${made.length}</span>`, deliverHTML(ws, b, made) + list('confirmed', made.map(({ p, doc }) => madeRow(ws, b, p, doc)).join(''))) : ''}
       ${missing.length ? CK().panel(`No K-1 in this file <span class="cs-count">${missing.length}</span>`, list('missing', missing.map((i) => `<li class="tx-row"><div class="tx-what"><span class="tx-title">${h(i.title)}</span><span class="tx-detail">${h(i.id)}</span></div></li>`).join(''))) : ''}
     </div>`;
   }
@@ -522,6 +527,236 @@
       return;
     }
     if (body.isConnected) body.innerHTML = `<div class="doc-pages" tabindex="0">${urls.map((u, k) => `<img class="doc-page" src="${u}" alt="Page ${p.first + k}">`).join('')}</div>`;
+  };
+
+  /* ---------- delivery (plan 10-06: D-01, C-06, C-08, TAX-04, TAX-05) ---------- */
+  // NS.taxdocs decides every delivery, wait, paper step, withdrawal and open; this part lists, asks and draws what it
+  // returns. The firm's contact is what the investor's consent names for withdrawals (Rev. Proc. 2012-17 section 5.05).
+  const CONTACT = [['name', 'Name'], ['address', 'Mailing address'], ['phone', 'Telephone'], ['email', 'Email']];
+  const CONTACT_WORDS = { name: 'name', address: 'mailing address', phone: 'telephone', email: 'email' };
+  const STATE = { confirmed: ['Not delivered', 'is-wait'], waiting: ['Waiting for consent', 'is-wait'], paper: ['Sent on paper', 'is-off'], delivered: ['Delivered', 'is-ok'], replaced: ['Replaced', 'is-off'], withdrawn: ['Withdrawn', 'is-stop'] };
+  const GIVEN = ['waiting', 'delivered', 'paper'];
+  const longDay = (iso) => U.date(String(iso || '').slice(0, 10), 'long');
+  const andList = (a) => (a.length < 2 ? a.join('') : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`);
+  function dv() {
+    const u = ui();
+    if (!u.dv) u.dv = { list: {}, replace: {}, row: null };
+    return u.dv;
+  }
+  const contactSaved = (ws) => (ws.taxdocs || {}).contact || {};
+  const missingContact = (ws) => CONTACT.map(([k]) => k).filter((k) => !contactSaved(ws)[k]);
+  /** The contact as saved; before anything is saved, the name, telephone and email of the firm's support details. */
+  function contactDraft(ws) {
+    const c = contactSaved(ws);
+    if (CONTACT.some(([k]) => c[k])) return c;
+    const sup = (ws.tenant && ws.tenant.support) || {};
+    return { name: sup.team || '', address: '', phone: sup.phone || '', email: sup.email || '' };
+  }
+  function contactHTML(ws) {
+    const c = contactDraft(ws);
+    const ops = NS.app.can('operate');
+    const type = { email: 'email', phone: 'tel' };
+    return CK().panel(
+      'Contact for tax documents',
+      `<div class="tx-form">${CONTACT.map(([k, label]) => `<label class="cs-field${k === 'address' ? ' cs-wide' : ''}" for="tx-c-${k}"><span>${label}</span><input id="tx-c-${k}" type="${type[k] || 'text'}" value="${h(c[k] || '')}"${ops ? '' : ' readonly'}></label>`).join('')}</div>${ops ? `<div class="cs-row">${btn('tx-contact', 'Save')}</div>` : ''}`
+    );
+  }
+  /** Every offering, kind and year that has a tax document. */
+  function slots(ws) {
+    const seen = {};
+    return (ws.docs || [])
+      .filter((d) => d.tax)
+      .map((d) => ({ offeringId: d.offeringId, kind: d.tax.kind, year: d.tax.year }))
+      .filter((q) => {
+        const k = `${q.offeringId}|${q.kind}|${q.year}`;
+        return seen[k] ? false : (seen[k] = true);
+      });
+  }
+  /** Send on paper (sections 5.02, 7.02 and 10): every document owed on paper, from NS.taxdocs.lists. */
+  function paperHTML(ws) {
+    if (!(ws.taxdocs || {}).batches && !(ws.docs || []).some((d) => d.tax)) return '';
+    const rows = slots(ws).reduce((out, q) => out.concat(TD().lists(ws, q).paper), []);
+    if (!rows.length) return '';
+    const ops = NS.app.can('operate');
+    const today = NS.dates.today();
+    const row = ({ doc, why, dueBy }) =>
+      `<li class="tx-row" data-id="${h(doc.id)}"><div class="tx-what"><span class="tx-title">${invLine(ws, doc.investors[0])}</span><span class="tx-detail">${h(kindLabel(doc.tax.kind))} ${h(doc.tax.year)} · ${h(fundName(ws, doc.offeringId))} · ${why === 'no consent' ? 'No consent to electronic delivery' : `Notice came back on ${h(longDay(doc.tax.notice.bounced))}`}${dueBy ? ` · paper due by ${h(longDay(dueBy))}` : ''}</span>${
+        ops ? `<div class="tx-form"><label class="cs-field" for="tx-paper-${h(doc.id)}"><span>Sent on</span><input id="tx-paper-${h(doc.id)}" type="date" value="${h(today)}"></label>${btn('tx-paper', 'Mark sent on paper', ` data-doc="${h(doc.id)}"`)}</div>` : ''
+      }</div></li>`;
+    return CK().panel(`Send on paper <span class="cs-count">${rows.length}</span>`, `<ul class="tx-list" data-list="paper">${rows.map(row).join('')}</ul>`);
+  }
+  function opensText(o) {
+    if (!o || !o.count) return 'Not opened';
+    return o.count === 1 ? `Opened once on ${longDay(o.first)}` : `Opened ${o.count} times, first ${longDay(o.first)}, last ${longDay(o.last)}`;
+  }
+  /** The document this investor has now for the same offering, kind and year (what an amended one replaces), or null. */
+  function earlierOf(ws, doc) {
+    return (ws.docs || []).find((d) => d !== doc && d.tax && (d.investors || [])[0] === (doc.investors || [])[0] && d.offeringId === doc.offeringId && d.tax.kind === doc.tax.kind && d.tax.year === doc.tax.year && GIVEN.indexOf(d.tax.state) >= 0) || null;
+  }
+  const givenOn = (d) => d.tax.deliveredAt || (d.tax.paper && d.tax.paper.sentOn) || d.date;
+  const docAttr = (doc) => ` data-doc="${h(doc.id)}"`;
+  /** The notice of section 7.01 as NS.taxdocs.notice gives it, with Copy and a link that opens the sponsor's own email. */
+  function noticeHTML(ws, doc) {
+    const n = TD().notice(ws, doc);
+    const inv = investorOf(ws, doc.investors[0]) || {};
+    const to = inv.email || '';
+    const href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(n.subject)}&body=${encodeURIComponent(n.body.replace(/\r?\n/g, '\r\n'))}`;
+    return `<div class="tx-notice"${docAttr(doc)}><dl class="tx-review"><dt>To</dt><dd>${h(inv.contact || inv.title || '')}${to ? ` &lt;${h(to)}&gt;` : ''}</dd><dt>Subject</dt><dd>${h(n.subject)}</dd></dl>${n.body
+      .split('\n\n')
+      .map((x) => `<p class="tx-detail">${h(x)}</p>`)
+      .join('')}<div class="tx-acts">${btn('tx-notice-copy', 'Copy', docAttr(doc))}<a class="cs-btn cs-btn-small" href="${h(href)}">Email</a></div></div>`;
+  }
+  /** One confirmed package's row: its document's state, dates and opens, and what may be done with it. */
+  function madeRow(ws, b, p, doc) {
+    const head = `<div class="tx-what"><span class="tx-title">${invLine(ws, p.investorId)}</span><span class="tx-detail">${pagesText(p)} · ${h(BASIS[p.basis] || p.basis)} · ${h(p.confirmedBy)}</span>`;
+    if (!doc) return `<li class="tx-row" data-id="${h(p.id)}">${head}</div></li>`;
+    const t = doc.tax;
+    const [label, cls] = STATE[t.state] || [t.state, 'is-off'];
+    const ops = NS.app.can('operate');
+    const facts = [];
+    if (['delivered', 'replaced', 'withdrawn'].indexOf(t.state) >= 0 && t.deliveredAt) {
+      if (t.availableUntil) facts.push(`Available until ${longDay(t.availableUntil)}`);
+      facts.push(opensText(t.opens));
+    }
+    if (t.state === 'replaced' && t.replacedAt) facts.push(`Replaced on ${longDay(t.replacedAt)}`);
+    if (t.state === 'withdrawn' && t.withdrawn) facts.push(`Withdrawn on ${longDay(t.withdrawn.at)}: ${t.withdrawn.why}`);
+    if (t.paper && t.paper.sentOn) facts.push(`Sent on paper on ${longDay(t.paper.sentOn)}`);
+    if (t.notice && t.notice.bounced && !t.paper) facts.push(`Notice came back on ${longDay(t.notice.bounced)}; paper due by ${longDay(t.notice.paperBy)}`);
+    if (t.replaces) facts.push('Replaces an earlier document');
+    const earlier = ops && t.state === 'confirmed' ? earlierOf(ws, doc) : null;
+    const tick = earlier ? `<label class="tx-note"><input type="checkbox" data-change="tx-replaces" data-id="${h(doc.id)}"${dv().replace[doc.id] ? ' checked' : ''}> This replaces the document delivered on ${h(longDay(givenOn(earlier)))}</label>` : '';
+    const acts = [];
+    if (ops && t.state === 'delivered') acts.push(btn('tx-notice', 'Notice', docAttr(doc)), btn('tx-bounce', 'Notice came back', docAttr(doc)));
+    if (NS.app.can('configure') && ['confirmed', 'waiting', 'delivered'].indexOf(t.state) >= 0) acts.push(btn('tx-withdraw', 'Withdraw', docAttr(doc)));
+    const f = dv().row && dv().row.id === doc.id ? dv().row.what : '';
+    const today = NS.dates.today();
+    const form =
+      f === 'notice' && t.state === 'delivered'
+        ? noticeHTML(ws, doc)
+        : f === 'bounce' && t.state === 'delivered'
+          ? `<div class="tx-form"><label class="cs-field" for="tx-bounce-date"><span>Came back on</span><input id="tx-bounce-date" type="date" value="${h(today)}"></label>${btn('tx-bounce-go', 'Save', docAttr(doc), 'cs-btn-primary')}${btn('tx-row-close', 'Cancel', docAttr(doc))}</div>`
+          : f === 'withdraw' && NS.app.can('configure')
+            ? `<div class="tx-form"><label class="cs-field cs-wide" for="tx-why"><span>Reason</span><input id="tx-why" type="text"></label>${btn('tx-withdraw-go', 'Withdraw document', docAttr(doc), 'cs-btn-primary')}${btn('tx-row-close', 'Cancel', docAttr(doc))}</div>`
+            : '';
+    return `<li class="tx-row" data-id="${h(p.id)}">${head}${facts.length ? `<span class="tx-detail">${h(facts.join(' · '))}</span>` : ''}${linkLine(ws, doc)}${tick}${acts.length ? `<div class="tx-acts">${acts.join('')}</div>` : ''}${form}</div><div class="tx-when"><span class="tx-pill ${cls}">${label}</span></div></li>`;
+  }
+  /** Deliver: first the list of who receives what (D-01), then one action. Only confirmed documents are offered. */
+  function deliverHTML(ws, b, made) {
+    const ready = made.filter(({ doc }) => doc && doc.tax.state === 'confirmed').map(({ doc }) => doc);
+    const own = made.some(({ doc }) => doc && doc.tax.state === 'delivered') && !connected(ws) ? '<p class="tx-note">No server is connected, so you send each notice from your own email: choose Notice on its row.</p>' : '';
+    if (!NS.app.can('operate') || !ready.length) return own;
+    if (!dv().list[b.id]) return `<div class="cs-row">${btn('tx-deliver', `Deliver ${ready.length}`, on(b), 'cs-btn-primary')}</div>${own}`;
+    const rows = ready
+      .map((doc) => {
+        const inv = investorOf(ws, doc.investors[0]);
+        const e = dv().replace[doc.id] ? earlierOf(ws, doc) : null;
+        return `<li class="tx-row" data-id="${h(doc.id)}"><div class="tx-what"><span class="tx-title">${inv ? `${h(inv.title)} · ${h(inv.id)}` : h(doc.investors[0])}</span><span class="tx-detail">${h(kindLabel(doc.tax.kind))} ${h(doc.tax.year)}${e ? ` · replaces the document delivered on ${h(longDay(givenOn(e)))}` : ''}</span></div></li>`;
+      })
+      .join('');
+    return `<ul class="tx-list" data-list="recipients">${rows}</ul><div class="cs-row">${btn('tx-deliver-go', `Deliver to these ${ready.length}`, on(b), 'cs-btn-primary')}${btn('tx-deliver-cancel', 'Cancel', on(b))}</div>${own}`;
+  }
+  NS.changes['tx-replaces'] = (el) => {
+    dv().replace[el.getAttribute('data-id')] = !!el.checked;
+    redraw();
+  };
+  NS.actions['tx-contact'] = () => {
+    const ws = W();
+    if (!NS.app.can('operate')) return;
+    const val = (k) => String((document.getElementById(`tx-c-${k}`) || {}).value || '').trim();
+    TD().setContact(ws, { name: val('name'), address: val('address'), phone: val('phone'), email: val('email') });
+    ui().msg.main = '';
+    NS.app.save(true);
+    redraw();
+  };
+  NS.actions['tx-deliver'] = act(async (ws, b) => {
+    const miss = missingContact(ws);
+    if (miss.length) throw new Error(`Before delivering, save the Contact for tax documents with its ${andList(miss.map((k) => CONTACT_WORDS[k]))}.`);
+    dv().list[b.id] = true;
+  });
+  NS.actions['tx-deliver-cancel'] = act(async (ws, b) => {
+    dv().list[b.id] = false;
+  });
+  NS.actions['tx-deliver-go'] = act(async (ws, b) => {
+    const docs = b.packages.map((p) => p.docId && (ws.docs || []).find((d) => d.id === p.docId)).filter((d) => d && d.tax && d.tax.state === 'confirmed');
+    const how = connected(ws) ? 'email' : 'own email';
+    const refused = [];
+    const sent = [];
+    for (const d of docs) {
+      const e = dv().replace[d.id] ? earlierOf(ws, d) : null;
+      try {
+        TD().deliver(ws, d.id, { by: actor(), how, replaces: e ? e.id : '' });
+        delete dv().replace[d.id];
+        if (d.tax.state === 'delivered') sent.push(d);
+      } catch (err) {
+        if (refused.indexOf(err.message) < 0) refused.push(err.message);
+      }
+    }
+    dv().list[b.id] = false;
+    if (connected(ws) && typeof API.link.send === 'function') {
+      for (const d of sent) {
+        try {
+          await API.link.send(ws, d);
+        } catch (err) {
+          if (window.console) console.error(err);
+        }
+      }
+    }
+    if (refused.length) throw new Error(`Not delivered: ${refused.join(' ')}`);
+  });
+  /** An action on one tax document: one at a time, its refusal said in one line, the workspace saved after it. */
+  function docAct(fn, need) {
+    return async (el) => {
+      const u = ui();
+      const ws = W();
+      const doc = (ws.docs || []).find((d) => d.id === el.getAttribute('data-doc') && d.tax);
+      if (!doc || u.working || !NS.app.can(need || 'operate')) return;
+      const key = /^batch-/.test(String(S().param || '')) && doc.tax.batch ? doc.tax.batch : 'main';
+      const val = (id) => String((document.getElementById(id) || {}).value || '').trim();
+      const typed = { date: val('tx-bounce-date'), why: val('tx-why'), sent: val(`tx-paper-${doc.id}`) };
+      u.working = true;
+      u.msg[key] = '';
+      redraw();
+      try {
+        await fn(ws, doc, typed);
+      } catch (e) {
+        u.msg[key] = (e && e.message) || 'That could not be done.';
+      }
+      u.working = false;
+      NS.app.save(true);
+      redraw();
+    };
+  }
+  const rowForm = (what, need) => (el) => {
+    if (!NS.app.can(need || 'operate')) return;
+    const id = el.getAttribute('data-doc');
+    const r = dv().row;
+    dv().row = r && r.id === id && r.what === what ? null : { id, what };
+    redraw();
+  };
+  NS.actions['tx-notice'] = rowForm('notice');
+  NS.actions['tx-bounce'] = rowForm('bounce');
+  NS.actions['tx-withdraw'] = rowForm('withdraw', 'configure');
+  NS.actions['tx-row-close'] = () => {
+    dv().row = null;
+    redraw();
+  };
+  NS.actions['tx-bounce-go'] = docAct(async (ws, doc, t) => {
+    TD().bounced(ws, doc.id, t.date);
+    dv().row = null;
+  });
+  NS.actions['tx-withdraw-go'] = docAct(async (ws, doc, t) => {
+    TD().withdraw(ws, doc.id, { by: actor(), why: t.why });
+    dv().row = null;
+  }, 'configure');
+  NS.actions['tx-paper'] = docAct(async (ws, doc, t) => {
+    TD().markPaper(ws, doc.id, { sentOn: t.sent, by: actor() });
+  });
+  NS.actions['tx-notice-copy'] = (el) => {
+    const ws = W();
+    const doc = (ws.docs || []).find((d) => d.id === el.getAttribute('data-doc') && d.tax);
+    if (!doc) return;
+    const n = TD().notice(ws, doc);
+    U.copy(`${n.subject}\n\n${n.body}`, el.closest('.tx-notice'));
   };
 
   /* ---------- the page ---------- */
