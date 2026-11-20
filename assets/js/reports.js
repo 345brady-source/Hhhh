@@ -668,8 +668,204 @@
       );
       X.B.push(note('Book capital, not tax capital.'));
       if (s.preliminary) X.B.push(note('Preliminary: the books are not closed for this period.'));
+    },
+    commitment(X, sec, o) {
+      const s = X.st[o.id];
+      if (!s || s.open) return;
+      const cur = s.currency;
+      X.B.push({ k: 'h2', text: 'Your commitment' });
+      X.B.push({
+        k: 'tiles',
+        items: [moneyTile('Commitment', s.commit, cur), moneyTile('Contributed to date', s.contribCum, cur), moneyTile('Unfunded commitment', s.unfunded, cur), moneyTile('Distributed to date', s.distCum, cur), { label: 'Ownership', value: fmt.own(s.own), v: num(s.own), t: 'pct' }]
+      });
+      if (!(sec.opts && sec.opts.activity)) return;
+      const A = X.D.activity(X.ws, X.rid, o.id, X.from, X.to) || [];
+      if (!A.length) return X.B.push(note('No capital activity in this period.'));
+      X.B.push(
+        table(
+          'Capital activity',
+          cur,
+          [col('Date', 'date'), col('Activity'), col('Amount', 'money')],
+          A.map((a) => [dateCell(a.date), txt(a.label || ACTIVITY[a.kind] || ''), money(a.kind === 'contribution' ? a.cents : -a.cents, cur, 'Capital activity')]),
+          null
+        )
+      );
+    },
+    distributions(X, sec, o) {
+      const s = X.st[o.id];
+      if (!X.rid || !s) return;
+      const cur = s.currency;
+      const d = X.D.distributions(X.ws, X.rid, o.id, X.from, X.to);
+      if (!d) return;
+      const three = (x) => [money(x.gross, cur, 'Gross'), money(x.withheld, cur, 'Tax withheld'), money(x.net, cur, 'Net')];
+      const m3 = [col('Gross', 'money'), col('Tax withheld', 'money'), col('Net', 'money')];
+      if (d.rows.length) X.B.push(table('Distributions', cur, [col('Date', 'date'), col('Type')].concat(m3), d.rows.map((r) => [dateCell(r.date), txt(r.type)].concat(three(r))), [txt('Total'), txt('')].concat(three(d.period))));
+      else X.B.push(note('No distributions were paid in this period.'));
+      X.B.push(table('Totals', cur, [col('Period')].concat(m3), [[txt('This period')].concat(three(d.period)), [txt('Year to date')].concat(three(d.ytd)), [txt('Since inception')].concat(three(d.itd))], null));
+    },
+    performance(X, sec, o) {
+      const P = X.D.performance(X.ws, o.id, X.from, X.to);
+      if (!P) return;
+      if (P.kind === 'open') {
+        X.B.push({ k: 'h2', text: 'Net returns' });
+        X.B.push({ k: 'tiles', items: [pctTile('This period', P.period), pctTile('Year to date', P.ytd), pctTile('Since inception (annualized)', P.itdAnnual)] });
+        X.B.push(table('Monthly net return', '', [col('Month'), col('Net return', 'pct')], (P.monthly || []).map((m) => [txt(fmt.month(m.key)), { v: num(m.net), s: fmt.ret(m.net) }]), null));
+        X.B.push(note('Net of fees and incentive allocation.'));
+        return;
+      }
+      const f = P.fund || {};
+      const cur = curOf(X, o);
+      X.B.push({ k: 'tiles', items: [pctTile('Net IRR', f.irr), multTile('TVPI', f.tvpi), multTile('DPI', f.dpi), multTile('RVPI', f.rvpi)] });
+      const row = (name, x) => [txt(name), money(x.paid, cur, 'Paid in'), money(x.dist, cur, 'Distributed'), money(x.nav, cur, 'Net asset value'), { v: num(x.irr), s: fmt.ret(x.irr) }, multCell(x.tvpi), multCell(x.dpi), multCell(x.rvpi)];
+      const rows = [row(o.name, f)];
+      const s = X.st[o.id];
+      if (X.rid && s && s.perf) rows.push(row('Your investment', s.perf));
+      X.B.push(
+        table('Net performance', cur, [col('Investment'), col('Paid in', 'money'), col('Distributed', 'money'), col('Net asset value', 'money'), col('Net IRR', 'pct'), col('TVPI', 'ratio'), col('DPI', 'ratio'), col('RVPI', 'ratio')], rows, null)
+      );
+      X.B.push(note('Net of fees and carried interest.'));
+    },
+    holdings(X, sec, o) {
+      const H = X.D.holdings(X.ws, o.id, X.to);
+      const cur = curOf(X, o);
+      if (!H || !(H.rows || []).length) return X.B.push(note(`No holdings at ${fmtDate(X.to)}.`));
+      const sum = (k) => H.rows.reduce((a, h) => a + (h[k] || 0), 0);
+      X.B.push(
+        table(
+          'Holdings',
+          cur,
+          [col('Investment'), col('Security'), col('Fair value', 'money'), col('Cost', 'money'), col('% of net assets', 'pct')],
+          H.rows.map((h) => [txt(h.name), txt(h.security || ''), money(h.fv, cur, 'Fair value'), money(h.cost, cur, 'Cost'), pctCell(h.pctNav)]),
+          [txt('Total'), txt(''), money(sum('fv'), cur, 'Fair value'), money(sum('cost'), cur, 'Cost'), pctCell(sum('pctNav'))]
+        )
+      );
+    },
+    assets(X, sec, o) {
+      const H = X.D.holdings(X.ws, o.id, X.to) || { rows: [] };
+      const cur = curOf(X, o);
+      const given = (sec.opts && sec.opts.items) || [];
+      const items = given.length ? given : (H.rows || []).map((h) => ({ holdingId: h.id, photoIds: [], text: [], figures: [] }));
+      items.forEach((it) => {
+        const h = (H.rows || []).find((x) => x.id === it.holdingId);
+        if (!h) return;
+        const out = [];
+        (it.photoIds || []).forEach((id) => out.push({ k: 'photo', id, caption: h.name }));
+        wording(X, it.text, 'assets').forEach((b) => out.push(b));
+        if ((it.figures || []).length) {
+          out.push(table(`Figures: ${h.name}`, '', [col('Item'), col('Value')], it.figures.map((f) => [txt(f.label), txt(f.value)]), null));
+          out.push(note('Provided by the sponsor; not from the fund’s books.'));
+        }
+        const n = X.D.noi(X.ws, o.id, h.id, X.from, X.to);
+        if (n) {
+          out.push(table('Net operating income', cur, [col('Item'), col('Amount', 'money')], [[txt('Income'), money(n.income, cur, 'Income')], [txt('Expenses'), money(-n.expenses, cur, 'Expenses')]], [txt('Net operating income'), money(n.noi, cur, 'Net operating income')]));
+          out.push(note('From the fund’s books.'));
+        }
+        if (!out.length) return;
+        X.B.push({ k: 'break' });
+        X.B.push({ k: 'h2', text: h.name });
+        out.forEach((b) => X.B.push(b));
+      });
+    },
+    fees(X, sec, o) {
+      const F = X.D.fees(X.ws, o.id, X.from, X.to);
+      const cur = curOf(X, o);
+      if (!F || !(F.rows || []).length) return X.B.push(note('No fees or expenses in this period.'));
+      X.B.push(table('Fees and expenses', cur, [col('Account'), col('Amount', 'money')], F.rows.map((r) => [txt(r.name), money(r.cents, cur, r.name)]), [txt('Total'), money(F.total, cur, 'Total')]));
+    },
+    statements(X, sec, o) {
+      const list = X.D.statements(X.ws, o.id, X.from, X.to) || [];
+      if (!list.length) return;
+      const cur = curOf(X, o);
+      list.forEach((s) => {
+        const cols = (s.cols || []).map((c) => col(c.h, c.t || 'text'));
+        const cells = (row) => (row || []).map((v, i) => cellFor(cols[i] ? cols[i].t : 'text', v, cur));
+        X.B.push(table(s.title, cur, cols, (s.rows || []).map(cells), s.total ? cells(s.total) : null));
+        if (s.desc) X.B.push(note(s.desc));
+      });
+      X.B.push(note('Prepared from the fund’s books. Unaudited.'));
+    },
+    chart(X, sec, o) {
+      const kind = X.t.chart;
+      const cur = curOf(X, o);
+      const show = (v) => fmt.money(v, cur);
+      if (kind === 'dist' || kind === 'capital') {
+        const mine = !!(X.rid && X.st[o.id]);
+        const S = X.D.series(X.ws, o.id, mine ? X.rid : null, X.from, X.to) || { capital: [], dist: [] };
+        if (kind === 'dist') chartBlock(X, 'columns', mine ? 'Your distributions by quarter' : 'Distributions by quarter', S.dist.map((d) => d.label), S.dist.map((d) => d.cents), show);
+        else chartBlock(X, 'line', mine ? 'Your capital account at month-end' : 'Fund capital at month-end', S.capital.map((c) => fmt.month(c.key)), S.capital.map((c) => c.cents), show);
+      } else if (kind === 'allocation') {
+        const H = X.D.holdings(X.ws, o.id, X.to) || { rows: [] };
+        bar100(X, 'Fair value by holding', (H.rows || []).map((h) => h.name), (H.rows || []).map((h) => h.fv));
+      }
     }
   };
+  const ACTIVITY = { contribution: 'Contribution', distribution: 'Distribution', redemption: 'Redemption' };
+  const num = (x) => (typeof x === 'number' && Number.isFinite(x) ? x : null);
+  const dateCell = (d) => ({ v: d || '', s: fmtDate(d) });
+  const pctCell = (x) => ({ v: num(x), s: fmt.own(x) });
+  const multCell = (x) => ({ v: num(x), s: fmt.mult(x) });
+  const moneyTile = (label, c, cur) => {
+    const v = whole(c, label);
+    return { label, value: fmt.money(v, cur), v, t: 'money', cur };
+  };
+  const pctTile = (label, x) => ({ label, value: fmt.ret(x), v: num(x), t: 'pct' });
+  const multTile = (label, x) => ({ label, value: fmt.mult(x), v: num(x), t: 'ratio' });
+  const curOf = (X, o) => (X.st[o.id] && X.st[o.id].currency) || NS.structures.curOf(o);
+  /** A schedule cell of the workbook writer's type as { v, s }. */
+  function cellFor(t, v, cur) {
+    if (v == null || v === '') return { v: v == null ? null : '', s: '' };
+    if (t === 'money') return money(v, cur, 'Schedule');
+    if (t === 'pct') return pctCell(v);
+    if (t === 'ratio') return multCell(v);
+    if (t === 'date') return dateCell(v);
+    if (typeof v === 'number') return { v, s: t === 'price' ? v.toFixed(2) : String(v) };
+    return txt(v);
+  }
+  /** A columns or line chart of whole cents: ticks at 0 (the lower of zero and the least value) and 1 (the greatest). */
+  function chartBlock(X, kind, title, labels, values, show) {
+    if (!labels.length) return;
+    values = values.map((v) => whole(v, title));
+    const max = Math.max(0, ...values);
+    const min = Math.min(0, ...values);
+    const span = max - min;
+    const ticks = span ? [min, Math.round(min + span / 2), max].map((v) => ({ at: (v - min) / span, s: show(v) })) : [{ at: 0, s: show(0) }, { at: 1, s: show(0) }];
+    X.B.push({ k: 'chart', kind, title, labels, values, shown: values.map(show), ticks });
+  }
+  /** Whole parts of `unit` in proportion to the values, by largest remainder (they add to `unit` exactly). */
+  function largestRemainder(values, unit) {
+    const sum = values.reduce((a, v) => a + v, 0);
+    const exact = values.map((v) => (v * unit) / sum);
+    const base = exact.map((e) => Math.floor(e));
+    let rem = unit - base.reduce((a, b) => a + b, 0);
+    exact
+      .map((e, i) => ({ f: e - base[i], i }))
+      .sort((a, b) => b.f - a.f || a.i - b.i)
+      .forEach((x) => {
+        if (rem > 0) {
+          base[x.i] += 1;
+          rem -= 1;
+        }
+      });
+    return base;
+  }
+  /** One 100% bar: values are fractions in whole basis points adding to exactly 1. Entries of zero or less are left out. */
+  function bar100(X, title, labels, raw) {
+    const keep = raw.map((v, i) => ({ v: whole(v, title), l: labels[i] })).filter((x) => x.v > 0);
+    if (!keep.length) return;
+    const bps = largestRemainder(
+      keep.map((x) => x.v),
+      10000
+    );
+    X.B.push({
+      k: 'chart',
+      kind: 'bar100',
+      title,
+      labels: keep.map((x) => x.l),
+      values: bps.map((b) => b / 10000),
+      shown: bps.map((b) => (b / 100).toFixed(2) + '%'),
+      ticks: [{ at: 0, s: '0%' }, { at: 0.5, s: '50%' }, { at: 1, s: '100%' }]
+    });
+  }
   /**
    * Typed wording for one section, merge fields checked and filled: an unknown name, an investor field with no
    * recipient, or commitment / unfunded where no covered fund is closed, is an error naming the field and the section.
@@ -700,7 +896,116 @@
       if (!blocks.length) return;
       X.B.push({ k: 'h2', text: 'Disclosures' });
       blocks.forEach((b) => X.B.push(b));
+    },
+    /** Consolidated only: one table per currency; no total ever mixes currencies. */
+    summary(X) {
+      if (!X.multi || !X.rid) return;
+      const groups = [];
+      X.funds.forEach((o) => {
+        const s = X.st[o.id];
+        if (!s) return;
+        let g = groups.find((x) => x.cur === s.currency);
+        if (!g) groups.push((g = { cur: s.currency, list: [] }));
+        g.list.push(s);
+      });
+      const vals = (a) => [a.begin, a.contrib, -a.dist, a.income + a.gain, -(a.fee + a.carry), a.end];
+      groups.forEach((g) => {
+        const tot = (X.totals || []).find((x) => x.currency === g.cur);
+        const totals = tot ? vals(tot) : vals(['begin', 'contrib', 'dist', 'income', 'gain', 'fee', 'carry', 'end'].reduce((a, k) => ((a[k] = g.list.reduce((n, s) => n + s.period[k], 0)), a), {}));
+        X.B.push(
+          table(
+            `Summary (${g.cur})`,
+            g.cur,
+            [col('Fund'), col('Beginning capital', 'money'), col('Contributions', 'money'), col('Distributions', 'money'), col('Income and gains', 'money'), col('Fees and carried interest', 'money'), col('Ending capital', 'money')],
+            g.list.map((s) => [txt(s.name)].concat(vals(s.period).map((c) => money(c, g.cur, 'Summary')))),
+            [txt('Total')].concat(totals.map((c) => money(c, g.cur, 'Summary total')))
+          )
+        );
+      });
+    },
+    /** Consolidated allocation: ending capital (or net assets in a letter) by fund, one bar per currency. */
+    chart(X) {
+      const groups = [];
+      X.funds.forEach((o) => {
+        const s = X.st[o.id];
+        const cur = curOf(X, o);
+        const v = s ? s.period.end : X.rid ? 0 : (X.D.holdings(X.ws, o.id, X.to) || {}).nav || 0;
+        let g = groups.find((x) => x.cur === cur);
+        if (!g) groups.push((g = { cur, labels: [], values: [] }));
+        g.labels.push(o.name);
+        g.values.push(v);
+      });
+      groups.forEach((g) => bar100(X, `${X.rid ? 'Ending capital' : 'Net assets'} by fund (${g.cur})`, g.labels, g.values));
+    },
+    notice(X) {
+      const d = X.dist;
+      if (!d) return;
+      const cur = d.currency;
+      X.B.push({ k: 'tiles', items: [moneyTile('Gross amount', d.gross, cur), moneyTile('Tax withheld', d.withheld, cur), moneyTile('Net amount paid', d.net, cur)] });
+      X.B.push(
+        table(
+          'Payment details',
+          cur,
+          [col('Payment date', 'date'), col('Type'), col('Payment method'), col('Distributions to date', 'money')],
+          [[dateCell(d.date), txt(d.type), txt(d.method || 'Not recorded'), money(d.cumulative, cur, 'Distributions to date')]],
+          null
+        )
+      );
+      const parts = splitFor(X.ws, d.runId, d.gross);
+      if (!parts) return;
+      X.B.push(table('Character of this distribution', cur, [col('Character'), col('Amount', 'money')], parts.map((p) => [txt(p.label), money(p.cents, cur, p.label)]), [txt('Total'), money(d.gross, cur, 'Total')]));
+      X.B.push(note('Your tax documents are authoritative for tax purposes.'));
+    },
+    taxsummary(X) {
+      const T = X.tax;
+      if (!T || !X.rid) return;
+      const groups = [];
+      (T.funds || []).forEach((f) => {
+        let g = groups.find((x) => x.cur === f.currency);
+        if (!g) groups.push((g = { cur: f.currency, list: [] }));
+        g.list.push(f);
+      });
+      const three = (x, cur) => [money(x.gross, cur, 'Gross distributions'), money(x.withheld, cur, 'Tax withheld'), money(x.net, cur, 'Net paid')];
+      groups.forEach((g) => {
+        const sum = ['gross', 'withheld', 'net'].reduce((a, k) => ((a[k] = g.list.reduce((n, f) => n + f[k], 0)), a), {});
+        X.B.push(
+          table(
+            groups.length > 1 ? `Tax summary (${g.cur})` : 'Tax summary',
+            g.cur,
+            [col('Fund'), col('Gross distributions', 'money'), col('Tax withheld', 'money'), col('Net paid', 'money')],
+            g.list.map((f) => [txt(f.name)].concat(three(f, g.cur))),
+            [txt('Total')].concat(three(sum, g.cur))
+          )
+        );
+      });
+      if (!groups.length) X.B.push(note(`No distributions were paid to you in ${T.year}.`));
+      X.B.push(note(`Cash paid in ${T.year}. Your tax documents are authoritative for tax purposes.`));
+    },
+    taxdocs(X, sec) {
+      if (!X.rid) return;
+      const year = X.year;
+      const docs = X.D.taxDocs(X.ws, X.rid, year) || [];
+      if (docs.length)
+        X.B.push(
+          table(
+            'Tax documents',
+            '',
+            [col('Document'), col('Fund'), col('Status'), col('Available until', 'date')],
+            docs.map((d) => [txt(d.label), txt((offering(X.ws, d.offeringId) || { name: '' }).name), txt(DOC_STATUS[d.state] || DOC_STATUS.confirmed), d.availableUntil ? dateCell(d.availableUntil) : { v: '', s: '' }]),
+            null
+          )
+        );
+      else X.B.push(note(`No tax documents for ${year} yet.`));
+      const exp = sec.opts && sec.opts.expected;
+      if (exp) X.B.push(note(`Expected: ${exp}`));
     }
+  };
+  const DOC_STATUS = {
+    confirmed: 'Being prepared',
+    waiting: 'Held until you consent to electronic delivery',
+    delivered: 'In your Documents',
+    paper: 'Sent on paper',
+    replaced: 'Replaced by a corrected document'
   };
   /** 'A', 'A and B', 'A, B and C'. */
   const andList = (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]);
@@ -763,21 +1068,57 @@
     let to;
     let label;
     let funds = [];
+    let dist = null;
+    let tax = null;
+    let year = null;
+    let totals = null;
     const st = {};
-    const p = snapped(spec);
-    from = p.from;
-    to = p.to;
-    label = periodLabel(from, to);
-    if (aud.kind === 'investor' && aud.offeringId) funds = [offering(ws, aud.offeringId)];
-    else if ((aud.kind === 'investor' || aud.kind === 'all') && rid) funds = D.fundsOf(ws, rid);
-    else if (aud.kind === 'fund') funds = [offering(ws, aud.offeringId)];
-    else if (aud.kind === 'letter') funds = (aud.offeringIds || []).map((id) => offering(ws, id));
-    funds = funds.filter(Boolean);
-    if (rid) funds.forEach((o) => (st[o.id] = D.statement(ws, rid, o.id, from, to)));
-    const multi = funds.length > 1;
+    if (type === 'distribution') {
+      const run = (ws.runs || []).find((r) => r.id === spec.runId);
+      if (!run) return { model: null, errors: [{ section: 'notice', field: '', message: 'No such distribution' }] };
+      dist = rid ? D.distribution(ws, run.id, rid) : null;
+      if (rid && !dist) return { model: null, errors: [{ section: 'notice', field: '', message: 'This investor has no paid line in the distribution' }] };
+      from = to = dist ? dist.date : run.date;
+      label = { text: `Paid ${fmtDate(to)}`, short: fmtDate(to), months: 0 };
+      funds = [offering(ws, run.offeringId)].filter(Boolean);
+      // the run's month, for merge fields such as {ending_capital} in the cover letter
+      const p = parts(to);
+      if (rid && p) funds.forEach((o) => (st[o.id] = D.statement(ws, rid, o.id, `${to.slice(0, 7)}-01`, `${to.slice(0, 7)}-${String(lastDay(p.y, p.m)).padStart(2, '0')}`)));
+    } else if (type === 'tax') {
+      year = Number(spec.year);
+      from = `${year}-01-01`;
+      to = `${year}-12-31`;
+      label = { text: `Tax year ${year}`, short: String(year), months: 12 };
+      tax = rid ? D.taxYear(ws, rid, year) : { year, funds: [] };
+      funds = ((tax && tax.funds) || []).map((f) => offering(ws, f.offeringId)).filter(Boolean);
+      if (rid) funds.forEach((o) => (st[o.id] = D.statement(ws, rid, o.id, from, to)));
+    } else {
+      const p = snapped(spec);
+      from = p.from;
+      to = p.to;
+      label = periodLabel(from, to);
+      if (aud.kind === 'investor' && aud.offeringId) funds = [offering(ws, aud.offeringId)];
+      else if ((aud.kind === 'investor' || aud.kind === 'all') && rid) {
+        const C = D.consolidated(ws, rid, from, to) || { funds: [], totals: [] };
+        funds = C.funds.map((s) => offering(ws, s.offeringId));
+        C.funds.forEach((s) => (st[s.offeringId] = s));
+        totals = C.totals;
+      } else if (aud.kind === 'fund') funds = [offering(ws, aud.offeringId)];
+      else if (aud.kind === 'letter') funds = (aud.offeringIds || []).map((id) => offering(ws, id));
+      funds = funds.filter(Boolean);
+      if (rid) funds.forEach((o) => (st[o.id] = st[o.id] || D.statement(ws, rid, o.id, from, to)));
+    }
+    const multi = funds.length > 1 && type !== 'tax';
 
+    const six = /^H[12] /.test(label.short);
     let title = TITLES[type];
     if (type === 'statement' && multi) title = 'Consolidated statement';
+    if (type === 'quarterly' && six) title = 'Semiannual report';
+    // C-09: a Regulation A offering's annual review (or six-month report) is its report to investors, not its SEC filing
+    const REG_A = ['regA1', 'regA2', 'regA2listed'];
+    const regA = funds.length > 0 && !!(NS.eligibility && NS.eligibility.regime) && funds.every((o) => REG_A.indexOf(NS.eligibility.regime(o)) >= 0);
+    const secNote = regA && (type === 'annual' || (type === 'quarterly' && six));
+    if (secNote) title = six ? 'Semiannual report to investors' : 'Annual report to investors';
     if (t.title) title = t.title;
     const subtitle = label.text;
     const author = firm.legalName || firm.name || '';
@@ -788,12 +1129,16 @@
     const coverOn = sections.some((s) => s.key === 'cover');
     const fundLine = multi ? (aud.kind === 'letter' ? funds.map((o) => o.name).join(', ') : 'All investments') : funds[0] ? funds[0].name : '';
 
-    const X = { ws, D, t, type, rid, inv, from, to, label, funds, st, multi, firm, errors, dist: null, B: [] };
+    const X = { ws, D, t, type, rid, inv, from, to, label, funds, st, multi, firm, errors, dist, tax, year, totals, B: [] };
     X.values = mergeValues(X);
-    const fundKeys = sections.filter((s) => FUND_SECTIONS[s.key]);
+    if (secNote) X.B.push(note('This report is not the offering’s filing with the SEC (Form 1-K or Form 1-SA), which is made separately.'));
+    // a consolidated allocation chart is drawn once, across funds; every other chart is per fund
+    const perFund = (key) => !!FUND_SECTIONS[key] && !(key === 'chart' && multi && t.chart === 'allocation') && !(key === 'chart' && t.chart === 'none');
+    const fundKeys = sections.filter((s) => perFund(s.key));
     let fundsDone = false;
     sections.forEach((s) => {
-      if (FUND_SECTIONS[s.key]) {
+      if (s.key === 'chart' && t.chart === 'none') return;
+      if (perFund(s.key)) {
         if (!multi) {
           if (funds[0]) FUND_SECTIONS[s.key](X, s, funds[0]);
           return;
@@ -840,6 +1185,68 @@
     return { model, errors };
   }
 
+  /* ---------- Checks on a model ---------- */
+  function stringsOf(x, out) {
+    if (typeof x === 'string') out.push(x);
+    else if (Array.isArray(x)) x.forEach((y) => stringsOf(y, out));
+    else if (x && typeof x === 'object') Object.keys(x).forEach((k) => stringsOf(x[k], out));
+    return out;
+  }
+  /** Ids of investors other than the recipient whose id appears anywhere in the model, or whose name equals any string in it (Pitfall 12). */
+  function othersIn(ws, model) {
+    const all = stringsOf(model, []);
+    const me = model && model.recipient ? model.recipient.id : null;
+    return (ws.investors || [])
+      .filter((i) => i.id !== me)
+      .filter((i) => all.some((s) => (i.id && s.indexOf(i.id) >= 0) || (i.title && s === i.title) || (i.contact && s === i.contact)))
+      .map((i) => i.id);
+  }
+
+  /* ---------- Spreadsheet ---------- */
+  /**
+   * Schedule objects for NS.files.workbook: first 'Report' (title, period, recipient, firm, then each tile as its label
+   * and raw value in the column of its type), then one sheet per table, titled by the table title (prefixed with the
+   * fund name in a consolidated model), raw values only. Text is written by the workbook writer as inline strings, so a
+   * typed value is never read as a formula.
+   */
+  function sheets(model) {
+    const cols = [col('Item'), col('Value'), col('Amount', 'money'), col('Percent', 'pct'), col('Multiple', 'ratio')];
+    const firstCur = (model.blocks.find((b) => b.k === 'table' && b.currency) || {}).currency || 'USD';
+    const report = { title: 'Report', cols: cols.concat([col('Currency')]), rows: [], total: null, currency: firstCur };
+    const name = model.recipient ? model.recipient.name : 'All investors';
+    report.rows.push(['Title', model.title, null, null, null, ''], ['Period', model.subtitle, null, null, null, ''], ['Prepared for', name, null, null, null, ''], ['Firm', model.firm.legalName || model.firm.name, null, null, null, '']);
+    const extra = {};
+    const out = [];
+    let fund = '';
+    model.blocks.forEach((b) => {
+      if (b.k === 'h1') fund = b.text;
+      if (b.k === 'tiles')
+        b.items.forEach((it) => {
+          const label = (fund ? fund + ': ' : '') + it.label;
+          if (it.t === 'money') {
+            const cur = it.cur || firstCur;
+            const row = [label, null, it.v, null, null, cur];
+            if (cur === firstCur) report.rows.push(row);
+            else (extra[cur] = extra[cur] || { title: `Report (${cur})`, cols: report.cols, rows: [], total: null, currency: cur }).rows.push(row);
+          } else if (it.t === 'pct' && it.v != null) report.rows.push([label, null, null, it.v, null, '']);
+          else if (it.t === 'ratio' && it.v != null) report.rows.push([label, null, null, null, it.v, '']);
+          else report.rows.push([label, it.value, null, null, null, '']);
+        });
+      if (b.k === 'table')
+        out.push({
+          title: (fund ? fund + ' - ' : '') + b.title,
+          cols: b.cols.map((c) => ({ h: c.h, t: c.t })),
+          rows: b.rows.map((row) => row.map((c) => c.v)),
+          total: b.total ? b.total.map((c) => c.v) : null,
+          currency: b.currency || firstCur
+        });
+    });
+    return [report].concat(
+      Object.keys(extra).map((k) => extra[k]),
+      out
+    );
+  }
+
   NS.reports = {
     CATALOGUE,
     TYPES: Object.freeze(TYPES.slice()),
@@ -866,6 +1273,8 @@
     recipients,
     resolve,
     setSplit,
-    splitFor
+    splitFor,
+    othersIn,
+    sheets
   };
 })();
