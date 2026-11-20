@@ -1,5 +1,5 @@
 // gate: browser
-// last "TAX1099 FLOW: PASS (parts run: 1)"
+// last "TAX1099 FLOW: PASS (parts run: 6)"
 // The Form 1099 section of the Tax documents page (plan 10-10, D-02, C-01, C-05, TAX-07, TAX-08, TAX-10, TAX-11, TAX-12):
 // the sponsor of a notes fund reviews the Form 1099-INT figures the portal's records prove, confirms each against the
 // bank, has each recipient's number read from the signed W-9 or types it, makes the recipients' copies and delivers them
@@ -13,6 +13,29 @@
 //                  reads 'ending 7730' from the signed W-9 without typing, A-1001's typed number is accepted; Download the
 //                  IRS file saves one .csv: the header line and two rows with 20000.00, 13333.32 and 1600.00 in the box 1
 //                  and box 4 columns; the file's SHA-256 and row count are on the fund's year record
+//   review-desktop the same at 1280x800, with the three one-line notices: the IRS's code for filing can take up to 45 days
+//                  (with its link to the IRS's IRIS page), do not open the file in a spreadsheet before uploading it, and
+//                  (while NS.tax1099data.IRIS.headerPinned is false) the file's header has not been compared with the IRS's
+//                  own template
+//   payer          1280x800: an admin enters the payer's details and ticks the two boxes; saved with who and when, no
+//                  number stored, logged; a team member sees them and cannot change them; with either box unticked the
+//                  fund shows that stop's sentence and offers no Confirm
+//   tin            390x844: a typed number that does not end in the four on record is refused with one line showing no
+//                  digit beyond its last four; eight digits are refused; leaving the page empties the numbers; after the
+//                  file is made, every localStorage value, the saved workspace, the change log, the page's text and fields
+//                  hold none of the numbers and no run of nine digits or dashed shape that was not there before (the sample
+//                  firm itself holds nine-digit bank routing numbers); the file store holds no new record; the payer's
+//                  number is checked against its kept last four from the second time on; after a reload the step is empty
+//   copyb          390x844: Create recipient copies makes two confirmed, undelivered documents of kind 1099-int for 2026,
+//                  confirmed by the person who confirmed each total, listed on the page; delivered there, A-1002 (consented)
+//                  finds Form 1099-INT in Documents, its first page drawn, leaving the portal on October 15, 2027; its text
+//                  holds ***-**-7730, $13,333.32 and $1,600.00 and no full number; A-1001 (no consent) is on the
+//                  send-on-paper list; the year record holds each copy's document id
+//   file           1280x800: a period in A-1001's last name: the page names the row, the column and the reason, offers that
+//                  cell for correction and builds no file; corrected, the file downloads with no asterisk in any cell; Record
+//                  the IRS receipt (number and date) marks both forms filed with that date, logged; a missing number or date
+//                  is refused
+// Every part: quiet, leak and a way out on screen.
 //   NODE_PATH=$(npm root -g) node tax1099-flow.js [--only part1,part2]
 // The last line is "TAX1099 FLOW: PASS (parts run: N)" or "TAX1099 FLOW: FAIL (parts run: N) - <parts>".
 //
@@ -275,10 +298,9 @@ async function toNumbers(check, fr) {
   await typeNumbers(fr, { payer: PAYER_TIN, rec: { 'A-1001': TIN['A-1001'] } });
 }
 
-const parts = {
-  async 'review-phone'({ check: raw, S }) {
-    const check = masked(raw);
-    const { A, fr } = await open(S, 'phone');
+/** review-phone and review-desktop: the review, the confirmations, the numbers and the IRS file at one size. */
+async function review(check, S, size) {
+    const { A, fr } = await open(S, size);
     await T.proveRefused(check, A, fr);
     await T.sample(fr, { role: 'admin' });
     await seatD(fr);
@@ -309,11 +331,12 @@ const parts = {
     await toNumbers(check, fr);
     const nums = await rowsOf(fr, 'numbers');
     const n1 = nums.find((r) => r.id === 'A-1001') || { text: '' };
+    if (size === 'desktop') await notices(check, fr);
     check("A-1001's typed number is accepted: its row reads 'ending 4821'", /ending 4821/.test(n1.text) && !(await has(fr, '#t99-tin-A-1001')), n1.text);
     check("the payer's typed number is accepted: 'ending 4321'", /ending 4321/.test(await fr.evaluate(() => (document.querySelector('[data-panel="numbers"]') || {}).innerText || '')) && !(await has(fr, '#t99-payer-tin')));
     const page = await fr.evaluate(() => document.body.innerText);
     check('the screen holds no full number, only last fours', numberHits(page).hits.length === 0 && numberHits(page).shapes.length === 0, numberHits(page));
-    await shot(A, fr, '[data-panel="numbers"]', 'review-phone-numbers.png');
+    await shot(A, fr, '[data-panel="numbers"]', `review-${size}-numbers.png`);
     const got = await download(A, fr, '[data-action=t99-file]');
     const want = await fr.evaluate(() => window.CVPortal.tax1099.iris.header('1099-INT').join(','));
     const L = got ? lines(got.text) : [];
@@ -327,6 +350,317 @@ const parts = {
     const file = yr && (yr.files || [])[0];
     const sha = got ? crypto.createHash('sha256').update(Buffer.from(got.text, 'utf8')).digest('hex') : '';
     check("the file's SHA-256 and row count are on the fund's year record", !!file && file.sha256 === sha && file.rows === 2 && !!file.by, file ? { rows: file.rows, same: file.sha256 === sha } : yr);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  return true;
+}
+
+/** The three one-line notices of the IRS file (desktop review). */
+async function notices(check, fr) {
+  const n = await fr.evaluate(() => {
+    const t = (k) => {
+      const el = document.querySelector(`[data-notice="${k}"]`);
+      return el ? { text: el.innerText.trim(), links: Array.from(el.querySelectorAll('a')).map((a) => a.getAttribute('href')) } : null;
+    };
+    return { code: t('code'), sheet: t('sheet'), header: t('header'), pinned: !!window.CVPortal.tax1099data.IRIS.headerPinned };
+  });
+  check("one line says the IRS's code for filing can take up to 45 days, with its link to the IRS's IRIS page", !!n.code && /45 days/.test(n.code.text) && !/\n/.test(n.code.text) && n.code.links.length === 1 && /^https:\/\/www\.irs\.gov\/.*iris/i.test(n.code.links[0]), n.code);
+  check('one line says not to open the file in a spreadsheet before uploading it', !!n.sheet && /spreadsheet/i.test(n.sheet.text) && /upload/i.test(n.sheet.text) && !/\n/.test(n.sheet.text), n.sheet);
+  check("while headerPinned is false, one line says the file's header has not been compared with the IRS's own template", !n.pinned && !!n.header && /header/i.test(n.header.text) && /not/i.test(n.header.text) && /template/i.test(n.header.text), n.header);
+}
+/** What this browser holds that a person could read later: every localStorage value, the saved workspace, the change log, the page's text. */
+const stored = (fr) =>
+  fr.evaluate(() => {
+    const ls = [];
+    for (let k = 0; k < localStorage.length; k++) ls.push(localStorage.getItem(localStorage.key(k)) || '');
+    const ws = window.CVPortal.state.ws;
+    return { ls: ls.join('\n'), ws: JSON.stringify(ws), log: JSON.stringify(ws.audit || []), page: document.body.innerText, inputs: Array.from(document.querySelectorAll('input')).map((i) => i.value).join('\n') };
+  });
+/** The keys of the browser's file store. */
+const fileKeys = (fr) =>
+  fr.evaluate(
+    () =>
+      new Promise((res) => {
+        const r = indexedDB.open('cvp-documents', 1);
+        r.onsuccess = () => {
+          const t = r.result.transaction('files', 'readonly').objectStore('files').getAllKeys();
+          t.onsuccess = () => res(t.result.map(String).sort());
+          t.onerror = () => res(['error']);
+        };
+        r.onerror = () => res(['error']);
+      })
+  );
+/** The tax documents of kind 1099-int. */
+const copies = (fr) =>
+  fr.evaluate(() =>
+    (window.CVPortal.state.ws.docs || [])
+      .filter((d) => d.tax && d.tax.kind === '1099-int')
+      .map((d) => ({ id: d.id, investor: d.investors[0], year: d.tax.year, state: d.tax.state, hidden: d.hidden, by: d.tax.match.confirmedBy, until: d.tax.availableUntil, title: d.title }))
+  );
+/** As the investor on Documents: open a document by id; resolves to the dialog's head text and pages drawn. */
+async function openDoc(fr, docId) {
+  await T.press(fr, `.tbl-docs [data-action=open-doc][data-id="${docId}"]`);
+  await fr.waitForFunction(() => {
+    const imgs = Array.from(document.querySelectorAll('#dlg[open] .dlg-body img.doc-page'));
+    return (imgs.length > 0 && imgs.every((i) => i.complete && i.naturalWidth > 0)) || /cannot be shown/.test((document.querySelector('#dlg .dlg-body') || {}).innerText || '');
+  }, null, { timeout: 60000, polling: 300 }).catch(() => {});
+  const r = await fr.evaluate(() => {
+    const d = document.getElementById('dlg');
+    return { open: !!(d && d.open), head: d ? d.querySelector('.dlg-head').innerText.replace(/\s+/g, ' ') : '', pages: d ? Array.from(d.querySelectorAll('.dlg-body img.doc-page')).filter((i) => i.complete && i.naturalWidth > 0).length : 0 };
+  });
+  await T.press(fr, '#dlg [data-action=close-dialog]');
+  await fr.waitForTimeout(300);
+  return r;
+}
+/** The text of a stored document's every page, tested in the frame; only the answers leave it (never the text). */
+const copyText = (fr, docId, numbers) =>
+  fr.evaluate(
+    async ({ docId, numbers }) => {
+      const NS = window.CVPortal;
+      const blob = await NS.ops.files.get(docId);
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const lib = await NS.taxUI.reader();
+      const pdf = await lib.getDocument({ data: bytes, isEvalSupported: false }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const pg = await pdf.getPage(i);
+        text += ' ' + (await pg.getTextContent()).items.map((x) => x.str).join(' ');
+      }
+      pdf.destroy();
+      const flat = text.replace(/\s+/g, '');
+      return {
+        pages: pdf.numPages,
+        masked: /\*\*\*-\*\*-7730/.test(flat),
+        full: numbers.some((d) => flat.indexOf(d) >= 0 || flat.indexOf(`${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`) >= 0 || flat.indexOf(d.slice(0, 5)) >= 0),
+        box1: flat.indexOf('13,333.32') >= 0,
+        box4: flat.indexOf('1,600.00') >= 0
+      };
+    },
+    { docId, numbers }
+  );
+
+const parts = {
+  async 'review-phone'({ check, S }) {
+    await review(masked(check), S, 'phone');
+  },
+  async 'review-desktop'({ check, S }) {
+    await review(masked(check), S, 'desktop');
+  },
+  async payer({ check: raw, S }) {
+    const check = masked(raw);
+    const { A, fr } = await open(S, 'desktop');
+    await T.sample(fr, { role: 'admin' });
+    await seatD(fr, { payer: false });
+    await openSection(fr);
+    let st = (await stops(fr)).map((s) => s.code);
+    check('with no payer details, the fund shows the two confirmation stops and offers no Confirm', st.indexOf('registered') >= 0 && st.indexOf('in-money') >= 0 && !(await has(fr, '[data-action=t99-confirm]')), st);
+    const P = { name: 'Example D Notes LLC', name2: 'Series A', address1: '100 Main St', address2: 'Suite 5', city: 'Dallas', state: 'TX', zip: '75201', phone: '214-555-0100' };
+    for (const k of Object.keys(P)) await fr.fill(`#t99-p-${k}`, P[k]);
+    await fr.check('#t99-p-registered');
+    await fr.check('#t99-p-money');
+    await T.press(fr, '[data-action=t99-payer]');
+    await fr.waitForTimeout(500);
+    const p = await fr.evaluate((id) => JSON.parse(JSON.stringify(window.CVPortal.state.ws.offerings.find((o) => o.id === id).tax.payer || {})), FUND);
+    check("the payer's details are saved as entered", Object.keys(P).every((k) => p[k] === P[k]) && p.registeredForm === true && p.paidInMoney === true, p);
+    check('saved with who and when', !!p.setBy && !!p.setAt && !!p.confirmedBy && !!p.confirmedAt, { setBy: p.setBy, at: !!p.setAt });
+    check('no taxpayer number is stored with the payer', !('tin' in p) && !p.tinLast4, Object.keys(p));
+    const logged = await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((e) => e.action === 'Payer for Form 1099 changed').length);
+    check('the change log has the entry', logged >= 1, logged);
+    st = (await stops(fr)).map((s) => s.code);
+    check('with both boxes ticked the two stops are gone and Confirm is offered', st.length === 0 && (await has(fr, '[data-action=t99-confirm]')), st);
+    await fr.uncheck('#t99-p-registered');
+    await T.press(fr, '[data-action=t99-payer]');
+    await fr.waitForTimeout(500);
+    const s1 = await stops(fr);
+    check('with "registered form" unticked, the fund shows that stop\'s sentence and offers no Confirm', s1.length === 1 && s1[0].code === 'registered' && /CPA/.test(s1[0].text) && !(await has(fr, '[data-action=t99-confirm]')), s1);
+    await fr.check('#t99-p-registered');
+    await fr.uncheck('#t99-p-money');
+    await T.press(fr, '[data-action=t99-payer]');
+    await fr.waitForTimeout(500);
+    const s2 = await stops(fr);
+    check('with "paid in money" unticked, that stop\'s sentence and no Confirm', s2.length === 1 && s2[0].code === 'in-money' && /CPA/.test(s2[0].text) && !(await has(fr, '[data-action=t99-confirm]')), s2);
+    await fr.check('#t99-p-money');
+    await T.press(fr, '[data-action=t99-payer]');
+    await fr.waitForTimeout(500);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    // a team member sees the details and cannot change them
+    await T.sample(fr, { role: 'team' });
+    await openSection(fr);
+    const team = await fr.evaluate(() => {
+      const el = document.querySelector('[data-panel="payer"]');
+      return { text: el ? el.innerText : '', inputs: el ? el.querySelectorAll('input, select, textarea').length : -1, save: !!document.querySelector('[data-action=t99-payer]') };
+    });
+    check("a team member sees the payer's details", /Example D Notes LLC/.test(team.text) && /100 Main St/.test(team.text) && /Dallas/.test(team.text), team.text.slice(0, 200));
+    check('and cannot change them: no field and no Save', team.inputs === 0 && !team.save, team);
+    await T.wayOut(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+  async tin({ check: raw, S }) {
+    const check = masked(raw);
+    const { A, fr } = await open(S, 'phone');
+    await T.sample(fr, { role: 'admin' });
+    await seatD(fr);
+    await openSection(fr);
+    await confirmAll(fr);
+    await until(fr, '[data-list="numbers"] .tx-row[data-id="A-1002"][data-from="w9"]');
+    const base = await stored(fr);
+    const baseShapes = new Set([].concat(...['ls', 'ws', 'log', 'page'].map((k) => numberHits(base[k]).shapes)));
+    const keys0 = await fileKeys(fr);
+    // a number that does not end in the four on record
+    const wrong = TIN['A-1001'].slice(0, 5) + '4822';
+    await typeNumbers(fr, { rec: { 'A-1001': wrong } });
+    let said = await alerts(fr);
+    const rowSaid = said.filter((t) => /end in the four/i.test(t));
+    check('a number that does not end in the four on record is refused with one line', rowSaid.length === 1 && !/ending 4822/.test((await rowsOf(fr, 'numbers')).map((r) => r.text).join(' ')), said);
+    check('that line shows no digit of what was typed beyond its last four', said.every((t) => !/\d{5}/.test(t) && t.indexOf(wrong.slice(0, 5)) < 0), said);
+    check('the field is drawn again empty (no typed number stays in a field)', (await fr.inputValue('#t99-tin-A-1001').catch(() => 'missing')) === '');
+    // eight digits
+    await typeNumbers(fr, { rec: { 'A-1001': TIN['A-1001'].slice(0, 8) } });
+    said = await alerts(fr);
+    check('a number of eight digits is refused', said.some((t) => /nine digits/.test(t) && /8/.test(t)) && (await has(fr, '#t99-tin-A-1001')), said);
+    // accepted, then leaving the page empties the numbers
+    await typeNumbers(fr, { payer: PAYER_TIN, rec: { 'A-1001': TIN['A-1001'] } });
+    check('the right numbers are accepted', /ending 4821/.test((await rowsOf(fr, 'numbers')).find((r) => r.id === 'A-1001').text) && !(await has(fr, '#t99-payer-tin')));
+    await go(fr, 'console-taxdocs', '.tx');
+    await openSection(fr);
+    check('after the page is left and opened again, the typed numbers are gone (the fields are back)', (await has(fr, '#t99-payer-tin')) && (await has(fr, '#t99-tin-A-1001')));
+    // the file is made
+    await until(fr, '[data-list="numbers"] .tx-row[data-id="A-1002"][data-from="w9"]');
+    await typeNumbers(fr, { payer: PAYER_TIN, rec: { 'A-1001': TIN['A-1001'] } });
+    const got = await download(A, fr, '[data-action=t99-file]');
+    check('the IRS file is made', !!got && lines(got.text).length === 3);
+    const after = await stored(fr);
+    for (const [k, what] of [['ls', 'every localStorage value'], ['ws', 'the saved workspace'], ['log', 'the change log'], ['page', "the page's text"], ['inputs', "the page's fields"]]) {
+      const x = numberHits(after[k]);
+      const fresh = x.shapes.filter((s) => !baseShapes.has(s));
+      check(`after the file is made, ${what} holds none of the numbers, no new run of nine digits and none of the two dashed shapes`, x.hits.length === 0 && fresh.length === 0, { hits: x.hits, fresh });
+    }
+    check('the search can fail: it finds a number put into a copy of the workspace', numberHits(after.ws.replace('"Avery Example"', `"Avery ${TIN['A-1002']}"`)).hits.length === 1);
+    check('the file store holds no new record', JSON.stringify(await fileKeys(fr)) === JSON.stringify(keys0), { before: keys0.length });
+    check('the numbers step is empty again once the file is made', (await has(fr, '#t99-payer-tin')) && (await has(fr, '#t99-tin-A-1001')));
+    const last4 = await fr.evaluate((id) => (window.CVPortal.state.ws.offerings.find((o) => o.id === id).tax.payer || {}).tinLast4, FUND);
+    check("only the payer's last four are kept", last4 === '4321', last4);
+    // the second time, the payer's number is checked against its stored last four
+    await typeNumbers(fr, { payer: PAYER_TIN.slice(0, 5) + '4322' });
+    said = await alerts(fr);
+    check("from the second time on, a payer's number that does not end in the four kept is refused", said.some((t) => /four digits/.test(t)) && (await has(fr, '#t99-payer-tin')) && said.every((t) => !/\d{5}/.test(t)), said);
+    // a reload
+    const fr2 = await reframe(A);
+    await openSection(fr2);
+    await confirmAll(fr2);
+    check('after a reload the numbers step is empty again', (await has(fr2, '#t99-payer-tin')) && (await has(fr2, '#t99-tin-A-1001')) && !/typed/.test((await rowsOf(fr2, 'numbers')).map((r) => r.text).join(' ')));
+    await T.wayOut(check, fr2);
+    await T.leak(check, fr2);
+    await T.quiet(check, A, fr2);
+    await A.context.close();
+  },
+  async copyb({ check: raw, S }) {
+    const check = masked(raw);
+    const { A, fr } = await open(S, 'phone');
+    await T.sample(fr, { role: 'admin' });
+    await seatD(fr);
+    await T.ws(fr, (w, a, NS) => {
+      NS.taxdocs.setContact(w, { name: 'Example D investor relations', address: '1 Market Street, Wilmington, DE 19801', phone: '302-555-0100', email: 'tax@example.com' });
+      NS.taxdocs.consent(w, 'A-1002', { where: 'portal' });
+      return true;
+    });
+    await toNumbers(check, fr);
+    const keys0 = await fileKeys(fr);
+    await T.press(fr, '[data-action=t99-copies]');
+    await fr.waitForFunction(() => (window.CVPortal.state.ws.docs || []).filter((d) => d.tax && d.tax.kind === '1099-int').length >= 2, null, { timeout: 60000 }).catch(() => {});
+    await fr.waitForTimeout(500);
+    let docs = await copies(fr);
+    const conf = (await yearRec(fr)) || {};
+    const byOf = (id) => ((conf.confirmed || {})[id] || {}).by;
+    check('Create recipient copies makes two documents of kind 1099-int for 2026, one for A-1001 and one for A-1002', docs.length === 2 && docs.map((d) => d.investor).sort().join() === 'A-1001,A-1002' && docs.every((d) => d.year === '2026'), docs);
+    check('each is confirmed (by the person who confirmed that form\'s total), hidden and not yet delivered', docs.every((d) => d.state === 'confirmed' && d.hidden && !!d.by && d.by === byOf(d.investor)), docs);
+    check("the fund's year record holds each copy's document id", docs.every((d) => (conf.copyB || {})[d.investor] === d.id), conf.copyB);
+    const keys1 = await fileKeys(fr);
+    check('the file store gained exactly the two documents', keys1.length === keys0.length + 2 && docs.every((d) => keys1.indexOf(d.id) >= 0));
+    const listed = await rowsOf(fr, 'copies');
+    check('they are listed on the page, Not delivered', listed.length === 2 && listed.every((r) => /Not delivered/.test(r.text)), listed);
+    await shot(A, fr, '[data-list="copies"]', 'copyb-phone.png');
+    // delivered through the Tax documents page's delivery: the list first, then one action
+    await T.press(fr, '[data-action=t99-deliver]');
+    await fr.waitForTimeout(400);
+    const rec = await rowsOf(fr, 'recipients');
+    check('Deliver first lists who receives what', rec.length === 2 && rec.every((r) => /Form 1099-INT 2026/.test(r.text)), rec);
+    await T.press(fr, '[data-action=t99-deliver-go]');
+    await fr.waitForTimeout(800);
+    docs = await copies(fr);
+    const d2 = docs.find((d) => d.investor === 'A-1002') || {};
+    const d1 = docs.find((d) => d.investor === 'A-1001') || {};
+    check('A-1002 (who consented) has it delivered, available until 2027-10-15', d2.state === 'delivered' && !d2.hidden && d2.until === '2027-10-15', d2);
+    check('A-1001 (no consent) waits for consent', d1.state === 'waiting' && d1.hidden, d1);
+    const text = await copyText(fr, d2.id, [TIN['A-1001'], TIN['A-1002']]);
+    check("the copy is the official form's Copy B with the instructions: three pages", text.pages === 3, text.pages);
+    check("its text holds the recipient's number as ***-**-7730 and no full number", text.masked && !text.full, { masked: text.masked, full: text.full });
+    check('its text holds $13,333.32 and $1,600.00', text.box1 && text.box4, text);
+    await go(fr, 'console-taxdocs', '.tx');
+    const paper = await rowsOf(fr, 'paper');
+    check('A-1001 is on the send-on-paper list of the Tax documents page', paper.some((r) => /A-1001/.test(r.text) && /Form 1099-INT 2026/.test(r.text)), paper);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    // as A-1002
+    await T.sample(fr, { role: 'investor', investor: 'A-1002' });
+    await go(fr, 'documents', '#view');
+    await fr.waitForTimeout(400);
+    const rows = await fr.evaluate(() => Array.from(document.querySelectorAll('.tbl-docs tbody tr')).map((r) => r.innerText.replace(/\s+/g, ' ').trim()));
+    check('A-1002 finds Form 1099-INT in Documents', rows.some((r) => /Form 1099-INT 2026/.test(r)), rows);
+    const o = await openDoc(fr, d2.id);
+    check('its first page is drawn and it shows October 15, 2027 as the day it leaves the portal', o.pages >= 1 && /October 15, 2027/.test(o.head), o);
+    await T.wayOut(check, fr);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+  async file({ check: raw, S }) {
+    const check = masked(raw);
+    const { A, fr } = await open(S, 'desktop');
+    await T.sample(fr, { role: 'admin' });
+    await seatD(fr);
+    await toNumbers(check, fr);
+    await fr.fill('#t99-r-A-1001-last', 'Sample.');
+    const [none] = await Promise.all([A.page.waitForEvent('download', { timeout: 4000 }).catch(() => null), T.press(fr, '[data-action=t99-file]')]);
+    await fr.waitForTimeout(400);
+    const faults = await rowsOf(fr, 'faults');
+    check('with a period in the last name no file is built', !none && !(((await yearRec(fr)) || {}).files || []).length);
+    check('the page names the row, the column and the reason', faults.length === 1 && /A-1001/.test(faults[0].text) && /AA/.test(faults[0].text) && /Last Name/i.test(faults[0].text) && /rule/i.test(faults[0].text), faults);
+    check('that cell is offered for correction', (await fr.locator('[data-list="faults"] input[data-fix]').count()) === 1);
+    await fr.fill('[data-list="faults"] input[data-fix]', 'Sample');
+    const got = await download(A, fr, '[data-action=t99-file]');
+    check('corrected, the file downloads', !!got && lines(got.text).length === 3);
+    const rows = got ? lines(got.text).slice(1).map((l) => l.split(',')) : [];
+    check('no cell of it holds an asterisk', !!got && rows.every((r) => r.every((c) => c.indexOf('*') < 0)));
+    check('the corrected last name is in its row', rows.some((r) => r[col('AA')] === 'Sample'));
+    check('the faults are gone from the page', (await rowsOf(fr, 'faults')).length === 0);
+    // the IRS receipt
+    const filed = async (id, date) => {
+      await fr.fill('#t99-receipt', id);
+      await fr.fill('#t99-receipt-date', date);
+      await T.press(fr, '[data-action=t99-filed]');
+      await fr.waitForTimeout(400);
+    };
+    await filed('', '2027-01-21');
+    let said = await alerts(fr);
+    check('a missing receipt number is refused with one line and nothing is stored', said.length === 1 && !(((await yearRec(fr)) || {}).filed || []).length, said);
+    await filed('TEST-RCPT-A', '');
+    said = await alerts(fr);
+    check('a missing date is refused with one line and nothing is stored', said.length === 1 && !(((await yearRec(fr)) || {}).filed || []).length, said);
+    await filed('TEST-RCPT-A', '2027-01-21');
+    const yr = (await yearRec(fr)) || {};
+    const f0 = (yr.filed || [])[0] || {};
+    const last = (yr.files || [])[(yr.files || []).length - 1] || {};
+    check('Record the IRS receipt stores the receipt number, the date, the file\'s SHA-256 and its row count', f0.receiptId === 'TEST-RCPT-A' && f0.date === '2027-01-21' && f0.sha256 === last.sha256 && f0.rows === 2, { receipt: f0.receiptId, date: f0.date, rows: f0.rows });
+    const fm = await forms(fr);
+    check('both forms show as filed with that date', fm.length === 2 && fm.every((x) => /Filed/.test(x.text) && /January 21, 2027/.test(x.text)), fm.map((x) => x.text));
+    const log = await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((e) => e.action === 'Form 1099-INT file recorded as filed').length);
+    check('the change log has the entry', log === 1, log);
     await T.wayOut(check, fr);
     await T.leak(check, fr);
     await T.quiet(check, A, fr);
