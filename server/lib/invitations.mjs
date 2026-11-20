@@ -245,11 +245,51 @@ function cleanEnvelope(env, snap) {
 }
 
 
+/**
+ * Plan 06-38 (T-06-66): what a co-investor's device may change on the agreement it signs: only the co-investor's own signing
+ * (their signer's status, times, adopted signature and initials, and the values of their own unlocked places). Every other
+ * signer and field is the snapshot's copy (the console's, with any withheld taxpayer number still blank); a signer or field
+ * the device added is dropped. The envelope's own state (status, copies, events) then goes through cleanEnvelope as for any
+ * agreement, so a countersignature never comes from the device.
+ */
+const SIGNING = ['status', 'viewedAt', 'consentAt', 'signedAt', 'declinedReason', 'signature', 'initials', 'userAgent'];
+function coSignEnvelope(env, snap) {
+  const tpl = obj(snap.esign && snap.esign.template) || {};
+  const tSigners = (Array.isArray(tpl.signers) ? tpl.signers : []).filter(obj);
+  const tFields = (Array.isArray(tpl.fields) ? tpl.fields : []).filter(obj);
+  const coIds = new Set(tSigners.filter((s) => s.co === true).map((s) => String(s.id)));
+  const byId = (list) => new Map((Array.isArray(list) ? list : []).filter(obj).map((x) => [String(x.id), x]));
+  const sentSigners = byId(env.signers);
+  const sentFields = byId(env.fields);
+  env.signers = tSigners.map((t) => {
+    const out = JSON.parse(JSON.stringify(t));
+    const s = sentSigners.get(String(t.id));
+    if (s && coIds.has(String(t.id))) SIGNING.forEach((k) => (k in s ? (out[k] = s[k]) : null));
+    return out;
+  });
+  env.fields = tFields.map((t) => {
+    const out = JSON.parse(JSON.stringify(t));
+    const f = sentFields.get(String(t.id));
+    if (f && coIds.has(String(t.signerId)) && !t.locked && 'value' in f) out.value = f.value;
+    return out;
+  });
+  return env;
+}
+
 function cleanSubmission(body, rec, snap) {
-  const investor = obj(body.investor);
+  // Plan 06-38: a co-investor sign-in brings back the co-investor's signature on one agreement and nothing else.
+  const coSign = !!(snap.invitation && snap.invitation.existing && snap.invitation.coSign);
+  const investor = coSign && (body.investor === undefined || body.investor === null) ? {} : obj(body.investor);
   if (!investor) throw fail(400, 'investor is required');
   if (investor.id !== undefined && String(investor.id) !== rec.investorId) throw fail(400, 'investor.id does not match this invitation');
-  const out = { investor: Object.assign(cleanJson(investor, 1 * MB, 'investor'), { id: rec.investorId }) };
+  // The co-investor changes nothing on the account's record: the investor is reduced to its id.
+  const out = { investor: coSign ? { id: rec.investorId } : Object.assign(cleanJson(investor, 1 * MB, 'investor'), { id: rec.investorId }) };
+  if (coSign && body.request !== undefined && body.request !== null) throw fail(400, 'A co-investor sign-in brings back no subscription request.');
+  if (coSign) {
+    const e = body.envelope === undefined || body.envelope === null ? null : obj(body.envelope);
+    if (!e) throw fail(400, 'envelope is required: the co-investor’s signature travels on the agreement.');
+    if (String(e.id === undefined || e.id === null ? '' : e.id) !== snap.invitation.envelopeId) throw fail(400, 'envelope.id does not match the agreement on this invitation.');
+  }
   const request = body.request === undefined || body.request === null ? null : obj(body.request);
   if (body.request && !request) throw fail(400, 'request must be an object or null');
   if (request && request.investorId !== undefined && String(request.investorId) !== rec.investorId) throw fail(400, 'request.investorId does not match this invitation');
@@ -276,7 +316,7 @@ function cleanSubmission(body, rec, snap) {
   if (body.envelope && !envelope) throw fail(400, 'envelope must be an object or null');
   // Plan 06-26: a tax-form request holds no subscription agreement, so none is kept (nor its files, below).
   const taxReq = !!(snap.invitation && snap.invitation.existing && snap.invitation.taxRequest);
-  out.envelope = envelope && !taxReq ? cleanEnvelope(cleanJson(envelope, 1 * MB, 'envelope'), snap) : null;
+  out.envelope = envelope && !taxReq ? cleanEnvelope(coSign ? coSignEnvelope(cleanJson(envelope, 1 * MB, 'envelope'), snap) : cleanJson(envelope, 1 * MB, 'envelope'), snap) : null;
   const env = out.envelope;
   // The files this submission may carry: what it produced itself. Its envelope's copies keep esign.js's names (<envelope id>-work
   // once the investor has signed, <envelope id>-signed once everyone has, so only for a completed envelope), and evidence is
@@ -294,7 +334,8 @@ function cleanSubmission(body, rec, snap) {
   }
   const v = obj(out.investor.verify) || {};
   const kycName = new RegExp(`^kyc-${reEsc(rec.investorId)}-[a-z0-9]+$`);
-  for (const k of snap.invitation && snap.invitation.existing ? ['accreditation'] : ['identity', 'accreditation']) {
+  // Plan 06-38: no evidence on a co-investor sign-in (its investor is reduced to its id, so no verification record names one).
+  for (const k of coSign ? [] : snap.invitation && snap.invitation.existing ? ['accreditation'] : ['identity', 'accreditation']) {
     const x = obj(v[k]);
     if (x && typeof x.fileId === 'string' && kycName.test(x.fileId) && !allowed[x.fileId]) allowed[x.fileId] = 'evidence';
   }
@@ -454,6 +495,25 @@ const TO_CONFIRM = 'To be confirmed: your console checks this result against you
  */
 export function summarize(sub, snap, checks) {
   const inv = sub.investor || {};
+  // Plan 06-38: a co-investor sign-in: whether the co-investor signed, read from the agreement's co-investor signer.
+  if (snap.invitation && snap.invitation.existing && snap.invitation.coSign) {
+    const env = obj(sub.envelope);
+    const co = env && Array.isArray(env.signers) ? env.signers.find((s) => obj(s) && s.co === true) : null;
+    const coSigned = !!(co && co.status === 'signed');
+    return {
+      rows: [['Co-investor signature', coSigned ? 'Signed' : 'Not signed']],
+      next: coSigned ? 'Next: countersign the subscription agreement in the console.' : 'Next: ask the co-investor to sign.',
+      identity: '',
+      aml: '',
+      accreditation: '',
+      agreement: coSigned ? (env.status === 'completed' ? 'Signed by the co-investor' : 'Signed by the co-investor; waiting for your countersignature') : 'Not signed by the co-investor',
+      existing: true,
+      coSign: true,
+      coSigned,
+      account: snap.investor.title || '',
+      requested: false
+    };
+  }
   const c = checks || { identity: { status: 'not_started' }, accreditation: { status: 'not_started' }, aml: { status: 'not_started' } };
   const label = (x, dflt) => (x.unconfirmed ? (x.consoleRule ? TO_CONFIRM : UNCONFIRMED) : word(x.status === 'not_started' ? '' : x.status) || dflt);
   const identity = label(c.identity, 'Not started');
@@ -1037,7 +1097,8 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       rec = current(rec);
       if (rec.status === 'completed') return send(res, 200, { ok: true, already: true });
       const sub = cleanSubmission(body, rec, snap);
-      const checks = confirmChecks(sub.investor, rec);
+      // Plan 06-38: a co-investor sign-in runs no verification, and its investor stays reduced to its id.
+      const checks = snap.invitation && snap.invitation.coSign ? null : confirmChecks(sub.investor, rec);
       const blobs = [];
       const files = {};
       const dropped = sub.dropped;

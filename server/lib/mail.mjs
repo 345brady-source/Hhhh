@@ -656,6 +656,16 @@ export function notificationMessage({ firm, investor, offering, summary, console
       after: [summary.next]
     });
   }
+  // Plan 06-38: a co-investor sign-in: whether the co-investor (investor.contact) signed the account's (investor.title) agreement.
+  if (summary && summary.coSign) {
+    const account = summary.account || investor.title || who;
+    return compose(firm, summary.coSigned ? `${who} signed the subscription agreement for ${account}` : `${who} did not sign the subscription agreement for ${account}`, {
+      paras: [`${who}, co-investor on ${account}, went through your request to sign the subscription agreement on ${longDate(completedAt)}.`],
+      rows: summary.rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [summary.next, 'Nothing else in the account’s investor record changes.']
+    });
+  }
   // Plan 06-26: a tax-form request: which form came back, and how; nothing else in the record changes.
   if (summary && summary.taxRequest) {
     const form = `Form ${summary.taxForm || taxFormOf(investor)}`;
