@@ -357,7 +357,8 @@
 .sf-bar.is-ready .sf-ring > .i { opacity: 1; }
 .sf-count { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; margin: 0; }
 .sf-count strong { font-size: var(--text-md); font-weight: 500; line-height: 1.25; color: var(--es-fg); }
-.sf-hint { font-size: var(--text-sm); font-weight: 400; line-height: 1.35; color: var(--es-fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The hint is said in full at every size: where the sentence needs it, the bar grows by a line (06-WALKTHROUGH-2, failure 14). */
+.sf-hint { font-size: var(--text-sm); font-weight: 400; line-height: 1.35; color: var(--es-fg-3); }
 /* What a Finish pressed early still needs: said in the bar, in full. */
 .sf-hint.is-nudge { color: var(--es-bad); white-space: normal; }
 .sf-acts { grid-area: acts; display: flex; align-items: center; gap: var(--space-xs); }

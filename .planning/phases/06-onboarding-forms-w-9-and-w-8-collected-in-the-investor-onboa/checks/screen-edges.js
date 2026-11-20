@@ -124,8 +124,8 @@ async function press(W, sel, o) {
   try {
     if (!(await l.count())) return false;
     await l.scrollIntoViewIfNeeded({ timeout: 5000 });
-    if (W.vp === 'phone') await l.tap({ timeout: (o && o.timeout) || 8000 });
-    else await l.click({ timeout: (o && o.timeout) || 8000 });
+    if (W.vp === 'phone') await l.tap({ timeout: (o && o.timeout) || 8000, force: !!(o && o.force) });
+    else await l.click({ timeout: (o && o.timeout) || 8000, force: !!(o && o.force) });
     await W.fr.waitForTimeout((o && o.wait) || 350);
     return true;
   } catch (e) {
@@ -544,9 +544,11 @@ async function hintDesktop({ check, S }) {
       if (!b) return null;
       const r = b.getBoundingClientRect();
       const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      return { disabled: b.disabled, aria: b.getAttribute('aria-disabled'), rect: [r.left, r.top, r.width, r.height].map(Math.round), at: t ? `${t.tagName.toLowerCase()}.${String(t.className).split(' ')[0]}` : '', count: document.querySelectorAll('.sf-bar .sf-finish').length };
+      return { self: !!t && (t === b || b.contains(t)), disabled: b.disabled, aria: b.getAttribute('aria-disabled'), rect: [r.left, r.top, r.width, r.height].map(Math.round), at: t ? `${t.tagName.toLowerCase()}.${String(t.className).split(' ')[0]}` : '', count: document.querySelectorAll('.sf-bar .sf-finish').length };
     });
-    const fin = await press(W, '.sf-bar .sf-finish');
+    // Finish carries aria-disabled while the firm's signature is still to make, and the automation then refuses to press
+    // it; a person can: the browser's hit test at its middle finds Finish itself, so the mouse presses it there
+    const fin = !!finAt && finAt.self && !finAt.disabled && (await press(W, '.sf-bar .sf-finish', { force: true }));
     await fr.waitForTimeout(400);
     const h = await hintNow(fr);
     check(`the firm’s countersign view: Finish presses (the bar says what is left, in full: "${h ? h.text : ''}")`, fin && !!h && h.shown && !h.cut && h.lastIn, Object.assign({ fin, err: W.pressErr, finAt }, h));
