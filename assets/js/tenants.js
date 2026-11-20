@@ -423,7 +423,7 @@
       home: { about: 'Pellbrook manages venture, long/short, digital asset and multi-strategy funds for families, endowments and individual investors.', m1v: '$1.9B', m1l: 'Assets under management', m2v: '6', m2l: 'Funds', m3v: '2009', m3l: 'Founded' },
       support: { team: 'Pellbrook Investor Relations', email: 'ir@pellbrookpartners.com', phone: '(415) 555-0163', hours: 'Mon–Fri, 8:00 a.m.–5:00 p.m. PT' },
       disclaimer:
-        'Information in this portal is provided to investors in Pellbrook funds for informational purposes only. Fund values are estimates until audited. Past performance is not indicative of future results. [Regulatory disclosures to be provided by counsel.]',
+        'Information in this portal is provided to investors in Pellbrook funds for informational purposes only. Fund values are estimates until the annual financial statements are final. Past performance is not indicative of future results. [Regulatory disclosures to be provided by counsel.]',
       signin: { headline: 'Investor Portal', sub: 'Sign in to view your investments, capital account and documents.' },
       onboarding: { accreditation: true, taxForm: true, ach: 'required', esign: true },
       ach: {
