@@ -365,6 +365,7 @@
     ['sign-', 'sign'],
     ['join-', 'join'],
     ['invite-', 'invite'],
+    ['taxdoc-', 'taxdoc'],
     ['co-', 'co']
   ];
   function parseHash() {

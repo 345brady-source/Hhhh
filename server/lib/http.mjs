@@ -59,7 +59,7 @@ export function cors(req, res, allowed) {
     res.setHeader('Access-Control-Allow-Origin', list.includes('*') || !list.length ? '*' : origin);
     res.setHeader('Vary', 'Origin');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Invite-Token');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Invite-Token, X-Doc-Token');
     res.setHeader('Access-Control-Max-Age', '600');
   }
   return ok;
