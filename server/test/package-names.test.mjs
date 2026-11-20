@@ -6,7 +6,9 @@
 // its tests).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { withServer, mockFetch } from './helpers.mjs';
 import { openStore } from '../lib/store.mjs';
@@ -41,9 +43,12 @@ const ENV = {
   ACCREDIT_API_KEY: 'acc-test-0123456789'
 };
 
-/** The default registry (with the real identity check plug-in) plus a stand-in accreditation provider. */
+const ownSeen = [];
+/** The default registry (with the real identity check plug-in), a stand-in accreditation provider and a screening outside the package. */
 const PROVIDERS = Object.assign({}, await loadProviders({ env: {} }), {
-  accredit: { name: 'Accreditation check', kinds: ['accreditation'], env: ['ACCREDIT_API_KEY'], createSession: () => ({ status: 'pending', url: '' }) }
+  accredit: { name: 'Accreditation check', kinds: ['accreditation'], env: ['ACCREDIT_API_KEY'], createSession: () => ({ status: 'pending', url: '' }) },
+  // A screening provider outside the package (the firm's own), recording the names of each call.
+  ownscreen: { name: 'Own screening', kinds: ['aml'], env: [], screen: (ctx) => (ownSeen.push(ctx.names.slice()), { status: 'clear', hits: [] }) }
 });
 
 const SESSIONS = /\/v3\/session\/$/;
@@ -113,7 +118,7 @@ const BODY_ONLY = 'Body Only Name';
 
 /** A server with every package setting, a stand-in for both providers and an account named alpha with a card saved. */
 async function shop(opts, fn) {
-  const store = openStore(null);
+  const store = opts.store || openStore(null);
   const f = standIn();
   const env = Object.assign({}, ENV, opts.env);
   await withServer({ env, fetch: f, store, providers: PROVIDERS, now: () => T0 }, async (base, server) => {
@@ -169,4 +174,162 @@ test('screened: the screening reply says how many names the server screened', as
     assert.equal(r2.body.screened, h.f.screened().length - before);
     assert.equal(r2.body.screened, 2, 'with no role names stored, the invitation’s two names');
   });
+});
+
+const pdf = (marker) => Buffer.from(`%PDF-1.4\n% ${marker}\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n`);
+const SUBMISSION = {
+  investor: { id: ENTITY.id, contact: ENTITY.contact, title: ENTITY.title, email: ENTITY.email, type: 'entity', onboarding: { status: 'complete' } },
+  request: { id: 'req-1', type: 'subscription', offeringId: 'hr-fund-ii', investorId: ENTITY.id, cents: 25000000, status: 'pending', envelopeId: 'env-1' },
+  envelope: { id: 'env-1', status: 'sent', requestId: 'req-1', docId: 'tpl-doc-1', workDocId: 'env-1-work' },
+  files: { 'env-1-work': pdf('SIGNEDMARKER').toString('base64') },
+  docs: [{ id: 'env-1-work', title: 'Subscription agreement (signed by the investor)' }],
+  audit: [],
+  notifications: []
+};
+/** True when text holds any of the role names (in any letter case). */
+const holdsRole = (text) => OTHERS.concat(['Gideon Latecomer']).some((n) => String(text).toLowerCase().includes(n.toLowerCase()));
+
+test('R12 roles: role names are stored sealed, only for a package invitation, replaced by a later report, refused when not a list, never after completion', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'r12-'));
+  const file = join(dir, 'store.json');
+  try {
+    const store = openStore(file);
+    await shop({ store }, async (h) => {
+      const names = (id) => h.server.invitations.roleNames(h.store.get('invitations', id));
+      const p = await h.send('o1');
+      assert.equal((await h.roles(p.token, ROLES)).status, 200);
+      assert.deepEqual(names(p.id), KEPT, 'the first five other people are stored');
+      assert.ok(h.store.get('invitations', p.id).roleNames, 'stored on the invitation');
+      h.store.flush();
+      const disk = readFileSync(file, 'utf8');
+      assert.ok(disk.includes(p.id), 'the store file holds the invitation');
+      assert.ok(!holdsRole(disk), 'no role name in plain text in the store file');
+
+      // A later report replaces the names.
+      assert.equal((await h.roles(p.token, ['Gideon Latecomer'])).status, 200);
+      assert.deepEqual(names(p.id), ['Gideon Latecomer']);
+      // Not a list: refused, nothing stored.
+      const bad = await h.roles(p.token, 'x');
+      assert.equal(bad.status, 400, bad.text);
+      assert.deepEqual(bad.body, { error: 'roles must be a list' });
+      assert.deepEqual(names(p.id), ['Gideon Latecomer'], 'a refused report leaves the stored names');
+      // A step report without roles leaves the stored names as they were.
+      const step = await h.step(p.token);
+      assert.equal(step.status, 200, step.text);
+      assert.equal(h.store.get('invitations', p.id).stepKey, 'profile');
+      assert.deepEqual(names(p.id), ['Gideon Latecomer']);
+
+      // An invitation without the package: 200, nothing stored.
+      const plain = await j(h.base, 'POST', '/v1/invitations', { bearer: h.a.token, body: payload({ clientId: 'o2' }) });
+      assert.equal(plain.status, 200, plain.text);
+      assert.ok(!h.store.get('invitations', plain.body.id).package, 'no package on it');
+      const none = await h.roles(plain.body.token, ROLES);
+      assert.equal(none.status, 200, none.text);
+      assert.deepEqual(none.body, { ok: true });
+      assert.equal(h.store.get('invitations', plain.body.id).roleNames, undefined, 'nothing stored outside the package');
+      assert.deepEqual(names(plain.body.id), []);
+
+      // A completed invitation: 409 as before, nothing stored.
+      const q = await h.send('o3');
+      const done = await j(h.base, 'POST', '/v1/invite/complete', { invite: q.token, body: SUBMISSION });
+      assert.equal(done.status, 200, done.text);
+      const late = await h.roles(q.token, ROLES);
+      assert.equal(late.status, 409, late.text);
+      assert.deepEqual(late.body, { error: 'This onboarding is already complete' });
+      assert.equal(h.store.get('invitations', q.id).roleNames, undefined);
+    });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('R12 outside the package: the shared token and a screening provider outside the package screen as before and never add role names; a sponsor account still cannot call the package provider', async () => {
+  const invented = Array.from({ length: 25 }, (_, i) => `Invented Person ${i + 1}`);
+  await shop({ env: { API_TOKEN: API } }, async (h) => {
+    // A package invitation with role names stored.
+    const p = await h.send('x1');
+    assert.equal((await h.roles(p.token, ROLES)).status, 200);
+    assert.deepEqual(h.server.invitations.roleNames(h.store.get('invitations', p.id)), KEPT);
+
+    // An invitation (shared token, no package) whose firm screens with its own provider. Its report stores nothing; role
+    // names are planted on its record anyway, sealed as the server seals them, to prove the screening never adds them.
+    const verification = { accreditationRequired: false, connections: [{ id: 'own-aml', name: 'Own screening', type: 'server', connector: 'ownscreen', checks: ['aml'] }], use: { aml: ['own-aml'] } };
+    const inv = await j(h.base, 'POST', '/v1/invitations', { bearer: API, body: payload({}, { workspace: 'w1', verification }) });
+    assert.equal(inv.status, 200, inv.text);
+    assert.equal((await h.roles(inv.body.token, ROLES)).status, 200);
+    h.store.put('invitations', { id: inv.body.id, roleNames: h.server.invitations.vault.seal(KEPT, `${inv.body.id}:roleNames`) });
+    assert.deepEqual(h.server.invitations.roleNames(h.store.get('invitations', inv.body.id)), KEPT, 'planted');
+
+    // The firm's own provider from the link: the invitation's names plus the body's, cut to 25, no role name.
+    ownSeen.length = 0;
+    const own = await j(h.base, 'POST', '/v1/screenings', { invite: inv.body.token, body: { provider: 'ownscreen', investor: { id: ENTITY.id }, names: invented } });
+    assert.equal(own.status, 200, own.text);
+    assert.deepEqual(ownSeen, [OWN.concat(invented).slice(0, 25)], 'outside the package the link’s names are screened as before');
+    assert.equal(own.body.screened, 25);
+
+    // The shared token: exactly the names it sends.
+    const before = h.f.screened().length;
+    const s = await j(h.base, 'POST', '/v1/screenings', { bearer: API, body: { provider: 'idcheck', investor: { id: ENTITY.id }, names: ['Shared One', 'Shared Two'] } });
+    assert.equal(s.status, 200, s.text);
+    assert.deepEqual(h.f.screened().slice(before), ['Shared One', 'Shared Two'], 'the shared token screens the names it sends, as before');
+    assert.equal(s.body.screened, 2);
+    assert.ok(!h.f.screened().some((n) => KEPT.includes(n)), 'no role name screened');
+
+    // A sponsor account calling the package provider directly: 403, no provider call (pkg.gate).
+    const calls = h.f.screened().length;
+    const acc = await j(h.base, 'POST', '/v1/screenings', { bearer: h.a.token, body: { provider: 'idcheck', investor: { id: ENTITY.id }, names: [ENTITY.contact] } });
+    assert.equal(acc.status, 403, acc.text);
+    assert.deepEqual(acc.body, { error: ACCOUNT_SAYS });
+    assert.equal(h.f.screened().length, calls, 'no provider call');
+  });
+});
+
+test('R12 no leak: no role name in any event, log line, invitation row, GET /v1/invite or the outbox; three starts cost at most 3 x 7 calls, a fourth is refused with none', async () => {
+  const captured = [];
+  const keep = {};
+  for (const m of ['log', 'error', 'warn', 'info']) {
+    keep[m] = console[m];
+    console[m] = (...args) => {
+      captured.push(args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' '));
+      return keep[m].apply(console, args);
+    };
+  }
+  try {
+    await shop({}, async (h) => {
+      const p = await h.send('l1');
+      const r = await h.roles(p.token, ROLES);
+      assert.equal(r.status, 200, r.text);
+      assert.ok(!holdsRole(r.text), 'not in the progress reply');
+      for (let i = 1; i <= 3; i++) {
+        const s = await h.screening(p.token, [BODY_ONLY]);
+        assert.equal(s.status, 200, `start ${i}: ${s.text}`);
+        assert.equal(s.body.screened, 7);
+        assert.ok(!holdsRole(s.text), 'not in a screening reply');
+      }
+      assert.equal(h.f.screened().length, 3 * 7, 'three starts, at most the invitation’s names plus 5 each');
+      const fourth = await h.screening(p.token, [BODY_ONLY]);
+      assert.equal(fourth.status, 409, fourth.text);
+      assert.deepEqual(fourth.body, { error: LIMIT });
+      assert.equal(h.f.screened().length, 3 * 7, 'no provider call for the fourth start');
+
+      const rows = await j(h.base, 'GET', '/v1/invitations', { bearer: h.a.token });
+      assert.equal(rows.status, 200, rows.text);
+      assert.ok(rows.text.includes(p.id), 'the list holds the invitation');
+      assert.ok(!holdsRole(rows.text), 'not in GET /v1/invitations');
+      const row = await j(h.base, 'GET', `/v1/invitations/${p.id}`, { bearer: h.a.token });
+      assert.equal(row.status, 200, row.text);
+      assert.ok(!holdsRole(row.text), 'not in the invitation row');
+      const view = await j(h.base, 'GET', '/v1/invite', { invite: p.token });
+      assert.equal(view.status, 200, view.text);
+      assert.ok(!holdsRole(view.text), 'not in GET /v1/invite');
+      assert.ok(!holdsRole(JSON.stringify(h.store.list('events'))), 'not in the store’s events');
+      assert.ok(!holdsRole(JSON.stringify(h.store.get('invitations', p.id).events || [])), 'not in the invitation’s events');
+      assert.ok(!holdsRole(JSON.stringify(h.store.list('outbox'))), 'not in the outbox');
+      assert.ok(!holdsRole(JSON.stringify(h.server.invitations.mailer.outbox())), 'not in the mailer’s outbox');
+      assert.ok(!holdsRole(JSON.stringify(h.store.list('screenings'))), 'sealed in the screening records');
+    });
+  } finally {
+    Object.assign(console, keep);
+  }
+  assert.ok(!holdsRole(captured.join('\n')), 'not in any log line');
 });
