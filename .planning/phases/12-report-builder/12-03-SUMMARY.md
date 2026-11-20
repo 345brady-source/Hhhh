@@ -230,7 +230,8 @@ C-02 record for the owner's check (font names inside the PDF's font data, not pa
 - fbc013d wip(12-03): save
 - e5548da test(12-03): cases phone (the owner's frame, canvas logo path) and selfcheck (RED)
 - 5074a80 wip(12-03): save (holds Task 3's code, the canvas redraw in logoFor; the feat commit I made next had nothing left to commit)
-- plus the commit that adds this summary
+- 074514e wip(12-03): save (the full summary, saved the moment it was written)
+- the docs(12-03) commit that adds this line
 
 All on wip/12-03, pushed after each commit (normal push).
 
