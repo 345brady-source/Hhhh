@@ -167,4 +167,149 @@ Gaps that are bugs or blockers found while reading:
 3. `filesout.js` and `books-bank.js` are not in diy.html's script list (grep of diy.html this session: the list ends at taxdocs-ui.js, line 68). Phase 11 plans 11-09..11-17 (not merged at c8b65e7) wire the Books UI and the package button. Phase 12 depends on NS.files being on the page: either load it the way taxdocs-ui.js loads its parts (`PARTS` list, taxdocs-ui.js:158, `script(name)` lines 167-185) or add it to diy.html once 11-16 has done so. Check at plan time which has merged.
 4. The demonstration statement in documents.js is fixed to Q3 of the current year and only appears for sample firms; real self-serve firms have no statements. The builder is the fix; documents.js stays for the managed edition (C-03).
 
+## Part 3. Customization model, architecture and phone constraints
+
+### 3.1 Architectural responsibility map
+
+There is no server in the owner's conditions; every tier below is the browser page. "Tier" here means the module that owns the work.
+
+| Capability | Owner (module) | Secondary | Rationale |
+|---|---|---|---|
+| Figures (capital accounts, performance, holdings, journal amounts) | Engine: audit.js, books.js, operations.js, data.js (existing) | reports-data (new, read-only adapter) | One source of truth; the builder never recomputes a figure the engine has (FA-11 contract). |
+| Report model (which sections, in which order, with which words, for whom, for which period) | reports.js (new, pure functions over `ws.reports`) | — | Pure and testable in Node with load11.js, like books.js. |
+| Layout (page composition: cover, headings, paragraphs, key-figure tiles, tables, charts, photos, footers) | reports-pdf.js (new) on the shipped pdf-lib 1.17.1 and DejaVu Sans | filesout.js for table appendices and the workbook | filesout.pdf is landscape tables only; a report needs portrait pages. A separate composer leaves phase 11's proven writer untouched. |
+| On-screen preview | reports-ui.js (new): HTML rendering of the same layout model | NS.esign.viewPdf for the "see the PDF" view | The preview must be quick to update while editing; the PDF view proves the file. |
+| Storage of templates and runs | `ws.reports` in the workspace (localStorage, saved with everything else) | `NS.ops.files` (IndexedDB bytes) for photos and generated PDFs | The workspace holds small JSON only; bytes never go in localStorage and never as a Blob in IndexedDB. |
+| Delivery to investors | reports.js deliver/withdraw/opened over `ws.docs` | portal.js Documents (existing), Notices page (existing) | Same record shape as tax documents so the investor's Documents list needs no change. |
+| Change log | NS.audit.log (existing) | — | Tamper-evident chain already exported in the audit package. |
+
+### 3.2 System architecture (data flow)
+
+```
+ Sponsor (console > Reports > Investor reports)
+        │ picks: report type ─► starter template (built in, per fund type) or a saved template
+        │ edits: sections on/off + order, wording blocks (rich text + merge fields), cover/accent, disclosures
+        │ picks: period (preset or range), audience (one investor | one fund's investors | every investor | sponsor-wide)
+        ▼
+ reports.js  ── resolve(template, period, audience) ──►  report model per recipient
+        │                                                   (sections with resolved figures, text with merge fields filled,
+        │                                                    unknown merge field = error shown before generation)
+        │        reads only ▲
+        │   audit.period / closedPerformance / openPerformance / events, ops.capital, data.runRows,
+        │   books.trialBalance / entries / status, structures.fmt, ws.docs[].tax, tenant brand
+        ▼
+   ┌───────────────────────────┬────────────────────────────┬─────────────────────────────┐
+   │ preview (HTML, in page)   │ PDF (reports-pdf.js)       │ spreadsheet (files.workbook) │
+   │ same model, same strings  │ portrait Letter, logo PNG, │ one sheet per table section, │
+   │                           │ text, tiles, tables,       │ whole cents as numbers,      │
+   │                           │ vector charts, JPEG photos │ no formulas                  │
+   └───────────────────────────┴─────────────┬──────────────┴──────────────┬──────────────┘
+                                              │ bytes + sha256               │ download
+                                              ▼                              ▼
+                       run record (ws.reports.runs) + bytes (NS.ops.files) ── archive (re-download, sha256)
+                                              │ Deliver (named person)
+                                              ▼
+              ws.docs entry per investor (hidden → shown) ── investor's Documents (existing list, in-page PDF view)
+                                              │                                   │ open → documentOpened hook → opens count
+                                              ▼                                   ▼
+                       Notices page (existing, 'quarterly' template prefilled)     change log (every step)
+                       investors without e-delivery consent on record → "send on paper" list (PDF download)
+```
+
+### 3.3 The customization model (recommended shape)
+
+Stored in `ws.reports = { v: 1, templates: [], runs: [] }` (new key: a grep of assets/js and server/lib for `ws.reports` and `.reports =` this session found no match, so the name is free; the shape is a recommendation).
+
+Template:
+```js
+{ id: 'rt-<n>', name, type: 'statement' | 'distribution' | 'quarterly' | 'annual' | 'performance' | 'tax',
+  fundType: 'realestate' | 'credit' | 'pe' | 'vc' | 'spv' | 'realassets' | 'open' | 'any',   // the audit PROFILES keys grouped
+  scope: { firm: true } | { offeringIds: [...] },          // saved per firm or per offering (owner)
+  cover: { on, style: 'band' | 'plain' | 'photo', accent: '#RRGGBB' | '', photoId: '' },
+  sections: [ { key, on, opts: { ... }, text: <rich text model> } ],   // array order is the order
+  disclosures: <rich text model>,                          // editable (owner); starts from tenant.disclaimer
+  version: n, updatedAt, updatedBy }
+```
+Built-in starter templates live in code (not stored): one or more per report type and fund type (owner: "a few templates for each report type", quarterly letters "by fund type such as real estate, private credit or income, venture or private equity, single-asset"). "Start from" copies one into `ws.reports.templates`. A template never holds a figure; figures are resolved at generation.
+
+Section catalogue (each section knows which report types and fund types it fits; the planner fixes the final list):
+- Cover (firm lockup, report title, period, fund or "All investments", optional photo)
+- Sponsor letter (rich text; merge fields)
+- Summary across holdings (consolidated: one row per fund, totals only where currencies match)
+- Your capital account (T1 table: period and year-to-date/inception columns)
+- Commitment and capital activity (commitment, contributed, unfunded, distributed; activity list with dates)
+- Distributions (this period, year to date, since inception; by run with type, gross, withheld, net)
+- Fund performance (closed-end: paid-in, distributions, NAV, DPI, RVPI, TVPI, net IRR; open-ended: monthly table, period, YTD, since inception annualized)
+- Holdings / schedule of investments (from `period().hold`)
+- Asset pages (one per holding or property: photo, description, sponsor-typed operating figures, ledger NOI for real estate when books exist)
+- Fees and expenses (ledger expense accounts in ILPA order; management fee from the engine)
+- Fund financial statements (the `'al'`, `'ops'`, `'chg'` schedules, for annual review)
+- Chart (choice: distributions by quarter as columns; capital account or NAV over time as a line; allocation by fund or by property as one 100% bar)
+- Outlook / other wording block (free rich text)
+- Tax documents status (T6)
+- Disclosures (always last; can be edited, cannot be removed from investor-facing reports: a report without disclosures is a compliance risk; the sponsor's own words)
+
+Wording blocks and merge fields: the rich text model is a short list of blocks `[{ t: 'p' | 'h' | 'ul', runs: [{ s, b, i }] }]` (paragraph, heading, bulleted list; bold, italic). No raw HTML is stored, so the PDF and the preview draw the same thing and no script can be injected. Merge fields reuse the Notices convention `{name}` and extend it: `{first_name}`, `{account_name}`, `{investment}`, `{firm}`, `{team}`, `{phone}`, `{period}`, `{period_end}`, `{ending_capital}`, `{distributions_period}`, `{commitment}`, `{unfunded}` (figures formatted from the same resolved model as the tables). An unknown field blocks generation and is shown on the preview, unlike `NS.mergeNotice`, which leaves unknown fields as typed (data.js:325) — a report sent to 200 investors with `{frist_name}` in it is the kind of failure the owner will see.
+
+Branding: from the tenant (logo, colors, legal name, support contact); per template a cover style and an accent color (contrast-checked with `NS.brand.contrast`/`ensureContrast`, brand.js:84-101). PDF text is always DejaVu Sans (the only shipped Unicode font); the web font the portal uses is not embedded (no network, licence and size). `[VERIFIED: assets/vendor/textfont/ listing this session: DejaVuSans.ttf, DejaVuSans-Bold.ttf, text-regular.js, text-bold.js]`
+
+Period: presets from `NS.audit.presets` (audit.js:609-625: `'fy'`, `'ytd'`, `'q'`, `'itd'`) plus a custom range; the engine snaps to month-ends, and the report shows the snapped dates (never the typed ones).
+
+Audience: one investor; every investor of one fund (one PDF each); every investor of the firm, consolidated per investor (owner, line 99); sponsor-wide letter (one document, the same for everyone, optionally followed by each investor's own statement pages).
+
+Saved templates per firm or per offering, preview on screen, export PDF and xlsx, deliver, archive, change log: as in the diagram.
+
+### 3.4 Phone constraints (the owner's iPhone, sandboxed frame, no server, no network)
+
+| Constraint (AUTOPILOT.md) | What it means for the builder |
+|---|---|
+| No fetch()/XHR on a path that must work without a server | The PDF writer, font embedder and font data load from the shipped files (esign.js `shippedFirst`, lines 280-295). Check: the builder's path in the no-network frame (06 checks no-network.js pattern) produces a PDF. |
+| No Blob in IndexedDB | Photos and generated PDFs go through `NS.ops.files.put(id, blob)`, which stores `{ type, bytes }` (operations.js:476-494). |
+| No browser PDF viewer | "See the PDF" uses `NS.esign.viewPdf(body, blob, title, true)` (portal.js:1068), which draws pages in the page. Download uses `U.download`. |
+| Every view has a way out on screen; dialogs scroll | The builder is a page (not a full-screen dialog); the section editor opens inline rows like the Tax documents page (one at a time). ways-out.js and email-dialog.js checks cover it. |
+| 390x844 with touch | Section reordering by up/down buttons (44px targets), not drag-and-drop (touch drag in a sandboxed WKWebView is unreliable and inaccessible). Owner asked for a "section builder", not drag: buttons satisfy it. |
+| Rich text on iPhone | A `contenteditable` area with a 4-button toolbar (bold, italic, heading, list) and paste as plain text; the DOM is read back into the block model on each input. `document.execCommand('bold')` still works in Safari but is deprecated `[ASSUMED]`; implement marks by wrapping the selection range directly or keep execCommand behind one function so it can be replaced. |
+| Photos from the iPhone camera roll | `<input type="file" accept="image/*">`; Safari hands HEIC as JPEG for `image/*` in most cases `[ASSUMED]`; the builder always redraws the image on a canvas (max 1600 px long side, JPEG quality about 0.82) and stores those bytes, so any format Safari can decode becomes a JPEG pdf-lib can embed. |
+| Memory and storage | localStorage (the workspace) is small (a few MB on iPhone Safari `[ASSUMED]`): templates and runs are JSON only; bytes go to IndexedDB. A batch of PDFs is generated one at a time, each written to the store before the next starts, with a progress line and a way to stop. |
+| Time | No time is promised. The batch speed on the phone frame is measured by a check and printed (no threshold), like phase 11's speed case. |
+| Logo formats | pdf-lib embeds PNG and JPEG only (`embedPng`, `embedJpg` present in the shipped write.js this session). A webp/gif/svg logo or the generated mark (brand.js `markSVG`, an SVG) is drawn to a canvas and embedded as PNG. Canvas of a data-URL SVG is not tainted in current Safari `[ASSUMED]`; a check must prove the logo appears in the PDF in the phone frame; if the canvas refuses, the lockup falls back to the firm name in the brand color. |
+
+### 3.5 Recommended project structure (new files; one owner each)
+
+```
+assets/js/
+├── reports.js        # model: templates (starters + saved), resolve(template, period, audience) → per-recipient model,
+│                     # merge fields, runs, deliver / withdraw / replace / opened, change-log entries (pure; Node-testable)
+├── reports-data.js   # read-only adapters over audit/books/ops/data/taxdocs → section data (whole cents, dates)
+├── reports-pdf.js    # page composer on NS.esignKit (pdf-lib 1.17.1 + DejaVu): cover, headings, paragraphs, tiles,
+│                     # tables (shared measuring with filesout), vector charts, photos, footer "Page n of N"
+├── reports-ui.js     # console > Reports > "Investor reports": template list, editor, preview, generate, deliver, archive;
+│                     # documentOpened hook for report opens
+.planning/phases/12-report-builder/checks/
+├── reports-math.js   # Node: every figure equals the engine/journal to the cent (fund A hand-worked + samples)
+├── reports-pdf.js    # Node + pdftotext/pdfinfo: text read-back, page count, metadata, no vendor names
+├── reports-xlsx.js   # Node + python3 -I read-xlsx.py (phase 11): numbers to the cent, no formulas
+├── reports-flow.js   # Playwright: phone frame 390x844 and 1280x800, no network, sandboxed iframe
+└── gate12.sh         # the phase gate (pattern: phase 11 gate11.sh)
+```
+Small edits elsewhere (one line each, named in the plan): audit.js export of `closedPerformance`/`openPerformance`; console.js Reports page gains the "Investor reports" tab (or a hook, like `NS.navCounts`); diy.html/portal.html script list (or a parts loader like taxdocs-ui.js); server/help/guide.md entries (the help guide covers every screen).
+
+### 3.6 Patterns to follow
+
+- **One model, two renderers.** `resolve()` produces a plain object per recipient with every string and every figure already formatted; the HTML preview and the PDF composer only draw it. The validation (Part 4) compares the PDF's text with the model's strings, and the model's cents with the engine's.
+- **Figures as cents until drawn.** Money stays an integer number of cents through the model (`Number.isSafeInteger` is asserted, as filesout.pdfCell does, filesout.js:256-264); formatting happens once, in the model, with the fund's currency (`NS.structures.fmt`).
+- **Snapshot on generation.** A run stores a copy of the template as used, the period after snapping, the audience, and each PDF's SHA-256 (NS.audit.sha256). An archived report can be re-downloaded byte-identical, and the record shows exactly what was sent.
+- **Delivery reuses the document record.** A delivered report is a `ws.docs` entry with `cat: 'Reports' | 'Statements' | 'Notices'`, `audience: 'investors'`, `investors: [id]`, `hidden` until delivered, `publishedAt/By`, `sha256`, plus `report: { run, state, opens: { first, last, count }, withdrawn, replaces }`. portal.js `allDocs` already lists such entries (portal.js:1046-1051) and opens PDFs in the page.
+- **Starter templates per fund type in code, saved templates in the workspace** (owner: saved per offering or firm).
+
+### 3.7 Anti-patterns to avoid
+
+- Recomputing a figure in the builder (IRR, ownership, NAV) instead of reading the engine: two numbers for the same thing will disagree in some fund.
+- Storing HTML from the editor and drawing it in the PDF: script injection risk and preview/PDF drift.
+- Adding totals across funds in different currencies.
+- Extending `NS.files.pdf` in place for portrait reports: phase 11's checks pin its layout; build the composer beside it and share only measuring helpers.
+- A full-screen modal editor on the phone (no way out, no scroll): use the page.
+- Drag-and-drop as the only way to reorder.
+- Any wording that calls a report "audited", "ILPA compliant" or a tax form.
+
 <!-- gsd:write-continue -->
