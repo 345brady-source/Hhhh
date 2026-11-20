@@ -226,3 +226,67 @@ Volume model for cost: 40 self-serve sponsors, about 300 messages each a month =
 - **Live proof needs the owner's account**: agents hold no API keys (AUTOPILOT). Plans build and test against local fakes (as `mail.test.mjs` already does with a fake SMTP server); one owner checkpoint creates the AWS account and requests production access; until then the console marks live email "To be confirmed".
 
 <!-- section 3 done -->
+
+## 4. Validation Architecture (how every message is proven)
+
+`workflow.nyquist_validation` is `true` in .planning/config.json, so this section is required.
+
+### 4.1 Test framework
+
+| Property | Value |
+|----------|-------|
+| Server framework | `node --test` (Node built-in runner); script `"test": "node --test"` [VERIFIED: server/package.json] |
+| Server tests today | **368** on c8b65e7, all passing - measured this session: `# tests 368 / # pass 368 / # fail 0` (`node --test` in server/, 16.1 s) |
+| Existing mail tests | server/test/mail.test.mjs, 14 tests, including a fake SMTP server (plain, STARTTLS, implicit TLS) and a template test that already bans product names: `for (const banned of [/carrow/i, /vale\b/i, /powered by/i, /DIY Portal/i])` [VERIFIED: server/test/mail.test.mjs:216-236] |
+| Browser checks | Playwright scripts in .planning/phases/06-*/checks/ (e.g. `email-dialog.js`, `no-network.js`, `safari-finish.js`, `ways-out.js`, shared `lib.js`), run through the shared queue SCRATCH/exec-011/heavy.sh; full gate .planning/checks/gate-reference.sh with exact `GATE_SERVER_TESTS` |
+| Quick run | `cd server && node --test test/mail.test.mjs test/emails*.test.mjs` |
+| Full suite | `cd server && node --test` then the reference gate |
+
+### 4.2 Proof per message type (every kind in the inventory, both sides)
+
+1. **Golden render per kind** (server test, new `server/test/emails-render.test.mjs`): render every kind and variant from `emails.js` with one fixed sample (firm, investor, offering, fixed dates and link) and compare the text part and the HTML to committed golden files `server/test/fixtures/emails/<kind>.txt|.html`. A wording change is a visible diff the verifier and the owner read; goldens are updated only on purpose (an env flag, never automatically in the gate).
+2. **No vendor or platform name, ever** (all kinds, subject + text + HTML + headers built by `buildMessage`): extend the existing banned list to `carrow`, `vale\b`, `powered by`, `DIY Portal`, `amazon`, `aws`, `\bses\b`, `postmark`, `sendgrid`, `mailgun`, `zepto`, `zoho`, `resend\b`, `brevo`, `smtp2go`, `anthropic`, `claude`, and the word `basic`. Run it also with an SVG-logo firm and with an empty firm field set (fallback wording).
+3. **No taxpayer, bank or password pattern** (all kinds): feed sample data in which every free-text field (note, custom notice body, firm disclaimer, names) carries an SSN `123-45-6789`, an EIN `12-3456789`, a valid-checksum ABA routing number, a 12-digit account number and `password: hunter2`; assert (a) the renderer's structured fields never print a TIN/account field at all (the data shape has none), and (b) the free-text screen refuses the input with one plain sentence at the console and at the server route (HTTP 422), so nothing with those shapes is ever sent. Regexes live in one place (`emails.js`), reused by the console and the server (help.mjs already strips tax numbers and digit runs from questions with a similar list - reuse its patterns, server/lib/help.mjs:42-50).
+4. **Links valid**: every `href` in the HTML is either the message's own action link (equal to the input link, `https:`) or `mailto:` the firm's support address; the text part contains the same action link; no other domain appears; the personal link never appears in the sent log (replaced by "[personal link]").
+5. **Structure and mobile**: per kind - exactly one primary button, `lang`, `<title>`, `color-scheme` meta, logo `alt`, HTML under 100 KB, button contrast >= 4.5:1 computed from the firm colour (test with a light brand colour like `#FFE066`), no `<style>`-only formatting; browser check renders each kind at **390x844 (touch) and 1280x800** inside the sandboxed iframe with connect-src blocked and asserts nothing overflows horizontally and the button is >= 44 px tall.
+6. **Preview equals what is sent** (the F1 bug): a browser check loads the console, renders kind X through `NS.emails` and compares its text part byte-for-byte to the server's render of the same input (the check runs Node's `require('assets/js/emails.js')` with the same fixture). RED before: today the invitation subject differs (`... your invitation to invest in ...` vs `...: complete your investor onboarding`).
+7. **Both editions**: self-serve renders all kinds; managed edition output unchanged (its legacy activation preview C-04 and reminder C-05 compared against the base tree text), honouring the C-03 slice guard in status-math.
+8. **The no-server preview stays honest**: a browser check, with no server connected and network blocked, triggers every client path in 1.2 (invite, co-investor add, notice, capital call, document publish with notify, e-sign send/remind/void/sign, tax notice, forgot password, team invite) and asserts each toast/dialog contains the one sentence "(simulated in this demo)" or offers the mailto path, never a bare "sent"/"emailed"; each leaves a sent-log entry with status `simulated` or `manual`; zero network requests (no-network.js pattern).
+9. **Server transport and events**: fake SES API (local HTTPS with a test CA, as the STARTTLS test does) proves SigV4 headers and the DNS records returned; fake SNS posts prove subscription confirmation only for an allowed host, signature verification (a self-signed test cert passed through the adapter's injectable trust), bounce -> suppression + sent-log status, complaint -> optional mail off; a spoofed or unsigned post is refused (401) and changes nothing.
+10. **Live deliverability (owner checkpoint, not automatable here)**: once an SES account exists, one message of each kind to Gmail, Outlook.com and iCloud inboxes; headers show `spf=pass dkim=pass dmarc=pass` for the firm's test domain; the owner opens them on his iPhone. Until then the console says live email is "To be confirmed".
+
+### 4.3 Phase requirements -> test map
+
+| Req | Behaviour | Type | Command | Exists? |
+|-----|-----------|------|---------|---------|
+| EM-01 | one renderer, all kinds | unit | `node --test server/test/emails-render.test.mjs` | Wave 0 |
+| EM-02 | wording, subjects, greeting, expiry | unit (golden) | same | Wave 0 |
+| EM-03 | white label, branding, contrast | unit | `node --test server/test/emails-render.test.mjs` | partly (mail.test.mjs:216) |
+| EM-04 | no TIN/bank/password | unit + route | `node --test server/test/emails-guard.test.mjs` | Wave 0 |
+| EM-05 | mobile/accessible HTML | browser | `node .planning/phases/13-*/checks/emails-preview.js` | Wave 0 |
+| EM-06 | per-sponsor sender, DNS records, no unverified sending | unit | `node --test server/test/senders.test.mjs` | Wave 0 |
+| EM-07 | SES adapter + SNS events | unit with fakes | `node --test server/test/mailer-ses.test.mjs` | Wave 0 |
+| EM-08 | sent log, suppression, statuses | unit + browser | `node --test server/test/maillog.test.mjs` | Wave 0 |
+| EM-09 | server sends notices/tax/e-sign notices | route | `node --test server/test/messages.test.mjs` | Wave 0 |
+| EM-10 | investor confirmation | route | `node --test server/test/invitations-confirm-mail.test.mjs` | Wave 0 |
+| EM-11 | preferences + one-click unsubscribe | route + browser | `node --test server/test/unsubscribe.test.mjs` | Wave 0 |
+| EM-12 | console Emails page previews every kind | browser | `emails-preview.js` | Wave 0 |
+| EM-13 | honest no-server preview | browser | `node .planning/phases/13-*/checks/emails-honest.js` | Wave 0 |
+| EM-14 | preview == server text | browser + node | `node .planning/phases/13-*/checks/emails-parity.js` | Wave 0 |
+
+### 4.4 Server test count
+368 today. Each plan states its exact delta in its PLAN and SUMMARY (new tests added, existing assertions changed - the subject assertions in mail.test.mjs:221 and :228, and any invitations*.test.mjs that match old subjects, will change and must be listed, not silently deleted). The gate's `GATE_SERVER_TESTS` is set to the merged total after each merge.
+
+### 4.5 Sampling
+- Per task commit: the plan's own quick tests.
+- Per wave merge: `node --test` (full server) + the phase's browser checks.
+- Phase gate: the full reference gate on the merged tree, the owner-path walkthrough of the preview (phone sizes), then the owner's own check.
+
+### 4.6 Wave 0 gaps
+- `server/test/emails-render.test.mjs`, `server/test/fixtures/emails/` (goldens), `server/test/emails-guard.test.mjs`
+- `server/test/senders.test.mjs`, `server/test/mailer-ses.test.mjs` (fake SES/SNS with a test CA)
+- `server/test/maillog.test.mjs`, `server/test/messages.test.mjs`, `server/test/unsubscribe.test.mjs`
+- `.planning/phases/13-email-overhaul/checks/` - `emails-preview.js`, `emails-honest.js`, `emails-parity.js` reusing 06's `lib.js`
+- No framework install needed.
+
+<!-- section 4 done -->
