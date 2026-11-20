@@ -1,0 +1,293 @@
+<title>Portal Help Chat</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+/* Layout: one narrow working column; settings bar on top, the conversation, the composer pinned under it. */
+:root {
+  --bg: #f5f6f4; --panel: #ffffff; --fg: #1d2421; --muted: #5d6762; --line: #d9ddd9;
+  --accent: #1f5f4a; --accent-fg: #ffffff; --you: #e6efe9; --warn: #8a5a12; --warn-bg: #fbf1df;
+  --bad: #9b2c2c; --bad-bg: #fbe9e9;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121614; --panel: #1a201d; --fg: #e4e9e6; --muted: #9aa49f; --line: #2c3430;
+  --accent: #5fb393; --accent-fg: #0d1210; --you: #1f2c26; --warn: #e2b25c; --warn-bg: #2a2416;
+  --bad: #ee8e8e; --bad-bg: #2c1a1a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121614; --panel: #1a201d; --fg: #e4e9e6; --muted: #9aa49f; --line: #2c3430;
+  --accent: #5fb393; --accent-fg: #0d1210; --you: #1f2c26; --warn: #e2b25c; --warn-bg: #2a2416;
+  --bad: #ee8e8e; --bad-bg: #2c1a1a; color-scheme: dark }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 16px/1.5 var(--sans); }
+.wrap { max-width: 720px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; gap: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px; }
+h1 { font-size: 1.25rem; font-weight: 600; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); font-size: 0.875rem; margin: 2px 0 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 200px; }
+.field label, .seg-label { font-size: 0.8125rem; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.9375rem; border: 0; background: transparent; color: var(--fg); padding: 8px 14px; min-height: 44px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+select, textarea { font: inherit; font-size: 16px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-height: 44px; width: 100%; }
+button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.log { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.msg { max-width: 92%; padding: 10px 12px; border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.q { align-self: flex-end; background: var(--you); }
+.a { align-self: flex-start; background: var(--panel); border: 1px solid var(--line); }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; font-size: 0.75rem; color: var(--muted); }
+.chip { font-size: 0.75rem; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--line); }
+.chip.answer { color: var(--accent); border-color: var(--accent); }
+.chip.cannot, .chip.out_of_scope { color: var(--warn); background: var(--warn-bg); border-color: transparent; }
+.chip.error { color: var(--bad); background: var(--bad-bg); border-color: transparent; }
+.contact { margin-top: 6px; font-size: 0.8125rem; color: var(--muted); font-style: italic; }
+.empty { color: var(--muted); font-size: 0.9375rem; background: var(--panel); border: 1px dashed var(--line); border-radius: 10px; padding: 14px; }
+.starters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.starters button { font: inherit; font-size: 0.875rem; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 99px; padding: 6px 12px; min-height: 36px; cursor: pointer; text-align: left; }
+.composer { position: sticky; bottom: 0; background: var(--bg); padding-block: 8px; display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; gap: 8px; align-items: end; }
+.row textarea { flex: 1; resize: none; min-height: 48px; max-height: 160px; }
+.send { font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 8px; padding: 0 18px; min-height: 48px; cursor: pointer; }
+.send:disabled { opacity: 0.5; cursor: default; }
+.stat { display: flex; justify-content: space-between; gap: 8px; font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.link { font: inherit; font-size: 0.75rem; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; }
+.notice { font-size: 0.875rem; color: var(--bad); background: var(--bad-bg); border-radius: 8px; padding: 10px 12px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Portal Help Chat</h1>
+    <p class="sub">The portal's help assistant with its own rules and guide. Answers run on your Claude account.</p>
+  </header>
+
+  <section class="bar" aria-label="Who is asking">
+    <div class="field" style="flex:0 0 auto">
+      <span class="seg-label" id="who-label">Asking as</span>
+      <div class="seg" role="group" aria-labelledby="who-label">
+        <button type="button" id="as-sponsor" aria-pressed="true">Sponsor</button>
+        <button type="button" id="as-investor" aria-pressed="false">Investor</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="page">On page</label>
+      <select id="page"></select>
+    </div>
+  </section>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <main class="log" id="log" aria-live="polite">
+    <div class="empty" id="empty">
+      Ask the way a sponsor or investor would. The assistant answers only from the portal's guide, in at most 120 words, and says so when the guide does not cover something.
+      <div class="starters" id="starters"></div>
+    </div>
+  </main>
+
+  <form class="composer" id="form" autocomplete="off">
+    <div class="row">
+      <label for="q" class="seg-label" style="position:absolute;left:-9999px">Your question</label>
+      <textarea id="q" rows="1" maxlength="500" placeholder="Type a question about using the portal"></textarea>
+      <button class="send" id="send" type="submit">Ask</button>
+    </div>
+    <div class="stat">
+      <span id="left">20 questions left in this conversation</span>
+      <button type="button" class="link" id="reset">New conversation</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // The portal's limits and wording (server/lib/help.mjs), kept the same here.
+  const LIMITS = { message: 500, questions: 20, exchanges: 3, answer: 1200 };
+  const CANNOT = 'I do not have that information.';
+  const PORTAL_ONLY = 'I can only help with using this portal.';
+  const FAILED = 'Help could not answer just now. Try again in a moment.';
+  const PRODUCT_MODEL = 'claude-haiku-5-5';
+  const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/;
+  const NUMBERS = [/\b\d{2}-\d{7}\b/, /\b\d{3}[- ]?\d{2}[- ]?\d{4}\b/, /\d{8,}/];
+  const NAMES = /anthropic|claude|\bopus\b|sonnet|haiku|fable|mythos|openai|chatgpt|\bgpt\b|gpt-?\d|\bgemini\b|\bbard\b|google|microsoft|\bcopilot\b|\bllama\b|\bmistral\b|\bgrok\b|deepseek|\bcohere\b|perplexity|meta ai/i;
+  const WORD = /\bbasic(s|ally)?\b/i;
+  const PRODUCT = /carrow|\bvale\b/i;
+  const STARTERS = {
+    sponsor: ['How do I invite an investor?', 'How do I set up the subscription agreement for an offering?', 'Where do I see which investors still have to sign?', 'Should I file under 506(b) or 506(c)?'],
+    investor: ['Where do I sign my subscription agreement?', 'How do I add my bank account for distributions?', 'Which tax form should I fill in?', 'Where can I see my distributions?']
+  };
+
+  const $ = (id) => document.getElementById(id);
+  let data = null, sample = null, audience = 'sponsor', history = [], count = 0, busy = false, ctl = null;
+
+  function redact(text) {
+    let s = String(text || '');
+    for (const re of [EMAIL].concat(NUMBERS)) s = s.replace(new RegExp(re.source, 'g'), '[removed]');
+    return s;
+  }
+  function guard(answer) {
+    if (typeof answer !== 'string' || !answer.trim() || answer.length > LIMITS.answer) return null;
+    if (NAMES.test(answer) || WORD.test(answer) || EMAIL.test(answer) || NUMBERS.some((re) => re.test(answer))) return null;
+    if (data && answer.toLowerCase().includes(data.marker.toLowerCase())) return null;
+    if (audience !== 'sponsor' && PRODUCT.test(answer)) return null;
+    return answer;
+  }
+  function noteOf(key) {
+    const who = audience === 'investor' ? 'an investor' : 'an admin of the firm';
+    const p = key && data.pages[key];
+    return 'The person is ' + who + (p ? ', on ' + p.where : '') + '.';
+  }
+  function replyOf(text) {
+    let t = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+    const a = t.indexOf('{'), b = t.lastIndexOf('}');
+    if (a < 0 || b <= a) return null;
+    let v;
+    try { v = JSON.parse(t.slice(a, b + 1)); } catch (e) { return null; }
+    if (!v || typeof v !== 'object' || !['answer', 'cannot', 'out_of_scope'].includes(v.kind)) return null;
+    if (typeof v.answer !== 'string' || !v.answer.trim()) return null;
+    return { kind: v.kind, answer: v.answer.trim() };
+  }
+  // The portal sends the rules and the asker's guide as the system prompt, then the last three exchanges, the
+  // question and its note. Here the rules and guide open the first turn kept, in the same order.
+  function buildInput(question, note) {
+    const prefix = data.rules + '\n\n' + data.guide[audience] +
+      '\n\nReply with only the JSON object {"kind": "answer" | "cannot" | "out_of_scope", "answer": "<text>"} and nothing else.\n\n---\n\n';
+    const turns = [];
+    history.forEach((h, i) => {
+      turns.push({ role: 'user', content: (i === 0 ? prefix : '') + h.q });
+      turns.push({ role: 'assistant', content: h.a });
+    });
+    const tail = question + '\n\n[Note from the portal, not written by the person: ' + note + ']';
+    turns.push({ role: 'user', content: (history.length === 0 ? prefix : '') + tail });
+    return turns;
+  }
+
+  function fillPages() {
+    const sel = $('page');
+    sel.innerHTML = '';
+    const none = document.createElement('option');
+    none.value = ''; none.textContent = 'Not on a specific page';
+    sel.appendChild(none);
+    Object.keys(data.pages).forEach((k) => {
+      const p = data.pages[k];
+      if (audience === 'investor' && p.audience === 'sponsor') return;
+      const o = document.createElement('option');
+      o.value = k; o.textContent = p.title + (p.audience === 'sponsor' ? ' (console)' : '');
+      sel.appendChild(o);
+    });
+  }
+  function fillStarters() {
+    const box = $('starters');
+    box.innerHTML = '';
+    STARTERS[audience].forEach((s) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = s;
+      b.addEventListener('click', () => { $('q').value = s; ask(); });
+      box.appendChild(b);
+    });
+  }
+  function setLeft() {
+    $('left').textContent = (LIMITS.questions - count) + ' question' + (LIMITS.questions - count === 1 ? '' : 's') + ' left in this conversation';
+    $('send').disabled = busy || count >= LIMITS.questions || !data || !sample;
+  }
+  function reset() {
+    if (ctl) ctl.abort();
+    history = []; count = 0; busy = false;
+    $('log').querySelectorAll('.msg').forEach((n) => n.remove());
+    $('empty').hidden = false;
+    setLeft();
+  }
+  function setAudience(a) {
+    audience = a;
+    $('as-sponsor').setAttribute('aria-pressed', String(a === 'sponsor'));
+    $('as-investor').setAttribute('aria-pressed', String(a === 'investor'));
+    fillPages(); fillStarters(); reset();
+  }
+  function bubble(cls, text) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + cls;
+    d.textContent = text;
+    $('log').appendChild(d);
+    d.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    return d;
+  }
+  function meta(el, kind, label, extra) {
+    const m = document.createElement('div');
+    m.className = 'meta';
+    const c = document.createElement('span');
+    c.className = 'chip ' + kind; c.textContent = label;
+    m.appendChild(c);
+    if (extra) { const s = document.createElement('span'); s.textContent = extra; m.appendChild(s); }
+    el.appendChild(m);
+  }
+  function showNotice(t) { const n = $('notice'); n.textContent = t; n.hidden = !t; }
+
+  async function ask() {
+    const raw = $('q').value.trim();
+    if (!raw || busy || !sample || !data || count >= LIMITS.questions) return;
+    if (raw.length > LIMITS.message) { showNotice('A question can be at most 500 characters.'); return; }
+    showNotice('');
+    const question = redact(raw);
+    const note = noteOf($('page').value);
+    $('empty').hidden = true;
+    bubble('q', question);
+    $('q').value = '';
+    const out = bubble('a', 'Thinking…');
+    busy = true; count += 1; setLeft();
+    ctl = new AbortController();
+    const t0 = performance.now();
+    try {
+      const r = await sample(buildInput(question, note), {
+        modelTier: 'quick', model: PRODUCT_MODEL, effort: 'low', cache: false, signal: ctl.signal
+      });
+      const secs = ((performance.now() - t0) / 1000).toFixed(1) + ' s';
+      const same = r.modelApplied === PRODUCT_MODEL ? 'portal model' : 'stand-in model';
+      const reply = replyOf(r.text);
+      if (!reply) {
+        out.textContent = FAILED;
+        meta(out, 'error', 'No usable reply', secs + ' · ' + same);
+        return;
+      }
+      const safe = guard(reply.answer);
+      const shown = safe === null ? { kind: 'cannot', answer: CANNOT } : reply;
+      out.textContent = shown.answer;
+      const label = shown.kind === 'answer' ? 'Answer' : shown.kind === 'cannot' ? 'Not in the guide' : 'Outside the portal';
+      meta(out, shown.kind, safe === null ? 'Replaced by the safety check' : label, secs + ' · ' + same);
+      if (shown.kind !== 'answer') {
+        const c = document.createElement('div');
+        c.className = 'contact';
+        c.textContent = audience === 'investor' ? 'In the portal, the firm’s own contact line appears here.' : 'In the portal, the support contact appears here.';
+        out.appendChild(c);
+      }
+      history = history.concat({ q: question, a: JSON.stringify(shown) }).slice(-LIMITS.exchanges);
+    } catch (e) {
+      const code = e && e.code;
+      if (code === 'cancelled') { out.remove(); count -= 1; return; }
+      out.textContent = FAILED;
+      meta(out, 'error', code === 'not_granted' ? 'Not allowed' : code === 'rate_limited' ? 'Too many at once' : 'Failed');
+      if (code === 'not_granted') showNotice('The chat needs permission to use your Claude account. Reload the page and choose Allow when asked.');
+      if (code === 'rate_limited') showNotice('Too many questions at once. Wait a minute, then ask again.');
+    } finally {
+      busy = false; ctl = null; setLeft();
+    }
+  }
+
+  $('as-sponsor').addEventListener('click', () => setAudience('sponsor'));
+  $('as-investor').addEventListener('click', () => setAudience('investor'));
+  $('reset').addEventListener('click', reset);
+  $('form').addEventListener('submit', (e) => { e.preventDefault(); ask(); });
+  $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } });
+
+  setLeft();
+  fetch('guide.json').then((r) => r.json()).then((d) => {
+    data = d; fillPages(); fillStarters(); setLeft();
+  }).catch(() => showNotice('The portal’s help guide did not load. Reload the page.'));
+
+  (window.claude && window.claude.use ? window.claude.use('sample') : Promise.resolve(null)).then((s) => {
+    sample = s;
+    if (!s) showNotice('This page needs to be opened in Claude to answer questions.');
+    setLeft();
+  });
+})();
+</script>
