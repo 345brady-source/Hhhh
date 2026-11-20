@@ -143,6 +143,13 @@ const cases = {
     check("T7: the investors' income, gains, fees and carry plus the general partner's carry = the journal's 2026 results (7,650,000)", T.engine === T.journal && T.journal === F.expect.equation.results, { engine: T.engine, journal: T.journal });
     const split = P.inv.map((a) => [a.investor.id, a.income, a.gain, a.fee]);
     check('2026 by investor: income 800,000 - 500,000 legal and 400,000 - 250,000; gains 6,000,000 and 3,000,000; fees 1,200,000 and 600,000', J(split) === J([['FA-1001', 300000, 6000000, 1200000], ['FA-1002', 150000, 3000000, 600000]]), split);
+    // The managed edition runs the same engine on the same records: a real firm's figures are the self-serve edition's.
+    const NSm = loadPortal(undefined, { today: TODAY, edition: 'managed', extra: ['books.js', 'books-post.js'] });
+    const Fm = fixture('fund-a');
+    const m = build(NSm, Fm);
+    const months = (N, w, oo) => N.audit.ledger(w, oo).months.map((x) => [x.key, x.income, x.gain, x.fee, x.carry, x.endCap, x.gpEnd]);
+    const tb = (N, w) => N.books.trialBalance(w, oid, '2026-01-01', '2026-12-31').map((x) => [x.code, x.end]);
+    check("the managed edition gives fund A exactly the self-serve edition's monthly figures and trial balance", NSm.EDITION.id === 'managed' && J(months(NSm, m.ws, m.o)) === J(months(NS, ws, o)) && J(tb(NSm, m.ws)) === J(tb(NS, ws)), { managed: months(NSm, m.ws, m.o).slice(-1), selfserve: months(NS, ws, o).slice(-1) });
   },
 
   /** FA-05: fund B, open-ended: January and February to the cent; journal net assets = NAV at both month-ends. */
