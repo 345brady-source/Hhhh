@@ -50,6 +50,17 @@
     tax: 'Tax-season summary'
   };
 
+  const MERGE_FIELDS = Object.freeze(['first_name', 'account_name', 'investment', 'firm', 'team', 'phone', 'period', 'period_end', 'ending_capital', 'distributions_period', 'commitment', 'unfunded']);
+  // fields that fill from the recipient's own figures, and those that exist only for a closed fund
+  const INVESTOR_FIELDS = { first_name: 1, account_name: 1, ending_capital: 1, distributions_period: 1, commitment: 1, unfunded: 1 };
+  const CLOSED_FIELDS = { commitment: 1, unfunded: 1 };
+  const SPLIT_LABELS = Object.freeze(['Return of capital', 'Income', 'Interest', 'Capital gain', 'Other']);
+  const CHARTS = ['none', 'dist', 'capital', 'allocation'];
+  const COVER_STYLES = ['band', 'plain', 'photo'];
+  const MAX_BLOCKS = 60;
+  const MAX_CHARS = 5000;
+  const MAX_PHOTOS = 12;
+
   const clone = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
   const str = (v, max) => {
     let s = String(v == null ? '' : v)
@@ -163,6 +174,406 @@
     };
   }
 
+  /* ---------- Rich text (the block model; never HTML) ---------- */
+  const CTRL = /[\u0000-\u001F\u007F-\u009F​-‏‪-‮⁦-⁩﻿]/g;
+  /** Runs { s, b, i } only: control characters stripped, adjacent runs of the same style joined, at most `max` characters. */
+  function cleanRuns(list, max) {
+    const out = [];
+    let left = max;
+    (Array.isArray(list) ? list : []).forEach((r) => {
+      if (!r || typeof r !== 'object' || left <= 0) return;
+      let s = String(r.s == null ? '' : r.s)
+        .replace(/[\t\n\r]+/g, ' ')
+        .replace(CTRL, '');
+      if (!s) return;
+      if (s.length > left) s = s.slice(0, left).replace(/[\uD800-\uDBFF]$/, '');
+      left -= s.length;
+      const b = r.b === true;
+      const i = r.i === true;
+      const last = out[out.length - 1];
+      if (last && last.b === b && last.i === i) last.s += s;
+      else out.push({ s, b, i });
+    });
+    return out;
+  }
+  const runsText = (runs) => runs.map((r) => r.s).join('');
+  /** Blocks [{ t: 'p' | 'h', runs }, { t: 'ul', items: [runs] }]: anything else dropped; at most 60 blocks, 5,000 characters each. */
+  function sanitize(blocks) {
+    const out = [];
+    (Array.isArray(blocks) ? blocks : []).forEach((bk) => {
+      if (out.length >= MAX_BLOCKS || !bk || typeof bk !== 'object') return;
+      if (bk.t === 'p' || bk.t === 'h') {
+        const runs = cleanRuns(bk.runs, MAX_CHARS);
+        if (runsText(runs).trim()) out.push({ t: bk.t, runs });
+      } else if (bk.t === 'ul') {
+        let left = MAX_CHARS;
+        const items = [];
+        (Array.isArray(bk.items) ? bk.items : []).forEach((it) => {
+          const runs = cleanRuns(it, left);
+          if (runsText(runs).trim()) {
+            items.push(runs);
+            left -= runsText(runs).length;
+          }
+        });
+        if (items.length) out.push({ t: 'ul', items });
+      }
+    });
+    return out;
+  }
+  /**
+   * The editor's plain tree [{ tag, children } | { text }] as blocks: p and div → p; h1-h6 → h; ul and ol with li → ul;
+   * b and strong → bold; i and em → italic; br ends the paragraph; script and style dropped with their contents; any
+   * other tag keeps only its text. Attributes are never read.
+   */
+  function fromTree(tree) {
+    const out = [];
+    let cur = null;
+    let list = null;
+    let item = null;
+    const close = () => {
+      if (cur && cur.runs.length) out.push(cur);
+      cur = null;
+    };
+    const closeItem = () => {
+      if (list && item && item.length) list.items.push(item);
+      item = null;
+    };
+    const text = (s, st) => {
+      if (!s) return;
+      const r = { s: String(s), b: !!st.b, i: !!st.i };
+      if (list) {
+        if (!item) item = [];
+        item.push(r);
+        return;
+      }
+      if (!cur) cur = { t: 'p', runs: [] };
+      cur.runs.push(r);
+    };
+    function walk(nodes, st) {
+      (Array.isArray(nodes) ? nodes : []).forEach((n) => {
+        if (!n || typeof n !== 'object') return;
+        if (n.tag == null) {
+          if (typeof n.text === 'string') text(n.text, st);
+          return;
+        }
+        const tag = String(n.tag).toLowerCase();
+        if (tag === 'script' || tag === 'style') return;
+        if (tag === 'br') {
+          if (list) text(' ', st);
+          else close();
+          return;
+        }
+        if (tag === 'b' || tag === 'strong') return walk(n.children, { b: true, i: st.i });
+        if (tag === 'i' || tag === 'em') return walk(n.children, { b: st.b, i: true });
+        if (list) {
+          if (tag === 'li') {
+            closeItem();
+            item = [];
+            walk(n.children, st);
+            closeItem();
+            return;
+          }
+          return walk(n.children, st);
+        }
+        if (tag === 'p' || tag === 'div' || /^h[1-6]$/.test(tag)) {
+          close();
+          cur = { t: tag.charAt(0) === 'h' ? 'h' : 'p', runs: [] };
+          walk(n.children, st);
+          close();
+          return;
+        }
+        if (tag === 'ul' || tag === 'ol') {
+          close();
+          list = { t: 'ul', items: [] };
+          walk(n.children, st);
+          closeItem();
+          if (list.items.length) out.push(list);
+          list = null;
+          return;
+        }
+        walk(n.children, st);
+      });
+    }
+    walk(tree, { b: false, i: false });
+    close();
+    return sanitize(out);
+  }
+  /** The text of blocks, one line per paragraph, heading or list item. */
+  function plain(blocks) {
+    const lines = [];
+    sanitize(blocks).forEach((b) => {
+      if (b.t === 'ul') b.items.forEach((it) => lines.push(runsText(it)));
+      else lines.push(runsText(b.runs));
+    });
+    return lines.join('\n');
+  }
+  const eachRun = (blocks, f) =>
+    (Array.isArray(blocks) ? blocks : []).forEach((b) => {
+      if (!b) return;
+      if (Array.isArray(b.runs)) b.runs.forEach(f);
+      if (Array.isArray(b.items)) b.items.forEach((it) => (Array.isArray(it) ? it.forEach(f) : null));
+    });
+  const FIELD_RE = /\{([a-z_]+)\}/g;
+  /** The merge field names used in blocks, in order of first use. A field is { + [a-z_]+ + }; anything else is text. */
+  function fields(blocks) {
+    const seen = [];
+    eachRun(blocks, (r) =>
+      String((r && r.s) || '').replace(FIELD_RE, (m, k) => {
+        if (seen.indexOf(k) < 0) seen.push(k);
+        return m;
+      })
+    );
+    return seen;
+  }
+  /** Blocks with every field that has a value filled; a field without one is left as typed. */
+  function fill(blocks, values) {
+    const v = values || {};
+    const has = (k) => Object.prototype.hasOwnProperty.call(v, k) && v[k] != null;
+    const out = clone(Array.isArray(blocks) ? blocks : []);
+    eachRun(out, (r) => {
+      if (r && typeof r.s === 'string') r.s = r.s.replace(FIELD_RE, (m, k) => (has(k) ? String(v[k]) : m));
+    });
+    return out;
+  }
+
+  /* ---------- Templates ---------- */
+  const nowIso = () => new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+  function cleanScope(sc) {
+    const ids = sc && Array.isArray(sc.offeringIds) ? Array.from(new Set(sc.offeringIds.map((x) => str(x, 80)).filter(Boolean))) : [];
+    return ids.length && !(sc && sc.firm === true) ? { offeringIds: ids } : { firm: true };
+  }
+  function cleanOpts(key, o, photos) {
+    o = o && typeof o === 'object' ? o : {};
+    if (key === 'capital') return { second: o.second === 'itd' ? 'itd' : 'ytd' };
+    if (key === 'commitment') return { activity: o.activity === true };
+    if (key === 'taxdocs') return { expected: str(o.expected, 200) };
+    if (key === 'assets') {
+      const items = (Array.isArray(o.items) ? o.items : [])
+        .slice(0, 50)
+        .map((it) => {
+          it = it && typeof it === 'object' ? it : {};
+          const keep = [];
+          (Array.isArray(it.photoIds) ? it.photoIds : [])
+            .map((x) => str(x, 80))
+            .filter(Boolean)
+            .forEach((id) => {
+              if (photos.n < MAX_PHOTOS) {
+                keep.push(id);
+                photos.n++;
+              }
+            });
+          return {
+            holdingId: str(it.holdingId, 80),
+            photoIds: keep,
+            text: sanitize(it.text),
+            figures: (Array.isArray(it.figures) ? it.figures : [])
+              .slice(0, 20)
+              .map((f) => ({ label: str(f && f.label, 80), value: str(f && f.value, 80) }))
+              .filter((f) => f.label || f.value)
+          };
+        })
+        .filter((it) => it.holdingId);
+      return { items };
+    }
+    return {};
+  }
+  /**
+   * A template as it may be stored: unknown keys and sections dropped, duplicates removed, missing catalogue sections of
+   * the type appended off, cover first, disclosures last and on, wording sanitized, accent '#RRGGBB' or '', chart in the
+   * list, name at most 80 characters.
+   */
+  function normalise(template) {
+    const x = template && typeof template === 'object' ? template : {};
+    const type = TYPES.indexOf(x.type) >= 0 ? x.type : 'statement';
+    const keys = CATALOGUE.filter((c) => c.types.indexOf(type) >= 0).map((c) => c.key);
+    const seen = {};
+    const photos = { n: 0 };
+    let secs = [];
+    (Array.isArray(x.sections) ? x.sections : []).forEach((sec) => {
+      if (!sec || keys.indexOf(sec.key) < 0 || seen[sec.key]) return;
+      seen[sec.key] = 1;
+      secs.push({ key: sec.key, on: sec.on === true, opts: cleanOpts(sec.key, sec.opts, photos), text: sanitize(sec.text) });
+    });
+    keys.filter((k) => !seen[k]).forEach((k) => secs.push({ key: k, on: false, opts: cleanOpts(k, defaultOpts(k), photos), text: [] }));
+    const cover = secs.filter((sec) => sec.key === 'cover');
+    const disc = secs.filter((sec) => sec.key === 'disclosures');
+    secs = cover.concat(
+      secs.filter((sec) => sec.key !== 'cover' && sec.key !== 'disclosures'),
+      disc
+    );
+    disc.forEach((sec) => (sec.on = true));
+    const cv = x.cover && typeof x.cover === 'object' ? x.cover : {};
+    const hex = NS.brand && NS.brand.normHex ? NS.brand.normHex(cv.accent) : null;
+    return {
+      id: str(x.id, 40),
+      name: str(x.name, 80) || TITLES[type],
+      title: str(x.title, 120),
+      type,
+      fundType: FUND_TYPES.indexOf(x.fundType) >= 0 ? x.fundType : 'any',
+      starter: str(x.starter, 60),
+      scope: cleanScope(x.scope),
+      cover: { style: COVER_STYLES.indexOf(cv.style) >= 0 ? cv.style : 'band', accent: hex || '', photoId: str(cv.photoId, 80) },
+      chart: CHARTS.indexOf(x.chart) >= 0 ? x.chart : 'none',
+      sections: secs,
+      disclosures: sanitize(x.disclosures),
+      version: Number.isSafeInteger(x.version) && x.version > 0 ? x.version : 0,
+      updatedAt: str(x.updatedAt, 40),
+      updatedBy: str(x.updatedBy, 200)
+    };
+  }
+  /** Moves a section one place up (-1) or down (+1); the cover stays first and the disclosures last. */
+  function move(template, key, dir) {
+    const s = (template && template.sections) || [];
+    const i = s.findIndex((x) => x.key === key);
+    const j = i + (dir < 0 ? -1 : 1);
+    if (i < 0 || key === 'cover' || key === 'disclosures' || j < 0 || j >= s.length) return template;
+    if (s[j].key === 'cover' || s[j].key === 'disclosures') return template;
+    const tmp = s[i];
+    s[i] = s[j];
+    s[j] = tmp;
+    return template;
+  }
+  const REG = [];
+  /** Registers a starter (plan 12-05): { id, name, type, fundType, blurb, template: partial template }. */
+  function addStarter(spec) {
+    if (!spec || !str(spec.id, 60) || TYPES.indexOf(spec.type) < 0 || TYPES.indexOf(spec.id) >= 0) throw new Error('A starter needs its own id and a report type');
+    const s = { id: str(spec.id, 60), name: str(spec.name, 80) || TITLES[spec.type], type: spec.type, fundType: FUND_TYPES.indexOf(spec.fundType) >= 0 ? spec.fundType : 'any', blurb: str(spec.blurb, 200), template: clone(spec.template || {}) };
+    const i = REG.findIndex((x) => x.id === s.id);
+    if (i >= 0) REG[i] = s;
+    else REG.push(s);
+    return clone(s);
+  }
+  /** The starters for a type (or all types): the blank one first, always, then those registered. */
+  function starters(type) {
+    const out = [];
+    (type ? [type] : TYPES).forEach((ty) => {
+      if (TYPES.indexOf(ty) < 0) return;
+      out.push({ id: ty, name: 'Blank', type: ty, fundType: 'any', blurb: '', blank: true });
+      REG.filter((s) => s.type === ty).forEach((s) => out.push(Object.assign(clone(s), { blank: false })));
+    });
+    return out;
+  }
+  function nextId(ws) {
+    let n = 0;
+    ensure(ws).templates.forEach((t) => {
+      const m = /^rt-(\d+)$/.exec(t.id || '');
+      if (m) n = Math.max(n, Number(m[1]));
+    });
+    return `rt-${n + 1}`;
+  }
+  function scopeText(ws, sc) {
+    if (!sc || sc.firm) return 'for the whole firm';
+    return 'for ' + sc.offeringIds.map((id) => (offering(ws, id) || { name: id }).name).join(', ');
+  }
+  function logTemplate(ws, action, t, by, at) {
+    if (!NS.audit || !NS.audit.log) return;
+    NS.audit.log(ws, { action, fund: t.scope && t.scope.offeringIds ? t.scope.offeringIds.join(', ') : '', record: t.id, actor: by, at, detail: `${t.name}, version ${t.version}, ${scopeText(ws, t.scope)}` });
+  }
+  /** A stored copy of a starter (or the blank template of a type): version 1, logged 'Report template created'. */
+  function startFrom(ws, starterIdOrType, opts) {
+    const o = opts || {};
+    let base;
+    if (TYPES.indexOf(starterIdOrType) >= 0) base = blank(starterIdOrType, ws);
+    else {
+      const s = REG.find((x) => x.id === starterIdOrType);
+      if (!s) throw new Error('No such starter');
+      base = blank(s.type, ws);
+      const tp = clone(s.template);
+      Object.keys(tp).forEach((k) => {
+        if (k !== 'id' && k !== 'type' && k !== 'version') base[k] = tp[k];
+      });
+      base.starter = s.id;
+      base.fundType = s.fundType;
+      if (!tp.name) base.name = s.name;
+    }
+    if (o.name) base.name = o.name;
+    if (o.scope) base.scope = o.scope;
+    const t = normalise(base);
+    t.id = nextId(ws);
+    t.version = 1;
+    t.updatedAt = o.at || nowIso();
+    t.updatedBy = o.by || '';
+    ensure(ws).templates.push(t);
+    logTemplate(ws, 'Report template created', t, t.updatedBy, t.updatedAt);
+    return clone(t);
+  }
+  /** Normalises and stores a template: version + 1, logged 'Report template saved' with name, version and scope. */
+  function save(ws, template, opts) {
+    const o = opts || {};
+    const r = ensure(ws);
+    const t = normalise(template);
+    const i = t.id ? r.templates.findIndex((x) => x.id === t.id) : -1;
+    if (i < 0) t.id = nextId(ws);
+    t.version = (i >= 0 ? r.templates[i].version || 0 : 0) + 1;
+    t.updatedAt = o.at || nowIso();
+    t.updatedBy = o.by || '';
+    if (i >= 0) r.templates[i] = t;
+    else r.templates.push(t);
+    logTemplate(ws, 'Report template saved', t, t.updatedBy, t.updatedAt);
+    return clone(t);
+  }
+  /** Deletes a stored template, logged 'Report template deleted'. */
+  function remove(ws, id, opts) {
+    const o = opts || {};
+    const r = ensure(ws);
+    const i = r.templates.findIndex((x) => x.id === id);
+    if (i < 0) return false;
+    const t = r.templates.splice(i, 1)[0];
+    logTemplate(ws, 'Report template deleted', t, o.by || '', o.at || nowIso());
+    return true;
+  }
+  /** The firm-wide templates plus those saved for the offering. */
+  function templatesFor(ws, offeringId) {
+    return ensure(ws)
+      .templates.filter((t) => t.scope && (t.scope.firm || (t.scope.offeringIds || []).indexOf(offeringId) >= 0))
+      .map(clone);
+  }
+
+  /* ---------- Distribution split (C-06): typed by the sponsor, kept in ws.reports, never in the run ---------- */
+  function runGross(ws, run) {
+    const rows = NS.data && NS.data.runRows ? NS.data.runRows(ws, run) : (run.lines || []).map((l) => ({ cents: l.grossCents }));
+    return rows.reduce((a, r) => a + (r.cents || 0), 0);
+  }
+  /** Stores the run's split: labels from SPLIT_LABELS, each a positive whole number of cents, adding to the run's gross exactly. */
+  function setSplit(ws, runId, parts, opts) {
+    const o = opts || {};
+    const run = (ws.runs || []).find((r) => r.id === runId);
+    if (!run) return { ok: false, error: 'No such distribution' };
+    if (NS.data && NS.data.runPaid && !NS.data.runPaid(run)) return { ok: false, error: 'Only a paid distribution can carry a split' };
+    const cur = NS.structures.curOf(offering(ws, run.offeringId));
+    const list = Array.isArray(parts) ? parts : [];
+    const by = o.by || '';
+    const at = o.at || nowIso();
+    if (!list.length) {
+      if (ws.reports && ws.reports.splits && ws.reports.splits[runId]) {
+        delete ensure(ws).splits[runId];
+        NS.audit.log(ws, { action: 'Distribution split removed', fund: run.offeringId, record: runId, actor: by, at, detail: '' });
+      }
+      return { ok: true };
+    }
+    const seen = {};
+    for (const p of list) {
+      const label = String((p && p.label) || '');
+      if (SPLIT_LABELS.indexOf(label) < 0) return { ok: false, error: `Not a character a notice can show: ${str(label, 80)}` };
+      if (seen[label]) return { ok: false, error: `${label} is listed twice` };
+      seen[label] = 1;
+      if (!Number.isSafeInteger(p.cents) || p.cents <= 0) return { ok: false, error: `${label}: enter an amount above zero, to the cent` };
+    }
+    const gross = runGross(ws, run);
+    const sum = list.reduce((a, p) => a + p.cents, 0);
+    if (sum !== gross) return { ok: false, error: `Off by ${fmt.money(Math.abs(sum - gross), cur)}` };
+    const clean = list.map((p) => ({ label: p.label, cents: p.cents }));
+    ensure(ws).splits[runId] = { parts: clean, by, at };
+    NS.audit.log(ws, { action: 'Distribution split entered', fund: run.offeringId, record: runId, actor: by, at, detail: clean.map((p) => `${p.label} ${fmt.money(p.cents, cur)}`).join(', ') });
+    return { ok: true };
+  }
+  /** One investor's split of the run: the stored parts shared over their gross by largest remainder (sums exactly). */
+  function splitFor(ws, runId, investorGross) {
+    const s = ws.reports && ws.reports.splits && ws.reports.splits[runId];
+    if (!s || !Array.isArray(s.parts) || !s.parts.length) return null;
+    return NS.data.split(investorGross, s.parts.map((p) => ({ label: p.label, amount: p.cents }))).map((r) => ({ label: r.label, cents: r.cents }));
+  }
+
   /* ---------- Recipients ---------- */
   const byId = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
   const offering = (ws, id) => (ws.offerings || []).find((o) => o.id === id) || null;
@@ -259,14 +670,77 @@
       if (s.preliminary) X.B.push(note('Preliminary: the books are not closed for this period.'));
     }
   };
+  /**
+   * Typed wording for one section, merge fields checked and filled: an unknown name, an investor field with no
+   * recipient, or commitment / unfunded where no covered fund is closed, is an error naming the field and the section.
+   */
+  function wording(X, blocks, key) {
+    const label = CAT[key].label;
+    fields(blocks).forEach((k) => {
+      let message = '';
+      if (MERGE_FIELDS.indexOf(k) < 0) message = `Unknown field {${k}} in ${label}`;
+      else if (INVESTOR_FIELDS[k] && !X.rid) message = `The field {${k}} in ${label} needs an investor, and this goes to everyone without a statement`;
+      else if (CLOSED_FIELDS[k] && !X.funds.some((o) => X.st[o.id] && !X.st[o.id].open)) message = `The field {${k}} in ${label} does not apply to an open-ended fund`;
+      if (message) X.errors.push({ section: key, field: k, message });
+    });
+    return toModel(fill(blocks, X.values));
+  }
   const TOP_SECTIONS = {
+    letter(X, sec) {
+      wording(X, sec.text, 'letter').forEach((b) => X.B.push(b));
+    },
+    outlook(X, sec) {
+      const blocks = wording(X, sec.text, 'outlook');
+      if (!blocks.length) return;
+      X.B.push({ k: 'h2', text: 'Outlook' });
+      blocks.forEach((b) => X.B.push(b));
+    },
     disclosures(X) {
-      const blocks = toModel(X.t.disclosures);
+      const blocks = wording(X, X.t.disclosures, 'disclosures');
       if (!blocks.length) return;
       X.B.push({ k: 'h2', text: 'Disclosures' });
       blocks.forEach((b) => X.B.push(b));
     }
   };
+  /** 'A', 'A and B', 'A, B and C'. */
+  const andList = (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]);
+  /** Amounts by currency, each formatted, in first-seen order, joined with ' and '. */
+  function perCurrency(list) {
+    const order = [];
+    const sum = {};
+    list.forEach(([cur, cents]) => {
+      if (!(cur in sum)) {
+        sum[cur] = 0;
+        order.push(cur);
+      }
+      sum[cur] += cents;
+    });
+    return order.map((c) => fmt.money(sum[c], c)).join(' and ');
+  }
+  /** The merge values for one model (investor fields only with a recipient; commitment and unfunded only for closed funds). */
+  function mergeValues(X) {
+    const sup = X.firm.support || {};
+    const v = {
+      investment: andList(X.funds.map((o) => o.name)),
+      firm: X.firm.name || '',
+      team: sup.team || '',
+      phone: sup.phone || sup.email || '',
+      period: X.label.text,
+      period_end: fmtDate(X.to)
+    };
+    if (!X.inv) return v;
+    v.first_name = X.inv.firstName || '';
+    v.account_name = X.inv.title || '';
+    const sts = X.funds.map((o) => X.st[o.id]).filter(Boolean);
+    v.ending_capital = perCurrency(sts.map((s) => [s.currency, s.period.end]));
+    v.distributions_period = X.dist ? fmt.money(X.dist.gross, X.dist.currency) : perCurrency(sts.map((s) => [s.currency, s.period.dist]));
+    const closed = sts.filter((s) => !s.open);
+    if (closed.length) {
+      v.commitment = perCurrency(closed.map((s) => [s.currency, s.commit]));
+      v.unfunded = perCurrency(closed.map((s) => [s.currency, s.unfunded]));
+    }
+    return v;
+  }
 
   /* ---------- Resolve ---------- */
   /**
@@ -277,7 +751,7 @@
     D = D || NS.reportsData;
     if (!D) throw new Error('The report figures are not loaded');
     spec = spec || {};
-    const t = clone(template);
+    const t = normalise(template);
     const type = TYPES.indexOf(t.type) >= 0 ? t.type : 'statement';
     const errors = [];
     const rid = recipientId || null;
@@ -314,7 +788,8 @@
     const coverOn = sections.some((s) => s.key === 'cover');
     const fundLine = multi ? (aud.kind === 'letter' ? funds.map((o) => o.name).join(', ') : 'All investments') : funds[0] ? funds[0].name : '';
 
-    const X = { ws, D, t, type, rid, inv, from, to, label, funds, st, multi, firm, errors, B: [] };
+    const X = { ws, D, t, type, rid, inv, from, to, label, funds, st, multi, firm, errors, dist: null, B: [] };
+    X.values = mergeValues(X);
     const fundKeys = sections.filter((s) => FUND_SECTIONS[s.key]);
     let fundsDone = false;
     sections.forEach((s) => {
@@ -369,11 +844,28 @@
     CATALOGUE,
     TYPES: Object.freeze(TYPES.slice()),
     FUND_TYPES: Object.freeze(FUND_TYPES.slice()),
+    MERGE_FIELDS,
+    SPLIT_LABELS,
     fmt,
     periodLabel,
     ensure,
     blank,
+    addStarter,
+    starters,
+    startFrom,
+    save,
+    remove,
+    normalise,
+    move,
+    templatesFor,
+    sanitize,
+    fromTree,
+    plain,
+    fields,
+    fill,
     recipients,
-    resolve
+    resolve,
+    setSplit,
+    splitFor
   };
 })();

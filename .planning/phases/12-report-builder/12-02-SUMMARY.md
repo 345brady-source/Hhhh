@@ -27,3 +27,24 @@ PASS resolve no HTML anywhere in the model
 REPORTS MODEL: PASS (cases run: 1)
 VERIFY_EXIT=0
 ```
+
+### Task 2 RED (red-2.txt, `--case resolve,template,richtext,merge,split`, before the Task 2 code; FAIL lines and the last line, each cut at 200 characters)
+
+```
+FAIL template ran to the end :: TypeError: R.startFrom is not a function
+FAIL richtext ran to the end :: TypeError: R.sanitize is not a function
+FAIL merge MERGE_FIELDS is exactly the 12 names :: {"expected":["first_name","account_name","investment","firm","team","phone","period","period_end","ending_capital","distributions_period","commitment
+FAIL merge ran to the end :: TypeError: Cannot read properties of undefined (reading 'map')
+FAIL split SPLIT_LABELS :: {"expected":["Return of capital","Income","Interest","Capital gain","Other"]}
+FAIL split ran to the end :: TypeError: R.setSplit is not a function
+REPORTS MODEL: FAIL (cases run: 5) - template, richtext, merge, split
+```
+
+### Task 2 verify (verbatim tail, VERIFY_EXIT=0)
+
+```
+PASS split ws.runs is unchanged (JSON before and after)
+PASS split the split lives in ws.reports.splits only
+REPORTS MODEL: PASS (cases run: 5)
+VERIFY_EXIT=0
+```
