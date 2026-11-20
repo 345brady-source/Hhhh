@@ -407,11 +407,16 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
       const sg = await L.field(p, title);
       const colors = await p.evaluate((ids) => ids.map((fid) => document.querySelector(`.es-fld[data-fid="${fid}"]`).style.getPropertyValue('--sc')), [title, id['tf-csig'], id['tf-sig']]);
       check('EDIT-03 the signer can be changed: the field takes the other signer’s color and the counts follow', sg.signerId === other && colors[0] === colors[1] && colors[0] !== colors[2] && /4 fields/.test(await p.locator('.es-signers .es-signer').last().innerText()), { colors });
+      // Updated for 5f8db30 (plan 01.4-69, 01.4-69-SUMMARY deviation 2, on top of D-30 from 46b1b66 / plan 01.4-63): an
+      // investor's signature given to the firm becomes required, as every firm signature is (esign.js es-fprop). So the box
+      // is already ticked and the field marked required before the click, and the click makes it optional.
       const wasReq = await p.isChecked('#es-fr');
+      const preDom = await p.evaluate((fid) => document.querySelector(`.es-fld[data-fid="${fid}"]`).className, title);
       await p.click('#es-fr');
       const rq = await L.field(p, title);
       const rqDom = await p.evaluate((fid) => document.querySelector(`.es-fld[data-fid="${fid}"]`).className, title);
-      check('EDIT-03 required or optional: the box is ticked and the field is marked required', !wasReq && rq.required === true && /is-req/.test(rqDom));
+      const nowReq = await p.isChecked('#es-fr');
+      check('EDIT-03 required or optional: the box is ticked and the field is marked required (a signature given to the firm); one click on the box makes it optional', wasReq && /is-req/.test(preDom) && rq.required === false && !nowReq && !/is-req/.test(rqDom) && /is-opt/.test(rqDom), { wasReq, preDom, required: rq.required, nowReq, rqDom });
       await p.fill('#es-fl', '');
       await p.type('#es-fl', 'Authorised signatory');
       const lb = await L.field(p, title);
@@ -422,7 +427,10 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
       check('a click on the empty part of the document clears the selection', (await editorState(p)).sel === null && (await p.locator('.fe-props .fe-none').count()) === 1);
       await p.keyboard.press('Control+z');
       const lbUndo = await L.field(p, title);
-      check('EDIT-05 typing a label is one step: one undo clears the whole label, not a letter', lbUndo.label === 'Title' && lbUndo.required === true, lbUndo);
+      // Updated for 5f8db30 (plan 01.4-69): the step before the label made the field optional (EDIT-03 above), so one undo
+      // leaves required false and the firm as signer. Two undos would drop the key (the firm's signature before the click
+      // has none); three would give the field back to the investor.
+      check('EDIT-05 typing a label is one step: one undo clears the whole label, not a letter', lbUndo.label === 'Title' && lbUndo.required === false && lbUndo.signerId === other, lbUndo);
       for (let i = 0; i < 3; i++) await p.keyboard.press('Control+z');
       check('EDIT-05 required, signer and type are each undone in turn', same(await L.fields(p), start));
 
@@ -609,11 +617,15 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
         const bar = document.querySelector('.sf-bar');
         const env = NS.esignKit.env(bar.getAttribute('data-id'));
         const s = NS.esignKit.signer(env, bar.getAttribute('data-sid'));
-        return { mine: NS.esignKit.fieldsOf(env, s).map((f) => ({ type: f.type, page: f.page, x: f.x, y: f.y, w: f.w, h: f.h, label: f.label })), boxes: document.querySelectorAll('.es-doc-sign .es-f-mine').length, count: bar.querySelector('.sf-count strong').textContent };
+        return { mine: NS.esignKit.fieldsOf(env, s).map((f) => ({ type: f.type, page: f.page, x: f.x, y: f.y, w: f.w, h: f.h, label: f.label })), boxes: document.querySelectorAll('.es-doc-sign .es-f-mine').length, count: bar.querySelector('.sf-count strong').textContent, hint: (bar.querySelector('.sf-count .sf-hint') || { textContent: '' }).textContent };
       });
       const wantMine = saved.filter((f) => f.signerId === saved[0].signerId);
       const key = (f) => [f.type, f.page, f.x, f.y, f.w, f.h].join('|');
-      check('the saved agreement still signs: the invited investor reaches it in onboarding with every one of their fields where the editor left it', walk.reached && signing.mine.length === wantMine.length && signing.boxes === wantMine.length && wantMine.every((f) => signing.mine.some((m) => key(m) === key(f))) && / left$/.test(signing.count), { reached: walk.reached, mine: signing.mine.length, want: wantMine.length, count: signing.count });
+      const lost = wantMine.filter((f) => !signing.mine.some((m) => key(m) === key(f))).map(key);
+      // Updated for 46b1b66 (plan 01.4-63, D-30: no field on the investor's side is required, signatures included): the guide
+      // asks for nothing and says "Ready to finish" ("Nothing is required. ..."), as 04 checks/signing-step.js was changed
+      // to in the same plan (01.4-63-SUMMARY, "Every changed expectation" item 9). Before D-30 it counted "N of M left".
+      check('the saved agreement still signs: the invited investor reaches it in onboarding with every one of their fields where the editor left it', walk.reached && signing.mine.length === wantMine.length && signing.boxes === wantMine.length && !lost.length && signing.count === 'Ready to finish' && /^Nothing is required\./.test(signing.hint), { reached: walk.reached, mine: signing.mine.length, boxes: signing.boxes, want: wantMine.length, lost, count: signing.count, hint: signing.hint });
       check('desktop: no page or console errors, and nothing asked of another site', !A.errors.length && !A.net.external.length, { errors: A.errors, external: A.net.external });
     } catch (e) {
       check('desktop pass ran to the end', false, String(e && e.stack ? e.stack : e));
