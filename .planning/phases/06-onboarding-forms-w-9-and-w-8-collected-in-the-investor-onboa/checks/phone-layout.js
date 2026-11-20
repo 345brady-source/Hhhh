@@ -74,9 +74,10 @@ const DESKTOP_EXPECTED = [
   { at: /^investor Account with a tax-form request$/, el: /^a\.link-btn /, why: 'failure 14: the Account page offers the open tax-form request ("Complete your tax form"), as Home does' },
   // plan 06-35 (06-WALKTHROUGH-2.md, earlier failure 14's remainder): the signing bar's hint is no longer cut on a desktop
   // ("Nothing is required. Start goes to each em…"); it wraps, so the bar grows by a line where the sentence needs it.
-  // Allowed only on the signing screens: the elements inside the signing bar, and the elements below it moved down by one
-  // and the same distance (the extra line), at the same left, size and text size. Anything else still fails.
-  { at: /^onboarding: the (tax form to sign|agreement to sign|agreement, a field open)$/, test: (gone, added) => hintLine(gone, added), why: 'walkthrough 2, earlier failure 14 (the rest), plan 06-35: the signing bar’s hint is shown in full on a desktop; the bar grows by a line and what lies below it moves down by that line' }
+  // Allowed only on the signing screens: the elements inside the signing bar, the elements around it taller by that line,
+  // and the elements below it moved down by one and the same distance (the extra line), at the same left, size and text
+  // size. Anything else still fails.
+  { at: /^onboarding: (the tax form to sign|the agreement to sign|the agreement, a field open|Subscription agreement)$/, test: (gone, added) => hintLine(gone, added), why: 'walkthrough 2, earlier failure 14 (the rest), plan 06-35: the signing bar’s hint is shown in full on a desktop; the bar grows by a line and what lies below it moves down by that line' }
 ];
 /** The signing bar grown by its hint's extra line: every change is inside the bar's box, or a move straight down by one shared distance. */
 function hintLine(gone, added) {
@@ -96,6 +97,12 @@ function hintLine(gone, added) {
   const used = new Set();
   const nowOk = now.every((x) => {
     if (inBar(x, b1)) return true;
+    // an element that holds the bar: the same place and width, taller by the line
+    const around = was.findIndex((y, k) => !used.has(k) && y.name === x.name && y.left === x.left && y.top === x.top && y.w === x.w && y.px === x.px && Math.abs(x.h - y.h - d) <= 1 && x.top <= b1.top && x.top + x.h >= b1.top + b1.h);
+    if (around >= 0) {
+      used.add(around);
+      return true;
+    }
     const i = was.findIndex((y, k) => !used.has(k) && y.name === x.name && y.left === x.left && y.w === x.w && y.h === x.h && y.px === x.px && Math.abs(x.top - y.top - d) <= 1);
     if (i < 0) return false;
     used.add(i);
