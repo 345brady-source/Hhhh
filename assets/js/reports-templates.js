@@ -101,9 +101,9 @@
   });
 
   /* ---------- Quarterly letters, by fund type ---------- */
-  starter('q-realestate', 'Quarterly letter: real estate', 'quarterly', 'realestate', 'For a real estate fund or syndication: capital account, distributions, net performance and an update on each property.', ['letter', 'capital', 'distributions', 'performance', 'assets', 'fees', 'chart', 'outlook'], {
+  starter('q-realestate', 'Quarterly letter: real estate', 'quarterly', 'realestate', 'For a real estate fund or syndication: capital account, distributions, net performance and room for an update on each property.', ['letter', 'capital', 'distributions', 'performance', 'assets', 'fees', 'chart', 'outlook'], {
     chart: 'dist',
-    text: { letter: [COVERS('the distributions paid, net performance, an update on each property, and fees and expenses'), CONTACT] }
+    text: { letter: [COVERS('the distributions paid, net performance, and fees and expenses'), CONTACT] }
   });
   starter('q-credit', 'Quarterly letter: private credit or income', 'quarterly', 'credit', 'For a private credit or income fund: capital account, distributions, net performance and the loans held.', ['letter', 'capital', 'distributions', 'performance', 'holdings', 'fees', 'chart', 'outlook'], {
     chart: 'dist',
@@ -113,9 +113,9 @@
     chart: 'capital',
     text: { letter: [COVERS('net performance, the portfolio at fair value, and fees and expenses'), CONTACT] }
   });
-  starter('q-spv', 'Quarterly letter: single asset', 'quarterly', 'spv', 'For an SPV or co-investment in one asset: capital account, distributions, an update on the asset and net performance.', ['letter', 'capital', 'distributions', 'assets', 'performance', 'chart'], {
+  starter('q-spv', 'Quarterly letter: single asset', 'quarterly', 'spv', 'For an SPV or co-investment in one asset: capital account, distributions, net performance and room for an update on the asset.', ['letter', 'capital', 'distributions', 'assets', 'performance', 'chart'], {
     chart: 'dist',
-    text: { letter: [COVERS('the distributions paid, an update on the investment and its net performance'), CONTACT] }
+    text: { letter: [COVERS('the distributions paid and net performance'), CONTACT] }
   });
   starter('q-open', 'Quarterly letter: open-ended fund', 'quarterly', 'open', 'For a hedge, digital asset or multi-strategy fund: capital account, monthly net returns and holdings.', ['letter', 'capital', 'performance', 'holdings', 'fees', 'chart', 'outlook'], {
     chart: 'capital',
@@ -124,7 +124,7 @@
   });
   starter('q-firm', 'Quarterly letter: every fund', 'quarterly', 'any', 'One letter from the firm covering every fund, with a summary and each fund’s net performance.', ['letter', 'summary', 'capital', 'performance', 'chart', 'outlook'], {
     chart: 'allocation',
-    text: { letter: ['This report covers the period ended {period_end} and sets out the net performance of each fund named on the cover.', 'Please contact {firm} with any questions about this report.'] },
+    text: { letter: ['This report covers the period ended {period_end} and sets out the net performance of each fund in it.', 'Please contact {firm} with any questions about this report.'] },
     disclosures: [UNAUDITED, NET, NOT_OFFER_ALL]
   });
 
@@ -134,10 +134,10 @@
     opts: ITD,
     text: { letter: [COVERS(REVIEW_TEXT), CONTACT] }
   });
-  starter('a-realestate', 'Annual review: real estate', 'annual', 'realestate', 'The annual review with an update on each property.', ['letter', 'capital', 'distributions', 'performance', 'holdings', 'assets', 'fees', 'statements', 'chart', 'outlook'], {
+  starter('a-realestate', 'Annual review: real estate', 'annual', 'realestate', 'The annual review with room for an update on each property.', ['letter', 'capital', 'distributions', 'performance', 'holdings', 'assets', 'fees', 'statements', 'chart', 'outlook'], {
     chart: 'capital',
     opts: ITD,
-    text: { letter: [COVERS('the distributions paid, net performance, holdings at fair value, an update on each property, fees and expenses, and the financial statements'), CONTACT] }
+    text: { letter: [COVERS(REVIEW_TEXT), CONTACT] }
   });
   starter('a-rega', 'Annual report to investors (Regulation A)', 'annual', 'any', 'For a Regulation A offering: titled as its annual or semiannual report to investors, noting that the SEC filing is made separately.', REVIEW, {
     chart: 'capital',
@@ -147,7 +147,7 @@
 
   /* ---------- Performance ---------- */
   starter('p-summary', 'Performance and holdings summary', 'performance', 'any', 'Net performance, holdings at fair value, fees and expenses, and a chart of the holdings.', ['performance', 'holdings', 'fees', 'chart'], { chart: 'allocation' });
-  starter('p-property', 'Property summary', 'performance', 'realestate', 'Each property at fair value, an update on each, and the fund’s net performance.', ['holdings', 'assets', 'performance']);
+  starter('p-property', 'Property summary', 'performance', 'realestate', 'Each property at fair value, room for an update on each, and the fund’s net performance.', ['holdings', 'assets', 'performance']);
 
   /* ---------- Tax season ---------- */
   starter('t-season', 'Tax-season summary', 'tax', 'any', 'Cash distributions paid in the tax year and the status of each tax document.', ['letter', 'taxsummary', 'taxdocs'], {
