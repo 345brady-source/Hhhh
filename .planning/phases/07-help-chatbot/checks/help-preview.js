@@ -325,7 +325,7 @@ const parts = {
       check(`an answer naming a vendor is replaced by "${CANNOT}" and followed by the contact`, s.items.length === 2 && s.items[0].a === CANNOT && s.items[0].contact === want && !/claude|anthropic/i.test(s.lines.join(' ')), s.items[0]);
       calls = await samples(fr);
       c = carried(calls[1]);
-      check('the second request carries the first exchange (question, then the answer shown) before the new question', c.turns.length === 3 && c.turns[0].role === 'user' && c.turns[0].content.includes(Q1) && c.turns[1].role === 'assistant' && c.turns[1].content.includes(A1) && c.last.role === 'user' && c.last.content.includes('Which assistant are you?'), c.turns.map((t) => [t.role, String(t.content).slice(-80)]));
+      check('the second request carries the first exchange (the question, then the answer shown, kept as the server keeps it) before the new question', c.turns.length === 3 && c.turns[0].role === 'user' && c.turns[0].content.includes(Q1) && c.turns[1].role === 'assistant' && c.turns[1].content === JSON.stringify({ kind: 'answer', answer: A1 }) && c.last.role === 'user' && c.last.content.includes('Which assistant are you?'), c.turns.map((t) => [t.role, String(t.content).slice(-80)]));
       check("the rules and the sponsor's guide still go with it", c.all.includes(D.RULES) && c.all.includes(D.GUIDE.sponsor) && !c.all.includes(D.GUIDE.investor));
 
       // 3. an address and a tax number in a question are removed before they are sent
