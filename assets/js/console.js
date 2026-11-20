@@ -136,7 +136,7 @@
    * (its Documents entry), or not signed, or uploaded (plan 06-21); nothing when the investor has no such form.
    */
   function taxLine(w, inv) {
-    return taxState(w, inv) + taxAsked(w, inv);
+    return taxState(w, inv) + taxAsked(w, inv) + (NS.withholdingUI ? NS.withholdingUI.paperLine(w, inv) : ''); // plan 10-07: "W-9 signed on paper"
   }
   /**
    * Plan 06-26: an open tax-form request, one line under the tax form's ("Tax form requested <date>"), while the investor has
@@ -592,6 +592,7 @@
       <div class="cs-split">
         <div class="cs-split-main">
           ${panel('Offering details', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
+          ${NS.withholdingUI ? panel('Tax reporting', NS.withholdingUI.reportingField(W(), o)) : ''}
           ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, false) : ''}
           ${panel('Exit timing', kv([[h(x.label), h(x.value)], ['How exit is defined', h((BASIS.find((b) => b[0] === (o.exit || {}).basis) || ['', ''])[1])], ['Note shown to investors', h((o.exit || {}).note || '')]]))}
           ${panel('Distributions', kv([['Frequency', h(d.frequency || '')], ['Payment day', periodMonths(d.frequency) && d.day ? NS.data.ordinal(Number(d.day)) + ' of the month' : ''], ['Next payment', nextOf(o) ? date(nextOf(o).date, 'wd') : ''], ['Payment type', h(d.type || '')], ['Target or rate', h(d.target || '')]]))}
@@ -669,6 +670,7 @@
               ${offField('One-line description', 'summary', { wide: true, max: 100 })}
               ${offField('Minimum investment ($)', 'minimum', { type: 'number' })}
               ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: exemptionHint(o) })}
+              ${NS.withholdingUI ? NS.withholdingUI.reportingField(W(), o) : ''}
             </div>`)}
             ${eligibilityPanel(o)}
             ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, true) : ''}
@@ -1051,7 +1053,7 @@
         const n = NS.data.runRows(W(), r).filter((a) => a.cents > 0).length;
         const st = NS.data.runState(r, today());
         return `<tr><td class="nowrap" data-label="Payment date">${date(r.date)}</td><td data-label="Offering">${h(name(r.offeringId))}</td><td data-label="Type">${h(r.type)}</td><td class="num" data-label="Amount">${usdc(r.total)}</td><td class="num" data-label="Investors">${n}</td><td data-label="Status">${st === 'cancelled' ? badge('mute', 'Cancelled') : st === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
-          withFile ? `<td class="num">${st === 'cancelled' ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button>`}</td>` : ''
+          withFile ? `<td class="num">${st === 'cancelled' ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button>${distCancelButton(r)}`}</td>` : ''
         }</tr>`;
       })
       .join('')}</tbody></table></div>`;
@@ -1464,6 +1466,45 @@
     if (wait) return U.toast(wait);
     return distBuild.apply(this, arguments);
   };
+  /*
+   * Cancel on a recorded distribution (planner's choice P-1, plan-check D7): admins in the self-serve edition and Carrow &
+   * Vale staff in the managed edition (the role that may configure), with a reason. A cancelled distribution is paid nowhere
+   * (NS.data.cancelRun, plan 10-01); its lines stay, and the change log says who cancelled it and why.
+   */
+  const distCancelButton = (r) => (canConfigure() && !r.cancelled ? `<button class="cs-btn cs-btn-small" type="button" data-action="dist-cancel" data-id="${h(r.id)}">Cancel</button>` : '');
+  function distCancelDialog(r, err) {
+    const o = W().offerings.find((x) => x.id === r.offeringId) || {};
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Cancel this distribution</h2><p>${h(o.shortName || r.offeringId)} · ${usdc(r.total)} · ${date(r.date)}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body">
+        <label class="cs-field" for="dist-cancel-why"><span>Reason</span><textarea id="dist-cancel-why" rows="2" maxlength="300" autofocus></textarea></label>
+        ${err ? `<p class="cs-error">${h(err)}</p>` : ''}
+        <div class="cs-row cs-row-end"><button class="cs-btn cs-btn-danger" type="button" data-action="dist-cancel-go" data-id="${h(r.id)}">Cancel distribution</button></div>
+      </div>`,
+      'dlg-email'
+    );
+  }
+  NS.actions['dist-cancel'] = staffGuard((el) => {
+    const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
+    if (r && !r.cancelled) distCancelDialog(r, '');
+  });
+  NS.actions['dist-cancel-go'] = staffGuard((el) => {
+    const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
+    if (!r || r.cancelled) return U.closeDialog();
+    const why = String((document.getElementById('dist-cancel-why') || {}).value || '').trim();
+    if (!why) return distCancelDialog(r, 'Enter the reason for cancelling.');
+    try {
+      NS.data.cancelRun(W(), r.id, { by: NS.app.actor(), why });
+    } catch (e) {
+      return distCancelDialog(r, String((e && e.message) || e));
+    }
+    const o = W().offerings.find((x) => x.id === r.offeringId) || {};
+    audit('Distribution cancelled', `${r.type}: ${usdc(r.total)} dated ${date(r.date)} for ${o.shortName || r.offeringId}; reason: ${why}`, r.offeringId, r.id);
+    NS.app.save(true);
+    U.closeDialog();
+    NS.app.render();
+    U.toast(`The ${usdc(r.total)} distribution of ${date(r.date)} is cancelled. Investors no longer see it.`);
+  });
 
   /* ---------- Investor notices (mass email) ---------- */
   function latestQuarter() {
