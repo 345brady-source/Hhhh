@@ -851,7 +851,9 @@ async function flowTaxEnv(page, invId) {
         envId: env ? env.id : '',
         docId: env ? env.docId : '',
         filled: await b64(env ? await NS.ops.files.get(env.docId) : null),
-        finished: await b64(doc ? await NS.ops.files.get(doc.id) : null),
+        // plan 06-34: the finished copy is read from its envelope (a form finished without a signature is not listed in
+        // Documents any more; a signed form's listing shares this same file)
+        finished: await b64(env && env.signedDocId ? await NS.ops.files.get(env.signedDocId) : doc ? await NS.ops.files.get(doc.id) : null),
         taxForm: i.taxForm || '',
         taxCert: JSON.parse(JSON.stringify(i.taxCert || null)),
         blank: NS.taxmaps['W-9 2024-03'].file,

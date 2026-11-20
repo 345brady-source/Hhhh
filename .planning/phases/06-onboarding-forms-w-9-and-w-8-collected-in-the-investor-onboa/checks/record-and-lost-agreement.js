@@ -45,6 +45,7 @@ Lib.describeShots([
   [/-console-row\.png$/, 'The firm’s Investors page: the investor’s row reads "W-9 signed … Download".'],
   [/-lost-step\.png$/, 'IndexedDB absent, frame loaded again: the agreement step says this browser did not keep the file, with Back and "Continue and sign later".'],
   [/-lost-done\.png$/, 'After "Continue and sign later": the done screen says the subscription is recorded and what happens next.'],
+  [/-lost-notified\.png$/, 'The firm’s Notifications page: the investor could not see the subscription agreement; add it again from the offering page.'],
   [/-lost-refused\.png$/, 'The firm’s Requests page: Approve refused while the agreement is not signed; the row reads "Agreement not signed".'],
   [/-lost-waiting\.png$/, 'After the firm added the agreement again: the investor’s Documents lists it under "Waiting for your signature".'],
   [/-lost-signing\.png$/, 'The agreement added again, opened from Documents with its pages drawn.']
@@ -680,6 +681,11 @@ function lostPart(dev) {
     }, { oid: portal.offeringId, name });
     check('the firm has a notification naming the investor, saying to add the agreement again from the offering page, opening the offering', told.notes.some((n) => n.title === `${name} could not see the subscription agreement` && /Add the agreement again from the offering page/.test(n.detail) && n.route === 'console-offering-' + portal.offeringId), told.notes);
     check('the change log names the investor and says to add the agreement again from the offering page', told.log.some((l) => /^Subscription agreement not shown: this browser did not keep its file/.test(l) && l.indexOf(name) >= 0 && /add the agreement again from the offering page/i.test(l)), told.log);
+
+    await Lib.consoleRoute(fr, 'console-notifications', '#main h1, .cs-panel-head h2');
+    const ntf = await screen(X, fr, 'the firm’s notifications');
+    await A.page.screenshot({ path: path.join(OUT, `${tag}-lost-notified.png`), fullPage: false });
+    check('the firm’s Notifications page shows it', ntf.indexOf(`${name} could not see the subscription agreement`) >= 0, ntf.slice(0, 400));
 
     // 2. B2: Approve is refused while the agreement is not signed.
     await requestsPage(fr);
