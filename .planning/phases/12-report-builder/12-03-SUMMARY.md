@@ -57,6 +57,34 @@ FAIL repeat a different generation time gives a different SHA-256
 REPORTS PDF: FAIL (cases run: 7) - brand, images, charts, unicode, repeat
 ```
 
+### red-3 (Task 3, cases phone and selfcheck before the canvas path; exit 1)
+
+Two of these FAIL lines were the check's own mistakes, fixed before the code (see Deviations): the outside-request
+line counted the sign-up page's own stylesheet fonts loaded before the composer ran, and lib10's screen scan read the
+sign-up page (which names the portal's provider by design), not anything the composer produced. selfcheck passed at
+RED because runParts already refuses unknown and empty case lists.
+
+```
+PASS phone the frame is 390x844 with touch
+PASS phone the frame refuses fetch() (connect-src none is in force)
+FAIL phone logoFor redraws an SVG logo to PNG on the canvas :: name
+FAIL phone logoFor redraws a WebP logo to PNG on the canvas :: name
+PASS phone compose of layout-a in the frame took 524 ms (measured, printed, no threshold)
+PASS phone the composer, the shipped writer, font embedder and both font data files came from the page's own address
+FAIL phone the redrawn logo is an image on page 1 :: [{"page":5,"type":"image","width":160,"height":100,"color":"rgb","enc":"jpeg"}]
+PASS phone every string of the model is in the frame's PDF
+PASS phone with the canvas refusing, logoFor gives the firm's short name in its primary color
+PASS phone that PDF's page headers carry the short name (not an image)
+FAIL phone no request outside the page's address :: ["https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500&family=Funnel+Sans:wght@400;500&family=Caveat:wght@500&display=swap","https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500&family=Funnel+Sans:wght@400;500&display=swap"]
+PASS phone the policy refused nothing (no fetch, no outside script)
+PASS phone no script error in the browser
+PASS phone no request outside the page's origin
+FAIL phone no vendor, model or library name and no forbidden word on screen :: ["Carrow & Vale","By creating a portal you agree to the Carrow & Vale terms of service. No card is needed to start.","Your investors see only your firm’s brand. Prefer Carrow & Vale to run your portal for you? Ask about the managed service."]
+PASS selfcheck an unknown --case name exits 1 with a FAIL line
+PASS selfcheck an empty --case list exits 1 with a FAIL line
+REPORTS PDF: FAIL (cases run: 2) - phone
+```
+
 ## Verify lines
 
 ### Task 1 verify (exit 0)

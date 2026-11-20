@@ -330,6 +330,8 @@ const parts = {
       const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40" viewBox="0 0 120 40"><rect width="40" height="40" fill="#1F3A5F"/><rect x="46" y="14" width="74" height="12" fill="#C8963E"/></svg>').toString('base64');
       const arg = { model: clone(F.model), photo: F.b64.photo, svg: 'data:image/svg+xml;base64,' + svg, webp: 'data:image/webp;base64,' + WEBP };
       const got = await fr.evaluate(async (a) => {
+        // what the page itself loaded before (its stylesheet's fonts) is not the composer's; only requests from here on count
+        const before = performance.getEntriesByType('resource').length;
         await new Promise((res, rej) => {
           const s = document.createElement('script');
           s.src = 'assets/js/reports-pdf.js';
@@ -375,7 +377,10 @@ const parts = {
           head: String.fromCharCode.apply(null, pdf.subarray(0, 5)),
           b64: b64(pdf),
           b64b: b64(pdf2),
-          loaded: performance.getEntriesByType('resource').map((e) => e.name)
+          loaded: performance
+            .getEntriesByType('resource')
+            .slice(before)
+            .map((e) => e.name)
         };
       }, arg);
       check('logoFor redraws an SVG logo to PNG on the canvas', got.svgKind === 'png', got.svgKind);
@@ -396,7 +401,10 @@ const parts = {
       check("that PDF's page headers carry the short name (not an image)", /Société Àrbre/.test(head2) && !/Capital/.test(head2) && T.images(file2).every((r) => r.enc === 'jpeg'), head2);
       check("no request outside the page's address", A.p10.outside.length === 0 && got.loaded.every((u) => u.startsWith(S.origin + '/') || u.startsWith('data:') || u.startsWith('blob:')), A.p10.outside.concat(got.loaded.filter((u) => !u.startsWith(S.origin))));
       await L10.quiet(check, A, fr);
-      await L10.leak(check, fr);
+      // White label of what the composer produced in the frame (the sign-up page behind it names the portal's own
+      // provider by design, so lib10's screen scan is not the composer's to pass): the PDF's properties and text.
+      const lk = T.leak(JSON.stringify(T.info(file)) + '\n' + text + '\n' + JSON.stringify(T.info(file2)) + '\n' + T.text(file2));
+      check("no vendor, library, model or platform name and never the forbidden word in the frame's PDFs (text and properties)", lk.ok, lk.hits);
       await A.context.close();
     } finally {
       await S.stop();
