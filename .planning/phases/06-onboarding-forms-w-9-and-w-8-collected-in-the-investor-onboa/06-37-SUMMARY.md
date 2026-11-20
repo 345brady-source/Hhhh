@@ -139,4 +139,16 @@ its 500 ms wait after pointerup and held the code's redraw past the moment the c
 keep. Fix in the guard: at pointerup the press ends at once when the pointer moved more than 10 px, or when the control
 pressed was already redrawn by the person's own input. Rerun results below.
 
+### Rerun on the corrected guard (tree with 3d4685e)
+
+```
+PRESS AND CO-INVESTOR: PASS (parts run: 7)          (green.txt, 103 PASS, 0 FAIL; NOTE desktop 244 ms, phone 396 ms held)
+BANK STEP TYPING: PASS (parts run: 2)               (bank.txt)
+W3 field editor:  base 104/104 passed, fix 104/104 passed, new FAIL lines: 0, gone: 0
+W3 signatures:    base 70/70 passed,   fix 70/70 passed,   new FAIL lines: 0, gone: 0
+server tests:     # tests 368 / # pass 368 / # fail 0   (with the guide change)
+```
+(The diff is `diff <(grep '^FAIL' base-<check>.txt | sort) <(grep '^FAIL' fix-<check>.txt | sort)`, files w3-editor.diff and
+w3-signatures.diff in SCRATCH/exec-06-37/.)
+
 <!-- gsd:write-continue -->
