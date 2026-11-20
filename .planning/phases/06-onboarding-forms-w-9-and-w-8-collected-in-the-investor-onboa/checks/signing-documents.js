@@ -399,6 +399,31 @@ function countersignPart(dev) {
     }, portal.offeringId);
     check('a subscription whose agreement has no field for the firm is on Requests', !!solo && !!solo.envId && solo.firm === 0, solo);
     if (solo) {
+      // Plan 06-34 (plan-check B2): an agreement the investor has not signed can never be approved, so Approve is refused
+      // first; this part used to approve it unsigned. The investor then signs it (complete with their signature alone), and
+      // Countersign records at once as before.
+      await requestsPage(fr);
+      await toasts(fr);
+      await approve(fr, dev, solo.rid);
+      const refused = await toasts(fr);
+      const s0 = await subscription(fr, solo.id, solo.rid);
+      check('B2: Approve is refused while the investor has not signed ("The subscription agreement is not signed yet.")', s0.req.status === 'pending' && refused.indexOf('The subscription agreement is not signed yet.') >= 0, { status: s0.req.status, refused });
+      await asInvestor(fr, solo.id, 'sign-' + solo.envId);
+      if (await fr.locator('#es-consent-box').count()) {
+        await fr.check('#es-consent-box');
+        await press(fr, dev, '[data-action="es-consent"]');
+      }
+      await fr.waitForSelector('.es-doc-sign .es-page img', { timeout: 30000 });
+      if (await fr.locator('.es-doc-sign [data-action="es-sig"]').count()) {
+        await press(fr, dev, '.es-doc-sign [data-action="es-sig"]');
+        await fr.waitForTimeout(300);
+        if (await dlgOpen(fr)) {
+          await press(fr, dev, '[data-action="es-adopt"]');
+          await fr.waitForFunction(() => !document.getElementById('dlg').open);
+        }
+      }
+      await press(fr, dev, '.es-finish');
+      await fr.waitForSelector('.es-done', { timeout: 30000 }).catch(() => {});
       await requestsPage(fr);
       await approve(fr, dev, solo.rid);
       await toasts(fr);
