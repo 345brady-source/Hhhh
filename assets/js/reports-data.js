@@ -228,5 +228,80 @@
     return ['al', 'ops', 'chg'].map((id) => list.find((s) => s.id === id)).filter(Boolean);
   }
 
-  NS.reportsData = { fundsOf, holders, statement, consolidated, runs, distribution, distributions, performance, holdings, noi, fees, statements };
+  /* ---------- Activity and chart series ---------- */
+  const byDate = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+  /** The investor's contributions, distributions and redemptions in the period, as the engine records them, by date. */
+  function activity(ws, investorId, offeringId, from, to) {
+    const o = offeringOf(ws, offeringId);
+    if (!o) return [];
+    const P = A().period(ws, o, from, to);
+    const L = P.L;
+    const mine = (x) => x.inv.id === investorId && x.date >= P.from && x.date <= P.to;
+    const out = [];
+    L.contribs.filter(mine).forEach((c) => out.push({ date: c.date, kind: 'contribution', label: c.kind, cents: c.cents }));
+    L.dists.filter(mine).forEach((d) => out.push({ date: d.date, kind: 'distribution', label: d.run.type || 'Distribution', cents: d.cents }));
+    (L.redemptions || []).filter(mine).forEach((r) => out.push({ date: r.date, kind: 'redemption', label: `Redemption (${r.req && r.req.full ? 'full' : 'partial'})`, cents: r.cents }));
+    return out.sort(byDate);
+  }
+  /**
+   * Month-end capital (the investor's row end, or the fund's limited partners' capital when investorId is null) and
+   * distributions per calendar quarter in the period, from the engine's monthly ledger.
+   */
+  function series(ws, offeringId, investorId, from, to) {
+    const o = offeringOf(ws, offeringId);
+    if (!o) return null;
+    const P = A().period(ws, o, from, to);
+    if (investorId && !rowOf(P, investorId)) return null;
+    const capital = P.ms.map((m) => ({ key: m.key, cents: investorId ? m.rows[investorId].end : m.endCap }));
+    const dist = [];
+    const fy = Number(P.from.slice(0, 4));
+    const fq = Math.ceil(Number(P.from.slice(5, 7)) / 3);
+    const ty = Number(P.to.slice(0, 4));
+    const tq = Math.ceil(Number(P.to.slice(5, 7)) / 3);
+    for (let y = fy, q = fq; y < ty || (y === ty && q <= tq); q === 4 ? ((q = 1), y++) : q++) dist.push({ label: `Q${q} ${y}`, y, q, cents: 0 });
+    P.ms.forEach((m) => {
+      const y = Number(m.key.slice(0, 4));
+      const q = Math.ceil(Number(m.key.slice(5, 7)) / 3);
+      const slot = dist.find((d) => d.y === y && d.q === q);
+      if (slot) slot.cents += investorId ? m.rows[investorId].dist : m.dist;
+    });
+    return { capital, dist: dist.map((d) => ({ label: d.label, cents: d.cents })) };
+  }
+
+  /* ---------- Tax year and tax documents (the investor's own; never a taxpayer number) ---------- */
+  function taxYear(ws, investorId, year) {
+    const y = String(year);
+    const funds = fundsOf(ws, investorId)
+      .map((o) => {
+        const runsIn = paidRuns(ws, o.id)
+          .filter((r) => r.date.slice(0, 4) === y)
+          .map((r) => ({ r, x: lineOf(ws, r, investorId) }))
+          .filter((z) => z.x)
+          .map((z) => ({ runId: z.r.id, date: z.r.date, type: z.r.type || '', gross: z.x.cents, withheld: z.x.withheldCents, net: z.x.netCents }));
+        if (!runsIn.length) return null;
+        const sum = (k) => runsIn.reduce((s, r) => s + r[k], 0);
+        return { offeringId: o.id, name: o.name, currency: curOf(o), gross: sum('gross'), withheld: sum('withheld'), net: sum('net'), runs: runsIn };
+      })
+      .filter(Boolean);
+    return { year: Number(year), funds };
+  }
+  function taxDocs(ws, investorId, year) {
+    const kinds = (NS.taxdocs && NS.taxdocs.KINDS) || {};
+    return (ws.docs || [])
+      .filter((d) => d && d.tax && Array.isArray(d.investors) && d.investors.length === 1 && d.investors[0] === investorId && String(d.tax.year) === String(year) && d.tax.state !== 'withdrawn')
+      .map((d) => ({ docId: d.id, offeringId: d.offeringId || '', kind: d.tax.kind, label: (kinds[d.tax.kind] || {}).label || '', year: Number(d.tax.year), state: d.tax.state || '', availableUntil: d.tax.availableUntil || '' }));
+  }
+
+  /* ---------- Firm and investor blocks ---------- */
+  function firm(ws) {
+    const t = ws.tenant || {};
+    return { name: t.name, shortName: t.shortName, legalName: t.legalName, portalName: t.portalName, colors: t.colors, logo: t.logo, support: t.support, disclaimer: t.disclaimer };
+  }
+  function investor(ws, investorId) {
+    const i = (ws.investors || []).find((x) => x.id === investorId);
+    if (!i) return null;
+    return { id: i.id, title: i.title || '', contact: i.contact || '', firstName: String(i.contact || '').split(' ')[0] };
+  }
+
+  NS.reportsData = { fundsOf, holders, statement, consolidated, runs, distribution, distributions, activity, performance, holdings, noi, fees, statements, series, taxYear, taxDocs, firm, investor };
 })(typeof window !== 'undefined' ? window : globalThis);
