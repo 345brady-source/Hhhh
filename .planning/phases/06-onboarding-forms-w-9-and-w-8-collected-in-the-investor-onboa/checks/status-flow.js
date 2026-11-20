@@ -1568,6 +1568,38 @@ const parts = {
     check('the flagged row keeps Approve and Decline (nothing blocked)', (await p.locator('[data-action=req-approve][data-id="fa-req"]').count()) === 1 && (await p.locator('[data-action=req-decline][data-id="fa-req"]').count()) === 1);
     const lk = L.leakCheck(await L.screenText(p));
     check('white label: the requests view passes the leak check', lk.ok, lk.hits);
+    // Plan 06-34 (plan-check B2, merge 1b9eacb): an unsigned subscription can never be approved. These requests are signed
+    // through the offering's subscription agreement (esign.js wraps ops.submitSubscription: the envelope goes to the investor
+    // and signedAt stays empty until it is signed), so this part used to approve fa-req unsigned and now gets "The
+    // subscription agreement is not signed yet.". Avery signs it from their own portal first; what is tested (the Regulation
+    // A flag blocks nothing: Approve works on the flagged request) is the same.
+    const envId = await p.evaluate(() => (window.CVPortal.state.ws.requests.find((r) => r.id === 'fa-req') || {}).envelopeId || '');
+    await asInvestor(p, 'fa-inv', 'sign-' + envId);
+    if (await p.locator('#es-consent-box').count()) {
+      await p.check('#es-consent-box');
+      await p.click('[data-action="es-consent"]');
+    }
+    await p.waitForSelector('.es-doc-sign .es-page img', { timeout: 30000 });
+    if (await p.locator('.es-doc-sign [data-action="es-sig"]').count()) {
+      await p.locator('.es-doc-sign [data-action="es-sig"]').first().click();
+      await p.waitForTimeout(300);
+      if (await p.evaluate(() => !!(document.getElementById('dlg') || {}).open)) {
+        await p.click('#dlg[open] [data-action="es-adopt"]');
+        await p.waitForFunction(() => !document.getElementById('dlg').open, null, { timeout: 10000 }).catch(() => {});
+      }
+    }
+    await p.click('.es-finish');
+    await p.waitForSelector('.es-done', { timeout: 30000 }).catch(() => {});
+    await consoleRequests(p);
+    const signed = await p.evaluate((id) => {
+      const ws = window.CVPortal.state.ws;
+      const r = ws.requests.find((x) => x.id === 'fa-req') || {};
+      const env = (ws.envelopes || []).find((e) => e.id === id);
+      const me = env && env.signers.find((s) => s.investorId === 'fa-inv');
+      return { envelopeId: r.envelopeId, status: r.status, investor: me ? me.status : '' };
+    }, envId);
+    const rowSigned = await requestRow(p, 'fa-req');
+    check('Avery signs the agreement first (plan 06-34 B2); the request is still pending, flagged, with Approve', !!envId && signed.investor === 'signed' && signed.status === 'pending' && RA_FLAG.test(rowSigned) && (await p.locator('[data-action=req-approve][data-id="fa-req"]').count()) === 1, { signed, row: rowSigned });
     await p.click('[data-action=req-approve][data-id="fa-req"]');
     await p.waitForTimeout(400);
     const st = await p.evaluate(() => (window.CVPortal.state.ws.requests.find((r) => r.id === 'fa-req') || {}).status);
