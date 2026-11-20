@@ -1503,10 +1503,18 @@ async function editSignedCase({ check, S }) {
   check('the earlier signed form is not voided and stays in the record until the new one is finished', e1.status === 'completed' && !!E.taxCert && E.taxCert.envelopeId === first.envId && E.taxCert.signed === true, { e1, taxCert: E.taxCert });
   check('the earlier signed form stays in Documents (Tax, file present)', (e1.docs || []).length === 1 && e1.docs[0].cat === 'Tax' && e1.docs[0].file === true, e1.docs);
   await Lib.finishTaxForm(page);
+  // Plan 06-34 (walkthrough-2 N1, the orchestrator's rule "one tax form per investor, the signed one"): these two checks used
+  // to require both forms to stay (the signed one listed beside the new one, nothing voided), which is the duplicate the
+  // walkthrough reported. The new form is finished without a signature, and a form finished without a signature never
+  // replaces a signed one on file: the record and Documents keep the earlier signed form, and the new unsigned envelope is
+  // voided with the reason and its files (which hold the taxpayer ID) deleted.
+  await page.waitForFunction(async (id) => !(await window.CVPortal.ops.files.get(id + '-orig').catch(() => null)), second.envId, { timeout: 10000 }).catch(() => {});
   const end = await taxEnvelopes(page, inv.investorId);
   const e1b = end.list.find((e) => e.id === first.envId) || {};
-  check('after the new form is finished, the earlier signed form is still completed and in Documents', e1b.status === 'completed' && (e1b.docs || []).length === 1 && e1b.docs[0].file === true, e1b);
-  check('no tax envelope of the flow was voided (the signed one was never live, the new one was finished)', end.list.every((e) => e.status !== 'voided'), end.list.map((e) => [e.id, e.status]));
+  const e2b = end.list.find((e) => e.id === second.envId) || {};
+  const signedGone = await page.evaluate(async (id) => !(await window.CVPortal.ops.files.get(id + '-signed').catch(() => null)), second.envId);
+  check('after the new form is finished without a signature, the record still points at the earlier signed form (signed true), which is completed and still in Documents with its file', !!end.taxCert && end.taxCert.envelopeId === first.envId && end.taxCert.signed === true && e1b.status === 'completed' && (e1b.docs || []).length === 1 && e1b.docs[0].file === true, { taxCert: end.taxCert, e1b });
+  check('the new unsigned form is voided with "Finished without a signature; the signed Form W-9 on file stays" and its files are gone', e2b.status === 'voided' && e2b.voidReason === 'Finished without a signature; the signed Form W-9 on file stays' && e2b.files && e2b.files.doc === false && e2b.files.work !== true && signedGone && (e2b.docs || []).length === 0, { e2b, signedGone });
   check('no script error in the browser', A.errors.length === 0, A.errors);
   check('no request left the check server', A.net.external.length === 0, A.net.external);
   await A.context.close();

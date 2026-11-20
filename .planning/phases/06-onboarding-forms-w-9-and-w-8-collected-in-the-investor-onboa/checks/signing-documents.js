@@ -202,6 +202,25 @@ async function firmSigns(fr, dev, st) {
   );
 }
 
+/**
+ * Plan 06-34 (walkthrough-2 N1): a W-9 finished without a signature is no longer listed under "Signed documents" (it is not a
+ * signed document), so the parts that open the investor's signed W-9 (lost-files, viewer) sign it on the way, as they always
+ * meant: consent if asked, the signature field pressed (tapped on the phone) and the signature adopted.
+ */
+const signTaxOnWay = (dev) => async (fr) => {
+  if (await fr.locator('#es-consent-box').count()) {
+    await fr.check('#es-consent-box');
+    await press(fr, dev, '[data-action="es-consent"]');
+    await fr.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 30000 });
+  }
+  await press(fr, dev, '.ivf-tax-sign [data-action="es-sig"]');
+  await fr.waitForTimeout(300);
+  if (await dlgOpen(fr)) {
+    await press(fr, dev, '[data-action="es-adopt"]');
+    await fr.waitForFunction(() => !document.getElementById('dlg').open);
+  }
+};
+
 /* ---------- countersign (failure 3) ---------- */
 function countersignPart(dev) {
   const tag = tagOf(dev);
@@ -571,7 +590,7 @@ function lostFilesPart(dev) {
     const name = dev === IPHONE ? 'Marisol Etxeberria' : 'Cormac Niedzwiecki';
     const inv = await Lib.createInvitation(fr, { name, email: `${name.split(' ')[0].toLowerCase()}@example.com`, type: 'individual', offeringId: portal.offeringId });
     await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
-    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0 });
+    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0, taxSign: signTaxOnWay(dev) });
     check('in the same page load the investor reaches the agreement and it is drawn', w.reached, w.seen);
     if (!w.reached) return A.context.close();
     const team = await fr.evaluate(() => {
@@ -793,7 +812,7 @@ function viewerPart(dev) {
     const name = dev === IPHONE ? 'Solveig Abernathy' : 'Bartholomew Nwosu';
     const inv = await Lib.createInvitation(fr, { name, email: `${name.split(' ')[0].toLowerCase()}@example.com`, type: 'individual', offeringId: portal.offeringId });
     await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
-    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0 });
+    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0, taxSign: signTaxOnWay(dev) });
     check('the investor reaches the subscription agreement', w.reached, w.seen);
     if (!w.reached) return A.context.close();
     await Lib.finishAgreement(fr);
