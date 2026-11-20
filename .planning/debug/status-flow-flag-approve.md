@@ -1,5 +1,5 @@
 ---
-status: investigating
+status: verifying
 trigger: "status-flow.js part flag: FAIL flag Approve works as before on the flagged request :: pending (full reference gate, merged tree, STATUS FLOW: FAIL (parts run: 26) - flag)"
 created: 2026-11-20
 updated: 2026-11-20
@@ -23,7 +23,7 @@ reasoning_checkpoint:
     - "code/config: DIY subscribeGate second-click (refuted: gate null)"
     - "data: check builds requests with an envelope via the esign wrapper (confirmed - this is the cause the check did not account for)"
   and_gate: "yes, two conditions together: (1) 06-34 added the refusal, (2) setupPortal gives the offering a ready agreement so the esign wrapper sends an envelope for every submitSubscription; 06-34 ran only --only back,erisa so flag was never re-measured"
-next_action: edit status-flow.js flag part to sign fa-req's agreement as the investor before Approve; run --only flag
+next_action: wait for the background verify runs (status-flow full, record-and-lost-agreement, forms-flow --case editsigned,unsigned, signing-documents --only countersign-desktop) and record their last lines
 
 ## Symptoms
 
@@ -66,9 +66,20 @@ started: seen on the merged tree after plan 06-34 (and 06-35..06-39) merged toda
   found: 06-34 changed status-flow `back` (approved an unsigned subscription -> now declines) but ran status-flow only with --only back,erisa; `flag` was never re-run on 06-34
   implication: the flag part is an out-of-date check of the same class as back and signing-documents countersign; product rule is right
 
+- timestamp: 2026-11-20
+  checked: falsification test - status-flow --only flag on the check fix (Avery signs from their portal, then Approve)
+  found: "PASS flag Avery signs the agreement first (plan 06-34 B2); the request is still pending, flagged, with Approve" / "PASS flag Approve works as before on the flagged request" / "STATUS FLOW: PASS (parts run: 1)"
+  implication: once the investor's signer is signed, decide() allows the approve; nothing else refuses. H1 holds.
+
+- timestamp: 2026-11-20
+  checked: server tests (server/, npm test, node_modules linked)
+  found: # tests 368 / # pass 368 / # fail 0
+  implication: no server regression (no product file changed)
+
 ## Resolution
 
-root_cause:
-fix:
-verification:
-files_changed: []
+root_cause: out-of-date check, not a product bug. status-flow.js part flag (Approve click, was line 1571) approved fa-req, a subscription made with NS.ops.submitSubscription, which esign.js:2963-2989 wraps to send the offering's subscription agreement (envelopeId set, signedAt ''). Plan 06-34 B2 (merge 1b9eacb) made operations.js decide() (lines 263-276, unsignedAgreement at 251-256) refuse an approve while the investor's own signer has not signed, which is the intended rule. 06-34 updated status-flow `back` but ran only --only back,erisa, so `flag` kept approving an unsigned subscription.
+fix: status-flow.js flag part - before the Approve click, Avery signs fa-req's agreement from their own portal (asInvestor -> #sign-<envelopeId>, consent, signature, Finish); a new line asserts the investor's signer is signed and the request is still pending, flagged and offers Approve; the Approve assertion itself is unchanged. Reason and plan written above it. operations.js untouched (the rule stays).
+oracle_type: specified (status === 'approved' after the documented approve action; precondition investor signer === 'signed')
+verification: (pending background runs)
+files_changed: [.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/status-flow.js]
