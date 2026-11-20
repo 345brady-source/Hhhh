@@ -42,4 +42,31 @@ First sample entry of kb-fund-ii (from the check's output):
 ```
 POSTING after Task 1: `POSTING: PASS (cases run: 13)`.
 
+### Task 2 RED (SCRATCH/exec-11-09/red-2.txt, check commit b33fb06, before the W1 code)
+```
+FAIL edit kb-fund-ii, an entry made by hand in June 2026: sync reversed and posted the sample entries from June on (5) :: {"posted":0,"reversed":0,"exceptions":0}
+FAIL edit kb-fund-ii ties at every month-end after the entry made by hand (T3, 1000, 1100 + 1150, 2100, the trial balance) :: 5 problems; first: kb-fund-ii 2026-06: journal {"na":955480775,"cash":27461731,"inv":929081544,"fee":-1062500,"tb":0} engine {"na":955480775,"cash":28696298,"inv":927846977,"fee":-1062500,"tb":0} | ...
+FAIL edit an expense entered by hand: September and October 2026 are reported (September off by the 50,000) and not posted; no line is added :: {"u":[],"live":2,"ex":[]}
+SAMPLES BOOKS: FAIL (cases run: 7) - edit
+```
+In the same run all, storage, speed, repeat and selfcheck passed (Task 1's code already gives them; see deviations).
+The first assertion's expected count (5 re-posted months) was wrong arithmetic in the check: a balance-sheet entry
+made by hand in June changes June's sample entry only (later months count June's new entry). After the code the run
+showed `{"posted":1,"reversed":1}`; the assertion now requires exactly that, and also that June's new entry holds
+1000 +1,234,567 and 1100 -1,234,567 against the old one.
+
+### After the W1 code (code commit 1d4a545), full check
+```
+  fund-months tied: 743
+  kestrel-bay: books 104,067 bytes, 427 entries (157 sample entries), workspace 145,239 bytes
+  ashwell-ridge: books 178,645 bytes, 518 entries (173 sample entries), workspace 229,774 bytes
+  greywater: books 124,784 bytes, 405 entries (144 sample entries), workspace 167,074 bytes
+  pellbrook: books 162,781 bytes, 686 entries (269 sample entries), workspace 216,902 bytes
+  four sample workspaces together: 758,989 bytes
+  pellbrook (269 fund-months, the most): first sync 170.2 ms (686 entries posted), second sync 89.5 ms (0 posted)
+  hand-entered expense: unbalanced [{"src":"sim:kb-fund-ii:2026-09","sum":50000},{"src":"sim:kb-fund-ii:2026-10","sum":37682429}]; listed [["sim:kb-fund-ii:2026-09",50000],["sim:kb-fund-ii:2026-10",37682429]]
+SAMPLES BOOKS: PASS (cases run: 7)
+```
+Other checks on this tree: `POSTING: PASS (cases run: 13)`, `BANK REC: PASS (cases run: 10)`, `BOOKS CORE: PASS (cases run: 8)`.
+
 <!-- gsd:write-continue -->
