@@ -340,6 +340,7 @@ Identity verification, sanctions and PEP screening and accredited investor check
 - Filter the table with "Needs attention" or "All investors".
 - "Review match" beside an investor opens a potential screening match for the team to decide.
 - "Re-screen" beside an investor runs the screening again; the button at the top of the page re-screens every investor whose re-screening is due.
+- "Download letter" in an investor's details saves the accreditation letter the reviewer sent; it shows only while the portal is connected to its integration server.
 
 How often investors are re-screened is set on the Integrations page.
 
