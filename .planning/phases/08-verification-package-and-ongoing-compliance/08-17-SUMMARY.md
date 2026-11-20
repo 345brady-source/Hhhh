@@ -18,3 +18,11 @@ FAIL package-used its row no longer reads "Not sent yet" ::
 PACKAGE CONSOLE: FAIL (parts run: 1) - package-used
 ```
 The set-up lines already passed on the base: "the real server stored it and paid its package from the balance", "sent again, the real server answered 409 package_used with a sentence of its own", "the refused send charged nothing".
+
+## Task 1 verify (verify-1.sh, exit 0; tracer.txt 30 PASS, 0 FAIL)
+```
+PASS package-used every screen of this part: no vendor, library or forbidden word (leak check)
+PASS package-used every screen of this part: no provider name or address (vendor scan)
+PACKAGE CONSOLE: PASS (parts run: 1)
+VERIFY1_EXIT=0
+```
