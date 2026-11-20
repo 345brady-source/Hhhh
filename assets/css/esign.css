@@ -65,6 +65,9 @@
 .es-page { position: relative; container-type: inline-size; width: 100%; background: var(--es-paper); color-scheme: light; box-shadow: var(--es-paper-shadow); user-select: none; -webkit-user-select: none; }
 .es-page > img { display: block; width: 100%; height: 100%; pointer-events: none; }
 .es-page-no { margin: var(--space-xs) 0 var(--space-sm); text-align: center; font-size: var(--text-xs); color: var(--es-fg-3); }
+/* A page still being drawn keeps its place in the signing view (a blank sheet of its size), so nothing below it moves when it arrives. */
+.es-page-blank { display: flex; align-items: center; justify-content: center; width: 100%; background: var(--es-paper); color-scheme: light; box-shadow: var(--es-paper-shadow); }
+.es-page-blank .es-loading { padding: 0; color: color-mix(in srgb, var(--es-paper-ink) 72%, var(--es-paper)); }
 .es-doc.is-placing .es-page { cursor: crosshair; outline: 2px solid var(--es-focus); outline-offset: 2px; }
 
 /* ---------- The field box: one recipe for every field drawn on a page ---------- */

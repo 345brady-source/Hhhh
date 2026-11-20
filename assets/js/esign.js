@@ -564,10 +564,19 @@
   }
   // An imported envelope whose template file is gone keeps only its work or signed copy: show that rather than an error.
   const pagesSrc = (env) => env.docId || env.workDocId || env.signedDocId || '';
-  function pagesHTML(env, layer) {
+  // hold: the signing view. While the pages are drawn their places are kept, each a blank page of its size with its number
+  // ("Loading document…" on the first), so nothing after the document moves when they arrive (walkthrough 3 failure 7: on a
+  // phone the guide with Finish sits after the document; it moved about 200 px down under a finger on its way to it).
+  function pagesHTML(env, layer, hold) {
     const src = pagesSrc(env);
     const c = pagesOf(src);
-    if (c.status === 'loading') return `<p class="es-loading" role="status" data-doc="${h(src)}">Loading document…</p>`;
+    if (c.status === 'loading') {
+      const wait = `<p class="es-loading" role="status" data-doc="${h(src)}">Loading document…</p>`;
+      if (!hold) return wait;
+      const n = Math.max(1, Math.min(500, Number(env.pages) || 1));
+      const size = (i) => (env.pageSizes || [])[i] || (env.pageSizes || [])[0] || { w: 612, h: 792 };
+      return Array.from({ length: n }, (_, i) => `<div class="es-page-wrap es-page-hold"><div class="es-page-blank" style="aspect-ratio:${Number(size(i).w) || 612} / ${Number(size(i).h) || 792}">${i ? '' : wait}</div><p class="es-page-no" aria-hidden="true">Page ${i + 1} of ${n}</p></div>`).join('');
+    }
     // A file this browser did not keep cannot come back by trying again: one line says so and what to do.
     if (c.lost) return `<div class="es-note es-note-bad" role="alert"><span>${h(lostText(env.agreementFor || env.requestId ? 'the agreement’s file' : 'this document’s file', env.agreementFor ? 'agreement' : 'sign'))}</span></div>`;
     if (c.status === 'error') return `<div class="es-note es-note-bad" role="alert"><span>${h(c.error)}</span><button class="${S().route === 'sign' || S().route === 'invite' ? 'btn btn-small' : 'cs-btn cs-btn-small'}" type="button" data-action="es-pages-retry" data-doc="${h(src)}">Try again</button></div>`;
@@ -898,11 +907,37 @@
     const mine = co ? env.fields.filter((f) => f.signerId === co.id) : [];
     return mine.length && !mine.some((f) => f.type === 'signature') ? 'The co-investor has fields to complete but nowhere to sign. Add a signature field for the co-investor, or remove their fields.' : '';
   }
+  /**
+   * The template an agreement was made from. When the firm has edited the offering's agreement and saved it since (a new
+   * template replaces it), the offering's agreement now, if it is the same file: its places fit this agreement's pages.
+   */
+  function tplOf(ws, env) {
+    if (!env.templateId) return null;
+    const t = tpls(ws).find((x) => x.id === env.templateId);
+    if (t) return t;
+    const now = env.offeringId ? subscriptionTemplate(ws, env.offeringId) : null;
+    return now && now.docId && now.docId === env.docId ? now : null;
+  }
   /** An investor's agreements that have, or can have, a co-investor: each with the investor's signer, the co-investor's and its template. */
   const coEnvelopes = (ws, inv) =>
     envs(ws)
-      .map((env) => ({ env, mine: env.signers.find((s) => s.investorId === inv.id && !s.co), co: env.signers.find((s) => s.investorId === inv.id && s.co), tpl: env.templateId ? tpls(ws).find((t) => t.id === env.templateId) : null }))
+      .map((env) => ({ env, mine: env.signers.find((s) => s.investorId === inv.id && !s.co), co: env.signers.find((s) => s.investorId === inv.id && s.co), tpl: tplOf(ws, env) }))
       .filter((x) => x.mine && (x.co || (x.tpl && (x.tpl.roles || []).indexOf(CO_ROLE) >= 0)));
+  /**
+   * What the account's co-investor has to do, for their own sign-in (coinvestor.js): { due } an agreement waiting for their
+   * signature; { before, who } one they sign once `who` (the signer before them) has signed; { signed: true } they signed
+   * one; {} nothing (no agreement of the account has them as a signer).
+   */
+  function coTask(ws, inv) {
+    const mine = envs(ws)
+      .map((env) => ({ env, co: env.signers.find((s) => s.investorId === inv.id && s.co) }))
+      .filter((x) => x.co && (x.env.status === 'sent' || x.env.status === 'completed'));
+    const due = mine.find((x) => isTurn(x.env, x.co));
+    if (due) return { due: due.env };
+    const later = mine.find((x) => x.env.status === 'sent' && x.co.status !== 'signed' && x.co.status !== 'declined');
+    if (later) return { before: later.env, who: currentSigners(later.env)[0] || null };
+    return mine.some((x) => x.co.status === 'signed') ? { signed: true } : {};
+  }
   /**
    * A co-investor was added to an investor's account. Each agreement of theirs that is still out for signature and has
    * places for a co-investor gets them as a signer, after the investor and before the firm; an investor who has signed
@@ -2600,7 +2635,7 @@
     // A document that cannot be shown gets no guide: nothing reads "Ready to finish" and no Finish is offered for pages
     // nobody can see; the page's own way out stays (Back to envelope, Documents, or the onboarding step's Back).
     return wrap(`${note}${unseen ? '' : NS.signflow.barHTML(env, s, st, { ctx: opts.ctx, preview, back: opts.back })}
-      <div class="es-doc es-doc-sign">${pagesHTML(env, layer)}</div>`);
+      <div class="es-doc es-doc-sign">${pagesHTML(env, layer, true)}</div>`);
   }
   /* What the signing guide (signflow.js) reads from this file. */
   NS.esignKit = Object.assign(NS.esignKit || {}, { env: (id) => envById(W(), id), signer: signerById, state: signingState, fieldsOf, isReq, filled: filledVal, tooLong, missing: missingFields, label: (f) => f.label || TYPES[f.type].label });
@@ -3251,8 +3286,16 @@
     NS.app.save(true);
     return env;
   }
-  /** Agreements an investor signed that are waiting for the firm's countersignature (their copy so far can be opened). */
-  const awaitingFor = (ws, investorId) => envs(ws).filter((e) => e.status === 'sent' && e.signers.some((x) => x.investorId === investorId && x.status === 'signed'));
+  /**
+   * Agreements the person signed in to this investor's account signed (the investor, or the co-investor: mySigner) that are
+   * waiting for the firm's countersignature (their copy so far can be opened). Walkthrough 3 failure 2: another signer of
+   * the account having signed is not this person having signed (the investor's signature is not the co-investor's).
+   */
+  const awaitingFor = (ws, investorId) =>
+    envs(ws).filter((e) => {
+      const s = e.status === 'sent' ? mySigner(e, investorId) : null;
+      return !!s && s.status === 'signed';
+    });
   /** Documents for an investor with no investments yet: what to sign, what they signed, and the fully signed copies. */
   function investorDocsHTML(inv) {
     if (!inv) return '';
@@ -3267,7 +3310,7 @@
     return mine.length
       ? `<section class="sec es-mine" aria-label="Signed by you">${PK().sec('Signed by you', `<span class="hint">Waiting for ${h(T().shortName)}’s countersignature</span>`)}<div class="tbl-scroll"><table class="tbl tbl-mid"><thead><tr><th scope="col">Signed</th><th scope="col">Document</th></tr></thead><tbody>${mine
           .map((e) => {
-            const s = flowSigner(e, inv.id);
+            const s = mySigner(e, inv.id) || {};
             return `<tr><td class="nowrap td-meta">${date(String(s.signedAt || e.sentAt || '').slice(0, 10))}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="es-open-mine" data-id="${h(e.id)}">${h(e.title)}</button><span class="sub">Your signed copy. The fully signed agreement is added here once it is countersigned.</span></td></tr>`;
           })
           .join('')}</tbody></table></div></section>`
@@ -4200,8 +4243,10 @@
     }
     return n;
   }
+  let coAddedOnSave = []; // the co-investors the last save added to agreements: [{ inv, env }]
   /** Store a draft as the offering's subscription agreement (the template every invited investor signs). Returns it, or null. */
   function saveAgreement(w, env) {
+    coAddedOnSave = [];
     if (!env || !env.agreementFor || agreementTodo(env)) return null;
     const o = w.offerings.find((x) => x.id === env.agreementFor);
     // The firm signs only when it has a field: with none, the agreement is complete with the investor's signature.
@@ -4221,6 +4266,13 @@
     // Plan 06-34 (walkthrough failure 1): agreements of this offering that this browser no longer has the file of are prepared
     // again from the agreement just saved, so the investor can sign them from their portal.
     if (tpl.subscription && tpl.offeringId) reissueLost(w, tpl.offeringId, tpl).catch((e) => window.console && console.warn(e));
+    // Walkthrough 3 failure 2: places given to the co-investor reach the co-investors already on accounts whose agreement from
+    // this file is still out for signature (coAttach, as when a co-investor is added to the account): they sign their places,
+    // the investor does not sign again. Said by the Save's toast (coAddedOnSave).
+    if (tpl.subscription && (tpl.roles || []).indexOf(CO_ROLE) >= 0)
+      (w.investors || []).forEach((inv) => {
+        if (coOf(inv)) coAttach(w, inv).added.forEach((e) => coAddedOnSave.push({ inv, env: e }));
+      });
     CK().audit('Subscription agreement saved', `${o ? o.name : env.agreementFor}: ${tpl.title}, ${tpl.fields.length} fields (${tpl.roles.join(', ')})${placed ? `; ${placed} placed by the portal${settled ? `, ${settled} of them confirmed or adjusted by the firm after review` : ''}` : ''}; investors sign it during onboarding`, env.agreementFor, tpl.id);
     NS.app.save(true);
     return tpl;
@@ -4232,7 +4284,9 @@
     const todo = agreementTodo(env);
     if (todo) return U.toast(todo);
     saveAgreement(w, env);
-    U.toast('Subscription agreement saved. Investors sign it during onboarding.');
+    const added = coAddedOnSave;
+    const who = added.map((x) => `${coOf(x.inv).name} was added to ${x.inv.title}’s agreement to sign`);
+    U.toast(`Subscription agreement saved. Investors sign it during onboarding.${who.length ? ` ${who.length > 2 ? `${who.slice(0, 2).join('; ')}; and ${who.length - 2} more co-investors` : who.join('; ')}.` : ''}`);
     NS.app.go('console-offering-' + env.agreementFor);
   };
   /**
@@ -4315,7 +4369,7 @@
     return baseTodo(env) || coTodo(env);
   };
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal, firmOnly });
-  NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
+  NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, coTask, mySigner };
   NS.esign = { retire, fileLost, reissueLost, saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, coCopy, importSignature, refreshSubscription, canResign, resign, viewPdf, lostText, countersign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
   // How long the upload waits for the reading server before the in-page reading stands (a check may shorten it).
   NS.esign.createFromPdf = createFromPdf;
