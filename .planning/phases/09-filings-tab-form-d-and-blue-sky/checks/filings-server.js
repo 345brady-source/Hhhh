@@ -13,7 +13,18 @@
 //                the issuer's CCC and EDGAR name and download the TEST file, which validates against the SEC schema and
 //                holds the CCC, the filer contact and the sponsor's answers; staff record the test as accepted; Check now
 //                shows the test passed; no CCC in the page's storage or in any answer the page received
-//   NODE_PATH=$(npm root -g) node filings-server.js [--only send-phone]
+//   send-desktop the same path at 1280x800; a team member sees the order's state and has no Send
+//   outcome      a server that may file LIVE (outside tests, EDGAR_ALLOW_LIVE=1): staff record the test, then the live
+//                filing; Check now shows it filed with its accession number and date; the record holds it with a snapshot;
+//                the first Form D reminder is gone, the annual amendment shows its date; the order reads done
+//   suspended    a suspended test with an error (angle brackets in it) and a warning: both as plain text under the order
+//                with the way to correct; corrected, signed off again and sent: the server holds the same order, received
+//   guard        on a test server LIVE is refused and nothing reads as filed; another portal's key changes nothing; a
+//                staff cancel reads cancelled; a server with the module off (404) or not set up (on: false): the tab's
+//                one line and no Send
+//   offline-framed  inside the frame that refuses every connection, at 390x844, with a server address set: Send says in
+//                one plain line that the server could not be reached; the order stays recorded; no error is thrown
+//   NODE_PATH=$(npm root -g) node filings-server.js [--only send-phone,send-desktop,outcome,suspended,guard,offline-framed]
 // The last line is "FILINGS SERVER: PASS (parts run: N)" or "FILINGS SERVER: FAIL (parts run: N) - <failed parts>". The
 // two marker lines above are read by gate9.sh. A CCC is never printed: every check about one reports only true or false.
 const path = require('path');
@@ -307,27 +318,58 @@ async function prepared(F, srv, spec) {
 
 /* ---------- Parts ---------- */
 
-/** The tracer: sent from the tab on a phone, filed as a TEST by staff, the result back on the tab. */
-async function sendPhone({ check, S }) {
+const sendBtn = (id) => `${orderSel(id)} [data-action="flr-send"]`;
+const checkBtn = (id) => `${orderSel(id)} [data-action="flr-check"]`;
+/** Send from the tab and wait for the received order → the server's id for it ('' when it did not arrive). */
+async function sendIt(F, srv, id) {
+  await F.fr.waitForSelector(sendBtn(id), { timeout: 15000 }).catch(() => {});
+  if (!(await F.fr.locator(sendBtn(id)).count())) return '';
+  await L9.press(F, sendBtn(id));
+  await waitOrder(F, id, "o.status === 'received' && o.remote && o.remote.id");
+  const list = await srv.staff('GET', '/v1/filings/staff/orders');
+  const rows = Array.isArray(list.body) ? list.body : [];
+  return rows.length ? rows[rows.length - 1].id : '';
+}
+/** Check now on the tab, then wait until the stored order satisfies body. */
+async function checkNow(F, id, body) {
+  await F.fr.waitForSelector(checkBtn(id), { timeout: 15000 }).catch(() => {});
+  if (!(await F.fr.locator(checkBtn(id)).count())) return false;
+  await L9.press(F, checkBtn(id));
+  return waitOrder(F, id, body);
+}
+const staffOutcome = (srv, fid, body) => srv.staff('POST', `/v1/filings/staff/orders/${fid}/outcome`, body);
+
+/** The tracer's path at a size: sent from the tab, filed as a TEST by staff, the result back on the tab. Desktop adds a team member. */
+async function sendPath(size, { check, S }) {
   const k = await K();
   const srv = await filingServer(S);
-  const F = await opened(S, 'phone', [srv.base]);
+  const F = await opened(S, size, [srv.base]);
   try {
     const p = await prepared(F, srv);
     check('the completed notice passes the rule table in the page', p.errors.length === 0, p.errors);
     const id = p.orderId;
-    await F.fr.waitForSelector(`${orderSel(id)} [data-action="flr-send"]`, { timeout: 15000 }).catch(() => {});
-    check('the tab shows the order with a Send control', (await F.fr.locator(`${orderSel(id)} [data-action="flr-send"]`).count()) === 1);
+    if (size === 'desktop') {
+      await L9.role(F, 'team');
+      await L9.goto(F, 'console-filings', '.fl');
+      await F.fr.waitForTimeout(800);
+      check('a team member sees the recorded order and has no Send', (await F.fr.locator(orderSel(id)).count()) === 1 && (await F.fr.locator(sendBtn(id)).count()) === 0, await L9.text(F, orderSel(id)));
+      await L9.role(F, 'admin');
+      await L9.goto(F, 'console-filings', '.fl');
+      await F.fr.waitForTimeout(800);
+    }
+    await F.fr.waitForSelector(sendBtn(id), { timeout: 15000 }).catch(() => {});
+    check('the tab shows the order with a Send control', (await F.fr.locator(sendBtn(id)).count()) === 1);
     check('no notice about connecting the portal is shown', (await F.fr.locator('.fl-connect').count()) === 0, await L9.text(F, '.fl-connect'));
-    await F.A.page.screenshot({ path: path.join(OUT, 'phone-before.png'), fullPage: false });
+    await F.A.page.screenshot({ path: path.join(OUT, `${size}-before.png`), fullPage: false });
 
-    await L9.press(F, `${orderSel(id)} [data-action="flr-send"]`);
+    await L9.press(F, sendBtn(id));
     const got = await waitOrder(F, id, "o.status === 'received' && o.remote && o.remote.id");
     const line = await remoteText(F, id);
     check('after Send the row says the order was received', got && /Received/.test(line), { line, order: await orderOf(F, id) });
     const o = await orderOf(F, id);
     check('the order keeps the server\'s id and a key of 32 random bytes', !!(o && o.remote && /^fil_/.test(o.remote.id) && /^[A-Za-z0-9_-]{43}$/.test(o.remote.key)), o && o.remote ? { id: o.remote.id, keyLength: String(o.remote.key || '').length } : o);
-    await F.A.page.screenshot({ path: path.join(OUT, 'phone-received.png'), fullPage: false });
+    check('W2: while the order is received, Cancel order is not offered', (await F.fr.locator(`${orderSel(id)} [data-kind="cancel"]`).count()) === 0);
+    await F.A.page.screenshot({ path: path.join(OUT, `${size}-received.png`), fullPage: false });
 
     const list = await srv.staff('GET', '/v1/filings/staff/orders');
     const rows = Array.isArray(list.body) ? list.body : [];
@@ -350,20 +392,24 @@ async function sendPhone({ check, S }) {
     const missing = [`<cik>${CIK}</cik>`, `<issuerPhoneNumber>${phone}</issuerPhoneNumber>`, `<value>${p.seeded.sales[0].date}</value>`, `<nameOfSigner>${SIGNER.name}</nameOfSigner>`, '<testOrLive>TEST</testOrLive>', `<issuerName>${EDGAR_NAME}</issuerName>`].filter((x) => file.text.indexOf(x) < 0);
     check('the TEST file holds the filer contact the server added and the sponsor\'s answers (issuer, first sale, signer, EDGAR\'s name)', contact && !missing.length, { contact, missing });
 
-    const out = fid ? await srv.staff('POST', `/v1/filings/staff/orders/${fid}/outcome`, { step: 'test', result: 'accepted' }) : { status: 0 };
+    const out = fid ? await staffOutcome(srv, fid, { step: 'test', result: 'accepted' }) : { status: 0 };
     check('staff record the test as accepted', out.status === 200 && out.body.formD.status === 'test_passed', out.status);
-    await L9.press(F, `${orderSel(id)} [data-action="flr-check"]`);
-    const passed = await waitOrder(F, id, "o.remote && o.remote.filing === 'test_passed'");
+    if (size === 'desktop') {
+      await L9.role(F, 'team');
+      await L9.goto(F, 'console-filings', '.fl');
+      await F.fr.waitForTimeout(800);
+    }
+    const passed = await checkNow(F, id, "o.remote && o.remote.filing === 'test_passed'");
     const line2 = await remoteText(F, id);
-    check('Check now on the tab shows the test passed', passed && /Test filing passed/.test(line2), line2);
-    await F.A.page.screenshot({ path: path.join(OUT, 'phone-test-passed.png'), fullPage: false });
+    check(`Check now on the tab shows the test passed${size === 'desktop' ? ' (to a team member, who has no Send)' : ''}`, passed && /Test filing passed/.test(line2) && (await F.fr.locator(sendBtn(id)).count()) === 0, line2);
+    await F.A.page.screenshot({ path: path.join(OUT, `${size}-test-passed.png`), fullPage: false });
 
     const answered = await Promise.all(F.answers);
     check('the page received answers from the server (sending and checking)', answered.length >= 3, answered.length);
     check('no CCC in any answer the page received', !(await holdsCcc(answered.join('\n'))));
     check('no CCC in the page\'s storage (localStorage, IndexedDB, the workspace)', !(await holdsCcc(await storageText(F))));
     check('no CCC in any other answer staff received, in the stored records or in the outbox', !(await holdsCcc(srv.seen.join('\n') + JSON.stringify(srv.server.store.data()) + JSON.stringify(srv.mail()))));
-    noOutside(check, F, [srv], 'send-phone');
+    noOutside(check, F, [srv], `send-${size}`);
     check('no script error in the browser', F.A.errors.length === 0, F.A.errors);
     await L9.leak(check, F, 'the Filings tab with a sent order');
     await L9.wayOut(check, F, 'the Filings tab', { selector: '.fl-bar a.fl-back' });
@@ -373,4 +419,235 @@ async function sendPhone({ check, S }) {
   }
 }
 
-Lib.runParts({ 'send-phone': sendPhone }, { name: 'FILINGS SERVER', unit: 'parts', flag: '--only', browser: true });
+const ACCESSION = '0009999999-26-000123';
+/** B1: filed through the outcome call on a server that may file LIVE (outside tests, EDGAR_ALLOW_LIVE=1, pinned clock). */
+async function outcomePart({ check, S }) {
+  const srv = await filingServer(S, { env: { NODE_ENV: 'production', EDGAR_ALLOW_LIVE: '1' } });
+  const F = await opened(S, 'desktop', [srv.base]);
+  try {
+    const on = await srv.call('GET', '/v1/filings');
+    check('the server takes filing orders and may file live', on.status === 200 && on.body.on === true && on.body.live === true, on.body);
+    const p = await prepared(F, srv);
+    const id = p.orderId;
+    const fid = await sendIt(F, srv, id);
+    check('the order was sent and received', !!fid, fid);
+    const t = await staffOutcome(srv, fid, { step: 'test', result: 'accepted' });
+    const l = await staffOutcome(srv, fid, { step: 'live', result: 'accepted', accession: ACCESSION, filedOn: PINNED });
+    check('staff record the test, then the live filing with its accession number and date', t.status === 200 && l.status === 200 && l.body.formD.status === 'accepted' && l.body.status === 'done', { test: t.status, live: l.status, body: l.body && l.body.formD });
+    const done = await checkNow(F, id, "o.status === 'done'");
+    const line = await remoteText(F, id);
+    const annual = FL.businessDay(`${Number(PINNED.slice(0, 4)) + 1}${PINNED.slice(4)}`.replace(/-02-29$/, '-02-28'));
+    check('after Check now the tab shows the notice filed, with its accession number and date', done && line.indexOf(`Filed on ${L9.label(PINNED)}`) >= 0 && line.indexOf(ACCESSION) >= 0, line);
+    check('the line gives the next annual amendment date (one year on, rolled to a business day)', line.indexOf(`Annual amendment due ${L9.label(annual)}`) >= 0, { line, annual });
+    const rec = await F.fr.evaluate((oid) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const r = ws.filings.offerings[oid];
+      const due = NS.filings.due(ws, NS.dates.today()).filter((x) => x.offeringId === oid);
+      return JSON.parse(JSON.stringify({ formD: r.formD.map((n) => ({ id: n.id, status: n.status, filedOn: n.filedOn, accession: n.accession, snapshot: !!n.snapshot, source: n.source, orderId: n.orderId })), due: due.map((x) => ({ kind: x.kind, due: x.due })) }));
+    }, p.seeded.offeringId);
+    const filed = rec.formD.find((n) => n.status === 'accepted');
+    check('the offering\'s record holds the notice as accepted, with its date, accession number and a snapshot', !!filed && filed.id === p.entryId && filed.filedOn === PINNED && filed.accession === ACCESSION && filed.snapshot && filed.orderId === id, rec.formD);
+    check('the first Form D reminder is gone and the annual amendment reminder shows its date', !rec.due.some((x) => x.kind === 'formd-first') && rec.due.some((x) => x.kind === 'formd-annual' && x.due === annual), rec.due);
+    const tab = await L9.text(F, `.fl-off[data-offering="${p.seeded.offeringId}"]`);
+    check('the tab reads the order as done and lists the annual amendment with its date', /Done/.test(await L9.text(F, `${orderSel(id)} .fl-total`)) && /Form D annual amendment/.test(tab) && tab.indexOf(`Due ${L9.label(annual)}`) >= 0, tab.slice(0, 600));
+    await F.A.page.screenshot({ path: path.join(OUT, 'desktop-filed.png'), fullPage: false });
+    noOutside(check, F, [srv], 'outcome');
+    check('no script error in the browser', F.A.errors.length === 0, F.A.errors);
+    await L9.leak(check, F, 'a filed notice');
+  } finally {
+    await F.A.context.close();
+    await srv.close();
+  }
+}
+
+/** A suspended test: EDGAR's messages as plain text under the order; corrected, signed off again and sent under the same order. */
+async function suspendedPart({ check, S }) {
+  const srv = await filingServer(S);
+  const F = await opened(S, 'phone', [srv.base]);
+  try {
+    const p = await prepared(F, srv);
+    const id = p.orderId;
+    const oid = p.seeded.offeringId;
+    const fid = await sendIt(F, srv, id);
+    const msgs = [{ type: 'error', code: 'E0101', message: 'The issuer name <b>Masked</b> does not match EDGAR' }, { type: 'warning', code: 'W0202', message: 'The phone number looks unusual' }];
+    const s = await staffOutcome(srv, fid, { step: 'test', result: 'suspended', messages: msgs });
+    check('staff record a suspended test with one error and one warning', s.status === 200 && s.body.formD.status === 'suspended', s.status);
+    const got = await checkNow(F, id, "o.remote && o.remote.filing === 'suspended'");
+    const box = `${orderSel(id)} .fl-remote`;
+    const line = await L9.text(F, box);
+    const bold = await F.fr.locator(`${box} b`).count();
+    check('after Check now the tab says the test was suspended and shows both messages as plain text (angle brackets as text)', got && /suspended/i.test(line) && line.indexOf('The issuer name <b>Masked</b> does not match EDGAR') >= 0 && line.indexOf('The phone number looks unusual') >= 0 && bold === 0, { line, bold });
+    const fix = `${box} a[href="#console-filings-formd-${oid}"]`;
+    check('the order offers the way to correct the notice', (await F.fr.locator(fix).count()) === 1);
+    await F.A.page.screenshot({ path: path.join(OUT, 'phone-suspended.png'), fullPage: false });
+
+    // The sponsor corrects: Make changes on the signed notice, a new phone number, Review, sign off again.
+    if (await F.fr.locator(fix).count()) await L9.press(F, fix);
+    await F.fr.waitForSelector('[data-action="fd-edit"]', { timeout: 15000 }).catch(() => {});
+    await L9.press(F, '[data-action="fd-edit"]');
+    const phoneSel = '.fl-section[data-part="formd"] [data-field="primaryIssuer.issuerPhoneNumber"]';
+    await F.fr.waitForSelector(phoneSel, { timeout: 15000 }).catch(() => {});
+    const field = F.fr.locator(phoneSel).first();
+    await field.scrollIntoViewIfNeeded();
+    await field.tap();
+    await field.fill('518-555-0199');
+    await F.fr.waitForTimeout(200);
+    await L9.goto(F, `console-filings-formd-${oid}-review`, '.fl-section');
+    await F.fr.waitForSelector('form[data-form="fd-signoff"]', { timeout: 15000 }).catch(() => {});
+    const errors = await L9.text(F, '.fl-section .fl-errors');
+    check('the corrected notice reviews with nothing to fix and can be signed off', (await F.fr.locator('form[data-form="fd-signoff"]').count()) === 1, errors);
+    if (await F.fr.locator('form[data-form="fd-signoff"]').count()) {
+      await F.fr.fill('form[data-form="fd-signoff"] input[name="name"]', SIGNER.name);
+      await F.fr.fill('form[data-form="fd-signoff"] input[name="title"]', SIGNER.title);
+      await L9.press(F, 'form[data-form="fd-signoff"] button[type=submit]');
+      await F.fr.waitForTimeout(800);
+    }
+    const signed = await F.fr.evaluate(([o, order]) => window.CVPortal.state.ws.filings.offerings[o].formD.filter((n) => n.orderId === order && n.status === 'ordered').map((n) => n.id), [oid, id]);
+    check('signed off again under the same order (no second order)', signed.length === 2 && (await F.fr.evaluate(([o]) => window.CVPortal.state.ws.filings.orders.filter((x) => x.offeringId === o && x.status !== 'cancelled').length, [oid])) === 1, signed);
+    await L9.goto(F, 'console-filings', '.fl');
+    await F.fr.waitForTimeout(800);
+    const again = await L9.text(F, sendBtn(id));
+    check('the tab offers to send the corrected notice', /corrected/i.test(again), again);
+    if (again) await L9.press(F, sendBtn(id));
+    await waitOrder(F, id, "o.remote && o.remote.filing === 'in_review'");
+    const list = await srv.staff('GET', '/v1/filings/staff/orders');
+    const one = await srv.staff('GET', `/v1/filings/staff/orders/${fid}`);
+    check('the server holds one order, the same id, back at received with the corrected notice', Array.isArray(list.body) && list.body.length === 1 && list.body[0].id === fid && one.body.status === 'received' && one.body.formD.status === 'in_review' && one.body.version === 2 && one.body.notice.primaryIssuer.issuerPhoneNumber === '518-555-0199', { rows: (list.body || []).length, status: one.body && one.body.status, formD: one.body && one.body.formD && one.body.formD.status, version: one.body && one.body.version });
+    const line2 = await remoteText(F, id);
+    check('the tab says the corrected notice was received; the messages are gone', /Received/.test(line2) && line2.indexOf('does not match EDGAR') < 0, line2);
+    noOutside(check, F, [srv], 'suspended');
+    check('no script error in the browser', F.A.errors.length === 0, F.A.errors);
+  } finally {
+    await F.A.context.close();
+    await srv.close();
+  }
+}
+
+/** The guard: LIVE refused on a test server; another portal's key; a staff cancel; a server that takes no filing orders. */
+async function guardPart({ check, S }) {
+  const k = await K();
+  const srv = await filingServer(S);
+  const off = await filingServer(S, { env: { FILINGS: undefined } });
+  const half = await filingServer(S, { env: { FILINGS_STAFF_EMAIL: undefined } });
+  const F = await opened(S, 'desktop', [srv.base, off.base, half.base]);
+  try {
+    const p = await prepared(F, srv);
+    const id = p.orderId;
+    const oid = p.seeded.offeringId;
+    const fid = await sendIt(F, srv, id);
+    await srv.staff('PUT', `/v1/filings/staff/issuers/${CIK}`, { ccc: k.CCCS[0], name: EDGAR_NAME });
+    await staffOutcome(srv, fid, { step: 'test', result: 'accepted' });
+    const liveFile = await srv.file(fid, 'LIVE');
+    const live = await staffOutcome(srv, fid, { step: 'live', result: 'accepted', accession: ACCESSION, filedOn: PINNED });
+    check('on the default server (a test) the LIVE file is refused (403) and so is a live outcome (409)', liveFile.status === 403 && live.status === 409, { file: liveFile.status, outcome: live.status });
+    await checkNow(F, id, "o.remote && o.remote.filing === 'test_passed'");
+    const line = await remoteText(F, id);
+    const accepted = await F.fr.evaluate((o) => window.CVPortal.state.ws.filings.offerings[o].formD.filter((n) => n.status === 'accepted').length, oid);
+    check('the tab shows the test as passed and nothing as filed', /Test filing passed/.test(line) && !/Filed on/.test(line) && accepted === 0, { line, accepted });
+
+    // Another portal's key: the status call is refused and nothing changes.
+    const before = await orderOf(F, id);
+    await F.fr.evaluate((oid2) => {
+      const o = window.CVPortal.state.ws.filings.orders.find((x) => x.id === oid2);
+      o.remote.realKey = o.remote.key;
+      o.remote.key = 'A'.repeat(43);
+    }, id);
+    await L9.press(F, checkBtn(id));
+    await F.fr.waitForTimeout(1500);
+    const wrong = await L9.text(F, `${orderSel(id)} .fl-remote .field-error`);
+    const after = await orderOf(F, id);
+    check('with another portal\'s key the tab says the order could not be found, and nothing changes', /could not find this order/i.test(wrong) && after.status === before.status && after.remote.filing === before.remote.filing && after.remote.checkedAt === before.remote.checkedAt, { wrong, before: before.remote.filing, after: after.remote.filing });
+    await F.fr.evaluate((oid2) => {
+      const o = window.CVPortal.state.ws.filings.orders.find((x) => x.id === oid2);
+      o.remote.key = o.remote.realKey;
+      delete o.remote.realKey;
+    }, id);
+
+    // W2: an order cancelled by staff reads cancelled after Check now.
+    const c = await staffOutcome(srv, fid, { cancelled: true });
+    check('staff cancel the order', c.status === 200 && c.body.status === 'cancelled', c.status);
+    const cancelled = await checkNow(F, id, "o.status === 'cancelled'");
+    await L9.goto(F, `console-filings-formd-${oid}`, '.fl-section');
+    const sec = await L9.text(F, '.fl-section');
+    check('after Check now the order reads cancelled (stored, and on its Form D section)', cancelled && /Cancelled/.test(sec), sec.slice(0, 300));
+
+    // W3: a server that does not take filing orders (404, and on:false): the tab's own one line, no Send, nothing under the order.
+    for (const [name, other] of [['the module off (404)', off], ['the module on but not set up (on: false)', half]]) {
+      const ans = await other.call('GET', '/v1/filings');
+      await other.configure(F);
+      const p2 = await prepared(F, null);
+      await F.fr.waitForTimeout(1500);
+      await L9.goto(F, 'console-filings', '.fl');
+      await F.fr.waitForTimeout(800);
+      const notes = await F.fr.locator('.fl-connect').count();
+      check(`a server with ${name} (it answered ${ans.status}${ans.body && ans.body.on === false ? ', on: false' : ''}): the tab says so in its one line, Send is not offered and nothing is added under the order`, notes === 1 && (await F.fr.locator('[data-action="flr-send"]').count()) === 0 && (await F.fr.locator(`${orderSel(p2.orderId)} .fl-remote`).count()) === 0, { notes, text: await L9.text(F, '.fl-connect') });
+    }
+    noOutside(check, F, [srv, off, half], 'guard');
+    check('no script error in the browser', F.A.errors.length === 0, F.A.errors);
+  } finally {
+    await F.A.context.close();
+    await srv.close();
+    await off.close();
+    await half.close();
+  }
+}
+
+/** Inside the frame that refuses every connection, with a server address set: Send says so in one line; nothing is lost. */
+async function offlineFramed({ check, S }) {
+  const F = await L9.framed(S, 'phone');
+  try {
+    await L9.proveRefused(check, F);
+    await L9.sample(F);
+    const port = await freePort(); // nothing listens here, and the frame's policy refuses it before any connection
+    const base = `http://127.0.0.1:${port}`;
+    const seeded = await L9.seed(F, { name: 'Harbor Growth Fund, L.P.', sales: [{ daysAgo: 30, state: 'NY', funded: true, amount: 250000 }] });
+    await F.fr.evaluate((b) => {
+      const NS = window.CVPortal;
+      const s = NS.integrations.ensure(NS.state.ws).server;
+      s.url = b;
+      s.token = 'invented-token-for-the-frame';
+      NS.app.save(true);
+    }, base);
+    await openTab(F);
+    const s = await signOff(F, seeded.offeringId, seeded.sales[0].date);
+    await L9.goto(F, 'console-filings', '.fl');
+    await F.fr.waitForTimeout(1200);
+    const id = s.orderId;
+    const reportsBefore = await F.fr.evaluate(() => (window.__cspv || []).length);
+    check('with a server address set, the order offers Send', (await F.fr.locator(sendBtn(id)).count()) === 1);
+    if (await F.fr.locator(sendBtn(id)).count()) await L9.press(F, sendBtn(id));
+    await F.fr.waitForSelector(`${orderSel(id)} .fl-remote .field-error`, { timeout: 15000 }).catch(() => {});
+    await F.fr.waitForTimeout(500);
+    const box = await F.fr.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      return el ? Array.from(el.querySelectorAll('p')).map((p) => p.innerText.trim()).filter(Boolean) : null;
+    }, `${orderSel(id)} .fl-remote`);
+    check('Send says in one plain line that the server could not be reached', !!box && box.length === 1 && /could not be reached/.test(box[0]), box);
+    check('no other line about connecting is on the tab', (await F.fr.locator('.fl-connect').count()) === 0, await L9.text(F, '.fl-connect'));
+    const o = await orderOf(F, id);
+    check('the order is still recorded, its key kept and nothing marked as sent', !!o && o.status === 'recorded' && !!o.remote && !!o.remote.key && !o.remote.id, o && { status: o.status, sent: !!(o.remote && o.remote.id) });
+    const reports = await F.fr.evaluate(() => (window.__cspv || []).slice());
+    check('the only policy reports are the refused connections to the server\'s address (Send added one)', reports.length > reportsBefore && reports.every((r) => r.indexOf('connect-src') === 0 && r.indexOf(base) > 0), reports);
+    const errs = F.A.errors.filter((e) => !(/^console: (Refused to connect to|Connecting to|Fetch API cannot load)/.test(e) && e.indexOf(base) > 0));
+    check('no error was thrown (the browser\'s console holds only the refused connections)', errs.length === 0, errs);
+    check('no request left the check server', F.A.net.external.length === 0, F.A.net.external);
+    await F.A.page.screenshot({ path: path.join(OUT, 'phone-offline.png'), fullPage: false });
+    await L9.leak(check, F, 'the order that could not be sent');
+    await L9.wayOut(check, F, 'the Filings tab in the frame', { selector: '.fl-bar a.fl-back' });
+  } finally {
+    await F.A.context.close();
+  }
+}
+
+Lib.runParts(
+  {
+    'send-phone': (ctx) => sendPath('phone', ctx),
+    'send-desktop': (ctx) => sendPath('desktop', ctx),
+    outcome: outcomePart,
+    suspended: suspendedPart,
+    guard: guardPart,
+    'offline-framed': offlineFramed
+  },
+  { name: 'FILINGS SERVER', unit: 'parts', flag: '--only', browser: true }
+);
