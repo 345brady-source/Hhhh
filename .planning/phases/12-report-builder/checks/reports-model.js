@@ -691,7 +691,340 @@ const parts = {
     ws.runs.pop();
     same(check, 'ws.runs is unchanged (JSON before and after)', JSON.stringify(ws.runs), runsBefore);
     check('the split lives in ws.reports.splits only', !JSON.stringify(ws.runs).includes('Capital gain'));
+  },
+
+  /** Task 3: one investor over three funds: per-currency summary, one group per fund laid out for its type. */
+  async consolidated({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const ws = seat();
+    const D = standIn(ws);
+    const t = R.blank('statement', ws);
+    t.sections.find((s) => s.key === 'letter').text = [{ t: 'p', runs: [{ s: 'Ending capital: {ending_capital}.', b: false, i: false }] }];
+    const spec = Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001' } }, Q4);
+    const r = R.resolve(ws, t, spec, 'FA-1001', D);
+    same(check, 'no errors', r.errors, []);
+    const m = r.model;
+    if (!m) return;
+    same(check, 'title', m.title, 'Consolidated statement');
+    check('cover says All investments', m.cover.lines.indexOf('All investments') >= 0, m.cover.lines);
+    const sums = tables(m).filter((x) => /^Summary/.test(x.title));
+    same(check, 'two summary tables, one per currency', sums.map((x) => [x.title, x.currency]), [['Summary (USD)', 'USD'], ['Summary (EUR)', 'EUR']]);
+    const usd = sums[0];
+    const eur = sums[1];
+    if (!usd || !eur) return;
+    same(check, 'summary columns', usd.cols.map((c) => c.h), ['Fund', 'Beginning capital', 'Contributions', 'Distributions', 'Income and gains', 'Fees and carried interest', 'Ending capital']);
+    same(check, 'USD summary: fund A and the open fund', usd.rows.map((row) => row[0].s), ['Fund A, L.P.', 'Open Fund, L.P.']);
+    same(check, 'EUR summary: the euro fund only', eur.rows.map((row) => row[0].s), ['Rhine Property Fund SCSp']);
+    const colSum = (tb, i) => tb.rows.reduce((a, row) => a + row[i].v, 0);
+    same(check, 'USD total equals the sum of its rows in every column', usd.total.slice(1).map((c) => c.v), [1, 2, 3, 4, 5, 6].map((i) => colSum(usd, i)));
+    same(check, 'USD ending capital total', usd.total[6].s, '$450,500.00');
+    same(check, 'EUR total', [eur.total[6].v, eur.total[6].s], [5075000, '€50,750.00']);
+    check('no total mixes currencies (every USD cell $, every EUR cell €)', usd.rows.concat([usd.total]).every((row) => row.slice(1).every((c) => /\$/.test(c.s))) && eur.rows.concat([eur.total]).every((row) => row.slice(1).every((c) => /€/.test(c.s))));
+    same(check, 'fund A row: distributions negative, fees and carried interest negative', [usd.rows[0][3].v, usd.rows[0][4].v, usd.rows[0][5].v], [-600000, 2000000, -300000]);
+    const h1 = m.blocks.map((b, i) => (b.k === 'h1' ? [b.text, m.blocks[i - 1] && m.blocks[i - 1].k] : null)).filter(Boolean);
+    same(check, 'a break and an h1 per fund', h1, [['Fund A, L.P.', 'break'], ['Open Fund, L.P.', 'break'], ['Rhine Property Fund SCSp', 'break']]);
+    const G = groups(m);
+    const capOf = (name) => (G[name] || []).find((b) => b.k === 'table' && b.title === 'Your capital account');
+    same(check, "open fund's capital rows", capOf('Open Fund, L.P.') && capOf('Open Fund, L.P.').rows.map((row) => row[0].s), ['Beginning capital', 'Subscriptions', 'Distributions and redemptions', 'Investment income, net of fund expenses', 'Realized and unrealized gain (loss)', 'Management fees', 'Incentive allocation']);
+    same(check, "fund A's capital ending", capOf('Fund A, L.P.') && capOf('Fund A, L.P.').total[1].s, '$345,000.00');
+    const ob = G['Open Fund, L.P.'] || [];
+    check('open fund: the monthly net return table', ob.some((b) => b.k === 'table' && b.title === 'Monthly net return'), ob.map((b) => b.title || b.k));
+    check('open fund: no closed-fund performance tiles', !ob.some((b) => b.k === 'tiles' && b.items.some((x) => x.label === 'Net IRR')));
+    check('open fund: commitment not drawn', !ob.some((b) => b.k === 'tiles' && b.items.some((x) => x.label === 'Commitment')));
+    check('open fund: note says net of incentive allocation', ob.some((b) => b.k === 'note' && b.text === 'Net of fees and incentive allocation.'));
+    const fa = G['Fund A, L.P.'] || [];
+    check('fund A: commitment tiles drawn', fa.some((b) => b.k === 'tiles' && b.items.some((x) => x.label === 'Commitment' && x.value === '$600,000.00')));
+    check('fund A: closed performance tiles', fa.some((b) => b.k === 'tiles' && b.items.some((x) => x.label === 'TVPI' && x.value === '1.17x')));
+    const rh = G['Rhine Property Fund SCSp'] || [];
+    check('euro fund: commitment in euros', rh.some((b) => b.k === 'tiles' && b.items.some((x) => x.label === 'Commitment' && x.value === '€80,000.00')));
+    check('ending_capital fills as $x and €y', m.blocks.some((b) => b.k === 'p' && plainRuns(b.runs) === 'Ending capital: $450,500.00 and €50,750.00.'), m.blocks.filter((b) => b.k === 'p'));
+    same(check, 'every money value whole cents', moneyWhole(m), []);
+    same(check, 'sheets titles carry the fund name in a consolidated model', R.sheets(m).map((s) => s.title).filter((x) => /Your capital account/.test(x)), ['Fund A, L.P. - Your capital account', 'Open Fund, L.P. - Your capital account', 'Rhine Property Fund SCSp - Your capital account']);
+  },
+
+  /** Task 3: with every section of every type on, FA-1001's models hold nothing of FA-1002 (Pitfall 12). */
+  async leak({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const ws = seat();
+    const D = standIn(ws, null, TAX_DOCS);
+    R.setSplit(ws, 'fa-run-1', [{ label: 'Return of capital', cents: 450000 }, { label: 'Capital gain', cents: 450000 }], { by: 'gp', at: WHEN });
+    let n = 0;
+    const bad = [];
+    const leaks = [];
+    const perf = [];
+    R.TYPES.forEach((type) => {
+      const specs =
+        type === 'distribution'
+          ? [{ runId: 'fa-run-1', audience: { kind: 'investor', investorId: 'FA-1001' }, when: WHEN }]
+          : type === 'tax'
+          ? [{ year: 2026, audience: { kind: 'investor', investorId: 'FA-1001' }, when: WHEN }]
+          : [Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001', offeringId: 'fund-a' } }, Q4), Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001' } }, Q4), Object.assign({ audience: { kind: 'all' } }, Q4)];
+      ['dist', 'capital', 'allocation'].forEach((chart) => {
+        specs.forEach((spec) => {
+          const t = everything(R, ws, type, chart);
+          const r = R.resolve(ws, t, spec, 'FA-1001', D);
+          n++;
+          if (!r.model) return bad.push({ type, chart, errors: r.errors });
+          const json = JSON.stringify(r.model);
+          const o = R.othersIn(ws, r.model);
+          if (o.length || json.includes('FA-1002') || json.includes('Investor Two')) leaks.push({ type, chart, others: o });
+          tables(r.model)
+            .filter((x) => x.title === 'Net performance')
+            .forEach((x) => perf.push(x.rows.map((row) => row[0].s)));
+        });
+      });
+    });
+    same(check, 'every model resolved without errors', bad, []);
+    check('models resolved', n === 3 * (4 * 3 + 2), n);
+    same(check, 'othersIn empty and no FA-1002 or Investor Two in any model', leaks, []);
+    check('performance tables hold the fund row and only Your investment', perf.length > 0 && perf.every((rows) => rows.length <= 2 && rows.slice(1).every((x) => x === 'Your investment')), perf);
+    const t = everything(R, ws, 'quarterly', 'dist');
+    const m = R.resolve(ws, t, Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001', offeringId: 'fund-a' } }, Q4), 'FA-1001', D).model;
+    const planted = clone(m);
+    planted.blocks.push({ k: 'note', text: 'Investor Two' });
+    same(check, 'othersIn finds a planted name', R.othersIn(ws, planted), ['FA-1002']);
+    planted.blocks[planted.blocks.length - 1] = { k: 'note', text: 'Account FA-1002 moved' };
+    same(check, 'othersIn finds a planted id', R.othersIn(ws, planted), ['FA-1002']);
+  },
+
+  /** Task 3: formats, the Regulation A titles, the notice, the tax sections and the words that never appear. */
+  async formats({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const f = R.fmt;
+    same(check, 'IRR null', f.ret(null), 'Not meaningful yet');
+    same(check, 'return 0.12345', f.ret(0.12345), '12.3%');
+    same(check, 'TVPI 1.17', f.mult(1.17), '1.17x');
+    same(check, 'multiple null', f.mult(null), '—');
+    same(check, 'ownership 2/3', f.own(2 / 3), '66.67%');
+    check('a negative amount carries U+2212', f.money(-600000, 'USD') === `${MINUS}$6,000.00`, f.money(-600000, 'USD'));
+    same(check, 'dates', f.date('2026-12-31'), 'December 31, 2026');
+    same(check, 'period words', ['2026-10-01|2026-12-31', '2026-01-01|2026-12-31', '2026-01-01|2026-06-30', '2026-10-01|2026-11-30'].map((x) => R.periodLabel(...x.split('|'))).map((p) => [p.text, p.short]), [
+      ['Quarter ended December 31, 2026', 'Q4 2026'],
+      ['Year ended December 31, 2026', '2026'],
+      ['Six months ended June 30, 2026', 'H1 2026'],
+      ['October 1, 2026 to November 30, 2026', 'This period']
+    ]);
+    const models = [];
+    const ws = seat();
+    const D = standIn(ws, null, TAX_DOCS);
+    const res = (t, spec, rid) => {
+      const r = R.resolve(ws, t, spec, rid === undefined ? 'FA-1001' : rid, D);
+      if (r.model) models.push(r.model);
+      return r;
+    };
+    const inv = (oid, from, to) => ({ audience: { kind: 'investor', investorId: 'FA-1001', offeringId: oid }, from, to, when: WHEN });
+    const nm = res(R.blank('quarterly', ws), inv('fund-r', Q4.from, Q4.to)).model;
+    const pt = nm && tableNamed(nm, 'Net performance');
+    const yours = pt && pt.rows.find((row) => row[0].s === 'Your investment');
+    same(check, "a null IRR prints 'Not meaningful yet' with no number", yours && [yours[4].v, yours[4].s], [null, 'Not meaningful yet']);
+    check('performance says net', nm && nm.blocks.some((b) => b.k === 'note' && b.text === 'Net of fees and carried interest.'));
+
+    const SEC = 'This report is not the offering’s filing with the SEC (Form 1-K or Form 1-SA), which is made separately.';
+    const plainAnnual = res(R.blank('annual', ws), inv('fund-a', '2026-01-01', '2026-12-31')).model;
+    same(check, 'annual for a year (not Regulation A)', plainAnnual && [plainAnnual.title, plainAnnual.subtitle], ['Annual review', 'Year ended December 31, 2026']);
+    check('no SEC note when not Regulation A', plainAnnual && !plainAnnual.blocks.some((b) => b.k === 'note' && /SEC/.test(b.text)));
+    ws.offerings.find((o) => o.id === 'fund-a').structure = { exemption: 'Regulation A Tier 2' };
+    const ra = res(R.blank('annual', ws), inv('fund-a', '2026-01-01', '2026-12-31')).model;
+    same(check, "Regulation A Tier 2, annual for a year: 'Annual report to investors'", ra && ra.title, 'Annual report to investors');
+    same(check, 'the SEC note block right after the cover', ra && ra.blocks[0], { k: 'note', text: SEC });
+    const rs = res(R.blank('annual', ws), inv('fund-a', '2026-07-01', '2026-12-31')).model;
+    same(check, "six months: 'Semiannual report to investors'", rs && [rs.title, rs.subtitle], ['Semiannual report to investors', 'Six months ended December 31, 2026']);
+    const rq = res(R.blank('quarterly', ws), inv('fund-a', '2026-01-01', '2026-06-30')).model;
+    same(check, 'a six-month quarterly for Regulation A', rq && [rq.title, rq.blocks[0] && rq.blocks[0].text], ['Semiannual report to investors', SEC]);
+    delete ws.offerings.find((o) => o.id === 'fund-a').structure;
+    const sq = res(R.blank('quarterly', ws), inv('fund-a', '2026-01-01', '2026-06-30')).model;
+    same(check, "six months otherwise: 'Semiannual report'", sq && sq.title, 'Semiannual report');
+
+    R.setSplit(ws, 'fa-run-1', [{ label: 'Return of capital', cents: 450000 }, { label: 'Capital gain', cents: 450000 }], { by: 'gp', at: WHEN });
+    const dn = res(R.blank('distribution', ws), { runId: 'fa-run-1', audience: { kind: 'investor', investorId: 'FA-1001' }, when: WHEN }).model;
+    check('the distribution notice resolves', !!dn);
+    if (dn) {
+      same(check, 'notice title, subtitle and period', [dn.title, dn.subtitle, dn.period], ['Distribution notice', 'Paid December 15, 2026', { from: '2026-12-15', to: '2026-12-15' }]);
+      const tiles = dn.blocks.find((b) => b.k === 'tiles');
+      same(check, 'notice tiles', tiles && tiles.items.map((x) => [x.label, x.value, x.v]), [['Gross amount', '$6,000.00', 600000], ['Tax withheld', '$0.00', 0], ['Net amount paid', '$6,000.00', 600000]]);
+      const pay = tableNamed(dn, 'Payment details');
+      same(check, 'payment details', pay && [pay.cols.map((c) => c.h), pay.rows[0].map((c) => c.s)], [['Payment date', 'Type', 'Payment method', 'Distributions to date'], ['December 15, 2026', 'Realization proceeds', 'ACH', '$6,000.00']]);
+      const ch = tableNamed(dn, 'Character of this distribution');
+      same(check, "the recipient's own split", ch && ch.rows.map((row) => [row[0].s, row[1].s]).concat([ch.total.map((c) => c.s)]), [['Return of capital', '$3,000.00'], ['Capital gain', '$3,000.00'], ['Total', '$6,000.00']]);
+      check('split note', notes(dn).indexOf('Your tax documents are authoritative for tax purposes.') >= 0, notes(dn));
+      same(check, 'recipients of the notice: the run investors with a line', R.recipients(ws, R.blank('distribution', ws), { runId: 'fa-run-1' }, D), ['FA-1001', 'FA-1002']);
+    }
+    const tt = R.blank('tax', ws);
+    tt.sections.find((s) => s.key === 'taxdocs').opts.expected = 'by March 15, 2027';
+    const tx = res(tt, { year: 2026, audience: { kind: 'investor', investorId: 'FA-1001' }, when: WHEN }).model;
+    check('the tax-season summary resolves', !!tx);
+    if (tx) {
+      same(check, 'tax title and subtitle', [tx.title, tx.subtitle, tx.period], ['Tax-season summary', 'Tax year 2026', { from: '2026-01-01', to: '2026-12-31' }]);
+      const ts = tables(tx).find((x) => /^Tax summary/.test(x.title));
+      same(check, 'tax summary', ts && [ts.cols.map((c) => c.h), ts.rows.map((row) => row.map((c) => c.s)), ts.total.map((c) => c.s)], [['Fund', 'Gross distributions', 'Tax withheld', 'Net paid'], [['Fund A, L.P.', '$6,000.00', '$0.00', '$6,000.00']], ['Total', '$6,000.00', '$0.00', '$6,000.00']]);
+      check('tax summary note', notes(tx).indexOf('Cash paid in 2026. Your tax documents are authoritative for tax purposes.') >= 0, notes(tx));
+      const td = tableNamed(tx, 'Tax documents');
+      same(check, 'tax documents and their states', td && [td.cols.map((c) => c.h), td.rows.map((row) => row.map((c) => c.s))], [['Document', 'Fund', 'Status', 'Available until'], [['Schedule K-1 (Form 1065)', 'Fund A, L.P.', 'In your Documents', 'October 15, 2027'], ['Form 1099-DIV', 'Fund A, L.P.', 'Being prepared', '']]]);
+      check("'Expected: ...' when typed", notes(tx).indexOf('Expected: by March 15, 2027') >= 0, notes(tx));
+    }
+    const D2 = standIn(ws);
+    const none = R.resolve(ws, R.blank('tax', ws), { year: 2026, audience: { kind: 'investor', investorId: 'FA-1001' }, when: WHEN }, 'FA-1001', D2).model;
+    check("'No tax documents for 2026 yet.' when none is listed", none && notes(none).indexOf('No tax documents for 2026 yet.') >= 0, none && notes(none));
+    if (none) models.push(none);
+    // every state's words
+    const states = { confirmed: 'Being prepared', waiting: 'Held until you consent to electronic delivery', delivered: 'In your Documents', paper: 'Sent on paper', replaced: 'Replaced by a corrected document' };
+    const allDocs = { 'FA-1001': Object.keys(states).map((state, k) => ({ docId: 'd' + k, offeringId: 'fund-a', kind: 'k1-1065', label: 'Schedule K-1 (Form 1065)', year: 2026, state, availableUntil: '' })) };
+    const sw = R.resolve(ws, R.blank('tax', ws), { year: 2026, audience: { kind: 'investor', investorId: 'FA-1001' }, when: WHEN }, 'FA-1001', standIn(ws, null, allDocs)).model;
+    same(check, 'the status words for every state', sw && tableNamed(sw, 'Tax documents').rows.map((row) => row[2].s), Object.keys(states).map((k) => states[k]));
+    if (sw) models.push(sw);
+    // every type with every section on, for the word checks
+    R.TYPES.forEach((type) => {
+      const spec = type === 'distribution' ? { runId: 'fa-run-1', when: WHEN } : type === 'tax' ? { year: 2026, when: WHEN } : Object.assign({}, Q4);
+      spec.audience = { kind: 'investor', investorId: 'FA-1001' };
+      res(everything(R, ws, type, 'allocation'), spec);
+    });
+    const all = [].concat(...models.map((m) => strings(m)));
+    check('models checked for words', models.length >= 15, models.length);
+    same(check, 'no string matches the forbidden word', all.filter((s) => WORD_RE.test(s)), []);
+    same(check, 'no string says audited, ILPA compliant or gross performance', all.filter((s) => BAD_RE.test(s)), []);
+    same(check, 'every money value whole cents in every model', [].concat(...models.map(moneyWhole)), []);
+  },
+
+  /** Task 3: charts per template.chart. */
+  async charts({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const ws = seat();
+    const year = { from: '2026-01-01', to: '2026-12-31', when: WHEN };
+    const one = Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001', offeringId: 'fund-a' } }, year);
+    const withChart = (chart, type) => Object.assign(R.blank(type || 'quarterly', ws), { chart });
+    const chartsOf = (m) => (m ? m.blocks.filter((b) => b.k === 'chart') : []);
+    const D = standIn(ws);
+    const d = chartsOf(R.resolve(ws, withChart('dist'), one, 'FA-1001', D).model);
+    same(check, 'dist: one columns chart', d.map((c) => c.kind), ['columns']);
+    if (d[0]) {
+      same(check, 'dist labels', d[0].labels, ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026']);
+      same(check, 'dist values', d[0].values, [0, 0, 0, 600000]);
+      same(check, 'dist shown', d[0].shown, ['$0.00', '$0.00', '$0.00', '$6,000.00']);
+      check('dist ticks at 0 and 1', d[0].ticks.some((x) => x.at === 0) && d[0].ticks.some((x) => x.at === 1 && x.s === '$6,000.00') && d[0].ticks.every((x) => x.at >= 0 && x.at <= 1), d[0].ticks);
+      check('dist has a title', typeof d[0].title === 'string' && d[0].title.length > 0);
+    }
+    const c = chartsOf(R.resolve(ws, withChart('capital'), one, 'FA-1001', D).model);
+    same(check, 'capital: one line chart', c.map((x) => x.kind), ['line']);
+    if (c[0]) {
+      same(check, 'capital: 12 points ending 34500000', [c[0].values.length, c[0].values[11], c[0].shown[11]], [12, 34500000, '$345,000.00']);
+      same(check, 'capital labels', [c[0].labels[0], c[0].labels[11]], ['Jan 2026', 'Dec 2026']);
+    }
+    // three funds in one currency
+    const F = figures();
+    F['fund-r'].currency = 'USD';
+    const ws3 = seat();
+    ws3.offerings.find((o) => o.id === 'fund-r').currency = 'USD';
+    const D3 = standIn(ws3, F);
+    const all3 = Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001' } }, year);
+    const a = chartsOf(R.resolve(ws3, Object.assign(R.blank('statement', ws3), { chart: 'allocation' }), all3, 'FA-1001', D3).model);
+    same(check, 'allocation over three funds in one currency: one bar100', a.map((x) => [x.kind, x.labels.length]), [['bar100', 3]]);
+    if (a[0]) {
+      const bps = a[0].values.map((v) => Math.round(v * 10000));
+      check('bar100 values are whole basis points', a[0].values.every((v, i) => Math.abs(v * 10000 - bps[i]) < 1e-9), a[0].values);
+      same(check, 'bar100 values sum to exactly 1 (10,000 basis points)', bps.reduce((x, y) => x + y, 0), 10000);
+      const shown = a[0].shown.map((s) => Number(s.replace('%', '')));
+      same(check, 'shown percents sum to 100.0%', (Math.round(shown.reduce((x, y) => x + y, 0) * 100) / 100).toFixed(1) + '%', '100.0%');
+    }
+    const a2 = chartsOf(R.resolve(ws, Object.assign(R.blank('statement', ws), { chart: 'allocation' }), all3, 'FA-1001', D).model);
+    same(check, 'allocation over two currencies: one bar per currency', a2.map((x) => [x.kind, x.labels]), [['bar100', ['Fund A, L.P.', 'Open Fund, L.P.']], ['bar100', ['Rhine Property Fund SCSp']]]);
+    const a1 = chartsOf(R.resolve(ws, withChart('allocation'), one, 'FA-1001', D).model);
+    same(check, 'allocation for one fund: fair value by holding', a1.map((x) => [x.kind, x.labels, x.values]), [['bar100', ['Portfolio Co X'], [1]]]);
+    same(check, "chart 'none': no chart block", chartsOf(R.resolve(ws, withChart('none'), one, 'FA-1001', D).model).length, 0);
+    const lt = chartsOf(R.resolve(ws, withChart('dist'), { audience: { kind: 'letter', offeringIds: ['fund-a'] }, from: year.from, to: year.to, when: WHEN }, null, D).model);
+    same(check, "dist in a letter: the fund's distributions", lt.map((x) => x.values), [[0, 0, 0, 900000]]);
+  },
+
+  /** Task 3: the model's tables as schedule objects for the workbook writer, reopened by an independent reader. */
+  async sheets({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const ws = seat();
+    const D = standIn(ws);
+    const LABEL = '=HYPERLINK("http://x","y")';
+    const t = R.blank('quarterly', ws);
+    t.sections.find((s) => s.key === 'assets').opts.items = [{ holdingId: 'fa-x', photoIds: [], text: [], figures: [{ label: LABEL, value: '95% leased' }] }];
+    const m = R.resolve(ws, t, Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001', offeringId: 'fund-a' } }, Q4), 'FA-1001', D).model;
+    check('the model resolves', !!m);
+    if (!m) return;
+    const S = R.sheets(m);
+    same(check, "the first sheet is 'Report'", S[0] && S[0].title, 'Report');
+    same(check, 'Report sheet header rows', S[0].rows.slice(0, 4).map((row) => [row[0], row[1]]), [['Title', 'Quarterly report'], ['Period', 'Quarter ended December 31, 2026'], ['Prepared for', 'Investor One'], ['Firm', 'Fund A Sponsor Management, LLC']]);
+    check('one sheet per table block', S.length === 1 + tables(m).length, { sheets: S.length, tables: tables(m).length });
+    const capS = S.find((s) => s.title === 'Your capital account');
+    same(check, 'capital sheet: raw cents', capS && capS.rows.map((row) => row[1]), [33400000, 0, -600000, 0, 2000000, -300000, 0]);
+    fs.mkdirSync(WORK, { recursive: true });
+    const file = path.join(WORK, 'report.xlsx');
+    fs.writeFileSync(file, Buffer.from(NS.files.workbook(S, { when: new Date(Date.UTC(2027, 0, 20)) })));
+    const r = spawnSync('python3', ['-I', READER, file], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    check('read-xlsx.py reads the workbook', r.status === 0, (r.stderr || '').slice(-800));
+    if (r.status !== 0) return;
+    const X = JSON.parse(r.stdout);
+    same(check, "sheet 'Report' first", X.sheets[0].name, 'Report');
+    const cs = X.sheets.find((s) => s.name === 'Your capital account');
+    check('the capital sheet', !!cs, X.sheets.map((s) => s.name));
+    if (cs) {
+      const cells = cs.cells;
+      const want = capS.rows.map((row) => [row[1], row[2]]).concat([[capS.total[1], capS.total[2]]]);
+      const got = want.map((w, k) => [cells['B' + (k + 2)], cells['C' + (k + 2)]]);
+      check('money cells are numbers equal to cents / 100', got.every((pair, k) => pair.every((c, j) => (want[k][j] === 0 ? !c || c.v === 0 : c && c.t === 'n' && c.v === want[k][j] / 100))), got);
+      same(check, 'ending capital 345000.0 and distributions -6000.0', [cells.B9 && cells.B9.v, cells.B4 && cells.B4.v], [345000, -6000]);
+    }
+    same(check, 'no formula in any worksheet part', X.raw_formulas, 0);
+    check('no cell holds a formula (openpyxl)', X.sheets.every((s) => Object.values(s.cells).every((c) => !c.f)));
+    const fig = X.sheets.find((s) => Object.values(s.cells).some((c) => c.v === LABEL));
+    const cell = fig && Object.values(fig.cells).find((c) => c.v === LABEL);
+    check("the typed '=HYPERLINK(' label is a string cell beginning with '='", !!cell && cell.t === 's' && /^=/.test(cell.v), cell);
+    const rep = X.sheets[0].cells;
+    check('Report sheet: a tile as a number with its type', Object.values(rep).some((c) => c.t === 'n'), rep);
+  },
+
+  /** An unknown --case name and an empty list each exit 1 with a FAIL line. */
+  async selfcheck({ check }) {
+    [['--case', 'no-such-case'], ['--case', '']].forEach((args) => {
+      const r = spawnSync(process.execPath, [__filename].concat(args), { encoding: 'utf8', env: process.env });
+      check(`${JSON.stringify(args.join(' '))} exits 1 with a FAIL line`, r.status === 1 && /^FAIL/m.test(r.stdout || ''), { status: r.status, out: (r.stdout || '').slice(-400) });
+    });
   }
 };
+
+/* ---------- Case helpers ---------- */
+const TAX_DOCS = {
+  'FA-1001': [
+    { docId: 'd-1', offeringId: 'fund-a', kind: 'k1-1065', label: 'Schedule K-1 (Form 1065)', year: 2026, state: 'delivered', availableUntil: '2027-10-15' },
+    { docId: 'd-2', offeringId: 'fund-a', kind: '1099-div', label: 'Form 1099-DIV', year: 2026, state: 'confirmed', availableUntil: '' }
+  ],
+  'FA-1002': [{ docId: 'd-3', offeringId: 'fund-a', kind: 'k1-1065', label: 'Schedule K-1 (Form 1065)', year: 2026, state: 'delivered', availableUntil: '2027-10-15' }]
+};
+/** A template of the type with every section on, wording with merge fields, an asset item and the chart chosen. */
+function everything(R, ws, type, chart) {
+  const t = R.blank(type, ws);
+  t.chart = chart;
+  t.sections.forEach((s) => (s.on = true));
+  const set = (key, f) => {
+    const s = t.sections.find((x) => x.key === key);
+    if (s) f(s);
+  };
+  set('letter', (s) => (s.text = [{ t: 'p', runs: [{ s: 'Dear {first_name}, {account_name}: {investment} {ending_capital} {distributions_period}.', b: false, i: false }] }]));
+  set('outlook', (s) => (s.text = [{ t: 'h', runs: [{ s: 'Next quarter', b: false, i: false }] }, { t: 'ul', items: [[{ s: '{firm} at {phone}', b: true, i: false }]] }]));
+  set('commitment', (s) => (s.opts.activity = true));
+  set('assets', (s) => (s.opts.items = [{ holdingId: 'fa-x', photoIds: ['ph-1'], text: [{ t: 'p', runs: [{ s: 'Revenue grew.', b: false, i: false }] }], figures: [{ label: 'Occupancy', value: '95%' }] }]));
+  set('taxdocs', (s) => (s.opts.expected = 'by March 15, 2027'));
+  return t;
+}
+/** Blocks under each h1 (fund name) up to the next break. */
+function groups(model) {
+  const G = {};
+  let cur = null;
+  model.blocks.forEach((b) => {
+    if (b.k === 'break') cur = null;
+    else if (b.k === 'h1') G[(cur = b.text)] = [];
+    else if (cur) G[cur].push(b);
+  });
+  return G;
+}
 
 runParts(parts, { name: 'REPORTS MODEL', unit: 'cases', flag: '--case' });
