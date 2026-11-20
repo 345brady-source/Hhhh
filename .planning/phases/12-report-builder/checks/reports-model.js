@@ -19,7 +19,7 @@ const { spawnSync } = require('child_process');
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const P6 = path.join(ROOT, '.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js');
 const P11 = path.join(ROOT, '.planning/phases/11-fund-accounting-and-cpa-year-end-package/checks');
-const { runParts, WORD_RE } = require(P6);
+const { runParts, WORD_RE, VENDORS, VENDOR_RE } = require(P6);
 const { loadPortal } = require(path.join(P11, 'load11.js'));
 const READER = path.join(P11, 'read-xlsx.py');
 
@@ -889,6 +889,7 @@ const parts = {
     const all = [].concat(...models.map((m) => strings(m)));
     check('models checked for words', models.length >= 15, models.length);
     same(check, 'no string matches the forbidden word', all.filter((s) => WORD_RE.test(s)), []);
+    same(check, 'no vendor, library or model name in any string (white label)', all.filter((s) => VENDORS.test(s) || VENDOR_RE.test(s)), []);
     same(check, 'no string says audited, ILPA compliant or gross performance', all.filter((s) => BAD_RE.test(s)), []);
     same(check, 'every money value whole cents in every model', [].concat(...models.map(moneyWhole)), []);
   },
