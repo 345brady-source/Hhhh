@@ -14,6 +14,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const L = require('../../06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js');
 const { loadPortal, sampleWorkspaces, CHECKOUT } = require('./load11.js');
 
@@ -304,6 +305,27 @@ const cases = {
     check("T3 from December 2025 to December 2026: the journal's net assets = capital", !bad.length, bad);
     const pre = ws.books.funds[oid].journal.filter((e) => e.date < '2026-01-01').map((e) => e.src);
     check('no entry dated before 2026-01-01 other than the opening entry (no contribution posted: before the start)', J(pre) === J(['open:' + oid]), pre);
+  },
+
+  /**
+   * The check's own rules (an unknown case name and an empty list each exit 1 with a FAIL line, as child processes), and
+   * the three pages load the books (11-CONTEXT W1): each lists assets/js/books.js then assets/js/books-post.js, each
+   * exactly once, on the two lines directly after the operations.js line.
+   */
+  selfcheck: ({ check }) => {
+    const run = (args) => spawnSync(process.execPath, [__filename].concat(args), { encoding: 'utf8' });
+    const a = run(['--case', 'no-such-case']);
+    const b = run(['--case', '']);
+    check('an unknown --case name exits 1 with a FAIL line', a.status === 1 && /^FAIL unknown case name: no-such-case/m.test(a.stdout) && /ENGINE BOOKS: FAIL \(cases run: 0\)/.test(a.stdout), a.stdout);
+    check('an empty list exits 1 with a FAIL line', b.status === 1 && /^FAIL no cases to run/m.test(b.stdout) && /ENGINE BOOKS: FAIL \(cases run: 0\)/.test(b.stdout), b.stdout);
+    ['index.html', 'diy.html', 'portal.html'].forEach((page) => {
+      const lines = fs.readFileSync(path.join(CHECKOUT, page), 'utf8').split('\n');
+      const count = (s) => lines.filter((l) => l.indexOf(s) >= 0).length;
+      const ops = lines.findIndex((l) => l.indexOf('src="assets/js/operations.js"') >= 0);
+      const next = ops >= 0 ? [lines[ops + 1], lines[ops + 2]].map((l) => String(l || '').trim()) : [];
+      const want = ['<script src="assets/js/books.js"></script>', '<script src="assets/js/books-post.js"></script>'];
+      check(`${page}: books.js then books-post.js, each once, on the two lines directly after operations.js`, count('assets/js/books.js') === 1 && count('assets/js/books-post.js') === 1 && J(next) === J(want), { books: count('assets/js/books.js'), post: count('assets/js/books-post.js'), next });
+    });
   }
 };
 
