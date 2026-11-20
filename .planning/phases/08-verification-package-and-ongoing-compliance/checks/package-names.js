@@ -220,7 +220,17 @@ const fitsWidth = async (p, sel) => {
   return x.found && x.left >= 0 && x.right <= x.width && x.page <= x.width + 1;
 };
 /** The labels of the step's fields, as the investor reads them (the Optional mark included). */
-const labels = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.ivf-form label')).filter((l) => !!(l.offsetWidth || l.offsetHeight)).map((l) => l.innerText.replace(/\s+/g, ' ').trim()).filter(Boolean));
+const labels = (p) =>
+  p.evaluate(() =>
+    Array.from(document.querySelectorAll('.ivf-form label'))
+      .filter((l) => !!(l.offsetWidth || l.offsetHeight))
+      .map((l) => {
+        const c = l.cloneNode(true);
+        c.querySelectorAll('select, option, input, textarea').forEach((x) => x.remove());
+        return c.textContent.replace(/\s+/g, ' ').trim();
+      })
+      .filter(Boolean)
+  );
 
 async function owners({ check, S }) {
   // The taxpayer-number scan proved first on a planted copy of a file.
@@ -301,6 +311,7 @@ async function owners({ check, S }) {
     const lines = await screeningLines(C.cp, it.title);
     const last = lines[lines.length - 1] || '';
     check('the console imports and the investor\'s last screening line reads "4 names screened"', countOf(last) === 4 && last.indexOf(`${it.title}: 4 names screened.`) === 0, lines);
+    check('that count is the server\'s: the number of calls in the last round', countOf(last) === n2 - n1, { line: countOf(last), server: n2 - n1 });
     await Lib.consoleRoute(C.cp, 'console-kyc', '[data-action=kyc-tab]').catch(() => {});
     await C.cp.screenshot({ path: path.join(SHOTS, 'owners-audit-line.png') });
     check('the console screened nothing again on import (eight calls in all)', C.w.count('screening') === 8, C.w.count('screening'));
@@ -378,6 +389,7 @@ async function preview(check, S, view) {
     const atProfile = await Lib.walk(fr, { name: who.name, until: /Investor information/ });
     check('an invited entity investor reaches the profile step', atProfile.reached && atProfile.errors.length === 0, atProfile);
     const got = await labels(fr);
+    fs.writeFileSync(path.join(path.dirname(Lib.OUT), `package-names-labels-${view}.json`), JSON.stringify(got, null, 1));
     await A.page.screenshot({ path: path.join(SHOTS, `preview-${view}-profile.png`) });
     check('the profile step shows exactly the fields it showed at the base (the same labels)', !!BASE_LABELS && JSON.stringify(got) === JSON.stringify(BASE_LABELS), got);
     check('"Second beneficial owner" is still marked Optional', got.some((l) => /^Second beneficial owner: first name Optional$/.test(l)), got.filter((l) => /owner/i.test(l)));
