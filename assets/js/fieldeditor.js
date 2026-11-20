@@ -1025,7 +1025,14 @@
   }
 
   /* ---------- Pointer, click and keyboard ---------- */
+  // How far beside a field a finger may land and still mean it: every field then has a tap area at least 44 px each way
+  // (a 5x5 px field at Fit on a phone: 49x49 px). Nothing is drawn larger.
+  const FINGER_REACH = 22;
+  // The pointer type of the last primary press: a browser may deliver the click that follows as a plain mouse event with
+  // no pointer type, so the click asks the press what made it.
+  let pressType = '';
   document.addEventListener('pointerdown', (e) => {
+    if (e.isPrimary) pressType = e.pointerType || '';
     if (!live() || drag || !e.isPrimary || e.button > 0) return;
     const t = e.target;
     // The field's toolbar, and any control drawn on a field (a status mark's own button, say), take their clicks as usual.
@@ -1085,8 +1092,9 @@
     const ui = cur.ctx.ui;
     const pg = t.closest('.es-page');
     // A finger that lands just beside a small field means the field.
-    if (pg && !ui.tool && e.pointerType && e.pointerType !== 'mouse') {
-      const hit = nearestField(pg, e.clientX, e.clientY, 16);
+    const finger = e.pointerType ? e.pointerType !== 'mouse' : !!pressType && pressType !== 'mouse';
+    if (pg && !ui.tool && finger) {
+      const hit = nearestField(pg, e.clientX, e.clientY, FINGER_REACH);
       if (hit) {
         select(hit.getAttribute('data-fid'));
         hit.focus({ preventScroll: true });
