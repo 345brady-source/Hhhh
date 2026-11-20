@@ -34,3 +34,13 @@ PASS fund-a no vendor name and never the forbidden word in the files or their na
 REPORTS RUN: PASS (cases run: 1)
 VERIFY_EXIT=0
 ```
+
+### Task 2 verify (the plan's command, from a script file; exit 0)
+The five cases first ran fresh (GATE_FRESH=1) on this same tree: 38 PASS, 0 FAIL, exit 0. The verify run below then
+printed them as KEPT (the shared runner keeps a passing part per exact tree; 5 KEPT lines).
+```
+PASS letter with statements: one file per holder
+PASS letter with statements: each file holds the letter and its own title only
+REPORTS RUN: PASS (cases run: 5)
+VERIFY_EXIT=0
+```
