@@ -1,10 +1,55 @@
 ---
 phase: 11-fund-accounting-and-cpa-year-end-package
 plan: 09
-status: in-progress
+subsystem: fund accounting (sample funds post to the journal)
+status: complete
+tags: [ledger, sample-funds, fa-03, t3, storage]
+requires: ["11-05 (books-post.js desired/sync)", "11-07 (NS.audit.generated, journal-keyed ledger)"]
+provides:
+  - "sim:<offeringId>:<YYYY-MM> entries in NS.books.desired for generated offerings; desired(...).unbalanced"
+  - "checks/samples-books.js: SAMPLES BOOKS (7 cases)"
+affects: [11-11, 11-12, 11-13, 11-15]
+tech-stack:
+  added: []
+  patterns:
+    - "the sample entry's balance-sheet lines are targets less what sync leaves in the journal (11-CONTEXT W1)"
+    - "an entry that does not balance is left out and listed, never plugged"
+key-files:
+  created:
+    - .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/samples-books.js
+  modified:
+    - assets/js/books-post.js
+decisions:
+  - "An unbalanced sample entry is also listed in fund.exceptions as { src, kind: 'unbalanced', cents }, so a person sees it, not only desired()"
+  - "An unbalanced month's earlier live sample entry is reversed by sync (it is no longer called for), not held"
+  - "The capital-call edit runs in Pellbrook's pb-ventures-i: Kestrel Bay fund ii is 100% called in the seed and issueCall refuses there"
+metrics:
+  duration: "not measured"
+  completed: 2026-11-20
+estimate:
+  tokens: 72000
+  tasks: 2
+actuals:
+  tokens: 6200
+  tasks: 2
+  commits: 8
+plan_head_before: ad2fc5a78d65cc1aa5b362026c33540dd76340b6
+plan_head_after: see the commit of this summary (the last save before it is 835dc18)
 ---
 
-# Phase 11 Plan 09: Sample funds through the same ledger (DRAFT, saved as produced)
+# Phase 11 Plan 09: Sample funds through the same ledger Summary
+
+Every sample fund now has a full journal that agrees with what its Audit page shows. Each month of each of the 15 sample funds carries one sample entry: the generator's income and gain, plus the balance sheet moved to the one the Audit page already shows. At all 743 sample fund-month-ends, journal net assets equal LP capital plus the GP's accrued share. Cash, investments and fees payable match the Audit page, and the trial balance sums to zero. No sample entry needed a balancing line. Entries made by hand in a sample firm are counted. An expense made by hand, which the generated figures cannot hold, is reported and never forced. The owner has not checked this.
+
+## Failures and weak points first
+
+- **No check failed in the end. The phase gate passed: GATE_EXIT=0, every step run fresh, server tests 368, AUDIT SAME ok.**
+- **An expense or income entered by hand in a sample fund breaks that fund's sample entries from that month on.** The generated figures do not know about the entry, so those months cannot balance. They are left out and listed (`desired().unbalanced` and `fund.exceptions`, kind `unbalanced`), never forced. One unbalanced month carries into every later month, because each month counts the one before it. The check measured this: a 50,000-cent legal fee in September 2026 gives September off by exactly 50,000 and October off by 37,682,429. Neither is posted. Balance-sheet-only entries made by hand (cash into investments and back) tie fully. This is the plan's rule ("reported, never forced"). A sample firm is a demonstration, so I left it as it is.
+- **The capital-call edit could not be done in Kestrel Bay as the plan words it.** Fund ii's five seeded calls are 100% of commitments, and `NS.ops.issueCall` returns null there. The check asserts that fact. The call is issued in Pellbrook's pb-ventures-i (70% called) on 2026-11-19, and one item is received on 2026-11-25. That receipt is recorded with the portal's day at 2026-12-05, so November is a completed, open month. Kestrel Bay fund ii carries the entry made by hand (W1) and a closed-period test.
+- **Not every case failed before its code.** `all`, `storage`, `speed` and `selfcheck` passed on their first run (red-2). Task 1's code is generic for every sample fund, the budgets were met without compaction, and speed only measures. `repeat` failed at the base only through its "the books held sample entries" assertion. Its real RED for 11-CONTEXT B1 is red-1b-repeat.txt: sample entries were in, MANAGED did not yet hold `sim`, and each second sync posted 144-269 entries again.
+- **The closed-month branch of `sample()` is not separated by a check.** A closed month keeps its live sample entry, and later months count it (W1: earlier sample entries as they stand in the journal). The close-then-edit case passes with or without that branch, because the computed and live entries agree there.
+- **The browser's storage limit inside the iPhone preview has not been measured.** I assume it is about 5 MB. The four sample workspaces together measured 758,989 bytes of JSON after posting.
+- The sample generator's own figures are what is posted. For example, kb-fund-ii's first month shows a gain of $258,123.41 on $1,593,750.00 called. Those are the demonstration figures the Audit page already showed (FA-03, AUDIT SAME unchanged). This plan did not judge them.
 
 ## Evidence as produced
 
@@ -69,4 +114,132 @@ SAMPLES BOOKS: PASS (cases run: 7)
 ```
 Other checks on this tree: `POSTING: PASS (cases run: 13)`, `BANK REC: PASS (cases run: 10)`, `BOOKS CORE: PASS (cases run: 8)`.
 
-<!-- gsd:write-continue -->
+### Task 2 verify (SCRATCH/exec-11-09/verify2.sh, the plan's command, with the node_modules link made and removed)
+The samples run ended `SAMPLES BOOKS: PASS (cases run: 7)`. The gate's last lines, verbatim (SCRATCH/exec-11-09/gate.txt; no step was carried over from an earlier run; 0 "GATE FAIL" lines):
+```
+GATE ok   server tests # fail 0
+GATE ok   STATUS MATH (13)
+GATE ok   FORM MAPS (3)
+GATE ok   FORMS FLOW (34)
+GATE ok   STATUS FLOW (26)
+GATE ok   SERVER MODE (15)
+GATE ok   TWO PERSONS
+GATE ok   MEASURE
+GATE ok   owner's folder: index.txt and four signed PDFs
+GATE ok   EMAIL DIALOG (3)
+GATE ok   AGREEMENT NAME
+GATE ok   TAX REQUEST LEAVE (5)
+GATE ok   WAYS OUT (7)
+GATE ok   NO NETWORK (3)
+GATE ok   EMBED DATA (3)
+GATE ok   SAFARI FINISH (6)
+GATE ok   BANK STEP TYPING (2)
+GATE ok   HELP CHAT (10)
+GATE ok   REAL FIRM (9)
+GATE ok   SIGNING DOCUMENTS (8)
+GATE ok   PHONE LAYOUT (8)
+GATE ok   RECORD AND LOST AGREEMENT (7)
+GATE ok   SCREEN EDGES (5)
+GATE ok   WALK3 FIXES (9)
+GATE ok   TITLES AND EDITOR (4)
+GATE ok   PRESS AND CO-INVESTOR (10)
+GATE ok   CO-INVESTOR SERVER (5)
+GATE ok   HELP PREVIEW (6)
+GATE ok   base is an ancestor of HEAD and HEAD moved
+GATE ok   signing: base and plan each have PASS lines
+GATE ok   signing: no FAIL the base lacks
+signing: base 75 PASS / 0 FAIL; plan 75 PASS / 0 FAIL
+GATE ok   record: base and plan each have PASS lines
+GATE ok   record: no FAIL the base lacks
+record: base 40 PASS / 0 FAIL; plan 40 PASS / 0 FAIL
+# tests 368
+# pass 368
+# fail 0
+GATE ok   server tests 368 = base 368 + 0 declared
+GATE ok   DIST FLOW
+GATE ok   DIST RECORD
+GATE ok   K1 SPLIT
+GATE ok   SHIPPED LIBS
+GATE ok   TAX 1099
+GATE ok   TAX FORMS
+GATE ok   TAX MATH
+GATE ok   TAXDOCS FLOW
+GATE ok   TAXDOCS MATH
+GATE ok   TAXRECORD FLOW
+GATE ok   WITHHOLDING FLOW
+GATE ok   AUDIT SAME
+GATE ok   BANK FILES
+GATE ok   BANK REC
+GATE ok   BOOKS CORE
+GATE ok   ENGINE BOOKS
+GATE ok   PDF OUT
+GATE ok   POSTING
+GATE ok   SAMPLES BOOKS
+GATE ok   WORKBOOK
+GATE_EXIT=0
+VERIFY2 OK
+```
+The gate left no base tree (the gate folder is 1.2 MB) and no server/node_modules.
+
+## Measured
+
+| Sample firm | Books (JSON bytes) | Entries (sample entries) | Whole workspace (bytes) |
+|---|---|---|---|
+| kestrel-bay | 104,067 | 427 (157) | 145,239 |
+| ashwell-ridge | 178,645 | 518 (173) | 229,774 |
+| greywater | 124,784 | 405 (144) | 167,074 |
+| pellbrook | 162,781 | 686 (269) | 216,902 |
+| four together | | | 758,989 |
+
+Budgets 300,000 per firm and 2,500,000 together: met, with no compaction (the compaction rule was not needed and is not built).
+Sync time on pellbrook (269 fund-months, the most), node on this machine: first sync 119.2, 135.3, 205.1 and 170.2 ms in four runs (686 entries posted); second sync 64.5, 83.3, 93.6 and 89.5 ms (0 posted). The phone's time is not measured.
+
+**First sample entry of kb-fund-ii, by hand:** sim:kb-fund-ii:2019-09, dated 2019-09-30, memo "Sample fund: Sep 2019".
+6100 credit 25,812,341 (the generator's gain) · 1000 credit 153,819,380 · 1100 debit 125,975,727 · 1150 debit 53,655,994.
+Sum: -25,812,341 - 153,819,380 + 125,975,727 + 53,655,994 = 0. There is no 4090 line (income 0 that month) and no 2100 line (the fee entry already left 2100 at -1,062,500, the Audit page's fee payable). The call entry put 159,375,000 into 1000. After this entry, 1000 = 5,555,620 = H.cash and 1100 + 1150 = 179,631,721 = H.longFV, which are the engine figures red-1.txt printed for that month.
+
+## Interfaces as built
+
+- `NS.books.desired(ws, o, {today})` also returns sim entries for `NS.audit.generated(o)`, sorted by date then src with all the others. The returned array has `unbalanced` (`[{src, sum}]`, always present, empty for real funds).
+- sim lines: [4090 -income][6100 -gain] then 1000, 1100, 1150, 2300, 2100, 2200, 2500, 2600, each target less the projected balance. Zero lines are left out.
+- Projected balance (W1): every live journal entry this module does not own (man:, mark:, bank:, open:, ...); for each record it posts, the entry sync will leave live (the desired one, or the live one when held or in a closed period); and the sample entries of earlier months (the live one for a closed month).
+- `MANAGED` = `/^(call|pos|run|req|reqpaid|fee|gp|sim):/` (B1), so sync reverses and re-posts a changed sample entry and never posts one twice.
+- Real funds: unchanged. No sim entry is made (POSTING fund-a compares desired with the fixture exactly; ENGINE BOOKS ok).
+
+## Deviations from Plan
+
+1. **[RED order] Case `repeat` was written with Task 1's check** (257e190). B1 puts the MANAGED change in Task 1 step 2 and names `repeat` as its RED. Its RED was taken between writing the sample entries and changing MANAGED (red-1b-repeat.txt), and both went in one code commit (c331c1d).
+2. **[Plan wording] The capital-call edit runs in Pellbrook's pb-ventures-i**, because Kestrel Bay fund ii has no open call and no commitment left (asserted in the case). Kestrel Bay fund ii carries the man: entry, a close through 2026-06-30 with a later entry made by hand, and the expense-made-by-hand report.
+3. **[Rule 2] An unbalanced sample entry is also listed in fund.exceptions** (`{src, kind: 'unbalanced', cents, found}`), so it is visible in the books, not only in desired's return.
+4. **[Check correction] The edit case's re-post count was wrong arithmetic** (5 months expected, 1 is right). It now asserts exactly 1 re-posted entry and the exact line change.
+5. **The case `edit` also includes a closed period and an expense made by hand.** Neither is in the plan's behaviour list. Both test the "never forced" rule (T-11-27) and W1.
+
+## Known Stubs
+
+None.
+
+## Threat Flags
+
+None. T-11-26: sim entries only when `generated(o)`. T-11-27: unbalanced entries are left out and listed (case edit). T-11-28: storage measured (case storage).
+
+## Files a preview build must add
+
+None new at run time. assets/js/books-post.js is changed and already loaded by index.html, diy.html and portal.html. The check file is not shipped.
+
+## Commits
+
+- 257e190 test(11-09): kb-fund-ii ties to its capital accounts every month; a second sync of the sample firms changes nothing (RED)
+- c331c1d feat(11-09): sample funds carry one balancing sample entry per month (FA-03)
+- 26a843c wip(11-09): save
+- b33fb06 test(11-09): all 15 sample funds, storage, speed, edits in sample firms, selfcheck (RED: entries made by hand)
+- 2820743 wip(11-09): save
+- 1d4a545 feat(11-09): a sample entry counts every live entry of the fund, entries made by hand included (11-CONTEXT W1)
+- 835dc18 wip(11-09): save
+- plus the commit of this summary
+
+Pushed only to wip/11-09. STATE.md, ROADMAP.md and REQUIREMENTS.md not touched; no 11-10 or 11-11 file edited.
+
+## Self-Check: PASSED
+
+- FOUND: assets/js/books-post.js, checks/samples-books.js
+- FOUND (in `git log ad2fc5a..HEAD`): 257e190, c331c1d, 26a843c, b33fb06, 2820743, 1d4a545, 835dc18
