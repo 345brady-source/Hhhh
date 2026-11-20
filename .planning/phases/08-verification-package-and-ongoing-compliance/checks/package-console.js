@@ -20,9 +20,16 @@
 //                    package; with nothing owed the box is enabled again after the next read
 //   returned         an invitation sent with the package whose package was returned as credit: the sponsor resends it; the
 //                    real 409 sentence on its row and in the toast, word for word and alone; no email sent
+//   phone            390x844 with touch, an amount owed: the single form's switched-off box and its sentence fit the width;
+//                    then (nothing owed) a used package: the row's send reached by a tap, the server's sentence and the new
+//                    "Not sent yet" row fit, no sideways scroll
+//   preview-desktop  the owner's preview (sandboxed frame, connect-src none, no server) at 1280x800, and at 390x844 with
+//   preview-phone    touch: the frame refuses a fetch; the single form's and the list form's box show "Checks run once your
+//                    portal is connected to its server." as before; an invitation still sends from the sponsor's own email
+//                    app; no refused connection recorded; no raw error
 // Every part asserts that the server in this process called nothing outside this machine, and ends with the leak scan of
 // the screens it saw (phase 6's leak check and frame.js's vendor scan).
-//   NODE_PATH=$(npm root -g) node package-console.js [--only package-used,tier-mismatch,credit-owed,returned]
+//   NODE_PATH=$(npm root -g) node package-console.js [--only package-used,tier-mismatch,credit-owed,returned,phone,preview-desktop,preview-phone]
 // The last line is "PACKAGE CONSOLE: PASS (parts run: N)" or "PACKAGE CONSOLE: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -50,7 +57,14 @@ Lib.describeShots([
   ['used-all.png', 'Server mode, 1280x800: the invitations list on "All": the closed invitation with the server\'s sentence, and its replacement.'],
   ['owed-desktop-form.png', 'Server mode, 1280x800, an amount owed: the invite form\'s box switched off with the server\'s credit_owed sentence.'],
   ['owed-desktop-list.png', 'Server mode, 1280x800, an amount owed: the list form\'s box switched off with the same sentence.'],
-  ['returned-row.png', 'Server mode, 1280x800: a resend refused because the package was returned: the server\'s sentence on the row.']
+  ['returned-row.png', 'Server mode, 1280x800: a resend refused because the package was returned: the server\'s sentence on the row.'],
+  ['owed-phone-form.png', 'Server mode at 390x844 with touch, an amount owed: the box switched off with the server\'s sentence, inside the width.'],
+  ['used-phone-rows.png', 'Server mode at 390x844 with touch: after a used package, the new invitation reading "Not sent yet".'],
+  ['used-phone-all.png', 'Server mode at 390x844 with touch, "All": the closed invitation with the server\'s sentence.'],
+  ['preview-desktop-form.png', 'The owner\'s preview (sandboxed frame, no connection allowed, no server) at 1280x800: the box switched off with its one line.'],
+  ['preview-desktop-list.png', 'The owner\'s preview at 1280x800: the list form\'s box switched off with its one line.'],
+  ['preview-phone-form.png', 'The owner\'s preview at 390x844 with touch: the box switched off with its one line.'],
+  ['preview-phone-list.png', 'The owner\'s preview at 390x844 with touch: the list form\'s box switched off with its one line.']
 ]);
 
 // As package-invite.js (sponsor accounts, plan 08-01): the operator's admin token; stand-in values where the server only asks
@@ -264,6 +278,76 @@ const reread = async (p) => {
 };
 /** The text of every toast on screen now. */
 const toastsNow = (p) => p.evaluate(() => Array.from(document.querySelectorAll('#toasts .toast')).map((t) => t.textContent.trim()));
+/** An element and everything shown inside it, against the window's width; and the page's own width. */
+const fitOf = (p, sel) =>
+  p.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    const kids = Array.from(el.querySelectorAll('*')).filter((k) => !k.hidden && k.offsetWidth).map((k) => k.getBoundingClientRect());
+    return { width: innerWidth, left: Math.round(Math.min(r.left, ...kids.map((k) => k.left))), right: Math.round(Math.max(r.right, ...kids.map((k) => k.right))), page: document.documentElement.scrollWidth };
+  }, sel);
+const fits = (f) => !!f && f.left >= 0 && f.right <= f.width && f.page <= f.width + 1;
+const LINE_NO_SERVER = 'Checks run once your portal is connected to its server.';
+
+/** The owner's preview: the portal framed with every connection refused, no server, at one size. */
+async function preview({ check, S }, view) {
+  const tap = view === 'phone';
+  const { A, fr } = await F.framed(S, view);
+  try {
+    const size = A.page.viewportSize();
+    check(`the window is ${F.VIEW[view].viewport.width}x${F.VIEW[view].viewport.height}${tap ? ' with touch' : ''}`, size.width === F.VIEW[view].viewport.width && size.height === F.VIEW[view].viewport.height && (await fr.evaluate(() => navigator.maxTouchPoints > 0)) === tap, size);
+    await F.proveRefused(check, A, fr);
+    await fr.waitForSelector('[data-action=diy-sample][data-id=kestrel-bay]', { timeout: 30000 });
+    await fr.click('[data-action=diy-sample][data-id=kestrel-bay] >> nth=0');
+    await fr.waitForFunction(() => window.CVPortal && window.CVPortal.state.ws && window.CVPortal.state.ws.tenant.id === 'kestrel-bay', null, { timeout: 30000 });
+    check('no integration server is connected', (await fr.evaluate(() => window.CVPortal.invitations.serverOn(window.CVPortal.state.ws))) === false);
+    await openForm(fr);
+    await fr.waitForSelector('#iv-package-row:not([hidden])', { timeout: 8000 }).catch(() => {});
+    let b = await box(fr);
+    check(`the single form: the box shown, switched off, "Add verification package", one line "${LINE_NO_SERVER}"`, b.present && b.shown && b.disabled && !b.checked && b.label === 'Add verification package' && b.line === LINE_NO_SERVER && b.rows.length === 2, b);
+    b = await tryTick(fr, tap);
+    check('the single form: it cannot be ticked', b.checked === false && b.disabled === true, b);
+    const f1 = await fitOf(fr, '#iv-package-row');
+    check('the single form: the box fits the width (no sideways scroll)', fits(f1), f1);
+    await fr.locator('#iv-package-row').scrollIntoViewIfNeeded().catch(() => {});
+    await A.page.screenshot({ path: path.join(SHOTS, `preview-${view}-form.png`) });
+    const seen = [await F.noRawError(check, fr, 'the invite form')];
+
+    const who = { first: 'Wilhelmina', last: 'Okonkwo', email: 'wilhelmina.okonkwo@example.net', package: true, tap };
+    const it = await invite(fr, who);
+    await fr.waitForSelector('#dlg[open] .inv8-email', { timeout: 15000 }).catch(() => {});
+    const dlg = await fr.evaluate(() => {
+      const d = document.getElementById('dlg');
+      return { open: !!(d && d.open), heading: d ? ((d.querySelector('.dlg-head h2') || {}).textContent || '').trim() : '' };
+    });
+    check('an invitation still sends from the sponsor\'s own email app (the email dialog opens), with no package', dlg.open && dlg.heading === 'Invitation email' && it.emailStatus === 'manual' && it.ticked === false && it.pkg === null, { dlg, it });
+    seen.push(await F.noRawError(check, fr, 'the email dialog'));
+    if (tap) await fr.tap('#dlg [data-action=close-dialog]');
+    else await fr.click('#dlg [data-action=close-dialog]');
+    await fr.waitForTimeout(400);
+
+    await checkList(fr, ['Pat,Previewone,pat.previewone@example.com', 'Lee,Previewtwo,lee.previewtwo@example.com'], tap);
+    await fr.waitForSelector('#iv-bulkPackage-row:not([hidden])', { timeout: 8000 }).catch(() => {});
+    const lb = await bulkBox(fr);
+    check(`the list form: the box shown, switched off, one line "${LINE_NO_SERVER}"`, lb.shown && lb.disabled && !lb.checked && lb.label === 'Add verification package' && lb.line === LINE_NO_SERVER && lb.rows.length === 2, lb);
+    const f2 = await fitOf(fr, '#iv-bulkPackage-row');
+    check('the list form: the box fits the width', fits(f2), f2);
+    await fr.locator('#iv-bulkPackage-row').scrollIntoViewIfNeeded().catch(() => {});
+    await A.page.screenshot({ path: path.join(SHOTS, `preview-${view}-list.png`) });
+    seen.push(await F.noRawError(check, fr, 'the list form'));
+    if (tap) await fr.tap('[data-action="invite-bulk-add"]');
+    else await fr.click('[data-action="invite-bulk-add"]');
+    await fr.waitForTimeout(1200);
+    const got = await Promise.all(['pat.previewone@example.com', 'lee.previewtwo@example.com'].map((e) => invitationsOf(fr, e)));
+    check('the list still sends, from the sponsor\'s own email app, with no package', got.every((x) => x.length === 1 && x[0].emailStatus === 'manual' && x[0].pkg === null), got);
+    seen.push(await F.noRawError(check, fr, 'after sending the list'));
+    check('nothing outside the page was asked for', A.net.external.length === 0 && A.net.allowed.length === 0, A.net);
+    F.leakFree(check, 'every screen of this part', seen.join('\n'));
+  } finally {
+    await A.context.close().catch(() => {});
+  }
+}
 
 const parts = {
   'package-used': async ({ check, S }) => {
@@ -505,7 +589,105 @@ const parts = {
     } finally {
       await C.close();
     }
-  }
+  },
+
+  phone: async ({ check, S }) => {
+    let mode = 'real';
+    const replies = [];
+    const C = await consoleOn(S, check, F.VIEW.phone, {
+      'POST /v1/invitations': async (req) => {
+        if (mode === 'lost') {
+          mode = 'real';
+          const r = await ownFetch(`${C.srv.base}/v1/invitations`, { method: 'POST', headers: { Authorization: req.auth, 'Content-Type': 'application/json' }, body: JSON.stringify(req.body) });
+          replies.push({ status: r.status, json: await r.json().catch(() => null), lost: true });
+          return { refuse: true };
+        }
+        return {
+          amend: (json, status) => {
+            replies.push({ status, json });
+            return json;
+          }
+        };
+      }
+    });
+    try {
+      const p = C.page;
+      const st = C.srv.server.store;
+      const size = p.viewportSize();
+      check('the window is 390x844 with touch', size.width === 390 && size.height === 844 && (await p.evaluate(() => navigator.maxTouchPoints > 0)), size);
+      // An amount owed: the single form's box switched off with the server's sentence, inside the width.
+      st.put('billing', { id: C.account.id, owedCents: 1900 });
+      const probe = await C.call('POST', '/v1/invitations', { workspace: 'kestrel-bay', portalUrl: `${S.origin}/diy.html`, sendEmail: false, firm: { name: 'Kestrel Bay Capital' }, investor: { id: 'OWED-PROBE', contact: 'Owed Probe', email: 'owed.probe@example.com' }, invitation: { package: true, clientId: 'owed-probe-2' }, verification: {} });
+      const OWED = probe.body && typeof probe.body.error === 'string' ? probe.body.error : '';
+      check('the real server refuses a package invitation for this account with 409 credit_owed', probe.status === 409 && probe.body.code === 'credit_owed' && OWED.length > 10, probe);
+      await openForm(p);
+      await chooseOffering(p, C.off.offeringId);
+      await reread(p);
+      let b = await boxReady(p);
+      check('an amount owed: the box switched off, unticked, its line the server\'s sentence word for word', b.shown && b.disabled && !b.checked && b.line === OWED && b.rows.length === 2, b);
+      b = await tryTick(p, true);
+      check('a tap does not tick it', b.checked === false, b);
+      const f1 = await fitOf(p, '#iv-package-row');
+      check('the switched-off box and its sentence fit the width (no sideways scroll)', fits(f1), f1);
+      await p.locator('#iv-package-row').scrollIntoViewIfNeeded().catch(() => {});
+      await C.A.page.screenshot({ path: path.join(SHOTS, 'owed-phone-form.png') });
+      const seen = [await F.noRawError(check, p, 'the invite form, an amount owed', C.A.errors)];
+
+      // Nothing owed: a used package, on the phone.
+      st.put('billing', { id: C.account.id, owedCents: 0 });
+      await reread(p);
+      mode = 'lost';
+      const posts = () => C.stub.sent('POST /v1/invitations').length;
+      const who = { first: 'Ingrid', last: 'Halvorsen-Abernathy', email: 'ingrid.halvorsen-abernathy@example.com', offeringId: C.off.offeringId, package: true, tap: true };
+      const one = await invite(p, who);
+      const lost = replies.find((r) => r.lost) || null;
+      const sid = lost && lost.json && lost.json.id;
+      const rec = sid ? st.get('invitations', sid) : null;
+      check('a tap ticked the box; the server stored and paid it; the console heard a refused connection ("Not sent yet")', one.ticked === true && !!rec && !!rec.package && one.serverId === '' && /Not sent yet/.test(await rowText(p, one.id)), { one, lost: lost && lost.status });
+      if (rec && rec.package) st.put('entitlements', { id: rec.package.entitlement, startedAt: new Date().toISOString() });
+      const cancel = sid ? await C.call('POST', `/v1/invitations/${encodeURIComponent(sid)}/cancel`, {}) : { status: 0 };
+      check('the package\'s check is started and the server\'s invitation cancelled', cancel.status === 200, cancel);
+      const before = C.money();
+      await sendRow(p, one.id, posts, true);
+      const said = replies.filter((r) => !r.lost)[0] || null;
+      const SENT = said && said.json && typeof said.json.error === 'string' ? said.json.error : '';
+      check('the row\'s send, reached by a tap, gets the real 409 package_used', !!said && said.status === 409 && said.json.code === 'package_used' && SENT.length > 10, said);
+      const after = C.money();
+      check('nothing was charged by the refused send', after.credit === before.credit && after.entitlements === before.entitlements && after.payments === 0, { before, after });
+      const all = await invitationsOf(p, who.email);
+      const nu = all.find((x) => x.id !== one.id) || {};
+      check('a new invitation with a new id holds the package choice, not sent', all.length === 2 && !!nu.id && nu.pkg === true && nu.emailStatus === 'not_sent' && posts() === 2, all);
+      const nuRow = nu.id ? await rowText(p, nu.id) : '';
+      const f2 = nu.id ? await fitOf(p, `tr[data-invitation="${nu.id}"]`) : null;
+      check('the new row reads "Not sent yet" and fits the width', /Not sent yet/.test(nuRow) && fits(f2), { nuRow, f2 });
+      const text = await F.noRawError(check, p, 'after the refusal', C.A.errors);
+      check('the server\'s sentence is on screen word for word', !!SENT && text.indexOf(SENT) >= 0, SENT);
+      if (nu.id) await p.locator(`tr[data-invitation="${nu.id}"]`).scrollIntoViewIfNeeded().catch(() => {});
+      await C.A.page.screenshot({ path: path.join(SHOTS, 'used-phone-rows.png') });
+      await listTab(p, 'all', true);
+      const oldRow = await rowText(p, one.id);
+      const f3 = await fitOf(p, `tr[data-invitation="${one.id}"]`);
+      check('on "All", the old row\'s line is the server\'s sentence and the row fits the width', !!SENT && oldRow.indexOf(SENT) >= 0 && fits(f3), { oldRow, f3 });
+      await p.locator(`tr[data-invitation="${one.id}"]`).scrollIntoViewIfNeeded().catch(() => {});
+      await C.A.page.screenshot({ path: path.join(SHOTS, 'used-phone-all.png') });
+      seen.push(text, await F.noRawError(check, p, 'the list on All', C.A.errors));
+      await listTab(p, 'open', true);
+      if (nu.id) await sendRow(p, nu.id, posts, true);
+      const got = (await invitationsOf(p, who.email)).find((x) => x.id === nu.id) || {};
+      const end = C.money();
+      check('a tap on the new row\'s send pays one new package ($99) and the server holds it', /^ivt_/.test(got.serverId || '') && end.credit === after.credit - 9900 && end.entitlements === after.entitlements + 1, { got, end });
+      const pg = await p.evaluate(() => ({ width: innerWidth, page: document.documentElement.scrollWidth }));
+      check('the page does not scroll sideways', pg.page <= pg.width + 1, pg);
+      seen.push(await F.noRawError(check, p, 'after sending the new one', C.A.errors));
+      check('the server called nothing outside this machine', outside.length === 0, outside);
+      F.leakFree(check, 'every screen of this part', seen.join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+
+  'preview-desktop': (ctx) => preview(ctx, 'desktop'),
+  'preview-phone': (ctx) => preview(ctx, 'phone')
 };
 
 Lib.runParts(parts, { name: 'PACKAGE CONSOLE', unit: 'parts', flag: '--only', browser: true });
