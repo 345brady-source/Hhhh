@@ -28,3 +28,8 @@ Owner instruction (2026-11-20, verbatim): "work around whatever bullshit you thi
 - W6 (13-02 Task 2): join each TXT record's pieces before comparing (a 2048-bit DKIM key is split into strings of at most 255 characters; resolveTxt returns arrays) in smtp.mjs and wherever ses.mjs checks DNS. "Check ready" adds a fake resolver returning the DKIM record in two pieces.
 - Note for the 13-10 checkpoint: with bring-your-own-key DKIM and no custom MAIL FROM, raw headers carry the provider's Return-Path and a second DKIM signature in the provider's domain. The visible message and the DNS records the sponsor copies stay white label; the provider's name appears only in "show original".
 - Server test count today: 368. After 13-02: 386.
+
+## After 13-02 (merged 2026-11-20; server tests 387)
+- Every .mjs under server/test counts as at least one test with node --test, so helper files count one each (ses-fake.mjs carries `// gate: tests 1`). Later plans count helper files the same way.
+- Owner-run items for 13-10: the provider's v2 request and response shapes, the private-key encoding (base64 PKCS#1 DER), the event fields (mail.commonHeaders.messageId with angle brackets), and the certificate host pattern.
+- A domain already used by another workspace is refused with 409. A domain the provider already holds gets the new key (PUT .../dkim/signing). A DMARC record is offered only when the lookup proves none exists (ENOTFOUND or ENODATA), never after a timeout.
