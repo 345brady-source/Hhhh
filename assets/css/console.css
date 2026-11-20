@@ -122,6 +122,17 @@ body.has-demo .cs-main { padding-bottom: 104px; }
   body.has-demo #view { padding-bottom: 0; }
   body.has-demo .cs-main { padding-bottom: var(--space-xl); }
 }
+/* On a phone the console's menu row stays at the top of the screen while a long page scrolls, so a way out is on screen at
+   every point of the page, with the preview bar or without it (once the bar stood in the page's flow, 06-35, nothing else
+   was). The firm's name, the bell and Help above the row scroll away: console.js measures how far the row lies below the top
+   of the menu (--cs-nav-lift) and the row's height with its line (--cs-nav-pin). A page's own sticky bar (Filings, Tax
+   documents) stops just under the row, and a control brought into view is not left under it. `.cs >` outweighs diy.css's
+   `.cs-nav { position: relative }`; sticky still places the bell and Help. */
+@media (max-width: 640px) {
+  .cs > .cs-nav { position: sticky; top: calc(env(safe-area-inset-top, 0px) - var(--cs-nav-lift, 0px)); z-index: var(--z-sticky-nav); }
+  .cs-main .fl-bar, .cs-main .tx-bar { top: calc(env(safe-area-inset-top, 0px) + var(--cs-nav-pin, 0px)); }
+  :root:has(.cs > .cs-nav) { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + var(--cs-nav-pin, 0px)); }
+}
 body.edition-diy .cs, body.edition-diy .pt { min-height: 100vh; min-height: 100dvh; }
 body.has-demo.mode-standalone #view { background: var(--page); }
 body.has-demo.mode-portal #view { background: var(--page); }

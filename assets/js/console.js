@@ -79,8 +79,27 @@
     if (k === 'console-kyc') return w.investors.filter((i) => ['review', 'due'].indexOf(NS.ops.kycLabel(NS.ops.kycOf(i)).key) >= 0).length;
     return 0;
   }
+  /**
+   * On a phone the menu row stays on screen as the page scrolls (console.css): how far it lies below the top of the menu (the
+   * firm's name, the bell and Help above it scroll away) and how tall it is with its line. Measured once each page is drawn,
+   * and again when the screen's width or the fonts change.
+   */
+  function pinMenu() {
+    const nav = document.querySelector('.cs > .cs-nav');
+    const row = nav && nav.querySelector(':scope > nav');
+    if (!row) return;
+    const a = nav.getBoundingClientRect();
+    const b = row.getBoundingClientRect();
+    const root = document.documentElement.style;
+    root.setProperty('--cs-nav-lift', `${Math.max(0, b.top - a.top)}px`);
+    root.setProperty('--cs-nav-pin', `${Math.max(0, a.bottom - b.top)}px`);
+  }
+  window.addEventListener('resize', pinMenu);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(pinMenu);
   function shell(inner, active) {
     const t = T();
+    // the page is put on screen right after this returns; the menu is measured then
+    Promise.resolve().then(pinMenu);
     return `<div class="cs">
       <aside class="cs-nav" aria-label="Sponsor console">
         <div class="cs-client">${B.lockup(t)}<span class="cs-client-meta">${h(t.domain)}</span></div>

@@ -691,9 +691,13 @@ const parts = {
     const { spawnSync } = require('child_process');
     const g = (args) => spawnSync('git', args, { cwd: Lib.ROOT, encoding: 'utf8' });
     const base = '6061fce0b5d43bced41eb84c3c7c6375d1d97f27';
-    const log = g(['log', '--format=%H', '--no-merges', `${base}..HEAD`, '--', 'index.html']);
+    // Out of date as first written (any commit since the base): plan 11-07's 6f838bc ("feat(11-07): both editions load the
+    // journal and the posting module", two script lines), merged later, touches index.html by its own plan. D6 is about this
+    // plan's commits: those whose subject is "<type>(10-07): ...".
+    const log = g(['log', '--format=%H %s', '--no-merges', `${base}..HEAD`, '--', 'index.html']);
+    const ours = log.stdout.split('\n').filter((l) => /^[0-9a-f]{40} \w+\(10-07\):/.test(l));
     const dirty = g(['diff', '--quiet', 'HEAD', '--', 'index.html']);
-    check('git shows index.html unchanged since the plan’s base (no commit of the plan, no change in the working tree)', log.status === 0 && log.stdout.trim() === '' && dirty.status === 0, { log: log.stdout.slice(0, 200), status: log.status, dirty: dirty.status });
+    check('git shows index.html unchanged since the plan’s base (no commit of the plan, no change in the working tree)', log.status === 0 && ours.length === 0 && dirty.status === 0, { ours: ours.slice(0, 5), others: log.stdout.slice(0, 300), status: log.status, dirty: dirty.status });
     await T.wayOut(check, fr);
     const text = await fr.evaluate(() => document.body.innerText);
     const hits = text.split('\n').map((l) => l.replace(/Carrow\s*&\s*Vale/gi, '')).filter((l) => Lib.VENDORS.test(l) || Lib.VENDOR_RE.test(l) || Lib.WORD_RE.test(l));
