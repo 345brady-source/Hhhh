@@ -12,3 +12,13 @@ FAIL deliver ran to the end :: Error: ENOENT: no such file or directory, open '/
     ...
 REPORTS RECORD: FAIL (cases run: 1) - deliver
 ```
+
+## Task 1 verify (after assets/js/reports-record.js)
+
+```
+PASS deliver the change log verifies
+PASS deliver the run's delivered block names the person and the docs
+PASS deliver no vendor name and never the forbidden word in the log
+REPORTS RECORD: PASS (cases run: 1)
+```
+(20 PASS lines, 0 FAIL; SCRATCH/exec-12-04/deliver.txt)
