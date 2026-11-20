@@ -154,12 +154,12 @@
   /* ---------- sections other files add (NS.taxUI) ---------- */
   const HERE = (document.currentScript && document.currentScript.src) || '';
   // Only files that are shipped: a part not in the build would be asked for, and refused, on every page load
-  // (06-WALKTHROUGH-3 failure 4). Plan 10-10 adds 'tax1099-ui.js' back after 'tax1099.js', plan 10-12 adds 'taxlink.js' last.
-  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js']);
+  // (06-WALKTHROUGH-3 failure 4). Plan 10-10 added 'tax1099-ui.js' after 'tax1099.js'; plan 10-12 adds 'taxlink.js' last.
+  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js', 'tax1099-ui.js']);
   const parts = {};
   const load = { settled: false, waiting: false };
   function part(key, spec) {
-    if (!/^[a-z][a-z0-9]*$/.test(String(key)) || key === 'batch' || !spec || typeof spec.render !== 'function') return false;
+    if (!/^[a-z0-9]+$/.test(String(key)) || key === 'batch' || !spec || typeof spec.render !== 'function') return false;
     parts[key] = { key, order: Number(spec.order) || 0, title: String(spec.title || ''), summary: typeof spec.summary === 'function' ? spec.summary : null, render: spec.render };
     return true;
   }
@@ -228,7 +228,7 @@
   }
   /** A section's page: console-taxdocs-<key>[-<rest>]; null when no such section is registered. */
   function partHTML(ws, param) {
-    const m = /^([a-z][a-z0-9]*)(?:-(.*))?$/.exec(String(param || ''));
+    const m = /^([a-z0-9]+)(?:-(.*))?$/.exec(String(param || ''));
     if (!m || m[1] === 'batch' || !Object.prototype.hasOwnProperty.call(parts, m[1])) return null;
     const x = parts[m[1]];
     return `<div class="tx"><div class="tx-bar"><a class="tx-back" href="#${ROUTE}">Back</a><h1>${h(x.title)}</h1></div>${from(x.render, ws, m[2] || '')}</div>`;
