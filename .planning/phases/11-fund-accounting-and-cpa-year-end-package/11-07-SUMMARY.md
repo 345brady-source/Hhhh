@@ -40,9 +40,9 @@ estimate:
 actuals:
   tokens: 14100
   tasks: 3
-  commits: COMMITS_PLACEHOLDER
+  commits: 8
 plan_head_before: a2f61064cada89902b68aa042ee88d7c85a58f62
-plan_head_after: HEAD_PLACEHOLDER
+plan_head_after: d2024785c615c10e22cb98a4f261df366f132dcd
 ---
 
 # Phase 11 Plan 07: The capital-account engine reads the journal Summary
@@ -51,7 +51,7 @@ For every fund that is not a sample fund, the capital accounts now come from the
 
 ## Failures and weak points first
 
-GATE_FAILURES_PLACEHOLDER
+- **The phase gate passed (GATE_EXIT=0); no check failed.** The first gate run was killed part-way when the container restarted (in its reference step). Its leftovers were removed: the server/node_modules link it made and its 377 MB gate folder. Then the whole of Task 3's verify was run again from the start (01:10:14 to 02:44:34 UTC, the gate included). `commits: 8` counts the seven plan commits plus one save commit (d202478, `wip(11-07): save`, the summary draft, made under the owner's save rule); the commit of this summary follows them.
 
 - **Not every check failed first.** Case `t8` passed before any code, because fees on commitments are the same under the generator. It guards existing behaviour. A mutation proves it can fail: the engine fee +1 cent in June gives `ENGINE BOOKS: FAIL (cases run: 1) - t8` (mut-t8.txt). The managed-edition check in case `fund-a` was added after the code (commit 2879ea3). The selfcheck child-process rules passed before the code; only the three page checks failed first.
 - **Fund C's March and April lines in red-2 failed only because `gpRun` did not yet exist** (the figures matched). The real failures before the code were May and June: May ended with NAV 1,000,000 against the journal's 0; June accrued 200,000 again, with carry -800,000.
@@ -78,7 +78,55 @@ VERIFY2 OK
 ```
 Task 3 (`SCRATCH/exec-11-07/verify3.sh`, the plan's command, which runs the full phase gate):
 ```
-GATE_PLACEHOLDER
+PASS selfcheck diy.html: books.js then books-post.js, each once, on the two lines directly after operations.js
+PASS selfcheck portal.html: books.js then books-post.js, each once, on the two lines directly after operations.js
+ENGINE BOOKS: PASS (cases run: 8)
+GATE ok   server tests # fail 0
+GATE ok   STATUS MATH (13)
+GATE ok   FORM MAPS (3)
+GATE ok   FORMS FLOW (34)
+GATE ok   STATUS FLOW (26)
+GATE ok   SERVER MODE (15)
+GATE ok   TWO PERSONS
+GATE ok   MEASURE
+GATE ok   owner's folder: index.txt and four signed PDFs
+GATE ok   EMAIL DIALOG (3)
+GATE ok   AGREEMENT NAME
+GATE ok   TAX REQUEST LEAVE (5)
+GATE ok   WAYS OUT (7)
+GATE ok   NO NETWORK (3)
+GATE ok   EMBED DATA (3)
+GATE ok   SAFARI FINISH (6)
+GATE ok   BANK STEP TYPING (2)
+GATE ok   HELP CHAT (10)
+GATE ok   REAL FIRM (9)
+GATE ok   SIGNING DOCUMENTS (8)
+GATE ok   PHONE LAYOUT (8)
+GATE ok   base is an ancestor of HEAD and HEAD moved
+GATE ok   signing: base and plan each have PASS lines
+GATE ok   signing: no FAIL the base lacks
+signing: base 75 PASS / 0 FAIL; plan 75 PASS / 0 FAIL
+GATE ok   record: base and plan each have PASS lines
+GATE ok   record: no FAIL the base lacks
+record: base 40 PASS / 0 FAIL; plan 40 PASS / 0 FAIL
+# tests 358
+# pass 358
+# fail 0
+GATE ok   server tests 358 = base 358 + 0 declared
+GATE ok   DIST FLOW
+GATE ok   DIST RECORD
+GATE ok   K1 SPLIT
+GATE ok   SHIPPED LIBS
+GATE ok   TAX MATH
+GATE ok   TAXDOCS MATH
+GATE ok   AUDIT SAME
+GATE ok   BANK FILES
+GATE ok   BOOKS CORE
+GATE ok   ENGINE BOOKS
+GATE ok   POSTING
+GATE ok   WORKBOOK
+GATE_EXIT=0
+VERIFY3 OK
 ```
 
 ## RED evidence (SCRATCH/exec-11-07)
@@ -148,6 +196,12 @@ assets/js/books.js and assets/js/books-post.js (already in the repository; this 
 - c3e2f97 test(11-07): selfcheck: the check's own rules and the three pages loading the books (RED)
 - 6f838bc feat(11-07): both editions load the journal and the posting module
 - 2879ea3 test(11-07): fund A gives the same figures in the managed edition as in the self-serve edition
+- d202478 wip(11-07): save (the summary draft, owner's save rule)
 - plus the commit of this summary
 
-Pushed only to wip/11-07. STATE.md, ROADMAP.md and REQUIREMENTS.md not touched; no 11-08 file edited.
+Pushed only to wip/11-07 (one earlier save of the uncommitted draft went to save/11-07 before that form was withdrawn). STATE.md, ROADMAP.md and REQUIREMENTS.md not touched; no 11-08 file edited.
+
+## Self-Check: PASSED
+
+- FOUND: assets/js/audit.js, assets/js/books-post.js, checks/engine-books.js, checks/fixtures/fund-b.js, fund-c.js, fund-d.js
+- FOUND (in `git log a2f6106..HEAD`): 18dfbb4, d7c02bf, 04b0389, e0f9068, c3e2f97, 6f838bc, 2879ea3, d202478
