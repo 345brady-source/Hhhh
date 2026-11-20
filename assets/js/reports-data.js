@@ -41,6 +41,25 @@
     return 'Check';
   }
 
+  const byName = (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  const snapTo = (to) => A().snap(to, to).to;
+
+  /* ---------- Who holds what ---------- */
+  /** The offerings the investor holds a position in, by name. */
+  function fundsOf(ws, investorId) {
+    const inv = (ws.investors || []).find((i) => i.id === investorId);
+    if (!inv) return [];
+    return (ws.offerings || []).filter((o) => inv.positions.some((p) => p.offeringId === o.id)).sort(byName);
+  }
+  /** The investors with a position in the offering dated on or before `to`, by id. */
+  function holders(ws, offeringId, to) {
+    const t = snapTo(to);
+    return (ws.investors || [])
+      .filter((i) => i.positions.some((p) => p.offeringId === offeringId && p.date <= t))
+      .slice()
+      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  }
+
   /* ---------- Capital account statement ---------- */
   function statement(ws, investorId, offeringId, from, to) {
     const o = offeringOf(ws, offeringId);
@@ -76,7 +95,48 @@
     };
   }
 
+  /** One investor across funds: a statement per fund, and one total per currency (never a total across currencies). */
+  const TOTAL = ['begin', 'contrib', 'dist', 'income', 'gain', 'fee', 'carry', 'end'];
+  const HELD = ['commit', 'unfunded', 'distCum'];
+  function consolidated(ws, investorId, from, to) {
+    const funds = fundsOf(ws, investorId)
+      .map((o) => statement(ws, investorId, o.id, from, to))
+      .filter(Boolean);
+    const totals = [];
+    funds.forEach((s) => {
+      let t = totals.find((x) => x.currency === s.currency);
+      if (!t) {
+        t = { currency: s.currency };
+        TOTAL.concat(HELD).forEach((k) => (t[k] = 0));
+        totals.push(t);
+      }
+      TOTAL.forEach((k) => (t[k] += s.period[k]));
+      HELD.forEach((k) => (t[k] += s[k]));
+    });
+    return { funds, totals };
+  }
+
   /* ---------- Distributions ---------- */
+  /** The investor's line on a run, or null. */
+  const lineOf = (ws, run, investorId) => NS.data.runRows(ws, run).find((x) => x.investor.id === investorId) || null;
+  /** Every paid run of the offering, newest first (any paid run can produce a notice, past ones included). */
+  function runs(ws, offeringId) {
+    return paidRuns(ws, offeringId)
+      .reverse()
+      .map((r) => ({ id: r.id, date: r.date, type: r.type || '', gross: NS.data.runRows(ws, r).reduce((s, x) => s + x.cents, 0) }));
+  }
+  /** The investor's paid distributions from the offering in the period, with period, year-to-date and inception totals. */
+  function distributions(ws, investorId, offeringId, from, to) {
+    const p = A().snap(from, to);
+    const mine = paidRuns(ws, offeringId)
+      .filter((r) => r.date <= p.to)
+      .map((r) => ({ r, x: lineOf(ws, r, investorId) }))
+      .filter((z) => z.x)
+      .map((z) => ({ runId: z.r.id, date: z.r.date, type: z.r.type || '', gross: z.x.cents, withheld: z.x.withheldCents, net: z.x.netCents }));
+    const sum = (list) => ({ gross: list.reduce((s, x) => s + x.gross, 0), withheld: list.reduce((s, x) => s + x.withheld, 0), net: list.reduce((s, x) => s + x.net, 0) });
+    const rows = mine.filter((x) => x.date >= p.from);
+    return { rows, period: sum(rows), ytd: sum(mine.filter((x) => x.date >= p.to.slice(0, 4) + '-01-01')), itd: sum(mine) };
+  }
   function distribution(ws, runId, investorId) {
     const run = (ws.runs || []).find((r) => r.id === runId);
     if (!run || !NS.data.runPaid(run, today())) return null;
@@ -107,5 +167,66 @@
     };
   }
 
-  NS.reportsData = { statement, distribution, performance };
+  /* ---------- Holdings, property income, fees and the fund's statements ---------- */
+  /** The schedule of investments at `to`, as the engine holds it (period().hold). */
+  function holdings(ws, offeringId, to) {
+    const o = offeringOf(ws, offeringId);
+    if (!o) return null;
+    const P = A().period(ws, o, to, to);
+    const H = P.hold;
+    return {
+      asOf: P.to,
+      nav: H.nav,
+      rows: H.rows.map((r) => ({ id: (r.h && r.h.id) || '', name: r.name, security: r.security, level: r.level, fv: r.fv, cost: r.cost, debt: r.debt, equity: r.equity, pctNav: r.pctNav }))
+    };
+  }
+  const inRange = (code, lo, hi) => code >= lo && code <= hi;
+  /** A property's net operating income from the journal: income = minus the 4000-4090 lines, expenses = the 5300-5390 lines. */
+  function noi(ws, offeringId, holdingId, from, to) {
+    if (!NS.books || !holdingId) return null;
+    const p = A().snap(from, to);
+    const lines = NS.books.entries(ws, offeringId, { from: p.from, to: p.to, holding: holdingId });
+    const inc = lines.filter((l) => inRange(l.code, '4000', '4090'));
+    const exp = lines.filter((l) => inRange(l.code, '5300', '5390'));
+    if (!inc.length && !exp.length) return null;
+    const income = -inc.reduce((s, l) => s + l.cents, 0);
+    const expenses = exp.reduce((s, l) => s + l.cents, 0);
+    return { income, expenses, noi: income - expenses };
+  }
+  /** ILPA order of expense accounts: management fees, professional, administration, organizational, interest, property, other. */
+  function feeRank(code) {
+    const fixed = { 5000: 0, 5100: 1, 5110: 2, 5120: 3, 5200: 4, 5900: 6 };
+    if (fixed[code] != null) return fixed[code];
+    if (inRange(code, '5300', '5390')) return 5;
+    return 7;
+  }
+  /** Fees and expenses for the period: the journal's expense accounts, or the engine's management fee for a fund without books. */
+  function fees(ws, offeringId, from, to) {
+    const o = offeringOf(ws, offeringId);
+    if (!o) return null;
+    const p = A().snap(from, to);
+    if (!A().generated(o) && booksStatus(ws, o.id).entries > 0) {
+      const rows = NS.books
+        .trialBalance(ws, o.id, p.from, p.to)
+        .filter((r) => r.type === 'expense' && r.debits - r.credits !== 0)
+        .map((r) => ({ code: r.code, name: r.name, cents: r.debits - r.credits }))
+        .sort((a, b) => feeRank(a.code) - feeRank(b.code) || (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
+      return { source: 'books', rows, total: rows.reduce((s, r) => s + r.cents, 0) };
+    }
+    const fee = A().period(ws, o, from, to).fund.fee;
+    return { source: 'engine', rows: [{ code: '5000', name: 'Management fees', cents: fee }], total: fee };
+  }
+  /**
+   * The fund's statements of assets and liabilities, operations and changes in partners' capital, as the audit package
+   * builds them. Built on a copy of the workspace, so nothing the build does can write to the caller's.
+   */
+  function statements(ws, offeringId, from, to) {
+    const copy = JSON.parse(JSON.stringify(ws));
+    const o = offeringOf(copy, offeringId);
+    if (!o) return null;
+    const list = A().build(copy, o, from, to).list;
+    return ['al', 'ops', 'chg'].map((id) => list.find((s) => s.id === id)).filter(Boolean);
+  }
+
+  NS.reportsData = { fundsOf, holders, statement, consolidated, runs, distribution, distributions, performance, holdings, noi, fees, statements };
 })(typeof window !== 'undefined' ? window : globalThis);
