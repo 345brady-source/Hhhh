@@ -101,3 +101,11 @@
 - W4 (Task 1 part `send-phone`): use the invented CCCs from server/test/fixtures/filings-kit.mjs (`CCCS`), or one generated per run, and a CIK in a never-issued range. Every CCC check reports only true/false, never the file, the storage or the code. Before committing: `! grep -rF "$CCC" $O/*.txt .planning/phases/09-*/09-09-SUMMARY.md`.
 - W5 (Task 1): start the server settings from `ENV` in filings-kit.mjs (DATA_KEY, a staff token of 24 characters or more, a staff email, a contact), plus API_TOKEN and PORTAL_ORIGIN from serverPortal. Pass a recording `fetch` to createServer and assert in every part that it was called 0 times.
 - Info: the server checks the posted draft with its own today (filings.mjs:147). Seed sales on or before the pinned day, or the answer is 422.
+
+## After 09-09 (merged 2026-11-20)
+- Open fix: a state order where only some states are filed reads "filed" in the portal while the server still says received (09-09 deviation 5). The tab must show filed only when every ordered state has a result, and show "Partly filed (n of m)" otherwise. RED first.
+- A staff-cancelled order drops out of the tab's order list (filings-ui.js filters cancelled orders). It still reads Cancelled on its Form D section and in storage. Decide at the owner's check whether the list should show it.
+- `connected()` stays true while the server's answer is unknown or unreachable, and shows one line under the order. It turns false on 404 or `on:false`.
+- The system fee is read from the server's order line; the status answer carries no systemFeeCents.
+- No EDGAR TEST or LIVE upload has happened; staff results were recorded with the outcome call on a local server. The preview has no server, so the owner sees the sent, received and filed states only on a hosted server. Hosting is still open (09-05).
+- Preview build adds assets/js/filings-remote.js (filings-ui.js loads it from beside itself).
