@@ -1,3 +1,6 @@
+// gate: tests 1
+// The line above is this file's count for the phase gate: the test runner counts every file under test/ as one test, as it
+// does helpers.mjs and smtp-fake.mjs. This file holds no test of its own.
 // Test doubles for the mail provider adapters (server/mailers/): an HTTPS stand-in for the provider's v2 identity API,
 // a DNS resolver stand-in, an RSA signing certificate and a signer for delivery-event messages. Everything is local:
 // nothing here, or in the tests that use it, reaches the outside world. The request and response shapes follow the
