@@ -1971,10 +1971,11 @@
           <p class="cs-hint">Bank account numbers and taxpayer IDs are never included in contact exports.</p>`
         );
       }
+      const hooked = NS.runHooks('reportTab', r.tab, w);
       return shell(
-        `${head('Reports', 'Distribution reports for any period and investor contact lists. Downloads are CSV files that open in Excel.')}
-        <div class="cs-tabs" role="group" aria-label="Report"><button type="button" class="cs-tab" data-action="rep-tab" data-t="dist" aria-pressed="${r.tab === 'dist'}">Distributions</button><button type="button" class="cs-tab" data-action="rep-tab" data-t="contacts" aria-pressed="${r.tab === 'contacts'}">Contacts</button></div>
-        ${body}`,
+        `${head('Reports', hooked ? '' : 'Distribution reports for any period and investor contact lists. Downloads are CSV files that open in Excel.')}
+        <div class="cs-tabs" role="group" aria-label="Report"><button type="button" class="cs-tab" data-action="rep-tab" data-t="dist" aria-pressed="${r.tab === 'dist'}">Distributions</button><button type="button" class="cs-tab" data-action="rep-tab" data-t="contacts" aria-pressed="${r.tab === 'contacts'}">Contacts</button>${NS.runHooks('reportTabs', r.tab)}</div>
+        ${hooked || body}`,
         'console-reports'
       );
     }
