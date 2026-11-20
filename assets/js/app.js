@@ -241,8 +241,9 @@
       state.viewer = null;
       B.apply(NS.TENANT_TEMPLATE);
       applyAppearance();
-      // An investor's invitation link opened where its portal is not stored: the invitation page explains (never the sign-up page).
-      if (!route && state.route === 'invite') return render();
+      // An investor's invitation link (or a co-investor's sign-in link, coinvestor.js) opened where its portal is not stored:
+      // its page explains (never the sign-up page).
+      if (!route && (state.route === 'invite' || state.route === 'co')) return render();
       go(route || 'diy-start');
       return;
     }
@@ -363,7 +364,8 @@
     ['console-taxdocs-', 'console-taxdocs'],
     ['sign-', 'sign'],
     ['join-', 'join'],
-    ['invite-', 'invite']
+    ['invite-', 'invite'],
+    ['co-', 'co']
   ];
   function parseHash() {
     const raw = (location.hash || '').replace(/^#/, '');

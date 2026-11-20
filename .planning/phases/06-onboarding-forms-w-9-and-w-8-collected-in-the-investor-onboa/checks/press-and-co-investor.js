@@ -399,6 +399,8 @@ async function pressText(fr, dev, scope, text) {
   await fr.waitForTimeout(400);
 }
 async function investorsPage(fr, invId) {
+  // A window left open (the Account window when what was looked for in it is missing) would cover the page.
+  await fr.evaluate(() => window.CVPortal.ui.closeDialog());
   await Lib.consoleRoute(fr, 'console-investors', `[data-action=co-record][data-id="${invId}"]`);
 }
 async function fillCo(fr, dev, first, last, email) {
