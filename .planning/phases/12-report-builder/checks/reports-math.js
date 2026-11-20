@@ -453,6 +453,161 @@ const cases = {
     check(`fund A as "${reType}": noi(fa-x, Q4 2026) = { income: 1000000, expenses: 300000, noi: 700000 }`, J(n) === J({ income: 1000000, expenses: 300000, noi: 700000 }), n);
     check('a holding with no income or property-expense line gives null', D.noi(ws, 'fund-a', 'no-such-holding', '2026-10-01', '2026-12-31') === null);
     check('fa-x in Q3 2026 (a valuation line only) gives null', D.noi(ws, 'fund-a', 'fa-x', '2026-07-01', '2026-09-30') === null);
+  },
+
+  /**
+   * Tax year and tax documents: FA-1001's 2026 is one fund, 600,000 gross, nothing withheld, the one run; taxDocs lists
+   * only FA-1001's own documents for the year (not FA-1002's, not a withdrawn one, not another year), labelled from
+   * NS.taxdocs.KINDS, and no result carries anything shaped like a taxpayer number (the records hold made-up ones).
+   */
+  tax: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    const doc = (id, inv, year, state) => ({ id, title: 'Schedule K-1', fileName: id + '.pdf', type: 'application/pdf', size: 1, sha256: '', cat: 'Tax', offeringId: 'fund-a', audience: 'investors', investors: [inv], date: '2027-01-15', taxYear: String(year), publishedAt: '', publishedBy: '', hidden: false, tinShown: '987-65-4321', tax: { kind: 'k1-1065', year: String(year), batch: '', pkg: '', pages: [], sourceSha256: '', match: { basis: 'made-up taxpayer number 98-7654321' }, state, replaces: '', deliveredAt: '2027-01-15', availableUntil: '2027-10-15', notice: null, opens: { first: '', last: '', count: 0 }, paper: null, withdrawn: null } });
+    const { ws } = fundA(NS, (w) => {
+      // Made-up taxpayer numbers in the records, so the scan below can find one if any adapter passed it on.
+      w.investors[0].tin = '123-45-6789';
+      w.investors[0].tinFull = '123456789';
+      w.investors[0].tinLast4 = '6789';
+      w.investors[1].tin = '12-3456789';
+      w.docs.push(doc('doc-k1-fa1001', 'FA-1001', 2026, 'delivered'), doc('doc-k1-fa1002', 'FA-1002', 2026, 'delivered'), doc('doc-k1-fa1001-old', 'FA-1001', 2026, 'withdrawn'), doc('doc-k1-fa1001-2025', 'FA-1001', 2025, 'delivered'));
+    });
+    const T = D.taxYear(ws, 'FA-1001', 2026);
+    // fa-run-1 is FA-1001's only paid run in 2026: 600,000 gross, 0 withheld, 600,000 net
+    const wantT = { year: 2026, funds: [{ offeringId: 'fund-a', name: 'Fund A, L.P.', currency: 'USD', gross: 600000, withheld: 0, net: 600000, runs: [{ runId: 'fa-run-1', date: '2026-12-15', type: 'Realization proceeds', gross: 600000, withheld: 0, net: 600000 }] }] };
+    check('FA-1001 tax year 2026: one fund, gross 600,000, withheld 0, net 600,000, the one run', J(T) === J(wantT), T);
+    check('FA-1001 tax year 2025: no fund (no paid run in 2025)', J(D.taxYear(ws, 'FA-1001', 2025)) === J({ year: 2025, funds: [] }), D.taxYear(ws, 'FA-1001', 2025));
+    const docs = D.taxDocs(ws, 'FA-1001', 2026);
+    const wantD = [{ docId: 'doc-k1-fa1001', offeringId: 'fund-a', kind: 'k1-1065', label: NS.taxdocs.KINDS['k1-1065'].label, year: 2026, state: 'delivered', availableUntil: '2027-10-15' }];
+    check("taxDocs(FA-1001, 2026): exactly FA-1001's own delivered K-1, labelled 'Schedule K-1 (Form 1065)'; not FA-1002's, not the withdrawn one, not 2025's", J(docs) === J(wantD) && wantD[0].label === 'Schedule K-1 (Form 1065)', docs);
+    const blob = J([T, docs, D.taxDocs(ws, 'FA-1002', 2026), D.taxYear(ws, 'FA-1002', 2026), D.investor(ws, 'FA-1001'), D.investor(ws, 'FA-1002')]);
+    const shapes = blob.match(/\d{9}|\d{2}-\d{7}|\d{3}-\d{2}-\d{4}/g);
+    check('no 9-digit run, NN-NNNNNNN or NNN-NN-NNNN in any tax result or investor block', !shapes, shapes);
+    check("taxDocs(FA-1002, 2026) lists only FA-1002's", J(D.taxDocs(ws, 'FA-1002', 2026).map((d) => d.docId)) === J(['doc-k1-fa1002']), D.taxDocs(ws, 'FA-1002', 2026));
+  },
+
+  /**
+   * Activity: FA-1001's 2026 contributions are NS.audit.events' contributions for FA-1001 (dates and cents, 30,000,000 in
+   * all) and one distribution on 2026-12-15 of 600,000; across every sample fund and investor, inception to date, the
+   * contributions, distributions and redemptions are the engine's.
+   */
+  activity: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    const { ws, o } = fundA(NS);
+    const act = D.activity(ws, 'FA-1001', 'fund-a', '2026-01-01', '2026-12-31');
+    const E = NS.audit.events(ws, o);
+    const wantC = E.contribs.filter((c) => c.inv.id === 'FA-1001').map((c) => [c.date, c.cents]);
+    const gotC = act.filter((x) => x.kind === 'contribution');
+    check('FA-1001 2026 contributions = NS.audit.events (dates and cents), 30,000,000 in all', J(gotC.map((x) => [x.date, x.cents])) === J(wantC) && gotC.reduce((s, x) => s + x.cents, 0) === 30000000, gotC);
+    check('FA-1001 2026: one distribution, 2026-12-15, 600,000, labelled as the run', J(act.filter((x) => x.kind === 'distribution')) === J([{ date: '2026-12-15', kind: 'distribution', label: 'Realization proceeds', cents: 600000 }]), act);
+    check('FA-1001 2026 activity is by date', act.every((x, n) => !n || act[n - 1].date <= x.date), act.map((x) => x.date));
+    let reds = 0;
+    sampleWorkspaces(NS).forEach((sw) => {
+      const bad = [];
+      sw.offerings.forEach((so) => {
+        const itd = NS.audit.presets(sw, so).find((p) => p.id === 'itd');
+        const P = NS.audit.period(sw, so, itd.from, itd.to);
+        const L = P.L;
+        const inP = (x) => x.date >= P.from && x.date <= P.to;
+        P.inv.forEach((a) => {
+          const id = a.investor.id;
+          const got = D.activity(sw, id, so.id, itd.from, itd.to);
+          const k = (kind) => got.filter((x) => x.kind === kind).map((x) => [x.date, x.cents]);
+          const want = (list) => list.filter((x) => x.inv.id === id && inP(x)).map((x) => [x.date, x.cents]);
+          const sortD = (l) => l.slice().sort((p, q) => (p[0] < q[0] ? -1 : p[0] > q[0] ? 1 : 0));
+          reds += k('redemption').length;
+          if (J(sortD(k('contribution'))) !== J(sortD(want(L.contribs))) || J(sortD(k('distribution'))) !== J(sortD(want(L.dists))) || J(sortD(k('redemption'))) !== J(sortD(want(L.redemptions || []))) || !got.every((x, n) => !n || got[n - 1].date <= x.date) || notCents(got, MONEY).length) bad.push({ o: so.id, id });
+        });
+      });
+      check(`${sw.tenant.id}: every fund and investor, inception to date: contributions, distributions and redemptions = the engine's, by date`, !bad.length, bad.slice(0, 3));
+    });
+    check('redemptions were among those compared (an open fund redeems)', reds > 0, reds);
+  },
+
+  /**
+   * Chart series: FA-1001's 2026 distributions per quarter are 0, 0, 0, 600,000; its December capital is 34,500,000 and
+   * each month is the ledger row's end; the fund's series (no investor) is the limited partners' capital at each
+   * month-end (expect.lpCapital).
+   */
+  series: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    const { F, ws, o } = fundA(NS);
+    const s = D.series(ws, 'fund-a', 'FA-1001', '2026-01-01', '2026-12-31');
+    check('FA-1001 2026 distributions per quarter: Q1 0, Q2 0, Q3 0, Q4 600,000', s && J(s.dist) === J([{ label: 'Q1 2026', cents: 0 }, { label: 'Q2 2026', cents: 0 }, { label: 'Q3 2026', cents: 0 }, { label: 'Q4 2026', cents: 600000 }]), s && s.dist);
+    const months = F.expect.monthEnds.map((d) => d.slice(0, 7));
+    const ledgerEnds = F.expect.monthEnds.map((d) => NS.audit.period(ws, o, d.slice(0, 8) + '01', d).inv.find((a) => a.investor.id === 'FA-1001').end);
+    check('FA-1001 2026 capital: twelve month-ends, each the ledger row end, December 34,500,000', s && J(s.capital) === J(months.map((k, i) => ({ key: k, cents: ledgerEnds[i] }))) && s.capital[11].cents === 34500000, s && s.capital);
+    const f = D.series(ws, 'fund-a', null, '2026-01-01', '2026-12-31');
+    check("fund A series: capital = the limited partners' capital at each month-end (expect.lpCapital); distributions Q4 900,000", f && J(f.capital.map((x) => x.cents)) === J(F.expect.lpCapital) && J(f.dist.map((x) => x.cents)) === J([0, 0, 0, 900000]), f);
+    const q = D.series(ws, 'fund-a', 'FA-1001', '2026-11-01', '2026-12-31');
+    check('a period inside one quarter: one quarter, Q4 2026, 600,000; capital November and December', q && J(q.dist) === J([{ label: 'Q4 2026', cents: 600000 }]) && J(q.capital.map((x) => x.key)) === J(['2026-11', '2026-12']), q);
+  },
+
+  /**
+   * Nothing writes to the workspace: JSON.stringify(ws) is identical before and after calling every adapter for fund A
+   * and for kestrel-bay. The firm and investor blocks read the records as they are.
+   */
+  readonly: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    const every = (ws, oid, inv, hold, run) => {
+      const out = {};
+      const call = (name, fn) => {
+        const before = J(ws);
+        try {
+          fn();
+        } catch (e) {
+          out[name] = 'threw: ' + e.message;
+          return;
+        }
+        if (J(ws) !== before) {
+          const a = JSON.parse(before);
+          out[name] = Object.keys(ws).filter((k) => J(ws[k]) !== J(a[k]));
+        }
+      };
+      call('fundsOf', () => D.fundsOf(ws, inv));
+      call('holders', () => D.holders(ws, oid, '2026-12-31'));
+      call('statement', () => D.statement(ws, inv, oid, '2026-01-01', '2026-12-31'));
+      call('consolidated', () => D.consolidated(ws, inv, '2026-01-01', '2026-12-31'));
+      call('runs', () => D.runs(ws, oid));
+      call('distribution', () => D.distribution(ws, run, inv));
+      call('distributions', () => D.distributions(ws, inv, oid, '2026-01-01', '2026-12-31'));
+      call('activity', () => D.activity(ws, inv, oid, '2026-01-01', '2026-12-31'));
+      call('performance', () => D.performance(ws, oid, '2026-01-01', '2026-12-31'));
+      call('holdings', () => D.holdings(ws, oid, '2026-12-31'));
+      call('noi', () => D.noi(ws, oid, hold, '2026-01-01', '2026-12-31'));
+      call('fees', () => D.fees(ws, oid, '2026-01-01', '2026-12-31'));
+      call('statements', () => D.statements(ws, oid, '2026-01-01', '2026-12-31'));
+      call('series', () => D.series(ws, oid, inv, '2026-01-01', '2026-12-31'));
+      call('seriesFund', () => D.series(ws, oid, null, '2026-01-01', '2026-12-31'));
+      call('taxYear', () => D.taxYear(ws, inv, 2026));
+      call('taxDocs', () => D.taxDocs(ws, inv, 2026));
+      call('firm', () => D.firm(ws));
+      call('investor', () => D.investor(ws, inv));
+      return out;
+    };
+    const { ws } = fundA(NS, (w) => w.investors.forEach((i) => (i.onboarding = { status: 'complete', step: 0, invited: '2026-01-05', completed: '2026-01-05' })));
+    const a = every(ws, 'fund-a', 'FA-1001', 'fa-x', 'fa-run-1');
+    check('fund A: every adapter leaves JSON.stringify(ws) unchanged and none throws', !Object.keys(a).length, a);
+    const kb = sampleWorkspaces(NS).find((w) => w.tenant.id === 'kestrel-bay');
+    const kr = kb.runs.find((r) => r.offeringId === 'kb-fund-ii' && NS.data.runPaid(r, TODAY));
+    const b = every(kb, 'kb-fund-ii', 'KBC-1001', '', kr.id);
+    check('kestrel-bay: every adapter leaves JSON.stringify(ws) unchanged and none throws', !Object.keys(b).length, b);
+    const t = kb.tenant;
+    const fm = D.firm(kb);
+    check('firm(kestrel-bay) = the tenant: name, shortName, legalName, portalName, colors, logo, support, disclaimer', J(fm) === J({ name: t.name, shortName: t.shortName, legalName: t.legalName, portalName: t.portalName, colors: t.colors, logo: t.logo, support: t.support, disclaimer: t.disclaimer }), fm);
+    check("investor(FA-1001) = { id, title, contact, firstName 'Investor' }; an unknown id gives null", J(D.investor(ws, 'FA-1001')) === J({ id: 'FA-1001', title: 'Investor One', contact: 'Investor One', firstName: 'Investor' }) && D.investor(ws, 'NO-SUCH-INVESTOR') === null, D.investor(ws, 'FA-1001'));
+  },
+
+  /** The check's own rules: an unknown case name and an empty list each exit 1 with a FAIL line (child processes). */
+  selfcheck: ({ check }) => {
+    const run = (args) => spawnSync(process.execPath, [__filename].concat(args), { encoding: 'utf8' });
+    const a = run(['--case', 'no-such-case']);
+    const b = run(['--case', '']);
+    check('an unknown --case name exits 1 with a FAIL line', a.status === 1 && /^FAIL unknown case name: no-such-case/m.test(a.stdout) && /REPORTS MATH: FAIL \(cases run: 0\)/.test(a.stdout), a.stdout);
+    check('an empty list exits 1 with a FAIL line', b.status === 1 && /^FAIL no cases to run/m.test(b.stdout) && /REPORTS MATH: FAIL \(cases run: 0\)/.test(b.stdout), b.stdout);
   }
 };
 

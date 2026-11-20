@@ -49,3 +49,14 @@ REPORTS MATH: PASS (cases run: 1)
 VERIFY-1 EXIT=0
 ```
 (audit.js diff against base 96bbdf6: `2 0`, checked inside the same command.)
+
+### Task 2 (verify command run verbatim from a script file)
+
+```
+PASS noi a holding with no income or property-expense line gives null
+PASS noi fa-x in Q3 2026 (a valuation line only) gives null
+REPORTS MATH: PASS (cases run: 8)
+VERIFY-2 EXIT=0
+```
+Measured scope behind it: 816 statement rows compared (4 sample firms, 15 funds, 4 presets), 228 paid runs and 3,251 paid lines compared with runRows.
+Mutation test (not committed): ytd account set to the period account and the cumulative made strict (`<` for `<=`): statement and distribution FAIL on all four firms; file restored with `git checkout`.
