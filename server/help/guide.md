@@ -306,9 +306,10 @@ anchor: Download CSV
 
 Distribution reports for any period, and investor contact lists. Downloads are CSV files.
 
-1. Choose "Distributions" or "Contacts" at the top.
+1. Choose "Distributions", "Contacts" or "Investor reports" at the top.
 2. For distributions, choose the "Period" (for example "This quarter", "Year to date" or "Custom dates"), the "Offering" and the "View": "By investor", "By payment" or "By offering". Tick "Include scheduled payments" to add payments not yet made.
 3. Choose "Download CSV".
+4. In "Investor reports", choose the "Report type" and "Start from", then "Create". Turn sections on or off, use "Move up", and check the preview. "See the PDF" shows the file; "Download PDF" saves it.
 
 ## console-audit
 audience: sponsor
