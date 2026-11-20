@@ -245,7 +245,7 @@ async function consentPhone(check, S) {
   const srv = await Lib.serverPortal(S);
   try {
     const { A, page, k, msgs, link } = await delivered(S, srv, { last4: '6789', email: 'partner2@example.com', consent: false });
-    const lines = await page.evaluate(() => window.CVPortal.taxdocs.CONSENT.lines({}).map((l) => l.text));
+    const lines = await page.evaluate(() => window.CVPortal.taxdocs.CONSENT.lines(window.CVPortal.taxdocs.ensure(window.CVPortal.state.ws).contact).map((l) => l.text));
     let d = await docOf(page, k.docId);
     check('with no consent in effect, Deliver holds the K-1 back (waiting) and still sends it to the server', d.state === 'waiting' && !!(d.link && d.link.linkId), d);
     check('the first message asks for consent and does not carry the section 7.01 subject', msgs.length === 1 && msgs[0].subject !== SUBJECT && /consent/i.test(msgs[0].subject) && /consent/i.test(msgs[0].text) && !!link, msgs.map((m) => m.subject));
