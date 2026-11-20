@@ -45,3 +45,11 @@ tier-mismatch already passed on Task 1's code (the row already shows `it.emailEr
 FAIL tier-mismatch the invitation's row shows the server's sentence word for word and still reads "Not sent yet" :: Ottilie Varga ... Not sent yet The email could not be sent ... Could not send Resend Cancel
 PACKAGE CONSOLE: FAIL (parts run: 1) - tier-mismatch
 ```
+
+## Task 2 verify (verify-2.sh, exit 0; flow2.txt 81 PASS, 0 FAIL, no part kept from an earlier run)
+```
+PASS returned every screen of this part: no vendor, library or forbidden word (leak check)
+PASS returned every screen of this part: no provider name or address (vendor scan)
+PACKAGE CONSOLE: PASS (parts run: 4)
+VERIFY2_EXIT=0
+```
