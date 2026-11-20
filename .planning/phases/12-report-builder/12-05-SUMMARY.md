@@ -22,3 +22,19 @@ FAIL fund-a ran to the end :: Error: ENOENT: no such file or directory, open '/h
     ...
 REPORTS XLSX: FAIL (cases run: 1) - fund-a
 ```
+
+## Verify lines
+
+### Task 1 verify (the plan's command, run verbatim from SCRATCH/exec-12-05/verify-1.sh with GATE_FRESH=1)
+
+```
+==> .../exec-12-05/t1a.txt <==
+PASS fund-a t-season: no vendor, library or model name, never audited or the forbidden word (text and properties)
+REPORTS STARTERS: PASS (cases run: 1)
+
+==> .../exec-12-05/t1b.txt <==
+PASS fund-a no cell holds a formula (openpyxl)
+REPORTS XLSX: PASS (cases run: 1)
+VERIFY-1 EXIT=0
+```
+Tracer feedback gate: verify rerun end to end and passed; expansion continued. The st-capital PDF text for FA-1001 was also read by eye (capital table, commitment tiles, activity, distributions, chart): figures as worked by hand.
