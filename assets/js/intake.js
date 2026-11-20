@@ -1252,6 +1252,13 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     if (!(s.firstPage >= 1 && s.firstPage <= s.lastPage && s.lastPage <= d.pages)) return null;
     return { name: d.name, pages: d.pages, firstPage: s.firstPage, lastPage: s.lastPage, foundFirst: s.firstPage, foundLast: s.lastPage, use: true };
   }
+  /** D-11: a stored offering document recognised as the subscription agreement as a whole gets the agreement's title (the
+   * title saveAgreement gives it too); its fileName, and so its download name, is kept. The workspace is saved. */
+  function retitle(ws, doc) {
+    if (!doc || doc.title === 'Subscription Agreement') return;
+    doc.title = 'Subscription Agreement';
+    if (NS.workspace) NS.workspace.save(ws);
+  }
   /** D-44: the background reading of an agreement found inside an uploaded PDF, by offering id. */
   const readings = new Map();
   /**
@@ -1270,6 +1277,8 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     try {
       let doc = null;
       if (a === 1 && b === d.pages) doc = (ws.docs || []).slice().reverse().find((x) => x && x.offeringId === o.id && x.sha256 === d.sha256 && x.fileName === d.name) || null;
+      // The whole stored file is the agreement: titled for what it is (D-11), as prepareAgreement titles it.
+      if (doc) retitle(ws, doc);
       if (!doc) {
         const bytes = await cutPages(d.file, a, b);
         const sha256 = NS.audit ? NS.audit.sha256(bytes) : '';
@@ -1341,6 +1350,9 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       return null;
     }
     const d = found.doc;
+    // D-11 (walkthrough 2, failure 7): the stored document read as the agreement as a whole is titled for what it is the
+    // moment it is recognised, whatever becomes of the draft made from it; its file name stays the uploaded one.
+    retitle(ws, d);
     try {
       // D-11: titled for what it is, never by its file name (the stored document is retitled with it when it is saved).
       const env = await es.agreementDraft(ws, o.id, { docId: d.id, title: 'Subscription Agreement' });
