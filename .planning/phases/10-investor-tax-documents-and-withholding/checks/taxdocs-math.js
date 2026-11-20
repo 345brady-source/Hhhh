@@ -364,9 +364,10 @@ const cases = {
     // a document replaced before it was ever delivered (waiting for consent) was never shown and stays hidden
     const c = docFor(7, 'INV-1008');
     T.deliver(ws, c.id, { at: AT, by: BY, how: 'email' });
-    const pk2 = T.addPackage(ws, batch.id, { first: 1, last: 1, by: BY, at: AT });
-    T.confirm(ws, batch.id, pk2.id, { investorId: 'INV-1008', by: BY, at: AT });
-    const c2 = T.toDocument(ws, batch.id, pk2.id, { id: 'doc-c2', size: 1, sha256: 'cd'.repeat(32), fileName: 'k1.pdf', title: 'K-1', at: AT, by: BY });
+    const nb = T.addBatch(ws, { kind: 'k1-1065', year: '2025', offeringId: B.OFFERING, fileName: 'k1-second.pdf', sourceSha256: SHA, pages: 1, by: BY, at: AT });
+    const pk2 = T.addPackage(ws, nb.id, { first: 1, last: 1, by: BY, at: AT });
+    T.confirm(ws, nb.id, pk2.id, { investorId: 'INV-1008', by: BY, at: AT });
+    const c2 = T.toDocument(ws, nb.id, pk2.id, { id: 'doc-c2', size: 1, sha256: 'cd'.repeat(32), fileName: 'k1.pdf', title: 'K-1', at: AT, by: BY });
     T.deliver(ws, c2.id, { at: AT, by: BY, how: 'email', replaces: c.id });
     check('a waiting document that is replaced stays hidden and is listed for nobody', c.tax.state === 'replaced' && c.hidden === true && listed('INV-1008').length === 0, [c.tax.state, c.hidden]);
     // D9

@@ -806,7 +806,8 @@
       } else {
         docs.push({ id: `final-${o.id}`, title: 'Final Distribution Notice', offeringId: o.id, cat: 'Notices', kind: 'final', date: o.exit.date, pages: 2 });
       }
-      if (p.date < `${year - 1}-12-31`) {
+      // a generated tax document is a demonstration: only a sample firm lists one (nobody's CPA prepared it)
+      if (ws.tenant && ws.tenant.sample && p.date < `${year - 1}-12-31`) {
         const taxTitle = o.type === 'Delaware Statutory Trust' ? `${year - 1} Grantor Trust Tax Letter` : o.type === 'Private credit' ? `${year - 1} Form 1099-INT` : `${year - 1} Schedule K-1`;
         docs.push({ id: `tax-${o.id}-${year - 1}`, title: taxTitle, offeringId: o.id, cat: 'Tax', kind: 'tax', date: `${year}-03-12`, pages: o.type === 'Private credit' ? 1 : 12 });
       }

@@ -813,8 +813,11 @@ async function generatedPart(check, fr) {
   check('with the firm marked as not a sample it is gone, and the other generated entries are still there', !b2.some((id) => /^tax-/.test(id)) && b2.some((id) => /^(qr|sub|stmt|final)-/.test(id)) && b2.length === a.filter((id) => !/^tax-/.test(id)).length, { before: a.length, after: b2.length });
   await T.ws(fr, (w) => (w.tenant.sample = true) || true);
   const src = fs.readFileSync(path.join(Lib.ROOT, 'assets/js/onboarding.js'), 'utf8');
-  const tick = (src.match(/check\('edelivery', `([^`]*)`\)/) || [])[1] || '';
-  check('in the self-serve welcome step the general tick box no longer names tax documents', tick.length > 20 && !/tax documents/i.test(tick) && /statements/.test(tick), tick.slice(0, 120));
+  // the self-serve welcome step is the one with id="ivf-consent"; the managed edition's step (a C-03 slice) is not changed
+  const tick = (src.slice(src.indexOf('id="ivf-consent"')).match(/check\('edelivery', `([^`]*)`\)/) || [])[1] || '';
+  const managed = (src.match(/check\('edelivery', `([^`]*)`\)/) || [])[1] || '';
+  check('in the self-serve welcome step the general tick box no longer names tax documents', src.indexOf('id="ivf-consent"') > 0 && tick.length > 20 && !/tax documents/i.test(tick) && /statements/.test(tick), tick.slice(0, 120));
+  check('the managed edition\'s sentence is not touched', managed !== tick && /statements, tax documents and notices/.test(managed), managed.slice(0, 80));
 }
 
 /** deliver-desktop's further steps: the unconfirmed, a team member, paper, a notice that came back, withdraw, Form 8805. */

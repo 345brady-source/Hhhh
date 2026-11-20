@@ -1533,7 +1533,7 @@
       </div>
       <div class="form-grid">
         ${check('esignConsent', 'I agree to use electronic records and signatures, and I have read the information above.')}
-        ${t.onboarding.esign ? check('edelivery', `I consent to receive statements, tax documents and notices electronically through this portal. I can withdraw consent at any time by contacting ${h(sup.team || 'investor relations')}.`) : ''}
+        ${t.onboarding.esign ? check('edelivery', `I consent to receive statements and notices electronically through this portal. I can withdraw consent at any time by contacting ${h(sup.team || 'investor relations')}.`) : ''}
       </div>`;
   }
   function fLogin(c) {

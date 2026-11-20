@@ -579,6 +579,8 @@
     if (!c || !c.at || c.withdrawnAt) refuse('There is no consent in effect to withdraw.');
     c.withdrawnAt = stamp(a && a.at);
     c.withdrawalConfirmed = { at: '', how: '' };
+    // Made in the portal, the withdrawal is confirmed there in writing with its date (section 5.05(3)).
+    if (a && a.where === 'portal') c.withdrawalConfirmed = { at: c.withdrawnAt, how: 'portal' };
     log(ws, { action: 'Tax document consent withdrawn', record: inv.id, actor: (a && a.by) || `${inv.title} (investor)`, at: c.withdrawnAt, detail: `Electronic delivery of tax documents withdrawn, effective ${dayOf(c.withdrawnAt)}; later tax documents are owed on paper` });
     return inv;
   }
@@ -605,8 +607,9 @@
   /**
    * Deliver a confirmed document to its one investor. Refused when no person confirmed the match, when the firm's
    * contact is incomplete, and when the investor already has a document for that offering, kind and year unless
-   * `replaces` names it (an amended document replaces the earlier one; it never sits beside it). With the investor's
-   * consent in effect it is shown to them; without it, it waits, hidden, on the paper list.
+   * `replaces` names it (an amended document replaces the earlier one; C-09: a delivered earlier one stays beside it,
+   * marked replaced, until its own access period ends: see replaceEarlier). With the investor's consent in effect it is
+   * shown to them; without it, it waits, hidden, on the paper list.
    */
   function deliver(ws, docId, a) {
     const doc = docOf(ws, docId);
@@ -623,10 +626,9 @@
     else if (earlier.length) refuse(`${inv.title} already has a ${KINDS[t.kind].label} for ${t.year}. Say which document this one replaces.`);
     const at = stamp(a.at);
     if (old) {
-      old.tax.state = 'replaced';
-      old.hidden = true;
+      replaceEarlier(old, doc, at);
       t.replaces = old.id;
-      log(ws, { action: 'Tax document replaced', fund: old.offeringId, record: old.id, actor: a.by, at, detail: `${KINDS[t.kind].label} ${t.year} for ${nameOf(ws, inv.id)} replaced by ${doc.id}; it leaves the investor's list and keeps its record of opens` });
+      log(ws, { action: 'Tax document replaced', fund: old.offeringId, record: old.id, actor: a.by, at, detail: `${KINDS[t.kind].label} ${t.year} for ${nameOf(ws, inv.id)} replaced by ${doc.id}; ${old.hidden ? 'it was never shown to the investor' : `it stays in the investor's list, marked replaced, until ${old.tax.availableUntil}`}; it keeps its record of opens` });
     }
     if (inEffect(inv)) return release(ws, doc, at, a.by, a.how);
     t.state = 'waiting';
@@ -682,7 +684,7 @@
   /** The investor opened a delivered document. Anything else (hidden, withdrawn, replaced) changes nothing. */
   function opened(ws, docId, at) {
     const doc = (ws.docs || []).find((d) => d.id === docId);
-    if (!doc || !doc.tax || doc.hidden || doc.tax.state !== 'delivered') return doc || null;
+    if (!doc || !doc.tax || doc.hidden || (doc.tax.state !== 'delivered' && doc.tax.state !== 'replaced')) return doc || null;
     const o = doc.tax.opens;
     const when = stamp(at);
     if (!o.first) o.first = when;
@@ -731,11 +733,43 @@
       delivered: docs.filter((d) => d.tax.state === 'delivered'),
       paper,
       missing: holdersOf(ws.investors, q.offeringId).filter((inv) => !live(inv.id)),
-      aside: packages('aside')
+      aside: packages('aside'),
+      replaced: docs.filter((d) => d.tax.state === 'replaced'),
+      withdrawn: docs.filter((d) => d.tax.state === 'withdrawn')
     };
   }
 
-  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, notTogether, reopen, confirm, togetherIds, confirmTogether, toDocument, addGenerated, inEffect, consent, withdrawConsent, deliver, markPaper, bounced, withdraw, opened, notice, lists, availableUntil };
+  /* ---------- an amended document beside the earlier one (C-09, plan 10-06) ---------- */
+  /**
+   * Rev. Proc. 2012-17 section 9.01: a K-1 or amended K-1 furnished on a website stays there for its access period. The
+   * earlier document is marked replaced (by which document, when) and its title says so; one that was delivered stays
+   * in its investor's list until its own availableUntil, one that was never shown stays hidden.
+   */
+  function replaceEarlier(old, doc, at) {
+    old.tax.state = 'replaced';
+    old.tax.replacedBy = doc.id;
+    old.tax.replacedAt = at;
+    if (!old.tax.deliveredAt) old.hidden = true;
+    if (!/\(replaced\)$/.test(old.title)) old.title = `${old.title} (replaced)`;
+  }
+  /**
+   * A replaced document whose access period has ended (today is after its availableUntil) leaves its investor's list;
+   * its record and its opens stay. Returns how many left. A current document is never taken away here.
+   */
+  function expire(ws, today) {
+    const day = dayOf(today);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return 0;
+    let n = 0;
+    (ws.docs || []).forEach((d) => {
+      if (!d.tax || d.tax.state !== 'replaced' || d.hidden || !d.tax.availableUntil || !(day > d.tax.availableUntil)) return;
+      d.hidden = true;
+      n += 1;
+      log(ws, { action: 'Tax document access period ended', fund: d.offeringId, record: d.id, at: stamp(), detail: `${KINDS[d.tax.kind].label} ${d.tax.year} for ${nameOf(ws, d.investors[0])}, replaced by ${d.tax.replacedBy}: available until ${d.tax.availableUntil}, so it leaves the investor's list; it keeps its record of opens` });
+    });
+    return n;
+  }
+
+  const API = { KINDS, NOTICE_SUBJECT, CONSENT, SCAN_TEXT, pdfItems, pageFacts, split, last4, propose, ensure, setContact, addBatch, addPackage, setAside, notTogether, reopen, confirm, togetherIds, confirmTogether, toDocument, addGenerated, inEffect, consent, withdrawConsent, deliver, markPaper, bounced, withdraw, opened, notice, lists, availableUntil, expire };
   if (NS) NS.taxdocs = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);
