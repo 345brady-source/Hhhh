@@ -132,9 +132,19 @@
   }
 
   /* ---------- Failures, in one plain line ---------- */
-  function lineFor(e, what) {
+  /** The server's own sentence, when it gave one (shown as text, clipped). */
+  const theirs = (e) => (e.body && typeof e.body.error === 'string' ? e.body.error.replace(/\s+/g, ' ').trim().slice(0, 200) : '');
+  function lineFor(e, sending) {
     if (!(e instanceof Refused)) return 'The server could not be reached. The order is kept here.';
-    return `The server could not ${what} (it answered ${e.status}).`;
+    if (e.status === 401) return 'The server did not accept the portal’s access token (Integrations).';
+    if (e.status === 404) return sending ? 'The connected server does not take filing orders.' : 'The server could not find this order.';
+    if (e.status === 422) {
+      const m = e.body && Array.isArray(e.body.messages) && e.body.messages[0] && typeof e.body.messages[0].message === 'string' ? e.body.messages[0].message.slice(0, 200) : '';
+      return m ? `The server found an answer to correct: ${m}` : `The server refused the order: ${theirs(e) || 'it could not be read'}.`;
+    }
+    if (e.status === 409) return `The server refused the order: ${theirs(e) || 'it conflicts with one it already holds'}.`;
+    if (e.status === 0) return 'The server’s answer could not be read. Nothing was changed.';
+    return 'The server could not complete this just now. Try again later.';
   }
 
   /* ---------- Sending ---------- */
@@ -173,7 +183,8 @@
       NS.app.save(true);
       return true;
     } catch (e) {
-      said[order.id] = lineFor(e, 'take the order');
+      if (e instanceof Refused && e.status === 404) probes[urlOf(ws)] = 'off';
+      said[order.id] = lineFor(e, true);
       return false;
     } finally {
       busy[order.id] = false;
@@ -195,15 +206,42 @@
     order.dueCents = a.dueCents;
     order.openFees = a.openFees;
   }
+  const isDay = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && NS.dates.isoOf(NS.dates.parse(v)) === v;
+  const ACCESSION = /^\d{10}-\d{2}-\d{6}$/;
+  /** EDGAR's messages as the server passed them on: at most 50, each a type and a sentence, kept as text. */
+  const cleanMessages = (list) =>
+    (Array.isArray(list) ? list.slice(0, 50) : [])
+      .map((m) => ({ type: m && m.type === 'warning' ? 'warning' : 'error', message: String((m && m.message) || '').replace(/\s+/g, ' ').trim().slice(0, 500) }))
+      .filter((m) => m.message);
+  /**
+   * The status answer applied to the order (T-09-28): only a known status; a notice is marked filed only with an accession
+   * number of the SEC's form and a real filing date not after today, and then through NS.filings.recordFiled with its
+   * snapshot. An answer that does not read this way changes nothing.
+   */
   function apply(ws, order, a) {
     if (!a || a.id !== order.remote.id || ORDER_STATUS.indexOf(a.status) < 0) throw new Refused(0, null);
+    const f = isFormD(order) && a.formD && typeof a.formD === 'object' ? a.formD : null;
+    if (isFormD(order) && (!f || FILING.indexOf(f.status) < 0)) throw new Refused(0, null);
+    const notice = f ? noticeOf(ws, order) : null;
+    if (f && f.status === 'accepted' && (!ACCESSION.test(String(f.accession || '')) || !isDay(f.filedOn) || f.filedOn > today() || !notice)) throw new Refused(0, null);
     const r = order.remote;
     r.status = a.status;
     r.checkedAt = stamp();
     order.status = a.status;
     copyAmounts(order, a);
-    const f = a.formD;
-    if (isFormD(order) && f && typeof f === 'object' && FILING.indexOf(f.status) >= 0) r.filing = f.status;
+    if (!f) return;
+    const was = r.filing;
+    r.filing = f.status;
+    r.messages = f.status === 'suspended' ? cleanMessages(f.messages) : [];
+    if (f.status === 'accepted') {
+      r.accession = f.accession;
+      r.filedOn = f.filedOn;
+      if (was !== 'accepted') {
+        FL.recordFiled(ws, order.offeringId, { id: notice.id, type: notice.type === 'D/A' ? 'D/A' : 'D', filedOn: f.filedOn, accession: f.accession, snapshot: NS.formD && notice.draft ? NS.formD.snapshot(notice.draft) : null, source: 'portal', orderId: order.id });
+        const o = offeringOf(ws, order.offeringId);
+        NS.consoleKit.audit(notice.type === 'D/A' ? 'Form D amendment filed' : 'Form D notice filed', `${o ? o.name : order.offeringId}: filed on ${date(f.filedOn)}, accession number ${f.accession}`, order.offeringId);
+      }
+    }
   }
 
   async function check(order) {
@@ -218,7 +256,7 @@
       NS.app.save(true);
       return true;
     } catch (e) {
-      said[order.id] = lineFor(e, 'say where the order stands');
+      said[order.id] = lineFor(e, false);
       return false;
     } finally {
       busy[order.id] = false;
@@ -242,7 +280,12 @@
     if (!r.id) return '';
     if (order.status === 'cancelled') return 'Cancelled by the filing team.';
     if (isFormD(order)) {
+      if (r.filing === 'accepted') {
+        const next = FL.due(ws, today(), { states: NS.blueskyData && NS.blueskyData.table }).find((x) => x.offeringId === order.offeringId && x.kind === 'formd-annual');
+        return `Filed on ${date(r.filedOn)} · accession number ${r.accession}.${next && next.due ? ` Annual amendment due ${date(next.due)}.` : ''}`;
+      }
       if (r.filing === 'test_passed') return 'Test filing passed.';
+      if (r.filing === 'suspended') return 'The test filing was suspended:';
       if (r.filing === 'submitted') return 'With EDGAR, waiting for acceptance.';
       return 'Received by the filing team.';
     }
@@ -253,12 +296,15 @@
     const r = order.remote || {};
     const line = stateLine(ws, order);
     const acts = [];
-    if (!busy[order.id] && sendable(ws, order)) acts.push(btn('flr-send', 'Send to be filed', order.id, 'cs-btn-primary'));
+    const suspended = !busy[order.id] && isFormD(order) && r.filing === 'suspended' && order.status === 'received';
+    if (!busy[order.id] && sendable(ws, order)) acts.push(btn('flr-send', r.id ? 'Send the corrected notice' : 'Send to be filed', order.id, 'cs-btn-primary'));
+    else if (suspended) acts.push(`<a class="cs-btn cs-btn-small" href="#console-filings-formd-${h(order.offeringId)}">Correct the notice</a>`);
     if (!busy[order.id] && r.id && order.status !== 'done' && order.status !== 'cancelled') acts.push(btn('flr-check', 'Check now', order.id));
     const fail = said[order.id] || '';
     if (!line && !acts.length && !fail) return '';
     return `<div class="fl-remote" data-remote="${h(order.id)}">
       ${line ? `<p class="fl-note" role="status">${h(line)}</p>` : ''}
+      ${suspended && (r.messages || []).length ? `<ul class="fl-errors">${r.messages.map((m) => `<li>${m.type === 'warning' ? 'Warning: ' : ''}${h(m.message)}</li>`).join('')}</ul>` : ''}
       ${acts.length ? `<div class="fl-acts">${acts.join('')}</div>` : ''}
       ${fail ? `<p class="field-error" role="alert">${h(fail)}</p>` : ''}
     </div>`;
