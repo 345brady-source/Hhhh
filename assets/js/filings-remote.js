@@ -251,13 +251,13 @@
     const r = order.remote;
     r.status = a.status;
     r.checkedAt = stamp();
-    const filedHere = isStates(order) ? applyStates(ws, order, a) : false;
+    if (isStates(order)) applyStates(ws, order, a);
     copyAmounts(order, a);
     // A state order reads what its results give it: partly filed while any ordered state has no result, filed or done
     // only once every ordered state has one, whatever the server's received or done says; received while none has.
     const B = NS.bluesky && typeof NS.bluesky.resultStatus === 'function' ? NS.bluesky : null;
     if (isStates(order) && a.status !== 'cancelled' && B) order.status = B.resultStatus(ws, order) || 'received';
-    else order.status = a.status === 'received' && (filedHere || order.status === 'filed') && isStates(order) ? 'partly-filed' : a.status;
+    else order.status = a.status;
     if (!f) return;
     const was = r.filing;
     r.filing = f.status;
