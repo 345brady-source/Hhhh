@@ -407,3 +407,17 @@ Plans:
 - [ ] 11-15-PLAN.md — The Accounting page's bank section: upload, CSV layout, suggestions, decisions, undo, reconcile, the file kept as evidence (FA-06, FA-12) (wave 6)
 - [ ] 11-16-PLAN.md — The year-end package's files and button: workbook, PDF, README and manifest in one zip, signed tax forms only by the sponsor's tick, every sheet viewable in the page (FA-09, FA-10, FA-11, FA-12, FA-13) (wave 7)
 - [ ] 11-17-PLAN.md — The owner's inputs: a CPA's read of a sample package, Excel and Numbers, a masked export from his bank; each applied when it arrives (FA-06, FA-08, FA-09, FA-10) (wave 8)
+
+### Phase 12: Report builder
+
+**Goal:** A premium report builder inside the portal: report templates per report type (investor statements, capital account statements, distribution notices, quarterly and annual investor letters, fund performance and holdings summaries, tax-season summaries), each built from the data the portal already holds (capital accounts, journal, distributions, calls, holdings, tax documents), highly customizable by the sponsor (sections on or off and reordered, the firm's branding, wording blocks, date range, per-fund or per-investor), previewed on screen and exported as PDF and spreadsheet with the shipped writers, and delivered to investors through the portal's documents; no outside API; all in the browser with no server, proven in the owner's iPhone conditions. Nothing is called ready before the owner has checked it.
+**Requirements**: defined in 12-RESEARCH.md
+**Depends on:** Phase 11 (journal, workbook and PDF writers), Phase 10 (investor documents delivery)
+**Plans:** TBD
+
+### Phase 13: Email overhaul
+
+**Goal:** Every email the portal and its server send is reviewed and rebuilt into one system: one template set in the firm's branding (white label: the firm's name and colors, never the platform's or a vendor's), plain-text and HTML parts, clear subject lines, one action per message, the investor's or sponsor's name, mobile layout, unsubscribe and notification preferences where the law requires them (CAN-SPAM for non-transactional mail), deliverability basics the sponsor's sending domain needs (SPF, DKIM, DMARC guidance), a preview of every message in the console, a sent log per investor, and the server's mail path (server/lib/mail.mjs) using it; no message holds a taxpayer number, password or bank number; works with the server's existing mail settings and stays honest in the no-server preview ("simulated in this demo"). Nothing is called ready before the owner has checked it.
+**Requirements**: defined in 13-RESEARCH.md
+**Depends on:** Phase 6 (invitations and reminders), Phase 8 (verification emails), Phase 10 (tax document notices)
+**Plans:** TBD
