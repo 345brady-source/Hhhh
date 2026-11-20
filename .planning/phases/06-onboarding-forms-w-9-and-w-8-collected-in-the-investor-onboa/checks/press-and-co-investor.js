@@ -403,6 +403,13 @@ const rowOf = (fr, invId) =>
     const tr = b && b.closest('tr');
     return tr ? tr.innerText.replace(/\s+/g, ' ') : '';
   }, invId);
+/** The account's row brought to the middle of the screen (for the owner's screenshot). */
+const showRow = (fr, invId) =>
+  fr.evaluate((id) => {
+    const b = document.querySelector(`[data-action=co-record][data-id="${CSS.escape(id)}"]`);
+    const tr = b && b.closest('tr');
+    if (tr) tr.scrollIntoView({ block: 'center' });
+  }, invId);
 const dialogNow = (fr) =>
   fr.evaluate(() => {
     const d = document.getElementById('dlg');
@@ -580,6 +587,7 @@ function coLink(dev) {
     await fr.evaluate(() => window.CVPortal.ui.closeDialog());
     await investorsPage(fr, inv.investorId);
     let row = await rowOf(fr, inv.investorId);
+    await showRow(fr, inv.investorId);
     await A.page.screenshot({ path: path.join(OUT, `${tag}-co-row-ready.png`) });
     check('the investors row reads "Sign-in link ready to send"', /Sign-in link ready to send/.test(row), row);
     await press(fr, dev, `[data-action=co-record][data-id="${inv.investorId}"]`);
@@ -593,6 +601,7 @@ function coLink(dev) {
     await investorsPage(fr, inv.investorId);
     row = await rowOf(fr, inv.investorId);
     st = await coState(fr, inv.investorId);
+    await showRow(fr, inv.investorId);
     await A.page.screenshot({ path: path.join(OUT, `${tag}-co-row-sent.png`) });
     check('after Mark as sent the row reads "Sign-in sent <date>"', /Sign-in sent [A-Z][a-z]{2} \d{1,2}, \d{4}/.test(row) && !!st.signIn && !!st.signIn.sentAt, { row, signIn: st.signIn });
     await press(fr, dev, `[data-action=co-record][data-id="${inv.investorId}"]`);
