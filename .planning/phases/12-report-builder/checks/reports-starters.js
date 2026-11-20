@@ -358,6 +358,7 @@ const parts = {
     const fs = require('fs');
     let made = 0;
     let total = 0;
+    const all = new Set();
     for (const F of X.firms) {
       const bad = { resolve: [], compose: [], figures: [], name: [], others: [], titles: [], leak: [], props: [], charts: [] };
       const who = F.firm.legalName || F.firm.name;
@@ -394,7 +395,10 @@ const parts = {
         fs.rmSync(P.file, { force: true });
       }
       const n = F.jobs.length;
-      check(`${F.id}: every one of the ${X.list.length} starters was made at least once (${covered.size})`, covered.size === X.list.length, X.list.map((s) => s.id).filter((id) => !covered.has(id)));
+      // offered here: a fund of the firm matches the starter's fund type, has a holder, and (for a notice) a paid run
+      const offered = X.list.filter((s) => F.ws.offerings.some((o) => offeredFor(s, profileOf(X.NS, o)) && X.D.holders(F.ws, o.id, '2026-12-31').length > 0 && (s.type !== 'distribution' || X.D.runs(F.ws, o.id).length > 0)));
+      offered.forEach((s) => all.add(s.id));
+      check(`${F.id}: every starter offered for one of its funds was made (${covered.size} of ${offered.length})`, offered.every((s) => covered.has(s.id)), offered.map((s) => s.id).filter((id) => !covered.has(id)));
       check(`${F.id}: ${n} reports resolve with no error`, !bad.resolve.length, bad.resolve.slice(0, 3));
       check(`${F.id}: every report composes`, !bad.compose.length, bad.compose.slice(0, 3));
       check(`${F.id}: every PDF holds every table cell string and tile value of its model`, !bad.figures.length, bad.figures.slice(0, 3));
@@ -407,6 +411,7 @@ const parts = {
     }
     console.log(`PDFs made: ${made} of ${total} reports`);
     check(`PDFs made: ${made} (every report of every sample firm)`, made > 0 && made === total, { made, total });
+    check(`every one of the ${X.list.length} starters is offered on a sample firm and was made (${all.size})`, X.list.every((s) => all.has(s.id)), X.list.map((s) => s.id).filter((id) => !all.has(id)));
   },
 
   /** Task 2 (C-09): a Regulation A Tier 2 fund's a-rega is its report to investors, with the SEC note; six months: semiannual. */
