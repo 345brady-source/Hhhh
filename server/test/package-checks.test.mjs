@@ -1,3 +1,4 @@
+// gate: tests 2
 // Who may start a paid check, and what happens to a package when its invitation ends (plan 08-15, D-01, C-05, C-08).
 // A package check (the package's identity and screening provider, or its accreditation provider) starts only from the
 // invitation that holds its own paid package; sponsor accounts never reach those providers directly; an unused package
@@ -577,6 +578,61 @@ test('provider refusal: the provider refusing to start keeps the package valid, 
     assert.deepEqual(r.body, { error: COULD_NOT_START });
     assert.equal(operatorMail(h).length, 0, 'without OPERATOR_EMAIL nothing is sent');
     assert.ok(!h.store.list('events').some((e) => e.type === 'package_alert'));
+  });
+});
+
+// Quick fix 2026-11-20 (08-CONTEXT "After 08-07"): every other provider failure gives the investor the same plain
+// sentence as a refusal, never the provider's status or words. The package stays valid and unstarted, the failure is on
+// the invitation's record, and the operator's balance-and-keys alert stays for the provider's own refusals (402, 403).
+const timedOut = () => {
+  throw Object.assign(new Error('This operation was aborted'), { name: 'AbortError' });
+};
+const unreachable = () => {
+  throw new Error(`getaddrinfo ENOTFOUND api.${VENDOR}.example`);
+};
+/** One failed start: the plain sentence alone, nothing of the provider's, the package valid and unstarted. */
+async function failsPlainly(h, p, start, what) {
+  const r = await start(p.token);
+  assert.equal(r.status, 502, `${what}: ${r.text}`);
+  assert.deepEqual(r.body, { error: COULD_NOT_START }, what);
+  assert.ok(!/\d/.test(r.text) && !vendorWord.test(r.text) && !/answered|reached|timed out|unavailable|link/i.test(r.text), `${what}: ${r.text}`);
+  assert.ok(!h.ent(p.entitlement).startedAt, `${what}: not started`);
+  assert.equal(h.ent(p.entitlement).status, 'consumed', `${what}: still valid`);
+}
+
+test('provider failure, identity: a 500, a timeout, a network error and a malformed answer each give the investor only the plain sentence; the package stays valid', async () => {
+  await shop({ env: { OPERATOR_EMAIL: OPERATOR } }, async (h) => {
+    const p = await h.send('f1');
+    const failures = [
+      ['a 500', () => ({ status: 500, body: { detail: `${VENDOR} internal error 500` } })],
+      ['a 503 with a text page', () => ({ status: 503, body: `<html>${VENDOR} Service Unavailable</html>` })],
+      ['a timeout', timedOut],
+      ['a network error', unreachable],
+      ['a malformed answer', () => ({ status: 201, body: { unexpected: true } })]
+    ];
+    for (const [what, answer] of failures) {
+      h.f.ctl.session = answer;
+      await failsPlainly(h, p, h.identity, what);
+    }
+    assert.equal(h.store.get('invitations', p.id).events.filter((e) => e.kind === 'package_check_failed').length, failures.length, 'each failure is on the invitation’s record');
+    assert.equal(operatorMail(h).length, 0, 'no balance-and-keys alert for a failure that is not a refusal');
+    h.f.ctl.session = () => ({ status: 201, body: idfx('session-created').reply });
+    const ok = await h.identity(p.token);
+    assert.equal(ok.status, 200, ok.text);
+    assert.ok(h.ent(p.entitlement).startedAt, 'a later accepted start marks the package started');
+  });
+});
+
+test('provider failure, screening: a 500 and a timeout give the investor only the plain sentence; the package stays valid', async () => {
+  await shop({}, async (h) => {
+    const p = await h.send('f2');
+    h.f.ctl.aml = () => ({ status: 500, body: { detail: `${VENDOR} internal error 500` } });
+    await failsPlainly(h, p, h.screening, 'a 500');
+    h.f.ctl.aml = timedOut;
+    await failsPlainly(h, p, h.screening, 'a timeout');
+    h.f.ctl.aml = () => idfx('aml-clear').reply;
+    const ok = await h.screening(p.token);
+    assert.equal(ok.status, 200, ok.text);
   });
 });
 
