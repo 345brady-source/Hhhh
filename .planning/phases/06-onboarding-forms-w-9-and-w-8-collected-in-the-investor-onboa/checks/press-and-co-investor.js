@@ -434,6 +434,8 @@ function pressW8(dev) {
     texts.push(await screen(fr));
     await A.page.screenshot({ path: path.join(OUT, `${tag}-press-w8.png`) });
     check('the page image arrived and the step was redrawn after Finish was found and before the finger landed', drawn && asked && redrawn, { drawn, asked, redrawn });
+    // A finger aims where Finish was seen: the page arriving must not move it (on the phone the guide sits after the document).
+    check('Finish is where it was found: the page image arriving moved it by at most 2 px', !!box1 && Math.abs(box1.x - box0.x) <= 2 && Math.abs(box1.y - box0.y) <= 2, { found: box0, after: box1 });
     check('the Finish found is still the Finish in the page after that redraw', kept === true, { kept });
     check('one press on it: the step after the tax step (Distribution payments) is on screen, and the press landed on that Finish', !lost && moved && at === 'Distribution payments' && pr.clickOnIt === true, { lost, at, press: pr });
     await quiet(check, A, fr, texts);
