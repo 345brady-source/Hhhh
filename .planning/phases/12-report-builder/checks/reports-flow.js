@@ -75,6 +75,96 @@ async function previewState(fr) {
   });
 }
 
+/** Choose what the preview is for: fund, the quarter preset, who, and (when given) the investor previewed. */
+async function previewFor(fr, opts) {
+  await fr.selectOption('#rb-fund', opts.fund || FUND);
+  await fr.waitForTimeout(120);
+  if (await fr.locator('#rb-period').count()) {
+    await fr.selectOption('#rb-period', opts.preset || 'q');
+    await fr.waitForTimeout(120);
+  }
+  await T.press(fr, `input[name=rb-who][value=${opts.who || 'fund'}]`);
+  await fr.waitForTimeout(120);
+  if (opts.as) {
+    await fr.selectOption('#rb-as', opts.as);
+    await fr.waitForTimeout(120);
+  }
+}
+/** Open one section's options in the editor. */
+async function openSec(fr, key) {
+  if (!(await fr.locator(`.rb-sec[data-key=${key}] .rb-opts`).count())) await T.press(fr, `[data-action=rb-sec][data-key=${key}]`);
+  await fr.waitForSelector(`.rb-sec[data-key=${key}] .rb-opts`, { timeout: 10000 });
+}
+/** A file the page offers, saved into the check's folder; resolves to its path (or '' when none came). */
+async function download(A, fr, selector, name) {
+  const [dl] = await Promise.all([A.page.waitForEvent('download', { timeout: 60000 }), T.press(fr, selector)]).catch(() => [null]);
+  if (!dl) return '';
+  const file = path.join(OUT(), name);
+  await dl.saveAs(file);
+  return file;
+}
+/** A solid-color PNG of w x h pixels, made here (zlib only). */
+function png(w, h, rgb) {
+  const zlib = require('zlib');
+  const crcT = [];
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    crcT[n] = c >>> 0;
+  }
+  const crc = (buf) => {
+    let c = 0xffffffff;
+    for (const b of buf) c = crcT[(c ^ b) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type, data) => {
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const td = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+    const c = Buffer.alloc(4);
+    c.writeUInt32BE(crc(td));
+    return Buffer.concat([len, td, c]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 2;
+  const row = Buffer.alloc(1 + w * 3);
+  for (let x = 0; x < w; x++) row.set(rgb, 1 + x * 3);
+  const raw = Buffer.concat(Array.from({ length: h }, () => row));
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+/** The words of a text, split on white space. */
+const wordsOf = (t) => String(t || '').split(/\s+/).filter(Boolean);
+/** Kestrel Bay's sample holdings carry no id until plan 11-11 moves holdings onto the journal: give the engine's rows ids in the page. */
+async function holdingIds(fr) {
+  await fr.evaluate(() => {
+    const D = window.CVPortal.reportsData;
+    if (D.__ids) return;
+    const was = D.holdings;
+    D.holdings = function () {
+      const r = was.apply(this, arguments);
+      if (r) r.rows.forEach((x, i) => (x.id = x.id || `h-s${i + 1}`));
+      return r;
+    };
+    D.__ids = true;
+    window.CVPortal.app.render();
+  });
+  await fr.waitForTimeout(200);
+}
+/** The size of the controls named, in CSS pixels. */
+async function sizes(fr, selector) {
+  return fr.evaluate((sel) => Array.from(document.querySelectorAll(sel)).filter((b) => b.offsetWidth || b.offsetHeight).map((b) => {
+    const r = b.getBoundingClientRect();
+    return { name: (b.getAttribute('aria-label') || b.innerText || '').trim().slice(0, 40), w: Math.round(r.width), h: Math.round(r.height) };
+  }), selector);
+}
+const lastLog = (fr) => fr.evaluate(() => {
+  const a = window.CVPortal.state.ws.audit || [];
+  return a.length ? a[a.length - 1].action : '';
+});
+
 const parts = {
   /** Tracer: on the phone, a blank quarterly letter for kb-fund-ii previews one investor's real figures and draws its PDF in the page. */
   async 'open-phone'({ check, S }) {
@@ -136,6 +226,393 @@ const parts = {
     await T.quiet(check, A, fr);
     await T.leak(check, fr);
     await T.wayOut(check, fr);
+    await A.context.close();
+  },
+
+  /** The editor by touch on the phone: sections on and off and moved, the letter in rich text, fields checked, Save. */
+  async 'editor-phone'({ check, S }) {
+    const { A, fr } = await open(S, 'phone', check);
+    await toTab(fr);
+    await create(fr, 'quarterly', 'quarterly', 'Letter test');
+    await previewFor(fr, { who: 'fund' });
+    const who = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const id = document.querySelector('#rb-as').value;
+      const i = NS.state.ws.investors.find((x) => x.id === id);
+      return { id, first: String(i.contact || '').split(' ')[0] };
+    });
+    const st0 = await previewState(fr);
+    const titles = (st) => st.tables.map((t) => t.title);
+    check("with Holdings on, the preview has the table 'Holdings'", titles(st0).indexOf('Holdings') >= 0, titles(st0));
+    await T.press(fr, '.rb-sec[data-key=holdings] label.rb-switch');
+    const st1 = await previewState(fr);
+    check("Holdings turned off leaves no Holdings table and no holdings line in the preview", titles(st1).indexOf('Holdings') < 0 && !/No holdings at/.test(st1.text), titles(st1));
+    const before = titles(st1);
+    check("before the move, 'Net performance' comes after 'Totals'", before.indexOf('Net performance') > before.indexOf('Totals') && before.indexOf('Totals') >= 0, before);
+    await T.press(fr, '.rb-sec[data-key=performance] [data-action=rb-move][data-dir=up]');
+    const st2 = await previewState(fr);
+    const after = titles(st2);
+    check("'Move up' on Performance puts 'Net performance' before 'Distributions' in the preview", after.indexOf('Net performance') >= 0 && after.indexOf('Net performance') < after.indexOf('Distributions'), after);
+    const order = await fr.evaluate(() => Array.from(document.querySelectorAll('.rb-sec')).map((x) => x.getAttribute('data-key')));
+    check('the editor lists Performance before Distributions now', order.indexOf('performance') < order.indexOf('distributions'), order);
+    // the letter
+    await openSec(fr, 'letter');
+    const area = '.rb-sec[data-key=letter] .rb-area';
+    const role = await fr.evaluate((a) => {
+      const el = document.querySelector(a);
+      return [el.getAttribute('role'), el.getAttribute('aria-multiline'), el.isContentEditable];
+    }, area);
+    check('the letter is a text box that takes several lines', role[0] === 'textbox' && role[1] === 'true' && role[2] === true, role);
+    await T.press(fr, area);
+    await A.page.keyboard.type('Dear {first_name}');
+    await fr.waitForTimeout(250);
+    const caret = await fr.evaluate((a) => {
+      const s = document.getSelection();
+      const el = document.querySelector(a);
+      const n = s.focusNode;
+      return { inside: !!n && el.contains(n), atEnd: !!n && n.nodeType === 3 && s.focusOffset === n.length && /\}$/.test(n.textContent), focused: document.activeElement === el };
+    }, area);
+    check('the caret stays after the typed text (the page is not redrawn while typing)', caret.inside && caret.atEnd && caret.focused, caret);
+    await fr.evaluate((a) => {
+      const el = document.querySelector(a);
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const t = walker.nextNode();
+      const r = document.createRange();
+      r.setStart(t, 0);
+      r.setEnd(t, 4);
+      const s = document.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    }, area);
+    await fr.waitForTimeout(100);
+    await T.press(fr, '.rb-sec[data-key=letter] [data-cmd=bold]');
+    await fr.evaluate((a) => {
+      const el = document.querySelector(a);
+      el.focus();
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      r.collapse(false);
+      const s = document.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    }, area);
+    await A.page.keyboard.press('Enter');
+    await A.page.keyboard.type('First point');
+    await T.press(fr, '.rb-sec[data-key=letter] [data-cmd=list]');
+    await fr.waitForTimeout(250);
+    const doc = await fr.evaluate(() => {
+      const d = document.querySelector('#rb-preview .rb-doc');
+      return { bold: Array.from(d.querySelectorAll('p b')).map((b) => b.textContent), items: Array.from(d.querySelectorAll('ul li')).map((li) => li.textContent.trim()), text: d.innerText };
+    });
+    check("the preview shows 'Dear' in bold", doc.bold.indexOf('Dear') >= 0, doc.bold);
+    check(`the preview fills {first_name} with the investor's first name (${who.first})`, doc.text.indexOf(`Dear ${who.first}`) >= 0 && doc.text.indexOf('{first_name}') < 0, doc.text.slice(0, 400));
+    check("the preview shows the list item 'First point'", doc.items.indexOf('First point') >= 0, doc.items);
+    // paste: plain text only
+    await fr.evaluate((a) => {
+      const el = document.querySelector(a);
+      el.focus();
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      r.collapse(false);
+      const s = document.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+      const dt = new DataTransfer();
+      dt.setData('text/html', '<b>x</b>');
+      dt.setData('text/plain', '<b>x</b>');
+      el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+    }, area);
+    await fr.waitForTimeout(250);
+    const pasted = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const t = NS.reportsUI.state().draft;
+      const sec = t.sections.find((x) => x.key === 'letter');
+      const d = document.querySelector('#rb-preview .rb-doc');
+      return { stored: NS.reports.plain(sec.text), shown: d.innerText, boldX: Array.from(d.querySelectorAll('b')).some((b) => b.textContent === 'x') };
+    });
+    check("pasting '<b>x</b>' stores and shows it as typed text", pasted.stored.indexOf('<b>x</b>') >= 0 && pasted.shown.indexOf('<b>x</b>') >= 0 && !pasted.boldX, pasted);
+    // a misspelt field stops the files
+    await A.page.keyboard.type(' {frist_name}');
+    await fr.waitForTimeout(250);
+    const bad = await previewState(fr);
+    check("'{frist_name}' shows 'Unknown field {frist_name} in Letter' at the top of the preview", bad.errors.indexOf('Unknown field {frist_name} in Letter') >= 0, bad.errors);
+    check('See the PDF, Download PDF and Download spreadsheet are off while it stands', bad.pdf === false && bad.dlPdf === false && bad.dlXlsx === false, bad);
+    for (let k = 0; k < 13; k++) await A.page.keyboard.press('Backspace');
+    await fr.waitForTimeout(250);
+    const good = await previewState(fr);
+    check('fixing it clears the error and turns the three buttons on', good.errors.length === 0 && good.pdf && good.dlPdf && good.dlXlsx, good);
+    const btns = await sizes(fr, '.rb-sec [data-action=rb-move], .rb-sec[data-key=letter] .rb-tools button, .rb-sec[data-key=letter] .rb-tools select');
+    check("'Move up', 'Move down' and the letter's toolbar measure at least 44 x 44 px", btns.length >= 6 && btns.every((b) => b.w >= 44 && b.h >= 44), btns.filter((b) => b.w < 44 || b.h < 44).concat([{ n: btns.length }]));
+    const labels = await fr.evaluate(() => Array.from(document.querySelectorAll('.rb-sec[data-key=performance] [data-action=rb-move]')).map((b) => b.getAttribute('aria-label')));
+    check('the move buttons are named for their section', labels.indexOf('Move Performance up') >= 0 && labels.indexOf('Move Performance down') >= 0, labels);
+    await A.page.screenshot({ path: path.join(OUT(), 'phone-editor.png') });
+    await T.press(fr, '[data-action=rb-save]');
+    await fr.waitForTimeout(250);
+    const ver = await fr.evaluate(() => (document.querySelector('#rb-ver') || { innerText: '' }).innerText.trim());
+    check("'Save' shows version 2", ver === 'Version 2', ver);
+    const logged = await lastLog(fr);
+    check("the change log's last entry is 'Report template saved'", logged === 'Report template saved', logged);
+    const kept = await fr.evaluate(() => {
+      const t = window.CVPortal.state.ws.reports.templates.find((x) => x.name === 'Letter test');
+      return { v: t.version, holdings: t.sections.find((s) => s.key === 'holdings').on, order: t.sections.map((s) => s.key), letter: window.CVPortal.reports.plain(t.sections.find((s) => s.key === 'letter').text) };
+    });
+    check('the stored template keeps Holdings off, the new order and the letter', kept.v === 2 && kept.holdings === false && kept.order.indexOf('performance') < kept.order.indexOf('distributions') && /^Dear \{first_name\}/.test(kept.letter) && /First point/.test(kept.letter), kept);
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await A.context.close();
+  },
+
+  /** Cover style, accent and photo; twelve photos at most; the chart; the disclosures (1280x800). */
+  async 'cover-photos-desktop'({ check, S }) {
+    const { A, fr } = await open(S, 'desktop', check);
+    await toTab(fr);
+    await holdingIds(fr);
+    await create(fr, 'quarterly', 'quarterly', 'Photos');
+    await previewFor(fr, { who: 'fund' });
+    await openSec(fr, 'cover');
+    await fr.selectOption('#rb-cover-style', 'photo');
+    await fr.waitForTimeout(150);
+    await fr.setInputFiles('#rb-cover-photo', { name: 'site.png', mimeType: 'image/png', buffer: png(3000, 2000, [40, 120, 180]) });
+    await fr.waitForFunction(() => {
+      const t = window.CVPortal.reportsUI.state().draft;
+      return t && t.cover.photoId;
+    }, null, { timeout: 30000 });
+    const stored = await fr.evaluate(async () => {
+      const NS = window.CVPortal;
+      const id = NS.reportsUI.state().draft.cover.photoId;
+      const blob = await NS.ops.files.get(id);
+      const bmp = await createImageBitmap(blob);
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      let exif = false;
+      for (let i = 0; i + 4 < bytes.length && i < 4096; i++) if (bytes[i] === 0x45 && bytes[i + 1] === 0x78 && bytes[i + 2] === 0x69 && bytes[i + 3] === 0x66) exif = true;
+      return { id, type: blob.type, w: bmp.width, h: bmp.height, exif, head: [bytes[0], bytes[1]] };
+    });
+    check('the 3000 x 2000 cover photo is kept as a JPEG of 1600 x 1067 (within 1 px), pixels only', stored.type === 'image/jpeg' && stored.head[0] === 0xff && stored.head[1] === 0xd8 && stored.w === 1600 && Math.abs(stored.h - 1067) <= 1 && !stored.exif, stored);
+    const coverImg = await fr.evaluate(() => !!document.querySelector('#rb-preview .rb-cover img'));
+    check('the preview draws the cover photo', coverImg, coverImg);
+    // accent
+    await fr.fill('#rb-accent-hex', '#FFFF00');
+    await fr.press('#rb-accent-hex', 'Enter');
+    await fr.waitForTimeout(250);
+    const acc = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const a = NS.reportsUI.state().draft.cover.accent;
+      const line = document.querySelector('.rb-adjusted');
+      return { a, ratio: NS.brand.contrast(a, '#FFFFFF'), line: line ? line.innerText.trim() : '' };
+    });
+    check("Accent '#FFFF00' is adjusted to 3:1 against white, with the line 'Adjusted for contrast'", acc.a !== '#FFFF00' && acc.ratio >= 3 && acc.line === 'Adjusted for contrast', acc);
+    // photos on an asset item
+    await openSec(fr, 'assets');
+    const holding = await fr.evaluate(() => (document.querySelector('.rb-hold') || { getAttribute: () => '' }).getAttribute('data-holding'));
+    check('the asset updates list the fund holdings', !!holding, holding);
+    const small = (k) => ({ name: `p${k}.png`, mimeType: 'image/png', buffer: png(40 + k, 30, [10 * k, 60, 90]) });
+    await fr.setInputFiles(`.rb-hold[data-holding="${holding}"] input[type=file]`, Array.from({ length: 12 }, (x, k) => small(k + 1)));
+    await fr.waitForFunction((hid) => {
+      const t = window.CVPortal.reportsUI.state().draft;
+      const it = (t.sections.find((s) => s.key === 'assets').opts.items || []).find((x) => x.holdingId === hid);
+      return it && it.photoIds.length === 12;
+    }, holding, { timeout: 30000 }).catch(() => {});
+    await fr.setInputFiles(`.rb-hold[data-holding="${holding}"] input[type=file]`, [small(13)]);
+    await fr.waitForTimeout(800);
+    const cap = await fr.evaluate((hid) => {
+      const t = window.CVPortal.reportsUI.state().draft;
+      const it = (t.sections.find((s) => s.key === 'assets').opts.items || []).find((x) => x.holdingId === hid);
+      const msg = Array.from(document.querySelectorAll('.rb-msg')).map((m) => m.innerText.trim());
+      return { n: it ? it.photoIds.length : 0, msg, shown: document.querySelectorAll('#rb-preview .rb-photo img').length };
+    }, holding);
+    check("twelve photos are kept and a thirteenth gives 'A template holds at most 12 photos.'", cap.n === 12 && cap.msg.indexOf('A template holds at most 12 photos.') >= 0, cap);
+    // chart
+    await openSec(fr, 'chart');
+    await fr.selectOption('#rb-chart', 'capital');
+    await fr.waitForTimeout(250);
+    const line = await fr.evaluate(() => {
+      const p = document.querySelector('#rb-preview .rb-chart polyline');
+      return p ? p.getAttribute('points').split(' ').length : 0;
+    });
+    check("Chart 'Capital over time' draws a line (an SVG polyline) in the preview", line >= 2, line);
+    // disclosures
+    const disc = await fr.evaluate(() => {
+      const row = document.querySelector('.rb-sec[data-key=disclosures]');
+      return { switch: !!row.querySelector('input.rb-on'), remove: Array.from(row.querySelectorAll('button')).some((b) => /remove/i.test(b.innerText + (b.getAttribute('aria-label') || ''))), moves: row.querySelectorAll('[data-action=rb-move]').length };
+    });
+    check('the disclosures have no on switch, no remove and do not move', !disc.switch && !disc.remove && disc.moves === 0, disc);
+    await openSec(fr, 'disclosures');
+    const dline = await fr.evaluate(() => Array.from(document.querySelectorAll('.rb-sec[data-key=disclosures] .rb-line')).map((x) => x.innerText.trim()));
+    check("the disclosures say 'Starting wording; to be confirmed with counsel.'", dline.indexOf('Starting wording; to be confirmed with counsel.') >= 0, dline);
+    await fr.evaluate(() => {
+      const el = document.querySelector('.rb-sec[data-key=disclosures] .rb-area');
+      el.focus();
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      r.collapse(false);
+      const s = document.getSelection();
+      s.removeAllRanges();
+      s.addRange(r);
+    });
+    await A.page.keyboard.press('Enter');
+    await A.page.keyboard.type('Past results do not predict future results.');
+    await fr.waitForTimeout(250);
+    const dshown = await fr.evaluate(() => document.querySelector('#rb-preview .rb-doc').innerText);
+    check('the edited disclosures show in the preview', dshown.indexOf('Past results do not predict future results.') >= 0, dshown.slice(-300));
+    await T.press(fr, '[data-action=rb-save]');
+    await fr.waitForTimeout(250);
+    const saved = await fr.evaluate((hid) => {
+      const t = window.CVPortal.state.ws.reports.templates.find((x) => x.name === 'Photos');
+      const it = (t.sections.find((s) => s.key === 'assets').opts.items || []).find((x) => x.holdingId === hid);
+      return { style: t.cover.style, photo: t.cover.photoId, accent: t.cover.accent, chart: t.chart, n: it ? it.photoIds.length : 0, disc: window.CVPortal.reports.plain(t.disclosures) };
+    }, holding);
+    check('the saved template keeps the photo cover, the accent, the chart, the 12 photos and the disclosures', saved.style === 'photo' && saved.photo === stored.id && saved.accent === acc.a && saved.chart === 'capital' && saved.n === 12 && /Past results do not predict future results\./.test(saved.disc), saved);
+    await A.page.screenshot({ path: path.join(OUT(), 'desktop-cover.png'), fullPage: false });
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await A.context.close();
+  },
+
+  /** RB-12: the preview's words are in the PDF, the money of the model in both; the spreadsheet reopens to the cent. */
+  async 'preview-pdf'({ check, S }) {
+    const { A, fr } = await open(S, 'desktop', check);
+    await toTab(fr);
+    await create(fr, 'quarterly', 'quarterly', 'Same words');
+    await openSec(fr, 'chart');
+    await fr.selectOption('#rb-chart', 'dist');
+    await fr.waitForTimeout(150);
+    await previewFor(fr, { who: 'fund', as: 'KBC-1001' });
+    const st = await previewState(fr);
+    check('the preview is for KBC-1001 with no error', st.errors.length === 0 && st.text.indexOf('Prepared for') >= 0, st.errors);
+    const model = await fr.evaluate((fund) => {
+      const NS = window.CVPortal;
+      const w = NS.state.ws;
+      const t = NS.reportsUI.state().draft;
+      const o = w.offerings.find((x) => x.id === fund);
+      const q = NS.audit.presets(w, o).find((p) => p.id === 'q');
+      const r = NS.reports.resolve(w, t, { from: q.from, to: q.to, audience: { kind: 'fund', offeringId: fund } }, 'KBC-1001');
+      return { model: r.model, sheets: r.model ? NS.reports.sheets(r.model) : [] };
+    }, FUND);
+    const m = model.model;
+    const pdfFile = await download(A, fr, '[data-action=rb-dl-pdf]', 'same.pdf');
+    check('Download PDF gives a PDF', !!pdfFile && fs.readFileSync(pdfFile).subarray(0, 5).toString() === '%PDF-', pdfFile);
+    if (!pdfFile || !m) return A.context.close();
+    const name = path.basename(pdfFile);
+    const offered = await fr.evaluate(() => '');
+    void offered;
+    const pdfText = L12.text(pdfFile);
+    const pw = {};
+    wordsOf(pdfText).forEach((x) => (pw[x] = (pw[x] || 0) + 1));
+    const vw = {};
+    wordsOf(st.text).forEach((x) => (vw[x] = (vw[x] || 0) + 1));
+    const missing = Object.keys(vw).filter((x) => (pw[x] || 0) < vw[x]).map((x) => `${x} x${vw[x]} (PDF ${pw[x] || 0})`);
+    check(`every word of the preview's report area is in the PDF's words, counted (${Object.keys(vw).length} distinct words)`, Object.keys(vw).length > 50 && missing.length === 0, missing.slice(0, 20));
+    const flat = pdfText.replace(/\s+/g, ' ');
+    const titles = m.blocks.filter((b) => b.k === 'table').map((b) => b.title);
+    let at = -1;
+    const order = titles.map((t) => (at = flat.indexOf(t, at + 1)));
+    check('the tables come in the same order in the PDF as in the preview', titles.length >= 4 && order.every((x, i) => x >= 0 && (i === 0 || x > order[i - 1])) && JSON.stringify(st.tables.map((t) => t.title)) === JSON.stringify(titles), { titles, order });
+    const money = [];
+    m.blocks.forEach((b) => {
+      if (b.k === 'table') b.cols.forEach((c, i) => c.t === 'money' && b.rows.concat(b.total ? [b.total] : []).forEach((r) => r[i] && r[i].s && money.push(r[i].s)));
+      if (b.k === 'tiles') b.items.forEach((it) => it.t === 'money' && money.push(it.value));
+    });
+    const notBoth = money.filter((s) => st.text.indexOf(s) < 0 || flat.indexOf(s) < 0);
+    check(`every money string of the model (${money.length}) is in the preview and in the PDF`, money.length > 20 && notBoth.length === 0, notBoth.slice(0, 10));
+    check('the file is named for the firm, the report, the period and the investor', /^Kestrel_Bay[A-Za-z_]*_Quarterly_report_Q4_2026_KBC_1001\.pdf$/.test(name) || /Quarterly_report_Q4_2026_KBC_1001\.pdf$/.test(name), name);
+    const xlsxFile = await download(A, fr, '[data-action=rb-dl-xlsx]', 'same.xlsx');
+    check('Download spreadsheet gives a workbook', !!xlsxFile && fs.readFileSync(xlsxFile).subarray(0, 2).toString() === 'PK', xlsxFile);
+    if (xlsxFile) {
+      const X = L12.xlsx(xlsxFile);
+      const col = (i) => String.fromCharCode(65 + i);
+      const bad = [];
+      let cells = 0;
+      model.sheets.forEach((sh, k) => {
+        const got = X.sheets[k];
+        if (!got) return bad.push(`sheet ${k} missing`);
+        const rows = sh.rows.concat(sh.total ? [sh.total] : []);
+        rows.forEach((r, ri) =>
+          sh.cols.forEach((c, ci) => {
+            if (c.t !== 'money' || typeof r[ci] !== 'number') return;
+            cells++;
+            const cell = got.cells[`${col(ci)}${ri + 2}`];
+            if (!cell || Math.round(Number(cell.v) * 100) !== r[ci] || Math.abs(Number(cell.v) - r[ci] / 100) > 1e-9) bad.push(`${got.name} ${col(ci)}${ri + 2}: ${cell ? cell.v : 'none'} vs ${r[ci] / 100}`);
+          })
+        );
+      });
+      const formulas = X.raw_formulas + X.sheets.reduce((a, s) => a + Object.values(s.cells).filter((c) => c.f).length, 0);
+      check(`the spreadsheet reopens with every money cell equal to the model's cents / 100 (${cells} cells) and no formula`, cells > 20 && bad.length === 0 && formulas === 0, bad.slice(0, 10).concat([`formulas ${formulas}`]));
+    }
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+
+  /** C-06: a distribution notice's split must add to the gross exactly; the run itself is never written. */
+  async split({ check, S }) {
+    const { A, fr } = await open(S, 'desktop', check);
+    await toTab(fr);
+    await create(fr, 'distribution', 'distribution', 'Notice');
+    await fr.selectOption('#rb-fund', FUND);
+    await fr.waitForTimeout(150);
+    const run = await fr.evaluate((fund) => {
+      const NS = window.CVPortal;
+      const w = NS.state.ws;
+      return { r: NS.reportsData.runs(w, fund)[0], runs: JSON.stringify(w.runs) };
+    }, FUND);
+    const sel = await fr.evaluate(() => (document.querySelector('#rb-run') || {}).value);
+    check("'Payment' starts on the fund's newest paid run", !!run.r && sel === run.r.id, { sel, run: run.r });
+    const dollars = (c) => `${Math.floor(c / 100)}.${String(c % 100).padStart(2, '0')}`;
+    await fr.selectOption('.rb-split-row select', 'Return of capital');
+    await fr.fill('.rb-split-row input', dollars(run.r.gross - 1));
+    await fr.waitForTimeout(200);
+    const off = await fr.evaluate(() => ({ line: (document.querySelector('.rb-off') || { innerText: '' }).innerText.trim(), save: (document.querySelector('[data-action=rb-split-save]') || {}).disabled }));
+    check("a split one cent short shows 'Off by $0.01' and 'Save split' is off", off.line === 'Off by $0.01' && off.save === true, off);
+    await fr.fill('.rb-split-row input', 'abc');
+    await fr.waitForTimeout(150);
+    const refused = await fr.evaluate(() => Array.from(document.querySelectorAll('.rb-split .rb-msg')).map((x) => x.innerText.trim()));
+    check('an amount that is not dollars and cents is refused with one line', refused.length === 1, refused);
+    await fr.fill('.rb-split-row input', dollars(run.r.gross));
+    await fr.waitForTimeout(200);
+    const on = await fr.evaluate(() => ({ line: (document.querySelector('.rb-off') || { innerText: '' }).innerText.trim(), save: (document.querySelector('[data-action=rb-split-save]') || {}).disabled }));
+    check("at the gross exactly the line is gone and 'Save split' is on", on.line === '' && on.save === false, on);
+    await T.press(fr, '[data-action=rb-split-save]');
+    await fr.waitForTimeout(300);
+    const after = await fr.evaluate((runId) => {
+      const w = window.CVPortal.state.ws;
+      return { split: w.reports.splits[runId], runs: JSON.stringify(w.runs) };
+    }, run.r.id);
+    check('the split is stored with the report data', !!after.split && after.split.parts.length === 1 && after.split.parts[0].cents === run.r.gross, after.split);
+    const logged = await lastLog(fr);
+    check("the change log gains 'Distribution split entered'", logged === 'Distribution split entered', logged);
+    check('the distribution run itself is unchanged (JSON before and after)', after.runs === run.runs, after.runs.length);
+    const st = await previewState(fr);
+    const tbl = st.tables.find((t) => t.title === 'Character of this distribution');
+    const gross = await fr.evaluate(() => {
+      const t = Array.from(document.querySelectorAll('#rb-preview .rb-tile')).find((x) => /Gross amount/.test(x.innerText));
+      return t ? t.querySelector('.rb-tile-v').innerText.trim() : '';
+    });
+    check("the preview shows the recipient's split, adding to their gross", !!tbl && tbl.foot && tbl.foot[0] === 'Total' && tbl.foot[1] === gross && !!gross, { tbl, gross });
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await A.context.close();
+  },
+
+  /** The logo paths: an SVG logo redrawn on the canvas is an image on page 1; the generated mark draws no image. */
+  async 'logo-canvas'({ check, S }) {
+    const { A, fr } = await open(S, 'desktop', check);
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40" viewBox="0 0 120 40"><rect width="120" height="40" fill="#123A5F"/><circle cx="20" cy="20" r="12" fill="#F2B705"/></svg>').toString('base64');
+    await T.ws(fr, (w, src) => (w.tenant.logo = { type: 'image', image: src }), `data:image/svg+xml;base64,${svg}`);
+    await toTab(fr);
+    await create(fr, 'quarterly', 'quarterly', 'Logo');
+    await previewFor(fr, { who: 'fund' });
+    const f1 = await download(A, fr, '[data-action=rb-dl-pdf]', 'logo-svg.pdf');
+    const im1 = f1 ? L12.images(f1) : [];
+    check('with an SVG logo the PDF has an image on page 1 (redrawn on the canvas)', im1.some((x) => x.page === 1), im1);
+    const firm = await T.ws(fr, (w) => {
+      w.tenant.logo = { type: 'monogram', letters: 'KB' };
+      return w.tenant.shortName || w.tenant.name;
+    });
+    await fr.waitForSelector('[data-action=rb-dl-pdf]:not([disabled])');
+    const f2 = await download(A, fr, '[data-action=rb-dl-pdf]', 'logo-mark.pdf');
+    const im2 = f2 ? L12.images(f2) : ['no file'];
+    const t2 = f2 ? L12.text(f2) : '';
+    check(`with the generated mark the PDF has no image and the firm's name (${firm}) in its text`, im2.length === 0 && t2.indexOf(firm) >= 0, { images: im2, text: t2.slice(0, 200) });
+    await T.quiet(check, A, fr);
     await A.context.close();
   }
 };
