@@ -7,7 +7,7 @@
 # HEAD, the uncommitted changes, the base commit where compared, the command line) and prints its checks as
 # "GATE ok   <name> (kept from <time>)"; a step killed part-way, a failed step or a changed tree runs again. GATE_FRESH=1
 # runs every step. Each step's GATE lines print as soon as it ends.
-cd /home/user/Hhhh/.claude/worktrees/agent-a1abdd780a1107725 || exit 9
+cd "$(git rev-parse --show-toplevel)" || exit 9
 S=/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad
 P=.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa
 Q=.planning/phases/01.4-every-subscription-agreement-the-reader-is-trained-and-measu/checks
