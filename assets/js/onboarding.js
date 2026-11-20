@@ -2289,7 +2289,8 @@
    *  - Unchanged: a signed form is kept (false: the flow moves on); an unsigned form still to sign is shown again.
    *  - Changed (or not known after a reload): the filled, flattened official form is built now and becomes an envelope for
    *    this investor to sign on the page. An unsigned earlier form is voided first ("answers changed before signing") and
-   *    its files deleted; a signed earlier form stays in the record and in Documents until the new one is finished.
+   *    its files deleted; a signed earlier form stays in the record and in Documents until the new one is finished, then
+   *    taxSigned applies plan 06-34's rule (a new signed form supersedes it; a new unsigned form is retired and it stays).
    * The W-9's full taxpayer ID leaves this page's memory once it is in the form (T-06-35). Returns true to stay on the step.
    */
   async function buildTax(c, d) {
