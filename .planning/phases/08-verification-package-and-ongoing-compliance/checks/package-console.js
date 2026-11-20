@@ -117,10 +117,17 @@ async function consoleOn(S, check, view, handlers) {
   };
 }
 
-/** The invite form open on the Investors page. */
+/** The invite form open on the Investors page (on its single tab, whichever tab was open before). */
 async function openForm(p) {
   await p.evaluate(() => (location.hash = '#console-investors'));
   await p.waitForSelector('[data-action=invite-toggle]', { timeout: 20000 });
+  await p.evaluate(() => {
+    const ui = window.CVPortal.state.ui;
+    if (ui.inviteOpen && ui.inviteTab === 'bulk') {
+      ui.inviteTab = 'single';
+      window.CVPortal.app.render();
+    }
+  });
   if ((await p.locator('#iv-email').count()) === 0) await p.click('[data-action=invite-toggle]');
   await p.waitForSelector('#iv-email', { timeout: 10000 });
 }
@@ -403,7 +410,7 @@ const parts = {
       const st = C.srv.server.store;
       st.put('billing', { id: C.account.id, owedCents: 1900 });
       // The sentence the real server answers to a package invitation for this account, read once from a direct POST.
-      const probe = await C.call('POST', '/v1/invitations', { workspace: 'kestrel-bay', portalUrl: `${S.origin}/diy.html`, sendEmail: false, investor: { id: 'OWED-PROBE', contact: 'Owed Probe', email: 'owed.probe@example.com' }, invitation: { package: true, clientId: 'owed-probe-1' }, verification: {} });
+      const probe = await C.call('POST', '/v1/invitations', { workspace: 'kestrel-bay', portalUrl: `${S.origin}/diy.html`, sendEmail: false, firm: { name: 'Kestrel Bay Capital' }, investor: { id: 'OWED-PROBE', contact: 'Owed Probe', email: 'owed.probe@example.com' }, invitation: { package: true, clientId: 'owed-probe-1' }, verification: {} });
       const OWED = probe.body && typeof probe.body.error === 'string' ? probe.body.error : '';
       check('the real server refuses a package invitation for this account with 409 credit_owed and a sentence of its own', probe.status === 409 && probe.body.code === 'credit_owed' && OWED.length > 10 && (await C.srv.rows()).length === 0, probe);
       const view = await C.call('GET', '/v1/billing');
