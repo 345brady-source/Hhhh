@@ -1285,95 +1285,109 @@
   }
   /* ---------- Finishing a signature ---------- */
   const signedHooks = [];
-  async function finishSigning(env, signer, st) {
+  /**
+   * The signing itself (finishSigning, and plan 06-39's importSignature): the signer's own values (input.vals, by field id)
+   * and adopted marks (input.adopted) are stamped on the envelope's work copy (or its original) in this browser; the envelope
+   * completes when everyone has signed. Works on a copy, so a failure leaves the envelope unchanged. input.at and
+   * input.userAgent: when and on what the signer signed (now and this browser unless given). Resolves to { complete }.
+   */
+  async function applySignature(env, signer, input) {
     const ws = W();
+    const L = await pdflib();
+    // Work on a copy so a failure leaves the envelope unchanged.
+    const next = JSON.parse(JSON.stringify(env));
+    const me = signerById(next, signer.id);
+    const at = input.at || nowIso();
+    const actor = actorFor(me);
+    fieldsOf(next, me).forEach((f) => {
+      if (f.locked) return; // prefilled by the sponsor: the envelope's value stands, whatever the page holds
+      const v = input.vals[f.id];
+      f.value = f.type === 'checkbox' ? !!v : f.type === 'signature' || f.type === 'initials' ? (v ? 'adopted' : '') : String(v || '');
+    });
+    if (input.adopted.signature) me.signature = input.adopted.signature;
+    if (input.adopted.initials) me.initials = input.adopted.initials;
+    me.status = 'signed';
+    me.signedAt = at;
+    me.userAgent = input.userAgent || navigator.userAgent;
+    addEvent(next, actor, 'Signed', `${fieldsOf(next, me).length} field${fieldsOf(next, me).length === 1 ? '' : 's'} completed`, at);
+    const src = await files().get(next.workDocId || next.docId);
+    if (!src) throw new Error(lostText('this document’s file', 'sign'));
+    const pdf = await L.PDFDocument.load(new Uint8Array(await src.arrayBuffer()), { ignoreEncryption: true });
+    // pdf-lib cannot write an encrypted file: saving would produce a PDF no reader can open.
+    if (pdf.isEncrypted) throw new Error(`This PDF is password-protected, so signatures cannot be added to it. ${T().name} needs to send an unprotected copy.`);
+    const fonts = await fontsFor(L, pdf, fieldsOf(next, me).map(fieldText));
+    await stampFields(L, pdf, next, me, fonts);
+    // An official tax form (D-04): the line the IRS rules for an electronic W-8 ask for, on the form page beside the
+    // signature, only when this signer signed there.
+    if (next.kind === 'tax' && next.caption && fieldsOf(next, me).some((f) => f.type === 'signature' && f.value)) taxCaption(L, pdf, next.caption, at, fonts);
+    if (fonts.replaced) addEvent(next, 'System', 'Characters replaced', 'This browser could not draw some characters, so they print as "?" in the stamped fields', at);
+    // Once signed, the PDF's own form fields (a fillable PDF) can no longer be typed into.
+    lockOwnFields(L, pdf);
+    const complete = next.signers.every((s) => s.status === 'signed');
+    let out;
+    if (complete) {
+      next.status = 'completed';
+      next.completedAt = at;
+      addEvent(next, 'System', 'Completed', 'All signers finished; certificate of completion appended', at);
+      next.signers.forEach((s) => email(next, s, `Completed: ${next.title} (signed copy available)`));
+      // The signed pages are saved (and hashed) first; the certificate quotes that hash, then is appended.
+      const pagesOut = await pdf.save();
+      next.sha256SignedPages = NS.audit.sha256(pagesOut);
+      next.workDocId = next.id + '-work';
+      const final = await L.PDFDocument.load(pagesOut);
+      await (NS.record ? NS.record.certify(L, final, next) : appendCertificate(L, final, next));
+      out = await final.save();
+      next.signedDocId = next.id + '-signed';
+      next.sha256Signed = NS.audit.sha256(out);
+      if (NS.record) await NS.record.seal(next, out, final.getPageCount());
+      await files().put(next.workDocId, new Blob([pagesOut], { type: 'application/pdf' }));
+      await files().put(next.signedDocId, new Blob([out], { type: 'application/pdf' }));
+    } else {
+      out = await pdf.save();
+      next.workDocId = next.id + '-work';
+      await files().put(next.workDocId, new Blob([out], { type: 'application/pdf' }));
+      notifyTurn(next);
+    }
+    Object.assign(env, next);
+    logChange(ws, 'Document signed', env, `${me.name} (${roleLabel(me).toLowerCase()})`, actor);
+    if (complete) {
+      const ids = Array.from(new Set(env.signers.filter((s) => s.investorId).map((s) => s.investorId)));
+      ws.docs = ws.docs || [];
+      // Plan 06-34 (walkthrough-2 N1): a tax form finished without the investor's signature (D-30) is not a signed document,
+      // so it is not listed under "Signed documents" with a "_signed" file name; the record and the console say "not signed".
+      const unsignedTax = env.kind === 'tax' && !env.signers.some((s) => s.investorId && fieldsOf(env, s).some((f) => f.type === 'signature' && !!f.value));
+      if (unsignedTax) ids.length = 0;
+      // The portal listing shares the envelope's file; removing the listing keeps the file (see docs-remove below).
+      if (ids.length && !ws.docs.some((d) => d.id === env.signedDocId))
+        ws.docs.push({ id: env.signedDocId, title: env.title, fileName: slug(env.title) + '_signed.pdf', type: 'application/pdf', size: out.length, sha256: env.sha256Signed, cat: env.kind === 'tax' ? 'Tax' : 'Legal', offeringId: env.offeringId || null, audience: 'investors', investors: ids, date: NS.dates.today(), taxYear: '', publishedAt: nowIso(), publishedBy: 'E-sign', envelopeId: env.id });
+      // A subscription signed through this envelope (the offering's subscription agreement template).
+      (ws.requests || []).filter((r) => r.envelopeId === env.id && !r.signedAt).forEach((r) => (r.signedAt = at.replace(/\.\d{3}Z$/, 'Z')));
+      logChange(ws, 'Envelope completed', env, `${env.signers.length} signer${env.signers.length === 1 ? '' : 's'}; signed pages SHA-256 ${env.sha256SignedPages}; signed PDF SHA-256 ${env.sha256Signed}; published to ${ids.length} investor portal${ids.length === 1 ? '' : 's'}`, actor);
+    }
+    return { complete };
+  }
+  /** Other modules react to a signature (the investor onboarding flow moves on by itself); true when one handled it. */
+  function runSignedHooks(env, signerId, complete) {
+    let handled = false;
+    signedHooks.forEach((fn) => {
+      try {
+        if (fn(env, signerById(env, signerId), complete) === true) handled = true;
+      } catch (e) {
+        if (window.console) console.error(e);
+      }
+    });
+    return handled;
+  }
+  async function finishSigning(env, signer, st) {
     if (!isTurn(env, signer)) return U.toast('It is not this signer’s turn to sign.');
     st.busy = true;
     NS.app.render();
     try {
-      const L = await pdflib();
-      // Work on a copy so a failure leaves the envelope unchanged.
-      const next = JSON.parse(JSON.stringify(env));
-      const me = signerById(next, signer.id);
-      const at = nowIso();
-      const actor = actorFor(me);
-      fieldsOf(next, me).forEach((f) => {
-        if (f.locked) return; // prefilled by the sponsor: the envelope's value stands, whatever the page holds
-        const v = st.vals[f.id];
-        f.value = f.type === 'checkbox' ? !!v : f.type === 'signature' || f.type === 'initials' ? (v ? 'adopted' : '') : String(v || '');
-      });
-      if (st.adopted.signature) me.signature = st.adopted.signature;
-      if (st.adopted.initials) me.initials = st.adopted.initials;
-      me.status = 'signed';
-      me.signedAt = at;
-      me.userAgent = navigator.userAgent;
-      addEvent(next, actor, 'Signed', `${fieldsOf(next, me).length} field${fieldsOf(next, me).length === 1 ? '' : 's'} completed`, at);
-      const src = await files().get(next.workDocId || next.docId);
-      if (!src) throw new Error(lostText('this document’s file', 'sign'));
-      const pdf = await L.PDFDocument.load(new Uint8Array(await src.arrayBuffer()), { ignoreEncryption: true });
-      // pdf-lib cannot write an encrypted file: saving would produce a PDF no reader can open.
-      if (pdf.isEncrypted) throw new Error(`This PDF is password-protected, so signatures cannot be added to it. ${T().name} needs to send an unprotected copy.`);
-      const fonts = await fontsFor(L, pdf, fieldsOf(next, me).map(fieldText));
-      await stampFields(L, pdf, next, me, fonts);
-      // An official tax form (D-04): the line the IRS rules for an electronic W-8 ask for, on the form page beside the
-      // signature, only when this signer signed there.
-      if (next.kind === 'tax' && next.caption && fieldsOf(next, me).some((f) => f.type === 'signature' && f.value)) taxCaption(L, pdf, next.caption, at, fonts);
-      if (fonts.replaced) addEvent(next, 'System', 'Characters replaced', 'This browser could not draw some characters, so they print as "?" in the stamped fields', at);
-      // Once signed, the PDF's own form fields (a fillable PDF) can no longer be typed into.
-      lockOwnFields(L, pdf);
-      const complete = next.signers.every((s) => s.status === 'signed');
-      let out;
-      if (complete) {
-        next.status = 'completed';
-        next.completedAt = at;
-        addEvent(next, 'System', 'Completed', 'All signers finished; certificate of completion appended', at);
-        next.signers.forEach((s) => email(next, s, `Completed: ${next.title} (signed copy available)`));
-        // The signed pages are saved (and hashed) first; the certificate quotes that hash, then is appended.
-        const pagesOut = await pdf.save();
-        next.sha256SignedPages = NS.audit.sha256(pagesOut);
-        next.workDocId = next.id + '-work';
-        const final = await L.PDFDocument.load(pagesOut);
-        await (NS.record ? NS.record.certify(L, final, next) : appendCertificate(L, final, next));
-        out = await final.save();
-        next.signedDocId = next.id + '-signed';
-        next.sha256Signed = NS.audit.sha256(out);
-        if (NS.record) await NS.record.seal(next, out, final.getPageCount());
-        await files().put(next.workDocId, new Blob([pagesOut], { type: 'application/pdf' }));
-        await files().put(next.signedDocId, new Blob([out], { type: 'application/pdf' }));
-      } else {
-        out = await pdf.save();
-        next.workDocId = next.id + '-work';
-        await files().put(next.workDocId, new Blob([out], { type: 'application/pdf' }));
-        notifyTurn(next);
-      }
-      Object.assign(env, next);
-      logChange(ws, 'Document signed', env, `${me.name} (${roleLabel(me).toLowerCase()})`, actor);
-      if (complete) {
-        const ids = Array.from(new Set(env.signers.filter((s) => s.investorId).map((s) => s.investorId)));
-        ws.docs = ws.docs || [];
-        // Plan 06-34 (walkthrough-2 N1): a tax form finished without the investor's signature (D-30) is not a signed document,
-        // so it is not listed under "Signed documents" with a "_signed" file name; the record and the console say "not signed".
-        const unsignedTax = env.kind === 'tax' && !env.signers.some((s) => s.investorId && fieldsOf(env, s).some((f) => f.type === 'signature' && !!f.value));
-        if (unsignedTax) ids.length = 0;
-        // The portal listing shares the envelope's file; removing the listing keeps the file (see docs-remove below).
-        if (ids.length && !ws.docs.some((d) => d.id === env.signedDocId))
-          ws.docs.push({ id: env.signedDocId, title: env.title, fileName: slug(env.title) + '_signed.pdf', type: 'application/pdf', size: out.length, sha256: env.sha256Signed, cat: env.kind === 'tax' ? 'Tax' : 'Legal', offeringId: env.offeringId || null, audience: 'investors', investors: ids, date: NS.dates.today(), taxYear: '', publishedAt: nowIso(), publishedBy: 'E-sign', envelopeId: env.id });
-        // A subscription signed through this envelope (the offering's subscription agreement template).
-        (ws.requests || []).filter((r) => r.envelopeId === env.id && !r.signedAt).forEach((r) => (r.signedAt = at.replace(/\.\d{3}Z$/, 'Z')));
-        logChange(ws, 'Envelope completed', env, `${env.signers.length} signer${env.signers.length === 1 ? '' : 's'}; signed pages SHA-256 ${env.sha256SignedPages}; signed PDF SHA-256 ${env.sha256Signed}; published to ${ids.length} investor portal${ids.length === 1 ? '' : 's'}`, actor);
-      }
+      const { complete } = await applySignature(env, signer, { vals: st.vals, adopted: st.adopted });
       st.busy = false;
       st.finished = true;
       S().ui.esFocus = '.es-done';
-      // Other modules react to a signature (the investor onboarding flow moves on by itself); one that handles it says so.
-      let handled = false;
-      signedHooks.forEach((fn) => {
-        try {
-          if (fn(env, signerById(env, signer.id), complete) === true) handled = true;
-        } catch (e) {
-          if (window.console) console.error(e);
-        }
-      });
+      const handled = runSignedHooks(env, signer.id, complete);
       NS.app.save(true);
       NS.app.render();
       if (!handled) U.toast(complete ? 'Signed. Everyone has signed; the completed copy was emailed to all parties (simulated).' : 'Signed. The next signer was emailed (simulated).');
@@ -3019,7 +3033,8 @@
   }
 
   /* ---------- Signing inside another page (the investor onboarding flow, onboarding.js) ---------- */
-  const flowSigner = (env, investorId) => (env ? env.signers.find((x) => x.investorId === investorId) || null : null);
+  // Plan 06-39: in a co-investor's sign-in (state.co, set by the onboarding flow) the signer is the co-investor; otherwise the investor.
+  const flowSigner = (env, investorId) => (env ? env.signers.find((x) => x.investorId === investorId && !!x.co === !!S().co) || null : null);
   /** The signing experience for an investor, without the portal page around it. */
   // back: the action of the step's Back (onboarding.js), drawn in the signing guide so it stays on screen beside the progress.
   function embed(envId, investorId, back) {
@@ -3050,6 +3065,104 @@
     addEvent(env, actorFor(s), 'Consent given', `Agreed to use electronic records and signatures (ESIGN Act, UETA)${givenAt ? ` on ${stamp(givenAt)}` : ''}, when starting onboarding, with the disclosures shown on the consent screen`);
     NS.app.save(true);
     return true;
+  }
+  /* ---------- The co-investor signing on their own device (plan 06-39, server mode) ---------- */
+  // A full SSN or EIN, dashed, spaced or nine bare digits (the integration server's own test, 06-38 withholdTins).
+  const TIN = /\b\d{3}-\d{2}-\d{4}\b|\b\d{3} \d{2} \d{4}\b|\b\d{2}-\d{7}\b|(^|\D)\d{9}(\D|$)/;
+  /**
+   * What the co-investor's device is given to sign an agreement that waits for them: the envelope reduced to what signing
+   * needs (every signer's name, order and status; only the co-investor's own places; no events, no other signer's adopted
+   * signature, email or device) and the agreement's current copy. The account investor's taxpayer number never goes (W2): when
+   * another signer's place holds a full SSN or EIN, the copy is made again from the original file with every signed place
+   * stamped except those. Resolves to { template, pdf (a Blob), redacted }.
+   */
+  async function coCopy(ws, envId) {
+    const env = envById(ws, envId);
+    const co = env && env.signers.find((s) => s.co);
+    if (!env || !co) throw new Error('This agreement has no co-investor to sign it.');
+    const tin = (f) => f.signerId !== co.id && typeof f.value === 'string' && TIN.test(f.value);
+    const work = env.workDocId ? await files().get(env.workDocId) : null;
+    if (!work) throw new Error(lostText('the copy of the agreement the investor signed', 'sign'));
+    let pdf = work;
+    const redacted = env.fields.some(tin);
+    if (redacted) {
+      const orig = env.docId ? await files().get(env.docId) : null;
+      if (!orig) throw new Error('The agreement holds a taxpayer number and its original file is not in this browser, so a copy without the number cannot be made for the co-investor.');
+      const L = await pdflib();
+      const doc = await L.PDFDocument.load(new Uint8Array(await orig.arrayBuffer()), { ignoreEncryption: true });
+      const copy = JSON.parse(JSON.stringify(env));
+      copy.fields.forEach((f) => tin(f) && (f.value = ''));
+      for (const s of copy.signers) {
+        if (s.co || s.status !== 'signed') continue;
+        const fonts = await fontsFor(L, doc, fieldsOf(copy, s).map(fieldText));
+        await stampFields(L, doc, copy, s, fonts);
+      }
+      lockOwnFields(L, doc);
+      pdf = new Blob([await doc.save()], { type: 'application/pdf' });
+    }
+    const signer = (s) => Object.assign({ id: s.id, investorId: s.investorId || null, name: s.name, role: s.role, order: s.order, color: s.color, status: s.status, signedAt: s.status === 'signed' ? s.signedAt : null }, s.co ? { co: true, email: s.email, account: s.account || '', viewedAt: s.viewedAt || null, consentAt: s.consentAt || null, declinedReason: '', signature: null, initials: null, userAgent: '' } : {});
+    const template = { id: env.id, title: env.title, fileName: env.fileName, message: env.message || '', pages: env.pages, pageSizes: env.pageSizes || [], status: env.status, sequential: env.sequential !== false, sentAt: env.sentAt || null, docId: null, workDocId: `${env.id}-work`, signers: env.signers.map(signer), fields: env.fields.filter((f) => f.signerId === co.id).map((f) => JSON.parse(JSON.stringify(f))), events: [] };
+    return { template, pdf, redacted };
+  }
+  /** An adopted signature or initials from another device: a PNG picture of bounded size, and its short words only. */
+  function adoptedFrom(x) {
+    if (!x || typeof x !== 'object' || typeof x.png !== 'string' || x.png.length > 600 * 1024 || !/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(x.png)) return null;
+    const out = { png: x.png };
+    Object.keys(x).forEach((k) => k !== 'png' && /^[a-zA-Z]{1,20}$/.test(k) && (typeof x[k] === 'string' ? x[k].length <= 200 : typeof x[k] === 'number' || typeof x[k] === 'boolean') && (out[k] = x[k]));
+    return out;
+  }
+  /**
+   * Plan 06-39: the co-investor signed on their own device (server mode). This console signs its OWN copy of the agreement
+   * for them, with what their device sent (x: status, viewedAt, consentAt, signedAt, signature, initials, userAgent, values
+   * by field id, from: the earliest time allowed): their consent, adopted marks and the values of their own unlocked places.
+   * Nothing else from the device is used, not even its PDF: the stamping is done here on the copy the console holds. Times
+   * are kept between `from` and now, in order. Only for an agreement out for signature whose turn is the co-investor's.
+   * Resolves to { ok, complete } or { ok: false, why }.
+   */
+  async function importSignature(ws, envId, signerId, x) {
+    const env = envById(ws, envId);
+    const s = env ? signerById(env, signerId) : null;
+    if (!env || !s || !s.co) return { ok: false, why: 'the agreement is not in the portal with this co-investor as a signer' };
+    if (env.status !== 'sent') return { ok: false, why: `the agreement is no longer out for signature (${env.status})` };
+    if (s.status === 'signed') return { ok: false, why: `${s.name} has already signed it` };
+    if (!isTurn(env, s)) return { ok: false, why: `it is not ${s.name}'s turn to sign it` };
+    if (!x || x.status !== 'signed') return { ok: false, why: 'it came back unsigned' };
+    const from = isFinite(x.from) ? x.from : 0;
+    const clamp = (t, min) => {
+      const ms = Date.parse(t || '');
+      return new Date(Math.min(Date.now(), Math.max(from, min || 0, isFinite(ms) ? ms : Date.now()))).toISOString();
+    };
+    if (!Date.parse(x.consentAt || '')) return { ok: false, why: 'it has no consent to electronic records and signatures' };
+    const viewed = clamp(x.viewedAt || x.consentAt);
+    const consent = clamp(x.consentAt, Date.parse(viewed));
+    const at = clamp(x.signedAt, Date.parse(consent));
+    const values = x.values && typeof x.values === 'object' ? x.values : {};
+    const vals = {};
+    fieldsOf(env, s).forEach((f) => {
+      if (f.locked || !Object.prototype.hasOwnProperty.call(values, f.id)) return;
+      const v = values[f.id];
+      vals[f.id] = f.type === 'checkbox' || f.type === 'signature' || f.type === 'initials' ? !!v : String(v == null ? '' : v).slice(0, 500);
+    });
+    const adopted = { signature: adoptedFrom(x.signature), initials: adoptedFrom(x.initials) };
+    // A place marked signed with no picture of the mark adopted is left empty (nothing to stamp there).
+    fieldsOf(env, s).forEach((f) => (f.type === 'signature' || f.type === 'initials') && vals[f.id] && !adopted[f.type === 'initials' ? 'initials' : 'signature'] && (vals[f.id] = false));
+    const kept = JSON.stringify(env);
+    const actor = actorFor(s);
+    if (!s.viewedAt) {
+      s.viewedAt = viewed;
+      addEvent(env, actor, 'Viewed', `Opened by ${s.name} on their own device`, viewed);
+    }
+    s.consentAt = consent;
+    addEvent(env, actor, 'Consent given', 'Agreed to use electronic records and signatures (ESIGN Act, UETA) on their own device, with the disclosures shown on the consent screen', consent);
+    try {
+      const r = await applySignature(env, s, { vals, adopted, at, userAgent: String(x.userAgent || '').slice(0, 400) || 'Unknown device' });
+      runSignedHooks(env, s.id, r.complete);
+      NS.app.save(true);
+      return { ok: true, complete: r.complete };
+    } catch (e) {
+      Object.assign(env, JSON.parse(kept));
+      return { ok: false, why: `the signature could not be put on the agreement here (${(e && e.message) || 'unknown error'})` };
+    }
   }
   /** fn(envelope, signer, complete) runs after each signature; return true to replace the default toast. */
   const onSigned = (fn) => signedHooks.push(fn);
@@ -4203,7 +4316,7 @@
   };
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal, firmOnly });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
-  NS.esign = { retire, fileLost, reissueLost, saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, viewPdf, lostText, countersign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
+  NS.esign = { retire, fileLost, reissueLost, saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, coCopy, importSignature, refreshSubscription, canResign, resign, viewPdf, lostText, countersign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
   // How long the upload waits for the reading server before the in-page reading stands (a check may shorten it).
   NS.esign.createFromPdf = createFromPdf;
   NS.esign.SERVER_LIMIT_MS = 330000;
