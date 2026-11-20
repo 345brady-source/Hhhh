@@ -67,8 +67,8 @@
  *                  row's days after the first sale in the state, moved the same way; otherwise due null.
  *                  basis { firstSale, days? }. A confirmed row with noticeRequired false gives none.
  *   state-renewal  on the state's renewsOn. basis { renewsOn, filedOn }
- * The annual and the change reminder stop once rec.ended is set and not after today (the Form D instructions ask for
- * no amendment after the offering terminates). An offering record with no cap or minimum is not laid over the filed
+ * The annual, the change and the state renewal reminders stop once rec.ended is set and not after today (the Form D
+ * instructions ask for no amendment after the offering terminates; a notice is not renewed for an offering that ended). An offering record with no cap or minimum is not laid over the filed
  * figures: a blank in the portal is not a change in the offering.
  * Levels: overdue once today is after the due date; due when the calendar deadline is within the reminder's lead
  * (15 days for a first notice, so from the day of the first sale; 30 for an annual amendment and a renewal), and
@@ -415,13 +415,15 @@
         if (days != null && first) add('state-first', addDays(first, days), { firstSale: first, days }, code);
         else add('state-first', null, { firstSale: first }, code);
       });
-      Object.keys(r.states)
-        .sort()
-        .forEach((code) => {
-          const s = r.states[code];
-          const renewsOn = own(STATES, code) && s ? day(s.renewsOn) : '';
-          if (renewsOn) add('state-renewal', renewsOn, { renewsOn, filedOn: day(s.filedOn) }, code);
-        });
+      // A notice is not renewed for an offering that has ended (F4 (3)); a first notice for a sale before the end still shows.
+      if (!ended)
+        Object.keys(r.states)
+          .sort()
+          .forEach((code) => {
+            const s = r.states[code];
+            const renewsOn = own(STATES, code) && s ? day(s.renewsOn) : '';
+            if (renewsOn) add('state-renewal', renewsOn, { renewsOn, filedOn: day(s.filedOn) }, code);
+          });
     });
     return out;
   }

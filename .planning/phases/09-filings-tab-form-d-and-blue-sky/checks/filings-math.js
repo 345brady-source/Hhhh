@@ -439,6 +439,14 @@ const cases = {
     check('renewal levels: soon within 60 days, due within 30, overdue after', lv('2027-09-20') === 'soon' && lv('2027-10-13') === 'due' && lv('2027-11-12') === 'due' && lv('2027-11-13') === 'overdue', [lv('2027-09-20'), lv('2027-10-13'), lv('2027-11-13')]);
     const p = F.recordState(ws, 'o1', 'CA', { status: 'ordered' });
     check('a state ordered but not yet filed keeps its reminder', !!p && p.filedOn === '' && st(ws, '2026-11-13').some((x) => x.key === 'state-first:o1:CA'), st(ws, '2026-11-13'));
+    // F4 (3): once the offering has ended, no renewal is due; a first notice for a sale made before the end still shows.
+    const ends = (d) => {
+      F.rec(ws, 'o1').ended = d;
+      const out = st(ws, '2027-09-20', { states: table }).map((x) => x.key).join();
+      F.rec(ws, 'o1').ended = '';
+      return out;
+    };
+    check('an offering ended before today, or today, has no renewal reminder; its first notice for a sale before the end still shows; an end date still ahead changes nothing', ends('2026-12-01') === 'state-first:o1:CA' && ends('2027-09-20') === 'state-first:o1:CA' && ends('2028-01-01') === 'state-first:o1:CA,state-renewal:o1:NY', [ends('2026-12-01'), ends('2027-09-20'), ends('2028-01-01')]);
     // Not for an offering outside Rule 506, nor for one marked as not filing.
     const regA = make();
     regA.offerings[0].structure.exemption = 'Regulation A Tier 1';
