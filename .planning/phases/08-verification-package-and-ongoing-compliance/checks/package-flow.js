@@ -20,8 +20,21 @@
 //             records no session; reloading the page clears the line
 //   start-limit three accepted identity starts; the fourth shows "This check was already started." and the firm's
 //             contact as the investor's page holds it; the world holds exactly three sessions; nothing on screen holds 409
+//   phone     the identity step through the package at 390x844 with touch: no sideways scroll, the button is tapped,
+//             the refusal line fits the width, "Open it again" is offered while the check runs, Back is on screen and
+//             leaves the step
+//   preview-desktop, preview-phone  the owner's preview (framed, every connection refused, no server) at 1280x800 and at
+//             390x844 with touch: the frame refuses a fetch; the console's AML/KYC page and an invited investor's identity
+//             step (the firm's own sandbox connection) render their existing text, no package sentence, nothing attempted,
+//             no raw error
+//   leak      the flows identity, refused, start-limit and phone again, everything kept: no investor screen, investor
+//             email or GET /v1/invite reply holds $19, $99, 1900, 9900, tier or entitlement; those plus the console's
+//             screens and GET /v1/connectors and GET /v1/invitations (account token) pass the leak check and the vendor
+//             scan; the new tabs' own addresses are the one place outside the portal and the server; the typed taxpayer
+//             number is in no world record, no server output and no file this part writes; each scan proved first on a
+//             planted copy; the counts scanned are printed
 // Every part ends with the leak scan of the investor's screens it saw (phase 6's leak check and frame.js's vendor scan).
-//   NODE_PATH=$(npm root -g) node package-flow.js [--only identity,refused,start-limit]
+//   NODE_PATH=$(npm root -g) node package-flow.js [--only identity,refused,start-limit,phone,preview-desktop,preview-phone,leak]
 // The last line is "PACKAGE FLOW: PASS (parts run: N)" or "PACKAGE FLOW: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -49,7 +62,13 @@ fs.mkdirSync(SHOTS, { recursive: true });
 Lib.describeShots([
   ['identity-step-desktop.png', 'The investor\'s identity step through the package at 1280x800: "A secure page opens in a new tab for this step."'],
   ['identity-verified-desktop.png', 'The same step after the signed result arrived: Verified, without a reload.'],
-  ['identity-kyc-row.png', 'The console\'s AML/KYC page after the import: the investor\'s identity verified and no matches.']
+  ['identity-kyc-row.png', 'The console\'s AML/KYC page after the import: the investor\'s identity verified and no matches.'],
+  ['identity-step-phone.png', 'The identity step through the package at 390x844 with touch.'],
+  ['identity-refusal-phone.png', 'The same step at 390x844 after the provider refused the start: "This check could not start. Please try again later."'],
+  ['preview-desktop-kyc.png', 'The owner\'s preview (no server, every connection refused) at 1280x800: the console\'s AML/KYC page as before.'],
+  ['preview-desktop-identity.png', 'The owner\'s preview at 1280x800: an invited investor\'s identity step with the firm\'s own sandbox connection, as before.'],
+  ['preview-phone-kyc.png', 'The owner\'s preview at 390x844 with touch: the console\'s AML/KYC page as before.'],
+  ['preview-phone-identity.png', 'The owner\'s preview at 390x844 with touch: an invited investor\'s identity step as before.']
 ]);
 
 const SECURE = 'A secure page opens in a new tab for this step.';
@@ -62,13 +81,14 @@ const WHO = { first: 'Odalys', last: 'Vantongeren', email: 'odalys.vantongeren@e
 const WHO2 = { first: 'Teodor', last: 'Halvorsen', email: 'teodor.halvorsen@example.net' };
 const WHO3 = { first: 'Marisol', last: 'Achterberg', email: 'marisol.achterberg@example.net' };
 const WHO4 = { first: 'Ingrid', last: 'Nakashima', email: 'ingrid.nakashima@example.net' };
+const WHO5 = { first: 'Benedikt', last: 'Oyelaran', email: 'benedikt.oyelaran@example.net' };
 
 /** The console on a sponsor account of the real server, wired to a fresh world. */
 async function boot(S, check) {
   const w = W.world();
   const srv = await W.startServer(S, w, { dir: Lib.OUT });
   const A = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({ acceptDownloads: true }, F.VIEW.desktop) });
-  const C = { S, w, srv, A, cp: A.page, marks: [], closers: [() => A.context.close()] };
+  const C = { S, w, srv, A, cp: A.page, marks: [], investors: [], invited: [], closers: [() => A.context.close()] };
   C.close = async () => {
     for (const c of C.closers.reverse()) await c().catch(() => {});
     await srv.close().catch(() => {});
@@ -138,6 +158,9 @@ async function investor(C, it, who, view) {
     if (f === ip.mainFrame()) B.navs++;
   });
   B.screens = [];
+  B.addresses = [];
+  C.investors.push(B);
+  C.invited.push(who.email.toLowerCase());
   B.keep = async () => B.screens.push(await Lib.screenText(ip));
   await ip.goto(it.link);
   const wk = await Lib.walk(ip, { name: `${who.first} ${who.last}`, until: /Identity verification/ });
@@ -171,6 +194,7 @@ async function startCheck(B, ip, tap) {
   }
   await ip.waitForTimeout(400);
   const address = B.net.external.slice(before).find((u) => /^https:\/\//.test(u)) || '';
+  B.addresses.push(address);
   if (tab && !tab.isClosed()) await tab.close().catch(() => {});
   return { address, opened: !!tab };
 }
@@ -260,8 +284,8 @@ async function packageWord(C, serverId) {
   return row ? row.package || null : null;
 }
 
-const PARTS = {
-  async identity({ check, S }) {
+const FLOWS = {
+  async identity(check, S, sink) {
     const C = await boot(S, check);
     try {
       const it = await sendPackage(C, check, WHO);
@@ -335,10 +359,11 @@ const PARTS = {
       check('no script error in the console or on the investor\'s device', C.A.errors.length === 0 && B.errors.length === 0, { console: C.A.errors, investor: B.errors });
       F.leakFree(check, 'every investor screen of this part', B.screens.join('\n'));
     } finally {
+      await collect(C, sink);
       await C.close();
     }
   },
-  async refused({ check, S }) {
+  async refused(check, S, sink) {
     const C = await boot(S, check);
     try {
       const it = await sendPackage(C, check, WHO2);
@@ -399,10 +424,11 @@ const PARTS = {
       check('no script error on either investor\'s device', B.errors.length === 0 && R.B.errors.length === 0, { a: B.errors, b: R.B.errors });
       F.leakFree(check, 'every investor screen of this part', B.screens.concat(R.B.screens).join('\n'));
     } finally {
+      await collect(C, sink);
       await C.close();
     }
   },
-  async 'start-limit'({ check, S }) {
+  async 'start-limit'(check, S, sink) {
     const C = await boot(S, check);
     try {
       const it = await sendPackage(C, check, WHO4);
@@ -428,9 +454,229 @@ const PARTS = {
       check('no script error on the investor\'s device', B.errors.length === 0, B.errors);
       F.leakFree(check, 'every investor screen of this part', B.screens.join('\n'));
     } finally {
+      await collect(C, sink);
+      await C.close();
+    }
+  },
+  async phone(check, S, sink) {
+    const C = await boot(S, check);
+    try {
+      const it = await sendPackage(C, check, WHO5);
+      const { B, ip, wk } = await investor(C, it, WHO5, 'phone');
+      const size = ip.viewportSize();
+      check('the investor\'s window is 390x844 with touch', size.width === 390 && size.height === 844 && (await ip.evaluate(() => navigator.maxTouchPoints > 0)), size);
+      check('the investor reaches the identity step', wk.reached && /Identity verification/.test(wk.at || ''), wk);
+      let pn = await idPanel(ip);
+      B.screens.push(await Lib.screenText(ip));
+      await ip.locator('#iv-identity').scrollIntoViewIfNeeded();
+      await ip.screenshot({ path: path.join(SHOTS, 'identity-step-phone.png') });
+      check(`the step reads "${SECURE}"`, pn.text.indexOf(SECURE) >= 0, pn.text);
+      check('no sideways scroll on the identity step', await fitsWidth(ip, '#iv-identity'), await widths(ip, '#iv-identity'));
+      C.w.refuseNextSession(402);
+      await startCheck(B, ip, true);
+      pn = await idPanel(ip);
+      B.screens.push(await Lib.screenText(ip));
+      await ip.locator('#iv-identity .iv-refused').scrollIntoViewIfNeeded().catch(() => {});
+      await ip.screenshot({ path: path.join(SHOTS, 'identity-refusal-phone.png') });
+      check(`a tap on the button reaches the server; the refusal line reads "${COULD_NOT_START}"`, C.w.count('session') === 1 && pn.refusal.length === 1 && pn.refusal[0] === COULD_NOT_START, pn.refusal);
+      check('the refusal line fits the width (no sideways scroll)', await fitsWidth(ip, '#iv-identity .iv-refused'), await widths(ip, '#iv-identity .iv-refused'));
+      const st = await startCheck(B, ip, true);
+      pn = await idPanel(ip);
+      B.screens.push(await Lib.screenText(ip));
+      check('a second tap starts the check: one session, its page in a new tab', C.w.sessions.length === 1 && /^https:\/\//.test(st.address), { sessions: C.w.sessions.length });
+      check('while the check runs, "Open it again" is offered', /^https:\/\//.test(pn.again), pn);
+      check('no sideways scroll while the check runs', await fitsWidth(ip, '#iv-identity'), await widths(ip, '#iv-identity'));
+      const back = ip.locator('.ivf-form [data-action=ivf-back]');
+      await back.scrollIntoViewIfNeeded().catch(() => {});
+      const onScreen = await back.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return el.innerText.trim() === 'Back' && r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth && !!hit && (hit === el || el.contains(hit));
+      }).catch(() => false);
+      check('Back is on screen at the end of the step', onScreen);
+      if (onScreen) await back.tap();
+      await ip.waitForTimeout(600);
+      const hd = await Lib.heading(ip);
+      B.screens.push(await Lib.screenText(ip));
+      check('Back leaves the identity step', !!hd && !/Identity verification/.test(hd), hd);
+      noPayment(check, B);
+      worldClean(check, C);
+      check('no script error on the investor\'s device', B.errors.length === 0, B.errors);
+      F.leakFree(check, 'every investor screen of this part', B.screens.join('\n'));
+    } finally {
+      await collect(C, sink);
       await C.close();
     }
   }
+};
+
+/** An element (selector) and the page inside the window's width. */
+const widths = (p, sel) =>
+  p.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    const r = el ? el.getBoundingClientRect() : null;
+    return { found: !!el, left: r ? Math.round(r.left) : null, right: r ? Math.round(r.right) : null, width: innerWidth, page: document.documentElement.scrollWidth };
+  }, sel);
+const fitsWidth = async (p, sel) => {
+  const x = await widths(p, sel);
+  return x.found && x.left >= 0 && x.right <= x.width && x.page <= x.width + 1;
+};
+
+/**
+ * What a flow leaves for the leak part, read before its server closes: the investor's screens, the GET /v1/invite bodies
+ * the investor's browser received (with its invitation token) and the addresses its new tabs went to; the emails the server
+ * holds for the invited investors; the console's Investors and AML/KYC screens; GET /v1/connectors and GET /v1/invitations
+ * with the account's token; the server's event log; the world's record.
+ */
+async function collect(C, sink) {
+  if (!sink) return;
+  try {
+    C.investors.forEach((B) => {
+      sink.investor.push(...B.screens);
+      sink.replies.push(...B.replies);
+      sink.addresses.push(...B.addresses);
+    });
+    const mail = await C.srv.call('GET', '/v1/outbox?workspace=kestrel-bay', undefined, C.srv.token);
+    ((mail.body && mail.body.messages) || [])
+      .filter((m) => C.invited.indexOf(String(m.to || '').toLowerCase()) >= 0)
+      .forEach((m) => sink.emails.push([m.subject, m.text, String(m.html || '').replace(/<[^>]*>/g, ' ')].join('\n')));
+    for (const [hash, sel] of [['console-investors', '[data-action=invite-toggle]'], ['console-kyc', '[data-action=kyc-tab]']]) {
+      await Lib.consoleRoute(C.cp, hash, sel);
+      sink.console.push(await Lib.screenText(C.cp));
+    }
+    sink.sponsor.push((await C.srv.call('GET', '/v1/connectors', undefined, C.srv.token)).text);
+    sink.sponsor.push((await C.srv.call('GET', '/v1/invitations?workspace=kestrel-bay', undefined, C.srv.token)).text);
+    sink.events.push(JSON.stringify(C.srv.server.store.list('events')));
+    sink.calls.push(JSON.stringify(C.w.calls));
+  } catch (e) {
+    sink.errors.push(String(e && e.message));
+  }
+}
+const newSink = () => ({ investor: [], replies: [], addresses: [], emails: [], console: [], sponsor: [], events: [], calls: [], errors: [] });
+
+/**
+ * The owner's preview (view: 'desktop' | 'phone'): the portal framed with every connection refused and no server. The
+ * console's AML/KYC page and an invited investor's identity step (the firm's own sandbox connection) render as before.
+ */
+async function preview(check, S, view) {
+  const { A, fr } = await F.framed(S, view);
+  try {
+    const size = A.page.viewportSize();
+    const tap = view === 'phone';
+    check(`the window is ${F.VIEW[view].viewport.width}x${F.VIEW[view].viewport.height}${tap ? ' with touch' : ''}`, size.width === F.VIEW[view].viewport.width && size.height === F.VIEW[view].viewport.height && (await fr.evaluate(() => navigator.maxTouchPoints > 0)) === tap, size);
+    await F.proveRefused(check, A, fr);
+    const portal = await Lib.setupPortal(S, { page: fr, context: A.context });
+    check('no integration server is connected', (await fr.evaluate(() => window.CVPortal.invitations.serverOn(window.CVPortal.state.ws))) === false);
+    await Lib.consoleRoute(fr, 'console-kyc', '[data-action=kyc-tab]');
+    const kyc = await F.noRawError(check, fr, 'the console\'s AML/KYC page');
+    await A.page.screenshot({ path: path.join(SHOTS, `preview-${view}-kyc.png`) });
+    check('the AML/KYC page renders its existing text', /AML\/KYC/.test(kyc) && kyc.indexOf('Identity verification, sanctions and PEP screening and accredited investor checks run automatically') >= 0 && kyc.indexOf(SECURE) < 0, kyc.slice(0, 400));
+    const who = { name: 'Rosalind Achebe', email: 'rosalind.achebe@example.net' };
+    const inv = await Lib.createInvitation(fr, { name: who.name, email: who.email, type: 'individual', account: '', offeringId: portal.offeringId });
+    await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+    const wk = await Lib.walk(fr, { name: who.name, until: /Identity verification/ });
+    check('an invited investor reaches the identity step', wk.reached && /Identity verification/.test(wk.at || '') && wk.errors.length === 0, wk);
+    const pn = await idPanel(fr);
+    const step = await F.noRawError(check, fr, 'the identity step');
+    await fr.locator('#iv-identity').scrollIntoViewIfNeeded().catch(() => {});
+    await A.page.screenshot({ path: path.join(SHOTS, `preview-${view}-identity.png`) });
+    check('the identity step renders its existing text (the firm\'s own sandbox connection), with no package sentence', pn.text.indexOf('Take a photo of your government-issued ID') >= 0 && pn.text.indexOf('This portal is in sandbox mode: the check is simulated.') >= 0 && pn.button === 'Verify my identity' && pn.text.indexOf(SECURE) < 0 && pn.refusal.length === 0, pn);
+    check('nothing outside the page was asked for', A.net.external.length === 0 && A.net.allowed.length === 0, A.net);
+    F.leakFree(check, 'every screen of this part', [kyc, step].join('\n'));
+  } finally {
+    await A.context.close().catch(() => {});
+  }
+}
+
+/* ---------- Plan-check W (08-07) and W1 (wave 5): what the investor reads holds no price; nothing holds the TIN ---------- */
+// A price, a tier or an entitlement, as the investor could read them (amounts such as $190,000 are not prices).
+const PRICE_RE = [/\$19(?![\d,])/, /\$99(?![\d,])/, /(^|[^\d])1900(?!\d)/, /(^|[^\d])9900(?!\d)/, /\btiers?\b/i, /\bentitlements?\b/i];
+const PRICE_WORDS = ['$19', '$99', '1900', '9900', 'tier', 'entitlement'];
+function priceScan(text) {
+  const hits = String(text || '')
+    .split('\n')
+    .filter((l) => PRICE_RE.some((re) => re.test(l)))
+    .map((l) => l.trim().slice(0, 160));
+  return { ok: hits.length === 0, hits };
+}
+/** A GET /v1/invite body as text, without the documents' bytes (base64 holds digits at random). */
+function inviteText(raw) {
+  try {
+    return JSON.stringify(JSON.parse(raw), (k, v) => (k === 'base64' || k === 'pdf' ? '' : v));
+  } catch (e) {
+    return String(raw || '');
+  }
+}
+// The taxpayer number phase 6's walk types (lib.js walk: a.tin || '123456789'); read from that file, never typed here.
+const TIN = (() => {
+  const src = fs.readFileSync(path.join(Lib.ROOT, '.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js'), 'utf8');
+  const m = src.match(/#ob-tin', a\.tin \|\| '(\d{9})'/);
+  return m ? m[1] : '';
+})();
+const holdsTin = (text) => !!TIN && String(text || '').indexOf(TIN) >= 0;
+
+async function leak({ check, S }) {
+  // The scans proved first: a planted vendor word (frame.js), a planted price, a planted taxpayer number in a file.
+  F.proveScan(check);
+  const planted = ['Add verification package ($19)', 'Your package tier: full', 'Charged 9900 cents'];
+  check('the price scan catches a planted "$19", a tier and an amount in cents, and passes a clean screen', planted.every((t) => !priceScan(t).ok) && priceScan('Minimum investment $100,000\nSubscription of $190,000.00 submitted').ok, planted.map((t) => priceScan(t).ok));
+  const O = path.dirname(Lib.OUT);
+  const plantFile = path.join(O, `package-flow-planted-${process.pid}.txt`);
+  fs.writeFileSync(plantFile, `planted copy: ${TIN}\n`);
+  check('the taxpayer-number scan finds the number in a planted copy of a file', TIN.length === 9 && holdsTin(fs.readFileSync(plantFile, 'utf8')));
+  fs.rmSync(plantFile, { force: true });
+
+  // The four flows the investor sees, their screens, emails and replies kept; everything the process prints captured.
+  const sink = newSink();
+  let printed = '';
+  const out = process.stdout.write.bind(process.stdout);
+  const err = process.stderr.write.bind(process.stderr);
+  process.stdout.write = (c, ...a) => {
+    printed += String(c);
+    return out(c, ...a);
+  };
+  process.stderr.write = (c, ...a) => {
+    printed += String(c);
+    return err(c, ...a);
+  };
+  try {
+    for (const f of ['identity', 'refused', 'start-limit', 'phone']) await FLOWS[f](check, S, sink);
+  } finally {
+    process.stdout.write = out;
+    process.stderr.write = err;
+  }
+  check('everything the flows left was read before their servers closed', sink.errors.length === 0, sink.errors);
+  // Test-only: PACKAGE_FLOW_PLANT=price adds a price to one investor screen, to show this part failing on a planted copy.
+  if (process.env.PACKAGE_FLOW_PLANT === 'price') sink.investor.push('Your verification package ($19) is paid.');
+  const replies = sink.replies.map(inviteText);
+  check(`scanned ${sink.investor.length} investor screens, ${sink.emails.length} investor emails, ${replies.length} GET /v1/invite replies, ${sink.console.length} console screens, ${sink.sponsor.length} account replies (each above zero)`, sink.investor.length > 0 && sink.emails.length > 0 && replies.length > 0 && sink.console.length > 0 && sink.sponsor.length > 0);
+  for (const [label, texts] of [['investor screens', sink.investor], ['investor emails', sink.emails], ['GET /v1/invite replies (investor token)', replies]]) {
+    const p = priceScan(texts.join('\n'));
+    check(`${label}: none of ${PRICE_WORDS.join(', ')}`, p.ok, p.hits);
+    F.leakFree(check, label, texts.join('\n'));
+  }
+  F.leakFree(check, 'console screens', sink.console.join('\n'));
+  F.leakFree(check, 'GET /v1/connectors and GET /v1/invitations (account token)', sink.sponsor.join('\n'));
+  const own = [new URL(S.origin).origin];
+  check(`the new tabs' own addresses (${sink.addresses.filter(Boolean).length}) are the one place outside the portal and the server: https, on neither origin`, sink.addresses.filter(Boolean).length > 0 && sink.addresses.filter(Boolean).every((a) => /^https:\/\//.test(a) && own.indexOf(new URL(a).origin) < 0 && !/^https?:\/\/(127\.0\.0\.1|localhost)/.test(a)), sink.addresses.length);
+  // W1: the typed taxpayer number appears in no world record, no server output (event log, anything printed) and no file this part writes.
+  const record = path.join(O, 'package-flow-leak.txt');
+  fs.writeFileSync(record, [`PACKAGE FLOW leak part, ${new Date().toISOString()}`, `investor screens ${sink.investor.length}`, `investor emails ${sink.emails.length}`, `GET /v1/invite replies ${replies.length}`, `console screens ${sink.console.length}`, `account replies ${sink.sponsor.length}`, `new tab addresses ${sink.addresses.filter(Boolean).length}`, `world calls ${sink.calls.map((c) => JSON.parse(c).length).join(' + ')}`].join('\n') + '\n');
+  check('the typed taxpayer number is in no world record', sink.calls.length > 0 && !sink.calls.some(holdsTin));
+  check('the typed taxpayer number is in no server output (event log, anything this process printed)', sink.events.length > 0 && !sink.events.some(holdsTin) && !holdsTin(printed));
+  check('the typed taxpayer number is in no file this part writes', !holdsTin(fs.readFileSync(record, 'utf8')));
+  check('no call left this machine outside the stand-in world over all four flows', outside.length === 0, outside);
+}
+
+const part = (f) => ({ check, S }) => FLOWS[f](check, S, null);
+const PARTS = {
+  identity: part('identity'),
+  refused: part('refused'),
+  'start-limit': part('start-limit'),
+  phone: part('phone'),
+  'preview-desktop': ({ check, S }) => preview(check, S, 'desktop'),
+  'preview-phone': ({ check, S }) => preview(check, S, 'phone'),
+  leak
 };
 
 Lib.runParts(PARTS, { name: 'PACKAGE FLOW', unit: 'parts', flag: '--only', browser: true });
