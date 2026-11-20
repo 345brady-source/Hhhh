@@ -1,10 +1,44 @@
 ---
 phase: 08-verification-package-and-ongoing-compliance
 plan: 07
-status: in-progress
+subsystem: verification-package (investor side)
+tags: [package, identity, screening, white-label, refusals, stand-ins]
+status: complete
+requires: [08-02, 08-05, 08-06, 08-13, 08-15, 08-16]
+provides:
+  - "checks/doubles/world.js: world() (payment and identity providers as one injected fetch, signed deliveries) and startServer() (the real server, a sponsor account, a card on file, the accredit stand-in), for 08-18, 08-19, 08-08, 08-20"
+  - "checks/doubles/accredit.mjs: the stand-in accreditation provider"
+  - "checks/package-flow.js: GATE CHECK PACKAGE FLOW, 7 parts"
+  - "integrations.js: the neutral package sentence; api keeps the server's sentence, status and code; the refusal line with the firm's contact; a package connection screens through the server"
+affects: [08-17, 08-18, 08-19, 08-08, 08-20, 08-12]
+tech-stack:
+  added: []
+  patterns: ["checks own an in-process server with an injected fetch world; every outside call refused and recorded"]
+key-files:
+  created:
+    - .planning/phases/08-verification-package-and-ongoing-compliance/checks/package-flow.js
+    - .planning/phases/08-verification-package-and-ongoing-compliance/checks/doubles/world.js
+    - .planning/phases/08-verification-package-and-ongoing-compliance/checks/doubles/accredit.mjs
+  modified:
+    - assets/js/integrations.js
+decisions:
+  - "A package connection never uses the screening carried on the identity decision: its names are screened through the server so the import confirms them"
+  - "A refusal line under the step's button holds the server's sentence; 403 and 409 add 'Contact <team> at <email>.' from the workspace; kept in memory only"
+metrics:
+  started: "2026-11-20 15:22 UTC (step 0)"
+  completed: "2026-11-20 (owner's screens run after the gate)"
+  duration: "about 2 h 50 min, most of it waiting for the shared browser queue"
+actuals:
+  tokens: 16100
+  tasks: 3
+  commits: 13
+plan_head_before: 38ffa1203e1438a640a975df6de4f44f02cd997f
+plan_head_after: 560c49f0ddf11ee5787605a5477650e47817e5bd
 ---
 
-# Phase 8 Plan 07 (draft, filled in as evidence is produced)
+# Phase 8 Plan 07: the verification package from the investor's side, proven end to end against stand-ins
+
+One line: a sponsor ticks the box, the stand-in payment provider takes $19, the investor verifies identity inside onboarding through the package on a page in a new tab (the step names no one), the signed result returns, the invitation's names are screened through the package, the console imports a verified, screened investor; every refusal is the server's own plain sentence, with the firm's contact where it cannot be retried. Proven against stand-ins only: no real provider has confirmed anything (08-12 does that). Not done until the owner has checked it.
 
 ## Step 0 (base, measured)
 - base commit 38ffa1203e1438a640a975df6de4f44f02cd997f
@@ -117,3 +151,23 @@ Accreditation provider (checks/doubles/accredit.mjs):
 8. Settings ACCREDIT_API_KEY and ACCREDIT_SECRET.
 9. The investor works on the provider's own page in a new tab; submitting leaves the check pending; the result arrives later (days) and is read back by the server.
 10. A verified result carries an expiry 90 days ahead, the method "Third-party verification letter" and one letter the server downloads as a PDF; a rejected result carries a one-line detail.
+
+## After the gate
+- One check-only change after the gate (560c49f): the owner's AML/KYC screenshot scrolls the investor's row into view and waits for the import's notices to fade (the first screenshot showed other investors under three notices). No assertion changed. Proven by a full run of the check afterwards: `PACKAGE FLOW: PASS (parts run: 7)` ($O/owner-shots.txt). The full phase gate itself ran on eb47bca, not rerun for this change.
+- Gate outputs deleted as the plan says ($O/base-tree, $O/checks-out, $O/shots, $O/owner).
+- The owner's screens, kept for the orchestrator's walkthrough, with index.txt: /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/exec-08-07/owner-shots (identity step at 1280x800 and at 390x844, the step after the result arrived, the refusal line at 390x844, the AML/KYC row after the import, and the owner's preview's AML/KYC page and sandbox identity step at both sizes).
+- Owner check still owed (human-check of the plan): in the published preview on the iPhone, an investor's identity step and Console, AML/KYC look as before, with no error text, and Back leaves the step. The package's own step needs a connected portal; 08-12 shows it with the real providers.
+
+## Out of scope, seen during the gate
+- Phase 6's FORMS FLOW reference check prints a stand-in foreign tax ID (a test value, line 6a of the W-8BEN) in one PASS line of its output (forms.txt). Not this plan's file; listed for the orchestrator.
+- The investor's chip reads "Verified· Identity check" (no space before the dot) on desktop; pre-existing styling of the chip, not changed here.
+
+## Known stubs
+None. The stand-ins are test-only (checks/doubles/); no product file holds a stand-in value.
+
+## Threat flags
+None beyond the plan's threat model (no new route, no new outside address; the browser now shows the server's own refusal sentences, which the server writes without provider text, except the 5xx path noted above).
+
+## Self-Check: PASSED
+- FOUND: checks/package-flow.js, checks/doubles/world.js, checks/doubles/accredit.mjs, assets/js/integrations.js
+- FOUND in history and on origin/wip/08-07 (head 560c49f): 93c1724 e78f1db 0201466 f4e23ed 75f767b 2ee8b7e ae4c2c2 b2572d4 f08cc49 0d3561f eb47bca b6e88a3 560c49f
