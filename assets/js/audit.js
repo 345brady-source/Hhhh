@@ -177,12 +177,12 @@
     return inv.positions.filter((p) => p.offeringId === o.id).reduce((a, p) => a + Math.round((p.commitment != null ? p.commitment : p.amount) * 100), 0);
   }
 
-  function ledger(ws, o) {
-    // A fund that is not a sample fund reads its journal, which only grows (a reversal is a new entry): its length is in
-    // the key, so an entry posted after the engine was read is seen without clearing the caches.
-    const fb = ws.books && ws.books.funds && ws.books.funds[o.id];
-    const ckey = ws.tenant.id + ':' + o.id + (generated(o) ? '' : ':' + ((fb && fb.journal) || []).length);
-    if (cache.has(ckey)) return cache.get(ckey);
+  /**
+   * The fund's money events, with no allocation: { S, invs, contribs, dists, strays, gpRuns, now }. gpRuns[investorId]
+   * lists the general partner's cash paid with each paid distribution (run.gp) as { date, cents }: each run's share is
+   * split over its lines' gross amounts with largest(), so the shares add up to run.gp exactly.
+   */
+  function events(ws, o) {
     const S = settings(o);
     const now = D.today();
     const invs = ws.investors.filter((i) => i.positions.some((p) => p.offeringId === o.id));
@@ -225,6 +225,29 @@
         });
       });
 
+    const gpRuns = {};
+    ws.runs
+      .filter((r) => r.offeringId === o.id && NS.data.runPaid(r, now) && r.gp > 0)
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : 1))
+      .forEach((run) => {
+        const rows = NS.data.runRows(ws, run).filter((row) => row.cents > 0);
+        const shares = largest(Math.round(run.gp), rows.map((row) => row.cents));
+        rows.forEach((row, n) => {
+          if (shares[n]) (gpRuns[row.investor.id] = gpRuns[row.investor.id] || []).push({ date: run.date, cents: shares[n] });
+        });
+      });
+    return { S, invs, contribs, dists, strays, gpRuns, now };
+  }
+
+  function ledger(ws, o) {
+    // A fund that is not a sample fund reads its journal, which only grows (a reversal is a new entry): its length is in
+    // the key, so an entry posted after the engine was read is seen without clearing the caches.
+    const fb = ws.books && ws.books.funds && ws.books.funds[o.id];
+    const ckey = ws.tenant.id + ':' + o.id + (generated(o) ? '' : ':' + ((fb && fb.journal) || []).length);
+    if (cache.has(ckey)) return cache.get(ckey);
+    const { S, now, invs, contribs, dists, strays, gpRuns } = events(ws, o);
+
     const L = { o, S, invs, contribs, dists, strays, redemptions: [], keys: [], months: [], byKey: {}, prices: {}, exitKey: null, inception: contribs.length ? contribs[0].date : null };
     cache.set(ckey, L);
     if (!contribs.length) return L;
@@ -242,13 +265,25 @@
     const gen = generated(o);
     const R = rng(hashStr(o.id + ':returns'));
     const ret = {};
+    // Opening balances (a fund that existed before its books), for a fund that is not a sample fund: the live entry
+    // 'open:<offeringId>' sets, at the end of the month holding its date (the first month when earlier), each investor's
+    // capital to minus their 3900 lines in it; the difference from the capital worked out is that month's gain.
+    const openCap = {};
+    let openKey = null;
     if (!gen) {
       const B = NS.books;
       const f = ws.books && ws.books.funds && ws.books.funds[o.id];
       const zero = () => L.keys.map(() => 0);
       let incM = zero();
       let gainM = zero();
-      if (B && f && Array.isArray(f.journal) && f.journal.length) {
+      const op = B && f && Array.isArray(f.journal) && L.keys.length ? B.live(f, 'open:' + o.id) : null;
+      if (op && Array.isArray(op.lines) && keyOf(op.date) <= L.keys[L.keys.length - 1]) {
+        op.lines.forEach((l) => {
+          if (Array.isArray(l) && String(l[0]) === '3900' && l[2]) openCap[l[2]] = (openCap[l[2]] || 0) - l[1];
+        });
+        openKey = keyOf(op.date) < L.keys[0] ? L.keys[0] : keyOf(op.date);
+      }
+      if (B && f && Array.isArray(f.journal) && f.journal.length && L.keys.length) {
         const accts = B.accounts(ws, o.id);
         const incCodes = accts.filter((a) => a.type === 'income' || (a.type === 'expense' && a.code !== '5000')).map((a) => a.code);
         const gainCodes = accts.filter((a) => a.type === 'gain').map((a) => a.code);
@@ -322,14 +357,10 @@
     invs.forEach((i) => (flowsBy[i.id] = []));
     contribs.forEach((c) => flowsBy[c.inv.id].push({ date: c.date, cents: -c.cents }));
     dists.forEach((d) => flowsBy[d.inv.id].push({ date: d.date, cents: d.cents }));
-    const gpPaidBy = {};
-    ws.runs
-      .filter((r) => r.offeringId === o.id && NS.data.runPaid(r, now) && r.gp > 0)
-      .forEach((run) =>
-        NS.data.runRows(ws, run).forEach((row) => {
-          if (row.cents > 0 && flowsBy[row.investor.id]) (gpPaidBy[row.investor.id] = gpPaidBy[row.investor.id] || []).push({ date: run.date, cents: Math.round((run.gp * row.cents) / run.total) });
-        })
-      );
+    // (each run's shares add up to run.gp exactly; gBy holds each investor's share paid in each month, for F-3 below)
+    const gpPaidBy = gpRuns;
+    const gBy = {};
+    Object.keys(gpRuns).forEach((id) => gpRuns[id].forEach((x) => (gBy[id + '|' + keyOf(x.date)] = (gBy[id + '|' + keyOf(x.date)] || 0) + x.cents)));
     const upTo = (arr, end) => (arr || []).filter((f) => f.date <= end);
     // Side pocket (open-ended funds): investors at its creation share it; it has its own valuation.
     const SPc = S.open && S.sidePocket && S.sidePocket.created ? S.sidePocket : null;
@@ -370,7 +401,7 @@
         if (baseSum > 0) held.income = held.gain = 0;
       }
       const rows = {};
-      const F = { key: k, end, begin: 0, contrib: 0, dist: 0, income: 0, gain: 0, fee: 0, carry: 0, gpOut: 0, endCap: 0, gpBegin: 0, gpEnd: 0, sp: 0, r };
+      const F = { key: k, end, begin: 0, contrib: 0, dist: 0, income: 0, gain: 0, fee: 0, carry: 0, gpOut: 0, gpRun: 0, endCap: 0, gpBegin: 0, gpEnd: 0, sp: 0, r };
       invs.forEach((i, n) => {
         const s = st[i.id];
         const c = cBy[i.id + '|' + k] || 0;
@@ -399,8 +430,11 @@
         const fee = s.firstKey ? Math.round((feeBase * rate) / 12) : 0;
         if (S.open) s.hwm += c - d;
         const prevA = s.carry;
-        let pre = beginMain + c - d + inc + gain - fee + prevA;
-        let A = prevA;
+        // F-3: the general partner's cash paid with a distribution this month (g) is its distribution now: it leaves the
+        // capital before carry and, outside a waterfall month, the share accrued so far. Without g nothing changes.
+        const g = gBy[i.id + '|' + k] || 0;
+        let pre = beginMain + c - d + inc + gain - fee + prevA - g;
+        let A = g ? Math.max(0, prevA - g) : prevA;
         let out = 0;
         let hurdle = null;
         let profit = null;
@@ -423,14 +457,22 @@
             A = Math.max(0, Math.min(pre, w.gp));
           }
         }
+        // What crystallizes this month (an exit, December of an open-ended fund) resets the accrued share; g never does.
+        const crystal = out;
+        out += g;
         let endCap = pre - A;
         if (endCap < 0) {
           gain -= endCap;
           endCap = 0;
         }
-        const carryChg = A - prevA;
-        s.carry = out ? 0 : A;
-        if (S.open && mNum === 12 && out > 0) s.hwm = endCap;
+        // Opening balances: the capital the opening entry gives replaces the capital worked out; the difference is gain.
+        if (k === openKey && openCap[i.id] != null) {
+          gain += openCap[i.id] - endCap;
+          endCap = openCap[i.id];
+        }
+        const carryChg = A - prevA + g;
+        s.carry = crystal ? 0 : A;
+        if (S.open && mNum === 12 && crystal > 0) s.hwm = endCap;
         // Side pocket created this month: part of each existing investor's capital moves into it.
         if (spKey === k && endCap > 0) {
           const x = Math.round(endCap * spFrac);
@@ -464,6 +506,7 @@
         F.fee += fee;
         F.carry += carryChg;
         F.gpOut += out;
+        F.gpRun += g;
         F.endCap += endCap + s.sp;
         F.gpBegin += prevA;
         F.gpEnd += s.carry;
@@ -1530,6 +1573,7 @@
     FEE_BASIS,
     settings,
     generated,
+    events,
     ledger,
     period,
     presets,
