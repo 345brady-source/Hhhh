@@ -202,50 +202,96 @@
     const start = startOf(ws, o.id);
     const after = (x) => !start || x.date >= start;
     const kept = entries.filter(after).sort(byDateSrc);
-    const unbalanced = NS.audit.generated(o) ? sample(ws, o, L, kept, flag, after) : [];
+    const held = new Set(flagged.filter((x) => x.held && after(x)).map((x) => x.item.src));
+    const unbalanced = NS.audit.generated(o) ? sample(ws, o, L, kept, flag, after, held) : [];
     kept.sort(byDateSrc);
     const fl = flagged.filter(after);
     return { entries: kept, unbalanced, notes: fl.map((x) => x.item), hold: new Set(fl.filter((x) => x.held).map((x) => x.item.src)) };
   }
 
   /**
+   * What the fund's journal holds once sync has run, other than sample entries: every live entry a person or another
+   * module made (mark:, bank:, man:, open:, any prefix this module does not own), and for each record this module posts
+   * the entry sync leaves live (the one in list, or the live one when its period is closed or its record is held).
+   */
+  function projected(ws, o, list, hold) {
+    const f = ws.books && ws.books.funds && ws.books.funds[o.id];
+    const j = f && Array.isArray(f.journal) ? f.journal : [];
+    const reversed = new Set();
+    j.forEach((e) => e && e.rev && reversed.add(e.rev));
+    const ct = B.closedThrough(ws, o.id);
+    const closed = (date) => !!ct && date <= ct;
+    const out = [];
+    const mine = new Map();
+    j.forEach((e) => {
+      if (!e || e.rev || reversed.has(e.id) || !Array.isArray(e.lines) || typeof e.date !== 'string') return;
+      const src = typeof e.src === 'string' ? e.src : '';
+      if (!MANAGED.test(src)) out.push(e);
+      else if (!/^sim:/.test(src) && !mine.has(src)) mine.set(src, e);
+    });
+    const want = new Set();
+    list.forEach((d) => {
+      want.add(d.src);
+      const cur = mine.get(d.src);
+      if (cur && cur.date === d.date && same(cur.lines, d.lines)) return out.push(cur);
+      if ((cur && closed(cur.date)) || closed(d.date)) return cur && out.push(cur);
+      out.push(d);
+    });
+    mine.forEach((cur, src) => !want.has(src) && (hold.has(src) || closed(cur.date)) && out.push(cur));
+    return out.sort(byDateSrc);
+  }
+
+  /**
    * A sample fund (NS.audit.generated): one entry per month k of the engine's ledger, dated endOf(k), src
    * sim:<offeringId>:<k>. It credits the generator's income (4090) and gain (6100) and moves each balance-sheet account to
    * the balance the Audit page shows at that month-end (the holdings of NS.audit.period for the month): the line is the
-   * target less the account's balance over every other entry of the fund dated on or before endOf(k), earlier sample
-   * entries included. Zero lines are left out. An entry whose lines do not sum to zero is not added: it is returned as
-   * { src, sum } and listed for a person to look at. No line is ever added to make it balance.
-   * Adds to list (the fund's other entries, in date order); returns the unbalanced items.
+   * target less the account's balance at endOf(k) over every live entry of the fund other than sample entries for month k
+   * and later (11-CONTEXT W1: what sync leaves in the journal, so entries a person made count too). Zero lines are left
+   * out. An entry whose lines do not sum to zero is not added: it is returned as { src, sum } and listed for a person to
+   * look at. No line is ever added to make it balance. A month on or before the last closed month-end keeps its live
+   * sample entry, which later months count. Adds to list (the fund's other entries); returns the unbalanced items.
    */
-  function sample(ws, o, L, list, flag, after) {
+  function sample(ws, o, L, list, flag, after, hold) {
     const unbalanced = [];
     if (!L.keys.length) return unbalanced;
     const CODES = ['1000', '1100', '1150', '2300', '2100', '2200', '2500', '2600'];
     const bal = {};
     CODES.forEach((c) => (bal[c] = 0));
-    const base = list.slice().sort(byDateSrc);
+    const move = (lines) => lines.forEach((l) => bal[l[0]] !== undefined && (bal[l[0]] += l[1]));
+    const base = projected(ws, o, list, hold);
+    const ct = B.closedThrough(ws, o.id);
+    const closed = (date) => !!ct && date <= ct;
+    const liveSim = new Map();
+    liveManaged(ws, o.id).forEach((e, src) => /^sim:/.test(src) && liveSim.set(src, e));
     let at = 0;
     L.keys.forEach((k) => {
       const end = endOf(k);
-      for (; at < base.length && base[at].date <= end; at++) base[at].lines.forEach((l) => bal[l[0]] !== undefined && (bal[l[0]] += l[1]));
+      for (; at < base.length && base[at].date <= end; at++) move(base[at].lines);
+      const src = `sim:${o.id}:${k}`;
+      const cur = liveSim.get(src);
+      // A closed month: the journal keeps its live sample entry (sync lists any difference); later months count it.
+      const keep = closed(end) || (cur && closed(cur.date));
       const F = L.byKey[k];
       const H = NS.audit.period(ws, o, k + '-01', end).hold;
       const target = { 1000: H.cash, 1100: H.longCost, 1150: H.longFV - H.longCost, 2300: -H.shortFV, 2100: -H.feePayable, 2200: -H.redemptionsPayable, 2500: -H.debt, 2600: 0 };
       const lines = [ln('4090', -F.income), ln('6100', -F.gain)];
       CODES.forEach((c) => lines.push(ln(c, target[c] - bal[c])));
       const kept = lines.filter((l) => l[1] !== 0);
-      if (!kept.length) return;
-      const src = `sim:${o.id}:${k}`;
       const e = { src, date: end, memo: `Sample fund: ${monthLabel(k)}`, lines: kept };
-      if (!after(e)) return;
-      const sum = kept.reduce((a, l) => a + l[1], 0);
-      if (sum !== 0 || kept.some((l) => !Number.isSafeInteger(l[1]))) {
-        unbalanced.push({ src, sum });
-        flag(end, { src, kind: 'unbalanced', cents: sum });
-        return;
+      let ok = false;
+      if (kept.length && after(e)) {
+        const sum = kept.reduce((a, l) => a + l[1], 0);
+        if (sum !== 0 || kept.some((l) => !Number.isSafeInteger(l[1]))) {
+          unbalanced.push({ src, sum });
+          flag(end, { src, kind: 'unbalanced', cents: sum });
+        } else {
+          list.push(e);
+          ok = true;
+        }
       }
-      list.push(e);
-      kept.forEach((l) => bal[l[0]] !== undefined && (bal[l[0]] += l[1]));
+      if (keep) {
+        if (cur) move(cur.lines);
+      } else if (ok) move(kept);
     });
     return unbalanced;
   }

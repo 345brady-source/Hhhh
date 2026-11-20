@@ -184,9 +184,15 @@ const cases = {
     const o = ws.offerings.find((x) => x.id === 'kb-fund-ii');
     sync(NS, ws);
     check('Kestrel Bay fund ii has no open call and no commitment left to call', !(ws.calls || []).some((c) => c.offeringId === o.id && c.items.some((it) => !it.received)) && NS.ops.issueCall(ws, o, { pct: 0.01, due: '2026-12-15' }) === null);
+    const june0 = liveOf(ws, o.id).find((e) => e.src === `sim:${o.id}:2026-06`);
     NS.books.post(ws, o.id, { src: 'man:check-1', date: '2026-06-15', memo: 'Investment bought', lines: [['1100', 1234567], ['1000', -1234567]] }, { by: 'Check Runner', at: AT });
     const r = sync(NS, ws);
-    check('kb-fund-ii, an entry made by hand in June 2026: sync reversed and posted the sample entries from June on (5)', r.reversed === 5 && r.posted === 5, r);
+    // June's sample entry takes the entry made by hand back out of 1000 and 1100; later months count June's new entry, so
+    // their own entries are unchanged.
+    const june = liveOf(ws, o.id).find((e) => e.src === `sim:${o.id}:2026-06`);
+    const amt = (e, code) => (e ? e.lines.filter((l) => l[0] === code).reduce((a, l) => a + l[1], 0) : NaN);
+    const moved = !!june0 && !!june && june0.id !== june.id && amt(june, '1000') - amt(june0, '1000') === 1234567 && amt(june, '1100') - amt(june0, '1100') === -1234567;
+    check("kb-fund-ii, an entry made by hand in June 2026: sync reversed and posted June's sample entry only, now 1000 +1,234,567 and 1100 -1,234,567 against before", r.reversed === 1 && r.posted === 1 && moved, { r, before: june0 && june0.lines, after: june && june.lines });
     show(check, 'kb-fund-ii ties at every month-end after the entry made by hand (T3, 1000, 1100 + 1150, 2100, the trial balance)', tie(NS, ws, o));
     const again = sync(NS, ws);
     check('kb-fund-ii: a further sync changes nothing', again.posted === 0 && again.reversed === 0, again);
