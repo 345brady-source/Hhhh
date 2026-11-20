@@ -70,3 +70,23 @@ REPORTS XLSX: PASS (cases run: 1)
 VERIFY-1 EXIT=0
 ```
 Tracer feedback gate: verify rerun end to end and passed; expansion continued. The st-capital PDF text for FA-1001 was also read by eye (capital table, commitment tiles, activity, distributions, chart): figures as worked by hand.
+
+### Task 2 verify (SCRATCH/exec-12-05/verify-2.sh with GATE_FRESH=1: the plan's command, with the empty-folder test excluding runParts' results store `.parts` as 12-CONTEXT "After 12-03" directs)
+
+```
+PASS consolidated each fund name is in the PDF
+PASS consolidated no single total of all three funds (in the model or the PDF)
+REPORTS STARTERS: PASS (cases run: 6)
+VERIFY-2 EXIT=0
+```
+120 PASS lines, 0 FAIL. checks-out afterwards holds only `.parts`. every-sample printed `PDFs made: 336 of 336 reports` (4 sample firms, 18 starters, every matching fund, first and last holder, plus one multi-fund investor for st-consolidated and q-firm). The six cases took 87 s in Node (measured once by the run script).
+
+Mutation test (not committed; reverted with `git checkout`, diff empty afterwards): NET disclosure changed to "Performance is shown as gross performance." and the consolidated summary grouped without currency:
+```
+FAIL words no starter's name, blurb or wording says the forbidden word, audited, ILPA compliant, gross performance or asks for more investment :: ["st-capital","st-consolidated",...
+FAIL words every starter's disclosures say net :: ["st-capital","st-consolidated",...
+FAIL words none of the 62946 model strings every-sample makes breaks a wording rule :: [{"what":"st-capital kb-fund-ii KBC-1001","s":"Performance is shown as gross performance. ...
+FAIL consolidated Summary (USD) total ending capital = kb-fund-ii + kb-note-24a :: {"want":47374273}
+FAIL consolidated the PDF holds the USD total $473,742.73 and the EUR total €102,092.95 :: ["$473,742.73","Summary (USD)"]
+REPORTS STARTERS: FAIL (cases run: 2) - words, consolidated
+```
