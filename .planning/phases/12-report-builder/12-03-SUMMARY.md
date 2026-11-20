@@ -66,3 +66,21 @@ PASS compose each page carries 'Page n of N'
 PASS compose the recipient and the firm print with their accents and Polish letters
 REPORTS PDF: PASS (cases run: 1)
 ```
+
+### Task 2 verify: FAILED as written (exit 1), only on the empty-folder test; passes with the results store excluded
+
+The command as written ends with `test -z "$(ls -A $O/checks-out)"`. The folder holds no PDF (0 files named *.pdf);
+it holds `.parts/`, the per-part results store that runParts (P6/lib.js, gate-resume 1d57f8d) writes into P6_OUT by
+design (small JSON files stamped to the tree, kept so a rerun on the same tree resumes). The plan was written before
+that store existed. The same command with `.parts` excluded (`ls -A ... | grep -vx '.parts'`) exits 0.
+
+```
+PASS repeat a fresh load of the portal gives the same SHA-256 too
+PASS repeat a different generation time gives a different SHA-256
+REPORTS PDF: PASS (cases run: 7)
+verify exit 1
+.parts
+verify (results store excluded) exit 0
+```
+62 PASS lines, 0 FAIL. The C-02 record from case brand:
+`PASS brand pdffonts names (the record for C-02): DejaVuSans-Bold-5348, DejaVuSans-5083`
