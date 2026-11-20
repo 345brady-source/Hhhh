@@ -251,10 +251,13 @@
     const r = order.remote;
     r.status = a.status;
     r.checkedAt = stamp();
-    const filedHere = isStates(order) ? applyStates(ws, order, a) : false;
-    // A state order with some states filed reads filed here while the server still holds it as received.
-    order.status = a.status === 'received' && (filedHere || order.status === 'filed') && isStates(order) ? 'filed' : a.status;
+    if (isStates(order)) applyStates(ws, order, a);
     copyAmounts(order, a);
+    // A state order reads what its results give it: partly filed while any ordered state has no result, filed or done
+    // only once every ordered state has one, whatever the server's received or done says; received while none has.
+    const B = NS.bluesky && typeof NS.bluesky.resultStatus === 'function' ? NS.bluesky : null;
+    if (isStates(order) && a.status !== 'cancelled' && B) order.status = B.resultStatus(ws, order) || 'received';
+    else order.status = a.status;
     if (!f) return;
     const was = r.filing;
     r.filing = f.status;
@@ -321,7 +324,8 @@
     const filed = states.filter((c) => rec.states && rec.states[c] && rec.states[c].status === 'filed' && rec.states[c].filedOn);
     const waiting = states.filter((c) => filed.indexOf(c) < 0);
     if (!filed.length) return 'Received by the filing team.';
-    return `Filed in ${filed.map(name).join(', ')}.${waiting.length ? ` Waiting for ${waiting.map(name).join(', ')}.` : ''}`;
+    // While some states are open the order itself lists them (Still open: ...), so this line names only those filed.
+    return `Filed in ${filed.map(name).join(', ')}.${waiting.length && order.status !== 'partly-filed' ? ` Waiting for ${waiting.map(name).join(', ')}.` : ''}`;
   }
   function orderLine(ws, order) {
     if (!order || !connected(ws)) return '';
