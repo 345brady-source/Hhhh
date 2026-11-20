@@ -135,7 +135,8 @@
     const inv = investorOf(ws, f.investorId) || {};
     const ok = X().confirmed(ws, c.o, c.year, f);
     const conf = (yearRecOf(c.o, c.year).confirmed || {})[f.investorId];
-    const pill = ok ? `<span class="tx-pill is-ok">Confirmed by ${h(conf.by)}</span>` : '<span class="tx-pill is-wait">Not confirmed</span>';
+    const filed = ok ? filedOn(c.o, c.year, f.investorId) : '';
+    const pill = (ok ? `<span class="tx-pill is-ok">Confirmed by ${h(conf.by)}</span>` : '<span class="tx-pill is-wait">Not confirmed</span>') + (filed ? `<span class="tx-pill is-ok">Filed ${h(U.date(filed, 'long'))}</span>` : '');
     const acts = !ok && NS.app.can('operate') ? `<div class="tx-acts"><button type="button" class="cs-btn cs-btn-small cs-btn-primary" data-action="t99-confirm" data-id="${h(f.investorId)}">Confirm</button></div>` : '';
     return `<li class="tx-row" data-id="${h(f.investorId)}"><div class="tx-what"><span class="tx-title">${h(inv.title || f.investorId)} · ${h(f.investorId)}</span>
       <dl class="tx-review">
@@ -296,13 +297,98 @@
     );
   }
 
-  /* ---------- the IRS file ---------- */
+  /* ---------- the payer (admins enter it; a team member reads it) ---------- */
+  const PAYER = [['name', 'Payer’s name'], ['name2', 'Second name line'], ['address1', 'Street address'], ['address2', 'Second address line'], ['city', 'City'], ['state', 'State'], ['zip', 'ZIP'], ['phone', 'Telephone']];
+  const BOXES = [['registeredForm', 't99-p-registered', 'These notes are in registered form or of a type offered to the public'], ['paidInMoney', 't99-p-money', 'Interest was paid in money and none was added to principal or issued at a discount']];
+  function payerHTML(c) {
+    const p = X().payerOf(c.o);
+    if (!admin()) {
+      const rows = PAYER.filter(([k]) => p[k]).map(([k, label]) => `<dt>${label}</dt><dd>${h(p[k])}</dd>`).join('') + BOXES.map(([k, , label]) => `<dt>${label}</dt><dd>${p[k] === true ? 'Yes' : 'Not confirmed'}</dd>`).join('');
+      return CK().panel('Payer', `<div data-panel="payer"><dl class="tx-review">${rows}</dl></div>`);
+    }
+    const f = ([k, label]) => `<label class="cs-field${k === 'name' || k === 'address1' ? ' cs-wide' : ''}" for="t99-p-${k}"><span>${label}</span><input id="t99-p-${k}" type="${k === 'phone' ? 'tel' : 'text'}" autocomplete="off" value="${h(p[k] || '')}"></label>`;
+    const box = ([k, id, label]) => `<label class="tx-note" for="${id}"><input id="${id}" type="checkbox"${p[k] === true ? ' checked' : ''}> ${label}</label>`;
+    return CK().panel('Payer', `<div data-panel="payer">${said('payer')}<div class="tx-form">${PAYER.map(f).join('')}</div>${BOXES.map(box).join('')}<div class="cs-row"><button type="button" class="cs-btn" data-action="t99-payer">Save</button></div></div>`);
+  }
+
+  /* ---------- the recipients' copies (admins), delivered through NS.taxdocs ---------- */
+  const copyDocs = (ws, c) => {
+    const ids = yearRecOf(c.o, c.year).copyB || {};
+    return Object.keys(ids)
+      .map((id) => (ws.docs || []).find((d) => d.id === ids[id] && d.tax))
+      .filter(Boolean);
+  };
+  const STATE = { confirmed: ['Not delivered', 'is-wait'], waiting: ['Waiting for consent', 'is-wait'], paper: ['Sent on paper', 'is-off'], delivered: ['Delivered', 'is-ok'], replaced: ['Replaced', 'is-off'], withdrawn: ['Withdrawn', 'is-stop'] };
+  const LIVE = ['confirmed', 'waiting', 'delivered', 'paper'];
+  /** The forms that have no live copy yet. */
+  const needCopy = (ws, c, F) => F.forms.filter((f) => !copyDocs(ws, c).some((d) => d.investors[0] === f.investorId && LIVE.indexOf(d.tax.state) >= 0));
+  function copiesHTML(ws, c, F) {
+    const docs = copyDocs(ws, c);
+    const rows = docs
+      .map((d) => {
+        const inv = investorOf(ws, d.investors[0]) || {};
+        const [label, cls] = STATE[d.tax.state] || [d.tax.state, 'is-off'];
+        const until = d.tax.availableUntil && ['delivered', 'replaced'].indexOf(d.tax.state) >= 0 ? `<span class="tx-detail">Available until ${h(U.date(d.tax.availableUntil, 'long'))}</span>` : '';
+        return `<li class="tx-row" data-id="${h(d.id)}"><div class="tx-what"><span class="tx-title">${h(inv.title || d.investors[0])} · ${h(d.investors[0])}</span>${until}</div><div class="tx-when"><span class="tx-pill ${cls}">${label}</span></div></li>`;
+      })
+      .join('');
+    const ready1 = docs.filter((d) => d.tax.state === 'confirmed');
+    const need = needCopy(ws, c, F).length;
+    let deliver = '';
+    if (ready1.length && !ui().deliver) deliver = `<button type="button" class="cs-btn cs-btn-primary" data-action="t99-deliver">Deliver ${ready1.length}</button>`;
+    else if (ready1.length) {
+      const list = ready1.map((d) => `<li class="tx-row" data-id="${h(d.id)}"><div class="tx-what"><span class="tx-title">${h((investorOf(ws, d.investors[0]) || {}).title || d.investors[0])} · ${h(d.investors[0])}</span><span class="tx-detail">${h(d.title)}</span></div></li>`).join('');
+      deliver = `<ul class="tx-list" data-list="recipients">${list}</ul><div class="cs-row"><button type="button" class="cs-btn cs-btn-primary" data-action="t99-deliver-go">Deliver to these ${ready1.length}</button><button type="button" class="cs-btn" data-action="t99-deliver-cancel">Cancel</button></div>`;
+    }
+    const make = need ? `<button type="button" class="cs-btn${docs.length ? '' : ' cs-btn-primary'}" data-action="t99-copies">Create recipient copies</button>` : '';
+    return CK().panel(
+      'Recipient copies',
+      `<div data-panel="copies">${said('copies')}${rows ? `<ul class="tx-list" data-list="copies">${rows}</ul>` : ''}<div class="cs-row">${make}${ui().deliver ? '' : deliver}</div>${ui().deliver ? deliver : ''}</div>`
+    );
+  }
+
+  /* ---------- the IRS file and its receipt ---------- */
+  const IRIS_PAGE = 'https://www.irs.gov/filing/e-file-information-returns-with-iris';
+  // the file's cells a person can correct on screen when a rule names them: the recipient's (in this section's memory)
+  // and the payer's (saved with the payer's details)
+  const FIX_REC = { W: 'bname', Y: 'first', Z: 'middle', AA: 'last', AB: 'suffix', AD: 'address1', AE: 'address2', AF: 'city', AG: 'state', AH: 'zip' };
+  const FIX_PAYER = { F: 'name', G: 'name2', M: 'address1', N: 'address2', O: 'city', P: 'state', Q: 'zip', S: 'phone' };
+  function faultsHTML(ws) {
+    const list = ui().faults || [];
+    if (!list.length) return '';
+    const rows = list
+      .map((x, n) => {
+        const inv = investorOf(ws, x.investorId) || {};
+        const rec = FIX_REC[x.col];
+        const pay = FIX_PAYER[x.col];
+        const fix = rec || (pay && admin()) ? `<div class="tx-form"><label class="cs-field cs-wide" for="t99-fix-${n}"><span>${h(x.name)}</span><input id="t99-fix-${n}" type="text" autocomplete="off" data-fix="${rec ? 'r' : 'p'}" data-fix-id="${h(x.investorId)}" data-fix-key="${rec || pay}" value="${h(x.value)}"></label></div>` : '';
+        return `<li class="tx-row" data-id="${h(x.investorId)}"><div class="tx-what"><span class="tx-title">Row ${x.row} (${h(inv.title || x.investorId)} · ${h(x.investorId)}), column ${h(x.col)} (${h(x.name)})</span><span class="tx-detail">${h(x.why)}</span></div>${fix}</li>`;
+      })
+      .join('');
+    return `<ul class="tx-list" data-list="faults">${rows}</ul>`;
+  }
+  /** The day the IRS receipt recorded for a file holding this investor's form, or ''. */
+  function filedOn(o, y, investorId) {
+    const yr = yearRecOf(o, y);
+    const files = yr.files || [];
+    const hit = (yr.filed || []).filter((x) => files.some((f) => f.sha256 === x.sha256 && (f.ids || []).indexOf(investorId) >= 0));
+    return hit.length ? hit[hit.length - 1].date : '';
+  }
   function fileHTML(ws, c) {
     const yr = yearRecOf(c.o, c.year);
     const files = yr.files || [];
     const last = files[files.length - 1];
     const made = last ? `<p class="tx-detail" data-made>Last file: ${h(U.date(String(last.at).slice(0, 10), 'long'))} · ${last.rows} form${last.rows === 1 ? '' : 's'} · ${h(last.by)}</p>` : '';
-    return CK().panel('IRS file', `<div data-panel="file">${said('file')}${made}<div class="cs-row"><button type="button" class="cs-btn cs-btn-primary" data-action="t99-file">Download the IRS file</button></div></div>`);
+    const pinned = !!(NS.tax1099data && NS.tax1099data.IRIS && NS.tax1099data.IRIS.headerPinned);
+    const notes = `<p class="tx-note" data-notice="code">The IRS’s code for filing can take up to 45 days to arrive: apply early on the <a href="${IRIS_PAGE}" target="_blank" rel="noopener">IRS’s IRIS page</a>.</p>
+      <p class="tx-note" data-notice="sheet">Do not open the file in a spreadsheet before you upload it.</p>${pinned ? '' : '<p class="tx-note" data-notice="header">The file’s header has not yet been compared with the IRS’s own template.</p>'}`;
+    const receipt = last
+      ? `<div class="tx-form">
+          <label class="cs-field" for="t99-receipt"><span>IRS receipt number</span><input id="t99-receipt" type="text" autocomplete="off"></label>
+          <label class="cs-field" for="t99-receipt-date"><span>Date filed</span><input id="t99-receipt-date" type="date"></label>
+        </div>${said('filed')}<div class="cs-row"><button type="button" class="cs-btn" data-action="t99-filed">Record the IRS receipt</button></div>`
+      : '';
+    return CK().panel('IRS file', `<div data-panel="file">${notes}${said('file')}${faultsHTML(ws)}${made}<div class="cs-row"><button type="button" class="cs-btn cs-btn-primary" data-action="t99-file">Download the IRS file</button></div>${receipt}</div>`);
   }
 
   function render(ws) {
@@ -312,8 +398,8 @@
       .then(() => {})
       .catch(() => {});
     const F = figures(ws, c);
-    const steps = admin() && ready(ws, c, F) ? `${numbersHTML(ws, c, F)}${fileHTML(ws, c)}` : '';
-    return `${pickerHTML(c)}${stopsHTML(F)}${formsHTML(ws, c, F)}${leftHTML(ws, F)}${steps}`;
+    const steps = admin() && ready(ws, c, F) ? `${numbersHTML(ws, c, F)}${copiesHTML(ws, c, F)}${fileHTML(ws, c)}` : '';
+    return `${pickerHTML(c)}${payerHTML(c)}${stopsHTML(F)}${formsHTML(ws, c, F)}${leftHTML(ws, F)}${steps}`;
   }
 
   /* ---------- picking and acting ---------- */
@@ -348,7 +434,16 @@
       });
       ui().edit[id] = e;
     });
-    return ws;
+    const payerFix = {};
+    document.querySelectorAll('[data-list="faults"] input[data-fix]').forEach((el) => {
+      const key = el.getAttribute('data-fix-key');
+      const v = String(el.value || '').trim();
+      if (el.getAttribute('data-fix') === 'r') {
+        const id = el.getAttribute('data-fix-id');
+        ui().edit[id] = Object.assign({}, edit(id), { [key]: v });
+      } else payerFix[key] = v;
+    });
+    return payerFix;
   }
   /** One action: refused with one line where it was asked; on success saved (the module writes the change log). */
   function act(at, fn, need) {
@@ -448,21 +543,109 @@
       const F = figures(ws, c);
       if (!ready(ws, c, F)) throw new Error('Confirm every form first.');
       await irisData();
+      const payerFix = harvest(ws);
+      if (Object.keys(payerFix).length) X().setPayer(ws, c.o.id, payerFix, { by: actor() });
       await numbersReady(ws, c, F);
       const payer = payerObj(c);
       const rows = F.forms.map((f) => X().iris.row(FORM, c.year, f, payer, recipientObj(ws, f.investorId)));
+      const faults = X().iris.validate(FORM, rows);
+      const cols = NS.tax1099data.IRIS.columns[FORM];
+      ui().faults = faults.map((x) => {
+        const k = cols.findIndex((cc) => cc.col === x.col);
+        return Object.assign({}, x, { investorId: (F.forms[x.row - 1] || {}).investorId || '', value: k >= 0 && /^(W|X|Y|Z|AA|AB|AD|AE|AF|AG|AH|F|G|M|N|O|P|Q|S)$/.test(x.col) ? rows[x.row - 1][k] : '' });
+      });
+      if (faults.length) throw new Error(`The file cannot be built while ${faults.length} cell${faults.length === 1 ? '' : 's'} break the IRS’s published rules: correct ${faults.length === 1 ? 'it' : 'them'} below.`);
       const files = X().iris.files(FORM, rows);
       const yr = (((c.o.tax = c.o.tax || {}).years = c.o.tax.years || {})[c.year] = c.o.tax.years[c.year] || {});
       yr.files = yr.files || [];
       const at = new Date().toISOString();
       for (const f of files) {
         await U.download(f.name, f.text, { mime: 'text/csv' });
-        yr.files.push({ name: f.name, sha256: NS.audit.sha256(f.text), rows: f.rows, by: actor(), at });
+        yr.files.push({ name: f.name, sha256: NS.audit.sha256(f.text), rows: f.rows, ids: F.forms.map((x) => x.investorId), by: actor(), at });
         CK().audit('Form 1099-INT file downloaded', `${c.o.shortName || c.o.name}: ${c.year}, ${f.rows} form${f.rows === 1 ? '' : 's'}`, c.o.id, c.o.id);
       }
       if (!X().payerOf(c.o).tinLast4) X().setPayer(ws, c.o.id, { tinLast4: held.payer.tin.slice(5) }, { by: actor() });
+      ui().faults = [];
       // the file has been made: every number leaves this page's memory
       held = fresh(held.key, true);
+    },
+    'configure'
+  );
+
+  NS.actions['t99-payer'] = act(
+    'payer',
+    (ws, c) => {
+      const patch = {};
+      PAYER.forEach(([k]) => (patch[k] = typed(`t99-p-${k}`)));
+      BOXES.forEach(([k, id]) => (patch[k] = !!(document.getElementById(id) || {}).checked));
+      X().setPayer(ws, c.o.id, patch, { by: actor() });
+    },
+    'configure'
+  );
+  NS.actions['t99-copies'] = act(
+    'copies',
+    async (ws, c) => {
+      const F = figures(ws, c);
+      if (!ready(ws, c, F)) throw new Error('Confirm every form first.');
+      harvest(ws);
+      await numbersReady(ws, c, F);
+      const todo = needCopy(ws, c, F);
+      if (!todo.length) return;
+      const map = await (async () => {
+        await irisData();
+        return NS.tax1099data.MAPS[X().COPY_B];
+      })();
+      await load('../forms/1099/forms1099-data.js', () => !!(NS.tax1099formsData && NS.tax1099formsData[map.file]));
+      const L = await NS.esignKit.writer();
+      const font = await NS.esignKit.unicodeFont();
+      const blank = NS.esignKit.fromBase64(NS.tax1099formsData[map.file]);
+      const payer = payerObj(c);
+      const conf = yearRecOf(c.o, c.year).confirmed || {};
+      for (const f of todo) {
+        const bytes = await X().recipientCopy(L, blank.slice(), map, X().copyBAnswers(f, payer, recipientObj(ws, f.investorId), c.year), { fontkit: font.fontkit, fontBytes: font.fontBytes, sha256: NS.audit.sha256 });
+        const id = 'txd-' + Array.from({ length: 12 }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join('');
+        await NS.ops.files.put(id, new Blob([bytes], { type: 'application/pdf' }));
+        const by = conf[f.investorId];
+        NS.taxdocs.addGenerated(ws, { kind: '1099-int', year: c.year, offeringId: c.o.id, investorId: f.investorId, id, title: `Form 1099-INT ${c.year}`, fileName: `form-1099-int-${c.year}-${f.investorId}.pdf`, size: bytes.length, sha256: NS.audit.sha256(bytes), confirmedBy: by.by, confirmedAt: by.at });
+        const yr = c.o.tax.years[c.year];
+        yr.copyB = Object.assign({}, yr.copyB || {}, { [f.investorId]: id });
+      }
+    },
+    'configure'
+  );
+  NS.actions['t99-deliver'] = act('copies', (ws, c, el, u) => {
+    const miss = ['name', 'address', 'phone', 'email'].filter((k) => !((ws.taxdocs || {}).contact || {})[k]);
+    if (miss.length) throw new Error('Before delivering, save the Contact for tax documents on the Tax documents page.');
+    u.deliver = true;
+  }, 'configure');
+  NS.actions['t99-deliver-cancel'] = act('copies', (ws, c, el, u) => {
+    u.deliver = false;
+  }, 'configure');
+  NS.actions['t99-deliver-go'] = act('copies', (ws, c, el, u) => {
+    u.deliver = false;
+    const refused = [];
+    copyDocs(ws, c)
+      .filter((d) => d.tax.state === 'confirmed')
+      .forEach((d) => {
+        try {
+          NS.taxdocs.deliver(ws, d.id, { by: actor(), how: 'own email' });
+        } catch (e) {
+          if (refused.indexOf(e.message) < 0) refused.push(e.message);
+        }
+      });
+    if (refused.length) throw new Error(`Not delivered: ${refused.join(' ')}`);
+  }, 'configure');
+  NS.actions['t99-filed'] = act(
+    'filed',
+    (ws, c) => {
+      const files = yearRecOf(c.o, c.year).files || [];
+      const last = files[files.length - 1];
+      if (!last) throw new Error('Download the IRS file first.');
+      const receiptId = typed('t99-receipt');
+      const date = typed('t99-receipt-date');
+      if (!receiptId) throw new Error('Type the receipt number the IRS gave.');
+      if (!date) throw new Error('Give the date the file was filed.');
+      X().markFiled(ws, c.o.id, c.year, { by: actor(), receiptId, date, sha256: last.sha256, rows: last.rows });
     },
     'configure'
   );
