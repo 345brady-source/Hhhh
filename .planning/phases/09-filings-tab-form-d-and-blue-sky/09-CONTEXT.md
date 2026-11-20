@@ -84,3 +84,11 @@
 - W-3: 09-04 order-phone reloads halfway through the form and after Review (typed values kept, Back on screen); 09-07 order-phone reloads at console-filings-states-<id> (ticks kept if stored, Back on screen).
 - W-7: the owner's screens are a separate run of the plan's own check with P6_SHOTS=$O/shots after the gate, with an index.txt, kept until the orchestrator's walkthrough; every gate run is followed by rm -rf $O/gate/checks-out $O/gate/base-tree $O/gate/shots.
 - W-8: each verify is written to $O/verify-N.sh and run with bash.
+
+## After 09-04, 09-06, 09-07 (merged b8e6b69, 9e2c45e and the 09-07 merge, 2026-11-20)
+- Renewal orders disagree between page and server. bluesky.js (09-07) prices a renewal as $50 plus that state's line, and adds the filing system's line only when a confirmed system fee says it applies to renewals. server/lib/filings.mjs (09-05) always adds a filing system line to renewal orders. 09-10 settles this from the official fee matrix and makes both sides agree, with a server test and a bluesky-math case.
+- All 52 state rows and the filing system's fee are unconfirmed. Sponsors see "To be confirmed" and get no state due date until 09-10 fills the table from the official matrix (owner input).
+- Renewal shape is `{ months, fee? }`. Only the 52 Form D jurisdictions can be ordered: an investor in a territory gets a reminder but no picker line.
+- Form D sign-off sentence: `SIGNOFF_SENTENCE` in assets/js/formd-ui.js is a placeholder until counsel words it. Assumption A4 (whether Rule 302 of Regulation S-T needs a manually signed page kept by the issuer) is still open. The checks prove the files against the SEC schema only; acceptance by EDGAR needs a TEST upload once Carrow & Vale has filing access.
+- Form ID field order inside parts (09-06) is not confirmed against the SEC's site.
+- 09-07 deviation 5: `pick` returns `facts.byState` unchanged, so wave 3 guide bullets must say territories are reminded but not orderable.
