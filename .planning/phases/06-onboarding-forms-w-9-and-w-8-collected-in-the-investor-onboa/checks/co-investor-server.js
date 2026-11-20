@@ -84,6 +84,19 @@ async function pdfText(buf) {
   return out.join('\n');
 }
 
+/** How many pictures a PDF holds (an adopted signature is stamped as one). */
+async function pdfImages(buf) {
+  const PL = require(path.join(L.VENDOR, 'pdflib/package/dist/pdf-lib.min.js'));
+  const doc = await PL.PDFDocument.load(new Uint8Array(buf), { ignoreEncryption: true });
+  let n = 0;
+  doc.context.enumerateIndirectObjects().forEach(([, o]) => {
+    const d = o && o.dict;
+    const st = d && d.get(PL.PDFName.of('Subtype'));
+    if (st && String(st) === '/Image') n++;
+  });
+  return n;
+}
+
 /* ---------- The firm's console ---------- */
 /** A firm with the integration server set up, the agreement's co-investor places and an investor on file to invite. */
 async function firm(S, check) {
@@ -276,7 +289,24 @@ async function investorSigns(S, check, F) {
     await ip.waitForTimeout(200);
   }
   check('the investor types a full SSN in the agreement’s Taxpayer ID place', !!tinId, tinId);
+  // The investor adopts a signature too, so the copy made for the co-investor must carry it again (W2's copy is re-stamped).
+  const sigId = await ip.evaluate(() => {
+    const ws = window.CVPortal.state.ws;
+    const env = (ws.envelopes || []).find((e) => e.kind !== 'tax' && e.status === 'sent');
+    const me = env && env.signers.find((s) => s.role === 'investor' && !s.co);
+    const f = me && env.fields.find((x) => x.signerId === me.id && x.type === 'signature');
+    return f ? f.id : '';
+  });
+  if (sigId) {
+    await ip.click(`.es-doc-sign [data-fid="${sigId}"]`);
+    await ip.waitForTimeout(300);
+    if (await ip.evaluate(() => !!document.getElementById('dlg').open)) {
+      await ip.click('[data-action="es-adopt"]');
+      await ip.waitForFunction(() => !document.getElementById('dlg').open, null, { timeout: 10000 }).catch(() => {});
+    }
+  }
   await L.finishAgreement(ip);
+  F.investorSigned = !!sigId;
   await F.srv.waitCompleted(inv.serverId);
   await L.importFromConsole(cp, inv.id);
   return true;
@@ -478,6 +508,9 @@ async function receivedChecks(check, F, st, R) {
   const own = st.work ? await pdfText(Buffer.from(st.work, 'base64')).catch((e) => 'UNREADABLE ' + e.message) : '';
   check('the console’s own copy holds the SSN the investor typed (so the next line tests something)', own.indexOf(SSN) >= 0, own.slice(0, 300));
   const hit = txt.match(TIN_RE);
+  const pics = pdf ? await pdfImages(pdf).catch(() => -1) : -1;
+  const ownPics = st.work ? await pdfImages(Buffer.from(st.work, 'base64')).catch(() => -1) : -1;
+  check('the copy the co-investor receives carries the investor’s adopted signature, as the console’s own copy does', F.investorSigned === true && ownPics > 0 && pics === ownPics, { investorSigned: F.investorSigned, received: pics, console: ownPics });
   check('W2: the PDF the co-investor receives has no full SSN or EIN in its text, and still shows the investor’s other values', !!pdf && !hit && !/^UNREADABLE/.test(txt) && txt.indexOf(F.who.name) >= 0, { hit: hit ? hit[0] : null, len: txt.length, sample: txt.slice(0, 200) });
   return m;
 }
