@@ -11,9 +11,18 @@
 //                    sentence on screen word for word, the old invitation closed, a new invitation for the same investor,
 //                    offering, amount and package choice with a new id reading "Not sent yet", nothing charged and nothing
 //                    sent by itself; sending the new one pays one new package at the server's price
+//   tier-mismatch    the console's invitation id is paid at the identity tier (POST /v1/billing/entitlements, the account's
+//                    token), then the sponsor sends that invitation to a Rule 506(c) offering with the box ticked: the real
+//                    409 tier_mismatch sentence on its row word for word; no second entitlement, no balance change
+//   credit-owed      the account owes an amount (owedCents 1900 in the server's store): the single form's box and the list
+//                    form's box shown switched off, unticked, with exactly the sentence the real server answers to a package
+//                    invitation for that account (captured from a direct POST); "Send invitation" still sends without the
+//                    package; with nothing owed the box is enabled again after the next read
+//   returned         an invitation sent with the package whose package was returned as credit: the sponsor resends it; the
+//                    real 409 sentence on its row and in the toast, word for word and alone; no email sent
 // Every part asserts that the server in this process called nothing outside this machine, and ends with the leak scan of
 // the screens it saw (phase 6's leak check and frame.js's vendor scan).
-//   NODE_PATH=$(npm root -g) node package-console.js [--only package-used]
+//   NODE_PATH=$(npm root -g) node package-console.js [--only package-used,tier-mismatch,credit-owed,returned]
 // The last line is "PACKAGE CONSOLE: PASS (parts run: N)" or "PACKAGE CONSOLE: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -38,7 +47,10 @@ const SHOTS = path.join(Lib.OUT, 'package-console-shots');
 fs.mkdirSync(SHOTS, { recursive: true });
 Lib.describeShots([
   ['used-rows.png', 'Server mode, 1280x800: after the server refused a used package, the new invitation for the same investor reads "Not sent yet".'],
-  ['used-all.png', 'Server mode, 1280x800: the invitations list on "All": the closed invitation with the server\'s sentence, and its replacement.']
+  ['used-all.png', 'Server mode, 1280x800: the invitations list on "All": the closed invitation with the server\'s sentence, and its replacement.'],
+  ['owed-desktop-form.png', 'Server mode, 1280x800, an amount owed: the invite form\'s box switched off with the server\'s credit_owed sentence.'],
+  ['owed-desktop-list.png', 'Server mode, 1280x800, an amount owed: the list form\'s box switched off with the same sentence.'],
+  ['returned-row.png', 'Server mode, 1280x800: a resend refused because the package was returned: the server\'s sentence on the row.']
 ]);
 
 // As package-invite.js (sponsor accounts, plan 08-01): the operator's admin token; stand-in values where the server only asks
@@ -202,6 +214,49 @@ async function sendRow(p, id, posts, tap) {
   await p.waitForTimeout(1200);
 }
 const packageOf = (post) => ((post && post.body) || {}).invitation || {};
+/** A person tries to tick the single form's box: a click (or a tap) on its row, whatever its state. */
+async function tryTick(p, tap) {
+  const row = p.locator('#iv-package-row');
+  await row.scrollIntoViewIfNeeded().catch(() => {});
+  if (tap) await row.tap({ timeout: 5000 }).catch(() => {});
+  else await row.click({ timeout: 5000 }).catch(() => {});
+  await p.waitForTimeout(200);
+  return box(p);
+}
+/** "Import a list" open on the Investors page, the lines pasted and checked; resolves once "Send N invitations" shows. */
+async function checkList(p, lines, tap) {
+  await p.evaluate(() => (location.hash = '#console-investors'));
+  await p.waitForSelector('[data-action=invite-toggle]', { timeout: 20000 });
+  await p.evaluate(() => {
+    const ui = window.CVPortal.state.ui;
+    ui.inviteOpen = true;
+    ui.inviteTab = 'bulk';
+    window.CVPortal.app.render();
+  });
+  await p.waitForSelector('#iv-csv', { timeout: 10000 });
+  await p.fill('#iv-csv', lines.join('\n'));
+  if (tap) await p.tap('form[data-form="invite-bulk"] button[type=submit]');
+  else await p.click('form[data-form="invite-bulk"] button[type=submit]');
+  await p.waitForSelector('[data-action="invite-bulk-add"]', { timeout: 15000 });
+  await p.waitForTimeout(300);
+}
+/** The list form's box as the screen shows it. */
+const bulkBox = (p) =>
+  p.evaluate(() => {
+    const row = document.getElementById('iv-bulkPackage-row');
+    const input = document.getElementById('iv-bulkPackage');
+    const shown = (el) => !!el && !el.hidden && !!(el.offsetWidth || el.offsetHeight);
+    const label = document.getElementById('iv-bulkPackage-label');
+    const line = document.getElementById('iv-bulkPackage-line');
+    return { shown: shown(row) && shown(input), disabled: !!(input && input.disabled), checked: !!(input && input.checked), label: label ? label.innerText.trim() : '', line: shown(line) ? line.innerText.trim() : '', rows: shown(row) ? row.innerText.split('\n').map((x) => x.trim()).filter(Boolean) : [] };
+  });
+/** The server asked again (as after a card change) and the page drawn from its answer. */
+const reread = async (p) => {
+  await p.evaluate(() => window.CVPortal.pkg.load(window.CVPortal.state.ws, true).then(() => window.CVPortal.app.render()));
+  await p.waitForTimeout(500);
+};
+/** The text of every toast on screen now. */
+const toastsNow = (p) => p.evaluate(() => Array.from(document.querySelectorAll('#toasts .toast')).map((t) => t.textContent.trim()));
 
 const parts = {
   'package-used': async ({ check, S }) => {
@@ -288,6 +343,158 @@ const parts = {
       seen.push(await F.noRawError(check, p, 'after sending the new one', C.A.errors));
       check('the server called nothing outside this machine', outside.length === 0, outside);
       F.leakFree(check, 'every screen of this part', seen.join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+
+  'tier-mismatch': async ({ check, S }) => {
+    // The first send is answered with a refused connection (nothing reaches the server), so the console's invitation id is
+    // known before the server has heard of it; later sends are the server's own replies, kept as the server sent them.
+    let mode = 'lost';
+    const replies = [];
+    const C = await consoleOn(S, check, F.VIEW.desktop, {
+      'POST /v1/invitations': () => {
+        if (mode === 'lost') {
+          mode = 'real';
+          return { refuse: true };
+        }
+        return {
+          amend: (json, status) => {
+            replies.push({ status, json });
+            return json;
+          }
+        };
+      }
+    });
+    try {
+      const p = C.page;
+      const posts = () => C.stub.sent('POST /v1/invitations').length;
+      const who = { first: 'Ottilie', last: 'Varga', email: 'ottilie.varga@example.com', offeringId: C.off.offeringId, package: true };
+      const one = await invite(p, who);
+      check('the box was ticked for the Rule 506(c) offering ($99); the first send did not reach the server', one.ticked === true && one.serverId === '' && /Not sent yet/.test(await rowText(p, one.id)) && (await C.srv.rows()).length === 0, one);
+      const start = C.money();
+      const paid = await C.call('POST', '/v1/billing/entitlements', { items: [{ key: one.id, tier: 'identity' }] });
+      const mid = C.money();
+      check('the console\'s invitation id is paid at the identity tier with the account\'s token (from the balance, $19)', paid.status === 200 && mid.entitlements === start.entitlements + 1 && mid.credit === start.credit - 1900 && mid.ents.some((e) => e.key === one.id && e.tier === 'identity' && e.status === 'paid'), { paid, mid });
+
+      await sendRow(p, one.id, posts);
+      const said = replies[0] || null;
+      const SENT = said && said.json && typeof said.json.error === 'string' ? said.json.error : '';
+      check('sent again to the Rule 506(c) offering, the real server answered 409 tier_mismatch with a sentence of its own', !!said && said.status === 409 && said.json.code === 'tier_mismatch' && SENT.length > 10 && packageOf(C.stub.sent('POST /v1/invitations')[1]).package === true, said);
+      const text = await F.noRawError(check, p, 'after the refusal', C.A.errors);
+      const row = await rowText(p, one.id);
+      check('the invitation\'s row shows the server\'s sentence word for word and still reads "Not sent yet"', !!SENT && row.indexOf(SENT) >= 0 && /Not sent yet/.test(row), row);
+      const after = C.money();
+      check('nothing was charged: no second entitlement, the balance as it was', after.entitlements === mid.entitlements && after.credit === mid.credit && after.payments === 0 && JSON.stringify(after.ents) === JSON.stringify(mid.ents), { mid, after });
+      const all = await invitationsOf(p, who.email);
+      check('the invitation is not replaced (only a used package makes a new one) and nothing more was sent', all.length === 1 && all[0].status === 'sent' && posts() === 2 && (await C.srv.rows()).length === 0, { all, posts: posts() });
+      check('the server called nothing outside this machine', outside.length === 0, outside);
+      F.leakFree(check, 'every screen of this part', text);
+    } finally {
+      await C.close();
+    }
+  },
+
+  'credit-owed': async ({ check, S }) => {
+    const C = await consoleOn(S, check, F.VIEW.desktop, {});
+    try {
+      const p = C.page;
+      const st = C.srv.server.store;
+      st.put('billing', { id: C.account.id, owedCents: 1900 });
+      // The sentence the real server answers to a package invitation for this account, read once from a direct POST.
+      const probe = await C.call('POST', '/v1/invitations', { workspace: 'kestrel-bay', portalUrl: `${S.origin}/diy.html`, sendEmail: false, investor: { id: 'OWED-PROBE', contact: 'Owed Probe', email: 'owed.probe@example.com' }, invitation: { package: true, clientId: 'owed-probe-1' }, verification: {} });
+      const OWED = probe.body && typeof probe.body.error === 'string' ? probe.body.error : '';
+      check('the real server refuses a package invitation for this account with 409 credit_owed and a sentence of its own', probe.status === 409 && probe.body.code === 'credit_owed' && OWED.length > 10 && (await C.srv.rows()).length === 0, probe);
+      const view = await C.call('GET', '/v1/billing');
+      check('GET /v1/billing reports the amount owed (owedCents 1900) and a balance that covers the price', view.status === 200 && view.body.owedCents === 1900 && view.body.creditCents >= 9900, view.body && { owedCents: view.body.owedCents, creditCents: view.body.creditCents });
+      const start = C.money();
+
+      await openForm(p);
+      await chooseOffering(p, C.off.offeringId);
+      await reread(p);
+      let b = await boxReady(p);
+      check('the single form: the box shown, switched off, unticked, with the server\'s price in its label', b.present && b.shown && b.disabled && !b.checked && b.label === 'Add verification package ($99)', b);
+      check('the single form: its one line is the server\'s sentence word for word', !!OWED && b.line === OWED && b.rows.length === 2, { line: b.line, OWED });
+      b = await tryTick(p, false);
+      check('the single form: it cannot be ticked', b.checked === false && b.disabled === true, b);
+      await C.A.page.screenshot({ path: path.join(SHOTS, 'owed-desktop-form.png') });
+      const seen = [await F.noRawError(check, p, 'the invite form', C.A.errors)];
+
+      const who = { first: 'Benedikt', last: 'Sorensen', email: 'benedikt.sorensen@example.com', offeringId: C.off.offeringId, package: true };
+      const one = await invite(p, who);
+      const post = C.stub.sent('POST /v1/invitations')[0];
+      const held = one.serverId ? (await C.srv.rows()).find((x) => x.id === one.serverId) : null;
+      check('"Send invitation" still sends: without the package (no flag, no client id), the real server holds it with none', one.ticked === false && one.pkg === null && /^ivt_/.test(one.serverId) && !!post && !('package' in packageOf(post)) && !('clientId' in packageOf(post)) && !!held && held.package === null, { one, held });
+      const mid = C.money();
+      check('nothing was charged', mid.credit === start.credit && mid.owed === 1900 && mid.entitlements === start.entitlements && mid.payments === 0, { start, mid });
+      seen.push(await F.noRawError(check, p, 'the list after sending', C.A.errors));
+
+      const two = [['Pat', 'Owedone', 'pat.owedone@example.com'], ['Lee', 'Owedtwo', 'lee.owedtwo@example.com']];
+      await checkList(p, two.map((x) => x.join(',')));
+      await reread(p);
+      const lb = await bulkBox(p);
+      check('the list form: the box shown, switched off, unticked, with the same sentence word for word', lb.shown && lb.disabled && !lb.checked && lb.label === 'Add verification package' && lb.line === OWED && lb.rows.length === 2, lb);
+      await C.A.page.screenshot({ path: path.join(SHOTS, 'owed-desktop-list.png') });
+      seen.push(await F.noRawError(check, p, 'the list form', C.A.errors));
+
+      // Nothing owed any more: the next read switches the box back on.
+      st.put('billing', { id: C.account.id, owedCents: 0 });
+      await openForm(p);
+      await chooseOffering(p, C.off.offeringId);
+      await reread(p);
+      b = await boxReady(p);
+      check('with nothing owed, the single form\'s box is enabled again after the next read, with no line', b.shown && !b.disabled && b.line === '' && b.label === 'Add verification package ($99)', b);
+      seen.push(await F.noRawError(check, p, 'the invite form, nothing owed', C.A.errors));
+      check('the server called nothing outside this machine', outside.length === 0, outside);
+      F.leakFree(check, 'every screen of this part', seen.join('\n'));
+    } finally {
+      await C.close();
+    }
+  },
+
+  returned: async ({ check, S }) => {
+    const replies = [];
+    const C = await consoleOn(S, check, F.VIEW.desktop, {});
+    try {
+      const p = C.page;
+      const st = C.srv.server.store;
+      const who = { first: 'Marisol', last: 'Quennell', email: 'marisol.quennell@example.com', offeringId: '', package: true };
+      const one = await invite(p, who);
+      const rec = one.serverId ? st.get('invitations', one.serverId) : null;
+      check('an invitation sent with the package: the real server holds it with its package (identity, $19)', one.ticked === true && /^ivt_/.test(one.serverId) && !!rec && !!rec.package && rec.package.key === one.id && rec.package.tier === 'identity', { one, pkg: rec && rec.package });
+      // The package goes back as credit (as when its invitation ended before a check started).
+      st.put('entitlements', { id: rec.package.entitlement, status: 'credited', creditedAt: new Date().toISOString() });
+      const key = `POST /v1/invitations/${one.serverId}/resend`;
+      C.stub.set(key, () => ({
+        amend: (json, status) => {
+          replies.push({ status, json });
+          return json;
+        }
+      }));
+      const outbox = st.list('outbox').length;
+      const hash = st.get('invitations', one.serverId).tokenHash;
+      const before = C.money();
+      const sel = `tr[data-invitation="${one.id}"] [data-action=inv8-resend]`;
+      await p.locator(sel).scrollIntoViewIfNeeded().catch(() => {});
+      await p.click(sel);
+      for (let i = 0; i < 100 && !C.stub.sent(key).length; i++) await p.waitForTimeout(100);
+      await p.waitForTimeout(500);
+      const shown = await toastsNow(p);
+      const said = replies[0] || null;
+      const SENT = said && said.json && typeof said.json.error === 'string' ? said.json.error : '';
+      check('the real server refused the resend with 409 and a sentence of its own', !!said && said.status === 409 && SENT.length > 10, said);
+      check('the toast is the server\'s sentence alone, word for word', !!SENT && shown.indexOf(SENT) >= 0, { shown, SENT });
+      await p.waitForTimeout(400);
+      const line = await p.evaluate((id) => Array.from(document.querySelectorAll(`tr[data-invitation="${id}"] .cs-error-text, tr[data-invitation="${id}"] .cs-error`)).map((e) => e.innerText.trim()), one.id);
+      check('the invitation\'s row shows the server\'s sentence alone, word for word', !!SENT && line.indexOf(SENT) >= 0, { line, row: await rowText(p, one.id) });
+      await C.A.page.screenshot({ path: path.join(SHOTS, 'returned-row.png') });
+      const text = await F.noRawError(check, p, 'after the refusal', C.A.errors);
+      check('no email was sent: the server\'s outbox and the invitation\'s link are as they were', st.list('outbox').length === outbox && st.get('invitations', one.serverId).tokenHash === hash, { outbox, now: st.list('outbox').length });
+      const after = C.money();
+      check('nothing was charged', after.credit === before.credit && after.entitlements === before.entitlements && after.payments === 0, { before, after });
+      check('the server called nothing outside this machine', outside.length === 0, outside);
+      F.leakFree(check, 'every screen of this part', text);
     } finally {
       await C.close();
     }
