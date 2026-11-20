@@ -408,8 +408,10 @@
     const c = m.cover || {};
     if (c.on) {
       const lines = c.lines || [];
+      // the band's words in white or ink, whichever reads better on the accent (as the PDF draws them)
+      const ink = NS.brand.contrast(accent, '#FFFFFF') >= NS.brand.contrast(accent, '#1A1D21') ? '#FFFFFF' : '#1A1D21';
       out.push(
-        `<header class="rb-cover rb-cover-${h(c.style)}" style="--rb-accent:${accent}">${c.style === 'photo' && c.photoId ? photoHTML(c.photoId, '') : ''}<h1>${h(lines[0] || '')}</h1>${lines
+        `<header class="rb-cover rb-cover-${h(c.style)}" style="--rb-accent:${accent};--rb-on:${ink}">${c.style === 'photo' && c.photoId ? photoHTML(c.photoId, '') : ''}<h1>${h(lines[0] || '')}</h1>${lines
           .slice(1)
           .map((l) => `<p>${h(l)}</p>`)
           .join('')}</header>`

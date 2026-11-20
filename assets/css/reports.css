@@ -38,7 +38,7 @@
 .rb-doc { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; padding: var(--space-lg); border: 1px solid var(--cv-line); border-radius: var(--cv-r-card); background: #FFFFFF; color: #1A1D21; font-size: var(--text-sm); line-height: 1.5; overflow-wrap: anywhere; }
 .rb-doc p, .rb-doc ul, .rb-doc h1, .rb-doc h2, .rb-doc h3, .rb-doc figure { margin: 0; }
 .rb-doc ul { padding-left: var(--space-lg); }
-.rb-cover { display: flex; flex-direction: column; gap: var(--space-2xs); padding: var(--space-lg); border-radius: var(--cv-r-inner); background: var(--rb-accent); color: #FFFFFF; }
+.rb-cover { display: flex; flex-direction: column; gap: var(--space-2xs); padding: var(--space-lg); border-radius: var(--cv-r-inner); background: var(--rb-accent); color: var(--rb-on, #FFFFFF); }
 .rb-cover-plain { background: none; color: #1A1D21; border-top: 4px solid var(--rb-accent); }
 .rb-cover-photo { background: none; color: #1A1D21; padding: 0 0 var(--space-sm); border-bottom: 4px solid var(--rb-accent); }
 .rb-cover h1, .rb-head h1 { font-size: var(--text-xl); font-weight: 500; line-height: 1.2; }
