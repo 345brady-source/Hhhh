@@ -235,6 +235,73 @@ const cases = {
       if (!holds(s, titleOf(ws, rid)) || others.length || !holds(s, 'the quarter went to plan')) bad.push({ rid, own: holds(s, titleOf(ws, rid)), others });
     });
     check('with statements: each file holds the letter and its own title only', bad.length === 0, bad.slice(0, 3));
+  },
+
+  archive: async ({ check }) => {
+    const { NS, kit } = load();
+    const { ws, oid } = T.fundA(NS);
+    const store = makeStore();
+    const t = blankTemplate(NS, ws, 'quarterly');
+    const run = await NS.reportsRun.generate(ws, t, { from: Q4.from, to: Q4.to, audience: { kind: 'fund', offeringId: 'fund-a' } }, { by: BY, at: AT, kit, store });
+    const [f1, f2] = run.files;
+    const original = Buffer.from(store.m.get(f1.id).bytes);
+    const a = await NS.reportsRun.fileBytes(ws, run.id, f1.id, { kit, store });
+    check("a kept file: source 'kept' with the recorded hash", a && a.source === 'kept' && NS.audit.sha256(a.bytes) === f1.sha256, a && (a.error || a.source));
+    await store.del(f1.id);
+    const b = await NS.reportsRun.fileBytes(ws, run.id, f1.id, { kit, store });
+    check("the store lost it: source 'remade' with the same hash", b && b.source === 'remade' && NS.audit.sha256(b.bytes) === f1.sha256, b && (b.error || b.source));
+    check('the remade file is byte-identical to the one made', !!(b && b.bytes) && Buffer.compare(Buffer.from(b.bytes), original) === 0, b && b.bytes && b.bytes.length);
+    check('remaking it recorded nothing and kept nothing', ws.reports.runs.length === 1 && !store.m.has(f1.id));
+    const endOf = () => NS.reportsData.statement(ws, 'FA-1001', oid, Q4.from, Q4.to).period.end;
+    const endBefore = endOf();
+    NS.books.post(ws, oid, { date: '2026-11-30', memo: 'Legal fees', src: 'bank:fa-run-1', lines: [['5100', 100000], ['1000', -100000]] }, { by: BY, at: '2027-01-20T13:00:00.000Z' });
+    NS.books.sync(ws, { today: NS.dates.today() });
+    check("a balanced entry dated 2026-11-30 changes FA-1001's quarter-end capital", endOf() !== endBefore, { before: endBefore, after: endOf() });
+    const c = await NS.reportsRun.fileBytes(ws, run.id, f1.id, { kit, store });
+    check('after the figures changed: the plain sentence, no bytes', c && !c.bytes && c.error === 'The original file is not kept on this device, and the figures or the firm’s details have changed since it was made.', c && (c.error || c.source));
+    store.m.get(f2.id).bytes[100] ^= 1;
+    const d = await NS.reportsRun.fileBytes(ws, run.id, f2.id, { kit, store });
+    check("one byte of a kept file changed: 'The kept file does not match its record.'", d && !d.bytes && d.error === 'The kept file does not match its record.', d && (d.error || d.source));
+    const e = await NS.reportsRun.fileBytes(ws, run.id, 'rf-x-9', { kit, store });
+    check('an unknown file gives a plain sentence, no bytes', e && !e.bytes && typeof e.error === 'string' && e.error.length > 0, e);
+    const all = [c, d, e].map((x) => (x && x.error) || '').join(' ');
+    check('the sentences name no vendor and never the forbidden word', !L.WORD_RE.test(all) && T.leak(all).ok, T.leak(all).hits);
+  },
+
+  batch: async ({ check }) => {
+    const { NS, kit } = load();
+    const ws = kestrel(NS);
+    const store = makeStore();
+    const t = blankTemplate(NS, ws, 'quarterly');
+    const ids = ws.investors.map((i) => i.id);
+    const t0 = Date.now();
+    const run = await NS.reportsRun.generate(ws, t, { from: Q4.from, to: Q4.to, audience: { kind: 'all' } }, { by: BY, at: AT, kit, store });
+    const total = Date.now() - t0;
+    const n = run.files.length;
+    console.log(`speed: ${n} reports, ${total} ms, ${n ? Math.round(total / n) : 0} ms per report`);
+    const want = NS.reports.recipients(ws, t, { from: Q4.from, to: Q4.to, audience: { kind: 'all' } });
+    check(`one file per investor of the firm (${want.length} of ${ids.length} investors hold a position at the quarter end)`, run.state === 'generated' && n === want.length && n > 2 && J(run.files.map((f) => f.investorIds)) === J(want.map((id) => [id])), { n, want: want.length });
+    check('every file is kept and matches its record', run.files.every((f) => store.m.has(f.id) && NS.audit.sha256(store.m.get(f.id).bytes) === f.sha256));
+    const bad = [];
+    run.files.forEach((f) => {
+      const rid = f.investorIds[0];
+      const s = textOf(store.m.get(f.id).bytes);
+      const others = otherTitles(ws, rid).filter((o) => holds(s, o));
+      const otherIds = ids.filter((id) => id !== rid && s.indexOf(id) >= 0);
+      if (!holds(s, titleOf(ws, rid)) || others.length || otherIds.length) bad.push({ rid, own: holds(s, titleOf(ws, rid)), others, otherIds });
+    });
+    check("every PDF holds its own investor's title and no other investor's title or id", bad.length === 0, bad.slice(0, 3));
+    const multi = run.files.filter((f) => NS.reportsData.fundsOf(ws, f.investorIds[0]).length > 1);
+    check("a file for an investor in several funds names no one fund; the others name theirs", multi.every((f) => f.offeringId === '') && run.files.filter((f) => multi.indexOf(f) < 0).every((f) => /^kb-/.test(f.offeringId)), run.files.map((f) => [f.investorIds[0], f.offeringId]));
+  },
+
+  selfcheck: async ({ check }) => {
+    const { spawnSync } = require('child_process');
+    const env = Object.assign({}, process.env, { GATE_FRESH: '1' });
+    const a = spawnSync(process.execPath, [__filename, '--case', 'nosuchcase'], { encoding: 'utf8', env });
+    check('an unknown --case name exits 1 with a FAIL line', a.status === 1 && /^FAIL /m.test(a.stdout) && /REPORTS RUN: FAIL/.test(a.stdout), { status: a.status, out: a.stdout });
+    const b = spawnSync(process.execPath, [__filename, '--case', ''], { encoding: 'utf8', env });
+    check('an empty --case list exits 1 with a FAIL line', b.status === 1 && /^FAIL /m.test(b.stdout) && /REPORTS RUN: FAIL/.test(b.stdout), { status: b.status, out: b.stdout });
   }
 };
 
