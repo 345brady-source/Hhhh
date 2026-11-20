@@ -46,6 +46,7 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
   - Check runs: gate steps and check parts save each result the moment it ends, stamped to the exact tree, and a rerun keeps what passed on the same tree (quick task wip/gate-resume). Until it merges, agents start long runs only after saving.
   - Evidence: RED outputs and run logs that a SUMMARY quotes are copied into the plan's SUMMARY as they are produced, not only at the end.
   - Orchestrator: "State now" is updated and pushed after every event (merge, launch, failure, owner message), not only after merge rounds.
+- Owner, 2026-11-20 (verbatim): "Every builder. Anything you do must be saved as you do it". The orchestrator saves its own work the moment it is made: tools and pages go in .planning/tools/ and are pushed, decisions go in CONTEXT files and are pushed, and "State now" is pushed after every event. Nothing the orchestrator needs lives only in the scratchpad.
 - Every agent the orchestrator creates from now on gets the full text of .planning/SAVE-RULES.md in its prompt (owner: "Also tell every agent you create for now on").
 - A stopped agent is continued from its pushed branch plus any files in its worktree (SCRATCH/continue-brief.md).
 
