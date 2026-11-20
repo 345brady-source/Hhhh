@@ -1,5 +1,5 @@
 // gate: node
-// last "BLUESKY MATH: PASS (cases run: 6)"
+// last "BLUESKY MATH: PASS (cases run: 7)"
 // Pure checks for plan 09-07 (no browser): the state table (assets/js/bluesky-data.js) and NS.bluesky (assets/js/bluesky.js)
 // with data.js, eligibility.js and filings.js in one sandbox, the way the browser loads them (window.CVPortal).
 //   table    the table's codes are the 52 of the pinned SEC schema; every row has a name; the rule holds for every row
@@ -16,6 +16,8 @@
 //            result (date, filing ID, fee paid, renewal date) sets it filed and gives its line the fee paid; a quoted and a
 //            paid fee that differ are both kept and the difference reported; a renewal order is the $50 service fee plus
 //            that state's line
+//   partly   an order for two states with a result for one is not filed: it reads "Partly filed (1 of 2)" with the
+//            state still open named; the second result makes it filed (a fee still open), and the last fee makes it done
 //   selfcheck an unknown --case name and an empty list exit 1 with FAIL; the gate markers
 //   node bluesky-math.js [--case name1,name2]
 // One PASS or FAIL line per check; the last line is "BLUESKY MATH: PASS (cases run: N)" or
@@ -229,7 +231,7 @@ const cases = {
     check('recording New York\'s result sets it filed with its date, filing ID, fee paid and renewal date', !!r1 && st().NY.status === 'filed' && st().NY.filedOn === '2026-11-10' && st().NY.efdId === 'NY-123' && st().NY.feeCents === 35000 && st().NY.renewsOn === '2027-11-10' && st().NY.source === 'portal', st().NY);
     check('the quoted fee is kept beside the fee paid, and the difference is reported ($50 more)', st().NY.quotedCents === 30000 && B.difference(st().NY) === 5000 && r1.difference === 5000, { NY: st().NY, r1 });
     const line = (x, code) => x.lines.find((l) => l.state === code);
-    check('the order\'s New York line now carries the fee paid; the amount due counts it; fees are still open', line(ord, 'NY').cents === 35000 && line(ord, 'CA').cents === null && ord.dueCents === 45000 && ord.openFees === true && ord.status === 'filed', ord);
+    check('the order\'s New York line now carries the fee paid; the amount due counts it; fees are still open; the order is only partly filed', line(ord, 'NY').cents === 35000 && line(ord, 'CA').cents === null && ord.dueCents === 45000 && ord.openFees === true && ord.status === 'partly-filed', ord);
     const r2 = B.recordResult(ws, 'o1', 'CA', { filedOn: '2026-11-11', efdId: '', feeCents: 20000, renewsOn: '', systemFeeCents: 16000 }, '2026-11-12');
     check('with no quoted fee there is no difference to report', !!r2 && r2.difference === null && B.difference(st().CA) === null);
     check('once every state is filed and every fee known the order is done, at cost: $100 + $350 + $200 + $160 due', ord.openFees === false && ord.status === 'done' && ord.dueCents === 81000 && ord.lines.find((l) => /Filing system fee/.test(l.label)).cents === 16000, ord);
@@ -254,6 +256,35 @@ const cases = {
     check('the renewal\'s result goes to the renewal order still open (not the cancelled one) and sets the next renewal date', !!r3 && st().NY.status === 'filed' && st().NY.renewsOn === '2027-11-12' && ren.lines[1].cents === 25000 && ren.dueCents === 30000 && ren2.lines[1].cents === null, { ren, ren2, NY: st().NY });
     check('placing an order with no state, or for an unknown offering, records nothing', B.placeOrder(ws, o, [], { by: 'x', data: T }) === null && B.placeOrder(ws, { id: 'nosuch' }, ['NY'], { by: 'x', data: T }) === null && ws.filings.orders.length === 3);
     check('each result is in the change log', calls.filter((c) => /State notice result recorded/.test(c.action)).length === 3, calls.map((c) => c.action));
+  },
+
+  partly({ check }) {
+    const NS = load();
+    const B = NS.bluesky;
+    const F = NS.filings;
+    const ws = sample();
+    const o = ws.offerings[0];
+    F.recordFiled(ws, 'o1', { type: 'D', filedOn: '2026-10-20', accession: '0001234567-26-000111', source: 'self' });
+    const ord = B.placeOrder(ws, o, ['CA', 'NY'], { by: 'Ann Admin', data: NS.blueskyData });
+    check('an order for two states (California and New York) is recorded', !!ord && ord.lines.filter((l) => l.state).length === 2 && ord.status === 'recorded', ord);
+    const said = () => (typeof B.orderStatus === 'function' ? B.orderStatus(ws, ord) : 'no orderStatus()');
+    check('before any result it reads Recorded, no state filed', J(said()) === J({ label: 'Recorded', filed: 0, total: 2, open: ['California', 'New York'] }), said());
+    const r1 = B.recordResult(ws, 'o1', 'NY', { filedOn: '2026-11-10', efdId: 'NY-1', feeCents: 30000, renewsOn: '' }, '2026-11-12');
+    check('New York\'s result is recorded', !!r1 && ws.filings.offerings.o1.states.NY.status === 'filed', r1);
+    check('with one of two states filed the order is not filed and not done', ord.status !== 'filed' && ord.status !== 'done', ord.status);
+    check('it is partly filed', ord.status === 'partly-filed', ord.status);
+    check('it reads "Partly filed (1 of 2)" with California still open', J(said()) === J({ label: 'Partly filed (1 of 2)', filed: 1, total: 2, open: ['California'] }), said());
+    const r2 = B.recordResult(ws, 'o1', 'CA', { filedOn: '2026-11-11', efdId: 'CA-1', feeCents: 20000, renewsOn: '' }, '2026-11-12');
+    check('the second result makes the order filed (every state has its result; the filing system\'s fee is still open)', !!r2 && ord.status === 'filed' && ord.openFees === true, { status: ord.status, openFees: ord.openFees });
+    check('it reads "Filed" with no state open', J(said()) === J({ label: 'Filed', filed: 2, total: 2, open: [] }), said());
+    const r3 = B.recordResult(ws, 'o1', 'CA', { filedOn: '2026-11-11', efdId: 'CA-1', feeCents: 20000, renewsOn: '', systemFeeCents: 15000 }, '2026-11-12');
+    check('with the filing system\'s fee known the order is done and reads "Done"', !!r3 && ord.status === 'done' && ord.openFees === false && said().label === 'Done', { status: ord.status, said: said() });
+    const three = sample();
+    F.recordFiled(three, 'o1', { type: 'D', filedOn: '2026-10-20', accession: '0001234567-26-000111', source: 'self' });
+    const o3 = B.placeOrder(three, three.offerings[0], ['CA', 'NY', 'TX'], { by: 'Ann Admin', data: NS.blueskyData });
+    B.recordResult(three, 'o1', 'TX', { filedOn: '2026-11-10', feeCents: 1000 }, '2026-11-12');
+    const s3 = typeof B.orderStatus === 'function' ? B.orderStatus(three, o3) : null;
+    check('three states with one result: "Partly filed (1 of 3)", California and New York still open', !!o3 && o3.status === 'partly-filed' && !!s3 && s3.label === 'Partly filed (1 of 3)' && J(s3.open) === J(['California', 'New York']), { status: o3 && o3.status, s3 });
   },
 
   selfcheck({ check }) {
