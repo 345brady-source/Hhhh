@@ -50,7 +50,10 @@ on a local server; a real TEST upload by a Carrow & Vale person is still unprove
 
 ## Failures and open items first
 
-GATE_PENDING
+No check fails on this tree: gate9.sh ended `GATE_EXIT=0` (a first gate run was killed by a container restart and rerun from the start). What is not proven:
+1. No EDGAR upload happened. Acceptance of a portal-built file by EDGAR needs a TEST upload by a Carrow & Vale person with the owner's EDGAR access.
+2. The owner's preview has no server, so the sent, received, filed and suspended states can be judged only from the screenshots until a real filing server is connected (hosting question of 09-05 still open).
+3. Partial RED: in Task 2, send-desktop passed on Task 1's code and offline-framed failed only on the check's own console pattern; in Task 3 the first RED run stopped on a check bug (no redraw) and was rerun on Task 2's code (red-3.txt).
 
 ## RED runs (kept in SCRATCH/exec-09-09)
 
@@ -85,11 +88,25 @@ FILINGS SERVER: FAIL (parts run: 1) - states
 - The full check alone before the gate: `FILINGS SERVER: PASS (parts run: 7)` (98 PASS, 0 FAIL)
 - CCC scan (scan-ccc.mjs over every output, the shipped file, the check and this summary): `CCC SCAN: 21 files, 0 holding a CCC`
 
-GATE_LINES
+Gate (verify-3.sh; last lines of gate.txt, verbatim):
+```
+GATE ok   server tests 358 = base 358 + 0 declared
+GATE ok   ACCESS FLOW
+GATE ok   BLUESKY FLOW
+GATE ok   BLUESKY MATH
+GATE ok   FILINGS FLOW
+GATE ok   FILINGS MATH
+GATE ok   FILINGS SERVER
+GATE ok   FORMD FLOW
+GATE ok   FORMD XML
+GATE_EXIT=0
+VERIFY3_EXIT=0
+```
+Every reference step before these printed `GATE ok` (21 steps, signing 75/0 and record 40/0 against the base). The gate's base tree, shots and checks-out were removed; the CCC scan afterwards: `CCC SCAN: 101 files, 0 holding a CCC`.
 
 ## Commits
 
-9d77ff3 (RED 1), d3b864b (Task 1), 5f773c5 (RED 2), e283ed4 (Task 2), 9899de7 (RED 3), 8a3d77f (Task 3), and this summary.
+9d77ff3 (RED 1), d3b864b (Task 1), 5f773c5 (RED 2), e283ed4 (Task 2), 9899de7 (RED 3), 8a3d77f (Task 3), 032077e (summary save) and the final summary commit.
 
 ## Deviations
 
