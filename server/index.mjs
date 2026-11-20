@@ -32,6 +32,12 @@
  *   PUT  /v1/invite/progress      …reports the step it is on
  *   POST /v1/invite/complete      …sends back the finished paperwork; the sponsor is emailed
  *
+ * Tax documents on the investor's own device (lib/taxdocs.mjs, plan 10-12; see README.md):
+ *   POST /v1/taxdocs              the console sends one delivered tax document, sealed; this server emails the link
+ *   GET  /v1/taxdocs              statuses and opens; POST /v1/taxdocs/:id/withdraw, …/resend
+ *   GET  /v1/taxdoc               the investor's page: the firm, the title and what is needed (X-Doc-Token)
+ *   POST /v1/taxdoc/open          …the document, with the last four digits of the tax number on record
+ *
  * No verification vendor is built in: sponsors plug in the services they use
  * (declarative connectors, code plug-ins, or hosted links plus the results
  * API; see README.md), as many per check as they like.
@@ -50,6 +56,7 @@ import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
+import { createTaxDocs } from './lib/taxdocs.mjs';
 import { createAccounts } from './lib/accounts.mjs';
 import { createBilling } from './lib/billing.mjs';
 import { createFilings } from './lib/filings.mjs';
@@ -171,6 +178,7 @@ export function createServer(opts = {}) {
   const accounts = createAccounts({ store, now });
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
+  const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
   const pkg = invites.usePackages({ billing, providers: PROVIDERS, identity: env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', accreditation: env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit' }); // the package on invitations (08-05); 08-15 adds its route helpers
   /**
    * Who is calling a sponsor route: null (refuse), { shared: true } (the shared API_TOKEN, or an open server: no API_TOKEN
@@ -835,6 +843,16 @@ export function createServer(opts = {}) {
       return send(res, 200, { ok: true, id: saved.id, status: saved.status });
     }
 
+    // A tax-document link's token (X-Doc-Token, plan 10-12) opens the two tax-document calls and nothing else; those two
+    // calls open with nothing else (no token, or an invitation's token, is refused).
+    const docToken = header(req.headers, 'x-doc-token');
+    if (path.startsWith('/v1/') && docToken !== undefined) {
+      if (!taxdocs.investorPath(req.method, path)) return send(res, 401, { error: 'Not authorized' });
+      if (req.method === 'POST' && limited(req)) return send(res, 429, { error: 'Too many requests' });
+      return taxdocs.investor(req, res, path, docToken);
+    }
+    if (/^\/v1\/taxdoc(\/|$)/.test(path)) return send(res, 401, { error: 'Not authorized' });
+
     // An invitation link's token (X-Invite-Token) authorizes the investor's own browser for its
     // onboarding and its own verification and screening calls, never the sponsor's routes.
     const inviteToken = header(req.headers, 'x-invite-token');
@@ -960,6 +978,7 @@ export function createServer(opts = {}) {
     }
 
     if (/^\/v1\/filings(\/|$)/.test(path)) return filings.handle(req, res, url, auth);
+    if (/^\/v1\/taxdocs(\/|$)/.test(path) && !scope) return taxdocs.sponsor(req, res, url, auth); // the sponsor's tax-document calls (plan 10-12)
     if (await invites.sponsor(req, res, url, auth)) return;
 
     return send(res, 404, { error: 'Not found' });
@@ -973,7 +992,9 @@ export function createServer(opts = {}) {
   );
   server.store = store;
   server.invitations = invites;
+  server.taxdocs = taxdocs;
   server.on('close', () => invites.stop());
+  server.on('close', () => taxdocs.stop());
   return server;
 }
 
