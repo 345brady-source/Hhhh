@@ -153,7 +153,9 @@
 
   /* ---------- sections other files add (NS.taxUI) ---------- */
   const HERE = (document.currentScript && document.currentScript.src) || '';
-  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js', 'tax1099-ui.js', 'taxlink.js']);
+  // Only files that are shipped: a part not in the build would be asked for, and refused, on every page load
+  // (06-WALKTHROUGH-3 failure 4). Plan 10-10 adds 'tax1099-ui.js' back after 'tax1099.js', plan 10-12 adds 'taxlink.js' last.
+  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js']);
   const parts = {};
   const load = { settled: false, waiting: false };
   function part(key, spec) {

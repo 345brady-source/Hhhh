@@ -108,6 +108,7 @@
   .fl-states { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fl-states label, .fl-steps > li { min-height: var(--control-h); }
 }
-/* Links inside a note line keep their place and get a 24 px touch area (17 px text box + 4 px above and below). */
-.fl-note a { position: relative; }
-.fl-note a::after { content: ""; position: absolute; inset: -4px 0; }
+/* Links inside a note line, or a step's how-to line (EDGAR access: "Open the answer sheet"), keep their place and get a
+   24 px touch area (17 px text box + 4 px above and below). */
+.fl-note a, .fl-detail a { position: relative; }
+.fl-note a::after, .fl-detail a::after { content: ""; position: absolute; inset: -4px 0; }

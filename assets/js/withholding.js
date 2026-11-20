@@ -53,6 +53,9 @@
     return s;
   };
   const dollars = (c) => `${Math.floor(c / 100)}.${String(c % 100).padStart(2, '0')}`;
+  // An amount in words a person reads, as the portal's money formatter prints it (NS.ui.usdc: "$5,000.00"). This file also
+  // runs under Node, so it does not reach for NS.ui. The worksheet's CSV keeps dollars() (no thousands separator).
+  const money = (c) => `$${String(Math.floor(c / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${String(c % 100).padStart(2, '0')}`;
 
   /* ---------- the offering's tax reporting type (only a person sets it) ---------- */
   const REPORTING = {
@@ -246,7 +249,7 @@
     const cents = amount(subject, rate);
     if (cents < 1) throw new Error('At this amount and rate nothing would be withheld.');
     const source = rate === RATE.foreign ? 'rule' : 'entered';
-    const why = source === 'rule' ? `${RATE.foreign}% of the amount you entered as subject to withholding ($${dollars(subject)}).` : `A rate of ${rate}% that you entered, on the amount you entered as subject to withholding ($${dollars(subject)}).`;
+    const why = source === 'rule' ? `${RATE.foreign}% of the amount you entered as subject to withholding (${money(subject)}).` : `A rate of ${rate}% that you entered, on the amount you entered as subject to withholding (${money(subject)}).`;
     return draft(line.investorId, 'foreign', subject, rate, cents, source, why);
   }
   /**
@@ -397,7 +400,7 @@
     const entry = { id: `dep-${Date.now().toString(36)}${(serial++).toString(36)}`, offeringId: d.offeringId, kind: d.kind, year, cents: d.cents, date: d.date, confirmation, by, at: d.at || nowIso() };
     if (!Array.isArray(ws.taxDeposits)) ws.taxDeposits = [];
     ws.taxDeposits.push(entry);
-    log(ws, { action: 'Tax deposit marked', record: entry.id, fund: d.offeringId, detail: `${KINDS[d.kind].label} for ${year}: $${dollars(d.cents)} deposited ${d.date}, confirmation ${confirmation}`, actor: by });
+    log(ws, { action: 'Tax deposit marked', record: entry.id, fund: d.offeringId, detail: `${KINDS[d.kind].label} for ${year}: ${money(d.cents)} deposited ${d.date}, confirmation ${confirmation}`, actor: by });
     return entry;
   }
 
