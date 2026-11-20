@@ -107,6 +107,21 @@ body.has-demo .cs-main { padding-bottom: 104px; }
   .demo-bar .demo-role select { max-width: 170px; }
   .demo-bar .demo-role:only-child select { max-width: 200px; }
 }
+/* On a phone the preview bar is not laid over the page (06-WALKTHROUGH-2, earlier failure 13): it stands in the page's flow
+   at the top, above the portal's own header, and scrolls away with the page. Its controls wrap, all on the screen; the room
+   kept at the bottom for a floating bar is not needed. Scoped to a page that has the bar: a build without it is untouched. */
+@media (max-width: 640px) {
+  #app:has(> #demo .demo-bar) { display: flex; flex-direction: column; }
+  #app:has(> #demo .demo-bar) > #demo { order: -1; }
+  .demo-bar { position: static; left: auto; right: auto; bottom: auto; flex-wrap: wrap; overflow: visible; max-width: none; margin: 0; padding: max(var(--space-xs), env(safe-area-inset-top, 0px)) max(var(--space-md), env(safe-area-inset-right, 0px)) var(--space-xs) max(var(--space-md), env(safe-area-inset-left, 0px)); background: var(--cv-bg); border-bottom: 1px solid var(--cv-line); pointer-events: auto; }
+  .demo-bar > * { flex: 1 1 auto; }
+  .demo-bar .demo-role { min-width: 0; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--cv-line-strong) 88%, var(--cv-ink)); }
+  .demo-bar .demo-role:has(#demo-sponsor) { flex-basis: 100%; }
+  .demo-bar .demo-role select, .demo-bar .demo-role:only-child select { flex: 1 1 auto; max-width: none; }
+  .demo-bar .demo-start { flex: none; box-shadow: var(--cv-edge-light); }
+  body.has-demo #view { padding-bottom: 0; }
+  body.has-demo .cs-main { padding-bottom: var(--space-xl); }
+}
 body.edition-diy .cs, body.edition-diy .pt { min-height: 100vh; min-height: 100dvh; }
 body.has-demo.mode-standalone #view { background: var(--page); }
 body.has-demo.mode-portal #view { background: var(--page); }
