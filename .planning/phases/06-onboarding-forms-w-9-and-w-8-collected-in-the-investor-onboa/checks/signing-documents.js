@@ -425,13 +425,18 @@ function countersignPart(dev) {
       await press(fr, dev, '.es-finish');
       await fr.waitForSelector('.es-done', { timeout: 30000 }).catch(() => {});
       await requestsPage(fr);
-      await approve(fr, dev, solo.rid);
-      await toasts(fr);
-      await press(fr, dev, `[data-action=req-funded][data-id="${solo.rid}"]`);
-      await fr.waitForTimeout(600);
+      // Signed by the investor, the agreement is complete (no field for the firm): the portal's automatic acceptance may take
+      // it at once; otherwise Approve, then Countersign records it at once as before.
+      const auto = (await subscription(fr, solo.id, solo.rid)).req.status === 'accepted';
+      if (!auto) {
+        await approve(fr, dev, solo.rid);
+        await toasts(fr);
+        await press(fr, dev, `[data-action=req-funded][data-id="${solo.rid}"]`);
+        await fr.waitForTimeout(600);
+      }
       const ss = await subscription(fr, solo.id, solo.rid);
       const stt = await toasts(fr);
-      check('with no field for the firm, Countersign records at once as before', ss.req.status === 'accepted' && ss.onRegister === 1 && ss.hash === '#console-requests' && stt.some((t) => /^Subscription countersigned\./.test(t)), { ss, toasts: stt });
+      check('with no field for the firm, the signed subscription is recorded at once (accepted automatically, or Countersign records it as before)', ss.req.status === 'accepted' && ss.onRegister === 1 && ss.hash === '#console-requests' && (auto || stt.some((t) => /^Subscription countersigned\./.test(t))), { auto, ss, toasts: stt });
     }
     const shown = await Lib.screenText(fr);
     check('no vendor name and no forbidden word on the last screen', Lib.leakCheck(shown).ok, Lib.leakCheck(shown).hits);
