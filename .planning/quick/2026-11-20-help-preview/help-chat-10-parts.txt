@@ -1,0 +1,236 @@
+PASS nosrv-desktop the frame refuses fetch() (connect-src none is in force)
+PASS nosrv-desktop signed in as an admin on the console
+PASS nosrv-desktop exactly one Help control is on the page, in the console bar
+PASS nosrv-desktop it says exactly "Help"
+PASS nosrv-desktop it is whole inside the window and nothing covers it
+PASS nosrv-desktop it overlaps neither the bell nor the firm name
+PASS nosrv-desktop the click opens the dialog with the class dlg-help
+PASS nosrv-desktop an admin with no support address reads exactly the heading and the sentence
+PASS nosrv-desktop the dialog holds no field
+PASS nosrv-desktop no connection was attempted
+PASS nosrv-desktop the page nowhere says "Failed to fetch"
+PASS nosrv-desktop the Close button is whole on screen and on top
+PASS nosrv-desktop the Close button closes it, the page unchanged
+PASS nosrv-desktop opened again, Escape closes it
+PASS nosrv-desktop opened again, browser back closes it and the page stays
+PASS nosrv-desktop still no connection attempted
+PASS nosrv-desktop no script error in the browser
+PASS nosrv-desktop no request went anywhere but this check's own servers
+PASS nosrv-desktop no vendor, model or library name and no forbidden word on the screens read
+PASS investor the frame refuses fetch() (connect-src none is in force)
+PASS investor 1280x800: the sample firm has a team name and an address of its own
+PASS investor 1280x800 overview: exactly one Help control, a button in the page footer saying "Help"
+PASS investor 1280x800 overview: the dialog is the heading, the sentence and the firm's own team and address
+PASS investor 1280x800 overview: the dialog is inside the window and its Close button on screen
+PASS investor 1280x800 overview: the Close button closes it
+PASS investor 1280x800 documents: exactly one Help control, a button in the page footer saying "Help"
+PASS investor 1280x800 documents: the dialog is the heading, the sentence and the firm's own team and address
+PASS investor 1280x800 documents: the dialog is inside the window and its Close button on screen
+PASS investor 1280x800 documents: the Close button closes it
+PASS investor 1280x800: with the firm's address emptied the contact is "Contact Kestrel Bay Investor Relations."
+PASS investor 1280x800: with no team name either it is "Contact the firm that invited you."
+PASS investor 1280x800 invitation: exactly one Help control, a button in the page footer saying "Help"
+PASS investor 1280x800 invitation: the person there is an investor: the firm's own team and address
+PASS investor 1280x800 invitation: the Close button closes it and the step is still there
+PASS investor 1280x800: no connection was attempted
+PASS investor 1280x800: the page nowhere says "Failed to fetch"
+PASS investor no script error in the browser
+PASS investor no request went anywhere but this check's own servers
+PASS investor no vendor, model or library name and no forbidden word on the screens read
+PASS investor the frame refuses fetch() (connect-src none is in force)
+PASS investor 390x844: the sample firm has a team name and an address of its own
+PASS investor 390x844 overview: exactly one Help control, a button in the page footer saying "Help"
+PASS investor 390x844 overview: it is at least 40px tall for a finger (40px)
+PASS investor 390x844 overview: the dialog is the heading, the sentence and the firm's own team and address
+PASS investor 390x844 overview: the dialog is inside the window and its Close button on screen
+PASS investor 390x844 overview: the Close button closes it
+PASS investor 390x844 documents: exactly one Help control, a button in the page footer saying "Help"
+PASS investor 390x844 documents: it is at least 40px tall for a finger (40px)
+PASS investor 390x844 documents: the dialog is the heading, the sentence and the firm's own team and address
+PASS investor 390x844 documents: the dialog is inside the window and its Close button on screen
+PASS investor 390x844 documents: the Close button closes it
+PASS investor 390x844: with the firm's address emptied the contact is "Contact Kestrel Bay Investor Relations."
+PASS investor 390x844: with no team name either it is "Contact the firm that invited you."
+PASS investor 390x844 invitation: exactly one Help control, a button in the page footer saying "Help"
+PASS investor 390x844 invitation: the person there is an investor: the firm's own team and address
+PASS investor 390x844 invitation: the Close button closes it and the step is still there
+PASS investor 390x844: no connection was attempted
+PASS investor 390x844: the page nowhere says "Failed to fetch"
+PASS investor no script error in the browser
+PASS investor no request went anywhere but this check's own servers
+PASS investor no vendor, model or library name and no forbidden word on the screens read
+PASS support the frame refuses fetch() (connect-src none is in force)
+PASS support no support address set: an admin reads []
+PASS support no support address set: a team member reads ["Contact your administrator."]
+PASS support no support address set: no element is created from the value and nothing of it runs
+PASS support no support address set: no connection was attempted
+PASS support no script error in the browser
+PASS support no request went anywhere but this check's own servers
+PASS support no vendor, model or library name and no forbidden word on the screens read
+PASS support the frame refuses fetch() (connect-src none is in force)
+PASS support a support address set: an admin reads ["Contact support at help@platform.example."]
+PASS support a support address set: a team member reads ["Contact support at help@platform.example."]
+PASS support a support address set: no element is created from the value and nothing of it runs
+PASS support a support address set: no connection was attempted
+PASS support no script error in the browser
+PASS support no request went anywhere but this check's own servers
+PASS support no vendor, model or library name and no forbidden word on the screens read
+PASS support the frame refuses fetch() (connect-src none is in force)
+PASS support a value that is not an address and carries markup: an admin reads []
+PASS support a value that is not an address and carries markup: a team member reads ["Contact your administrator."]
+PASS support a value that is not an address and carries markup: no element is created from the value and nothing of it runs
+PASS support a value that is not an address and carries markup: no connection was attempted
+PASS support no script error in the browser
+PASS support no request went anywhere but this check's own servers
+PASS support no vendor, model or library name and no forbidden word on the screens read
+PASS support the frame refuses fetch() (connect-src none is in force)
+PASS support a value that is not text: an admin reads []
+PASS support a value that is not text: a team member reads ["Contact your administrator."]
+PASS support a value that is not text: no element is created from the value and nothing of it runs
+PASS support a value that is not text: no connection was attempted
+PASS support no script error in the browser
+PASS support no request went anywhere but this check's own servers
+PASS support no vendor, model or library name and no forbidden word on the screens read
+PASS refused-desktop the frame refuses fetch() (connect-src none is in force)
+PASS refused-desktop with a server address saved, the console itself attempts no connection
+PASS refused-desktop the dialog has the field "Ask a question" (500 characters at most, no saved suggestions, Send on the keyboard) and Send
+PASS refused-desktop the field's text is at least 16px (16px), so a phone does not zoom the page
+PASS refused-desktop before a question the dialog says nothing but its heading and Send
+PASS refused-desktop question 1: within 2 seconds (63 ms) the question shows with "Help is not available right now." and the contact
+PASS refused-desktop question 1: exactly one refused connection for it (1 in all)
+PASS refused-desktop question 1: Send can be used again
+PASS refused-desktop 9.5 seconds later there is still exactly one (no retry)
+PASS refused-desktop question 2: within 2 seconds (37 ms) the question shows with "Help is not available right now." and the contact
+PASS refused-desktop question 2: exactly one refused connection for it (2 in all)
+PASS refused-desktop question 2: Send can be used again
+PASS refused-desktop the page nowhere says "Failed to fetch" or names an error
+PASS refused-desktop the Close button is whole on screen and on top
+PASS refused-desktop no script error in the browser
+PASS refused-desktop no request went anywhere but this check's own servers
+PASS refused-desktop no vendor, model or library name and no forbidden word on the screens read
+PASS answers-desktop an answer of several lines shows as text with its line breaks
+PASS answers-desktop an answer that helps is not followed by the contact
+PASS answers-desktop the log comes after the field and Send
+PASS answers-desktop one POST to /v1/help with the token and a JSON body
+PASS answers-desktop the body holds the question, the page (console-investors) and the role (admin), and no session yet
+PASS answers-desktop markup in an answer and in a question creates no element and shows its characters
+PASS answers-desktop the second request carries the session the first answer returned
+PASS answers-desktop a "cannot" and an "out_of_scope" answer are each followed by the contact, newest first
+PASS answers-desktop while the answer is awaited the question shows with a waiting mark and Send is off
+PASS answers-desktop a second submit meanwhile sends nothing
+PASS answers-desktop then its answer replaces the mark and Send works again
+PASS answers-desktop a reply arriving after another dialog took its place writes nothing into that dialog
+PASS answers-desktop closed and opened again, the exchanges are still there (the late answer among them)
+PASS answers-desktop they are still there on another page
+PASS answers-desktop asked from Documents the page is console-docs, in the same session
+PASS answers-desktop a 501-character paste is cut to 500 by the field (500)
+PASS answers-desktop after the role changes the exchanges are gone
+PASS answers-desktop and the next request starts a new conversation as the new role
+PASS answers-desktop on the invitation page the sponsor's exchanges are not shown
+PASS answers-desktop from an invitation's page the body has the page invite, the step on screen (welcome) and the role investor
+PASS answers-desktop and the contact after an answer that cannot help is the firm's own
+PASS answers-desktop on a server-mode invitation the request carries X-Invite-Token and no Authorization
+PASS answers-desktop on the bank account update the step is payment
+PASS answers-desktop every body has only keys among message, session, page, step, role
+PASS answers-desktop no body names the firm or any investor (73 names and addresses searched)
+PASS answers-desktop the stand-in was asked for nothing but /v1/help
+PASS answers-desktop the only origin reached beside this check's page server is the stand-in
+PASS answers-desktop no connection was refused (nothing went anywhere else)
+PASS answers-desktop no script error in the browser
+PASS answers-desktop no request went anywhere but this check's own servers
+PASS answers-desktop no vendor, model or library name and no forbidden word on the screens read
+PASS failures status 500 with a text body: the same sentence and the contact (55 ms)
+PASS failures status 500 with a text body: no status number, reason word or error text on screen
+PASS failures status 500 with a text body: Send can be used again
+PASS failures status 429 with { ok: false, reason: "limit" }: the same sentence and the contact (66 ms)
+PASS failures status 429 with { ok: false, reason: "limit" }: no status number, reason word or error text on screen
+PASS failures status 429 with { ok: false, reason: "limit" }: Send can be used again
+PASS failures status 402: the same sentence and the contact (119 ms)
+PASS failures status 402: no status number, reason word or error text on screen
+PASS failures status 402: Send can be used again
+PASS failures status 200 that is not JSON: the same sentence and the contact (105 ms)
+PASS failures status 200 that is not JSON: no status number, reason word or error text on screen
+PASS failures status 200 that is not JSON: Send can be used again
+PASS failures status 200 with { ok: true } and no answer: the same sentence and the contact (60 ms)
+PASS failures status 200 with { ok: true } and no answer: no status number, reason word or error text on screen
+PASS failures status 200 with { ok: true } and no answer: Send can be used again
+PASS failures status 200 with a number as the answer: the same sentence and the contact (103 ms)
+PASS failures status 200 with a number as the answer: no status number, reason word or error text on screen
+PASS failures status 200 with a number as the answer: Send can be used again
+PASS failures a connection cut in the middle of the answer: the same sentence and the contact (109 ms)
+PASS failures a connection cut in the middle of the answer: no status number, reason word or error text on screen
+PASS failures a connection cut in the middle of the answer: Send can be used again
+PASS failures after all of them a question is answered as usual
+PASS failures each question was sent once
+PASS failures the stand-in was asked for nothing but /v1/help
+PASS failures no script error in the browser
+PASS failures no request went anywhere but this check's own servers
+PASS failures no vendor, model or library name and no forbidden word on the screens read
+PASS nosrv-phone the frame refuses fetch() (connect-src none is in force)
+PASS nosrv-phone exactly one Help control, in the console bar, saying "Help"
+PASS nosrv-phone it is whole inside the 390-wide window and nothing covers it (261 to 326)
+PASS nosrv-phone it is at least 40px tall for a finger (40px)
+PASS nosrv-phone it overlaps neither the bell nor the firm name
+PASS nosrv-phone it is in the bar's first row, to the left of the bell
+PASS nosrv-phone the page is no wider than the window and not scrolled sideways
+PASS nosrv-phone a tap opens the dialog: the heading and the sentence, no field
+PASS nosrv-phone the dialog is inside the window, near its top (top 12px)
+PASS nosrv-phone the Close button is whole on screen and on top
+PASS nosrv-phone with the dialog open the page is no wider than the window
+PASS nosrv-phone a tap on the Close button closes it
+PASS nosrv-phone closed again, the page is no wider than the window
+PASS nosrv-phone no connection was attempted
+PASS nosrv-phone the page nowhere says "Failed to fetch"
+PASS nosrv-phone no script error in the browser
+PASS nosrv-phone no request went anywhere but this check's own servers
+PASS nosrv-phone no vendor, model or library name and no forbidden word on the screens read
+PASS refused-phone the frame refuses fetch() (connect-src none is in force)
+PASS refused-phone with a server address saved, the console itself attempts no connection
+PASS refused-phone the dialog has the field "Ask a question" (500 characters at most, no saved suggestions, Send on the keyboard) and Send
+PASS refused-phone the field's text is at least 16px (16px), so a phone does not zoom the page
+PASS refused-phone before a question the dialog says nothing but its heading and Send
+PASS refused-phone question 1: within 2 seconds (57 ms) the question shows with "Help is not available right now." and the contact
+PASS refused-phone question 1: exactly one refused connection for it (1 in all)
+PASS refused-phone question 1: Send can be used again
+PASS refused-phone 9.5 seconds later there is still exactly one (no retry)
+PASS refused-phone question 2: within 2 seconds (50 ms) the question shows with "Help is not available right now." and the contact
+PASS refused-phone question 2: exactly one refused connection for it (2 in all)
+PASS refused-phone question 2: Send can be used again
+PASS refused-phone the page nowhere says "Failed to fetch" or names an error
+PASS refused-phone the Close button is whole on screen and on top
+PASS refused-phone no script error in the browser
+PASS refused-phone no request went anywhere but this check's own servers
+PASS refused-phone no vendor, model or library name and no forbidden word on the screens read
+PASS answers-phone six questions asked by tapping, each with its long answer, newest first
+PASS answers-phone after each of them Close, the field and Send were whole inside the window
+PASS answers-phone with the field focused, Close (56), the field (121) and Send (121) end within the top 300px
+PASS answers-phone and the newest answer starts there too (206px), after a question of 336 characters
+PASS answers-phone the field's text is at least 16px (16px)
+PASS answers-phone a finger dragged over the log reads it to its end (3713 of 3713px), the oldest exchange in view
+PASS answers-phone through all 7 drags Close, the field and Send stayed whole inside the window, and the page behind did not move
+PASS answers-phone in a frame 420px tall Close (56), the field (121) and Send (121) are still whole inside it
+PASS answers-phone and the log still scrolls to its end there (4137 of 4137px) with all three in place
+PASS answers-phone a question sent there shows the first line of its answer inside the frame (185px of 420)
+PASS answers-phone the page is no wider than the window
+PASS answers-phone a tap on the Close button closes it
+PASS answers-phone seven questions, each sent once, to /v1/help only
+PASS answers-phone no connection was refused (nothing went anywhere else)
+PASS answers-phone no script error in the browser
+PASS answers-phone no request went anywhere but this check's own servers
+PASS answers-phone no vendor, model or library name and no forbidden word on the screens read
+PASS managed the frame refuses fetch() (connect-src none is in force)
+PASS managed the console has no help control, action, form or class
+PASS managed the investor's Home has none, and its footer row is the four details it was
+PASS managed sign-in has none
+PASS managed the activation page has none
+PASS managed no connection was attempted
+PASS managed help.js names no vendor, model or library and never uses the forbidden word
+PASS managed help.js adds no page (no NS.views entry) and does nothing outside the self-serve edition
+PASS managed help.js keeps nothing in storage and uses the one plain fetch
+PASS managed each of the three pages loads help.js once, right after coinvestor.js
+PASS managed no managed screen has the word Help as a control
+PASS managed no script error in the browser
+PASS managed no request went anywhere but this check's own servers
+PASS managed no vendor, model or library name and no forbidden word on the screens read
+HELP CHAT: PASS (parts run: 10)
+rc=0

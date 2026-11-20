@@ -7,6 +7,10 @@
  *   once the server gave one, the page's name, the step's key on a flow, and the role. Never a name, an address or
  *   anything else of the portal's records.
  * - With no server address the dialog says so in one sentence and shows who to contact. Nothing is requested.
+ * - The one exception is the owner's preview, which has no server: its page sets window.CVPortalConfig.helpAsk, a
+ *   function given the same fields a request would carry and resolving to what the server would answer. With no server
+ *   address and that function set, the dialog has the field and Send and treats each result as a server answer. A
+ *   portal that is published never sets it.
  * - Every failure ends in the same sentence and the contact. An error's own text is never read or shown.
  * - The contact is never invented: an investor sees their firm's own team and address (the portal's brand settings); a
  *   sponsor sees the address set where the portal is published (window.CVPortalConfig.supportEmail), and until one is
@@ -36,6 +40,14 @@
     const I = NS.integrations;
     return ws && I ? I.serverUrl(ws) : '';
   }
+
+  /** The preview's stand-in for the server (window.CVPortalConfig.helpAsk), or null. Never set where a portal is published. */
+  function preview() {
+    const c = window.CVPortalConfig;
+    return c && typeof c.helpAsk === 'function' ? c.helpAsk : null;
+  }
+  /** A reply as the dialog may use it: { ok: true, kind, answer, session } with an answer, or { ok: false }. */
+  const usable = (j) => (j && j.ok === true && typeof j.answer === 'string' && j.answer.trim() ? j : { ok: false });
 
   /** Who to contact, as one sentence, or '' when there is nobody to name. */
   function contact() {
@@ -77,12 +89,21 @@
   /**
    * The only transport: one request, never repeated. Resolves to the server's { ok: true, kind, answer, session }, or to
    * { ok: false } for everything else. On an invitation opened from the server, the invitation flow's own wrapper of
-   * fetch sends the investor's invitation token in place of the firm's.
+   * fetch sends the investor's invitation token in place of the firm's. With no server address, the preview's stand-in
+   * (when its page set one) is asked instead, with the same fields, and its result is checked the same way.
    */
   async function ask(p) {
     const ws = S().ws;
     const url = server();
-    if (!url) return { ok: false };
+    if (!url) {
+      const alt = preview();
+      if (!alt) return { ok: false };
+      try {
+        return usable(await alt(Object.assign({}, p)));
+      } catch (e) {
+        return { ok: false };
+      }
+    }
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), WAIT_MS);
     try {
@@ -91,8 +112,7 @@
       if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(url + '/v1/help', { method: 'POST', headers, body: JSON.stringify(p), signal: ctl.signal });
       if (res.status !== 200) return { ok: false };
-      const j = await res.json();
-      return j && j.ok === true && typeof j.answer === 'string' && j.answer.trim() ? j : { ok: false };
+      return usable(await res.json());
     } catch (e) {
       return { ok: false };
     } finally {
@@ -142,7 +162,7 @@
   }
 
   function open() {
-    const on = !!server();
+    const on = !!server() || !!preview();
     // The console's own controls on the console, the firm's on the investor's pages.
     const cs = !!document.querySelector('#view .cs');
     // A mouse or trackpad: the field is ready to type in. A touch screen: its keyboard waits for a tap on the field.
