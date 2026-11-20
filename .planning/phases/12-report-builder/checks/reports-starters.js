@@ -507,6 +507,38 @@ const parts = {
     const mixed = ['USD', 'EUR'].map((c) => NS.reports.fmt.money(all, c)).filter((s) => flat(P.text).indexOf(s) >= 0);
     const anyTotal = P.model.blocks.filter((b) => b.k === 'table' && b.total).some((b) => b.total.some((c) => c.v === all));
     check('no single total of all three funds (in the model or the PDF)', !mixed.length && !anyTotal, { mixed, anyTotal });
+  },
+
+  /** Task 3: the time to build one report in Node, measured (resolve then compose, one after another; no threshold). */
+  async speed({ check }) {
+    const L = load();
+    const { NS } = L;
+    const { sampleWorkspaces } = require(path.join(T.P11, 'checks/load11.js'));
+    const ws = sampleWorkspaces(NS).find((w) => w.tenant.id === 'kestrel-bay');
+    const ids = NS.reportsData.holders(ws, 'kb-fund-ii', Q4.to).map((i) => i.id);
+    const t = template(NS, ws, 'q-pe');
+    let made = 0;
+    const start = Date.now();
+    for (const rid of ids) {
+      const r = NS.reports.resolve(ws, t, Object.assign({ when: WHEN, audience: { kind: 'investor', investorId: rid, offeringId: 'kb-fund-ii' } }, Q4), rid);
+      if (!r.model) continue;
+      const bytes = await NS.reportsPdf.compose(r.model, { kit: L.kit, images: {} });
+      if (bytes && bytes.length > 4 && String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]) === '%PDF-') made++;
+    }
+    const total = Date.now() - start;
+    const per = ids.length ? Math.round(total / ids.length) : 0;
+    console.log(`speed: ${ids.length} reports, ${total} ms, ${per} ms per report`);
+    check(`q-pe for every holder of kb-fund-ii: ${made} of ${ids.length} reports made (measured with Date.now(), printed, no threshold)`, ids.length > 0 && made === ids.length, { made, holders: ids.length });
+  },
+
+  /** The check itself can fail: an unknown case name and an empty list each exit 1 with a FAIL line. */
+  async selfcheck({ check }) {
+    const { spawnSync } = require('child_process');
+    const run = (args) => spawnSync(process.execPath, [__filename].concat(args), { encoding: 'utf8', env: process.env });
+    const u = run(['--case', 'nonesuch']);
+    check('an unknown --case name exits 1 with a FAIL line', u.status === 1 && /^FAIL unknown case name: nonesuch/m.test(u.stdout), { status: u.status, out: u.stdout.slice(-300) });
+    const e = run(['--case', '']);
+    check('an empty --case list exits 1 with a FAIL line', e.status === 1 && /^FAIL no cases to run/m.test(e.stdout), { status: e.status, out: e.stdout.slice(-300) });
   }
 };
 
