@@ -14,7 +14,7 @@
 //                     the page's last control is tapped where it stands; the bar's controls all lie inside the screen with
 //                     no sideways scroll; Admin to Investor and back with the bar's own select
 //   bar-desktop       the desktop bar is as it was: fixed, and its box and the page's bottom padding equal the numbers a run
-//                     on the tree before recorded (SCREEN_EDGES_BAR_BASE, default SCRATCH/exec-06-35/bar-desktop-base.json;
+//                     on the tree before recorded (SCREEN_EDGES_BAR_BASE, default checks/fixtures/screen-edges-bar-desktop-base.json;
 //                     the first run with no such file records it)
 //   hint-desktop      earlier failure 14 (the rest): on the W-9 signing view, the investor's agreement and the firm's
 //                     countersign view, the signing bar's hint shows its whole sentence (nothing cut, the last letter inside
@@ -37,7 +37,7 @@ const Lib = require('./lib.js');
 
 const OUT = path.join(Lib.OUT, 'screen-edges');
 fs.mkdirSync(OUT, { recursive: true });
-const BAR_BASE = process.env.SCREEN_EDGES_BAR_BASE || path.join(Lib.SCRATCH, 'exec-06-35', 'bar-desktop-base.json');
+const BAR_BASE = process.env.SCREEN_EDGES_BAR_BASE || path.join(__dirname, 'fixtures', 'screen-edges-bar-desktop-base.json');
 Lib.describeShots([
   [/-bar-top-/, 'Phone: the top of the screen as it opens: where the preview bar stands.'],
   [/-bar-end-/, 'Phone: the end of the same screen, scrolled down: nothing at the bottom under the bar.'],
