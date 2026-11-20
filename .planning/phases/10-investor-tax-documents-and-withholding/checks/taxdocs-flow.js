@@ -1,5 +1,5 @@
 // gate: browser
-// last "TAXDOCS FLOW: PASS (parts run: 8)"
+// last "TAXDOCS FLOW: PASS (parts run: 14)"
 // The Tax documents page of the self-serve console (plan 10-04, D-01, C-06): a CPA's combined Schedule K-1 file is cut
 // into one package per K-1 in the browser, and every match is a person's decision. Every part runs the portal inside a
 // sandboxed frame whose policy refuses every connection and allows scripts from the portal's own address only, with the
@@ -25,6 +25,25 @@
 //   managed        index.html at 1280x800 as staff and as sponsor staff: Documents visible; no Tax documents in the menu;
 //                  console-taxdocs and console-taxdocs-batch-x fall back to the default page; the page names none of this
 //                  plan's files
+// Plan 10-06 (delivery and consent; taxdocs-investor.js served, the other later files 404 except in nocdn):
+//   deliver-phone  390x844: the contact starts from the support details; Deliver refused with one line while the mailing
+//                  address is empty; one investor consented; Deliver lists the 10 recipients by name, then delivers: that
+//                  investor's K-1 Delivered with its available-until date, the others wait; the notice (section 7.01
+//                  subject, Copy, Email link) and the one line about the sponsor's own email; as that investor the K-1 is
+//                  listed, opens with its pages and its date; not listed for two other investors; the row reads opened once
+//   deliver-desktop the same at 1280x800, then: the unconfirmed packages offered to nobody; a team member delivers and has
+//                  no Withdraw; the send-on-paper list, Mark sent on paper; Notice came back 2027-03-20 gives paper due
+//                  2027-04-19; Withdraw asks a reason, the K-1 leaves the list, the row keeps opened once, logged; Form 8805
+//   consent-phone, consent-desktop   waiting and nothing of it; the other controls and pages work without consent; the
+//                  eight disclosures with the firm's contact; consent delivers at once, stores date, version and text, logs;
+//                  kept after a reload; Withdraw consent with the date (withdrawalConfirmed); the next document waits;
+//                  Consent again; nothing waiting: one line. Desktop adds: the generated tax entry for sample firms only, and
+//                  the self-serve welcome step's tick box without "tax documents" (the managed one untouched)
+//   amended        390x844: a second file's K-1 for the same investor refused until "This replaces the document delivered
+//                  on <date>" is ticked; then Replaced beside the amended one, both open, a new notice; gone once the
+//                  clock passes the earlier one's available-until date
+//   nocdn          390x844, every later file served: import, confirm, deliver, consent, open with pages drawn; no request
+//                  to either outside host attempted and the reader and writer loaded from the portal's own address
 // Every part: quiet, leak and a way out on screen; the fund's name (with angle brackets) is shown as text.
 //   NODE_PATH=$(npm root -g) node taxdocs-flow.js [--only part1,part2]
 // The files it builds (the IRS's blank 2025 form, invented partners) go to a folder named with its process id, removed
@@ -1009,6 +1028,41 @@ const parts = {
   },
   async amended({ check, S }) {
     const { A } = await amendedPart(check, S, 'phone');
+    await A.context.close();
+  },
+  async nocdn({ check, S }) {
+    // the owner's conditions: every connection refused, scripts from the portal's own address only, every file of the
+    // portal served as published (no later file answered 404 by the check)
+    const { A, fr: fr0 } = await open6(S, 'phone', { serveAll: true });
+    let fr = fr0;
+    const cdn = [];
+    const shipped = [];
+    A.context.on('request', (r) => {
+      const u = r.url();
+      if (/^https:\/\/(cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net)\//.test(u)) cdn.push(u);
+      if (u.startsWith(S.origin + '/assets/vendor/')) shipped.push(new URL(u).pathname);
+    });
+    await T.proveRefused(check, A, fr);
+    const { fund, b } = await seat(check, fr);
+    const maria = fund.ids[0];
+    await deliverWaiting(fr, b);
+    await investorDocs(fr, maria);
+    await T.press(fr, '[data-txi=block] [data-action=txi-review]');
+    await fr.waitForTimeout(300);
+    await T.press(fr, '[data-txi=block] [data-action=txi-consent]');
+    await fr.waitForTimeout(500);
+    const docs = await taxDocs(fr);
+    const dm = docs.find((d) => d.investor === maria);
+    const o = dm ? await openDoc(fr, dm.id) : { pages: 0, head: '' };
+    check('the whole path: imported, confirmed, delivered, consented, and the K-1 opened with its pages drawn', !!dm && dm.state === 'delivered' && o.pages >= 1 && /until/.test(o.head), { state: dm && dm.state, pages: o.pages });
+    check('no request to either outside host was attempted', cdn.length === 0 && !A.p10.outside.some((u) => /cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net/.test(u)), cdn.concat(A.p10.outside).slice(0, 5));
+    check('the reader and the writer were loaded from the portal\'s own address', shipped.some((x) => /\/assets\/vendor\/pdfview\//.test(x)) && shipped.some((x) => /\/assets\/vendor\/pdfwrite\//.test(x)), Array.from(new Set(shipped)));
+    const fetched = await fr.evaluate(() => (window.__cspv || []).filter((v) => /^connect-src/.test(v)));
+    check('no fetch was made on the way', fetched.length === 0, fetched);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    fr = null;
     await A.context.close();
   },
   async ['import-phone']({ check, S }) {
