@@ -2431,6 +2431,17 @@
   };
 
   /* ---------- AML / KYC ---------- */
+  /**
+   * Plan 08-18 (D-01): an accreditation check run through the integration server. While its result is pending, one line
+   * says the reviewer's letter takes days; once the third party has sent letters, one "Download letter" per letter. Only
+   * while a server is connected: with none (the owner's preview) it adds nothing.
+   */
+  function kycLetter(w, i, x, kind) {
+    if (kind !== 'accreditation' || !x || !NS.integrations || !NS.integrations.serverUrl(w)) return '';
+    if (x.status === 'pending' && x.how === 'server') return `<span class="sub kyc-wait">A reviewer's letter usually arrives within two business days; this page updates when it does.</span>`;
+    if (!x.ref || !Array.isArray(x.evidence)) return '';
+    return x.evidence.map((e, n) => ` · <button class="link-btn" type="button" data-action="kyc-evidence" data-id="${h(i.id)}" data-n="${n}">Download letter</button>`).join('');
+  }
   NS.views['console-kyc'] = {
     mode: 'console',
     render() {
@@ -2462,11 +2473,11 @@
           const rec = ivd ? IVN.recordable(w, i) : [];
           // A cleared investor can still have a check waiting on the team (a team screening after approval): keep the details reachable,
           // and say so plainly when the check is what keeps them on Needs attention.
-          if (ivd && rec.length && (lab.key === 'cleared' || lab.key === 'due')) act += ` <button class="cs-btn cs-btn-small${team ? ' cs-btn-primary' : ''}" type="button" data-action="kyc-open" data-id="${h(i.id)}">${team ? 'Record result' : 'Details'}</button>`;
+          if (ivd && (rec.length || kycLetter(w, i, ivd.accreditation, 'accreditation')) && (lab.key === 'cleared' || lab.key === 'due')) act += ` <button class="cs-btn cs-btn-small${team ? ' cs-btn-primary' : ''}" type="button" data-action="kyc-open" data-id="${h(i.id)}">${team ? 'Record result' : 'Details'}</button>`;
           const ST = { not_started: 'not started', pending: 'waiting for the result', passed: 'verified', verified: 'verified', clear: 'clear', review: 'needs review', potential_match: 'potential match', failed: 'not verified', rejected: 'not accredited', match: 'confirmed match' };
           const recordBtns = (kind, conn) => `<div class="iv-record" role="group" aria-label="Record result"><span>Record result</span>${IVN.RECORD[kind].map(([o, l]) => `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-iv-record" data-id="${h(i.id)}" data-kind="${kind}" data-connection="${h(conn || '')}" data-outcome="${o}">${l}</button>`).join('')}</div>`;
           const canRecord = (kind, conn) => rec.some((r) => r.kind === kind && r.connection === conn);
-          const ivLine = (label, x, kind) => `<li><strong>${label}:</strong> ${h(ST[x.status] || x.status)}${IVN.via(w, x, kind) ? ` · ${h(IVN.via(w, x, kind))}` : ''}${x.method ? ` · ${h(x.method)}` : ''}${x.ref ? ` · ref ${h(x.ref)}` : ''}${x.expiresAt ? ` · valid until ${date(x.expiresAt)}` : ''}${x.note ? ` · note: ${h(x.note)}` : ''}${x.recordedBy ? ` · recorded by ${h(x.recordedBy)}` : ''}${x.fileId ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(x.fileId)}" data-name="${h(x.fileName || 'file')}">${h(x.fileName || 'View file')}</button>` : ''}${canRecord(kind, x.connection || '') ? recordBtns(kind, x.connection) : ''}</li>`;
+          const ivLine = (label, x, kind) => `<li><strong>${label}:</strong> ${h(ST[x.status] || x.status)}${IVN.via(w, x, kind) ? ` · ${h(IVN.via(w, x, kind))}` : ''}${x.method ? ` · ${h(x.method)}` : ''}${x.ref ? ` · ref ${h(x.ref)}` : ''}${x.expiresAt ? ` · valid until ${date(x.expiresAt)}` : ''}${x.note ? ` · note: ${h(x.note)}` : ''}${x.recordedBy ? ` · recorded by ${h(x.recordedBy)}` : ''}${x.fileId ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(x.fileId)}" data-name="${h(x.fileName || 'file')}">${h(x.fileName || 'View file')}</button>` : ''}${kycLetter(w, i, x, kind)}${canRecord(kind, x.connection || '') ? recordBtns(kind, x.connection) : ''}</li>`;
           const amlLine = (x) => `<li><strong>Screening:</strong> ${h(ST[x.status] || x.status)}${(x.results || []).length ? `<ul class="iv-results">${x.results.map((r) => `<li>${h(r.via)}: ${h(ST[r.status] || r.status)}${(r.hits || []).length ? ` · ${r.hits.map((x) => `${h(x.name)} on ${h(x.list)}${x.listed ? ` as “${h(x.listed)}”` : ''}${x.score ? `, ${Math.round(x.score * 100)}%` : ''}${x.detail ? ` (${h(x.detail)})` : ''}`).join('; ')}` : ''}${r.ref ? ` · ref ${h(r.ref)}` : ''}${r.error ? ` · ${h(r.error)}` : ''}${r.note ? ` · note: ${h(r.note)}` : ''}${r.by ? ` · recorded by ${h(r.by)}` : ''}${canRecord('aml', r.connection) ? recordBtns('aml', r.connection) : ''}</li>`).join('')}</ul>` : IVN.via(w, x, 'aml') ? ` · ${h(IVN.via(w, x, 'aml'))}` : ''}</li>`;
           if (ivd && !act && lab.key === 'pending') act = `<button class="cs-btn cs-btn-small${rec.length ? ' cs-btn-primary' : ''}" type="button" data-action="kyc-open" data-id="${h(i.id)}">${rec.length ? 'Record result' : 'Details'}</button>`;
           const detail =
@@ -2548,6 +2559,31 @@
     for (const i of due) await rescreen(i);
     NS.app.render();
     U.toast(`${due.length} investor${due.length === 1 ? '' : 's'} re-screened.`);
+  };
+  /** Plan 08-18: the third party's letter, fetched from the integration server with the sponsor's token, then saved. */
+  NS.actions['kyc-evidence'] = async (el) => {
+    const w = W();
+    const inv = invById(el.getAttribute('data-id'));
+    const x = inv ? NS.integrations.peek(inv).accreditation : null;
+    const n = Number(el.getAttribute('data-n'));
+    const item = x && Array.isArray(x.evidence) ? x.evidence[n] : null;
+    const base = NS.integrations.serverUrl(w);
+    const fail = () => U.toast('The letter could not be downloaded. Try again.');
+    if (!item || !x.ref || !base) return fail();
+    try {
+      const token = NS.integrations.ensure(w).server.token;
+      const res = await fetch(`${base}/v1/verifications/${encodeURIComponent(x.ref)}/evidence/${n}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+      if (!res.ok) return fail();
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      if (!bytes.length) return fail();
+      // The server's file name; the browser hides it from another origin unless the server exposes it, so the letter's own label and the investor name it otherwise.
+      const named = /filename="?([^";]+)"?/i.exec(res.headers.get('Content-Disposition') || '');
+      const part = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const name = named ? named[1] : `${part(item.label) || 'verification-letter'}-${part(inv.title) || 'investor'}.pdf`;
+      await U.download(name, bytes, { mime: res.headers.get('Content-Type') || 'application/pdf' });
+    } catch (e) {
+      fail();
+    }
   };
   NS.actions['kyc-iv-approve'] = (el) => {
     const inv = invById(el.getAttribute('data-id'));

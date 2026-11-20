@@ -547,7 +547,7 @@ const FLOWS = {
       const p = C.cp;
       let d = await kycDetails(p, it.investorId);
       await p.screenshot({ path: path.join(SHOTS, 'letter-waiting-desktop.png') });
-      check('the AML/KYC details read "Accreditation: waiting for the result"', /^Accreditation: waiting for the result/.test(d.acc), d.acc);
+      check('the AML/KYC details read "Accreditation: waiting for the result"', /^Accreditation: waiting for the result/.test(d.acc), d.open ? d.acc : d);
       check(`the AML/KYC details show the line "${WAIT}"`, d.acc.indexOf(WAIT) >= 0, d.acc);
       check('no "Download letter" while the result is pending', d.letters === 0, d.letters);
       // Days later: the third party's result arrives. Nothing is pressed; the page is opened again.
@@ -753,7 +753,10 @@ async function kycDetails(p, investorId) {
       await p.waitForTimeout(400);
     }
   }
-  return details(p);
+  const d = await details(p);
+  // What the investor's row offers, for the record when the details did not open.
+  if (!d.open) d.row = await p.evaluate((id) => Array.from(document.querySelectorAll('table.cs-tbl tbody tr')).filter((r) => (r.innerText || '').indexOf(id) >= 0).map((r) => r.innerText.replace(/\s+/g, ' ').trim()), investorId);
+  return d;
 }
 /** The details turn to verified by themselves (the page's own polling), or the time is up (the server reads the provider at most every 20 s). */
 const verifiedOnScreen = (p) =>
