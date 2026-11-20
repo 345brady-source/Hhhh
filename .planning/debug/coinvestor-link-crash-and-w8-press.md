@@ -1,5 +1,5 @@
 ---
-status: investigating
+status: verifying
 trigger: "Walkthrough 3 (b14): (1) co-investor sign-in link sticks on 'Opening your agreement…' with TypeError null.signedAt at esign.js:3271 mineHTML; (2) N4: W-8BEN Finish redrawn under the press at CPU 4x, press lost."
 created: 2026-11-20
 updated: 2026-11-20
@@ -9,7 +9,21 @@ updated: 2026-11-20
 
 bug_class: Bohrbug (both deterministic; (2) timing-window but reproduced deterministically by holding the page image)
 hypothesis: (1) CONFIRMED: esign.js awaitingFor (3255) matches envelopes where ANY signer of the account signed; mineHTML (3270) then looks up the VIEWER's signer via flowSigner (co flag from state.co) -> null for a co-investor on an agreement with no co signer -> TypeError. (2) CONFIRMED: on the phone the guide bar is order:5 sticky-bottom after the document; with the 1-page W-8BEN the image arrives right as Finish appears; pagesOf's NS.app.render() replaces the whole page (new Finish node) and moves Finish from y=586 (after the short 'Loading document...' placeholder) to y=784 (stuck at the screen bottom).
-next_action: fix (1) awaitingFor/mineHTML use mySigner; co link page for nothing-to-sign; console why/how; template save attaches co. Fix (2): loading placeholder reserves page space (no shift); render keeps data-keep nodes (bar buttons).
+next_action: wait for the verification runs (press-and-co-investor full, co-investor-server, record-and-lost-agreement, signing-documents, safari-finish, bank-step-typing); server tests already 368/368.
+
+reasoning_checkpoint:
+  hypothesis: "(1) The crash is esign.js awaitingFor counting any signer of the account as 'signed by you' while mineHTML reads the viewer's own signer (null for a co-investor with no place). (2) The lost press is the W-8BEN step's whole-page redraw when its one page image arrives: the guide bar (phone: after the document, sticky bottom) jumps ~200 px and its Finish node is replaced."
+  confirming_evidence:
+    - "RED: pageerror TypeError null.signedAt at esign.js:3271:68 <- mineHTML <- investorDocsHTML <- earlyDocuments portal.js:1003, page left on 'Opening your agreement…' (same stack as the walk)."
+    - "RED: elementHandle.tap 'Element is not attached to the DOM'; Finish at y=586 when found, y=784 after the redraw."
+  falsification_test: "(1) With awaitingFor on the viewer's own signer the Documents render must not throw for the co-investor. (2) With the page's place held while loading, Finish must not move, and with data-keep the found node must stay connected."
+  fix_rationale: "(1) awaitingFor/mineHTML now read the same signer (mySigner), so the list and the lookup agree; plus the co link's page says when there is nothing to sign (coTask), the console says why and how, and saving a co place reaches existing agreements from the same file (tplOf + coAttach) so the 'how' works. (2) the loading state reserves each page's size (nothing after the document moves) and render keeps data-keep nodes (Back/Next/Finish) through a redraw."
+  blind_spots: "Real WebKit not available (Chromium iPhone emulation). The not-your-turn co page (coTask.before) is drawn by the same code but not exercised by a check. Server mode co sign-in after a template save relies on invitations.js's sync picking up coWaiting (not exercised)."
+  candidate_causes:
+    - "code: awaitingFor/flowSigner mismatch (confirmed)"
+    - "data: an agreement with no co-investor places while a co-investor is on the account (the trigger condition, valid data)"
+    - "environment: CPU 4x timing makes the image arrive at the press moment (trigger for (2)), layout: phone CSS order:5 sticky-bottom bar"
+  and_gate: "yes for (2): needs the whole-page redraw AND the bar's position depending on the document's height AND the image arriving between Finish appearing and the touch; both the layout shift and the node replacement were fixed. (1) single code cause, triggered by valid data."
 
 ## Symptoms
 
@@ -38,7 +52,7 @@ started: 06-37/06-39 code paths
 
 ## Resolution
 
-root_cause:
-fix:
-verification:
-files_changed: []
+root_cause: "(1) assets/js/esign.js:3255 awaitingFor matched agreements where any signer of the account had signed; mineHTML (3270) then took the viewer's own signer via flowSigner, which is null for a co-investor who has no place on the agreement, and read .signedAt (3271) -> TypeError; the co link (coinvestor.js NS.views.co.after) had sent them to Documents, so the render threw and 'Opening your agreement…' stayed. Also: nothing told the firm the co-investor had nothing to sign, and adding a co place later never reached the already-signed agreement (its template was replaced on save, coAttach found no template). (2) On the phone the guide bar sits after the document (esign.css 443: order 5, sticky bottom); while loading, the document was one short 'Loading document…' line, so Finish sat mid-screen (y=586); the one-page W-8BEN's image arrives about when Finish appears and pagesOf's full NS.app.render() replaced the page: Finish moved to y=784 and was a new node, so the press on the Finish found was lost."
+fix: "(1) esign.js: awaitingFor and mineHTML use mySigner (the viewer's own signer); coTask (what the co-investor has to do); tplOf (an agreement's template, or the offering's agreement now when it is the same file); saveAgreement attaches co-investors already on accounts (coAttach) and its toast names them. coinvestor.js: the co link's page says 'Nothing for you to sign' (why: the agreement has no place for a co-investor; firm contact; Go to Documents) or 'Not your turn yet'; placeless/placelessHTML: the sign-in email dialog and the Account window say why and how to add a place (Edit fields, 'Co-investor (if any)', save; Open <offering>), the add toast says so (self-serve only; managed unchanged). (2) esign.js pagesHTML(hold) in the signing view: each page's place is a blank page of its size while drawn ('Loading document…' on the first) + esign.css .es-page-blank; app.js drawKeeping: data-keep nodes survive a redraw (attributes/content synced, focus kept); signflow.js: Back, Start/Next, Finish carry data-keep."
+verification: "RED (unfixed): press-w8-phone 3 FAIL (moved 586->784, node gone, 'Element is not attached to the DOM'); co-link-none-phone 12 FAIL (TypeError, stuck, no why, no way out, co not added after save). GREEN: both parts PASS. Server tests 368/368. Browser verification running."
+files_changed: [assets/js/esign.js, assets/js/coinvestor.js, assets/js/app.js, assets/js/signflow.js, assets/css/esign.css, .planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/press-and-co-investor.js]
