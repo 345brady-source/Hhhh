@@ -120,9 +120,54 @@
     if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpeg';
     return '';
   }
-  /** An SVG, WebP or GIF logo redrawn as PNG bytes on a canvas (browser only); null when it cannot be. */
-  async function redraw() {
-    return null;
+  /**
+   * An SVG, WebP or GIF logo redrawn as PNG bytes on a canvas (browser only; the canvas keeps pixels only, nothing else
+   * of the file), the longest side at most 600 px; null where there is no canvas. Throws when the canvas refuses.
+   */
+  async function redraw(src) {
+    if (typeof Image === 'undefined' || typeof document === 'undefined' || typeof HTMLCanvasElement === 'undefined') return null;
+    const img = new Image();
+    await new Promise((res, rej) => {
+      const t = setTimeout(() => rej(new Error('the logo did not load')), 8000);
+      img.onload = () => (clearTimeout(t), res());
+      img.onerror = () => (clearTimeout(t), rej(new Error('the logo could not be read')));
+      img.src = src;
+    });
+    let w = img.naturalWidth || img.width;
+    let h = img.naturalHeight || img.height;
+    if (!w || !h) {
+      w = 600;
+      h = 200;
+    }
+    // a drawing is drawn at the full 600 px so it stays sharp; a picture is only ever made smaller
+    const k = /^data:image\/svg/.test(src) ? 600 / Math.max(w, h) : Math.min(1, 600 / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w * k));
+    c.height = Math.max(1, Math.round(h * k));
+    const ctx = c.getContext('2d');
+    if (!ctx) throw new Error('no canvas');
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    let bytes = null;
+    try {
+      const blob = await new Promise((res, rej) => {
+        try {
+          c.toBlob((b) => (b ? res(b) : rej(new Error('no image'))), 'image/png');
+        } catch (e) {
+          rej(e);
+        }
+      });
+      bytes = blob.arrayBuffer
+        ? new Uint8Array(await blob.arrayBuffer())
+        : await new Promise((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(new Uint8Array(r.result));
+            r.onerror = () => rej(r.error);
+            r.readAsArrayBuffer(blob);
+          });
+    } catch (e) {
+      bytes = fromBase64(String(c.toDataURL('image/png')).split(',')[1] || '');
+    }
+    return bytes;
   }
   /**
    * The logo art for a tenant: an uploaded PNG or JPEG as its bytes; an SVG, WebP or GIF redrawn to PNG on a canvas in the
