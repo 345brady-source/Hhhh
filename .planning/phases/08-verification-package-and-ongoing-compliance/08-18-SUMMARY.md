@@ -28,3 +28,14 @@ A diagnostic rerun ($O/dbg1.txt) showed why the details never opened: the invest
 ```
 FAIL full the AML/KYC details read "Accreditation: waiting for the result" :: {"open":false,"text":"","acc":"","letters":0,"row":["Leocadia Ferreira KBC-1027 · Individual Low Nov 20, 2026 Identity check (ref ver_R2S6rMsW9MbW) No matches Nov 20, 2026 Dec 20, 2026 Leocadia Ferreira Cleared Re-screen"]}
 ```
+
+## Task 1 GREEN
+Code: console.js `kycLetter` (added block above the view), the `kyc-evidence` action (added block after `kyc-screen-due`), the `ivLine` line gains the call, and one more changed line (the Details button for a cleared investor; see Deviations). `--only full` then: 55 PASS, `PACKAGE FLOW: PASS (parts run: 1)` ($O/dbg2.txt).
+
+verify-1 ($O/verify-1.sh, exactly as the plan gives it), last lines of $O/tracer.txt:
+```
+PASS full the typed taxpayer number is in no server output (event log, anything this process printed)
+PASS full the typed taxpayer number is in no file this part writes (2)
+PACKAGE FLOW: PASS (parts run: 1)
+```
+verify-1 exit 0.
