@@ -4027,6 +4027,66 @@
       U.toast((e && e.message) || 'The agreement could not be opened.');
     }
   };
+  /**
+   * Plan 06-34 (walkthrough failure 1): whether this browser has answered that it no longer has the envelope's own file (the
+   * state pagesHTML shows with lostText). False while it is still being read, or for a file that is here.
+   */
+  const fileLost = (env) => {
+    const c = env ? pageCache[pagesSrc(env)] : null;
+    return !!c && c.lost === true;
+  };
+  /**
+   * Plan 06-34 (walkthrough failure 1; T-06-56): once the firm saves the offering's subscription agreement again, every
+   * subscription of that offering whose agreement the investor has not signed and whose own file this browser does not have
+   * gets a new envelope from the saved agreement, prefilled as resign() prefills it; the request points at it and the old
+   * envelope is voided with the reason. An envelope whose file is here, or that the investor signed, is never touched.
+   * Resolves to the number re-issued.
+   */
+  async function reissueLost(ws, oid, tpl) {
+    const why = 'This browser did not keep the agreement’s file; a new copy was prepared from the agreement added again';
+    const o = (ws.offerings || []).find((x) => x.id === oid);
+    if (!o || !tpl) return 0;
+    let n = 0;
+    const open = (ws.requests || []).filter((r) => r.type === 'subscription' && r.offeringId === oid && r.envelopeId && !r.signedAt && r.status !== 'rejected');
+    for (const r of open) {
+      const old = envById(ws, r.envelopeId);
+      const me = old ? old.signers.find((x) => x.investorId === r.investorId) : null;
+      if (!old || old.status !== 'sent' || old.templateId === tpl.id || !me || me.status === 'signed') continue;
+      const src = pagesSrc(old);
+      let have = null;
+      try {
+        have = src ? await files().get(src) : null;
+      } catch (e) {
+        have = null;
+      }
+      if (have) continue;
+      const inv = (ws.investors || []).find((x) => x.id === r.investorId);
+      if (!inv || r.envelopeId !== old.id || old.status !== 'sent') continue;
+      const opts = { cents: r.cents, cls: r.cls };
+      let env = null;
+      try {
+        env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts), values: prefillValues(inv, o, opts), quiet: true });
+      } catch (e) {
+        env = null;
+      }
+      if (!env || env.status !== 'sent') {
+        if (env) ws.envelopes = envs(ws).filter((x) => x !== env);
+        continue;
+      }
+      env.requestId = r.id;
+      r.envelopeId = env.id;
+      Object.assign(old, { status: 'voided', voidedAt: nowIso(), voidReason: why });
+      addEvent(old, 'System', 'Voided', why);
+      logChange(ws, 'Envelope voided', old, why);
+      ws.docs = (ws.docs || []).filter((d) => d.envelopeId !== old.id);
+      n++;
+    }
+    if (n) {
+      NS.app.save(true);
+      NS.app.render();
+    }
+    return n;
+  }
   /** Store a draft as the offering's subscription agreement (the template every invited investor signs). Returns it, or null. */
   function saveAgreement(w, env) {
     if (!env || !env.agreementFor || agreementTodo(env)) return null;
@@ -4045,6 +4105,9 @@
     if (from) from.title = tpl.title;
     const placed = tpl.fields.filter((f) => f.auto).length;
     const settled = tpl.fields.filter((f) => f.auto && !f.review && f.confidence && f.confidence !== 'high').length;
+    // Plan 06-34 (walkthrough failure 1): agreements of this offering that this browser no longer has the file of are prepared
+    // again from the agreement just saved, so the investor can sign them from their portal.
+    if (tpl.subscription && tpl.offeringId) reissueLost(w, tpl.offeringId, tpl).catch((e) => window.console && console.warn(e));
     CK().audit('Subscription agreement saved', `${o ? o.name : env.agreementFor}: ${tpl.title}, ${tpl.fields.length} fields (${tpl.roles.join(', ')})${placed ? `; ${placed} placed by the portal${settled ? `, ${settled} of them confirmed or adjusted by the firm after review` : ''}` : ''}; investors sign it during onboarding`, env.agreementFor, tpl.id);
     NS.app.save(true);
     return tpl;
@@ -4140,7 +4203,7 @@
   };
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal, firmOnly });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
-  NS.esign = { retire, saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, viewPdf, lostText, countersign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
+  NS.esign = { retire, fileLost, reissueLost, saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, viewPdf, lostText, countersign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
   // How long the upload waits for the reading server before the in-page reading stands (a check may shorten it).
   NS.esign.createFromPdf = createFromPdf;
   NS.esign.SERVER_LIMIT_MS = 330000;

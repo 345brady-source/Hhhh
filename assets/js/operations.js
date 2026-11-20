@@ -247,10 +247,19 @@
     save(ws);
     return r;
   }
+  /** A subscription whose e-signature agreement the investor has not signed (esign.js sets signedAt when they do). */
+  const unsignedAgreement = (r) => !!r && r.type === 'subscription' && !!r.envelopeId && !r.signedAt;
+  const NOT_SIGNED = 'The subscription agreement is not signed yet.';
   function decide(ws, r, approve, note) {
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     const inv = ws.investors.find((x) => x.id === r.investorId);
     if (!o || !inv || r.status !== 'pending') return false;
+    // Plan 06-34 (plan-check B2): a subscription signed through an agreement the investor has not signed yet ("Continue and
+    // sign later", walkthrough failure 1) is never approved; declining it stays possible.
+    if (approve && unsignedAgreement(r)) {
+      if (NS.ui && NS.ui.toast) NS.ui.toast(NOT_SIGNED);
+      return false;
+    }
     r.status = approve ? 'approved' : 'rejected';
     r.decided = today();
     r.note = note || '';
@@ -284,6 +293,11 @@
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     const inv = ws.investors.find((x) => x.id === r.investorId);
     if (r.type !== 'subscription' || r.status !== 'approved' || !o || !inv) return false;
+    // Plan 06-34 (B2): never funded or accepted while its agreement is unsigned.
+    if (unsignedAgreement(r)) {
+      if (NS.ui && NS.ui.toast) NS.ui.toast(NOT_SIGNED);
+      return false;
+    }
     if (isOpen(o)) inv.positions.push(Object.assign({ offeringId: o.id, amount: r.cents / 100, date: r.dealing, ref: r.id }, r.cls ? { class: r.cls } : {}));
     else inv.positions.push(Object.assign({ offeringId: o.id, amount: 0, commitment: r.cents / 100, date: today(), ref: r.id }, r.cls ? { class: r.cls } : {}));
     r.status = isOpen(o) ? 'funded' : 'accepted';
@@ -678,6 +692,7 @@
   }
 
   NS.ops = {
+    unsignedAgreement,
     ensure,
     isOpen,
     liquidity,
