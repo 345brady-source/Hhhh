@@ -453,6 +453,12 @@
       return null;
     }
   };
+  /** The firm as the investor's (or co-investor's) page shows it and the server's emails name it. */
+  function firmOf(ws) {
+    const t = ws.tenant;
+    const logo = t.logo && t.logo.type === 'image' && /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,/i.test(t.logo.image || '') && t.logo.image.length <= 600 * 1024 ? t.logo.image : '';
+    return { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) };
+  }
   /** Everything the investor's browser needs, from this workspace (no secrets: verification settings are names and rules). */
   async function snapshot(ws, it) {
     const t = ws.tenant;
@@ -488,7 +494,6 @@
       const pdf = ready ? await getFile(tpl.docId) : null;
       if (ready && pdf) esign = { template: { id: tpl.id, title: tpl.title, fileName: tpl.fileName, docId: tpl.docId, message: tpl.message || '', roles: tpl.roles, fields: tpl.fields, pages: tpl.pages, pageSizes: tpl.pageSizes, sha256: tpl.sha256 }, pdf: await blobB64(pdf) };
     }
-    const logo = t.logo && t.logo.type === 'image' && /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,/i.test(t.logo.image || '') && t.logo.image.length <= 600 * 1024 ? t.logo.image : '';
     const I = IV();
     const c = I.ensure(ws);
     // Whether this invitation needs VERIFIED accreditation, answered here on the whole workspace: the investor's device holds
@@ -501,7 +506,7 @@
       portalUrl: portalPage(),
       consoleUrl: `${portalPage()}#console-investors`,
       notifyEmail: senderEmail(ws),
-      firm: { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) },
+      firm: firmOf(ws),
       investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest || it.includeTax ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest || it.includeTax ? { taxPrefill: taxPrefill(inv) } : {}),
       offering,
       invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}, it.package ? { package: true, clientId: it.id } : {}),
@@ -652,6 +657,249 @@
     return true;
   }
 
+  /* ---------- Plan 06-39: the co-investor's own sign-in through the integration server ---------- */
+  // inv.coInvestor.signIn (plan 06-37's record) of the server kind: { server: true, token: '', link (the server's), createdAt,
+  // expiresAt, sentAt, openedAt, serverId, envelopeId, emailStatus, error, signedAt, importedAt }. One sign-in is for one
+  // agreement: the first of the account's agreements that waits for the co-investor (sent, the investor signed, the
+  // co-investor not). The co-investor signs the copy that carries the investor's signature, so nothing is sent before that.
+  const coBusy = new Set(); // accounts whose sign-in is being created or cancelled now
+  const coSi = (inv) => (inv && inv.coInvestor && inv.coInvestor.signIn && inv.coInvestor.signIn.server ? inv.coInvestor.signIn : null);
+  const coWaiting = (ws, inv) => (ws.envelopes || []).find((e) => waitingCo(e) && e.signers.some((s) => s.co && s.investorId === inv.id)) || null;
+  const coRetired = (ws) => (ws.coServerRetired = ws.coServerRetired || []);
+  /** A server sign-in replaced or ended: a late submission for it is recognised (and not used), for the last 200. */
+  function retireCo(ws, inv, si) {
+    if (!si || !si.serverId) return;
+    const list = coRetired(ws);
+    list.push({ id: si.serverId, investorId: inv.id, at: nowIso() });
+    if (list.length > 200) list.splice(0, list.length - 200);
+  }
+  /** The account's sign-in becomes the server kind, nothing sent yet (plan 06-37's local link, just made, is dropped unused). */
+  function serverSignIn(inv) {
+    const c = inv.coInvestor;
+    c.signIn = { server: true, token: '', link: '', createdAt: nowIso(), expiresAt: '', sentAt: '', openedAt: '', serverId: '', envelopeId: '', emailStatus: '', error: '' };
+    return c.signIn;
+  }
+  /** The Account window of this account, drawn again when it is open (what the firm sees follows the server's answer). */
+  function coRefresh(inv) {
+    if (W() && S().route && NS.app.modeOf(S().route) === 'console') NS.app.render();
+    if (document.querySelector(`#dlg[open] .co-record[data-investor="${CSS.escape(inv.id)}"]`) && NS.coInvestor && NS.coInvestor.openRecord) NS.coInvestor.openRecord(inv);
+  }
+  /**
+   * Create the co-investor's sign-in for one agreement on the integration server (06-38 contract): the account and the
+   * co-investor's name and email, the agreement (esign.js coCopy: their places only, no taxpayer number) and its current copy.
+   * The server emails the link. Resolves to true when it was created.
+   */
+  async function coSignIn(ws, inv, env) {
+    const c = inv.coInvestor;
+    const si = coSi(inv);
+    if (!c || !si || !env) return false;
+    coBusy.add(inv.id);
+    si.sending = true;
+    coRefresh(inv);
+    try {
+      const copy = await NS.esign.coCopy(ws, env.id);
+      const body = {
+        workspace: ws.tenant.id,
+        sendEmail: true,
+        portalUrl: portalPage(),
+        consoleUrl: `${portalPage()}#console-investors`,
+        notifyEmail: senderEmail(ws),
+        firm: firmOf(ws),
+        investor: { id: inv.id, contact: c.name, title: inv.title, type: inv.type, email: c.email },
+        offering: null,
+        invitation: { cents: 0, existing: true, coSign: true, envelopeId: env.id, senderName: senderName(ws), expiresAt: new Date(Date.now() + VALID_DAYS * DAY).toISOString() },
+        verification: {},
+        esign: { template: copy.template, pdf: await blobB64(copy.pdf) }
+      };
+      const r = await api(ws, 'POST', '/v1/invitations', body);
+      const failed = r.emailStatus === 'failed';
+      Object.assign(si, { serverId: String(r.id || ''), link: String(r.link || ''), token: '', envelopeId: env.id, emailStatus: String(r.emailStatus || 'sent'), error: failed ? String(r.emailError || 'The integration server could not send the email.') : '', expiresAt: String(r.expiresAt || ''), sentAt: failed ? '' : nowIso(), openedAt: '', signedAt: '', importedAt: '' });
+      delete si.retry;
+      audit(ws, failed ? 'Co-investor sign-in not emailed' : 'Co-investor sign-in emailed', `${inv.title}: ${c.name} <${c.email}>, for ${env.title}: ${si.emailStatus === 'outbox' ? 'kept in the server outbox (no SMTP settings)' : failed ? si.error : 'emailed by the integration server'}${copy.redacted ? '; the copy sent to the co-investor leaves out the taxpayer number' : ''}`, env.offeringId || '', inv.id);
+      return true;
+    } catch (e) {
+      si.error = (e && e.message) || 'The sign-in could not be sent.';
+      si.envelopeId = env.id;
+      // No answer at all is tried again on the next check; a refusal waits for the firm's "Send the sign-in again".
+      si.retry = !(e && e.status);
+      audit(ws, 'Co-investor sign-in not sent', `${inv.title}: ${c.name} <${c.email}>, for ${env.title}: ${si.error}`, env.offeringId || '', inv.id);
+      return false;
+    } finally {
+      delete si.sending;
+      coBusy.delete(inv.id);
+      NS.app.save(true);
+      coRefresh(inv);
+    }
+  }
+  /** End a server sign-in (its link then answers that it was cancelled). One the server could not be told about is retried. */
+  async function coCancel(ws, inv, si, why) {
+    if (!si || !si.serverId || si.cancelledAt) return;
+    retireCo(ws, inv, si);
+    si.cancelledAt = nowIso();
+    const who = (inv.coInvestor && inv.coInvestor.name) || 'the co-investor';
+    try {
+      await api(ws, 'POST', `/v1/invitations/${encodeURIComponent(si.serverId)}/cancel`, {});
+      audit(ws, 'Co-investor sign-in cancelled', `${inv.title}: the link sent to ${who} no longer works (${why})`, '', inv.id);
+    } catch (e) {
+      // Already finished or ended on the server: nothing left to cancel.
+      if (e && [404, 409, 410].indexOf(e.status) >= 0) audit(ws, 'Co-investor sign-in cancelled', `${inv.title}: the link sent to ${who} had already ended on the server (${why})`, '', inv.id);
+      else {
+        (ws.coSignInCancel = ws.coSignInCancel || []).push({ id: si.serverId, investorId: inv.id, why });
+        audit(ws, 'Co-investor sign-in not cancelled yet', `${inv.title}: the integration server could not be told that the link sent to ${who} no longer counts (${why}); it is tried again on the next check`, '', inv.id);
+      }
+    }
+    NS.app.save(true);
+  }
+  /**
+   * The sign-ins the server should hold, brought in line (after each check of the server, and after an investor's signed copy
+   * is imported): cancellations not delivered yet are sent; a sign-in for an agreement that no longer waits for the co-investor
+   * (voided, or the co-investor taken off it) is cancelled; an agreement that waits for the co-investor gets its sign-in.
+   */
+  async function coSweep(ws) {
+    let changed = false;
+    for (const x of (ws.coSignInCancel || []).slice()) {
+      try {
+        await api(ws, 'POST', `/v1/invitations/${encodeURIComponent(x.id)}/cancel`, {});
+      } catch (e) {
+        if (!(e && [404, 409, 410].indexOf(e.status) >= 0)) continue;
+      }
+      ws.coSignInCancel = ws.coSignInCancel.filter((y) => y !== x);
+      changed = true;
+    }
+    for (const inv of ws.investors || []) {
+      const si = coSi(inv);
+      if (!si || coBusy.has(inv.id)) continue;
+      const held = si.serverId && !si.cancelledAt && !si.signedAt ? (ws.envelopes || []).find((e) => e.id === si.envelopeId) || null : null;
+      if (si.serverId && !si.cancelledAt && !si.signedAt && !(held && waitingCo(held) && held.signers.some((s) => s.co && s.investorId === inv.id))) {
+        await coCancel(ws, inv, si, 'the agreement no longer waits for the co-investor');
+        changed = true;
+      }
+      const env = coWaiting(ws, inv);
+      if (!env) continue;
+      if (si.serverId && si.envelopeId === env.id && !si.cancelledAt) continue;
+      if (si.error && si.envelopeId === env.id && !si.retry) continue;
+      if (si.serverId) {
+        // The earlier sign-in was for another agreement (signed or ended): this one gets its own.
+        retireCo(ws, inv, si);
+        serverSignIn(inv);
+      }
+      await coSignIn(ws, inv, env);
+      changed = true;
+    }
+    return changed;
+  }
+  /** Anything about co-investor sign-ins still to hear from the server, or to tell it. */
+  const coAwaiting = (ws) => (ws.coSignInCancel || []).length > 0 || (ws.investors || []).some((i) => {
+    const si = coSi(i);
+    return !!si && ((si.serverId && !si.importedAt && !si.cancelledAt) || (!si.serverId && !!coWaiting(ws, i)));
+  });
+  /**
+   * The co-investor's signed agreement came back (POST /v1/invite/complete, 06-38: the server rebuilt the envelope from its
+   * snapshot and kept only the co-investor's signing and own places). Only that is taken, onto this console's own copy
+   * (esign.js importSignature); anything else in the submission is ignored. Nothing is changed when the agreement is no
+   * longer out for signature or the co-investor already signed it: an audit line says what came and why it was not used.
+   */
+  async function coMerge(ws, inv, si, sub) {
+    const c = inv.coInvestor || { name: 'the co-investor' };
+    const env = (ws.envelopes || []).find((e) => e.id === si.envelopeId) || null;
+    const se = sub && sub.envelope && typeof sub.envelope === 'object' ? sub.envelope : null;
+    const coS = env ? env.signers.find((s) => s.co && s.investorId === inv.id) || null : null;
+    const notUsed = (why) => {
+      audit(ws, 'Co-investor signature not used', `${inv.title}: the agreement signed on ${c.name}'s device came back, but ${why}; nothing was changed`, (env && env.offeringId) || '', inv.id);
+      return false;
+    };
+    if (!env || !se || String(se.id) !== env.id) return notUsed('it is not the agreement this sign-in was for');
+    if (!coS) return notUsed('the agreement no longer has the co-investor as a signer');
+    const sent = (Array.isArray(se.signers) ? se.signers : []).find((s) => s && typeof s === 'object' && s.id === coS.id) || null;
+    const values = {};
+    (Array.isArray(se.fields) ? se.fields : []).forEach((f) => {
+      if (f && typeof f === 'object' && env.fields.some((x) => x.id === f.id && x.signerId === coS.id)) values[f.id] = f.value;
+    });
+    const from = Date.parse(si.sentAt || si.createdAt || '');
+    const r = await NS.esign.importSignature(ws, env.id, coS.id, Object.assign({ values, from: isFinite(from) ? from : 0 }, sent ? { status: sent.status, viewedAt: sent.viewedAt, consentAt: sent.consentAt, signedAt: sent.signedAt, signature: sent.signature, initials: sent.initials, userAgent: sent.userAgent } : {}));
+    if (!r.ok) return notUsed(r.why);
+    si.signedAt = coS.signedAt;
+    si.importedAt = nowIso();
+    audit(ws, 'Co-investor signed', `${inv.title}: ${c.name} signed ${env.title} on their own device; their signature is on this portal's copy of the agreement, which ${r.complete ? 'is now complete' : 'waits for your countersignature'}. The copy on the integration server is deleted.`, env.offeringId || '', inv.id);
+    return true;
+  }
+  /** One row of the server's list that is a co-investor sign-in (or one replaced or ended): progress, then any submission. */
+  async function coRow(ws, row) {
+    const inv = (ws.investors || []).find((i) => {
+      const si = coSi(i);
+      return !!si && si.serverId === row.id;
+    });
+    const gone = inv ? null : coRetired(ws).find((x) => x.id === row.id);
+    if (!inv && !gone) return null;
+    let changed = false;
+    const si = inv ? coSi(inv) : null;
+    if (si && typeof row.openedAt === 'string' && row.openedAt && !si.openedAt) {
+      si.openedAt = row.openedAt;
+      changed = true;
+    }
+    if (!row.hasSubmission) return changed;
+    const path = `/v1/invitations/${encodeURIComponent(row.id)}/submission`;
+    const sub = await api(ws, 'GET', path);
+    if (inv) await coMerge(ws, inv, si, sub);
+    else {
+      const who = invOf(ws, gone.investorId);
+      audit(ws, 'Co-investor signature not used', `${who ? who.title : gone.investorId}: an agreement signed on a co-investor's device came back for a sign-in that had been replaced or removed; nothing was changed`, '', gone.investorId);
+    }
+    await api(ws, 'DELETE', path);
+    NS.app.save(true);
+    return true;
+  }
+  /** A co-investor on the account becomes a signer on the agreement the investor just signed on their device (server mode). */
+  function coAfterImport(ws, it) {
+    const inv = invOf(ws, it.investorId);
+    if (!inv || !inv.coInvestor || !NS.coSigning) return;
+    NS.coSigning.coAttach(ws, inv);
+  }
+  /* The co-investor hooks (coinvestor.js, plan 06-37): with the server connected the sign-in is the server's, never the link
+     to send by hand. */
+  function coHooks(CI) {
+    CI.hooks.added.push((ws, inv, was) => {
+      if (!serverOn(ws) || !inv.coInvestor) return false;
+      const old = was && was.signIn && was.signIn.server ? was.signIn : null;
+      serverSignIn(inv);
+      const env = coWaiting(ws, inv);
+      if (env) {
+        coBusy.add(inv.id);
+        inv.coInvestor.signIn.sending = true;
+      }
+      (async () => {
+        if (old && old.serverId) await coCancel(ws, inv, old, `the co-investor's email changed to ${inv.coInvestor.email}`);
+        if (env) await coSignIn(ws, inv, env);
+        else coRefresh(inv);
+      })();
+      return true;
+    });
+    CI.hooks.removed.push((ws, inv, removed) => {
+      const si = removed && removed.signIn && removed.signIn.server ? removed.signIn : null;
+      if (si && si.serverId && !si.signedAt) coCancel(ws, inv, si, 'the co-investor was removed from the account');
+    });
+  }
+  if (NS.coInvestor) coHooks(NS.coInvestor);
+  else (NS.coInvestorReady = NS.coInvestorReady || []).push(coHooks);
+  NS.actions['co-signin-retry'] = async (el) => {
+    const ws = W();
+    const inv = invOf(ws, el.getAttribute('data-id'));
+    const si = coSi(inv);
+    if (!inv || !si || !NS.app.can('operate') || coBusy.has(inv.id)) return;
+    const env = coWaiting(ws, inv);
+    if (!env) {
+      si.error = '';
+      NS.app.save(true);
+      return coRefresh(inv);
+    }
+    if (si.serverId) {
+      retireCo(ws, inv, si);
+      serverSignIn(inv);
+    }
+    const ok = await coSignIn(ws, inv, env);
+    U.toast(ok ? `Sign-in sent to ${inv.coInvestor.name}.` : `The sign-in could not be sent: ${coSi(inv).error}`);
+  };
+
   /* ---------- Server mode: statuses and importing finished onboardings ---------- */
   const check = { at: '', error: '', busy: null, subscriptions: 0 };
   /** "2 finished onboardings", "1 finished subscription", or both kinds: what the last import brought (check.subscriptions of n were investors on file). */
@@ -661,7 +909,7 @@
     return `${n} finished ${what}${n === 1 ? '' : 's'}`;
   }
   /** Anything on the server still to hear about (an older integration server without invitations is never asked). */
-  const awaiting = (ws) => list(ws).some((x) => x.serverId && (OPEN.indexOf(x.status) >= 0 || (x.status === 'completed' && !x.importedAt)));
+  const awaiting = (ws) => list(ws).some((x) => x.serverId && (OPEN.indexOf(x.status) >= 0 || (x.status === 'completed' && !x.importedAt))) || coAwaiting(ws);
   function applyRow(ws, it, row) {
     let changed = false;
     const inv = invOf(ws, it.investorId);
@@ -1274,13 +1522,18 @@
         const all = Array.isArray(rows) ? rows : rows && Array.isArray(rows.invitations) ? rows.invitations : [];
         for (const row of all) {
           const it = list(ws).find((x) => x.serverId && x.serverId === row.id);
-          if (!it) continue;
+          if (!it) {
+            // Plan 06-39: a co-investor's sign-in is not an invitation of this list.
+            if (await coRow(ws, row)) changed = true;
+            continue;
+          }
           if (applyRow(ws, it, row)) changed = true;
           if (!row.hasSubmission) continue;
           const path = `/v1/invitations/${encodeURIComponent(row.id)}/submission`;
           if (!it.importedAt) {
             const sub = await api(ws, 'GET', path);
             await merge(ws, it, sub);
+            coAfterImport(ws, it);
             it.importedAt = new Date().toISOString();
             const x = outcome(ws, it);
             // An investor already on file finished a subscription only: their account stays as this console holds it.
@@ -1295,6 +1548,7 @@
           }
           await api(ws, 'DELETE', path);
         }
+        if (await coSweep(ws)) changed = true;
         check.error = '';
       } catch (e) {
         check.error = e.message || 'The integration server could not be reached.';
@@ -2534,10 +2788,11 @@
     if (!w || !E.diy || S().remote || S().role === 'investor' || NS.app.modeOf(S().route) !== 'console') return;
     sweepAndShow();
     if (!serverOn(w) || !awaiting(w)) return;
-    const before = JSON.stringify([list(w).map((x) => x.status + x.stepKey + x.importedAt + x.emailStatus), unread(w)]);
+    const coPrint = () => (w.investors || []).map((i) => (coSi(i) ? [coSi(i).serverId, coSi(i).openedAt, coSi(i).signedAt, coSi(i).error].join() : '')).join('|');
+    const before = JSON.stringify([list(w).map((x) => x.status + x.stepKey + x.importedAt + x.emailStatus), unread(w), coPrint()]);
     importCompleted(w).then((n) => {
       if (W() !== w) return;
-      const after = JSON.stringify([list(w).map((x) => x.status + x.stepKey + x.importedAt + x.emailStatus), unread(w)]);
+      const after = JSON.stringify([list(w).map((x) => x.status + x.stepKey + x.importedAt + x.emailStatus), unread(w), coPrint()]);
       updateBell();
       const typing = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
       const dlg = document.getElementById('dlg');

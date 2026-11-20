@@ -1017,6 +1017,8 @@
     const tpFill = tp
       ? Object.assign({ address: str(tp.address, 300), country: str(tp.country, 60) }, tp.citizen === 'us' || tp.citizen === 'other' ? { citizenship: tp.citizen } : {}, tp.citizenship ? { knownCitizenship: str(tp.citizenship, 60) } : {}, tpAt ? { esignConsent: { at: tpAt, scope: 'Electronic records and signatures (ESIGN Act, UETA)' } } : {})
       : null;
+    // Plan 06-39: a co-investor's sign-in (06-38 contract) holds one agreement that waits for them, with its current copy.
+    if (sv.coSign === true && sv.existing === true) return coSnapshot(ws, server, token, key, snap, invId);
     ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', taxType: NS.INVESTOR_TYPES[si.taxType] ? si.taxType : '', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: exBasis, date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}, exErisa && exErisa.plan ? { erisa: exErisa } : {}, tpFill || {}));
     ws.invitations.push(Object.assign({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) }, ex ? { existing: true, holds: ex.holds === true } : {}, ex && sv.taxRequest === true && !so ? { taxRequest: true } : {}, withTax ? { includeTax: true } : {}));
     const v = snap.verification || {};
@@ -1026,6 +1028,35 @@
     // The console's own answer, worked out on all its offerings and this investor's holdings (absent from an older console).
     if (typeof v.accreditationRequired === 'boolean') ws.invite.accRequired = v.accreditationRequired;
     alignAccreditation(ws);
+    return ws;
+  }
+  /**
+   * Plan 06-39: the workspace of a co-investor's sign-in. The account (its id and name; the co-investor's name and email as
+   * the person signing in), the agreement as the console sent it (every signer's order and status, only the co-investor's own
+   * places) and its current copy, stored as the envelope's work copy and drawn as its pages (the investor's values are printed
+   * on it). Nothing about the account investor's record is held or asked.
+   */
+  async function coSnapshot(ws, server, token, key, snap, invId) {
+    const si = snap.investor || {};
+    const sv = snap.invitation || {};
+    const st = snap.esign && snap.esign.template;
+    const envId = st ? str(st.id, 70) : '';
+    if (!st || !snap.esign.pdf || !/^[\w.-]{1,70}$/.test(envId) || envId !== str(sv.envelopeId, 70)) throw new Error('This sign-in link is incomplete. Contact the firm that sent it.');
+    const files = NS.ops && NS.ops.files;
+    const work = `${envId}-work`;
+    if (files) await files.put(work, b64Blob(snap.esign.pdf, 'application/pdf'));
+    const name = str(si.contact, 120);
+    const words = name.split(/\s+/);
+    const signers = (Array.isArray(st.signers) ? st.signers : []).slice(0, 12).filter((x) => x && typeof x === 'object').map((x, n) => ({ id: str(x.id, 80), investorId: x.investorId ? invId : null, name: str(x.name, 120), email: x.co === true ? str(x.email, 160) : '', account: str(x.account, 160), role: x.role === 'investor' ? 'investor' : 'countersigner', order: Number(x.order) || n + 1, color: hex(x.color, '#2f6fb0'), status: ['waiting', 'sent', 'viewed', 'signed', 'declined'].indexOf(x.status) >= 0 ? x.status : 'waiting', viewedAt: x.co === true ? x.viewedAt || null : null, consentAt: x.co === true ? x.consentAt || null : null, signedAt: x.status === 'signed' ? str(x.signedAt, 40) : null, declinedReason: '', signature: null, initials: null, userAgent: '', co: x.co === true }));
+    const co = signers.find((x) => x.co);
+    if (!co) throw new Error('This sign-in link is incomplete. Contact the firm that sent it.');
+    const fields = (Array.isArray(st.fields) ? st.fields : []).filter((f) => f && typeof f === 'object' && f.signerId === co.id).slice(0, 200).map((f) => clone(f));
+    ws.envelopes.push({ id: envId, title: str(st.title, 200) || 'Subscription agreement', subject: '', message: str(st.message, 1000), fileName: str(st.fileName, 160) || 'Subscription_Agreement.pdf', docId: null, workDocId: work, pages: Number(st.pages) || 1, pageSizes: Array.isArray(st.pageSizes) ? st.pageSizes.slice(0, 500) : [], sha256Original: '', offeringId: null, templateId: null, status: st.status === 'sent' ? 'sent' : str(st.status, 20), sequential: st.sequential !== false, createdAt: nowIso(), createdBy: '', sentAt: str(st.sentAt, 40) || null, completedAt: null, signedDocId: null, sha256Signed: null, signers, fields, events: [] });
+    ws.investors.push({ id: invId, contact: name, title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', taxType: '', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, coInvestor: { first: words[0] || name, last: words.slice(1).join(' '), name, email: str(si.email, 160), added: '' }, onboarding: { status: 'complete', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: '' }, payment: { method: 'check', bank: null }, positions: [] });
+    ws.invitations.push({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: '', cents: 0, cls: '', note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || snap.sentBy, 120), existing: true, coSign: true, envelopeId: envId });
+    ws.integrations = { connections: [], use: {}, rules: {}, server: { url: server, token: '' }, configured: true };
+    if (NS.integrations) NS.integrations.ensure(ws);
+    ws.invite = { mode: 'server', key, token, server, loadedAt: nowIso() };
     return ws;
   }
   /**
@@ -1124,8 +1155,9 @@
     }
     return i.onboarding.flow;
   }
-  const envOf = (c) => (c.req && c.req.envelopeId ? (c.ws.envelopes || []).find((e) => e.id === c.req.envelopeId) || null : null);
-  const signerOf = (env, i) => (env ? env.signers.find((s) => s.investorId === i.id) || null : null);
+  // Plan 06-39: a co-investor's sign-in signs the agreement it names, as the co-investor (state.co, set by ensureFlow).
+  const envOf = (c) => (c.it && c.it.coSign ? (c.ws.envelopes || []).find((e) => e.id === c.it.envelopeId) || null : c.req && c.req.envelopeId ? (c.ws.envelopes || []).find((e) => e.id === c.req.envelopeId) || null : null);
+  const signerOf = (env, i) => (env ? env.signers.find((s) => s.investorId === i.id && !!s.co === !!S().co) || null : null);
   /** The records the flow works on: workspace, invitation, investor, the subscription request and the invited offering. */
   function fctx() {
     const o = ob();
@@ -1170,6 +1202,8 @@
     if (c.req ? !!envOf(c) : true) s.push('agreement');
   };
   function flowSteps(c) {
+    // Plan 06-39: a co-investor's sign-in: the consent, the agreement, done. Nothing about the account is asked.
+    if (c.it.coSign) return ['welcome', 'agreement', 'done'];
     // Plan 06-26 (owner decision on the verification's human item 3): the sponsor asked an investor on file for their tax form
     // again. The link holds the tax step and the done screen; the consent to electronic records and signatures is asked
     // first only when none is on the record (decided once, so the step count stays as the investor first saw it).
@@ -1335,6 +1369,7 @@
     const u = S().ui;
     S().viewer = i.id;
     S().role = 'investor';
+    S().co = !!it.coSign;
     if (u.ob && u.ob.mode === 'invite' && u.ob.itId === it.id) return u.ob;
     const fl = flowOf(i, it);
     // Plan 06-26: a tax-form request signs with the consent on the investor's record (given when they started onboarding,
@@ -1510,7 +1545,9 @@
     // D-06 (plan 06-15): who invited the investor and to what, in one sentence (the account named when it is not the
     // person); no description of the page, no facts list repeating it, no "what you will need" list or time estimate.
     const forAcct = c.inv.title && !sameName(c.inv.title, c.inv.contact) ? ` for ${h(c.inv.title)}` : '';
-    const intro = c.it.taxRequest
+    const intro = c.it.coSign
+      ? `${h(t.name)} asks you to sign the subscription agreement for ${h(c.inv.title)} as co-investor. Only your places on it are yours to complete.`
+      : c.it.taxRequest
       ? `${h(t.name)} asks you for your tax form${forAcct}. This link covers that form only.`
       : c.it.existing
       ? c.off
@@ -1533,7 +1570,7 @@
       </div>
       <div class="form-grid">
         ${check('esignConsent', 'I agree to use electronic records and signatures, and I have read the information above.')}
-        ${t.onboarding.esign ? check('edelivery', `I consent to receive statements and notices electronically through this portal. I can withdraw consent at any time by contacting ${h(sup.team || 'investor relations')}.`) : ''}
+        ${t.onboarding.esign && !c.it.coSign ? check('edelivery', `I consent to receive statements and notices electronically through this portal. I can withdraw consent at any time by contacting ${h(sup.team || 'investor relations')}.`) : ''}
       </div>`;
   }
   function fLogin(c) {
@@ -2531,8 +2568,10 @@
           ${resign ? `<p class="meta ivf-why">Or sign the agreement again on this page: ${h(t.shortName)}’s agreement is prepared again with the same details and commitment, and your details are sent once you sign it.</p>` : ''}
           ${action ? `<div class="ob-actions">${action}</div>` : ''}`;
       }
+      if (c.it.coSign) return `${ivfH1('Sending your signature…')}<p class="lede ivf-loading" role="status">Sending your signature to ${h(t.name)}.</p>`;
       return `${ivfH1('Finishing your account…')}<p class="lede ivf-loading" role="status">Saving your details and sending them to ${h(t.name)}.</p>`;
     }
+    if (c.it.coSign) return coDone(c);
     if (c.it.taxRequest) return taxDone(c);
     // D-06 (plan 06-15): no summary of what the investor just did; the lede says whether the firm is still reviewing and
     // "What happens next" says what is still open.
@@ -2581,6 +2620,16 @@
     </div>`;
   }
 
+  /** Plan 06-39: the co-investor's done screen (read from the flow: after the send this device holds no copy of the agreement). */
+  function coDone(c) {
+    const t = c.ws.tenant;
+    const name = c.fl.coName || c.inv.contact;
+    return `<div class="ivf-done">
+      ${ivfH1(`Thank you, ${h(name)}`)}
+      <p class="lede">Your signature is recorded and sent to ${h(t.name)}.</p>
+      <p class="meta">Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.</p>
+    </div>`;
+  }
   /**
    * Plan 06-26: what a tax-form request brought: { form, how: 'signed' | 'uploaded' | 'unsigned' | 'none' }, from the record's
    * tax form when this flow made it (the form signed or finished on its tax step, or the file uploaded on it).
@@ -2626,7 +2675,7 @@
     const e = {};
     if (key === 'welcome') {
       if (!d.esignConsent) e.esignConsent = 'Agree to electronic records and signatures to continue.';
-      if (t.onboarding.esign && !d.edelivery) e.edelivery = 'Electronic delivery is required for this portal.';
+      if (t.onboarding.esign && !d.edelivery && !c.it.coSign) e.edelivery = 'Electronic delivery is required for this portal.';
     }
     if (key === 'login' && !(c.fl.loginAt && !d.password && !d.password2)) Object.assign(e, validate('login'));
     else if (key === 'login') personErrors(e, d.loginFirst, d.loginLast, 'loginFirst', 'loginLast', 'your');
@@ -2771,6 +2820,13 @@
     const actor = () => `${i.title} (investor)`;
     const log = (action, detail) => NS.audit && NS.audit.log(ws, { action, record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: ${detail}`, actor: actor() });
     if (i.onboarding.status === 'invited') i.onboarding = Object.assign({}, i.onboarding, { status: 'in_progress' });
+    if (key === 'welcome' && c.it.coSign) {
+      // Plan 06-39: the co-investor's consent is recorded on their own signer on the agreement (esign.js recordConsent),
+      // never on the account investor's record.
+      fl.consentAt = nowIso();
+      if (NS.audit) NS.audit.log(ws, { action: 'Electronic records consent given', record: i.id, fund: '', detail: `${i.contact}, co-investor on ${i.title}: agreed to use electronic records and signatures`, actor: `${i.contact} (co-investor)` });
+      return false;
+    }
     if (key === 'welcome') {
       fl.consentAt = nowIso();
       i.edelivery = !!d.edelivery;
@@ -3019,7 +3075,53 @@
     delete c.fl.taxEnvelopeId;
     delete c.fl.taxView;
   }
+  /**
+   * Plan 06-39: the co-investor's completion, exactly the 06-38 contract: the agreement (same id) with the work copy now holding
+   * their signature (and the signed copy only when it is complete), the account's id and nothing else. After the send is
+   * confirmed this device keeps no copy of the agreement (it carries the investor's signature; plan 06-23's rule).
+   */
+  async function sendCoSign(c) {
+    const ws = c.ws;
+    const env = envOf(c);
+    const s = signerOf(env, c.inv);
+    const fail = (msg) => Object.assign(new Error(msg), { contact: true, code: 'missing' });
+    if (!env || !s || s.status !== 'signed') throw fail('Your signed agreement could not be found in this browser.');
+    const ids = [env.workDocId].concat(env.status === 'completed' && env.signedDocId ? [env.signedDocId] : []);
+    const files = {};
+    for (const id of ids) {
+      let b = null;
+      try {
+        b = NS.ops && NS.ops.files ? await NS.ops.files.get(id) : null;
+      } catch (e) {
+        b = null;
+      }
+      if (!b) throw fail('Your signed agreement could not be read from this browser’s storage.');
+      if (b.size > MAX_FILES || !(await sendable(b, true))) throw Object.assign(fail(b.size > MAX_FILES ? `Your signed agreement is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB this page can send.` : 'Your signed agreement is not a PDF file this page can send.'), { code: b.size > MAX_FILES ? 'size' : 'format' });
+      files[id] = await blobB64(b);
+    }
+    const payload = { investor: { id: c.inv.id }, request: null, envelope: clone(env), files, docs: [], audit: (ws.audit || []).map((x) => ({ at: x.at, actor: x.actor, action: x.action, detail: x.detail, fund: '', record: x.record || '' })), notifications: [] };
+    await remote.complete(ws.invite.server, ws.invite.token, payload);
+    c.fl.sentAt = nowIso();
+    c.fl.coName = c.inv.contact;
+    // The send is confirmed: the agreement, its copies and the investor's signature leave this device.
+    const gone = [env.docId, env.workDocId, env.signedDocId, `${env.id}-work`, `${env.id}-signed`].filter(Boolean);
+    try {
+      if (NS.ops && NS.ops.files) await Promise.all(gone.map((id) => NS.ops.files.del(id).catch(() => {})));
+    } catch (e) {
+      if (window.console) console.error(e);
+    }
+    ws.envelopes = (ws.envelopes || []).filter((e) => e.id !== env.id);
+    ws.docs = (ws.docs || []).filter((d) => d.envelopeId !== env.id && gone.indexOf(d.id) < 0);
+    ws.notifications = [];
+    ws.audit = [];
+    ws.invite.token = '';
+    ws.invite.sentAt = c.fl.sentAt;
+    c.it.status = 'completed';
+    c.it.completedAt = new Date().toISOString();
+    NS.app.save(true);
+  }
   async function sendCompletion(c) {
+    if (c.it.coSign) return sendCoSign(c);
     const ws = c.ws;
     const i = c.inv;
     const env = envOf(c);
@@ -3201,7 +3303,12 @@
       const i = c.inv;
       const ws = c.ws;
       let first = false;
-      if (!c.fl.completedAt) {
+      if (!c.fl.completedAt && c.it.coSign) {
+        // Plan 06-39: the co-investor signed; nothing on the account is completed or changed here.
+        c.fl.at = 'done';
+        c.fl.completedAt = nowIso();
+        NS.app.save(true);
+      } else if (!c.fl.completedAt) {
         first = true;
         const steps = flowSteps(c);
         // An active investor's beneficial owners and screening stay as they are on file (their invitation covers a subscription only).
@@ -3274,6 +3381,16 @@
       setTimeout(() => completeFlow(fctx()), 0);
       return true;
     });
+    // Plan 06-39: the co-investor signed the agreement of their sign-in: on to done, which sends it.
+    NS.esign.onSigned((env, signer) => {
+      const c = S().route === 'invite' ? fctx() : null;
+      if (!c || !c.it.coSign || env.id !== c.it.envelopeId || !signer || !signer.co) return false;
+      c.fl.signedAt = signer.signedAt;
+      c.fl.at = 'done';
+      NS.app.save(true);
+      setTimeout(() => completeFlow(fctx()), 0);
+      return true;
+    });
     // The W-9 of this flow, finished on the tax step's signing view (signed or not, D-30).
     NS.esign.onSigned((env, signer) => {
       const c = S().route === 'invite' ? fctx() : null;
@@ -3335,7 +3452,7 @@
       const n = steps.indexOf(key);
       // The step on screen: Continue and Back act on it only while it is still the current step (shownChanged).
       o.shownKey = key;
-      const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">${c.it.taxRequest ? 'Tax form' : 'Account setup'}</span></div></header>`;
+      const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">${c.it.coSign ? 'Co-investor signature' : c.it.taxRequest ? 'Tax form' : 'Account setup'}</span></div></header>`;
       const list = steps.map((s, i) => `<li class="${i < n || (key === 'done' && c.fl.completedAt) ? 'done' : i === n ? 'current' : ''}"${i === n ? ' aria-current="step"' : ''}><span class="ob-num">${i < n || (key === 'done' && c.fl.completedAt) ? icon('check') : i + 1}</span><span>${h(stepLabel(c, s))}</span></li>`).join('');
       const progress = `<div class="ivf-progress"><p class="ob-count">Step ${n + 1} of ${steps.length}<span class="ivf-count-label">: ${h(stepLabel(c, key))}</span></p><div class="ivf-bar" role="progressbar" aria-label="Account setup progress" aria-valuemin="1" aria-valuemax="${steps.length}" aria-valuenow="${n + 1}" aria-valuetext="Step ${n + 1} of ${steps.length}: ${h(stepLabel(c, key))}"><span style="width:${(((n + 1) / steps.length) * 100).toFixed(1)}%"></span></div></div>`;
       const taxEnv = key === 'tax' ? taxSignEnv(c) : null;
@@ -3345,8 +3462,8 @@
       // A tax-form request (plan 06-26) is opened from the portal and starts on its tax step (or Welcome): Back on that first
       // step returns to the portal, so the pre-filled form can be left without finishing it (the page has no menu). The same
       // for an investor on file's invitation to subscribe (plan 06-29): its Welcome returns to the portal that offers it.
-      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n === 0 && (c.it.taxRequest || c.it.existing) && key !== 'done' ? '<button class="btn" type="button" data-action="ivf-leave">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
-      const submit = { welcome: 'Get started', tax: key === 'tax' && !upView && taxKey(c, o.d) ? 'Continue to the form' : '', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
+      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n === 0 && (c.it.taxRequest || c.it.existing) && !c.it.coSign && key !== 'done' ? '<button class="btn" type="button" data-action="ivf-leave">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
+      const submit = { welcome: c.it.coSign ? 'Continue to the agreement' : 'Get started', tax: key === 'tax' && !upView && taxKey(c, o.d) ? 'Continue to the form' : '', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';
       const inner =
         key === 'done'
@@ -3544,7 +3661,8 @@
   /** Back on the first step of a tax-form request or an investor on file's invitation: to the portal it is offered on (its done screen goes there too). */
   NS.actions['ivf-leave'] = () => {
     const c = fctx();
-    if (!c || !(c.it.taxRequest || c.it.existing) || ob().busy) return;
+    // Plan 06-39: a co-investor's sign-in has no portal behind it (this device holds only the agreement to sign).
+    if (!c || !(c.it.taxRequest || c.it.existing) || c.it.coSign || ob().busy) return;
     NS.app.go('overview');
   };
   NS.actions['ivf-taxanswers'] = () => {
@@ -3597,6 +3715,7 @@
    * agreement unsigned and signs it from their portal once the firm adds it again (esign.js re-issues it then).
    */
   function lostAgreement(c) {
+    if (c.it.coSign) return false;
     const env = envOf(c);
     const s = signerOf(env, c.inv);
     return !!env && env.status === 'sent' && !!s && s.status !== 'signed' && s.status !== 'declined' && !!NS.esign && !!NS.esign.fileLost && NS.esign.fileLost(env);

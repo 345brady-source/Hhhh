@@ -50,7 +50,8 @@
   const portalPage = () => `${location.origin}${location.pathname}`;
   const signInOf = (inv) => {
     const c = coOf(inv);
-    return c && c.signIn && c.signIn.token ? c.signIn : null;
+    // Plan 06-39: with the integration server the record is the server's kind (server: true), with no link token of its own.
+    return c && c.signIn && (c.signIn.token || c.signIn.server) ? c.signIn : null;
   };
   const expired = (si) => !!si && !!si.expiresAt && Date.parse(si.expiresAt) < Date.now();
   const hashOf = (token) => (NS.audit && NS.audit.sha256 ? NS.audit.sha256(String(token)) : String(token));
@@ -76,6 +77,15 @@
     const si = E.diy ? signInOf(inv) : null;
     if (!si) return '';
     const day = (iso) => U.date(String(iso || '').slice(0, 10));
+    // Plan 06-39 (integration server): sent for the agreement that waits for the co-investor, once the investor has signed.
+    // A server without mail settings keeps the email in its outbox: said as it is.
+    if (si.server) {
+      if (si.signedAt) return `Signed ${day(si.signedAt)}`;
+      if (si.sending) return 'Emailing the sign-in…';
+      if (si.error) return `Sign-in not sent: ${si.error}`;
+      if (si.serverId && si.sentAt) return si.emailStatus === 'outbox' ? `Sign-in in the server outbox ${day(si.sentAt)}` : `Sign-in emailed ${day(si.sentAt)}`;
+      return `Sign-in is emailed once ${inv.contact || inv.title} has signed`;
+    }
     if (si.serverId) return si.sentAt ? `Sign-in emailed ${day(si.sentAt)}` : `Sign-in is emailed once ${inv.contact || inv.title} has signed`;
     if (expired(si) && !si.openedAt) return 'Sign-in link expired';
     return si.sentAt ? `Sign-in sent ${day(si.sentAt)}` : 'Sign-in link ready to send';
@@ -106,7 +116,8 @@
   function showSignIn(inv) {
     const ws = W();
     const si = signInOf(inv);
-    if (!E.diy || !si) return openRecord(inv);
+    // A server sign-in not created yet (nothing waits for the co-investor, or it could not be sent) has no email to show.
+    if (!E.diy || !si || (si.server && !si.serverId)) return openRecord(inv);
     const t = ws.tenant;
     const local = !si.serverId;
     const id = h(inv.id);
@@ -210,7 +221,7 @@
     const acts = !edit
       ? ''
       : c
-        ? `${E.diy && signInOf(inv) ? `<button class="cs-btn" type="button" data-action="co-link" data-id="${h(inv.id)}">Sign-in link</button>` : ''}<button class="cs-btn" type="button" data-action="co-add" data-id="${h(inv.id)}">Change co-investor</button><button class="cs-btn" type="button" data-action="co-remove" data-id="${h(inv.id)}">Remove co-investor</button>`
+        ? `${E.diy && signInOf(inv) && (!signInOf(inv).server || signInOf(inv).serverId) && !signInOf(inv).error ? `<button class="cs-btn" type="button" data-action="co-link" data-id="${h(inv.id)}">Sign-in link</button>` : ''}${E.diy && signInOf(inv) && signInOf(inv).server && signInOf(inv).error ? `<button class="cs-btn cs-btn-primary" type="button" data-action="co-signin-retry" data-id="${h(inv.id)}">Send the sign-in again</button>` : ''}<button class="cs-btn" type="button" data-action="co-add" data-id="${h(inv.id)}">Change co-investor</button><button class="cs-btn" type="button" data-action="co-remove" data-id="${h(inv.id)}">Remove co-investor</button>`
         : inv.noCoInvestor
           ? `<button class="cs-btn" type="button" data-action="co-add" data-id="${h(inv.id)}">${icon('plus')}Add co-investor</button><button class="cs-btn" type="button" data-action="co-none-undo" data-id="${h(inv.id)}">Undo: ask me again</button>`
           : need(ws, inv).length
@@ -486,5 +497,7 @@
       return false;
     });
 
-  NS.coInvestor = { need, needing, noticeText, noticeHTML, statusHTML, recordButton, offeringsOf, signInOf, signInText, showSignIn, hooks };
+  NS.coInvestor = { need, needing, noticeText, noticeHTML, statusHTML, recordButton, offeringsOf, signInOf, signInText, showSignIn, openRecord, hooks };
+  // Plan 06-39: invitations.js loads first and registers its hooks once this file has made them.
+  (NS.coInvestorReady || []).splice(0).forEach((fn) => fn(NS.coInvestor));
 })(window.CVPortal);
