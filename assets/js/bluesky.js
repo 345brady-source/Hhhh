@@ -20,6 +20,10 @@
  *                                  { state, order, difference }: the state filed; the fee paid becomes that state's line
  *                                  of its order (and systemFeeCents the filing system's line); null when refused
  *   difference(stateRecord)        fee paid less fee quoted, in cents, when both are known and differ; otherwise null
+ *   progress(ws, order)            { codes, filed, open }: the order's states, those with a result on record and those open
+ *   resultStatus(ws, order)        'partly-filed' while any ordered state has no result, 'filed' once every state has one
+ *                                  (a fee still open), 'done' once every fee is known; null while no state has a result
+ *   orderStatus(ws, order)         { label, filed, total, open: [names] }: "Partly filed (1 of 2)" and the states still open
  * The section (part key states of the Filings tab) is registered only where the tab is loaded (NS.filingsUI).
  * An order records each state's quoted fee (quotedCents) on the record and in the package; its pass-through lines stay
  * without an amount until what was paid is recorded.
@@ -165,6 +169,31 @@
     p.states.forEach((x) => NS.filings.recordState(ws, off.id, x.code, Object.assign({ status: renewal ? 'renewal-ordered' : 'ordered', quotedCents: x.quotedCents }, renewal ? {} : { source: 'portal' })));
     return order;
   }
+  /** An order's states: those with a result on record (filed, with its date) and those still open, in the order's order. */
+  function progress(ws, order) {
+    const rec = (order && stored(ws, order.offeringId).states) || {};
+    const codes = ((order && order.lines) || []).filter((l) => l && l.state).map((l) => l.state);
+    const filed = codes.filter((c) => own(rec, c) && rec[c] && rec[c].status === 'filed' && !!rec[c].filedOn);
+    return { codes, filed, open: codes.filter((c) => filed.indexOf(c) < 0) };
+  }
+  /**
+   * The status a state order's results give it: partly-filed while any ordered state has no result, filed once every
+   * state has one (a fee still open), done once every fee is known too; null while no state has a result.
+   */
+  function resultStatus(ws, order) {
+    const p = progress(ws, order);
+    if (!p.filed.length) return null;
+    if (p.open.length) return 'partly-filed';
+    return order.openFees ? 'filed' : 'done';
+  }
+  const STATUS = { recorded: 'Recorded', received: 'Received', 'partly-filed': 'Partly filed', filed: 'Filed', done: 'Done', cancelled: 'Cancelled' };
+  /** What a state order's status reads: { label, filed, total, open: [state names still open] }; "Partly filed (1 of 2)". */
+  function orderStatus(ws, order) {
+    const p = progress(ws, order);
+    const st = (order && order.status) || '';
+    const base = own(STATUS, st) ? STATUS[st] : st;
+    return { label: st === 'partly-filed' ? `${base} (${p.filed.length} of ${p.codes.length})` : base, filed: p.filed.length, total: p.codes.length, open: p.open.map(nameOf) };
+  }
   const difference = (st) => (st && isCents(st.quotedCents) && isCents(st.feeCents) && st.quotedCents !== st.feeCents ? st.feeCents - st.quotedCents : null);
   const BLUESKY = ['bluesky', 'bluesky-renewal'];
   function recordResult(ws, offeringId, code, result, today) {
@@ -187,9 +216,7 @@
       });
       order.dueCents = order.lines.reduce((a, l) => a + (l.cents || 0), 0);
       order.openFees = order.lines.some((l) => l.cents === null);
-      const states = stored(ws, offeringId).states || {};
-      const all = order.lines.filter((l) => l.state).every((l) => states[l.state] && states[l.state].status === 'filed' && states[l.state].filedOn);
-      order.status = all && !order.openFees ? 'done' : 'filed';
+      order.status = resultStatus(ws, order) || order.status;
     }
     const d = difference(st);
     if (NS.audit && NS.audit.log) NS.audit.log(ws, { action: 'State notice result recorded', fund: offeringId, record: order ? order.id : '', detail: `${off.name}: ${NS.filings.stateName(code)}, filed on ${x.filedOn}${st.efdId ? `, filing ID ${st.efdId}` : ''}, fee paid ${usd(x.feeCents)}${d ? ` (quoted ${usd(st.quotedCents)})` : ''}` });
@@ -197,7 +224,7 @@
     return { state: st, order, difference: d };
   }
 
-  const API = { problems, pick, fees, pack, latestNotice, placeOrder, recordResult, difference };
+  const API = { problems, pick, fees, pack, latestNotice, placeOrder, recordResult, difference, progress, resultStatus, orderStatus };
   if (NS) NS.bluesky = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 
@@ -337,7 +364,6 @@
         ${p.contact && p.contact.name ? row('Contact', [p.contact.name, p.contact.email, p.contact.phone].filter(Boolean).map(h).join(' · ')) : ''}
       </dl>`;
   }
-  const ORDER = { recorded: 'Recorded', received: 'Received', filed: 'Filed', done: 'Done' };
   function ordersHTML(ws, o) {
     const list = ((ws.filings && ws.filings.orders) || []).filter((x) => x && x.offeringId === o.id && (x.kind === 'bluesky' || x.kind === 'bluesky-renewal') && x.status !== 'cancelled');
     if (!list.length) return '';
@@ -346,8 +372,9 @@
         (x) => `<div class="fl-order" data-order="${h(x.id)}">
           <div class="fl-fees">
             ${(x.lines || []).map((l) => `<div><span>${h(l.label)}</span><span>${l.cents == null ? 'To be confirmed' : money(l.cents)}</span></div>`).join('')}
-            <div class="fl-total"><span>${h(ORDER[x.status] || x.status)} · ${date(String(x.at || '').slice(0, 10))}</span><span class="fl-due">${money(x.dueCents)} due${x.openFees ? ', fees to be confirmed' : ''}</span></div>
+            <div class="fl-total"><span>${h(orderStatus(ws, x).label)} · ${date(String(x.at || '').slice(0, 10))}</span><span class="fl-due">${money(x.dueCents)} due${x.openFees ? ', fees to be confirmed' : ''}</span></div>
           </div>
+          ${x.status === 'partly-filed' && orderStatus(ws, x).open.length ? `<p class="fl-note" data-open-states>Still open: ${h(orderStatus(ws, x).open.join(', '))}.</p>` : ''}
           ${packHTML(x.package)}
         </div>`
       )

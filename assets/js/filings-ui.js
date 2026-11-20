@@ -253,17 +253,26 @@
 
   /* ---------- Orders ---------- */
   const ORDER = { recorded: 'Recorded', received: 'Received', filed: 'Filed', done: 'Done' };
+  /** A state order reads its results ("Partly filed (1 of 2)" and the states still open); any other order its status. */
+  function orderSays(ws, order) {
+    const B = NS.bluesky;
+    if (B && typeof B.orderStatus === 'function' && (order.kind === 'bluesky' || order.kind === 'bluesky-renewal')) return B.orderStatus(ws, order);
+    return { label: ORDER[order.status] || order.status, open: [] };
+  }
+  API.orderSays = orderSays;
   const openOrders = (ws, id) => ((ws.filings && ws.filings.orders) || []).filter((x) => x && x.status !== 'cancelled' && (!id || x.offeringId === id));
   function orderHTML(ws, order) {
     const f = ui().form;
     const asking = f && f.kind === 'cancel' && f.id === order.id;
     // Orders are placed and cancelled by an admin only.
     const cancel = order.status === 'recorded' && NS.app.can('configure') ? (asking ? `<span class="fl-ask">Cancel this order?</span>${btn('fl-cancel-order', 'Cancel the order', ` data-id="${h(order.id)}"`, 'cs-btn-danger')}${btn('fl-form-close', 'Keep it')}` : btn('fl-form', 'Cancel order', ` data-kind="cancel" data-id="${h(order.id)}"`)) : '';
+    const says = orderSays(ws, order);
     return `<div class="fl-order" data-order="${h(order.id)}">
       <div class="fl-fees">
         ${(order.lines || []).map((l) => `<div><span>${h(l.label)}</span><span>${l.cents == null ? 'To be confirmed' : money(l.cents)}</span></div>`).join('')}
-        <div class="fl-total"><span>${h(ORDER[order.status] || order.status)} · ${date(String(order.at || '').slice(0, 10))}</span><span class="fl-due">${money(order.dueCents)} due${order.openFees ? ', fees to be confirmed' : ''}</span></div>
+        <div class="fl-total"><span>${h(says.label)} · ${date(String(order.at || '').slice(0, 10))}</span><span class="fl-due">${money(order.dueCents)} due${order.openFees ? ', fees to be confirmed' : ''}</span></div>
       </div>
+      ${order.status === 'partly-filed' && says.open.length ? `<p class="fl-note" data-open-states>Still open: ${h(says.open.join(', '))}.</p>` : ''}
       ${cancel ? `<div class="fl-acts">${cancel}</div>` : ''}
       ${API.link && typeof API.link.orderLine === 'function' ? from(API.link.orderLine, ws, order) : ''}
     </div>`;
