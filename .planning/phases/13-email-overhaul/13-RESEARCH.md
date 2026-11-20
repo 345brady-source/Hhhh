@@ -128,3 +128,68 @@ Root cause: two template sets (browser and server) written separately. Fix: **on
 **F8 - No sent log, no delivery state:** invitation records keep `emailStatus`/`notifyStatus` (invitations.mjs:1172-1174); envelopes keep "Email sent" events; notices keep `recipients`. There is no per-investor list of messages, no delivered/bounced/complained state, no suppression list, no `List-Unsubscribe`, and no way to see a message's exact text after it was sent (outbox holds it only when SMTP is off, 30 days).
 
 <!-- section 1 done -->
+
+## 2. What a good transactional email system needs (and what this product needs of it)
+
+Measured against the product as it stands (section 1). "Needed" = law, the owner's goal text, or a market-ready product requires it; "not needed" items are listed so the planner does not build them.
+
+### 2.1 One template set
+- **One module, both sides.** Every message is a pure function `render(kind, data) -> { subject, preheader, text, html, inline }` in one plain-data file loadable as a browser script and by the server through `createRequire` - the pattern the server already uses for `assets/js/formd.js` and `assets/js/filings.js` [VERIFIED: server/lib/filings.mjs:69-72 `formd = require(join(dir, 'formd.js')); lib = require(join(dir, 'filings.js'));`; UMD tail of assets/js/formd.js `if (typeof module !== 'undefined' && module && module.exports) module.exports = API;`]. This kills F1 at the root: the console preview, the mailto path and the server send the same words.
+- **HTML + plain text from the same parts**, as `compose()` already does (mail.mjs:436-468). The mailto path can only carry plain text (RFC 6068 `body=`), so the text part must read well on its own.
+- **Inputs are data, never markup.** Every value escaped in HTML; header values stripped of control characters (mail.mjs:16 `oneLine` already does it). Sponsor free text (note, custom notice) is text, with line breaks only.
+
+### 2.2 Branding per firm (white label)
+- From display name = the firm's name; From address on the **firm's own domain** (owner decision 5a); Reply-To = the firm's support address; footer = legal name, **postal address**, disclaimer. Nothing names the platform or a vendor in any header, body, footer, link domain or image URL. Link domain = the firm's portal address (already: links are built from `snap.portalUrl`, invitations.mjs:1190).
+- **The current server has one global `MAIL_FROM`** [VERIFIED: server/lib/mail.mjs:375-376 `buildMessage({ from: { name: m.fromName, address: env.MAIL_FROM }, ...`] while **one server serves several sponsors** [CITED: server/README.md:408 "One server can serve several sponsors, each with its own token."]. So every self-serve sponsor on a shared server sends from the same address today: a white-label failure and a DMARC-alignment failure for every sponsor whose name is not that domain. Needed: a per-workspace sender (from address + domain status) chosen by the server from the sponsor account, falling back to `MAIL_FROM` only for the single-sponsor case.
+- Logo: PNG/JPEG/GIF inline (cid), as now; SVG/WebP logos must be rasterised by the console before sending (draw to a canvas, export PNG) or the text name is used **and the console says so** (F5).
+- Colour: firm primary for the top rule; the button colour must pass 4.5:1 contrast against its text - pick white or near-black text by computed contrast, or fall back to a dark neutral [ASSUMED: WCAG 2.x contrast formula, standard].
+- Firm postal address: not stored today (TENANT_TEMPLATE has `legalName`, `support`, `disclaimer`, no address [VERIFIED: assets/js/tenants.js:40-57, keys `name`, `shortName`, `tagline`, `legalName`, `portalName`, `domain`, `logo`, `colors`, `font`, `radius`, `nav`, `appearance`, `support`, `disclaimer`, `signin`, `home`, `onboarding`, `ach`]); the tax-document contact has one (taxdocs.js:291-298). Needed for CAN-SPAM commercial messages (2.6) and good practice in every footer.
+
+### 2.3 Subject lines, one action, names
+- Pattern: `<Firm>: <what the reader must do or now has>` - firm first, because the offering name alone does not tell the reader who wrote (F4). Keep under about 60 characters where the data allows; the required tax wording `IMPORTANT TAX RETURN DOCUMENT AVAILABLE` stays exactly as the rule sets it (taxdocs.js:28-29).
+- Preheader (hidden first line): one sentence that completes the subject; absent today.
+- **One action per message**: one button, its link also printed as text (already in `compose`). Sponsor notifications: one button "Open the console".
+- Greeting: given name for investors with the "Shah, Anita" handling invitations.js:281-284 already has, moved into the shared module and used by notices too (F4). Fallback "Hello," - never "Dear investor,".
+- "Reminder:" only for a real reminder; a re-sent link says "New link:" (F4).
+
+### 2.4 Mobile layout and accessibility
+- Single column, max 600 px, fluid below; body 16 px; button a full-width-on-phone block at least 44 px tall built as a table cell so Outlook desktop keeps its padding ("bulletproof button"); inline styles only (many clients drop `<style>`); `lang`, `<title>`, `role="presentation"` on layout tables, logo `alt` = firm name (all but the button cell already present in `compose`) [ASSUMED: common email-client behaviour, not re-tested this session].
+- `<meta name="color-scheme" content="light dark">` and colours that survive forced dark mode; no text in images; link text says where it goes.
+- Keep the HTML well under 100 KB so Gmail does not clip it [ASSUMED: Gmail clips at about 102 KB].
+- Proof: render every message at 390 px and 1280 px in the existing sandboxed-iframe harness (AUTOPILOT checks), plus an HTML structure check (one button, `alt` present, contrast computed).
+
+### 2.5 Link expiry wording
+- Every link message states the expiry date in words, in one place, the same sentence everywhere: "This link is personal to you; please do not forward it. It expires on <Month D, YYYY>." (both template sets use near-identical wording today; unify).
+- A re-sent link says the earlier link no longer works (server does; manual path does not - F1).
+- The email must not promise anything the expired-link landing does not do.
+
+### 2.6 Law: CAN-SPAM, transactional exemption, state rules
+- CAN-SPAM's full duties (working opt-out honoured promptly, valid physical postal address, identification as an advertisement unless prior consent, non-deceptive headers and subject) apply to **commercial** messages; a **transactional or relationship** message (primary purpose: facilitate, complete or confirm a transaction the recipient already agreed to; notice of a change in terms or in the recipient's standing or status; periodic account balance or statement information; delivery of goods or services the recipient is entitled to) must only avoid false or misleading header information [CITED: 15 U.S.C. 7702(17) via uscode.house.gov search excerpt; 16 CFR 316.3 via ecfr.gov search excerpt]. Opt-out timing (10 business days) and the 30-day working period of the opt-out mechanism are [ASSUMED from training: ftc.gov and law.cornell.edu could not be fetched from this session - the hosts are not allowed in the session's network settings].
+- Mixed messages are commercial when the subject line would make a reasonable reader think the message is commercial and the transactional content is not at the start of the body [CITED: 16 CFR 316.3(a) as summarised in the FDIC Consumer Compliance Examination Manual VIII-4, search excerpt].
+- Classification for this product (recommendation; **counsel to confirm** - Open Question 2):
+
+| Class | Messages | Unsubscribe? |
+|-------|----------|--------------|
+| Transactional / relationship | invitation links for a commitment or onboarding the investor agreed to, portal access link, tax form request, co-investor signing, signature requests/reminders/void/completed, tax document notice, capital call and call reminder, quarterly report and new-document notices to an investor of record, investor confirmations, all sponsor and staff notices, password reset | No (required notices cannot be opted out of); a preference may turn off the *optional* "documents available" and "quarterly report" notices |
+| Possibly commercial | invitation to a **new** offering for an investor on file (S-02) or for a person with no commitment yet; a custom notice the sponsor marks as offering news | Yes: one-click unsubscribe from offering invitations (`List-Unsubscribe` + `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, RFC 8058), postal address in the footer, honoured at once and recorded |
+
+- State laws: most state anti-spam statutes are preempted by CAN-SPAM except provisions against falsity or deception (e.g. California B&P 17529.5 on misleading headers) [ASSUMED]. The product's headers are truthful by construction; no extra state mechanism is needed.
+- Rev. Proc. 2012-17 section 7 (implemented today as a mailto notice): the email notice with the required subject words, and paper within 30 days when the email notice comes back undeliverable (taxdocs.js:658 models the second half). A server send plus **hard bounce -> "notice came back"** closes the loop automatically.
+- Never in any message (owner rule + phishing safety): taxpayer numbers, bank, account or routing numbers, passwords, one-time codes, wire instructions, attachments of signed documents. Deliver by portal link only.
+
+### 2.7 Deliverability
+- **Authentication of the firm's own domain**: SPF (or the provider's return-path domain), DKIM with the firm's domain as `d=`, DMARC published (start `p=none`, move to `quarantine`), From aligned with the SPF or DKIM domain. Google requires SPF or DKIM for all senders, and SPF + DKIM + DMARC with alignment, TLS, and DKIM keys of at least 1024 bits for bulk senders (close to 5,000+ messages in 24 hours to personal Gmail; the classification is permanent) [CITED: support.google.com/a/answer/81126 and support.google.com/a/answer/14229414, search excerpts]. One-click unsubscribe and a spam rate under 0.3% for bulk senders [ASSUMED: vendor blog only in this session]. A sponsor will rarely be "bulk", but aligned SPF/DKIM/DMARC is what keeps invitations out of spam.
+- **Bounce and complaint handling**: hard bounce -> mark the address bad on the investor, stop sending to it (suppression), tell the sponsor on the investor row and the invitations list; complaint -> suppress optional mail at once; soft bounce -> provider retries, record. For tax notices a hard bounce sets the Rev. Proc. 2012-17 "notice came back" state.
+- `Auto-Submitted: auto-generated` on automatic mail (already on sponsor notifications, invitations.mjs:829, 1134); `Message-ID` on the firm's domain; no link shorteners or tracking redirects. Open/click tracking **off**: tracking pixels and rewritten links put a vendor domain in the message (white-label leak) and add nothing the portal's own "opened" step does not already record.
+
+### 2.8 Sent log, preview, resend
+- **Sent log per investor**: every message (server or simulated) leaves one entry: when, kind, subject, recipient, status (`sent`, `outbox`, `failed`, later `delivered`, `bounced`, `complained`; browser-only `simulated`, and `manual` for mailto + Mark as sent) and the rendered text with the personal link replaced by "[personal link]" so it can be kept after the link dies. Server side sealed in the vault like the outbox (the store keeps no addresses in plain text, mail.mjs:381-383); browser side in the workspace. Shown on the investor's record in the console.
+- **Preview of every message in the console**: one "Emails" page listing every message kind with its subject and a rendered preview (HTML at phone and desktop width, plus the plain text) using the firm's brand and a sample investor; the same renderer the server uses, so the preview is the message.
+- **Resend**: invitations already resend with a new token (server) or re-show the email (manual). Add "Send again" for a single notice or tax notice to one investor; a bounced address must be corrected first.
+
+### 2.9 Preferences and unsubscribe
+- Investor portal -> Account -> "Email": optional notices (new documents, quarterly reports, offering invitations) on/off; required notices listed as always sent. Default all on (nothing mandatory for investors to set, D-30).
+- Unsubscribe link only on possibly-commercial mail (2.6): one click, no sign-in, signed token; it turns off "offering invitations" for that investor and records it.
+- **Not needed**: a marketing list manager, campaigns, A/B tests, open/click analytics, scheduled sends, a drag-and-drop template editor. The sponsor edits only the custom-notice text and the invitation note, as today.
+
+<!-- section 2 done -->
