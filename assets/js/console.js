@@ -136,7 +136,7 @@
    * (its Documents entry), or not signed, or uploaded (plan 06-21); nothing when the investor has no such form.
    */
   function taxLine(w, inv) {
-    return taxState(w, inv) + taxAsked(w, inv);
+    return taxState(w, inv) + taxAsked(w, inv) + (NS.withholdingUI ? NS.withholdingUI.paperLine(w, inv) : ''); // plan 10-07: "W-9 signed on paper"
   }
   /**
    * Plan 06-26: an open tax-form request, one line under the tax form's ("Tax form requested <date>"), while the investor has
@@ -592,6 +592,7 @@
       <div class="cs-split">
         <div class="cs-split-main">
           ${panel('Offering details', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
+          ${NS.withholdingUI ? panel('Tax reporting', NS.withholdingUI.reportingField(W(), o)) : ''}
           ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, false) : ''}
           ${panel('Exit timing', kv([[h(x.label), h(x.value)], ['How exit is defined', h((BASIS.find((b) => b[0] === (o.exit || {}).basis) || ['', ''])[1])], ['Note shown to investors', h((o.exit || {}).note || '')]]))}
           ${panel('Distributions', kv([['Frequency', h(d.frequency || '')], ['Payment day', periodMonths(d.frequency) && d.day ? NS.data.ordinal(Number(d.day)) + ' of the month' : ''], ['Next payment', nextOf(o) ? date(nextOf(o).date, 'wd') : ''], ['Payment type', h(d.type || '')], ['Target or rate', h(d.target || '')]]))}
@@ -669,6 +670,7 @@
               ${offField('One-line description', 'summary', { wide: true, max: 100 })}
               ${offField('Minimum investment ($)', 'minimum', { type: 'number' })}
               ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: exemptionHint(o) })}
+              ${NS.withholdingUI ? NS.withholdingUI.reportingField(W(), o) : ''}
             </div>`)}
             ${eligibilityPanel(o)}
             ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, true) : ''}
@@ -1051,7 +1053,7 @@
         const n = NS.data.runRows(W(), r).filter((a) => a.cents > 0).length;
         const st = NS.data.runState(r, today());
         return `<tr><td class="nowrap" data-label="Payment date">${date(r.date)}</td><td data-label="Offering">${h(name(r.offeringId))}</td><td data-label="Type">${h(r.type)}</td><td class="num" data-label="Amount">${usdc(r.total)}</td><td class="num" data-label="Investors">${n}</td><td data-label="Status">${st === 'cancelled' ? badge('mute', 'Cancelled') : st === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
-          withFile ? `<td class="num">${st === 'cancelled' ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button>`}</td>` : ''
+          withFile ? `<td class="num">${st === 'cancelled' ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button>${distCancelButton(r)}`}</td>` : ''
         }</tr>`;
       })
       .join('')}</tbody></table></div>`;
@@ -1111,6 +1113,7 @@
     const entries = rows
       .filter((r) => r.investor.payment && r.investor.payment.method === 'ach' && r.investor.payment.bank && r.cents > 0)
       .map((r) => ({ name: r.investor.payment.bank.holder || r.investor.title, id: r.investor.id, routing: r.investor.payment.bank.routing, account: r.investor.payment.bank.account, accountType: r.investor.payment.bank.type, cents: r.cents, sec: (NS.ENTITY_TYPES[r.investor.type] || { sec: 'PPD' }).sec }));
+    if (!run) distNetEntries(d, entries); // plan 10-07: a new draft's file pays each investor the net of the confirmed lines
     const log = (W().achLog = W().achLog || []);
     const todayIso = today();
     const used = log.filter((x) => x.date === todayIso).length;
@@ -1202,8 +1205,9 @@
       const months = periodMonths(o.distribution.frequency);
       const invested = NS.data.investedAt(w.investors, o.id, d.date);
       const annualized = invested && months ? (total / 100 / invested) * (12 / months) : 0;
-      const canFile = ach.length && total > 0 && achReady() && !reason && d.date >= today();
-      const why = distWhy(d, total, ach, reason);
+      const taxWait = distTaxWait(o, d, rows); // plan 10-07: a proposed tax withheld line not yet decided
+      const canFile = ach.length && total > 0 && achReady() && !reason && d.date >= today() && !taxWait;
+      const why = taxWait || distWhy(d, total, ach, reason);
       const history = ui.histAll ? w.runs : w.runs.slice(0, 12);
       return shell(
         `${head('Distributions', 'Allocate a payment pro rata by amount invested, then generate the NACHA file for the bank.')}
@@ -1226,9 +1230,10 @@
           </div>
           ${wfPreview(o, d)}
           <div id="ds-alloc">${allocTable(rows, ach, chk, total)}</div>
+          ${distTaxBlock(o, d, rows)}
           <div class="cs-row">
             <button class="cs-btn cs-btn-primary" type="button" data-action="nacha-build"${canFile ? '' : ' disabled'}>Generate NACHA file</button>
-            <button class="cs-btn" type="button" data-action="dist-record"${total > 0 && rows.length ? '' : ' disabled'}>Record distribution</button>
+            <button class="cs-btn" type="button" data-action="dist-record"${total > 0 && rows.length && !taxWait ? '' : ' disabled'}>Record distribution</button>
             ${why ? `<span class="cs-hint">${h(why)}</span>` : ''}
           </div>`
         )}
@@ -1240,6 +1245,8 @@
   };
   function allocTable(rows, ach, chk, total) {
     if (!rows.length) return '<p class="cs-muted">No investors hold this offering on the payment date.</p>';
+    const cut = distWithheldCents(draft()); // plan 10-07: with a confirmed tax withheld line the table shows withheld and net
+    if (cut) return allocTableNet(rows, ach, chk, total, cut);
     const sum = (arr) => arr.reduce((a, r) => a + r.cents, 0);
     return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact">
       <thead><tr><th scope="col">Investor</th><th scope="col">Account</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Share</th><th scope="col" class="num">Amount</th><th scope="col">Paid by</th></tr></thead>
@@ -1339,15 +1346,18 @@
     const d = draft();
     const total = draftTotalCents(d);
     if (!(total > 0)) return;
+    const taxWait = distTaxWait(W().offerings.find((x) => x.id === d.offeringId), d, draftAlloc(d)); // plan 10-07
+    if (taxWait) return U.toast(taxWait);
     const wf = d.wf && d.wf.lp === total ? d.wf : null;
     // The record keeps what each investor is paid (NS.data.recordRun); the console adds its change-log entry. An ACH file
     // already built must pay exactly the net amounts about to be stored; a refusal records nothing and says why in one line.
     const spec = Object.assign({ offeringId: d.offeringId, date: d.date, type: d.type, total, file: d.file ? d.file.filename : '' }, wf ? { gp: wf.gp, gross: wf.gross } : {});
+    if (NS.withholdingUI) spec.withheld = NS.withholdingUI.withheld(d); // plan 10-07: each confirmed line is stored with who and when
     let id;
     try {
       if (d.file && d.file.paid) {
         const net = {};
-        NS.data.buildLines(W(), spec).forEach((l) => (net[l.investorId] = l.netCents));
+        NS.data.buildLines(W(), spec, spec.withheld).forEach((l) => (net[l.investorId] = l.netCents));
         if (d.file.paid.some((e) => net[e.id] !== e.cents)) {
           U.toast('The ACH file was built before the investor register changed; generate it again before recording.');
           return;
@@ -1382,6 +1392,119 @@
     S().ui.histAll = true;
     NS.app.render();
   };
+
+  /* ---------- Tax withheld at a distribution (plan 10-07) ---------- */
+  /*
+   * withholding-ui.js (self-serve edition only) draws the tax withheld block and keeps the person's decision on each line.
+   * Without it (the managed edition) none of this changes the screen. Only confirmed lines reach the table's net column, the
+   * ACH file's entries and the record (NS.data.buildLines through spec.withheld), and both buttons wait while a proposed line
+   * is neither confirmed nor removed.
+   */
+  const WUI = () => NS.withholdingUI || null;
+  /** Why the file and the record must wait ('' when they need not). */
+  const distTaxWait = (o, d, rows) => (WUI() && o && rows.length ? WUI().blocked(W(), o, d, rows) : '');
+  const distTaxBlock = (o, d, rows) => (WUI() ? `<div id="ds-tax">${WUI().block(W(), o, d, rows)}</div>` : '');
+  /** The confirmed withheld cents of the draft by investor, or null when nothing is withheld. */
+  function distWithheldCents(d) {
+    const wh = WUI() && d ? WUI().withheld(d) : {};
+    const ids = Object.keys(wh);
+    if (!ids.length) return null;
+    const out = {};
+    ids.forEach((id) => (out[id] = wh[id].reduce((a, w) => a + w.cents, 0)));
+    return out;
+  }
+  /** A new draft's ACH entries pay the net: each confirmed line is taken off its investor's entry; an entry left at 0 goes. */
+  function distNetEntries(d, entries) {
+    const cut = distWithheldCents(d);
+    if (!cut) return;
+    for (let k = entries.length - 1; k >= 0; k--) {
+      entries[k].cents -= cut[entries[k].id] || 0;
+      if (entries[k].cents <= 0) entries.splice(k, 1);
+    }
+  }
+  /** The allocation table with the tax withheld and the net of each investor. */
+  function allocTableNet(rows, ach, chk, total, cut) {
+    const off = (r) => cut[r.investor.id] || 0;
+    const sum = (arr, f) => arr.reduce((a, r) => a + f(r), 0);
+    const gross = (r) => r.cents;
+    const net = (r) => r.cents - off(r);
+    const foot = (label, arr, cls) => `<tr${cls ? ` class="${cls}"` : ''}><th scope="row" colspan="4">${label}</th><td class="num">${usdc(sum(arr, gross))}</td><td class="num">${usdc(sum(arr, off))}</td><td class="num">${usdc(sum(arr, net))}</td><td></td></tr>`;
+    return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact">
+      <thead><tr><th scope="col">Investor</th><th scope="col">Account</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Share</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Tax withheld</th><th scope="col" class="num">Net</th><th scope="col">Paid by</th></tr></thead>
+      <tbody>${rows
+        .map((r) => `<tr><td>${h(r.investor.title)}</td><td class="nowrap">${h(r.investor.id)}</td><td class="num">${usd(r.amount)}</td><td class="num">${(r.share * 100).toFixed(3)}%</td><td class="num">${usdc(r.cents)}</td><td class="num">${off(r) ? usdc(off(r)) : ''}</td><td class="num">${usdc(net(r))}</td><td>${payLabel(r.investor)}${r.investor.payment && r.investor.payment.method === 'ach' ? ` · ${(NS.ENTITY_TYPES[r.investor.type] || {}).sec}` : ''}</td></tr>`)
+        .join('')}</tbody>
+      <tfoot>${foot(`ACH (${ach.length})`, ach)}${foot(`Check (${chk.length})`, chk)}${foot('Total', rows, 'cs-total')}</tfoot></table></div>`;
+  }
+  // Changing the offering, the date or the amount drops every decision (the amounts they were made for have changed); while
+  // the amount is typed, the block, the two buttons and the line beside them follow it without redrawing the page.
+  const distBind = NS.binders.dist;
+  NS.binders.dist = (path, v, el) => {
+    if (WUI() && ['offeringId', 'date', 'mode', 'rate', 'total'].indexOf(path) >= 0) WUI().reset(draft());
+    distBind(path, v, el);
+    if (!WUI() || ['rate', 'total', 'desc'].indexOf(path) < 0) return;
+    const d = draft();
+    const o = W().offerings.find((x) => x.id === d.offeringId);
+    const rows = draftAlloc(d);
+    const box = document.getElementById('ds-tax');
+    if (box) box.innerHTML = WUI().block(W(), o, d, rows);
+    const wait = distTaxWait(o, d, rows);
+    if (!wait) return;
+    const file = document.querySelector('[data-action="nacha-build"]');
+    const rec = document.querySelector('[data-action="dist-record"]');
+    if (file) file.disabled = true;
+    if (rec) rec.disabled = true;
+    const bar = rec && rec.parentElement;
+    const said = bar && bar.querySelector(':scope > .cs-hint');
+    if (said) said.textContent = wait;
+    else if (bar) bar.insertAdjacentHTML('beforeend', `<span class="cs-hint">${h(wait)}</span>`);
+  };
+  const distBuild = NS.actions['nacha-build'];
+  NS.actions['nacha-build'] = function () {
+    const d = draft();
+    const wait = distTaxWait(W().offerings.find((x) => x.id === d.offeringId), d, draftAlloc(d));
+    if (wait) return U.toast(wait);
+    return distBuild.apply(this, arguments);
+  };
+  /*
+   * Cancel on a recorded distribution (planner's choice P-1, plan-check D7): admins in the self-serve edition and Carrow &
+   * Vale staff in the managed edition (the role that may configure), with a reason. A cancelled distribution is paid nowhere
+   * (NS.data.cancelRun, plan 10-01); its lines stay, and the change log says who cancelled it and why.
+   */
+  const distCancelButton = (r) => (canConfigure() && !r.cancelled ? `<button class="cs-btn cs-btn-small" type="button" data-action="dist-cancel" data-id="${h(r.id)}">Cancel</button>` : '');
+  function distCancelDialog(r, err) {
+    const o = W().offerings.find((x) => x.id === r.offeringId) || {};
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Cancel this distribution</h2><p>${h(o.shortName || r.offeringId)} · ${usdc(r.total)} · ${date(r.date)}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body">
+        <label class="cs-field" for="dist-cancel-why"><span>Reason</span><textarea id="dist-cancel-why" rows="2" maxlength="300" autofocus></textarea></label>
+        ${err ? `<p class="cs-error">${h(err)}</p>` : ''}
+        <div class="cs-row cs-row-end"><button class="cs-btn cs-btn-danger" type="button" data-action="dist-cancel-go" data-id="${h(r.id)}">Cancel distribution</button></div>
+      </div>`,
+      'dlg-email'
+    );
+  }
+  NS.actions['dist-cancel'] = staffGuard((el) => {
+    const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
+    if (r && !r.cancelled) distCancelDialog(r, '');
+  });
+  NS.actions['dist-cancel-go'] = staffGuard((el) => {
+    const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
+    if (!r || r.cancelled) return U.closeDialog();
+    const why = String((document.getElementById('dist-cancel-why') || {}).value || '').trim();
+    if (!why) return distCancelDialog(r, 'Enter the reason for cancelling.');
+    try {
+      NS.data.cancelRun(W(), r.id, { by: NS.app.actor(), why });
+    } catch (e) {
+      return distCancelDialog(r, String((e && e.message) || e));
+    }
+    const o = W().offerings.find((x) => x.id === r.offeringId) || {};
+    audit('Distribution cancelled', `${r.type}: ${usdc(r.total)} dated ${date(r.date)} for ${o.shortName || r.offeringId}; reason: ${why}`, r.offeringId, r.id);
+    NS.app.save(true);
+    U.closeDialog();
+    NS.app.render();
+    U.toast(`The ${usdc(r.total)} distribution of ${date(r.date)} is cancelled. Investors no longer see it.`);
+  });
 
   /* ---------- Investor notices (mass email) ---------- */
   function latestQuarter() {

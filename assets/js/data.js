@@ -177,6 +177,7 @@
       tinLast4: digits(R, 4),
       accreditation: { basis: type === 'entity' || type === 'ira' ? ACCRED[pick(R, [3, 4])] : ACCRED[pick(R, [0, 1, 1, 2])], date: `2026-0${1 + Math.floor(R() * 8)}-1${Math.floor(R() * 9)}` },
       taxForm: 'W-9',
+      taxCert: { signed: true, source: 'sample' }, // plan 10-07 (C-10): a signature record for the sample's signed W-9s
       edelivery: true,
       onboarding: { status: 'complete', step: 5, invited: '2022-01-10', completed: '2022-01-24' },
       payment: {
@@ -203,6 +204,7 @@
         tinLast4: '4417',
         accreditation: { basis: ACCRED[1], date: '2026-03-18' },
         taxForm: 'W-9',
+        taxCert: { signed: true, source: 'sample' }, // plan 10-07 (C-10)
         edelivery: true,
         onboarding: { status: 'complete', step: 5, invited: '2022-01-10', completed: '2022-01-12' },
         payment: { method: 'ach', bank: { holder: 'Davis Family Trust', routing: '044003186', account: '48213307', type: 'checking' } },
@@ -217,6 +219,7 @@
       list[k].payment = { method: 'check', bank: null };
       list[k].accreditation = { basis: '', date: '' };
       list[k].taxForm = '';
+      delete list[k].taxCert; // plan 10-07: no form, so no signature record
       list[k].edelivery = false;
     });
     [[n - 3, 2], [n - 4, 4]].forEach(([k, step]) => {

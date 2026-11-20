@@ -129,3 +129,10 @@ Waves: 1 = 10-01 (distribution record, gate10.sh), 10-02 (K-1 split core) · 2 =
 - An investor on another device, and the notice the portal sends, need the server (10-12, next window).
 - Its gate failed on FORM MAPS (a shared scratch PDF) and MEASURE (walkA waited 900 s in the browser queue); both passed when rerun alone. STATUS FLOW lean failed on old welcome words; fixed in dc3ea63. The merged-tree full gate is the proof.
 - Preview build adds assets/js/taxdocs-investor.js.
+
+## After 10-07 (merged 2026-11-20)
+- 10-01 bug fixed in 888eeac: at "Record distribution", the stale-file test compared the ACH file with gross amounts, so every file built with tax withheld would have been refused.
+- "W-9 signed on paper" is not offered for an IRA or for an exempt payee (backup withholding is never proposed for either).
+- Not confirmed: no minimum payment before backup withholding (A6); no CPA has read the stop sentences. A foreign investor whose W-8 has expired gets a backup line (10-05's rule) while the screen still offers the 30% amount. Settle which applies with the CPA read (10-13).
+- Sample firms: 7 of 94 sample investors still draw a backup line (no tax form on file); before 10-07 it was 86 of 94.
+- Preview build adds assets/js/withholding-ui.js and assets/js/withholding.js.
