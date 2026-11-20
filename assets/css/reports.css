@@ -74,3 +74,44 @@
 .rb-pdf-head h3 { margin: 0; font-size: var(--text-sm); font-weight: 500; }
 .rb-pdf .doc-pages { display: flex; flex-direction: column; gap: var(--space-sm); max-height: 80vh; overflow: auto; }
 .rb-pdf .doc-page { display: block; width: 100%; height: auto; box-shadow: 0 0 0 1px var(--cv-line); background: #FFFFFF; }
+
+/* The editor: sections with a switch, move buttons and their options */
+.rb-secs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rb-sec { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-xs) 0; border-top: 1px solid var(--cv-line); }
+.rb-sec:first-child { border-top: 0; }
+.rb-sec-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs); }
+.rb-switch, .rb-sec-name { display: flex; align-items: center; gap: var(--space-xs); min-height: 44px; min-width: 0; color: var(--cv-ink); font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
+.rb-switch input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--cv-accent); }
+.rb-sec.is-off .rb-switch span { color: var(--cv-ink-3); }
+.rb-sec-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs); }
+.rb .rb-move { width: 44px; padding: 0; font-size: var(--text-base, 1rem); }
+.rb-opts { display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-sm) 0 var(--space-xs); }
+.rb-accent { display: flex; align-items: center; gap: var(--space-xs); }
+.rb-accent input[type="color"] { width: 44px; height: 44px; padding: 2px; border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); }
+.rb-accent input[type="text"] { width: 9em; min-height: 44px; padding: var(--space-xs) var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); }
+.rb-file { position: relative; overflow: hidden; align-self: flex-start; }
+.rb-file input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.rb-thumbs { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.rb-thumb { position: relative; display: block; width: 88px; }
+.rb-thumb img, .rb-thumb .rb-photo-wait { display: block; width: 88px; height: 66px; object-fit: cover; border-radius: var(--cv-r-inner); }
+.rb .rb-x { position: absolute; top: -6px; right: -6px; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+.rb-hold { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-sm) 0; border-top: 1px dashed var(--cv-line); }
+.rb-hold h4 { margin: 0; font-size: var(--text-sm); font-weight: 500; color: var(--cv-ink); }
+.rb-fig { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xs); }
+.rb-fig input, .rb-split-row input, .rb-split-row select { width: 100%; min-height: 44px; padding: var(--space-xs) var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); }
+
+/* The rich-text editor */
+.rb-rte { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+.rb-tools { display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+.rb .rb-tool { min-width: 44px; padding: var(--space-2xs) var(--space-sm); }
+.rb-tools select { min-height: 44px; min-width: 44px; max-width: 100%; padding: 0 var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-pill); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); }
+.rb-area { min-height: 132px; padding: var(--space-sm) var(--space-md); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: #FFFFFF; color: #1A1D21; font-size: var(--text-sm); line-height: 1.5; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+.rb-area:focus { outline: 2px solid var(--cv-focus); outline-offset: 1px; }
+.rb-area p, .rb-area h3, .rb-area ul { margin: 0 0 var(--space-xs); }
+.rb-area h3 { font-size: var(--text-base, 1rem); font-weight: 500; }
+.rb-area ul { padding-left: var(--space-lg); }
+
+/* The distribution split */
+.rb-split { display: flex; flex-direction: column; gap: var(--space-xs); }
+.rb-split-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 9em); gap: var(--space-xs); }
+.rb-off:empty, .rb-split-msg:empty { display: none; }
