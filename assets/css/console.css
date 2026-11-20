@@ -117,7 +117,11 @@ body.has-demo .cs-main { padding-bottom: 104px; }
   .demo-bar > * { flex: 1 1 auto; }
   .demo-bar .demo-role { min-width: 0; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--cv-line-strong) 88%, var(--cv-ink)); }
   .demo-bar .demo-role:has(#demo-sponsor) { flex-basis: 100%; }
-  .demo-bar .demo-role select, .demo-bar .demo-role:only-child select { flex: 1 1 auto; max-width: none; }
+  /* Each label stands over its menu, so the menu has the row's whole width and a long name is shown whole ("Admin · Harbor
+     Ridge Capital" was cut, 06-WALKTHROUGH-3 failure 8); the menu's text lines up with its label. */
+  .demo-bar .demo-role { flex-wrap: wrap; row-gap: 0; padding-top: var(--space-xs); border-radius: var(--cv-r-inner); }
+  .demo-bar .demo-role > span { flex: 1 0 100%; }
+  .demo-bar .demo-role select, .demo-bar .demo-role:only-child select { flex: 1 1 calc(100% + var(--space-xs)); max-width: none; margin-left: calc(var(--space-xs) * -1); }
   .demo-bar .demo-start { flex: none; box-shadow: var(--cv-edge-light); }
   body.has-demo #view { padding-bottom: 0; }
   body.has-demo .cs-main { padding-bottom: var(--space-xl); }

@@ -481,7 +481,7 @@
     const labels = E.diy
       ? { admin: `Admin · ${h(w.tenant.shortName)}`, team: `Team member · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` }
       : { staff: 'Carrow &amp; Vale staff', sponsor: `Sponsor staff · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` };
-    return `<div class="demo-bar">${sponsorPickHTML(w.tenant.id)}<label class="demo-role" for="demo-role"><span>${E.diy ? 'Signed in as' : 'Demo · signed in as'}</span><select id="demo-role" data-change="demo-role">
+    return `<div class="demo-bar">${sponsorPickHTML(w.tenant.id)}<label class="demo-role" for="demo-role"><span>${E.diy ? 'Signed in as' : 'Demo · signed in as'}</span><select id="demo-role" data-change="demo-role" title="${state.role === 'investor' && state.co && co ? `Co-investor · ${h(co.name)}` : labels[state.role] || ''}">
       ${ROLES.map((r) => opt(r, labels[r])).join('')}
     </select></label>${E.diy ? '<button class="demo-start" type="button" data-action="diy-start-over">New sign-up</button>' : ''}</div>`;
   }
