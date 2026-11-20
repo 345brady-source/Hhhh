@@ -9,6 +9,11 @@
  *   co-investor is on the account, or once the firm says the investor has none (inv.noCoInvestor, one click, undone
  *   in one click).
  * - Signing is esign.js: the co-investor is a second investor signer with their own places (NS.coSigning).
+ * - Self-serve edition (plan 06-37): the co-investor gets their own sign-in, inv.coInvestor.signIn = { token, link, createdAt,
+ *   expiresAt, sentAt, openedAt } (plan 06-39 adds serverId, envelopeId, emailStatus, error when the integration server sends
+ *   it). The firm sends the link from its own email app (the "Co-investor sign-in email" dialog); the link (#co-<token>) signs
+ *   the co-investor in to the account with only their own places (NS.views.co). A changed email gives a new link; removing
+ *   the co-investor ends it. NS.coInvestor.hooks lets plan 06-39 send it by the server. The managed edition is unchanged (C-03).
  *
  * The only word for this person on screen is "Co-investor": the portal never says why an account has two people.
  */
@@ -25,6 +30,125 @@
   const tidy = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
   const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(s || '').trim());
   const audit = (action, detail, record) => NS.audit && NS.audit.log(W(), { action, detail, fund: '', record: record || '' });
+  const E = NS.EDITION || {};
+  const B = NS.brand;
+  const DAY = 864e5;
+  const SIGN_IN_DAYS = 30; // as an investor's invitation (invitations.js VALID_DAYS)
+  const RETIRED_MAX = 200;
+  /** Plan 06-39: added fn(ws, inv, was) after a sign-in is made (true = the server sent it); removed fn(ws, inv, removed). */
+  const hooks = { added: [], removed: [] };
+
+  /* ---------- The co-investor's own sign-in (self-serve edition) ---------- */
+  /** 32 random bytes, base64url (as invitations.js newToken). */
+  function newToken() {
+    const b = new Uint8Array(32);
+    crypto.getRandomValues(b);
+    let s = '';
+    b.forEach((x) => (s += String.fromCharCode(x)));
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  const portalPage = () => `${location.origin}${location.pathname}`;
+  const signInOf = (inv) => {
+    const c = coOf(inv);
+    return c && c.signIn && c.signIn.token ? c.signIn : null;
+  };
+  const expired = (si) => !!si && !!si.expiresAt && Date.parse(si.expiresAt) < Date.now();
+  const hashOf = (token) => (NS.audit && NS.audit.sha256 ? NS.audit.sha256(String(token)) : String(token));
+  /** A link that stops working is remembered by its hash only, so its page says it no longer works (not "not found"). */
+  function retire(ws, si) {
+    if (!si || !si.token) return;
+    const list = (ws.coSignInRetired = ws.coSignInRetired || []);
+    list.push({ hash: hashOf(si.token), at: new Date().toISOString() });
+    if (list.length > RETIRED_MAX) list.splice(0, list.length - RETIRED_MAX);
+  }
+  /** A new sign-in for the account's co-investor; the one it replaces stops working. */
+  function issue(ws, inv) {
+    const c = coOf(inv);
+    if (!c) return null;
+    retire(ws, signInOf(inv));
+    const token = newToken();
+    const now = Date.now();
+    c.signIn = { token, link: `${portalPage()}?tenant=${encodeURIComponent(ws.tenant.id)}#co-${token}`, createdAt: new Date(now).toISOString(), expiresAt: new Date(now + SIGN_IN_DAYS * DAY).toISOString(), sentAt: '', openedAt: '' };
+    return c.signIn;
+  }
+  /** What the firm sees about the sign-in, in the investors row and the Account window ('' in the managed edition). */
+  function signInText(inv) {
+    const si = E.diy ? signInOf(inv) : null;
+    if (!si) return '';
+    const day = (iso) => U.date(String(iso || '').slice(0, 10));
+    if (si.serverId) return si.sentAt ? `Sign-in emailed ${day(si.sentAt)}` : `Sign-in is emailed once ${inv.contact || inv.title} has signed`;
+    if (expired(si) && !si.openedAt) return 'Sign-in link expired';
+    return si.sentAt ? `Sign-in sent ${day(si.sentAt)}` : 'Sign-in link ready to send';
+  }
+  /** The person sending, as an invitation names them (invitations.js senderName). */
+  function senderName(ws) {
+    const team = ws.team || [];
+    const role = S().role;
+    const me = team.find((m) => m.current && m.role === role) || team.find((m) => m.role === role && m.status !== 'invited') || null;
+    return me ? me.name : ws.tenant.support.team;
+  }
+  /** The sign-in email, worded and laid out as the investor's invitation email (invitations.js emailFor). */
+  function emailOf(ws, inv) {
+    const t = ws.tenant;
+    const c = coOf(inv);
+    const si = signInOf(inv);
+    const by = senderName(ws);
+    const sender = by && by !== t.support.team ? `${by} at ${t.name}` : t.name;
+    const subject = `${t.name}: sign the subscription agreement for ${inv.title}`;
+    const lines = [`Dear ${c.first || c.name},`, `${sender} asks you to sign the subscription agreement for ${inv.title} as co-investor.`, 'The link below opens the agreement with only your places to sign. Nothing else is asked.'];
+    const tail = [`This link is personal to you; please do not forward it. It expires on ${U.date(String(si.expiresAt).slice(0, 10), 'long')}.`, `Questions? Contact ${t.support.team}${isEmail(t.support.email) ? ` at ${t.support.email}` : ''}.`];
+    const text = [lines.join('\n\n'), `Start here: ${si.link}`, tail.join('\n'), t.legalName || t.name].join('\n\n');
+    return { subject, lines, tail, text, link: si.link, to: c.email, toName: c.name, fromName: t.name, button: 'Open the agreement' };
+  }
+  /** mailto: with the subject and body; CRLF line breaks (RFC 6068). */
+  const mailtoOf = (m) => `mailto:${encodeURIComponent(m.to)}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.text.replace(/\r?\n/g, '\r\n'))}`;
+  /** The "Co-investor sign-in email" dialog (the investor invitation email's layout, invitations.js showEmail). */
+  function showSignIn(inv) {
+    const ws = W();
+    const si = signInOf(inv);
+    if (!E.diy || !si) return openRecord(inv);
+    const t = ws.tenant;
+    const local = !si.serverId;
+    const id = h(inv.id);
+    const close = `<button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button>`;
+    if (local && expired(si) && !si.openedAt) {
+      return U.dialog(
+        `<div class="dlg-head"><div><h2>Co-investor sign-in email</h2><p>${h(inv.title)}</p></div><div class="dlg-actions">${close}</div></div>
+        <div class="dlg-body"><p>The sign-in link for ${h(coOf(inv).name)} expired on ${h(U.date(String(si.expiresAt).slice(0, 10), 'long'))}. It no longer works.</p>
+        <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="co-record" data-id="${id}">Back</button>${canEdit() ? `<button class="cs-btn cs-btn-primary" type="button" data-action="co-link-new" data-id="${id}">Make a new link</button>` : ''}</div></div>`,
+        'dlg-email'
+      );
+    }
+    const m = emailOf(ws, inv);
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Co-investor sign-in email</h2><p>${local ? 'Send it from your email app. The portal prepared it with the co-investor’s link.' : 'The email your integration server sends.'}</p></div><div class="dlg-actions">${close}</div></div>
+      <div class="dlg-body inv8-email">
+        <dl class="inv8-meta">
+          <div><dt>From</dt><dd>${h(m.fromName)}${local ? ' <span class="cs-hint">(your own address, from your email app)</span>' : ''}</dd></div>
+          <div><dt>To</dt><dd>${h(m.toName)} &lt;${h(m.to)}&gt;</dd></div>
+          <div><dt>Subject</dt><dd class="inv8-subject">${h(m.subject)}</dd></div>
+        </dl>
+        <article class="email">
+          <div class="email-head">${B.lockup(t)}</div>
+          <div class="email-body">
+            ${m.lines.map((l) => `<p>${h(l)}</p>`).join('')}
+            <p><span class="email-btn">${h(m.button)}</span></p>
+            <p class="inv8-raw">${h(m.link)}</p>
+            ${m.tail.map((l) => `<p>${h(l)}</p>`).join('')}
+          </div>
+          <div class="email-foot">${h(t.legalName || t.name)}</div>
+        </article>
+        <label class="cs-field inv8-linkfield" for="co-link"><span>Sign-in link</span><input id="co-link" type="text" readonly value="${h(m.link)}"></label>
+        ${local ? '<p class="cs-hint">This link opens the portal in this browser only.</p>' : ''}
+        <div class="cs-row cs-row-end inv8-actions">
+          <button class="cs-btn" type="button" data-action="co-link-copy" data-id="${id}">${icon('copy')}Copy link</button>
+          ${local ? `<a class="cs-btn" id="co-mailto" href="${h(mailtoOf(m))}" data-action="co-link-mailto" data-id="${id}">Open in your email app</a>${canEdit() ? `<button class="cs-btn cs-btn-primary" type="button" data-action="co-link-sent" data-id="${id}">Mark as sent</button>` : ''}` : '<button class="cs-btn cs-btn-primary" type="button" data-action="close-dialog">Done</button>'}
+        </div>
+        ${local && NS.app.config.demo ? `<p class="cs-hint inv8-try">Trying it out? <button class="link-btn" type="button" data-action="co-link-open" data-id="${id}">Open the co-investor’s link</button> in this browser, signed in as ${h(coOf(inv).name)}.</p>` : ''}
+      </div>`,
+      'dlg-email'
+    );
+  }
 
   /**
    * The offerings an investor is in through the portal: invited to, subscribing to, or with an agreement made for them.
@@ -62,7 +186,10 @@
   /* ---------- The investors list: a small status, and the way into the record ---------- */
   function statusHTML(ws, inv) {
     const c = coOf(inv);
-    if (c) return `<span class="sub co-status">Co-investor: ${h(c.name)}</span>`;
+    if (c) {
+      const si = signInText(inv);
+      return `<span class="sub co-status">Co-investor: ${h(c.name)}${si ? `<span class="co-signin"> · ${h(si)}</span>` : ''}</span>`;
+    }
     if (!need(ws, inv).length) return '';
     return `<span class="sub co-status"><span class="cs-badge cs-badge-warn">Agreement has places for a co-investor</span>${canEdit() ? ` <button class="link-btn" type="button" data-action="co-add" data-id="${h(inv.id)}">Add co-investor</button>` : ''}</span>`;
   }
@@ -76,14 +203,14 @@
     const type = (NS.ENTITY_TYPES[inv.type] || {}).label || inv.type || '';
     const edit = canEdit();
     const co = c
-      ? `<strong>${h(c.name)}</strong><span class="sub">${h(c.email)}</span><span class="sub">On the account since ${h(U.date(String(c.added || '').slice(0, 10)))}. Signs their own places on this account’s agreements, with their own sign-in.</span>`
+      ? `<strong>${h(c.name)}</strong><span class="sub">${h(c.email)}</span><span class="sub">On the account since ${h(U.date(String(c.added || '').slice(0, 10)))}. Signs their own places on this account’s agreements, with their own sign-in.</span>${signInText(inv) ? `<span class="sub co-signin">${h(signInText(inv))}</span>` : ''}`
       : inv.noCoInvestor
         ? `None<span class="sub">You said ${h(inv.contact || inv.title)} has no co-investor.</span>`
         : 'None';
     const acts = !edit
       ? ''
       : c
-        ? `<button class="cs-btn" type="button" data-action="co-add" data-id="${h(inv.id)}">Change co-investor</button><button class="cs-btn" type="button" data-action="co-remove" data-id="${h(inv.id)}">Remove co-investor</button>`
+        ? `${E.diy && signInOf(inv) ? `<button class="cs-btn" type="button" data-action="co-link" data-id="${h(inv.id)}">Sign-in link</button>` : ''}<button class="cs-btn" type="button" data-action="co-add" data-id="${h(inv.id)}">Change co-investor</button><button class="cs-btn" type="button" data-action="co-remove" data-id="${h(inv.id)}">Remove co-investor</button>`
         : inv.noCoInvestor
           ? `<button class="cs-btn" type="button" data-action="co-add" data-id="${h(inv.id)}">${icon('plus')}Add co-investor</button><button class="cs-btn" type="button" data-action="co-none-undo" data-id="${h(inv.id)}">Undo: ask me again</button>`
           : need(ws, inv).length
@@ -145,6 +272,11 @@
     const was = coOf(inv);
     const name = `${d.first} ${d.last}`;
     inv.coInvestor = { first: d.first, last: d.last, name, email: d.email, added: was ? was.added : new Date().toISOString() };
+    // Self-serve edition: the sign-in stays with the same email; a new co-investor or a new email gets a new link (an
+    // earlier one stops working).
+    const moved = !was || String(was.email || '').toLowerCase() !== d.email.toLowerCase();
+    if (was && was.signIn) inv.coInvestor.signIn = was.signIn;
+    const fresh = E.diy && (moved || !signInOf(inv)) ? issue(ws, inv) : null;
     delete inv.noCoInvestor;
     let said;
     if (was) {
@@ -155,14 +287,19 @@
       const r = CS().coAttach(ws, inv);
       audit('Co-investor added', `${inv.title}: ${name} <${d.email}>`, inv.id);
       said = r.added.length
-        ? `${name} was added to the account and emailed ${r.added.length === 1 ? 'the agreement' : `${r.added.length} agreements`} to sign (simulated in this demo). ${inv.contact || inv.title} does not sign again.`
+        ? E.diy
+          ? `${name} was added to the account and to ${r.added.length === 1 ? 'the agreement' : `${r.added.length} agreements`} to sign. ${inv.contact || inv.title} does not sign again.`
+          : `${name} was added to the account and emailed ${r.added.length === 1 ? 'the agreement' : `${r.added.length} agreements`} to sign (simulated in this demo). ${inv.contact || inv.title} does not sign again.`
         : r.sealed.length
           ? `${name} was added to the account. ${r.sealed[0].title} was already signed by everyone and is sealed with its certificate, so it stays as it is: ${name} is not a signer on it.`
           : `${name} was added to the account. They sign their own places on each agreement made for it.`;
     }
     NS.app.save(true);
+    // Plan 06-39 sends the sign-in by the integration server: a hook answering true has sent it (nothing to send by hand).
+    const byServer = fresh ? hooks.added.some((fn) => fn(ws, inv, was) === true) : false;
     NS.app.render();
-    openRecord(inv);
+    if (fresh && !byServer) showSignIn(inv);
+    else openRecord(inv);
     U.toast(said);
   };
 
@@ -187,6 +324,8 @@
     const inv = invById(el.getAttribute('data-id'));
     const c = inv && coOf(inv);
     if (!c || !canEdit() || CS().coHolding(ws, inv).length) return;
+    hooks.removed.forEach((fn) => fn(ws, inv, c));
+    if (E.diy) retire(ws, signInOf(inv));
     delete inv.coInvestor;
     CS().coDetach(ws, inv, c);
     if (S().viewer === inv.id) S().co = false;
@@ -195,6 +334,101 @@
     NS.app.render();
     openRecord(inv);
     U.toast(`${c.name} was removed from the account.`);
+  };
+
+  /* ---------- The sign-in email's actions ---------- */
+  const signInFor = (el) => {
+    const inv = invById(el.getAttribute('data-id'));
+    return inv && signInOf(inv) ? inv : null;
+  };
+  NS.actions['co-link'] = (el) => {
+    const inv = signInFor(el);
+    if (inv) showSignIn(inv);
+  };
+  NS.actions['co-link-copy'] = (el) => {
+    const inv = signInFor(el);
+    if (inv) U.copy(signInOf(inv).link, document.getElementById('co-link'));
+  };
+  NS.actions['co-link-mailto'] = (el) => {
+    // The browser hands the email to the email app; the firm confirms with Mark as sent once it has gone.
+    const inv = signInFor(el);
+    if (inv) U.toast(`Your email app opens with the sign-in email to ${coOf(inv).name}. Send it from there, then choose Mark as sent.`);
+  };
+  NS.actions['co-link-sent'] = (el) => {
+    const inv = signInFor(el);
+    if (!inv || !canEdit()) return;
+    signInOf(inv).sentAt = new Date().toISOString();
+    audit('Co-investor sign-in sent', `${inv.title}: ${coOf(inv).name} <${coOf(inv).email}>, from the sender's own email app`, inv.id);
+    NS.app.save(true);
+    U.closeDialog();
+    NS.app.render();
+    U.toast(`Sign-in email to ${coOf(inv).name} marked as sent.`);
+  };
+  NS.actions['co-link-new'] = (el) => {
+    const inv = signInFor(el);
+    if (!inv || !canEdit()) return;
+    issue(W(), inv);
+    audit('Co-investor sign-in renewed', `${inv.title}: a new link for ${coOf(inv).name} <${coOf(inv).email}>`, inv.id);
+    NS.app.save(true);
+    NS.app.render();
+    showSignIn(inv);
+  };
+  NS.actions['co-link-open'] = (el) => {
+    const inv = signInFor(el);
+    if (!inv || !NS.app.config.demo) return;
+    U.closeDialog();
+    NS.app.go('co-' + signInOf(inv).token);
+  };
+
+  /* ---------- The co-investor's link (#co-<token>) ---------- */
+  function resolveSignIn(token) {
+    const ws = W();
+    if (!ws || !token) return { error: 'missing' };
+    const inv = (ws.investors || []).find((i) => {
+      const si = signInOf(i);
+      return !!si && si.token === String(token);
+    });
+    if (inv) return expired(signInOf(inv)) && !signInOf(inv).openedAt ? { error: 'gone' } : { inv, si: signInOf(inv) };
+    const hash = hashOf(token);
+    return (ws.coSignInRetired || []).some((r) => r.hash === hash) ? { error: 'gone' } : { error: 'missing' };
+  }
+  function bare(inner, t) {
+    return `<div class="pt pt-auth ivf">${t ? `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span></div></header>` : ''}<main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ivf-msg">${inner}</div></main>${t && NS.portalFooter ? NS.portalFooter() : ''}</div>`;
+  }
+  const contactOf = (t) => `${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}`;
+  NS.views.co = {
+    standalone: true,
+    edition: 'diy',
+    get title() {
+      const w = W();
+      return w ? `${w.tenant.portalName} · ${w.tenant.shortName}` : 'Sign the subscription agreement';
+    },
+    render(param) {
+      const ws = W();
+      const t = ws ? ws.tenant : null;
+      const x = resolveSignIn(param);
+      if (x.error === 'missing') return bare(`<h1>We could not find this sign-in link</h1><p class="lede">Open the link from your email again${t ? `, or contact ${contactOf(t)}` : ', or contact the firm that sent it'}.</p>`, t);
+      if (x.error) return bare(`<h1>This sign-in link no longer works</h1><p class="lede">Contact ${contactOf(t)} for a new link.</p>`, t);
+      return bare('<p class="lede ivf-loading" role="status">Opening your agreement…</p>', t);
+    },
+    after(param) {
+      const x = resolveSignIn(param);
+      if (x.error) return;
+      // Signed in as the account's co-investor: esign.js shows them only their own places (mySigner with state.co).
+      const st = S();
+      st.role = 'investor';
+      NS.store.set('role', 'investor');
+      st.viewer = x.inv.id;
+      st.co = true;
+      if (!x.si.openedAt) {
+        x.si.openedAt = new Date().toISOString();
+        audit('Co-investor sign-in opened', `${x.inv.title}: ${coOf(x.inv).name}`, x.inv.id);
+        NS.app.save(true);
+      }
+      // What waits for their signature first (as the demo bar's co-investor choice), else the account's documents.
+      const due = NS.esign ? NS.esign.pendingFor(W(), x.inv.id) : [];
+      NS.app.go(due.length ? 'sign-' + due[0].id : 'documents');
+    }
   };
 
   /* ---------- "This investor has no co-investor": one click, and one click back ---------- */
@@ -252,5 +486,5 @@
       return false;
     });
 
-  NS.coInvestor = { need, needing, noticeText, noticeHTML, statusHTML, recordButton, offeringsOf };
+  NS.coInvestor = { need, needing, noticeText, noticeHTML, statusHTML, recordButton, offeringsOf, signInOf, signInText, showSignIn, hooks };
 })(window.CVPortal);

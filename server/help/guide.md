@@ -118,7 +118,7 @@ The investor gets one link that walks them through every step. To invite several
 
 Under "Invitations", follow each invitation with In progress, Completed and All; the tick box "Accept subscriptions automatically once the agreement is countersigned and the investor is verified" turns that on. An invitation whose agreement waits for the firm's signature has "Countersign". In the investor table, "View portal" shows the portal as that investor sees it; an investor who has not activated has "Invitation" and "Send reminder" instead. With no integration server connected, the firm sends each invitation from its own email app: the portal prepares the email with the link.
 
-A second person on an investor's account, for example a spouse investing jointly, is a co-investor, and one can be added to an investor already on file: choose "Account" beside the investor in the table, then "Add co-investor", fill in "First name", "Last name" and "Email" (their own email, not the investor's) and choose "Add co-investor". An account has one co-investor, who signs their own places on the account's agreements with their own sign-in.
+A second person on an investor's account, for example a spouse investing jointly, is a co-investor, and one can be added to an investor already on file: choose "Account" beside the investor in the table, then "Add co-investor", fill in "First name", "Last name" and "Email" (their own email, not the investor's) and choose "Add co-investor". An account has one co-investor, who signs their own places on the account's agreements with their own sign-in. After "Add co-investor" the "Co-investor sign-in email" opens with the co-investor's own link, which opens only their places: send it from your own email app with "Open in your email app" (or "Copy link"), then choose "Mark as sent"; the row says "Sign-in link ready to send" until then, and "Sign-in link" in the "Account" window opens the email again. A changed email gives a new link, and the earlier one stops working.
 
 An admin records a W-9 the investor signed on paper, or a completed W-9 they uploaded that shows the last four digits of the taxpayer number, with "W-9 signed on paper" under the investor's activation; "Undo" takes the record away. Without it, a distribution of an offering set to notes or to a corporation or REIT proposes backup withholding for that investor.
 
@@ -782,6 +782,7 @@ The heading is "Update your bank account".
 3. Tick the authorization and choose "Save bank account".
 
 ## skip
+co: the co-investor's sign-in link; it signs the co-investor in and opens their agreement on its signing page, with no screen of its own beyond two plain messages for a link that does not work
 console-new-client: the managed edition's page for adding a client; the self-serve edition does not have it
 onboarding/login: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
 onboarding/profile: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
