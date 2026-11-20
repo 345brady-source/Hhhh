@@ -613,6 +613,92 @@ const parts = {
     check(`with the generated mark the PDF has no image and the firm's name (${firm}) in its text`, im2.length === 0 && t2.indexOf(firm) >= 0, { images: im2, text: t2.slice(0, 200) });
     await T.quiet(check, A, fr);
     await A.context.close();
+  },
+
+  /** C-04, C-08: who sees the tab and Delete; an investor never opens Reports; the managed edition's Reports page is unchanged. */
+  async 'roles-managed'({ check, S }) {
+    {
+      const { A, fr } = await open(S, 'desktop', check, 'team');
+      await toTab(fr);
+      check('a team member sees the tab Investor reports', await fr.locator('[data-action=rep-tab][data-t=investor]').count() === 1, '');
+      await create(fr, 'statement', 'statement', 'Team statement');
+      await T.press(fr, '[data-action=rb-save]');
+      await fr.waitForTimeout(250);
+      const v = await fr.evaluate(() => (window.CVPortal.state.ws.reports.templates.find((t) => t.name === 'Team statement') || {}).version);
+      check('a team member creates and saves a template (version 2)', v === 2, v);
+      await T.press(fr, '[data-action=rb-back]');
+      await fr.waitForSelector('.rb-home');
+      const teamDel = await fr.locator('[data-action=rb-del]').count();
+      check("a team member sees no 'Delete'", teamDel === 0, teamDel);
+      await T.sample(fr, { role: 'admin' });
+      await fr.evaluate(() => window.CVPortal.app.render());
+      await fr.waitForSelector('.rb-home');
+      const adminDel = await fr.evaluate(() => Array.from(document.querySelectorAll('[data-action=rb-del]')).filter((b) => b.offsetWidth && b.innerText.trim() === 'Delete').length);
+      check("an admin sees 'Delete'", adminDel >= 1, adminDel);
+      await T.press(fr, '[data-action=rb-del]');
+      await T.press(fr, '[data-action=rb-del-yes]');
+      await fr.waitForTimeout(250);
+      const gone = await fr.evaluate(() => ({ n: window.CVPortal.state.ws.reports.templates.length, last: window.CVPortal.state.ws.audit[window.CVPortal.state.ws.audit.length - 1].action }));
+      check("the admin's delete removes it and logs 'Report template deleted'", gone.n === 0 && gone.last === 'Report template deleted', gone);
+      await T.sample(fr, { role: 'investor' });
+      await fr.evaluate(() => (location.hash = '#console-reports'));
+      await fr.waitForTimeout(600);
+      const inv = await fr.evaluate(() => ({ route: window.CVPortal.state.route, tab: !!document.querySelector('[data-t=investor]'), rb: !!document.querySelector('.rb') }));
+      check('an investor cannot open the Reports page or the builder', inv.route !== 'console-reports' && !inv.tab && !inv.rb, inv);
+      await T.quiet(check, A, fr);
+      await A.context.close();
+    }
+    {
+      const { A, fr } = await T.framed(S, 'desktop', { page: 'index.html', clock: CLOCK });
+      await T.proveRefused(check, A, fr);
+      await T.sample(fr, { role: 'staff' });
+      await fr.evaluate(() => (location.hash = '#console-reports'));
+      await fr.waitForSelector('[data-action=rep-tab]', { timeout: 20000 });
+      await fr.waitForTimeout(400);
+      const m = await fr.evaluate(() => ({
+        tabs: Array.from(document.querySelectorAll('.cs-tabs [data-action=rep-tab]')).map((b) => b.innerText.trim()),
+        sub: (document.querySelector('.cs-head p') || { innerText: '' }).innerText.trim(),
+        ui: typeof window.CVPortal.reportsUI,
+        text: document.body.innerText.indexOf('Investor reports') >= 0
+      }));
+      check('the managed Reports page shows the Distributions and Contacts tabs only', JSON.stringify(m.tabs) === JSON.stringify(['Distributions', 'Contacts']), m.tabs);
+      check('its sentence is unchanged', m.sub === 'Distribution reports for any period and investor contact lists. Downloads are CSV files that open in Excel.', m.sub);
+      check("no 'Investor reports' and the builder is not loaded in the managed edition", !m.text && m.ui === 'undefined', m);
+      check('no error on the page', A.errors.length === 0, A.errors);
+      await A.context.close();
+    }
+  },
+
+  /** RB-14: a way out on screen in every view at both sizes; on the phone the page never scrolls sideways. */
+  async 'ways-out'({ check, S }) {
+    for (const size of ['phone', 'desktop']) {
+      const { A, fr } = await open(S, size, check);
+      const wide = async (what) => {
+        if (size !== 'phone') return;
+        const w = await fr.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth));
+        check(`${size}, ${what}: the page does not scroll sideways (width ${w} <= 390)`, w <= 390, w);
+      };
+      await toTab(fr);
+      await T.wayOut(check, fr);
+      await wide('the list');
+      await create(fr, 'quarterly', 'quarterly', `Ways ${size}`);
+      await openSec(fr, 'letter');
+      await T.wayOut(check, fr);
+      await wide('the editor with the letter open');
+      await openSec(fr, 'cover');
+      await previewFor(fr, { who: 'fund' });
+      await fr.evaluate(() => document.querySelector('#rb-preview').scrollIntoView());
+      await T.wayOut(check, fr);
+      await wide('the preview');
+      await T.press(fr, '[data-action=rb-pdf]');
+      await fr.waitForFunction(() => document.querySelectorAll('#rb-pdfpanel img.doc-page').length > 0, null, { timeout: 30000 }).catch(() => {});
+      await T.wayOut(check, fr);
+      await wide('the PDF panel');
+      await A.page.screenshot({ path: path.join(OUT(), `${size}-ways.png`) });
+      await T.quiet(check, A, fr);
+      await T.leak(check, fr);
+      await A.context.close();
+    }
   }
 };
 

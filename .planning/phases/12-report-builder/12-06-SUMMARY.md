@@ -52,3 +52,13 @@ REPORTS FLOW: PASS (parts run: 1)
 VERIFY-1 EXIT=0
 ```
 Measured in the part: KBC-1001's Q4 2026 capital account ends at $320,823.87 in the preview, equal to NS.audit.period.
+
+### Task 2 verify (the plan's command from a script file, on 9fb85c7; VERIFY-2 EXIT=0; 86 PASS lines, 0 FAIL)
+
+```
+PASS logo-canvas no script error in the browser
+PASS logo-canvas no request outside the page's origin
+REPORTS FLOW: PASS (parts run: 6)
+VERIFY-2 EXIT=0
+```
+Before it passed, one run (t2a) failed on two mistakes in my own check, not the screens: 'Move up' was asserted against a 'Distributions' table that this period does not have (no distribution was paid in Q4 2026, so the section shows a line and its 'Totals' table), and the PDF's offered name was read from the saved copy instead of the name the page offered. Both assertions were corrected (now 'Totals', and the exact offered name 'Kestrel_Bay_Quarterly_report_Q4_2026_KBC_1001.pdf').
