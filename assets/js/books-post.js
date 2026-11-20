@@ -55,8 +55,8 @@
     const f = ws && ws.books && ws.books.funds && ws.books.funds[id];
     return f && typeof f.start === 'string' ? f.start : '';
   }
-  /** Record prefixes this module owns; entries with any other prefix (mark:, bank:, open:, man:, rev:, sim:) are never touched. */
-  const MANAGED = /^(call|pos|run|req|reqpaid|fee|gp):/;
+  /** Record prefixes this module owns; entries with any other prefix (mark:, bank:, open:, man:, rev:) are never touched. */
+  const MANAGED = /^(call|pos|run|req|reqpaid|fee|gp|sim):/;
   /** [code, cents, partner, holding] with trailing empty ids left out (the stored form, as books.js compacts a line). */
   function compact(l) {
     const out = l.slice();
@@ -202,13 +202,63 @@
     const start = startOf(ws, o.id);
     const after = (x) => !start || x.date >= start;
     const kept = entries.filter(after).sort(byDateSrc);
+    const unbalanced = NS.audit.generated(o) ? sample(ws, o, L, kept, flag, after) : [];
+    kept.sort(byDateSrc);
     const fl = flagged.filter(after);
-    return { entries: kept, notes: fl.map((x) => x.item), hold: new Set(fl.filter((x) => x.held).map((x) => x.item.src)) };
+    return { entries: kept, unbalanced, notes: fl.map((x) => x.item), hold: new Set(fl.filter((x) => x.held).map((x) => x.item.src)) };
   }
 
-  /** Every entry the records of offering o call for, by date then src. Reads only. */
+  /**
+   * A sample fund (NS.audit.generated): one entry per month k of the engine's ledger, dated endOf(k), src
+   * sim:<offeringId>:<k>. It credits the generator's income (4090) and gain (6100) and moves each balance-sheet account to
+   * the balance the Audit page shows at that month-end (the holdings of NS.audit.period for the month): the line is the
+   * target less the account's balance over every other entry of the fund dated on or before endOf(k), earlier sample
+   * entries included. Zero lines are left out. An entry whose lines do not sum to zero is not added: it is returned as
+   * { src, sum } and listed for a person to look at. No line is ever added to make it balance.
+   * Adds to list (the fund's other entries, in date order); returns the unbalanced items.
+   */
+  function sample(ws, o, L, list, flag, after) {
+    const unbalanced = [];
+    if (!L.keys.length) return unbalanced;
+    const CODES = ['1000', '1100', '1150', '2300', '2100', '2200', '2500', '2600'];
+    const bal = {};
+    CODES.forEach((c) => (bal[c] = 0));
+    const base = list.slice().sort(byDateSrc);
+    let at = 0;
+    L.keys.forEach((k) => {
+      const end = endOf(k);
+      for (; at < base.length && base[at].date <= end; at++) base[at].lines.forEach((l) => bal[l[0]] !== undefined && (bal[l[0]] += l[1]));
+      const F = L.byKey[k];
+      const H = NS.audit.period(ws, o, k + '-01', end).hold;
+      const target = { 1000: H.cash, 1100: H.longCost, 1150: H.longFV - H.longCost, 2300: -H.shortFV, 2100: -H.feePayable, 2200: -H.redemptionsPayable, 2500: -H.debt, 2600: 0 };
+      const lines = [ln('4090', -F.income), ln('6100', -F.gain)];
+      CODES.forEach((c) => lines.push(ln(c, target[c] - bal[c])));
+      const kept = lines.filter((l) => l[1] !== 0);
+      if (!kept.length) return;
+      const src = `sim:${o.id}:${k}`;
+      const e = { src, date: end, memo: `Sample fund: ${monthLabel(k)}`, lines: kept };
+      if (!after(e)) return;
+      const sum = kept.reduce((a, l) => a + l[1], 0);
+      if (sum !== 0 || kept.some((l) => !Number.isSafeInteger(l[1]))) {
+        unbalanced.push({ src, sum });
+        flag(end, { src, kind: 'unbalanced', cents: sum });
+        return;
+      }
+      list.push(e);
+      kept.forEach((l) => bal[l[0]] !== undefined && (bal[l[0]] += l[1]));
+    });
+    return unbalanced;
+  }
+
+  /**
+   * Every entry the records of offering o call for, by date then src. Reads only. The list's unbalanced property names
+   * the sample entries left out because their lines do not sum to zero ({ src, sum }; empty for every other fund).
+   */
   function desired(ws, o, opts) {
-    return plan(ws, offeringOf(ws, o), opts).entries;
+    const P = plan(ws, offeringOf(ws, o), opts);
+    const out = P.entries;
+    out.unbalanced = P.unbalanced;
+    return out;
   }
 
   /** Bring every fund's journal in step with its records. Returns counts { posted, reversed, exceptions }. */
