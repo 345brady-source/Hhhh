@@ -94,3 +94,16 @@
 - Still invented for a real fund: holdings, cash and bank references come from weights until 11-11. Two engine rules can still put a figure that is not in the journal into a real fund's capital: the exit true-up (the exit month's gain is forced so capital equals accrued carry) and the floor at zero when a loss exceeds capital. A later plan must take both from the journal, or show them as adjustments the sponsor posts.
 - AUDIT SAME and ENGINE BOOKS case terms need P11_ROOT (the base tree); run them through gate11.sh, not alone.
 - events() also returns strays. A real fund gets no generated side-pocket return.
+
+## Plan-check additions, wave 4 (11-09, 11-10, 11-11; checked 2026-11-20 against c8b65e7; 1 blocker fixed here, 6 warnings). Executors apply these with their plan. Findings: scratchpad checks-11-wave4.md.
+- B1 (blocker, 11-09 Task 1 step 2): in assets/js/books-post.js line 59, `MANAGED` becomes `/^(call|pos|run|req|reqpaid|fee|gp|sim):/`, and `sim:` comes out of the line-58 comment ("never touched"). Without this, every sync posts every sim entry again and never reverses a stale one. Case `repeat` is the RED.
+- W1 (11-09 interfaces, the balance-sheet target): subtract the balance of every live, non-reversed journal entry of the fund dated on or before endOf(k), except `sim:` entries for month k and later. Not only desired entries: an edited sample firm can hold `mark:`, `bank:`, `man:` or `open:` entries. Case `edit` adds a `man:` entry.
+- W2 (11-11 Task 1): the signature becomes `holdingsAt(L, k, ws)` (audit.js:547), with `ws` passed from `period` (audit.js:678). Sample funds ignore it.
+- W3 (11-11 Task 2, runEvidence): for `!generated(o)`, `file = run.file || ''` (audit.js:745 must not invent `${slug}_${date}_A.ach`). Case `refs` adds a run that is not a console run and expects 'No file'.
+- W4 (11-11 Task 2, the 'books' check): when last4 is empty (books-bank.js:88), print '<name>: not reconciled through <period end>.'
+- W5 (11-11 with 11-09): `build` calls `NS.books.sync(ws)` only when `!NS.audit.generated(o)`. Print the measured AUDIT SAME time in the summary. Merge 11-09 before 11-11; one gate on the merged tree after both.
+- W6 (11-10 Task 1, value()): refuse a value dated before the holding's latest mark ("A later value exists (<date>); enter values in date order."). Case `refusals` adds it.
+- Line numbers in 11-10 and 11-11 are from 993e568 (redemptionAmount is now operations.js:281, build is audit.js:1549); find by name.
+- 11-11's statement labels rest on C-01, which no CPA has confirmed. Its summary says "statement format per C-01, assumption recorded; CPA read pending (C-07)".
+- The businessDays fix is a separate small plan after 11-10 merges (11-10's verify requires exactly one change hunk in operations.js). It moves seeded calls' notice dates (operations.js:564), so AUDIT SAME needs an expected-difference list built from the base, naming only the 'Capital call issued' change-log rows (audit.js:926) and their MANIFEST lines. Every other byte stays identical, so a one-cent change is still caught. Also fix the comment at books-bank.js:62.
+- Parallel: 11-09 (books-post.js), 11-10 (books-hold.js, operations.js redemptionAmount only) and 11-11 (audit.js) share no file.
