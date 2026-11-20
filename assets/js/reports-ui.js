@@ -269,6 +269,7 @@
     const ids = some ? t.scope.offeringIds : [];
     return `<div class="rb rb-edit">
       <div class="rb-bar"><button type="button" class="cs-btn rb-back" data-action="rb-back">Back to reports</button><h2>${h(t.name)}</h2></div>
+      ${s.leave ? `<div class="rb-leave" role="alert"><p class="rb-msg">Changes are not saved.</p><div class="rb-acts"><button type="button" class="cs-btn cs-btn-primary" data-action="rb-save-back">Save</button><button type="button" class="cs-btn" data-action="rb-leave">Leave without saving</button></div></div>` : ''}
       ${CK().panel(
         '',
         `<div class="rb-form">
@@ -1125,6 +1126,7 @@
     s.open = '';
     s.adjusted = false;
     s.split = null;
+    s.leave = false;
     NS.app.render();
     window.scrollTo(0, 0);
   }
@@ -1132,8 +1134,32 @@
     const t = templates(W()).find((x) => x.id === el.getAttribute('data-id'));
     if (t) openTemplate(t);
   };
+  /** Whether the template being edited differs from the version stored. */
+  function unsaved() {
+    const s = st();
+    if (!s.draft) return false;
+    const kept = templates(W()).find((x) => x.id === s.draft.id);
+    const strip = (t) => Object.assign(R().normalise(t), { version: 0, updatedAt: '', updatedBy: '' });
+    return !kept || JSON.stringify(strip(s.draft)) !== JSON.stringify(strip(kept));
+  }
   NS.actions['rb-back'] = () => {
     const s = st();
+    if (unsaved() && !s.leave) {
+      s.leave = true;
+      NS.app.render();
+      window.scrollTo(0, 0);
+      return;
+    }
+    toList();
+  };
+  NS.actions['rb-leave'] = () => toList();
+  NS.actions['rb-save-back'] = () => {
+    NS.actions['rb-save']();
+    toList();
+  };
+  function toList() {
+    const s = st();
+    s.leave = false;
     s.view = 'list';
     s.draft = null;
     s.pdf = null;
@@ -1257,6 +1283,7 @@
     NS.app.save();
     s.draft = clone(t);
     s.msg = '';
+    s.leave = false;
     NS.app.render();
     U.toast(`Saved, version ${t.version}`);
   };
