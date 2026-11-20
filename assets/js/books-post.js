@@ -15,7 +15,8 @@
  *   req:<requestId>              a redemption at its dealing date                  [3100 + investor][2200 -]
  *   reqpaid:<requestId>          its payment, on the day paid                       [2200 +][1000 - investor]
  *   fee:<offeringId>:<YYYY-MM>   the month's management fee, at the month-end      [5000 +][2100 -]
- *   gp:<offeringId>:<YYYY-MM>    the general partner's share crystallized that month, owed until paid [3300 +][2600 -]
+ *   gp:<offeringId>:<YYYY-MM>    the general partner's share crystallized that month, less what was paid with a
+ *                                distribution that month (already in its run: entry), owed until paid [3300 +][2600 -]
  * Entries dated before the fund's books start (fund.start) are left out.
  *
  * sync posts what is missing; reverses (dated its own date) and posts again an entry whose record changed inside an
@@ -110,10 +111,12 @@
       entries.push({ src, date, memo, lines: kept });
     };
 
-    // Contributions: call payments and funded positions, as the engine counts them.
+    // Contributions: call payments and funded positions, as the engine counts them (its event list, which runs no
+    // allocation; fees, the GP's entries, distributions and redemptions below still come from the engine's ledger, whose
+    // journal reads leave out 5000, 2100, 2600 and 3300, so what is posted here never feeds back into it).
     const calls = (ws.calls || []).filter((c) => c && c.offeringId === o.id);
     const nth = {};
-    L.contribs.forEach((c) => {
+    NS.audit.events(ws, o).contribs.forEach((c) => {
       const id = c.inv.id;
       let src;
       if (c.call != null) {
@@ -165,7 +168,8 @@
         });
         lines.push(ln('1000', -ach));
         other.forEach((l) => lines.push(l));
-        // The general partner's share paid with the distribution (carried interest), deducted from nobody's capital.
+        // The general partner's share paid with the distribution (carried interest): its distribution in the month paid,
+        // which the engine takes out of the investors' capital and accrued share (F-3).
         if (run.gp > 0) lines.push(ln('3300', run.gp), ln('1000', -run.gp));
         g.strays.forEach((s) => flag(run.date, { src, kind: 'stray', investorId: s.investorId, cents: s.cents }));
         add(src, run.date, `Distribution ${run.id}`, lines);
@@ -189,7 +193,9 @@
       const F = L.byKey[k];
       if (!F) return;
       if (F.fee > 0) add(`fee:${o.id}:${k}`, endOf(k), `Management fee ${monthLabel(k)}`, [ln('5000', F.fee), ln('2100', -F.fee)]);
-      if (F.gpOut > 0) add(`gp:${o.id}:${k}`, endOf(k), `${gpWord} ${monthLabel(k)}`, [ln('3300', F.gpOut), ln('2600', -F.gpOut)]);
+      // The share paid with a distribution that month (F.gpRun) is already in the run's entry; only the rest is owed.
+      const owed = F.gpOut - (F.gpRun || 0);
+      if (owed > 0) add(`gp:${o.id}:${k}`, endOf(k), `${gpWord} ${monthLabel(k)}`, [ln('3300', owed), ln('2600', -owed)]);
     });
 
     // Books started part-way: nothing dated before the start is posted from records.
