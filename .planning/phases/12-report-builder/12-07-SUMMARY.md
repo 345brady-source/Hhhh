@@ -25,6 +25,15 @@ FAIL letter ran to the end :: Error: The file needs the investors it is for.
 REPORTS RUN: FAIL (cases run: 5) - order, stop, refuse, letter
 ```
 
+### red-3 (Task 3, all 8 cases on Task 2's code, GATE_FRESH=1; exit 1; 44 PASS, 1 FAIL)
+Cases batch and selfcheck passed here: batch proves generate (built in Tasks 1-2) on a whole firm, and selfcheck proves
+the shared runner's refusal of an unknown or empty --case. Only archive needed new code (fileBytes).
+```
+FAIL archive ran to the end :: TypeError: NS.reportsRun.fileBytes is not a function
+speed: 23 reports, 5989 ms, 260 ms per report
+REPORTS RUN: FAIL (cases run: 8) - archive
+```
+
 ## Verify lines (verbatim)
 
 ### Task 1 verify (the plan's command, run from a script file; exit 0)
