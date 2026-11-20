@@ -253,8 +253,16 @@ async function tab(size, { check, S }, page) {
     check('with no exemption set on any offering the tab says so in one line that links to each offering\'s settings, and nothing is counted', none.panels === 0 && none.notes.length === 1 && /Rule 506\(b\) or Rule 506\(c\)/.test(none.notes[0]) && none.notes[0].split('\n').length === 1 && none.offerings.length >= 1 && none.links.length === none.offerings.length && none.offerings.every((id) => none.links.indexOf(`#console-offering-${id}`) >= 0) && m0.there && m0.count === '', { none, menu: m0 });
     await F.A.page.screenshot({ path: path.join(OUT, 'published-none.png'), fullPage: false });
     // A short page on the phone: the menu keeps its own height, so the page starts right under it.
-    const top = await F.fr.evaluate(() => ({ menu: Math.round(document.querySelector('.cs-nav').getBoundingClientRect().height), bar: Math.round(document.querySelector('.fl-bar').getBoundingClientRect().top), note: Math.round(document.querySelector('.fl .fl-note').getBoundingClientRect().bottom), screen: innerHeight }));
-    check('the short page starts right under the menu, with no empty band between them', top.menu < 200 && top.bar < 220 && top.note < top.screen / 2, top);
+    // Out of date after plan 06-35 (commit a7feb14, merged after 4205c8e wrote this): on a phone the preview bar stands in the
+    // page's flow above the console's menu, so the page's distances are measured from the menu's top (`at`), with the same
+    // limits as before; `above` is where the preview bar ends (0 without one), and the menu must start right there too.
+    const top = await F.fr.evaluate(() => {
+      const nav = document.querySelector('.cs-nav').getBoundingClientRect();
+      const pb = document.querySelector('#demo .demo-bar');
+      const above = pb && getComputedStyle(pb).position === 'static' ? Math.round(pb.getBoundingClientRect().bottom) : 0;
+      return { at: Math.round(nav.top), above, menu: Math.round(nav.height), bar: Math.round(document.querySelector('.fl-bar').getBoundingClientRect().top - nav.top), note: Math.round(document.querySelector('.fl .fl-note').getBoundingClientRect().bottom - nav.top), screen: innerHeight };
+    });
+    check('the short page starts right under the menu, with no empty band between them', Math.abs(top.at - top.above) <= 1 && top.menu < 200 && top.bar < 220 && top.note < top.screen / 2, top);
     await L9.wayOut(check, F, 'the tab with nothing to list');
     await L9.press(F, '.fl .fl-note a >> nth=0');
     const to = await F.fr.evaluate(() => ({ route: window.CVPortal.state.route, param: window.CVPortal.state.param }));
