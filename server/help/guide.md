@@ -16,7 +16,7 @@ menu: Overview, at the top
 anchor: Needs attention
 anchor: Recent distributions
 
-The first page of the console. The menu on every console page has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
+The first page of the console. The menu on every console page has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
 
 Overview shows:
 - "Setup": a checklist for a new portal. Choose "Start" or "Review" beside an item to open its page, or "Remove" to take the item off the list.
@@ -252,6 +252,30 @@ Under "Publish documents":
 6. Choose "Publish".
 
 "Published" lists every document with its recipients; "Remove" takes one out of the investors' portals. Investors find published documents on their Documents page.
+
+## console-taxdocs
+audience: sponsor
+kind: console
+title: Tax documents
+menu: Operate, then Tax documents
+anchor: Confirm together
+anchor: Not this one
+
+Take in the tax documents the CPA prepared and confirm whose each one is. A confirmed document shows "Not delivered": investors do not see it yet.
+
+To import:
+1. Under "Import", choose the "Fund", the "Type" and the "Tax year".
+2. Under "Files", choose the CPA's PDF files, up to 25 MB each.
+3. Choose "Import". The file is listed under "Imports" with the number to confirm; choose it to open it.
+
+A Schedule K-1 (Form 1065) file is cut into one package per K-1, and an investor of the fund is proposed where the last four digits of the taxpayer number or the name agree. Any other type is one package per file.
+
+To confirm:
+1. Under "Confirm together", check each row; "Not this one" moves a row to the others. Then choose the button "Confirm" with the count.
+2. Under "One by one", compare the picture with the investor proposed, change the "Investor" if needed, then choose "Confirm". "View pages" shows every page; "Set aside" and "Reopen" put a package aside and bring it back.
+3. For a file with no text, type the "First page" and "Last page" and choose "Make package".
+
+"Pages with no package" and "No K-1 in this file" list what is left.
 
 ## console-reports
 audience: sponsor

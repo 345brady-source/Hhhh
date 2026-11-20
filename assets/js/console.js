@@ -65,6 +65,7 @@
     ['Settings', ['console-brand', 'console-integrations', 'console-ach', 'console-team']]
   ];
   NAV_SECTIONS.find((g) => g[0] === 'Report')[1].push('console-filings'); // Filings (filings-ui.js) closes the Report section; kept on its own line
+  NAV.splice(NAV.findIndex((n) => n[0] === 'console-docs') + 1, 0, ['console-taxdocs', 'Tax documents']); NAV_SECTIONS.find((g) => g[0] === 'Operate')[1].push('console-taxdocs'); // Tax documents (taxdocs-ui.js) after Documents; kept on its own line
   const NAV_GROUPS = NAV_SECTIONS.map(([label, keys], i) => [label, i < NAV_SECTIONS.length - 1 ? keys : keys.concat(NAV.map(([k]) => k).filter((k) => !NAV_SECTIONS.some((g) => g[1].indexOf(k) >= 0)))]);
   /** Counts other modules show beside their menu entry: NS.navCounts[key] = (ws) => n. */
   NS.navCounts = NS.navCounts || {};
@@ -2178,6 +2179,7 @@
       const w = W();
       const d = dupState();
       const docs = (w.docs || []).slice().sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+      for (let k = docs.length - 1; k >= 0; k--) if (docs[k].tax) docs.splice(k, 1); // a tax document is handled on the Tax documents page only (plan 10-04)
       const matches = d.audience === 'investors' ? d.files.map((f) => ({ f, ids: OPS().matchIds(w, f.name) })) : [];
       const rows = docs
         .map((x) => {
@@ -2278,6 +2280,7 @@
     const w = W();
     const doc = (w.docs || []).find((x) => x.id === el.getAttribute('data-id'));
     if (!doc) return;
+    if (doc.tax) return; // a tax document leaves only by the Tax documents page's logged Withdraw (plan 10-04)
     w.docs = w.docs.filter((x) => x !== doc);
     OPS().files.del(doc.id).catch(() => {});
     audit('Document removed', `${doc.title} (${doc.fileName}) removed from investor portals`, doc.offeringId || '', doc.id);
