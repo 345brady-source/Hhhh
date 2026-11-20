@@ -258,10 +258,10 @@
  },
  {
   "screen": "welcome",
-  "item": "Tick \"I consent to receive statements, tax documents and notices electronically ...\" (when the firm requires electronic delivery)",
+  "item": "Tick \"I consent to receive statements and notices electronically ...\" (when the firm requires electronic delivery)",
   "decision": "keep",
-  "reason": "Consent to electronic delivery the firm requires for this portal (E-SIGN; IRS rules for electronic tax statements need affirmative consent).",
-  "text": "I consent to receive statements, tax documents and notices electronically",
+  "reason": "Consent to electronic delivery the firm requires for this portal (E-SIGN). Tax documents are not covered by it: they have their own optional consent on Documents (plan 10-06, Rev. Proc. 2012-17).",
+  "text": "I consent to receive statements and notices electronically",
   "paths": [
    "individual-506b"
   ]
