@@ -46,3 +46,20 @@ PASS file no script error in the browser
 PASS file no request outside the page's origin
 TAX1099 FLOW: PASS (parts run: 6)
 ```
+
+### RED 3 (SCRATCH/exec-10-10/red-3.txt, check committed in 450dd83; 7 PASS, 5 FAIL)
+```
+FAIL stops with every fund not set, the Tax documents page has no Form 1099 line
+FAIL stops with a fund set to partnership, still no Form 1099 line
+FAIL stops a Distribution payment in the year shows its stop sentence and "Is this payment interest?" with its date and amount :: {"st":[{"code":"kind",...
+FAIL stops ran to the end :: locator.scrollIntoViewIfNeeded: Timeout 30000ms exceeded.
+FAIL roles ran to the end :: locator.scrollIntoViewIfNeeded: Timeout 30000ms exceeded.
+TAX1099 FLOW: FAIL (parts run: 2) - stops, roles
+```
+
+### All eight parts on the final code, before the gate (SCRATCH/exec-10-10/all8.txt; 179 PASS, 0 FAIL, no full-number shape)
+```
+PASS roles no script error in the browser
+PASS roles no request outside the page's origin
+TAX1099 FLOW: PASS (parts run: 8)
+```
