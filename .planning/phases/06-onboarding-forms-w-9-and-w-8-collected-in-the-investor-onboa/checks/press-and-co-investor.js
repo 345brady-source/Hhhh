@@ -19,10 +19,12 @@
 //   press-tax-phone    390x844, touch, iOS user agent, the CPU slowed four times (Emulation.setCPUThrottlingRate) around
 //                      the presses; touches sent through the page's CDP session (touchStart, release, 150 ms, touchEnd);
 //                      the cancelled press is a touchCancel.
-//   press-nav-desktop  the walkthrough's sequence: the field editor's Save, the bar's select to the investor and back to
-//   press-nav-phone    Admin, then the console's Investors link pressed down, a background redraw arriving during the
-//                      press (a 0 ms timer calling the portal's render, as a timer- or file-driven redraw does), released:
-//                      Investors is open after this one press and the link pressed stayed in the page until its click.
+//   press-nav-desktop  the walkthrough's sequence. (a) The real source found in Task 2: on the field editor, the console's
+//   press-nav-phone    Investors link pressed down while the editor's Save runs (pressed by code during the press), whose
+//                      navigation redraws the whole page a task later; released. (b) The bar's select to the investor and
+//                      back to Admin, then the Investors link pressed down, a background redraw arriving during the press
+//                      (a 0 ms timer calling the portal's render, as a timer- or file-driven redraw does), released. Each
+//                      time Investors is open after this one press and the link pressed stayed in the page until its click.
 //   co-link-desktop    a self-serve firm whose agreement gets a co-investor place in "Edit fields"; an investor invited,
 //   co-link-phone      onboarded and signed; "Add co-investor" on the account. The "Co-investor sign-in email" dialog
 //                      (To, Subject, text, link, Copy link, Open in your email app, Mark as sent, Open the co-investor's
@@ -108,7 +110,7 @@ function instrument() {
   window.addEventListener(
     'pointerdown',
     (e) => {
-      if (!e.isPrimary) return;
+      if (!e.isTrusted || !e.isPrimary) return;
       rec.down = e.target;
       rec.label = String((e.target.closest && e.target.closest('a,button') ? e.target.closest('a,button').textContent : e.target.textContent) || '').trim().slice(0, 40);
       rec.upConnected = rec.clickConnected = rec.clickOnIt = null;
@@ -116,10 +118,11 @@ function instrument() {
     },
     true
   );
-  window.addEventListener('pointerup', () => rec.down && (rec.upConnected = rec.down.isConnected), true);
+  window.addEventListener('pointerup', (e) => e.isTrusted && rec.down && (rec.upConnected = rec.down.isConnected), true);
   window.addEventListener(
     'click',
     (e) => {
+      if (!e.isTrusted) return; // a click made by code (the check's own) is not the press
       rec.clicks++;
       if (rec.down && rec.clickConnected === null) {
         rec.clickConnected = rec.down.isConnected;
@@ -333,15 +336,25 @@ function pressNav(dev) {
     const cdp = dev.hasTouch ? await A.context.newCDPSession(A.page) : null;
     const portal = await Lib.setupPortal(S, { page: fr, context: A.context });
     const texts = [];
-    // The walkthrough: the field editor's Save, then the bar's select to the investor and back to Admin.
+    const link = '.cs-nav a[href="#console-investors"]';
+    // (a) The walkthrough's record: the field editor's Save, then the Investors link pressed before Save's navigation drew.
     await openEditor(fr, dev, portal.offeringId);
-    await press(fr, dev, '[data-action="es-agreement-save"]');
-    await fr.waitForFunction((oid) => location.hash === '#console-offering-' + oid, portal.offeringId, { timeout: 20000 });
-    await fr.waitForTimeout(300);
+    const pa = await centre(fr, link);
+    await down(A, cdp, dev, pa);
+    await fr.evaluate(() => document.querySelector('[data-action="es-agreement-save"]').click());
+    await fr.waitForTimeout(150);
+    const mid = await fr.evaluate(() => location.hash);
+    await up(A, cdp, dev);
+    const openedA = await fr.waitForFunction(() => location.hash === '#console-investors' && /Investors/.test((document.querySelector('.cs-head h1') || {}).innerText || ''), null, { timeout: 10000 }).then(() => true, () => false);
+    const prA = await pressNow(fr);
+    const savedA = await fr.evaluate((oid) => (window.CVPortal.state.ws.esignTemplates || []).some((t) => t.offeringId === oid && t.subscription), portal.offeringId);
+    texts.push(await screen(fr));
+    check('pressed while the editor’s Save navigates (a redraw a task later): the agreement is saved and Investors is open after this one press', openedA && savedA && /^#console-offering-/.test(mid), { hash: await hashOf(fr), during: mid, saved: savedA, press: prA });
+    check('that link stayed in the page until its click and the click landed on it', prA.upConnected === true && prA.clickConnected === true && prA.clickOnIt === true, prA);
+    // (b) The bar's select to the investor and back to Admin, then a redraw from a timer during the press.
     await selectRole(fr, 'investor');
     await selectRole(fr, 'admin');
-    await fr.waitForSelector('.cs-nav a[href="#console-investors"]', { timeout: 20000 });
-    const link = '.cs-nav a[href="#console-investors"]';
+    await fr.waitForSelector(link, { timeout: 20000 });
     const p = await centre(fr, link);
     await down(A, cdp, dev, p);
     // A redraw that something finishing in the background asks for, arriving during the press.

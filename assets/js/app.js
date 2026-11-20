@@ -385,12 +385,16 @@
     state.route = r.key;
     state.param = r.param;
     state.navOpen = false;
-    render();
-    if (prev !== state.route + ':' + state.param) {
-      window.scrollTo(0, 0);
-      const m = document.getElementById('main');
-      if (m) m.focus({ preventScroll: true });
-    }
+    const moved = prev !== state.route + ':' + state.param;
+    press.afterHeld = null;
+    // Held under a pending press (see "A press is never lost"): the new page's top and focus follow its drawing.
+    if (render() === false) press.afterHeld = moved ? toTop : null;
+    else if (moved) toTop();
+  }
+  function toTop() {
+    window.scrollTo(0, 0);
+    const m = document.getElementById('main');
+    if (m) m.focus({ preventScroll: true });
   }
   const modeOf = (key) => (NS.views[key] && NS.views[key].mode) || 'portal';
 
@@ -511,8 +515,82 @@
     if (!!el.firstChild !== !!html) el.innerHTML = html;
   }
 
+  /* ---------- A press is never lost to a redraw (walkthrough-2 N4) ----------
+   * render() rewrites the whole page. When something that finished in the background (page images drawn, a file stored, a
+   * navigation queued by the press before) redraws between a finger or mouse button going down and its click, the pressed
+   * control is replaced: with a mouse the click then reaches no control at all; with touch it lands on whatever the new page
+   * has under the finger. So from a primary pointerdown until that press's click has been dispatched (or pointercancel, or
+   * POINTER_UP_WAIT after pointerup with no click, or PRESS_MAX after pointerdown) a press is pending, and a render asked for
+   * outside a user input event is held. When the press ends the held render runs once, on the next task, unless a render ran
+   * since (the click's own handler drew the current state). Renders inside user input events (typing, the field editor's
+   * dragging, the signature pad, every data-action handler) run at once, as before. Only trusted events count: a click made
+   * by code is not a person's press. */
+  const PRESS_MAX = 1000;
+  const POINTER_UP_WAIT = 500;
+  const USER_INPUT = /^(pointer|mouse|touch|click|dblclick|auxclick|contextmenu|key|input|beforeinput|change|submit|focus|blur)/;
+  const press = { pending: false, held: false, heldAt: 0, renders: 0, timer: 0, upTimer: 0, afterHeld: null };
+  const inUserInput = () => {
+    const e = window.event;
+    return !!e && USER_INPUT.test(e.type);
+  };
+  function pressEnd() {
+    clearTimeout(press.timer);
+    clearTimeout(press.upTimer);
+    if (!press.pending) return;
+    press.pending = false;
+    if (!press.held) return;
+    press.held = false;
+    const at = press.heldAt;
+    // After the click's own handlers (they run in this same dispatch, after these capture listeners).
+    setTimeout(() => {
+      const after = press.afterHeld;
+      press.afterHeld = null;
+      if (press.renders === at) {
+        if (render() === false) {
+          press.afterHeld = after;
+          return;
+        }
+      }
+      if (after && press.renders !== at + 1) return; // another navigation drew and placed its own page since
+      if (after) after();
+    }, 0);
+  }
+  function pressWatch() {
+    document.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (!e.isTrusted || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        clearTimeout(press.timer);
+        clearTimeout(press.upTimer);
+        press.pending = true;
+        press.timer = setTimeout(pressEnd, PRESS_MAX);
+      },
+      true
+    );
+    document.addEventListener(
+      'pointerup',
+      (e) => {
+        if (!e.isTrusted || !e.isPrimary || !press.pending) return;
+        clearTimeout(press.upTimer);
+        press.upTimer = setTimeout(pressEnd, POINTER_UP_WAIT);
+      },
+      true
+    );
+    document.addEventListener('pointercancel', (e) => e.isTrusted && e.isPrimary && pressEnd(), true);
+    document.addEventListener('click', (e) => e.isTrusted && pressEnd(), true);
+  }
+
   /* ---------- Render ---------- */
+  /** Draws the page; false when the drawing is held under a pending press (it runs when the press ends). */
   function render() {
+    if (press.pending && !inUserInput()) {
+      if (!press.held) {
+        press.held = true;
+        press.heldAt = press.renders;
+      }
+      return false;
+    }
+    press.renders++;
     const w = ws();
     const key = state.route;
     const standalone = NS.views[key] && NS.views[key].standalone;
@@ -581,6 +659,7 @@
   /* ---------- Events ---------- */
   function boot() {
     const app = document.getElementById('app');
+    pressWatch();
     app.innerHTML = `<div id="notes"></div><div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div><div id="demo"></div>`;
     document.addEventListener('click', (e) => {
       const a = e.target.closest('[data-action]');
