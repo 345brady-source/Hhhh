@@ -64,7 +64,31 @@ const OWNER2_FIXED = { first: 'Bastian', last: 'Pellew' };
 const full = (o) => `${o.first} ${o.last}`;
 // The labels an entity's profile step showed at the base (b90ca2a, read by this check's preview parts before plan 08-19
 // changed anything on the investor's device; the plan adds no field).
-const BASE_LABELS = null;
+const BASE_LABELS = [
+  'Individual',
+  'Joint account',
+  'Trust',
+  'LLC, partnership or corporation',
+  'IRA (through a custodian)',
+  'Entity legal name The legal name of the entity',
+  'Country of mailing address',
+  'Mailing address',
+  'City',
+  'State',
+  'ZIP code',
+  'Phone',
+  'State or country of formation',
+  'Controlling person',
+  'Beneficial owner: first name',
+  'Last name',
+  'Ownership (%)',
+  'Second beneficial owner: first name Optional',
+  'Last name',
+  'Ownership (%)',
+  'Employer ID number (EIN) Nine digits.',
+  'No',
+  'Yes'
+];
 
 // The taxpayer number phase 6's walk types (lib.js walk: a.tin || '123456789'); read from that file, never typed here.
 const TIN = (() => {
