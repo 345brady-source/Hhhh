@@ -213,7 +213,111 @@
     return { docs, paper };
   }
 
-  const API = { CATS, ensure, newRun, addFile, finish, runsOf, runOf, docTitle, edelivery, deliver };
+  /* ---------- after delivery: paper, opens, withdrawal ---------- */
+  /** The run's delivered doc an investor has, or null. */
+  function docOfInvestor(ws, run, investorId) {
+    const file = run.files.find((f) => f.investorIds.indexOf(investorId) >= 0);
+    return file ? reportDoc(ws, file.id) : null;
+  }
+  /**
+   * The investors of a run's files with no consent to electronic delivery on record (C-01): each with name, mailing
+   * address, the file to print, and when and by whom it was sent on paper ('' until then).
+   */
+  function paperList(ws, runId) {
+    const run = needRun(ws, runId);
+    return investorsOf(run)
+      .map((id) => investorOf(ws, id))
+      .filter((inv) => inv && !edelivery(inv))
+      .map((inv) => {
+        const file = run.files.find((f) => f.investorIds.indexOf(inv.id) >= 0);
+        const doc = reportDoc(ws, file.id);
+        const p = (doc && doc.report.paper && doc.report.paper[inv.id]) || null;
+        return { investorId: inv.id, name: inv.title, address: String(inv.address || ''), fileId: file.id, sentOn: p ? p.sentOn : '', sentBy: p ? p.by : '' };
+      });
+  }
+  /** A delivered report on the paper list is marked sent on paper, with the date and the person. */
+  function markPaper(ws, runId, investorId, a) {
+    const run = needRun(ws, runId);
+    if (!a || !/^\d{4}-\d{2}-\d{2}$/.test(String(a.sentOn || ''))) refuse('Give the date it was sent on paper.');
+    if (!a.by || !String(a.by).trim()) refuse('The person who sent it must be named.');
+    if (!paperList(ws, runId).some((p) => p.investorId === investorId)) refuse('This investor is not on the paper list of this report.');
+    if (!run.delivered) refuse('Only a delivered report can be sent on paper.');
+    const doc = docOfInvestor(ws, run, investorId) || refuse('Only a delivered report can be sent on paper.');
+    if (doc.report.state === 'withdrawn') refuse('This report was withdrawn.');
+    const by = String(a.by).trim();
+    doc.report.paper[investorId] = { sentOn: a.sentOn, by };
+    log(ws, { action: 'Report sent on paper', fund: doc.offeringId, record: doc.id, actor: by, at: stamp(a.at), detail: `${doc.title} for ${nameOf(ws, investorId)} sent on paper on ${a.sentOn}` });
+    return doc;
+  }
+  /** Opens of a report: how many investors opened it and how many times in all. */
+  function opensOf(doc) {
+    const o = (doc && doc.report && doc.report.opens) || {};
+    const ids = Object.keys(o).filter((k) => o[k] && o[k].count > 0);
+    return { investors: ids.length, count: ids.reduce((n, k) => n + o[k].count, 0) };
+  }
+  /** An investor opened a report they have. Anything else (hidden, withdrawn, not theirs) changes nothing. */
+  function opened(ws, docId, investorId, at) {
+    const doc = (ws.docs || []).find((d) => d.id === docId) || null;
+    if (!isReport(doc) || doc.hidden || LIVE.indexOf(doc.report.state) < 0 || (doc.investors || []).indexOf(investorId) < 0) return doc;
+    const inv = investorOf(ws, investorId);
+    if (!inv) return doc;
+    const when = stamp(at);
+    if (!doc.report.opens || typeof doc.report.opens !== 'object') doc.report.opens = {};
+    const o = doc.report.opens[investorId] || (doc.report.opens[investorId] = { first: '', last: '', count: 0 });
+    if (!o.first) o.first = when;
+    o.last = when;
+    o.count += 1;
+    log(ws, { action: 'Report opened', fund: doc.offeringId, record: doc.id, actor: `${inv.title} (investor)`, at: when, detail: `${doc.title}, open number ${o.count} by this investor` });
+    return doc;
+  }
+  /**
+   * The sponsor takes a report back (the screen limits this to admins, C-04): it leaves its investors' Documents; its
+   * record and its record of opens stay.
+   */
+  function withdraw(ws, docId, a) {
+    const doc = reportDoc(ws, docId);
+    if (!doc || LIVE.indexOf(doc.report.state) < 0) refuse('This report cannot be withdrawn.');
+    if (!a || !a.by || !String(a.by).trim()) refuse('The person withdrawing it must be named.');
+    if (!a.why || !String(a.why).trim()) refuse('Say why it is withdrawn.');
+    const at = stamp(a.at);
+    const by = String(a.by).trim();
+    doc.report.state = 'withdrawn';
+    doc.report.withdrawn = { at, by, why: String(a.why).trim() };
+    doc.hidden = true;
+    const o = opensOf(doc);
+    log(ws, { action: 'Report withdrawn', fund: doc.offeringId, record: doc.id, actor: by, at, detail: `${doc.title} for ${(doc.investors || []).map((id) => nameOf(ws, id)).join(', ')} withdrawn: ${doc.report.withdrawn.why}; opened ${plural(o.count, 'time')} by ${plural(o.investors, 'investor')}` });
+    return doc;
+  }
+  /** A file's bytes are the ones on record: same SHA-256. */
+  function verifyFile(ws, runId, fileId, bytes) {
+    const run = runOf(ws, runId);
+    const file = run ? run.files.find((f) => f.id === fileId) : null;
+    if (!file || !bytes || !NS || !NS.audit || !NS.audit.sha256) return false;
+    return NS.audit.sha256(bytes) === file.sha256;
+  }
+
+  /* ---------- the Notices page ---------- */
+  /** 'Q4 2026' for a period ending in October to December 2026. */
+  function quarterOf(day) {
+    const [y, m] = String(day).split('-').map(Number);
+    return `Q${Math.floor((m - 1) / 3) + 1} ${y}`;
+  }
+  /**
+   * The Notices page's draft for a delivered run, with exactly the keys console.js noticeDraft writes: the investors it
+   * was delivered to, the 'quarterly' template for a quarterly report and 'documents' otherwise. It is only a draft:
+   * the person reads it, may change it, and sends it on the Notices page.
+   */
+  function noticeDraft(ws, runId) {
+    const run = needRun(ws, runId);
+    if (!run.delivered) refuse('This report has not been delivered yet.');
+    const kind = run.type === 'quarterly' ? 'quarterly' : 'documents';
+    const docs = run.delivered.docs.map((id) => reportDoc(ws, id)).filter((d) => d && d.report.state !== 'withdrawn');
+    const investors = uniq(docs.reduce((a, d) => a.concat(d.investors || []), []));
+    const tpl = (NS && NS.NOTICE_TEMPLATES && NS.NOTICE_TEMPLATES[kind]) || { subject: '', body: '' };
+    return { kind, audience: 'all', investors, pickerOpen: false, pickerQuery: '', includePending: true, quarter: quarterOf(run.period.to), docName: run.title, subject: tpl.subject, body: tpl.body, subjectEdited: false, bodyEdited: false, confirm: false };
+  }
+
+  const API = { CATS, ensure, newRun, addFile, finish, runsOf, runOf, docTitle, edelivery, deliver, paperList, markPaper, opened, opensOf, withdraw, verifyFile, noticeDraft };
   if (NS) NS.reportRecord = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);

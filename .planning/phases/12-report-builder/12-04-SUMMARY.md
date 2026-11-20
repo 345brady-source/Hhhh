@@ -37,3 +37,11 @@ REPORTS RECORD: FAIL (cases run: 10) - paper, opens, withdraw, letter, notice, a
 ```
 Plainly: cases refuse, replace and selfcheck already passed at this RED. Task 1's deliver was written to the full
 interfaces block (its refusals and `replaces`), so those cases exercise code that existed; selfcheck tests the runner.
+
+## Task 2 verify (SCRATCH/exec-12-04/record.txt: 99 PASS lines, 0 FAIL, no part kept from an earlier run)
+
+```
+PASS selfcheck an unknown --case name exits 1 with a FAIL line
+PASS selfcheck an empty --case list exits 1 with a FAIL line
+REPORTS RECORD: PASS (cases run: 10)
+```
