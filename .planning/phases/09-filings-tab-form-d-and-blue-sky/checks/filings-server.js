@@ -1,5 +1,5 @@
 // gate: browser
-// last "FILINGS SERVER: PASS (parts run: 1)"
+// last "FILINGS SERVER: PASS (parts run: 7)"
 // Plan 09-09: the link between the Filings tab and the filing server. The real server (server/index.mjs with the filings
 // module on) runs in this check's own process on a free local port, with invented tokens, an invented DATA_KEY, the
 // invented CCCs of server/test/fixtures/filings-kit.mjs, a fetch stand-in that records every outside call (none may be
@@ -24,7 +24,10 @@
 //                one line and no Send
 //   offline-framed  inside the frame that refuses every connection, at 390x844, with a server address set: Send says in
 //                one plain line that the server could not be reached; the order stays recorded; no error is thrown
-//   NODE_PATH=$(npm root -g) node filings-server.js [--only send-phone,send-desktop,outcome,suspended,guard,offline-framed]
+//   states       a state notice order for New York and California (NS.bluesky.placeOrder) sent with its package; staff
+//                record each state's result; Check now: both states filed with date, filing ID and fee paid, New York's
+//                renewal reminder with its date, the order done
+//   NODE_PATH=$(npm root -g) node filings-server.js [--only send-phone,send-desktop,outcome,suspended,guard,offline-framed,states]
 // The last line is "FILINGS SERVER: PASS (parts run: N)" or "FILINGS SERVER: FAIL (parts run: N) - <failed parts>". The
 // two marker lines above are read by gate9.sh. A CCC is never printed: every check about one reports only true or false.
 const path = require('path');
@@ -640,6 +643,64 @@ async function offlineFramed({ check, S }) {
   }
 }
 
+/** D-03: a state notice order sent with its package; each state's result recorded by staff arrives on the tab. */
+async function statesPart({ check, S }) {
+  const srv = await filingServer(S);
+  const F = await opened(S, 'desktop', [srv.base]);
+  try {
+    const seeded = await L9.seed(F, { name: 'Harbor Growth Fund, L.P.', sales: [{ daysAgo: 30, state: 'NY', funded: true, amount: 250000 }, { daysAgo: 20, state: 'CA', amount: 150000 }] });
+    const oid = seeded.offeringId;
+    await srv.configure(F);
+    await openTab(F);
+    await F.fr.waitForFunction(() => window.CVPortal.bluesky, null, { timeout: 15000 }).catch(() => {});
+    const id = await F.fr.evaluate((o) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const order = NS.bluesky.placeOrder(ws, ws.offerings.find((x) => x.id === o), ['NY', 'CA'], { by: NS.app.actor(), data: NS.blueskyData });
+      NS.app.save(true);
+      NS.app.render();
+      return order ? order.id : '';
+    }, oid);
+    await L9.goto(F, 'console-filings', '.fl');
+    await F.fr.waitForTimeout(800);
+    check('a state notice order for New York and California is recorded through NS.bluesky.placeOrder', !!id, id);
+    const fid = await sendIt(F, srv, id);
+    const one = fid ? await srv.staff('GET', `/v1/filings/staff/orders/${fid}`) : { body: null };
+    const codes = one.body && one.body.package && Array.isArray(one.body.package.states) ? one.body.package.states.map((x) => x.code).sort() : [];
+    check('Send: the server holds the order with its package (both states)', !!fid && one.body.kind === 'bluesky' && codes.join() === 'CA,NY' && /Received/.test(await remoteText(F, id)), { fid, codes });
+    const renewsOn = L9.iso(localToday(), 20);
+    const r = await staffOutcome(srv, fid, { states: { NY: { filedOn: PINNED, efdId: 'NY-EFD-1001', feeCents: 30000, renewsOn }, CA: { filedOn: PINNED, efdId: 'CA-EFD-2002', feeCents: 25000 } }, systemFeeCents: 15000 });
+    check('staff record each state\'s result (date, filing ID, fee paid, a renewal date 20 days ahead for New York)', r.status === 200 && r.body.status === 'done', r.status);
+    const done = await checkNow(F, id, "o.status === 'done'");
+    const st = await F.fr.evaluate((o) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const rec = ws.filings.offerings[o];
+      const order = ws.filings.orders.filter((x) => x.offeringId === o).pop();
+      return JSON.parse(JSON.stringify({ states: rec.states, due: NS.filings.due(ws, NS.dates.today(), { states: NS.blueskyData && NS.blueskyData.table }).filter((x) => x.offeringId === o).map((x) => ({ kind: x.kind, state: x.state, due: x.due })), lines: order.lines, dueCents: order.dueCents, openFees: order.openFees }));
+    }, oid);
+    const ny = st.states.NY || {};
+    const ca = st.states.CA || {};
+    check('after Check now the record shows both states filed with date, filing ID and fee paid', ny.status === 'filed' && ny.filedOn === PINNED && ny.efdId === 'NY-EFD-1001' && ny.feeCents === 30000 && ny.renewsOn === renewsOn && ca.status === 'filed' && ca.efdId === 'CA-EFD-2002' && ca.feeCents === 25000, st.states);
+    check('the order reads done, with the fees paid as its lines', done && st.dueCents === 80000 && st.openFees === false && st.lines.some((l) => l.state === 'NY' && l.cents === 30000 && /New York/.test(l.label)) && st.lines.some((l) => !l.state && l.passThrough && l.cents === 15000), { dueCents: st.dueCents, lines: st.lines });
+    check('New York\'s renewal reminder appears with its date; no state is still to file', st.due.some((x) => x.kind === 'state-renewal' && x.state === 'NY' && x.due === renewsOn) && !st.due.some((x) => x.kind === 'state-first'), st.due);
+    const tab = await L9.text(F, `.fl-off[data-offering="${oid}"]`);
+    const line = await remoteText(F, id);
+    check('the tab shows the renewal reminder with its date, the order done and both states filed', /State notice renewal: New York/.test(tab) && tab.indexOf(`Due ${L9.label(renewsOn)}`) >= 0 && /Done/.test(await L9.text(F, `${orderSel(id)} .fl-total`)) && /New York/.test(line) && /California/.test(line), { line, tab: tab.slice(0, 500) });
+    await F.A.page.screenshot({ path: path.join(OUT, 'desktop-states.png'), fullPage: false });
+    await L9.goto(F, `console-filings-states-${oid}`, '.fl-section');
+    await F.fr.waitForTimeout(500);
+    const sec = await L9.text(F, '.fl-section');
+    check('the State filings section shows each state with its date, filing ID and fee paid', ['NY-EFD-1001', 'CA-EFD-2002', '$300', '$250', `Filed ${L9.label(PINNED)}`].every((x) => sec.indexOf(x) >= 0), sec.slice(0, 800));
+    noOutside(check, F, [srv], 'states');
+    check('no script error in the browser', F.A.errors.length === 0, F.A.errors);
+    await L9.leak(check, F, 'the State filings section with results from the server');
+  } finally {
+    await F.A.context.close();
+    await srv.close();
+  }
+}
+
 Lib.runParts(
   {
     'send-phone': (ctx) => sendPath('phone', ctx),
@@ -647,7 +708,8 @@ Lib.runParts(
     outcome: outcomePart,
     suspended: suspendedPart,
     guard: guardPart,
-    'offline-framed': offlineFramed
+    'offline-framed': offlineFramed,
+    states: statesPart
   },
   { name: 'FILINGS SERVER', unit: 'parts', flag: '--only', browser: true }
 );
