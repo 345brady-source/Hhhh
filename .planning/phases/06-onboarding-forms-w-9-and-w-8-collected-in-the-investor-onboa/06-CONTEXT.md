@@ -42,3 +42,9 @@
 - In the snapshot, another signer's field value holding a full SSN or EIN pattern is blanked and marked `withheld: true`. The server cannot change the PDF, so 06-39's check that the PDF text holds no taxpayer number must pass on the console side, before the snapshot is sent.
 - The snapshot's investor is `{ id, contact, title, type, email }`; verification is `{}`, cents 0, cls empty. The verification check is skipped for a co-investor sign-in.
 - GATE_SERVER_TESTS is now 368.
+
+## After 06-37 (merged 2026-11-20)
+- The press guard: while a trusted press is pending, a redraw waits; it is dropped if the click already redrew. A press ends at click, pointercancel, after 1 s, or at pointerup once the pointer moved more than 10 px (a drag). The walkthrough's lost console-link press came from app.js's own hashchange render arriving one task after go().
+- Co-investor sign-in in the preview: `inv.coInvestor.signIn = { token, link, createdAt, expiresAt, sentAt, openedAt }`. 06-39 adds serverId, envelopeId, emailStatus and error to the same object; the row text switches on serverId. Hooks: `NS.coInvestor.hooks.added(ws, inv, was)` returns exactly true when the server sent it; `hooks.removed(ws, inv, removed)` runs before the record is deleted. Also exported: signInOf, signInText, showSignIn. Retired links are kept by sha256 of their token (ws.coSignInRetired, last 200).
+- Without a server, the link opens only in the browser holding the portal; on another device it says "We could not find this sign-in link". Delivery to the co-investor's own device is 06-39.
+- Gate line: PRESS AND CO-INVESTOR (7), `node $P/checks/press-and-co-investor.js`.
