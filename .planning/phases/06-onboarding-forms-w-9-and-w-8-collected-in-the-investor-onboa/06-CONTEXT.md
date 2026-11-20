@@ -35,3 +35,10 @@
 - W1 (sequencing): 10-06 edits onboarding.js and server/help/guide.md. 06-34 (onboarding.js) and 06-37 (guide.md, help-guide.mjs) start only after 10-06 is merged, from that tree; 06-39 starts after 06-34, 06-37 and 06-38 are merged. 06-35, 06-36 and 06-38 may start at once.
 - W2 (06-38, 06-39): the co-investor must not receive the account investor's taxpayer number in the PDF. co-investor-server.js asserts that no full SSN or EIN pattern appears in the snapshot's template values or in the PDF's text. If one does, blank the fields that are not the co-investor's in `esign.template`, and say so in the SUMMARY.
 - W3 (06-36 Task 2, 06-37 Task 2): the regression claims "no FAIL the base lacks" for the field editor check and the signature check become automated. Run each check on the base tree and on the fix, and diff their FAIL lines inside the verify command.
+
+## After 06-38 (merged 2026-11-20; server tests 368)
+- Creating a co-investor sign-in answers 200, not 201, like every other invitation. 06-39 expects 200.
+- On completion the server rebuilds the returned envelope from its snapshot. It takes from the device only the co-investor's signing state (status, viewedAt, consentAt, signedAt, declinedReason, signature, initials, userAgent) and the values of the co-investor's own unlocked fields. The 06-39 console merges only the co-investor's signer and fields, and keeps its own copy of everything else.
+- In the snapshot, another signer's field value holding a full SSN or EIN pattern is blanked and marked `withheld: true`. The server cannot change the PDF, so 06-39's check that the PDF text holds no taxpayer number must pass on the console side, before the snapshot is sent.
+- The snapshot's investor is `{ id, contact, title, type, email }`; verification is `{}`, cents 0, cls empty. The verification check is skipped for a co-investor sign-in.
+- GATE_SERVER_TESTS is now 368.
