@@ -1075,11 +1075,13 @@ const parts = {
     const q3 = (r3 && r3.qual) || {};
     check('answered yes again: request.qual and the investor record hold the ground', q3.accredited === true && q3.basis === bases[0] && !!r3.accreditation && r3.accreditation.basis === bases[0], { q3, accreditation: r3 && r3.accreditation });
     check('each correction while pending made one "Investor status updated" entry (three in all)', !!r3 && r3.log.filter((e) => e.action === 'Investor status updated').length === 3, r3 && r3.log);
-    // The sponsor approves the subscription: the request is no longer pending.
+    // The sponsor decides the subscription: the request is no longer pending. Plan 06-34 (plan-check B2): its agreement is not
+    // signed (the investor stopped at it), and an unsigned subscription can never be approved, so the sponsor declines it; this
+    // used to approve it unsigned. What is tested (a decided request keeps its answers) is the same.
     await p.evaluate((rid) => {
       const NS = window.CVPortal;
       const ws = NS.state.ws;
-      NS.ops.decide(ws, ws.requests.find((x) => x.id === rid), true);
+      NS.ops.decide(ws, ws.requests.find((x) => x.id === rid), false, 'Declined by the manager');
       NS.app.render();
     }, r3.id);
     await p.waitForTimeout(300);

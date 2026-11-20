@@ -1150,6 +1150,15 @@
       ws.envelopes.push(taxIn);
       const td = (Array.isArray(sub.docs) ? sub.docs : []).find((x) => x && typeof x === 'object' && x.id === tid) || {};
       if (!ws.docs.some((x) => x.id === tid)) ws.docs.push({ id: tid, title: String(td.title || taxIn.title || 'Tax form').slice(0, 200), fileName: String(td.fileName || 'Tax_form_signed.pdf').slice(0, 160), type: 'application/pdf', size: kept[tid], sha256: taxIn.sha256Signed, cat: 'Tax', offeringId: null, audience: 'investors', investors: [inv.id], date: isDay(td.date) && td.date <= today() ? td.date : today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'E-sign', envelopeId: taxIn.id });
+      // Plan 06-34 (walkthrough-2 N1; B1): one tax form per investor. The one just imported replaces every earlier tax form of
+      // this investor held here: a signed one is kept as superseded with its signed copy (no longer listed), an unsigned one
+      // voided (onboarding.js retireTax, the rule the investor's own browser applies).
+      if (NS.inviteFlow && NS.inviteFlow.retireTax) {
+        const s0 = taxIn.signers.find((x) => x.investorId === inv.id) || taxIn.signers[0] || {};
+        const when = NS.ui && NS.ui.date ? NS.ui.date(String(s0.signedAt || nowIso()).slice(0, 10), 'long') : String(s0.signedAt || nowIso()).slice(0, 10);
+        const why = `Replaced by the Form ${(taxIn.taxForm && taxIn.taxForm.form) || 'W-9'} signed on ${when}`;
+        ws.envelopes.filter((e) => e.kind === 'tax' && e.id !== taxIn.id && e.status !== 'voided' && e.status !== 'superseded' && e.signers.some((x) => x.investorId === inv.id)).forEach((e) => NS.inviteFlow.retireTax(ws, inv, e, why, { by: taxIn.id }));
+      }
     }
     // A new investor's tax form record is the device's (one on file keeps the record held here), checked against what came:
     // whether it is signed is read from the kept envelope's own signature field, and a form the device calls signed whose
@@ -1160,7 +1169,7 @@
         const s0 = taxIn.signers[0];
         tcert.signed = (Array.isArray(taxIn.fields) ? taxIn.fields : []).some((f) => f && f.signerId === s0.id && f.type === 'signature' && !!f.value);
         delete tcert.received;
-      } else if (tcert.signed !== false) tcert.received = false;
+      } else if (tcert.signed !== false && !(ws.envelopes || []).some((e) => e.id === tcert.envelopeId && e.kind === 'tax' && e.status === 'completed' && e.signers.some((x) => x.investorId === inv.id))) tcert.received = false;
     } else if (tcert && tcert.uploaded) {
       // The uploaded form: the record points at it only when this submission brought it under the investor's own name;
       // otherwise the pointer goes and the form is marked as not received (the investor row says to ask for it).

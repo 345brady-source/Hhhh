@@ -202,6 +202,25 @@ async function firmSigns(fr, dev, st) {
   );
 }
 
+/**
+ * Plan 06-34 (walkthrough-2 N1): a W-9 finished without a signature is no longer listed under "Signed documents" (it is not a
+ * signed document), so the parts that open the investor's signed W-9 (lost-files, viewer) sign it on the way, as they always
+ * meant: consent if asked, the signature field pressed (tapped on the phone) and the signature adopted.
+ */
+const signTaxOnWay = (dev) => async (fr) => {
+  if (await fr.locator('#es-consent-box').count()) {
+    await fr.check('#es-consent-box');
+    await press(fr, dev, '[data-action="es-consent"]');
+    await fr.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 30000 });
+  }
+  await press(fr, dev, '.ivf-tax-sign [data-action="es-sig"]');
+  await fr.waitForTimeout(300);
+  if (await dlgOpen(fr)) {
+    await press(fr, dev, '[data-action="es-adopt"]');
+    await fr.waitForFunction(() => !document.getElementById('dlg').open);
+  }
+};
+
 /* ---------- countersign (failure 3) ---------- */
 function countersignPart(dev) {
   const tag = tagOf(dev);
@@ -380,14 +399,44 @@ function countersignPart(dev) {
     }, portal.offeringId);
     check('a subscription whose agreement has no field for the firm is on Requests', !!solo && !!solo.envId && solo.firm === 0, solo);
     if (solo) {
+      // Plan 06-34 (plan-check B2): an agreement the investor has not signed can never be approved, so Approve is refused
+      // first; this part used to approve it unsigned. The investor then signs it (complete with their signature alone), and
+      // Countersign records at once as before.
       await requestsPage(fr);
-      await approve(fr, dev, solo.rid);
       await toasts(fr);
-      await press(fr, dev, `[data-action=req-funded][data-id="${solo.rid}"]`);
-      await fr.waitForTimeout(600);
+      await approve(fr, dev, solo.rid);
+      const refused = await toasts(fr);
+      const s0 = await subscription(fr, solo.id, solo.rid);
+      check('B2: Approve is refused while the investor has not signed ("The subscription agreement is not signed yet.")', s0.req.status === 'pending' && refused.indexOf('The subscription agreement is not signed yet.') >= 0, { status: s0.req.status, refused });
+      await asInvestor(fr, solo.id, 'sign-' + solo.envId);
+      if (await fr.locator('#es-consent-box').count()) {
+        await fr.check('#es-consent-box');
+        await press(fr, dev, '[data-action="es-consent"]');
+      }
+      await fr.waitForSelector('.es-doc-sign .es-page img', { timeout: 30000 });
+      if (await fr.locator('.es-doc-sign [data-action="es-sig"]').count()) {
+        await press(fr, dev, '.es-doc-sign [data-action="es-sig"]');
+        await fr.waitForTimeout(300);
+        if (await dlgOpen(fr)) {
+          await press(fr, dev, '[data-action="es-adopt"]');
+          await fr.waitForFunction(() => !document.getElementById('dlg').open);
+        }
+      }
+      await press(fr, dev, '.es-finish');
+      await fr.waitForSelector('.es-done', { timeout: 30000 }).catch(() => {});
+      await requestsPage(fr);
+      // Signed by the investor, the agreement is complete (no field for the firm): the portal's automatic acceptance may take
+      // it at once; otherwise Approve, then Countersign records it at once as before.
+      const auto = (await subscription(fr, solo.id, solo.rid)).req.status === 'accepted';
+      if (!auto) {
+        await approve(fr, dev, solo.rid);
+        await toasts(fr);
+        await press(fr, dev, `[data-action=req-funded][data-id="${solo.rid}"]`);
+        await fr.waitForTimeout(600);
+      }
       const ss = await subscription(fr, solo.id, solo.rid);
       const stt = await toasts(fr);
-      check('with no field for the firm, Countersign records at once as before', ss.req.status === 'accepted' && ss.onRegister === 1 && ss.hash === '#console-requests' && stt.some((t) => /^Subscription countersigned\./.test(t)), { ss, toasts: stt });
+      check('with no field for the firm, the signed subscription is recorded at once (accepted automatically, or Countersign records it as before)', ss.req.status === 'accepted' && ss.onRegister === 1 && ss.hash === '#console-requests' && (auto || stt.some((t) => /^Subscription countersigned\./.test(t))), { auto, ss, toasts: stt });
     }
     const shown = await Lib.screenText(fr);
     check('no vendor name and no forbidden word on the last screen', Lib.leakCheck(shown).ok, Lib.leakCheck(shown).hits);
@@ -571,7 +620,7 @@ function lostFilesPart(dev) {
     const name = dev === IPHONE ? 'Marisol Etxeberria' : 'Cormac Niedzwiecki';
     const inv = await Lib.createInvitation(fr, { name, email: `${name.split(' ')[0].toLowerCase()}@example.com`, type: 'individual', offeringId: portal.offeringId });
     await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
-    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0 });
+    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0, taxSign: signTaxOnWay(dev) });
     check('in the same page load the investor reaches the agreement and it is drawn', w.reached, w.seen);
     if (!w.reached) return A.context.close();
     const team = await fr.evaluate(() => {
@@ -793,7 +842,7 @@ function viewerPart(dev) {
     const name = dev === IPHONE ? 'Solveig Abernathy' : 'Bartholomew Nwosu';
     const inv = await Lib.createInvitation(fr, { name, email: `${name.split(' ')[0].toLowerCase()}@example.com`, type: 'individual', offeringId: portal.offeringId });
     await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
-    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0 });
+    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0, taxSign: signTaxOnWay(dev) });
     check('the investor reaches the subscription agreement', w.reached, w.seen);
     if (!w.reached) return A.context.close();
     await Lib.finishAgreement(fr);

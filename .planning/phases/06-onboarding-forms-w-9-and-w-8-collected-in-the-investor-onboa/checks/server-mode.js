@@ -1725,4 +1725,6 @@ const parts = {
   }
 };
 
-L.runParts(parts, { name: 'SERVER MODE', browser: true });
+// Plan 06-34: its harness is reused by record-and-lost-agreement.js (import-desktop); run directly, it runs its own parts.
+if (require.main === module) L.runParts(parts, { name: 'SERVER MODE', browser: true });
+else module.exports = { serverFlow, signTax, consoleTaxRow, consoleRecord, deviceTax, sha256 };

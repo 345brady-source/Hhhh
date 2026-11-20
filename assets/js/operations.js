@@ -247,10 +247,29 @@
     save(ws);
     return r;
   }
+  /**
+   * A subscription signed through an e-signature agreement that the investor has not signed. The investor's own signer on the
+   * envelope decides: esign.js sets the request's signedAt only once everyone has signed (the firm countersigns after
+   * approving), so a request without signedAt whose investor has signed is a normal one waiting for approval. A request whose
+   * envelope is not here counts as signed only with a signedAt (the console's import sets it from the investor's signature).
+   */
+  function unsignedAgreement(ws, r) {
+    if (!r || r.type !== 'subscription' || !r.envelopeId || r.signedAt) return false;
+    const env = ((ws && ws.envelopes) || []).find((e) => e.id === r.envelopeId);
+    const me = env ? env.signers.find((s) => s.investorId === r.investorId) : null;
+    return !(me && me.status === 'signed');
+  }
+  const NOT_SIGNED = 'The subscription agreement is not signed yet.';
   function decide(ws, r, approve, note) {
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     const inv = ws.investors.find((x) => x.id === r.investorId);
     if (!o || !inv || r.status !== 'pending') return false;
+    // Plan 06-34 (plan-check B2): a subscription signed through an agreement the investor has not signed yet ("Continue and
+    // sign later", walkthrough failure 1) is never approved; declining it stays possible.
+    if (approve && unsignedAgreement(ws, r)) {
+      if (NS.ui && NS.ui.toast) NS.ui.toast(NOT_SIGNED);
+      return false;
+    }
     r.status = approve ? 'approved' : 'rejected';
     r.decided = today();
     r.note = note || '';
@@ -284,6 +303,11 @@
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     const inv = ws.investors.find((x) => x.id === r.investorId);
     if (r.type !== 'subscription' || r.status !== 'approved' || !o || !inv) return false;
+    // Plan 06-34 (B2): never funded or accepted while its agreement is unsigned.
+    if (unsignedAgreement(ws, r)) {
+      if (NS.ui && NS.ui.toast) NS.ui.toast(NOT_SIGNED);
+      return false;
+    }
     if (isOpen(o)) inv.positions.push(Object.assign({ offeringId: o.id, amount: r.cents / 100, date: r.dealing, ref: r.id }, r.cls ? { class: r.cls } : {}));
     else inv.positions.push(Object.assign({ offeringId: o.id, amount: 0, commitment: r.cents / 100, date: today(), ref: r.id }, r.cls ? { class: r.cls } : {}));
     r.status = isOpen(o) ? 'funded' : 'accepted';
@@ -678,6 +702,7 @@
   }
 
   NS.ops = {
+    unsignedAgreement,
     ensure,
     isOpen,
     liquidity,

@@ -752,7 +752,8 @@ async function unsignedCase({ check, S }) {
         overlays: NS.taxmaps['W-9 2024-03'].overlays,
         blank: NS.taxmaps['W-9 2024-03'].file,
         ndocs: docs.length,
-        pdf: await b64(docs[0] ? await NS.ops.files.get(docs[0].id) : null),
+        // plan 06-34: the finished form stays with its envelope (its completed copy), not as a Documents entry
+        pdf: await b64(env && env.signedDocId ? await NS.ops.files.get(env.signedDocId) : null),
         filled: await b64(env ? await NS.ops.files.get(env.docId) : null),
         log: (ws.audit || []).filter((e) => e.record === invId).map((e) => `${e.action} :: ${e.detail}`)
       };
@@ -762,7 +763,10 @@ async function unsignedCase({ check, S }) {
   const tc = got.taxCert || {};
   check('the record says W-9, not signed, no signer (taxCert.signed false)', got.taxForm === 'W-9' && tc.form === 'W-9' && tc.signed === false && tc.signedBy === '', { taxForm: got.taxForm, taxCert: tc });
   check('the change log says the form was completed without a signature', got.log.some((l) => /^Tax form completed without a signature :: /.test(l)), got.log.slice(-4));
-  check('the finished form is kept in Documents (one entry)', got.ndocs === 1 && !!got.pdf, got.ndocs);
+  // Plan 06-34 (walkthrough-2 N1): this used to require one Documents entry, which listed the form under "Signed documents"
+  // with a "_signed" file name although nobody signed it (the duplicate the walkthrough reported). A form finished without a
+  // signature is not a signed document: it is not listed, and its finished copy stays with its envelope.
+  check('the finished form is not listed in Documents (not signed), and its finished copy is kept with its envelope', got.ndocs === 0 && !!got.pdf, { ndocs: got.ndocs, pdf: !!got.pdf });
   if (got.pdf && got.filled) {
     const finFile = path.join(dir, 'finished.pdf');
     const filledFile = path.join(dir, 'filled.pdf');
@@ -847,7 +851,10 @@ async function flowTaxEnv(page, invId) {
         envId: env ? env.id : '',
         docId: env ? env.docId : '',
         filled: await b64(env ? await NS.ops.files.get(env.docId) : null),
-        finished: await b64(doc ? await NS.ops.files.get(doc.id) : null),
+        // plan 06-34: the finished copy is read from its envelope (a form finished without a signature is not listed in
+        // Documents any more; a signed form's listing shares this same file)
+        finished: await b64(env && env.signedDocId ? await NS.ops.files.get(env.signedDocId) : doc ? await NS.ops.files.get(doc.id) : null),
+        debug: env ? { status: env.status, signedDocId: env.signedDocId || '', voidReason: env.voidReason || '', fl: fl.taxEnvelopeId || '' } : { none: id },
         taxForm: i.taxForm || '',
         taxCert: JSON.parse(JSON.stringify(i.taxCert || null)),
         blank: NS.taxmaps['W-9 2024-03'].file,
@@ -1082,7 +1089,7 @@ async function backupCase({ check, S }) {
     fs.writeFileSync(finFile, Buffer.from(after.finished, 'base64'));
     const finInk = st.lines.map((s) => inkBetween(blankFile, finFile, band(s), DPI));
     check('the stored finished form keeps the cross-out', st.lines.every((s, n) => finInk[n] > 0.25 * lenPx(s)), finInk);
-  } else check('the stored finished form keeps the cross-out', false, 'no stored form');
+  } else check('the stored finished form keeps the cross-out', false, { stored: 'none', envId: after.envId, docId: after.docId, taxCert: after.taxCert, debug: after.debug });
   check('no script error in the browser', A.errors.length === 0, A.errors);
   check('no request left the check server', A.net.external.length === 0, A.net.external);
   await A.context.close();
@@ -1503,10 +1510,18 @@ async function editSignedCase({ check, S }) {
   check('the earlier signed form is not voided and stays in the record until the new one is finished', e1.status === 'completed' && !!E.taxCert && E.taxCert.envelopeId === first.envId && E.taxCert.signed === true, { e1, taxCert: E.taxCert });
   check('the earlier signed form stays in Documents (Tax, file present)', (e1.docs || []).length === 1 && e1.docs[0].cat === 'Tax' && e1.docs[0].file === true, e1.docs);
   await Lib.finishTaxForm(page);
+  // Plan 06-34 (walkthrough-2 N1, the orchestrator's rule "one tax form per investor, the signed one"): these two checks used
+  // to require both forms to stay (the signed one listed beside the new one, nothing voided), which is the duplicate the
+  // walkthrough reported. The new form is finished without a signature, and a form finished without a signature never
+  // replaces a signed one on file: the record and Documents keep the earlier signed form, and the new unsigned envelope is
+  // voided with the reason and its files (which hold the taxpayer ID) deleted.
+  await page.waitForFunction(async (id) => !(await window.CVPortal.ops.files.get(id + '-orig').catch(() => null)), second.envId, { timeout: 10000 }).catch(() => {});
   const end = await taxEnvelopes(page, inv.investorId);
   const e1b = end.list.find((e) => e.id === first.envId) || {};
-  check('after the new form is finished, the earlier signed form is still completed and in Documents', e1b.status === 'completed' && (e1b.docs || []).length === 1 && e1b.docs[0].file === true, e1b);
-  check('no tax envelope of the flow was voided (the signed one was never live, the new one was finished)', end.list.every((e) => e.status !== 'voided'), end.list.map((e) => [e.id, e.status]));
+  const e2b = end.list.find((e) => e.id === second.envId) || {};
+  const signedGone = await page.evaluate(async (id) => !(await window.CVPortal.ops.files.get(id + '-signed').catch(() => null)), second.envId);
+  check('after the new form is finished without a signature, the record still points at the earlier signed form (signed true), which is completed and still in Documents with its file', !!end.taxCert && end.taxCert.envelopeId === first.envId && end.taxCert.signed === true && e1b.status === 'completed' && (e1b.docs || []).length === 1 && e1b.docs[0].file === true, { taxCert: end.taxCert, e1b });
+  check('the new unsigned form is voided with "Finished without a signature; the signed Form W-9 on file stays" and its files are gone', e2b.status === 'voided' && e2b.voidReason === 'Finished without a signature; the signed Form W-9 on file stays' && e2b.files && e2b.files.doc === false && e2b.files.work !== true && signedGone && (e2b.docs || []).length === 0, { e2b, signedGone });
   check('no script error in the browser', A.errors.length === 0, A.errors);
   check('no request left the check server', A.net.external.length === 0, A.net.external);
   await A.context.close();

@@ -2289,7 +2289,8 @@
    *  - Unchanged: a signed form is kept (false: the flow moves on); an unsigned form still to sign is shown again.
    *  - Changed (or not known after a reload): the filled, flattened official form is built now and becomes an envelope for
    *    this investor to sign on the page. An unsigned earlier form is voided first ("answers changed before signing") and
-   *    its files deleted; a signed earlier form stays in the record and in Documents until the new one is finished.
+   *    its files deleted; a signed earlier form stays in the record and in Documents until the new one is finished, then
+   *    taxSigned applies plan 06-34's rule (a new signed form supersedes it; a new unsigned form is retired and it stays).
    * The W-9's full taxpayer ID leaves this page's memory once it is in the form (T-06-35). Returns true to stay on the step.
    */
   async function buildTax(c, d) {
@@ -2375,8 +2376,20 @@
   function taxSigned(c, env, signer) {
     const i = c.inv;
     const fl = c.fl;
-    if (!(i.taxCert && i.taxCert.envelopeId === env.id)) {
-      const signed = env.fields.some((f) => f.signerId === signer.id && f.type === 'signature' && !!f.value);
+    const signed = env.fields.some((f) => f.signerId === signer.id && f.type === 'signature' && !!f.value);
+    // Plan 06-34 (walkthrough-2 N1): one tax form per investor. A form finished without a signature never replaces a signed
+    // form on file (a signed certification is the stronger one): the new one is retired and the record stays as it is.
+    if (!signed && !(i.taxCert && i.taxCert.envelopeId === env.id) && signedOnFile(c.ws, i, env)) {
+      const on = i.taxCert;
+      retireTax(c.ws, i, env, `Finished without a signature; the signed Form ${on.form} on file stays`, { actor: `${i.title} (investor)`, action: 'Tax form kept', what: `Form ${env.taxForm.form} finished on ${U.date(nowIso().slice(0, 10), 'long')} without a signature; the signed Form ${on.form}${on.at ? ` of ${U.date(String(on.at).slice(0, 10), 'long')}` : ''} stays on file` });
+      fl.taxKeptSigned = env.id;
+    } else if (!(i.taxCert && i.taxCert.envelopeId === env.id)) {
+      // The new form is the one on record: every earlier tax form of this investor is retired (a signed one is kept as
+      // superseded with its signed copy, an unsigned one voided and its files deleted).
+      const when = U.date(String(signer.signedAt || nowIso()).slice(0, 10), 'long');
+      const why = `Replaced by the Form ${env.taxForm.form} ${signed ? 'signed' : 'finished'} on ${when}`;
+      (c.ws.envelopes || []).filter((e) => e.kind === 'tax' && e.id !== env.id && e.status !== 'voided' && e.status !== 'superseded' && !!signerOf(e, i)).forEach((e) => retireTax(c.ws, i, e, why, { by: env.id, actor: `${i.title} (investor)` }));
+      delete fl.taxKeptSigned;
       const base = { form: env.taxForm.form, revision: env.taxForm.revision, envelopeId: env.id, at: signer.signedAt || nowIso(), signed, signedBy: signed ? signer.name : '' };
       i.taxForm = env.taxForm.form;
       if (env.taxForm.form === 'W-8BEN' || env.taxForm.form === 'W-8BEN-E') {
@@ -2395,6 +2408,43 @@
     ob().errors = {};
     S().ui.ivfFocus = true;
     NS.app.save(true);
+  }
+  /** Whether the investor signed this tax form: their own signature field holds a value (D-30: nothing on it is required). */
+  const signedTax = (env, i) => {
+    const s = signerOf(env, i);
+    return !!s && env.fields.some((f) => f.signerId === s.id && f.type === 'signature' && !!f.value);
+  };
+  /**
+   * Plan 06-34: a signed tax form the record holds, other than env: a completed form the investor signed (its envelope still
+   * here), or one recorded as signed whose envelope this browser does not hold (server mode: the console keeps it), or a
+   * completed form they uploaded instead. Never a form recorded as not signed or not received.
+   */
+  function signedOnFile(ws, i, env) {
+    const tc = i.taxCert;
+    if (!tc || !taxOnFile(i)) return false;
+    if (tc.uploaded === true) return true;
+    if (tc.signed !== true || !tc.envelopeId || tc.envelopeId === env.id) return false;
+    const held = (ws.envelopes || []).find((e) => e.id === tc.envelopeId);
+    return !held || (held.status === 'completed' && signedTax(held, i));
+  }
+  /**
+   * Plan 06-34 (walkthrough-2 N1; plan-check B1): an earlier tax form leaves the record. A completed form the investor signed
+   * is kept as superseded (its envelope and signed copy stay; a payer keeps a signed W-9 for four years and a W-8 as long as
+   * it may be relevant), its Documents listing and its drafts go; a form never signed is voided and every file of it deleted
+   * (they hold the full taxpayer ID). One change-log line says which form, when, and why. The envelope changes at once; the
+   * promise settles once its files are deleted. opts: { by, actor, action, what }.
+   */
+  function retireTax(ws, i, env, reason, opts) {
+    opts = opts || {};
+    if (!env || !NS.esign || !NS.esign.retire || env.status === 'voided' || env.status === 'superseded') return Promise.resolve(false);
+    const keep = env.status === 'completed' && signedTax(env, i);
+    const form = `Form ${(env.taxForm && env.taxForm.form) || 'W-9'}`;
+    const s = signerOf(env, i);
+    const when = s && s.signedAt ? ` of ${U.date(String(s.signedAt).slice(0, 10), 'long')}` : '';
+    const done = NS.esign.retire(ws, env.id, keep ? 'superseded' : 'voided', reason, { by: opts.by || '', actor: opts.actor });
+    delete BUILT[env.id];
+    if (NS.audit) NS.audit.log(ws, Object.assign({ action: opts.action || 'Tax form replaced', record: i.id, fund: '', detail: `${i.title}: ${opts.what || `the ${keep ? 'signed' : 'unsigned'} ${form}${when}`}; ${keep ? 'kept as superseded with its signed copy, no longer listed' : 'voided and its files deleted'}. ${reason}.` }, opts.actor ? { actor: opts.actor } : {}));
+    return done;
   }
   function docsHTML(c) {
     const docs = (c.ws.docs || []).filter((x) => x.offeringDoc && !x.hidden && x.offeringId === c.off.id);
@@ -2511,7 +2561,11 @@
     const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : k === 'rep' ? 'the acknowledgment of your purchaser representative you uploaded' : k === 'tax' ? (c.inv.taxForm ? `the Form ${h(c.inv.taxForm)} you signed` : 'the tax form you signed') : k === 'taxup' ? (c.inv.taxForm && c.inv.taxForm !== 'Tax form' ? `the Form ${h(c.inv.taxForm)} you uploaded` : 'the tax form you uploaded') : 'the verification letter you uploaded'));
     if (unsent.length) next.push(`${unsent.join(' and ').replace(/^t/, 'T')} could not be sent with your details, so ${h(t.support.team)} may ask you for ${unsent.length > 1 ? 'them' : 'it'} again.`);
     next.push(`Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.`);
-    const lede = c.it.existing
+    // Plan 06-34: the agreement could not be shown in this browser ("Continue and sign later"): said plainly, with what happens.
+    const later = c.req && c.fl.signLater && !signed ? `Your subscription is recorded. The subscription agreement could not be shown in this browser, and ${h(t.support.team || t.shortName)} has been told. Once they add it again, it waits for your signature under Documents.` : '';
+    const lede = later
+      ? later
+      : c.it.existing
       ? c.req
         ? `Your subscription to ${h(c.off.name.replace(/\.$/, ''))} is submitted.${held ? ` ${h(t.support.team)} is reviewing your verification and will contact you if anything else is needed.` : ''}`
         : `No subscription was made: ${closedName || 'the offering'} is no longer accepting subscriptions. ${h(t.support.team)} will contact you.`
@@ -2519,7 +2573,7 @@
         ? `Your account is set up. ${dec === 'review' || dec === 'rejected' ? `${h(t.support.team)} is reviewing your verification and will contact you if anything else is needed.` : 'Your verification results are still coming in.'}`
         : `Your account with ${h(t.name)} is active.`;
     return `<div class="ivf-done">
-      ${ivfH1(c.it.existing ? (c.req ? 'Thank you. Your subscription is submitted' : 'This offering has closed') : held ? 'Thank you. Your paperwork is complete' : 'You’re all set')}
+      ${ivfH1(later ? 'Thank you. One document is still to sign' : c.it.existing ? (c.req ? 'Thank you. Your subscription is submitted' : 'This offering has closed') : held ? 'Thank you. Your paperwork is complete' : 'You’re all set')}
       <p class="lede">${lede}</p>
       <h2 class="ivf-h2">What happens next</h2>
       <ul class="ivf-need">${next.map((x) => `<li>${x}</li>`).join('')}</ul>
@@ -2533,6 +2587,9 @@
    */
   function taxOutcome(c) {
     const tc = c.inv.taxCert;
+    // Plan 06-34: the form this flow finished without a signature, retired because a signed form stays on file
+    const kept = !!c.fl.taxKeptSigned && c.fl.taxKeptSigned === c.fl.taxEnvelopeId ? (c.ws.envelopes || []).find((e) => e.id === c.fl.taxKeptSigned) : null;
+    if (kept && kept.taxForm) return { form: kept.taxForm.form, how: 'unsigned' };
     const fresh = !!tc && ((!!tc.envelopeId && tc.envelopeId === c.fl.taxEnvelopeId) || (tc.uploaded === true && !!tc.fileId && tc.fileId === c.fl.taxUploadId));
     const form = (fresh && tc.form) || (NS.INVESTOR_TYPES[c.inv.taxType] || { form: 'W-9' }).form;
     return { form, how: !fresh ? 'none' : tc.uploaded ? 'uploaded' : tc.signed === false ? 'unsigned' : 'signed' };
@@ -3297,7 +3354,7 @@
           : taxEnv
             ? `<div class="ob-form ivf-form ivf-agreement ivf-tax-sign">${body}<div class="ob-actions"><button class="btn" type="button" data-action="ivf-taxanswers">Back</button></div>${saved}</div>`
             : key === 'agreement'
-            ? `<div class="ob-form ivf-form ivf-agreement">${body}<div class="ob-actions">${back}</div>${saved}</div>`
+            ? `<div class="ob-form ivf-form ivf-agreement">${body}<div class="ob-actions">${back}${lostAgreement(c) ? '<button class="btn btn-primary" type="button" data-action="ivf-sign-later">Continue and sign later</button>' : ''}</div>${saved}</div>`
             : `<form class="ob-form ivf-form" data-form="ivf-step" novalidate>${body}<div class="ob-actions">${back}<button class="btn btn-primary" type="submit"${o.busy ? ' disabled' : ''}>${o.busy ? 'Saving…' : submit}</button></div>${saved}</form>`;
       return `<div class="pt pt-auth ivf">${head}
         <main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ob ivf-wrap${key === 'agreement' || taxEnv ? ' ivf-wide' : ''}">
@@ -3534,6 +3591,34 @@
     const again = document.getElementById('ob-taxUpFile');
     if (again) again.focus();
   };
+  /**
+   * Plan 06-34 (walkthrough failure 1): the agreement step when this browser did not keep the agreement's file (it would not
+   * keep it, or it cleared it). Its pages cannot be shown, so nothing can be signed here; the investor goes on with the
+   * agreement unsigned and signs it from their portal once the firm adds it again (esign.js re-issues it then).
+   */
+  function lostAgreement(c) {
+    const env = envOf(c);
+    const s = signerOf(env, c.inv);
+    return !!env && env.status === 'sent' && !!s && s.status !== 'signed' && s.status !== 'declined' && !!NS.esign && !!NS.esign.fileLost && NS.esign.fileLost(env);
+  }
+  NS.actions['ivf-sign-later'] = () => {
+    const c = fctx();
+    if (!c || ob().busy) return;
+    const steps = flowSteps(c);
+    const key = currentKey(c, steps);
+    if (shownChanged(c, key) || key !== 'agreement' || !lostAgreement(c)) return;
+    const i = c.inv;
+    const oid = c.off ? c.off.id : c.it.offeringId;
+    // Nothing is recorded as signed: the subscription stays pending with its agreement unsigned, and Approve is refused until
+    // the investor signs it (operations.js decide).
+    if (NS.audit) NS.audit.log(c.ws, { action: 'Subscription agreement not shown: this browser did not keep its file', record: i.id, fund: oid || '', detail: `${i.title}: the subscription was submitted with the agreement unsigned. Add the agreement again from the offering page; ${i.title} then signs it from their portal.`, actor: `${i.title} (investor)` });
+    notify(c.ws, 'invite_progress', `${i.title} could not see the subscription agreement`, `This browser did not keep the agreement’s file. Add the agreement again from the offering page; ${i.title} then signs it from their portal.`, `console-offering-${oid}`);
+    c.fl.signLater = nowIso();
+    c.fl.at = 'done';
+    S().ui.ivfFocus = true;
+    NS.app.save(true);
+    completeFlow(c);
+  };
   NS.actions['ivf-back'] = () => {
     const c = fctx();
     if (!c) return;
@@ -3651,5 +3736,5 @@
     const req = fl.requestId ? (ws.requests || []).find((r) => r.id === fl.requestId) || null : null;
     return flowSteps({ ws, it, inv: i, fl, req, off: ws.offerings.find((x) => x.id === it.offeringId && (x.status === 'Raising' || req)) || null });
   }
-  NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL, taxOnFile, taxAsk };
+  NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL, taxOnFile, taxAsk, retireTax };
 })(window.CVPortal);
