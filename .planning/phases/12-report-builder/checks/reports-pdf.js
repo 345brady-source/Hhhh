@@ -99,8 +99,10 @@ const parts = {
   async compose({ check }) {
     const { P, kit, G } = load();
     const dir = T.work('reports-pdf');
+    const t0 = process.hrtime.bigint();
     const bytes = await P.compose(clone(F.model), { kit, images: imagesFor(G) });
-    check('compose returns bytes starting %PDF-', bytes instanceof G.Uint8Array && Buffer.from(bytes.subarray(0, 5)).toString() === '%PDF-');
+    const ms = Number((process.hrtime.bigint() - t0) / 1000000n);
+    check(`compose returns bytes starting %PDF- (layout-a in Node took ${ms} ms; measured, printed, no threshold)`, bytes instanceof G.Uint8Array && Buffer.from(bytes.subarray(0, 5)).toString() === '%PDF-');
     const file = T.save(dir, fileName('compose'), bytes);
     const info = T.info(file);
     const N = +info.Pages;
@@ -308,8 +310,111 @@ const parts = {
     m.when = '2027-02-01T12:00:00.000Z';
     const d = await P.compose(m, { kit, images: imagesFor(G) });
     check('a different generation time gives a different SHA-256', SHA(NS, a) !== SHA(NS, d));
+  },
+
+  /**
+   * RB-14: in the owner's phone frame (390x844, touch, sandboxed, scripts from the page's own address only, connections
+   * refused) the composer loads as a script from the same address, redraws an SVG and a WebP logo to PNG on a canvas,
+   * composes layout-a with the shipped writer and fonts, and hands the bytes out; with the canvas refusing, the firm's
+   * short name stands in.
+   */
+  async phone({ check }) {
+    const Lib = require(path.join(T.P6, 'lib.js'));
+    const L10 = require(path.join(T.P10, 'checks/lib10.js'));
+    const S = await Lib.start();
+    try {
+      const { A, fr } = await L10.framed(S, 'phone', { page: 'diy.html', policy: 'self' });
+      const size = await fr.evaluate(() => [window.innerWidth, window.innerHeight, navigator.maxTouchPoints > 0]);
+      check('the frame is 390x844 with touch', A.page.viewportSize().width === 390 && A.page.viewportSize().height === 844 && size[2] === true, size);
+      await L10.proveRefused(check, A, fr);
+      const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40" viewBox="0 0 120 40"><rect width="40" height="40" fill="#1F3A5F"/><rect x="46" y="14" width="74" height="12" fill="#C8963E"/></svg>').toString('base64');
+      const arg = { model: clone(F.model), photo: F.b64.photo, svg: 'data:image/svg+xml;base64,' + svg, webp: 'data:image/webp;base64,' + WEBP };
+      const got = await fr.evaluate(async (a) => {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'assets/js/reports-pdf.js';
+          s.onload = res;
+          s.onerror = () => rej(new Error('reports-pdf.js did not load'));
+          document.head.appendChild(s);
+        });
+        const P = window.CVPortal.reportsPdf;
+        const b64 = (u8) => {
+          let bin = '';
+          for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+          return btoa(bin);
+        };
+        const u8 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+        const tenant = (image) => ({ name: 'Société Àrbre Capital', shortName: 'Société Àrbre', colors: { primary: '#1F3A5F', accent: '#C8963E' }, logo: { type: 'image', image } });
+        const images = { p1: { type: 'image/jpeg', bytes: u8(a.photo) } };
+        const svgLogo = await P.logoFor(tenant(a.svg));
+        const webpLogo = await P.logoFor(tenant(a.webp));
+        const t0 = performance.now();
+        const pdf = await P.compose(a.model, { images, logo: svgLogo });
+        const ms = Math.round(performance.now() - t0);
+        const proto = HTMLCanvasElement.prototype;
+        const keep = { toBlob: proto.toBlob, toDataURL: proto.toDataURL };
+        proto.toBlob = function () {
+          throw new Error('refused');
+        };
+        proto.toDataURL = function () {
+          throw new Error('refused');
+        };
+        let refused;
+        try {
+          refused = await P.logoFor(tenant(a.svg));
+        } finally {
+          proto.toBlob = keep.toBlob;
+          proto.toDataURL = keep.toDataURL;
+        }
+        const pdf2 = await P.compose(a.model, { images, logo: refused });
+        return {
+          svgKind: svgLogo.kind,
+          webpKind: webpLogo.kind,
+          refused: { kind: refused.kind, text: refused.text, color: refused.color },
+          ms,
+          head: String.fromCharCode.apply(null, pdf.subarray(0, 5)),
+          b64: b64(pdf),
+          b64b: b64(pdf2),
+          loaded: performance.getEntriesByType('resource').map((e) => e.name)
+        };
+      }, arg);
+      check('logoFor redraws an SVG logo to PNG on the canvas', got.svgKind === 'png', got.svgKind);
+      check('logoFor redraws a WebP logo to PNG on the canvas', got.webpKind === 'png', got.webpKind);
+      check(`compose of layout-a in the frame took ${got.ms} ms (measured, printed, no threshold)`, Number.isFinite(got.ms) && got.head === '%PDF-', got.head);
+      const shipped = ['assets/js/reports-pdf.js', 'assets/vendor/pdfwrite/write.js', 'assets/vendor/pdfwrite/fonts.js', 'assets/vendor/textfont/text-regular.js', 'assets/vendor/textfont/text-bold.js'];
+      check("the composer, the shipped writer, font embedder and both font data files came from the page's own address", shipped.every((f) => got.loaded.some((u) => u === `${S.origin}/${f}`)), got.loaded.filter((u) => /vendor|reports-pdf/.test(u)));
+      const dir = T.work('reports-pdf');
+      const file = T.save(dir, fileName('phone'), Buffer.from(got.b64, 'base64'));
+      const list = T.images(file);
+      check('the redrawn logo is an image on page 1', list.some((r) => r.page === 1 && r.type === 'image' && r.enc !== 'jpeg'), list.slice(0, 6));
+      const text = T.text(file);
+      const lost = missingIn(text, strings(F.model));
+      check("every string of the model is in the frame's PDF", lost.length === 0, lost.slice(0, 10));
+      check("with the canvas refusing, logoFor gives the firm's short name in its primary color", got.refused.kind === 'name' && got.refused.text === 'Société Àrbre' && got.refused.color === '#1F3A5F', got.refused);
+      const file2 = T.save(dir, fileName('phone-name'), Buffer.from(got.b64b, 'base64'));
+      const head2 = (T.text(file2).split('\f')[1] || '').split('\n').find((l) => l.trim()) || '';
+      check("that PDF's page headers carry the short name (not an image)", /Société Àrbre/.test(head2) && !/Capital/.test(head2) && T.images(file2).every((r) => r.enc === 'jpeg'), head2);
+      check("no request outside the page's address", A.p10.outside.length === 0 && got.loaded.every((u) => u.startsWith(S.origin + '/') || u.startsWith('data:') || u.startsWith('blob:')), A.p10.outside.concat(got.loaded.filter((u) => !u.startsWith(S.origin))));
+      await L10.quiet(check, A, fr);
+      await L10.leak(check, fr);
+      await A.context.close();
+    } finally {
+      await S.stop();
+    }
+  },
+
+  /** The check itself can fail: an unknown case name and an empty list each exit 1 with a FAIL line. */
+  async selfcheck({ check }) {
+    const { spawnSync } = require('child_process');
+    const run = (args) => spawnSync(process.execPath, [__filename].concat(args), { encoding: 'utf8', env: process.env });
+    const u = run(['--case', 'nonesuch']);
+    check('an unknown --case name exits 1 with a FAIL line', u.status === 1 && /^FAIL unknown case name: nonesuch/m.test(u.stdout), { status: u.status, out: u.stdout.slice(-300) });
+    const e = run(['--case', '']);
+    check('an empty --case list exits 1 with a FAIL line', e.status === 1 && /^FAIL no cases to run/m.test(e.stdout), { status: e.status, out: e.stdout.slice(-300) });
   }
 };
+// A 120x40 lossless WebP of the test logo (python3 -I with PIL 12.3.0, once).
+const WEBP = 'UklGRkYAAABXRUJQVlA4TDkAAAAvd8AJABcgEEjAUtlfYw2BQKKS/pQLBBLVzEd5/uMPFRiJoIaS9EMTdPdyuIj+T4CPQgeRgk+FrgAA';
 
 module.exports = { strings, missingIn, imagesFor, load };
 
