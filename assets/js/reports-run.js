@@ -50,16 +50,24 @@
     return ids.filter((x, k) => ids.indexOf(x) === k);
   }
 
-  /** The photos from the store as the composer takes them, { id: { type, bytes } }; null when one is not kept. */
+  /** The photos from the store as the composer takes them: { images: { id: { type, bytes } }, missing: [ids not kept] }. */
   async function photosFrom(store, ids) {
-    const out = {};
+    const images = {};
+    const missing = [];
     for (const id of ids) {
-      const b = await store.get(id);
-      if (!b) return null;
-      out[id] = { type: b.type || '', bytes: new Uint8Array(await b.arrayBuffer()) };
+      let b;
+      try {
+        b = await store.get(id);
+      } catch (e) {
+        b = undefined;
+      }
+      if (!b) missing.push(id);
+      else images[id] = { type: b.type || '', bytes: new Uint8Array(await b.arrayBuffer()) };
     }
-    return out;
+    return { images, missing };
   }
+  /** The logo the composer would draw for the model's firm, worked out once for a whole run. */
+  const logoOf = (model) => NS.reportsPdf.logoFor({ name: model.firm.name, shortName: model.firm.name, logo: model.firm.logo, colors: model.firm.colors });
 
   /** The investors a letter without statements is for: every holder of its funds at the period end. */
   function letterInvestors(ws, template, spec, D) {
@@ -99,10 +107,12 @@
     });
     if (wrong) throw new Error(`${plural(wrong, 'report cannot', 'reports cannot')} be made: ${messages.slice(0, 5).join('; ')}`);
     if (models.some((m) => NS.reports.othersIn(ws, m).length)) throw new Error('A report would show another investor’s details. Nothing was generated.');
-    const images = await photosFrom(store, photoIds(template));
-    if (!images) throw new Error('A photo this template uses is not on this device. Remove it or add it again.');
+    const photos = await photosFrom(store, photoIds(template));
+    if (photos.missing.length) throw new Error('A photo this template uses is not on this device. Remove it or add it again.');
+    const images = photos.images;
 
     const first = models[0];
+    const logo = o.logo || (await logoOf(first));
     const run = R.newRun(ws, { template, title: first.title, period: { from: first.period.from, to: first.period.to, label: first.subtitle }, audience: spec.audience || {}, spec, by: o.by, at });
     const firm = (D.firm(ws) || {}).name || '';
     let stopped = false;
@@ -115,7 +125,7 @@
         const t0 = Date.now();
         const rid = ids[k];
         const model = models[k];
-        const bytes = await NS.reportsPdf.compose(model, { kit: o.kit, images, logo: o.logo });
+        const bytes = await NS.reportsPdf.compose(model, { kit: o.kit, images, logo });
         const file = R.addFile(ws, run.id, {
           investorIds: everyone || [rid],
           offeringId: fundOf(ws, template, spec, rid, D),
@@ -138,5 +148,53 @@
     return run;
   }
 
-  NS.reportsRun = { generate };
+  const CHANGED = 'The original file is not kept on this device, and the figures or the firm’s details have changed since it was made.';
+  const NO_PHOTO = 'The original file is not kept on this device, and a photo it used is no longer on this device.';
+
+  /**
+   * An archived file, byte-identical or not at all: the kept bytes when their SHA-256 equals the record; otherwise the
+   * file remade from the run's own copy of the template, spec and audience at the time it was made, served only when its
+   * SHA-256 equals the record. Nothing is recorded or kept here.
+   *   opts: { kit, store = NS.ops.files, logo, D = NS.reportsData } → { bytes, source: 'kept' | 'remade' } | { error }
+   */
+  async function fileBytes(ws, runId, fileId, opts) {
+    const o = opts || {};
+    const D = o.D || NS.reportsData;
+    const store = o.store || (NS.ops && NS.ops.files);
+    const R = NS.reportRecord;
+    const run = R.runOf(ws, runId);
+    const file = run ? (run.files || []).find((f) => f.id === fileId) : null;
+    if (!file) return { error: 'That report file is not in this workspace.' };
+    let kept;
+    try {
+      kept = await store.get(fileId);
+    } catch (e) {
+      kept = undefined; // the device could not read it: remade below, served only if it is the same file
+    }
+    if (kept) {
+      const bytes = new Uint8Array(await kept.arrayBuffer());
+      return R.verifyFile(ws, runId, fileId, bytes) ? { bytes, source: 'kept' } : { error: 'The kept file does not match its record.' };
+    }
+    const aud = run.audience || {};
+    const rid = aud.kind === 'letter' && !aud.statements ? null : file.investorIds[0] || null;
+    const spec = Object.assign({}, run.spec || {}, { audience: run.audience, when: run.createdAt });
+    let r;
+    try {
+      r = NS.reports.resolve(ws, run.template, spec, rid, D);
+    } catch (e) {
+      return { error: CHANGED };
+    }
+    if (!r || !r.model) return { error: CHANGED };
+    const photos = await photosFrom(store, photoIds(run.template));
+    let bytes;
+    try {
+      bytes = await NS.reportsPdf.compose(r.model, { kit: o.kit, images: photos.images, logo: o.logo || (await logoOf(r.model)) });
+    } catch (e) {
+      return { error: CHANGED };
+    }
+    if (R.verifyFile(ws, runId, fileId, bytes)) return { bytes, source: 'remade' };
+    return { error: photos.missing.length ? NO_PHOTO : CHANGED };
+  }
+
+  NS.reportsRun = { generate, fileBytes };
 })(typeof window !== 'undefined' ? window : globalThis);
