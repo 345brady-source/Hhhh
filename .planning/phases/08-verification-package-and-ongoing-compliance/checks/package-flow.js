@@ -248,6 +248,7 @@ async function kycRow(p, title) {
       return td && td.innerText.indexOf(title) === 0;
     });
     if (!tr) return null;
+    tr.scrollIntoView({ block: 'center' }); // the row in view for the owner's screenshot
     const cell = (l) => ((tr.querySelector(`td[data-label="${l}"]`) || {}).innerText || '').replace(/\s+/g, ' ').trim();
     return { identity: cell('Identity verified'), screening: cell('Screening'), status: cell('Status'), text: tr.innerText.replace(/\s+/g, ' ').trim() };
   }, title);
@@ -344,6 +345,8 @@ const FLOWS = {
 
       await Lib.importFromConsole(C.cp, it.id);
       const kr = await kycRow(C.cp, it.title);
+      // The import's notices fade first, so the owner's screenshot shows the row itself.
+      await C.cp.waitForFunction(() => !document.querySelector('#toasts .toast'), null, { timeout: 8000 }).catch(() => {});
       await C.A.page.screenshot({ path: path.join(SHOTS, 'identity-kyc-row.png') });
       check('the console\'s AML/KYC row shows the identity verified and screening clear (no matches)', !!kr && !/Not submitted/.test(kr.identity) && /\d/.test(kr.identity) && /^No matches/.test(kr.screening), kr);
       const dev = await C.cp.evaluate((id) => {
