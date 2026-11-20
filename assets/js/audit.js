@@ -544,10 +544,109 @@
     return { date: d, doc: s.doc, age, stale: age > every };
   }
 
-  function holdingsAt(L, k) {
+  /* ---------- A fund that is not a sample fund: the balance sheet from its journal ---------- */
+  const booksOf = (ws, o) => (ws && ws.books && ws.books.funds && o && ws.books.funds[o.id]) || null;
+  /**
+   * The values entered for a holding dated from..to, latest first: the stored marks and the live 'mark:' entries with a
+   * line on it (a value recorded as an entry only). doc is the mark's document, else the entry's memo.
+   */
+  function valuesOf(ws, o, hid, from, to) {
+    const f = booksOf(ws, o);
+    if (!f) return [];
+    const out = [];
+    const docs = {};
+    (Array.isArray(f.marks) ? f.marks : []).forEach((m) => {
+      if (!m) return;
+      if (m.id) docs[m.id] = String(m.doc || '');
+      if (m.holding === hid && typeof m.date === 'string' && m.date >= from && m.date <= to) out.push({ date: m.date, doc: String(m.doc || '') });
+    });
+    const j = Array.isArray(f.journal) ? f.journal : [];
+    const reversed = new Set();
+    j.forEach((e) => e && e.rev && reversed.add(e.rev));
+    j.forEach((e) => {
+      if (!e || e.rev || reversed.has(e.id) || typeof e.src !== 'string' || e.src.indexOf('mark:') !== 0) return;
+      if (typeof e.date !== 'string' || e.date < from || e.date > to) return;
+      if (!(e.lines || []).some((l) => Array.isArray(l) && (l[3] || '') === hid)) return;
+      const id = e.src.slice(5);
+      out.push({ date: e.date, doc: docs[id] != null ? docs[id] : String(e.memo || '') });
+    });
+    return out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  }
+  /** Asset and liability accounts with a row of their own on the statement (cash is every asset account coded 10xx). */
+  const AL_ASSET = { 1100: 1, 1150: 1, 1200: 1, 1300: 1, 1400: 1, 1410: 1, 1490: 1 };
+  const AL_LIAB = { 2000: 1, 2100: 1, 2200: 1, 2250: 1, 2300: 1, 2400: 1, 2500: 1, 2600: 1 };
+  /**
+   * The balance sheet at the month-end from the journal: every figure is an account balance; investments are cost (1100)
+   * plus recorded value changes (1150), one row per holding; nothing is split by weights or made to balance. nav stays
+   * the capital accounts' (LP capital plus the GP's accrued share), so the 'nav' check compares the two.
+   */
+  function booksHoldings(L, k, ws, out) {
+    const o = L.o;
+    const B = NS.books;
+    const F = L.byKey[k];
+    const d = endOf(k);
+    const nav = F ? F.endCap + F.gpEnd : 0;
+    out.nav = nav;
+    const f = booksOf(ws, o);
+    const accts = B.accounts(ws, o.id);
+    const bal = (codes, opts) => B.balance(ws, o.id, codes, d, opts);
+    const every = L.S.open ? 1 : 3;
+    const missing = () => ({ date: '', doc: '', age: 999, stale: true });
+    let costKnown = 0;
+    let upKnown = 0;
+    const seen = new Set();
+    ((f && Array.isArray(f.holdings) && f.holdings) || []).forEach((h) => {
+      if (!h || !h.id || seen.has(h.id)) return;
+      seen.add(h.id);
+      const cost = bal('1100', { holding: h.id });
+      const up = bal('1150', { holding: h.id });
+      costKnown += cost;
+      upKnown += up;
+      if (!cost && !up) return;
+      const last = valuesOf(ws, o, h.id, '', d)[0];
+      const age = last ? monthsFrom(keyOf(last.date), k) : 999;
+      const fv = cost + up;
+      out.rows.push({ h, sidePocket: false, name: String(h.name || h.id), security: h.kind === 'property' ? 'Property' : 'Investment', sleeve: '', level: h.level || 3, method: '', input: '', qty: null, price: null, cost, fv, debt: 0, equity: fv, support: last ? { date: last.date, doc: last.doc || 'Value entered', age, stale: age > every } : missing() });
+    });
+    // Lines on 1100 and 1150 that name no holding of this fund.
+    const cost = bal('1100') - costKnown;
+    const up = bal('1150') - upKnown;
+    if (cost || up) out.rows.push({ h: {}, sidePocket: false, name: 'Investments', security: 'Investment', sleeve: '', level: 3, method: '', input: '', qty: null, price: null, cost, fv: cost + up, debt: 0, equity: cost + up, support: missing() });
+    out.rows.forEach((r) => {
+      out.longFV += r.fv;
+      out.longCost += r.cost;
+      r.pctNav = nav ? r.fv / nav : 0;
+    });
+    const assets = accts.filter((a) => a.type === 'asset');
+    const liabs = accts.filter((a) => a.type === 'liability');
+    out.cash = bal(assets.filter((a) => a.code.slice(0, 2) === '10').map((a) => a.code));
+    out.feePayable = -bal('2100');
+    out.redemptionsPayable = -bal('2200');
+    out.debt = -bal('2500');
+    out.shortFV = -bal('2300');
+    out.receivables = bal('1200');
+    out.prepaid = bal('1300');
+    out.land = bal('1400');
+    out.buildings = bal(['1410', '1490']);
+    out.payables = -bal('2000');
+    out.subscriptionsAdvance = -bal('2250');
+    out.taxWithheld = -bal('2400');
+    out.dueGp = -bal('2600');
+    out.totalAssets = bal(assets.map((a) => a.code));
+    out.totalLiabilities = -bal(liabs.map((a) => a.code));
+    // Rows the statement adds for this fund when not zero, in statement order; any account added beyond the template
+    // keeps its own name, so the rows always add up to the totals.
+    const nz = (rows) => rows.filter((r) => r[1] !== 0);
+    out.extraAssets = nz([['Land', out.land], ['Buildings and improvements, net', out.buildings], ['Interest, dividends and rents receivable', out.receivables], ['Prepaid expenses and other assets', out.prepaid]].concat(assets.filter((a) => a.code.slice(0, 2) !== '10' && !AL_ASSET[a.code]).map((a) => [a.name || a.code, bal(a.code)])));
+    out.extraLiabilities = nz([['Accounts payable and accrued expenses', out.payables], ['Tax withheld, payable', out.taxWithheld], ['Due to general partner', out.dueGp], ['Subscriptions received in advance', out.subscriptionsAdvance]].concat(liabs.filter((a) => !AL_LIAB[a.code]).map((a) => [a.name || a.code, -bal(a.code)])));
+    return out;
+  }
+
+  function holdingsAt(L, k, ws) {
     const F = L.byKey[k];
     const S = L.S;
     const out = { key: k, date: k ? endOf(k) : '', rows: [], cash: 0, feePayable: 0, redemptionsPayable: 0, debt: 0, longFV: 0, longCost: 0, shortFV: 0, shortProceeds: 0, nav: 0, totalAssets: 0, totalLiabilities: 0 };
+    if (k && ws && NS.books && !generated(L.o)) return booksHoldings(L, k, ws, out);
     if (!F) return out;
     const nav = F.endCap + F.gpEnd;
     out.nav = nav;
@@ -675,7 +774,8 @@
     const sum = (f) => inv.reduce((s, a) => s + a[f], 0);
     const fund = { begin: sum('begin'), contrib: sum('contrib'), dist: sum('dist'), income: sum('income'), gain: sum('gain'), fee: sum('fee'), carry: sum('carry'), gpOut: sum('gpOut'), end: sum('end'), gpBegin: sum('carryBegin'), gpEnd: sum('carryEnd'), contribCum: sum('contribCum'), distCum: sum('distCum'), commit: sum('commit'), sp: sum('sp') };
     inv.forEach((a) => (a.own = fund.end > 0 ? a.end / fund.end : 0));
-    const hold = holdingsAt(L, lastM && lastM.key >= fk ? lastM.key : lastM ? lastM.key : null);
+    // A fund that is not a sample fund with no completed month yet still shows what its books hold at the period end.
+    const hold = holdingsAt(L, lastM && lastM.key >= fk ? lastM.key : lastM ? lastM.key : generated(o) ? null : tk, ws);
     return { L, o, S: L.S, from, to, ms, inv, fund, hold, empty: !L.months.length, before };
   }
 
@@ -1187,6 +1287,36 @@
 
   /* ---------- Schedules ---------- */
   const COL = (h, t, k) => ({ h, t: t || 'text', k });
+  /** The statement of operations of a fund that is not a sample fund, from its journal over P.from..P.to. */
+  function booksOperations(ws, P, f, gpWord) {
+    const o = P.o;
+    const tb = NS.books.trialBalance(ws, o.id, P.from, P.to);
+    const act = (r) => r.debits - r.credits;
+    const rows = (type, skip) => tb.filter((r) => r.type === type && act(r) !== 0 && !(skip && skip[r.code])).map((r) => [r.name || r.code, -act(r)]);
+    const sum = (xs) => xs.reduce((a, x) => a + x[1], 0);
+    const of = (code) => -tb.filter((r) => r.code === code).reduce((a, r) => a + act(r), 0);
+    const inc = rows('income');
+    const exp = rows('expense');
+    const ti = sum(inc);
+    const te = sum(exp);
+    const realized = of('6000');
+    const unrealized = of('6100');
+    // A gain account added beyond the template keeps its own row, so the rows add up to the journal's results.
+    const other = rows('gain', { 6000: 1, 6100: 1 });
+    return [
+      ...inc,
+      ['Total investment income', ti],
+      ...exp,
+      ['Total expenses', te],
+      ['Net investment income (loss)', ti + te],
+      ['Net realized gain (loss) on investments', realized],
+      ['Net change in unrealized appreciation (depreciation) on investments', unrealized],
+      ...other,
+      ['Net increase (decrease) in net assets from operations', ti + te + realized + unrealized + sum(other)],
+      [`Change in ${gpWord.toLowerCase()} allocated to the general partner`, -f.carry],
+      ['Net increase (decrease) in limited partners’ capital from operations', f.income - f.fee + f.gain - f.carry]
+    ];
+  }
   function sched(id, file, title, desc, cols, rows, total) {
     return { id, file, title, desc, cols, rows, total: total || null };
   }
@@ -1208,11 +1338,13 @@
     const al = [
       ['Investments, at fair value' + (H.longCost ? ` (cost ${money(H.longCost)})` : ''), H.longFV],
       ['Cash and cash equivalents', H.cash],
+      ...(H.extraAssets || []),
       ['Total assets', H.totalAssets],
       ...(H.shortFV ? [['Securities sold short, at fair value' + (H.shortProceeds ? ` (proceeds ${money(H.shortProceeds)})` : ''), H.shortFV]] : []),
       ...(H.debt ? [['Mortgage notes payable', H.debt]] : []),
       ...(H.redemptionsPayable ? [['Redemptions payable', H.redemptionsPayable]] : []),
       ['Management fees payable', H.feePayable],
+      ...(H.extraLiabilities || []),
       ['Total liabilities', H.totalLiabilities],
       ['Net assets (partners’ capital)', H.totalAssets - H.totalLiabilities],
       ['  Limited partners', f.end],
@@ -1220,8 +1352,10 @@
     ];
     out.push(sched('al', '01_Statement_of_assets_and_liabilities.csv', 'Statement of assets and liabilities', `As of ${dateLong(asOf)}.`, [COL('Line item'), COL('Amount', 'money')], al));
 
-    // 2. Statement of operations
-    const ops = [
+    // 2. Statement of operations. A fund that is not a sample fund: from the journal over the period, one row per
+    // income and expense account with activity (minus its activity), realized and unrealized gains from 6000 and 6100.
+    const fromBooks = !generated(o) && NS.books;
+    const ops = fromBooks ? booksOperations(ws, P, f, gpWord) : [
       ['Investment income', f.income],
       ['Management fees', -f.fee],
       ['Net investment income (loss)', f.income - f.fee],
@@ -1547,9 +1681,18 @@
     return String(s).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
   }
   function build(ws, o, from, to) {
+    // A fund that is not a sample fund: the books are brought up to date with the records before anything is read.
+    let syncError = '';
+    if (!generated(o) && NS.books && NS.books.sync) {
+      try {
+        NS.books.sync(ws);
+      } catch (e) {
+        syncError = String((e && e.message) || e);
+      }
+    }
     const P = period(ws, o, from, to);
     const ver = verify(ws);
-    const chk = checks(ws, P, { verify: ver });
+    const chk = checks(ws, P, { verify: ver, syncError });
     const list = schedules(ws, P, chk, ver);
     return { P, ver, chk, list };
   }
