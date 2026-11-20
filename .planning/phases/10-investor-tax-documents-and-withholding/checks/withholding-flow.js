@@ -140,7 +140,7 @@ async function pressRecord(fr) {
     const NS = window.CVPortal;
     const runs = NS.state.ws.runs;
     const key = Object.keys(localStorage).find((k) => /ws:kestrel-bay$/.test(k)) || '';
-    return { added: runs.length - before.length, run: runs.find((r) => before.indexOf(r.id) < 0) || null, actor: NS.app.actor(), saved: JSON.parse(localStorage.getItem(key) || 'null') };
+    return { added: runs.length - before.length, run: runs.find((r) => before.indexOf(r.id) < 0) || null, actor: NS.app.actor(), saved: JSON.parse(localStorage.getItem(key) || 'null'), said: ((document.getElementById('toasts') || {}).innerText || '').trim() };
   }, before);
 }
 const lineOf = (run, id) => ((run && run.lines) || []).find((l) => l.investorId === id) || null;
@@ -181,7 +181,7 @@ async function proposeAt(size, ctx, more) {
   const r = await pressRecord(fr);
   const l = lineOf(r.run, 'A-1002');
   const w = l && l.withheld && l.withheld[0];
-  check('Record distribution stores one run', r.added === 1, { added: r.added });
+  check('Record distribution stores one run', r.added === 1, { added: r.added, said: r.said });
   check('its line for A-1002: gross 333,333, one withheld entry of 80,000 cents (backup, 24%, rule) confirmed by the signed-in person, net 253,333', !!l && l.grossCents === 333333 && l.withheld.length === 1 && w.kind === 'backup' && w.cents === 80000 && w.basisCents === 333333 && w.ratePct === 24 && w.source === 'rule' && /item 2/.test(w.why) && w.confirmedBy === r.actor && /^2026-11-19T/.test(w.confirmedAt) && l.netCents === 253333, l);
   check('the other two lines have nothing withheld', J(['A-1001', 'A-1003'].map((id) => { const x = lineOf(r.run, id); return x && [x.grossCents, x.withheld.length, x.netCents]; })) === J([[500000, 0, 500000], [166667, 0, 166667]]), r.run && r.run.lines);
   const saved = r.saved && (r.saved.runs || []).find((x) => r.run && x.id === r.run.id);
