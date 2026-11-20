@@ -652,8 +652,10 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   const packageSettings = (scope, provider, settings) => (packageCheck(scope, provider) ? { firm: clip(firmName(scope), 120) } : settings);
   /**
    * A package check's start: billing holds the package while the provider is called (a cancel meanwhile credits nothing
-   * if the check then runs); the first start accepted marks it started. A refusal by the provider for its own billing or
-   * key reasons (402, 403) leaves the package valid and unstarted, tells the investor plainly and alerts the operator.
+   * if the check then runs); the first start accepted marks it started. Any provider failure (a refusal, a 5xx, a
+   * timeout, a network error, a malformed answer) leaves the package valid and unstarted, is put on the invitation's
+   * record and tells the investor one plain sentence, never the provider's status or words. A refusal for the provider's
+   * own billing or key reasons (402, 403) also alerts the operator.
    */
   async function packageStart(scope, provider, fn, kind) {
     if (!packageCheck(scope, provider) || !scope.package) return fn();
@@ -665,14 +667,15 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       out = await fn();
     } catch (e) {
       finish(false);
-      const refused = e && (e.providerStatus === 402 || e.providerStatus === 403);
-      if (refused) {
-        const cur = store.get('invitations', scope.id);
-        if (cur) addEvent(cur, 'package_check_failed');
-        store.event({ type: 'package_check_failed', id: scope.id });
-        alertOperator(e.providerStatus);
-      }
-      throw refused ? fail(502, 'This check could not start. Please try again later.') : e;
+      const providerStatus = e && Number.isInteger(e.providerStatus) ? e.providerStatus : 0;
+      const cur = store.get('invitations', scope.id);
+      if (cur) addEvent(cur, 'package_check_failed');
+      // The operator's log keeps the provider's status (0: no answer or no usable answer), never its words.
+      store.event({ type: 'package_check_failed', id: scope.id, providerStatus });
+      if (providerStatus === 402 || providerStatus === 403) alertOperator(providerStatus);
+      // A fault in the server's own code (an error with no status) is still printed for the operator, as index.mjs does.
+      if (!(e && e.status) && env.NODE_ENV !== 'test') console.error(e);
+      throw fail(502, 'This check could not start. Please try again later.');
     } finally {
       const left = (starting.get(key) || 1) - 1;
       if (left > 0) starting.set(key, left);
