@@ -477,6 +477,9 @@
           if (new RegExp(x.pattern).test(v)) fault(x.why);
         });
         if (c.max && v.length > c.max) fault(`is longer than ${c.max} characters (it has ${v.length})`);
+        if (c.trim && /^ | $| {2}/.test(v)) fault('has a leading, trailing or doubled space');
+        if (c.notSame && c.notSame.some((o) => cell(o) !== '' && cell(o).replace(/-/g, '') === v.replace(/-/g, ''))) fault(`is the same as the taxpayer number in column ${c.notSame.join(' or ')}`);
+        if (c.needsOneOf && c.needsOneOf.every((o) => cell(o) === '')) fault(`needs one of the amounts in columns ${c.needsOneOf.join(', ')}`);
         if (c.values && c.values.indexOf(v) < 0) fault(`is not one of: ${c.values.join(', ')}`);
         let p = c.pattern;
         if (c.patternBy) {
@@ -487,6 +490,42 @@
       });
     });
     return faults;
+  }
+
+  /**
+   * The upload files: at most IRIS.maxRows rows each, the header line first, lines ended CR LF. Refuses (throws, naming
+   * the first faults) while any row breaks a rule: no file is offered that the rules know to be wrong.
+   * Returns [ { name, text, rows } ].
+   */
+  function files(formType, rows) {
+    const faults = validate(formType, rows);
+    if (faults.length) {
+      const f = faults.slice(0, 3).map((x) => `row ${x.row}, column ${x.col}${x.name ? ` (${x.name})` : ''} ${x.why}`);
+      throw Object.assign(new Error(`The file cannot be built while ${faults.length} cell${faults.length === 1 ? '' : 's'} break the IRS's rules: ${f.join('; ')}${faults.length > 3 ? '; …' : ''}.`), { faults });
+    }
+    if (!(rows || []).length) throw new Error('There is no form to put in the file.');
+    const per = NS.tax1099data.IRIS.maxRows;
+    const year = String(rows[0][1]);
+    const parts = [];
+    for (let k = 0; k < rows.length; k += per) parts.push(rows.slice(k, k + per));
+    const head = header(formType).join(',');
+    return parts.map((p, n) => ({ name: `${formType}-${year}-part-${n + 1}-of-${parts.length}.csv`, rows: p.length, text: [head].concat(p.map((r) => r.join(','))).join('\r\n') + '\r\n' }));
+  }
+  /** Record that the sponsor uploaded a file to the IRS: the receipt id and date, the file's SHA-256, its row count. */
+  function markFiled(ws, offeringId, year, opts) {
+    opts = opts || {};
+    const y = yearOf(year);
+    const o = offeringOf(ws, offeringId);
+    const by = who(opts.by, 'Recording a filing');
+    const receiptId = String(opts.receiptId || '').trim();
+    if (!receiptId) throw new Error('A filing needs the receipt id the IRS gave.');
+    if (!ISO_DAY.test(String(opts.date || ''))) throw new Error('A filing needs the day it was made (YYYY-MM-DD).');
+    if (!/^[0-9a-f]{64}$/i.test(String(opts.sha256 || ''))) throw new Error('A filing needs the fingerprint (SHA-256) of the file uploaded.');
+    if (!(Number.isInteger(opts.rows) && opts.rows > 0)) throw new Error('A filing needs the number of forms in the file.');
+    const entry = { form: '1099-int', receiptId, date: opts.date, sha256: String(opts.sha256).toLowerCase(), rows: opts.rows, by, at: opts.at || nowIso() };
+    yearRec(o, y).filed.push(entry);
+    log(ws, { action: 'Form 1099-INT file recorded as filed', record: o.id, fund: o.id, detail: `${y}: ${opts.rows} form${opts.rows === 1 ? '' : 's'}, receipt ${receiptId}, filed ${opts.date}`, actor: by });
+    return entry;
   }
 
   /* ---------- reading a page's text ---------- */
@@ -520,7 +559,8 @@
     copyBAnswers,
     recipientCopy,
     textItems,
-    iris: { header, row, validate }
+    markFiled,
+    iris: { header, row, validate, files }
   };
   if (NS) NS.tax1099 = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;

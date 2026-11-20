@@ -1,5 +1,5 @@
 // gate: node
-// last "TAX 1099: PASS (cases run: 1)"
+// last "TAX 1099: PASS (cases run: 10)"
 // Form 1099-INT's core (plan 10-09, assets/js/tax1099.js and tax1099-data.js), no browser: data.js, audit.js,
 // withholding.js, taxmaps.js, taxforms.js, tax1099-data.js and tax1099.js run in one sandbox with window.CVPortal = {},
 // on workspaces written out here. The sandbox clock stands at noon on 20 January 2027 and every function is given its
@@ -440,6 +440,7 @@ const cases = {
       ws.runs.push({ id: 'old-oct', offeringId: 'f1', date: '2026-10-15', type: 'Interest', total: 1000000, status: 'paid', source: 'console', file: '' });
       let F = run();
       check('an interest payment without stored lines: the stop stored naming it, no form', codes(F) === 'stored' && F.stops[0].runId === 'old-oct' && /CPA/.test(F.stops[0].text) && F.forms.length === 0, F.stops);
+      check('while it stands, nothing worked out again from positions is counted: totalCents is the stored 4,000,000', F.totalCents === 4000000, F.totalCents);
       NS.data.confirmLines(ws, 'old-oct', { by: BY, at: AT });
       F = run();
       check('after confirmLines it counts with the confirmed amounts (A-1001 2,500,000; A-1002 1,666,665)', !F.stops.length && brief(F) === 'A-1001=2500000/0 A-1002=1666665/160000', brief(F));
@@ -598,7 +599,7 @@ const cases = {
       check('the files have distinct names naming the form, the year and the part', new Set(big.map((x) => x.name)).size === 3 && big.every((x) => /^1099-INT-2026-part-[1-3]-of-3\.csv$/.test(x.name)), big.map((x) => x.name));
       const all = big.map((x) => x.text).join('');
       check('no quotation mark and no asterisk anywhere in a file', !/["*]/.test(all));
-      const tinCells = [].concat(...big.map((x) => x.text.split('\r\n').slice(1).filter(Boolean).map((l) => { const c = l.split(','); return [c[col('D')], c[col('U')]]; })));
+      const tinCells = big.map((x) => x.text.split('\r\n').slice(1).filter(Boolean).map((l) => { const c = l.split(','); return [c[col('D')], c[col('U')]]; })).flat(2);
       check('every taxpayer number in the files is digits and dashes: no letter X or other mask standing in for a digit', tinCells.length === 474 && tinCells.every((v) => /^[0-9-]+$/.test(v) && /\d{4}$/.test(v)));
       const bad = r2.slice();
       bad[col('AH')] = '7870';
