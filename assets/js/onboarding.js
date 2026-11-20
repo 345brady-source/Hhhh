@@ -2375,8 +2375,20 @@
   function taxSigned(c, env, signer) {
     const i = c.inv;
     const fl = c.fl;
-    if (!(i.taxCert && i.taxCert.envelopeId === env.id)) {
-      const signed = env.fields.some((f) => f.signerId === signer.id && f.type === 'signature' && !!f.value);
+    const signed = env.fields.some((f) => f.signerId === signer.id && f.type === 'signature' && !!f.value);
+    // Plan 06-34 (walkthrough-2 N1): one tax form per investor. A form finished without a signature never replaces a signed
+    // form on file (a signed certification is the stronger one): the new one is retired and the record stays as it is.
+    if (!signed && !(i.taxCert && i.taxCert.envelopeId === env.id) && signedOnFile(c.ws, i, env)) {
+      const on = i.taxCert;
+      retireTax(c.ws, i, env, `Finished without a signature; the signed Form ${on.form} on file stays`, { actor: `${i.title} (investor)`, action: 'Tax form kept', what: `Form ${env.taxForm.form} finished on ${U.date(nowIso().slice(0, 10), 'long')} without a signature; the signed Form ${on.form}${on.at ? ` of ${U.date(String(on.at).slice(0, 10), 'long')}` : ''} stays on file` });
+      fl.taxKeptSigned = env.id;
+    } else if (!(i.taxCert && i.taxCert.envelopeId === env.id)) {
+      // The new form is the one on record: every earlier tax form of this investor is retired (a signed one is kept as
+      // superseded with its signed copy, an unsigned one voided and its files deleted).
+      const when = U.date(String(signer.signedAt || nowIso()).slice(0, 10), 'long');
+      const why = `Replaced by the Form ${env.taxForm.form} ${signed ? 'signed' : 'finished'} on ${when}`;
+      (c.ws.envelopes || []).filter((e) => e.kind === 'tax' && e.id !== env.id && e.status !== 'voided' && e.status !== 'superseded' && !!signerOf(e, i)).forEach((e) => retireTax(c.ws, i, e, why, { by: env.id, actor: `${i.title} (investor)` }));
+      delete fl.taxKeptSigned;
       const base = { form: env.taxForm.form, revision: env.taxForm.revision, envelopeId: env.id, at: signer.signedAt || nowIso(), signed, signedBy: signed ? signer.name : '' };
       i.taxForm = env.taxForm.form;
       if (env.taxForm.form === 'W-8BEN' || env.taxForm.form === 'W-8BEN-E') {
@@ -2395,6 +2407,43 @@
     ob().errors = {};
     S().ui.ivfFocus = true;
     NS.app.save(true);
+  }
+  /** Whether the investor signed this tax form: their own signature field holds a value (D-30: nothing on it is required). */
+  const signedTax = (env, i) => {
+    const s = signerOf(env, i);
+    return !!s && env.fields.some((f) => f.signerId === s.id && f.type === 'signature' && !!f.value);
+  };
+  /**
+   * Plan 06-34: a signed tax form the record holds, other than env: a completed form the investor signed (its envelope still
+   * here), or one recorded as signed whose envelope this browser does not hold (server mode: the console keeps it), or a
+   * completed form they uploaded instead. Never a form recorded as not signed or not received.
+   */
+  function signedOnFile(ws, i, env) {
+    const tc = i.taxCert;
+    if (!tc || !taxOnFile(i)) return false;
+    if (tc.uploaded === true) return true;
+    if (tc.signed !== true || !tc.envelopeId || tc.envelopeId === env.id) return false;
+    const held = (ws.envelopes || []).find((e) => e.id === tc.envelopeId);
+    return !held || (held.status === 'completed' && signedTax(held, i));
+  }
+  /**
+   * Plan 06-34 (walkthrough-2 N1; plan-check B1): an earlier tax form leaves the record. A completed form the investor signed
+   * is kept as superseded (its envelope and signed copy stay; a payer keeps a signed W-9 for four years and a W-8 as long as
+   * it may be relevant), its Documents listing and its drafts go; a form never signed is voided and every file of it deleted
+   * (they hold the full taxpayer ID). One change-log line says which form, when, and why. The envelope changes at once; the
+   * promise settles once its files are deleted. opts: { by, actor, action, what }.
+   */
+  function retireTax(ws, i, env, reason, opts) {
+    opts = opts || {};
+    if (!env || !NS.esign || !NS.esign.retire || env.status === 'voided' || env.status === 'superseded') return Promise.resolve(false);
+    const keep = env.status === 'completed' && signedTax(env, i);
+    const form = `Form ${(env.taxForm && env.taxForm.form) || 'W-9'}`;
+    const s = signerOf(env, i);
+    const when = s && s.signedAt ? ` of ${U.date(String(s.signedAt).slice(0, 10), 'long')}` : '';
+    const done = NS.esign.retire(ws, env.id, keep ? 'superseded' : 'voided', reason, { by: opts.by || '', actor: opts.actor });
+    delete BUILT[env.id];
+    if (NS.audit) NS.audit.log(ws, Object.assign({ action: opts.action || 'Tax form replaced', record: i.id, fund: '', detail: `${i.title}: ${opts.what || `the ${keep ? 'signed' : 'unsigned'} ${form}${when}`}; ${keep ? 'kept as superseded with its signed copy, no longer listed' : 'voided and its files deleted'}. ${reason}.` }, opts.actor ? { actor: opts.actor } : {}));
+    return done;
   }
   function docsHTML(c) {
     const docs = (c.ws.docs || []).filter((x) => x.offeringDoc && !x.hidden && x.offeringId === c.off.id);
