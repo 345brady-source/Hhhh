@@ -214,6 +214,30 @@
       .map((m) => ({ type: m && m.type === 'warning' ? 'warning' : 'error', message: String((m && m.message) || '').replace(/\s+/g, ' ').trim().slice(0, 500) }))
       .filter((m) => m.message);
   /**
+   * D-03: each state's result staff recorded, applied through NS.bluesky.recordResult (the record, the fee paid as the
+   * order's line, the audit entry). Only a state of the order, with a real filing date not after today, whole cents and a
+   * renewal date or none; a result already on the record as given is not applied twice. → whether any state is filed.
+   */
+  function applyStates(ws, order, a) {
+    const given = a.states && typeof a.states === 'object' && !Array.isArray(a.states) ? a.states : {};
+    const sys = (a.lines || []).find((l) => l && l.passThrough && !l.state);
+    const systemFeeCents = isCents(a.systemFeeCents) ? a.systemFeeCents : sys && isCents(sys.cents) ? sys.cents : null;
+    const rec = ws.filings && ws.filings.offerings && own(ws.filings.offerings, order.offeringId) ? ws.filings.offerings[order.offeringId] : { states: {} };
+    let any = false;
+    Object.keys(given).forEach((code) => {
+      const v = given[code] || {};
+      if (!FL.stateName(code) || !(order.lines || []).some((l) => l && l.state === code)) return;
+      if (!isDay(v.filedOn) || v.filedOn > today() || !isCents(v.feeCents) || (v.renewsOn && !isDay(v.renewsOn))) return;
+      const result = { filedOn: v.filedOn, efdId: String(v.efdId == null ? '' : v.efdId).slice(0, 40), feeCents: v.feeCents, renewsOn: v.renewsOn || '', systemFeeCents };
+      const had = (rec.states || {})[code];
+      any = true;
+      if (had && had.status === 'filed' && had.filedOn === result.filedOn && had.efdId === result.efdId && had.feeCents === result.feeCents && (had.renewsOn || '') === result.renewsOn) return;
+      if (NS.bluesky && typeof NS.bluesky.recordResult === 'function') NS.bluesky.recordResult(ws, order.offeringId, code, result, today());
+      else FL.recordState(ws, order.offeringId, code, { status: 'filed', filedOn: result.filedOn, efdId: result.efdId, feeCents: result.feeCents, renewsOn: result.renewsOn });
+    });
+    return any;
+  }
+  /**
    * The status answer applied to the order (T-09-28): only a known status; a notice is marked filed only with an accession
    * number of the SEC's form and a real filing date not after today, and then through NS.filings.recordFiled with its
    * snapshot. An answer that does not read this way changes nothing.
@@ -227,7 +251,9 @@
     const r = order.remote;
     r.status = a.status;
     r.checkedAt = stamp();
-    order.status = a.status;
+    const filedHere = isStates(order) ? applyStates(ws, order, a) : false;
+    // A state order with some states filed reads filed here while the server still holds it as received.
+    order.status = a.status === 'received' && (filedHere || order.status === 'filed') && isStates(order) ? 'filed' : a.status;
     copyAmounts(order, a);
     if (!f) return;
     const was = r.filing;
@@ -289,7 +315,13 @@
       if (r.filing === 'submitted') return 'With EDGAR, waiting for acceptance.';
       return 'Received by the filing team.';
     }
-    return order.status === 'done' ? 'Filed.' : 'Received by the filing team.';
+    const states = (order.lines || []).filter((l) => l && l.state).map((l) => l.state);
+    const rec = ws.filings && ws.filings.offerings && own(ws.filings.offerings, order.offeringId) ? ws.filings.offerings[order.offeringId] : {};
+    const name = (c) => FL.stateName(c) || c;
+    const filed = states.filter((c) => rec.states && rec.states[c] && rec.states[c].status === 'filed' && rec.states[c].filedOn);
+    const waiting = states.filter((c) => filed.indexOf(c) < 0);
+    if (!filed.length) return 'Received by the filing team.';
+    return `Filed in ${filed.map(name).join(', ')}.${waiting.length ? ` Waiting for ${waiting.map(name).join(', ')}.` : ''}`;
   }
   function orderLine(ws, order) {
     if (!order || !connected(ws)) return '';
