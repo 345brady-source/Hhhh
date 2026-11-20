@@ -99,3 +99,38 @@ not ok 1 .. not ok 5 (all five)
 COUNTS: base 387 + own 5 = 392
 VERIFY2_EXIT=0
 ```
+
+## Task 3 RED ($O/red3.txt: checks/package-names.js against the Task 2 code, integrations.js untouched)
+
+First full run ($O/red3-first.txt, all four parts): owners FAIL, individual PASS (a guard: its screened count equals the device's count at the base too), both preview parts FAIL only on the base-label comparison (the constant was still empty; the run read the base labels, then the label reader was made to drop the select options and the constant filled from the base run). The final RED run, owners and the two preview parts:
+
+```
+FAIL owners when identity passes the world records four calls: the controlling person, the entity's name and the two owners :: {"calls":2,"names":["Odalys Vantongeren","Vantongeren Holdings LLC"]}
+FAIL owners the server held the two role names before the first screening call :: [[],[]]
+FAIL owners a new round of four calls holds the corrected name and not the old one :: {"calls":2,"names":["Odalys Vantongeren","Vantongeren Holdings LLC"]}
+FAIL owners the corrected role names were stored before that round's first call :: []
+FAIL owners that count is the server's: the number of calls in the last round :: {"line":4,"server":2}
+FAIL owners the console screened nothing again on import (eight calls in all) :: 4
+FAIL preview-desktop the profile step shows exactly the fields it showed at the base (the same labels) :: [...]
+FAIL preview-phone the profile step shows exactly the fields it showed at the base (the same labels) :: [...]
+PACKAGE NAMES: FAIL (parts run: 3) - owners, preview-desktop, preview-phone
+```
+The base run shows the bug this plan fixes: the investor's device logged "4 names screened" while the server screened 2 (the owners were never screened through the package).
+
+## Task 3 GREEN ($O/green3.txt, integrations.js changed, constant set from the base run)
+
+```
+PACKAGE NAMES: PASS (parts run: 4)
+EXIT=0
+```
+82 PASS lines, 0 FAIL. Key lines:
+```
+PASS owners when identity passes the world records four calls: the controlling person, the entity's name and the two owners
+PASS owners the server held the two role names before the first screening call
+PASS owners a new round of four calls holds the corrected name and not the old one
+PASS owners the corrected role names were stored before that round's first call
+PASS owners package screening starts total 2 (the limit is 3)
+PASS owners the console imports and the investor's last screening line reads "4 names screened"
+PASS owners that count is the server's: the number of calls in the last round
+PASS owners the console screened nothing again on import (eight calls in all)
+```
