@@ -105,7 +105,7 @@ async function outbox(srv) {
   const r = await srv.call('GET', '/v1/outbox?workspace=kestrel-bay');
   return (r.body && r.body.messages) || [];
 }
-const linkIn = (m) => ((m && (m.text || '')).match(LINK_RE) || [])[1] || '';
+const linkIn = (m) => (String((m && m.text) || '').match(LINK_RE) || [])[1] || '';
 
 /** The investor's device: a fresh context at 390x844 with touch, no portal data, allowed to reach the check's server. */
 async function phoneOf(S, srv) {
