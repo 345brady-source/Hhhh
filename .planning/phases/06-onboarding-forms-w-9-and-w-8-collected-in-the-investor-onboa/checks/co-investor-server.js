@@ -251,6 +251,8 @@ const emailLine = (st) => (st === 'outbox' ? /Sign-in in the server outbox [A-Z]
 async function investorSigns(S, check, F) {
   const cp = F.cp;
   const who = F.who;
+  // The firm closes the Account window left open by "Add co-investor" before it invites.
+  await cp.evaluate(() => window.CVPortal.ui.closeDialog());
   const inv = await L.inviteFromConsole(cp, { first: who.first, last: who.last, email: who.email, offeringId: F.off.offeringId });
   F.inv = inv;
   check('the investor’s invitation goes through the integration server', /^ivt_/.test(inv.serverId) && inv.investorId === who.id, inv);
