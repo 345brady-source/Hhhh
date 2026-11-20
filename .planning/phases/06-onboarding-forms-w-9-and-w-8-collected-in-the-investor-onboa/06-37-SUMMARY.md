@@ -59,4 +59,14 @@ What the RED shows, plainly:
   press); everything before that failed for the reason named in each line.
 - Raw output: /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/exec-06-37/red.txt
 
+## Task 1 verify (co-investor sign-in, on the fix)
+
+```
+KEPT co-link-desktop (from 2026-11-20 03:05:21 UTC)
+PRESS AND CO-INVESTOR: PASS (parts run: 3)
+```
+(co-link-desktop ran once on this same tree just before, 29 PASS 0 FAIL; the rerun kept it. co-link-phone and co-managed ran in
+this run.) Check change after RED, before any product change was tested: `investorsPage` closes a window left open first (on the
+base the Account window stayed open and covered the page, which stopped the part with "ran to the end").
+
 <!-- gsd:write-continue -->
