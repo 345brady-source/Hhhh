@@ -2,6 +2,9 @@
 
 Every agent on this project reads this file first. SCRATCH = the session scratchpad (/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad).
 
+## Why this is built
+The self-serve portal is the funnel that brings business to Carrow & Vale: 40 sponsors free for 12 months, then $100 a month self-serve, with paid add-ons that are Carrow & Vale's services (Form D with Carrow & Vale as filing agent, state notices, verification packages, the managed edition). Every sponsor who signs up is a Carrow & Vale prospect. Work that moves sponsors into the portal and through it to Carrow & Vale's paid services comes first.
+
 ## Order of work (launch list)
 2 help chatbot (phase 07) · 3 verification package + ongoing compliance (08) · 4 filings tab (09) · 5 investor tax documents and withholding · 6 fund accounting + CPA package · 7 report builder · 8 email overhaul · 9 messaging + data room · 10 security · 11 NACHA/ACH with the $0 money path · 12 reorganize · 13 UI overhaul · 14 final systems check · 15 prospecting workflow · 16 bring to market. Decisions for each are in .planning/phases/01.4-*/01.4-RESUME.md (sections dated 2026-11-15 to 2026-11-17) and each phase's CONTEXT.md.
 
