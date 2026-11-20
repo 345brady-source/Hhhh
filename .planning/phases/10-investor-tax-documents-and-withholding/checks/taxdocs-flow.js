@@ -8,8 +8,8 @@
 //                  27-page file of k1-build.js: 12 to confirm, 10 in the together list and 2 one by one, each with the
 //                  K-1's name line and "ending" with four digits; page 1 belongs to no one; nothing delivered; no nine
 //                  digits kept or shown (the search of 10-02 B1, proven able to fail)
-//   import-desktop the same at 1280x800 with the file whose values are left in form fields; the later plans' files were
-//                  asked for and, answered 404, show nothing; a section registered from the check (probe) has its line and
+//   import-desktop the same at 1280x800 with the file whose values are left in form fields; the later plans' files in the
+//                  tree were asked for and, answered 404, show nothing (one not in the tree is not asked for); a section registered from the check (probe) has its line and
 //                  its page under a bar with Back, and Back and the browser's back return to the list; NS.taxUI.link's line
 //                  is drawn on a confirmed row; a team member imports and confirms; an investor cannot open the address
 //   confirm-phone, confirm-desktop   "Not this one" (Confirm 10 becomes Confirm 9), the 9 confirmed together: hidden
@@ -1075,11 +1075,15 @@ const parts = {
     const { A, fr: fr1 } = await importPart(check, S, 'desktop', { flatten: false, asked });
     let fr = fr1;
     await escaped(check, fr, 'the import\'s page');
-    // the later plans' files: asked for beside taxdocs-ui.js, answered 404, nothing shown and no error
-    const names = ['withholding', 'withholding-ui', 'taxdocs-investor', 'taxrecord-ui', 'tax1099', 'tax1099-ui', 'taxlink'];
+    // the later plans' files: asked for beside taxdocs-ui.js, answered 404, nothing shown and no error. Only the files in the
+    // tree are on NS.taxUI.PARTS (06-WALKTHROUGH-3 failure 4: tax1099-ui.js and taxlink.js are listed once plans 10-10 and
+    // 10-12 ship them); one that is not in the tree is not asked for.
+    const all = ['withholding', 'withholding-ui', 'taxdocs-investor', 'taxrecord-ui', 'tax1099', 'tax1099-ui', 'taxlink'];
+    const names = all.filter((n) => fs.existsSync(path.join(Lib.ROOT, 'assets', 'js', `${n}.js`)));
+    const unbuilt = all.filter((n) => names.indexOf(n) < 0);
     await go(fr, 'console-taxdocs', '#tx-files');
     const shown = await fr.evaluate(() => ({ parts: document.querySelectorAll('[data-list="parts"] .tx-row').length, api: typeof (window.CVPortal.taxUI || {}).part, link: (window.CVPortal.taxUI || {}).link === null, errorText: /error|undefined|failed/i.test(document.querySelector('.tx').innerText) }));
-    check('the seven files of later plans were asked for beside taxdocs-ui.js and, answered 404, show no section and no error', names.every((n) => asked.some((u) => u.endsWith(`/assets/js/${n}.js`))) && shown.parts === 0 && shown.api === 'function' && shown.link && !shown.errorText, { asked: asked.length, shown });
+    check(`the ${names.length} shipped files of later plans were asked for beside taxdocs-ui.js and, answered 404, show no section and no error; the ${unbuilt.length} not in the tree were not asked for`, names.length >= 5 && names.every((n) => asked.some((u) => u.endsWith(`/assets/js/${n}.js`))) && !unbuilt.some((n) => asked.some((u) => u.endsWith(`/assets/js/${n}.js`))) && shown.parts === 0 && shown.api === 'function' && shown.link && !shown.errorText, { asked: asked.length, shown });
     // a section registered from the check
     await fr.evaluate(() => {
       const X = window.CVPortal.taxUI;
