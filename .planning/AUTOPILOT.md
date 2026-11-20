@@ -56,8 +56,8 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 - "State now" is kept current after every merge round, so the next session resumes without redoing work.
 
 ## State now (updated 2026-11-20, after the container restart)
-- Merged today: 09-04, 09-06, 09-07, Filings guide entries; 10-04, 10-09; 11-05, 11-06, 11-08; 06-36, 06-38. Server tests 368.
-- Running (resumed after the restart; each branch pushed): 11-07 (wip/11-07, rerunning its gate), 09-09, 10-06, 10-07, 10-08, 06-35, the field editor debugger (wip/debug-editor: 3 old FAILs in .planning/phases/02-field-editor/checks/editor.js, one may mean an edited agreement does not reach the investor intact), and the gate-resume quick task (wip/gate-resume).
+- Merged today: 09-04, 09-06, 09-07, Filings guide entries; 10-04, 10-09; 11-05, 11-06, 11-08; 06-35, 06-36, 06-38; the field editor check fix (3 out-of-date assertions, no product bug). Server tests 368.
+- Running (each branch pushed): 11-07 (rerunning its gate), 09-09, 10-06, 10-07, 10-08, and the gate-resume quick task (wip/gate-resume).
 - Waiting: 06-34 and 06-37 start after 10-06 merges; 06-39 after 06-34, 06-37, 06-38. Then add six gate lines (RECORD AND LOST AGREEMENT 7, SCREEN EDGES 5, TITLES AND EDITOR 4, PRESS AND CO-INVESTOR 7, CO-INVESTOR SERVER 5; GATE_SERVER_TESTS 368 plus any later change), run one full reference gate on the merged tree, rebuild the preview, walk Filings, AML program and Tax documents plus the fixes, and publish to https://claude.ai/artifact/GPhQRgiF3Kkne2A5VHqDxP.
 - Owner's choice for this usage window: no new builds; finish what is running, plus fixes.
 - Owner's help chat page: https://claude.ai/artifact/Sbf9kfcoaqJd3svbb7tezj (source in the scratchpad's help-chat/; refresh guide.json from server/lib/help-guide.mjs after guide merges).
