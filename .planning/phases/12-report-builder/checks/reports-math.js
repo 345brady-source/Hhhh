@@ -158,6 +158,268 @@ const cases = {
     check('fund A DPI 0.02, RVPI 1.15, TVPI 1.17 (2 decimals)', pf && r2(pf.dpi) === 0.02 && r2(pf.rvpi) === 1.15 && r2(pf.tvpi) === 1.17, pf);
     const fundIrr = newtonIrr(flowsOf(NS, ws, o, null, '2026-12-31', 51750000));
     check("fund A IRR = the check's own Newton IRR to 4 decimals", pf && typeof pf.irr === 'number' && Math.abs(pf.irr - fundIrr) < 5e-5, { adapter: pf && pf.irr, newton: fundIrr });
+  },
+
+  /**
+   * The engine anchor: for every sample firm, fund, investor and preset of NS.audit.presets at 2027-01-20 the statement's
+   * period, year-to-date and inception-to-date accounts are the engine's rows exactly; perf is the engine's
+   * closedPerformance row (closed funds) or null (open funds); each account adds up; the investors add up to the fund.
+   */
+  statement: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    let rows = 0;
+    sampleWorkspaces(NS).forEach((ws) => {
+      const bad = [];
+      ws.offerings.forEach((o) => {
+        const inception = NS.audit.ledger(ws, o).inception;
+        NS.audit.presets(ws, o).forEach((pr) => {
+          const P = NS.audit.period(ws, o, pr.from, pr.to);
+          const Y = NS.audit.period(ws, o, P.to.slice(0, 4) + '-01-01', P.to);
+          const I = NS.audit.period(ws, o, inception || P.to, P.to);
+          const C = P.S.open ? null : NS.audit.closedPerformance(P);
+          ACCT.forEach((k) => {
+            if (P.inv.reduce((s, a) => s + a[k], 0) !== P.fund[k]) bad.push({ o: o.id, pr: pr.id, fundSum: k });
+          });
+          P.inv.forEach((a) => {
+            rows++;
+            const id = a.investor.id;
+            const s = D.statement(ws, id, o.id, pr.from, pr.to);
+            const eq = (acc, Q) => {
+              const r = Q.inv.find((x) => x.investor.id === id);
+              return acc && r && acc.from === Q.from && acc.to === Q.to && ACCT.every((k) => acc[k] === r[k]);
+            };
+            const add = (x) => x.begin + x.contrib - x.dist + x.income + x.gain - x.fee - x.carry === x.end;
+            const cr = C && C.investors.find((x) => x.a.investor.id === id);
+            const perfOk = P.S.open ? s && s.perf === null : s && s.perf && ['paid', 'dist', 'nav', 'dpi', 'rvpi', 'tvpi', 'irr'].every((k) => s.perf[k] === cr[k]);
+            const fields = s && s.commit === a.commit && s.contribCum === a.contribCum && s.distCum === a.distCum && s.own === a.own && s.unfunded === (P.S.open ? 0 : Math.max(0, a.commit - a.contribCum)) && s.open === !!P.S.open && s.fundType === P.S.key;
+            const cents = s && !notCents(s, MONEY).length;
+            if (!(eq(s && s.period, P) && eq(s && s.ytd, Y) && eq(s && s.itd, I) && perfOk && fields && cents && add(a) && add(s.period) && add(s.ytd) && add(s.itd)))
+              bad.push({ o: o.id, pr: pr.id, id, period: eq(s && s.period, P), ytd: eq(s && s.ytd, Y), itd: eq(s && s.itd, I), perfOk, fields, cents, notCents: s && notCents(s, MONEY) });
+          });
+          const to = P.to;
+          const want = ws.investors.filter((i) => i.positions.some((p) => p.offeringId === o.id && p.date <= to)).map((i) => i.id).sort();
+          const got = D.holders(ws, o.id, pr.to).map((i) => i.id);
+          if (J(got) !== J(want) || got.some((id) => !D.statement(ws, id, o.id, pr.from, pr.to))) bad.push({ o: o.id, pr: pr.id, holders: got, want });
+        });
+        if (D.statement(ws, 'NO-SUCH-INVESTOR', o.id, '2026-01-01', '2026-12-31') !== null) bad.push({ o: o.id, unknownInvestor: 'not null' });
+      });
+      check(`${ws.tenant.id}: every fund, investor and preset: period, ytd and itd accounts and performance = the engine; each account adds up; investors add up to the fund; holders by id`, !bad.length, bad.slice(0, 5));
+    });
+    check('statements compared: more than 0 (the sample firms have investors)', rows > 0, rows);
+  },
+
+  /**
+   * One investor across funds: one statement per fund in name order and one total per currency. With kb-harlow in euros
+   * (set before the first engine call), KBC-1001's totals are exactly two and no total mixes them.
+   */
+  consolidated: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    const TOT = ACCT.concat(['commit', 'unfunded', 'distCum']);
+    const sums = (list) => {
+      const out = [];
+      list.forEach((s) => {
+        let t = out.find((x) => x.currency === s.currency);
+        if (!t) out.push((t = Object.assign({ currency: s.currency }, ...TOT.map((k) => ({ [k]: 0 })))));
+        TOT.forEach((k) => (t[k] += ACCT.indexOf(k) >= 0 ? s.period[k] : s[k]));
+      });
+      return out;
+    };
+    let seen = 0;
+    sampleWorkspaces(NS).forEach((ws) => {
+      const bad = [];
+      ws.investors
+        .filter((i) => new Set(i.positions.map((p) => p.offeringId)).size > 1)
+        .forEach((i) => {
+          seen++;
+          const C = D.consolidated(ws, i.id, '2026-01-01', '2026-12-31');
+          const names = ws.offerings.filter((o) => i.positions.some((p) => p.offeringId === o.id)).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+          const wantFunds = names.map((o) => D.statement(ws, i.id, o.id, '2026-01-01', '2026-12-31')).filter(Boolean);
+          const fundsOf = D.fundsOf(ws, i.id).map((o) => o.id);
+          if (!C || J(C.funds) !== J(wantFunds) || J(C.totals) !== J(sums(wantFunds)) || J(fundsOf) !== J(names.map((o) => o.id))) bad.push({ id: i.id, funds: C && C.funds.map((s) => s.offeringId), want: names.map((o) => o.id), totals: C && C.totals, wantTotals: sums(wantFunds) });
+        });
+      check(`${ws.tenant.id}: every investor in two or more funds: one statement per fund in name order, totals = the sums per currency`, !bad.length, bad.slice(0, 3));
+    });
+    check('investors in two or more funds: more than 0', seen > 0, seen);
+
+    const N2 = load();
+    const kb = sampleWorkspaces(N2).find((w) => w.tenant.id === 'kestrel-bay');
+    kb.offerings.find((o) => o.id === 'kb-harlow').currency = 'EUR';
+    if (N2.clearCaches) N2.clearCaches();
+    const C = N2.reportsData.consolidated(kb, 'KBC-1001', '2026-01-01', '2026-12-31');
+    const st = (oid) => N2.reportsData.statement(kb, 'KBC-1001', oid, '2026-01-01', '2026-12-31');
+    const usd = sums([st('kb-fund-ii'), st('kb-note-24a')]);
+    const eur = sums([st('kb-harlow')]);
+    const tUsd = C && C.totals.find((t) => t.currency === 'USD');
+    const tEur = C && C.totals.find((t) => t.currency === 'EUR');
+    check('KBC-1001 with kb-harlow in euros: exactly two totals, USD = kb-fund-ii + kb-note-24a, EUR = kb-harlow', C && C.totals.length === 2 && J(tUsd) === J(usd[0]) && J(tEur) === J(eur[0]) && usd.length === 1 && eur.length === 1, C && C.totals);
+    check('KBC-1001: the euro fund statement reads EUR, the others USD', C && C.funds.every((s) => s.currency === (s.offeringId === 'kb-harlow' ? 'EUR' : 'USD')) && C.funds.length === 3, C && C.funds.map((s) => [s.offeringId, s.currency]));
+  },
+
+  /**
+   * Every paid run of every sample firm and every line: gross, withheld and net = NS.data.runRows; cumulative = the
+   * investor's gross over paid runs of the offering on or before the run, worked a second way from NS.audit.events; a
+   * run that is not paid gives null; runs lists every paid run newest first; distributions totals the investor's runs.
+   */
+  distribution: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    let lines = 0;
+    sampleWorkspaces(NS).forEach((ws) => {
+      const bad = [];
+      ws.offerings.forEach((o) => {
+        const paid = ws.runs.filter((r) => r.offeringId === o.id && NS.data.runPaid(r, TODAY));
+        const want = paid
+          .slice()
+          .sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))
+          .map((r) => ({ id: r.id, date: r.date, type: r.type || '', gross: NS.data.runRows(ws, r).reduce((s, x) => s + x.cents, 0) }));
+        const got = D.runs(ws, o.id);
+        if (J(got.map((r) => [r.id, r.date, r.type, r.gross])) !== J(want.map((r) => [r.id, r.date, r.type, r.gross])) || got.some((r, n) => n && r.date > got[n - 1].date)) bad.push({ o: o.id, runs: got.length, want: want.length });
+        const E = NS.audit.events(ws, o);
+        paid.forEach((run) => {
+          NS.data.runRows(ws, run).forEach((row) => {
+            lines++;
+            const id = row.investor.id;
+            const dl = D.distribution(ws, run.id, id);
+            const cum = E.dists.filter((d) => d.inv.id === id && d.date <= run.date).reduce((s, d) => s + d.cents, 0);
+            const inv = ws.investors.find((x) => x.id === id);
+            const method = inv && inv.payment && inv.payment.method === 'ach' && inv.payment.bank ? 'ACH' : inv && inv.payment && inv.payment.method === 'wire' ? 'Wire' : 'Check';
+            if (!(dl && dl.gross === row.cents && dl.withheld === row.withheldCents && dl.net === row.netCents && dl.cumulative === cum && dl.method === method && dl.date === run.date && dl.offeringId === o.id && !notCents(dl, MONEY).length))
+              bad.push({ run: run.id, id, dl, row: { gross: row.cents, withheld: row.withheldCents, net: row.netCents }, cum, method });
+          });
+        });
+        const y = ws.investors.filter((i) => i.positions.some((p) => p.offeringId === o.id)).slice(0, 3);
+        y.forEach((i) => {
+          const R = D.distributions(ws, i.id, o.id, '2026-01-01', '2026-12-31');
+          const mine = (from, to) =>
+            paid
+              .filter((r) => r.date >= from && r.date <= to)
+              .map((r) => ({ r, x: NS.data.runRows(ws, r).find((x) => x.investor.id === i.id) }))
+              .filter((z) => z.x);
+          const tot = (z) => ({ gross: z.reduce((s, q) => s + q.x.cents, 0), withheld: z.reduce((s, q) => s + q.x.withheldCents, 0), net: z.reduce((s, q) => s + q.x.netCents, 0) });
+          const p2026 = mine('2026-01-01', '2026-12-31');
+          const ok = R && R.rows.length === p2026.length && J(R.period) === J(tot(p2026)) && J(R.ytd) === J(tot(p2026)) && J(R.itd) === J(tot(mine('', '2026-12-31')));
+          if (!ok) bad.push({ o: o.id, id: i.id, distributions: R && { rows: R.rows.length, period: R.period, itd: R.itd }, want: { rows: p2026.length, period: tot(p2026) } });
+        });
+      });
+      check(`${ws.tenant.id}: every paid run and line: gross, withheld, net = runRows; cumulative = events; method; runs newest first; distributions totals`, !bad.length, bad.slice(0, 3));
+    });
+    check('paid lines compared: more than 0', lines > 0, lines);
+    const { ws } = fundA(NS);
+    const run = ws.runs[0];
+    ws.runs.push(Object.assign(JSON.parse(J(run)), { id: 'fa-run-cancelled', cancelled: true }), Object.assign(JSON.parse(J(run)), { id: 'fa-run-future', date: '2027-03-15' }));
+    check('a cancelled run and a run dated after today give null, and are not in runs', D.distribution(ws, 'fa-run-cancelled', 'FA-1001') === null && D.distribution(ws, 'fa-run-future', 'FA-1001') === null && J(D.runs(ws, 'fund-a').map((r) => r.id)) === J(['fa-run-1']), D.runs(ws, 'fund-a'));
+    check('an investor with no line on the run gives null', D.distribution(ws, 'fa-run-1', 'NO-SUCH-INVESTOR') === null);
+  },
+
+  /**
+   * Performance is the engine's: closedPerformance and openPerformance are exported; for every fund and preset the
+   * adapter equals them; no key named gross appears in any performance figure (C-07: net only).
+   */
+  performance: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    check('NS.audit.closedPerformance and NS.audit.openPerformance are functions', typeof NS.audit.closedPerformance === 'function' && typeof NS.audit.openPerformance === 'function');
+    const grossKeys = (x, at, out) => {
+      out = out || [];
+      if (x && typeof x === 'object') Object.keys(x).forEach((k) => (/gross/i.test(k) ? out.push(`${at}.${k}`) : grossKeys(x[k], `${at}.${k}`, out)));
+      return out;
+    };
+    let kinds = { open: 0, closed: 0 };
+    const gross = [];
+    sampleWorkspaces(NS).forEach((ws) => {
+      const bad = [];
+      ws.offerings.forEach((o) => {
+        NS.audit.presets(ws, o).forEach((pr) => {
+          const P = NS.audit.period(ws, o, pr.from, pr.to);
+          const R = D.performance(ws, o.id, pr.from, pr.to);
+          let ok;
+          if (P.S.open) {
+            const X = NS.audit.openPerformance(P);
+            ok = R && R.kind === 'open' && R.asOf === P.to && R.period === X.period && R.ytd === X.ytd && R.itd === X.itd && R.itdAnnual === X.itdAnnual && J(R.monthly) === J(X.monthly.map((m) => ({ key: m.key, begin: m.begin, contrib: m.contrib, dist: m.dist, net: m.net })));
+          } else {
+            const X = NS.audit.closedPerformance(P).fund;
+            ok = R && R.kind === 'closed' && R.asOf === P.to && ['paid', 'dist', 'nav', 'dpi', 'rvpi', 'tvpi', 'irr'].every((k) => R.fund[k] === X[k]) && Object.keys(R.fund).length === 7;
+          }
+          if (R) kinds[R.kind]++;
+          if (!ok) bad.push({ o: o.id, pr: pr.id, R });
+          gross.push(...grossKeys(R, `${o.id}/${pr.id}`));
+          const first = P.inv[0];
+          if (first) gross.push(...grossKeys((D.statement(ws, first.investor.id, o.id, pr.from, pr.to) || {}).perf, `${o.id}/${pr.id}/statement.perf`));
+        });
+      });
+      check(`${ws.tenant.id}: every fund and preset: performance = the engine's closedPerformance or openPerformance`, !bad.length, bad.slice(0, 3));
+    });
+    check('both kinds were compared (open and closed funds)', kinds.open > 0 && kinds.closed > 0, kinds);
+    check('no key named gross in any performance result or statement perf (C-07)', !gross.length, gross.slice(0, 5));
+  },
+
+  /** The schedule of investments is the engine's: for every fund, rows and NAV = period(...).hold field by field. */
+  holdings: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    const map = (hold) => ({ nav: hold.nav, rows: hold.rows.map((r) => ({ id: (r.h && r.h.id) || '', name: r.name, security: r.security, level: r.level, fv: r.fv, cost: r.cost, debt: r.debt, equity: r.equity, pctNav: r.pctNav })) });
+    const worlds = sampleWorkspaces(NS).concat([fundA(NS).ws]);
+    worlds.forEach((ws) => {
+      const bad = [];
+      ws.offerings.forEach((o) => {
+        ['2026-12-31', '2026-06-30'].forEach((to) => {
+          const P = NS.audit.period(ws, o, to, to);
+          const H = D.holdings(ws, o.id, to);
+          if (!(H && H.asOf === P.to && J({ nav: H.nav, rows: H.rows }) === J(map(P.hold)) && !notCents(H.rows, MONEY).length && Number.isSafeInteger(H.nav))) bad.push({ o: o.id, to, H, want: map(P.hold) });
+        });
+      });
+      check(`${ws.tenant.id}: every fund: holdings rows and NAV = the engine's (period().hold)`, !bad.length, bad.slice(0, 2));
+    });
+  },
+
+  /**
+   * Fees and expenses: fund A from the journal in the ILPA order (source 'books'), year 2026 and Q4 2026 as worked by
+   * hand, and with four more expense lines the order 5000, 5100, 5110, 5120, 5200, 5900; a sample fund: one row
+   * 'Management fees' = the engine's fee (source 'engine').
+   */
+  fees: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    const { ws } = fundA(NS);
+    const y = D.fees(ws, 'fund-a', '2026-01-01', '2026-12-31');
+    // 5000: 12 x 150,000 = 1,800,000; 5100: legal 750,000; total 2,550,000 (= expect.statements.expenses)
+    check('fund A 2026 (books): 5000 Management fees 1,800,000; 5100 Professional fees 750,000; total 2,550,000', y && y.source === 'books' && J(y.rows) === J([{ code: '5000', name: 'Management fees', cents: 1800000 }, { code: '5100', name: 'Professional fees', cents: 750000 }]) && y.total === 2550000, y);
+    const q = D.fees(ws, 'fund-a', '2026-10-01', '2026-12-31');
+    // Q4: 3 x 150,000 = 450,000; no other expense in the quarter
+    check('fund A Q4 2026 (books): 5000 only, 450,000', q && q.source === 'books' && J(q.rows) === J([{ code: '5000', name: 'Management fees', cents: 450000 }]) && q.total === 450000, q);
+    const N2 = load();
+    const B = fundA(N2);
+    N2.books.post(B.ws, 'fund-a', { date: '2026-11-15', memo: 'Other expenses', src: 'bank:fa-x1', lines: [['5900', 10000], ['5200', 20000], ['5110', 30000], ['5120', 40000], ['1000', -100000]] }, ACTOR);
+    const o2 = N2.reportsData.fees(B.ws, 'fund-a', '2026-01-01', '2026-12-31');
+    check('fund A with 5900, 5200, 5110, 5120 added: the ILPA order 5000, 5100, 5110, 5120, 5200, 5900; total 2,650,000', o2 && J(o2.rows.map((r) => r.code)) === J(['5000', '5100', '5110', '5120', '5200', '5900']) && o2.total === 2650000 && J(o2.rows.map((r) => r.cents)) === J([1800000, 750000, 30000, 40000, 20000, 10000]), o2);
+    const bad = [];
+    sampleWorkspaces(NS).forEach((sw) =>
+      sw.offerings.forEach((o) => {
+        const P = NS.audit.period(sw, o, '2026-01-01', '2026-12-31');
+        const f = D.fees(sw, o.id, '2026-01-01', '2026-12-31');
+        if (!(f && f.source === 'engine' && f.rows.length === 1 && f.rows[0].name === 'Management fees' && f.rows[0].cents === P.fund.fee && f.total === P.fund.fee)) bad.push({ o: o.id, f, fee: P.fund.fee });
+      })
+    );
+    check("every sample fund (2026): source 'engine', one row 'Management fees' = the engine's fee", !bad.length, bad.slice(0, 3));
+  },
+
+  /**
+   * NOI is the journal's: fund A as a real estate fund with rent 10,000.00, insurance 2,000.00 and taxes 1,000.00 on
+   * holding fa-x in November 2026: income 1,000,000, expenses 300,000, NOI 700,000; a holding or period with no such
+   * line gives null.
+   */
+  noi: ({ check }) => {
+    const NS = load();
+    const D = NS.reportsData;
+    const reType = Object.keys(NS.OFFERING_TYPES).find((k) => NS.OFFERING_TYPES[k].profile === 'realestate');
+    const { ws } = fundA(NS, (w) => (w.offerings[0].type = reType));
+    NS.books.post(ws, 'fund-a', { date: '2026-11-30', memo: 'November property operations', src: 'bank:fa-noi', lines: [['4020', -1000000, '', 'fa-x'], ['5300', 200000, '', 'fa-x'], ['5320', 100000, '', 'fa-x'], ['1000', 700000]] }, ACTOR);
+    const n = D.noi(ws, 'fund-a', 'fa-x', '2026-10-01', '2026-12-31');
+    check(`fund A as "${reType}": noi(fa-x, Q4 2026) = { income: 1000000, expenses: 300000, noi: 700000 }`, J(n) === J({ income: 1000000, expenses: 300000, noi: 700000 }), n);
+    check('a holding with no income or property-expense line gives null', D.noi(ws, 'fund-a', 'no-such-holding', '2026-10-01', '2026-12-31') === null);
+    check('fa-x in Q3 2026 (a valuation line only) gives null', D.noi(ws, 'fund-a', 'fa-x', '2026-07-01', '2026-09-30') === null);
   }
 };
 
