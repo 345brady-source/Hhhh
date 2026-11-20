@@ -10,21 +10,30 @@
 # 2. The server test count: the tests on this tree must equal the tests measured on the base tree in this run plus the
 #    tests the changed server test files declare (a first line "// gate: tests N"; the markers at HEAD minus the markers
 #    at the base, for the files git lists as changed under server/test).
-# 3. Phase 10's checks: every .js file directly in phase 10's checks folder, by the rules of step 4, output in
-#    GATE_OUT/gate/p10-<name>.txt. A tree without that folder prints "GATE ok   phase 10 checks: none in this tree".
-# 4. Phase 11's checks: every .js file in this folder: "// gate: none" is skipped; any other carries "// gate: node" or
+# 3. Other phases' checks, for each phase GATE13_PHASES names (space-separated, from 08 09 10 11 12; unset or empty
+#    means every one of them whose checks folder exists; the word none means no other phase). A phase without a checks
+#    folder prints "GATE ok   phase NN checks: none in this tree".
+#    Phase 08: each .js directly in its checks folder carrying "// GATE CHECK: <NAME>" in its first five lines is run
+#    through heavy.sh and passes when its last line is "<NAME>: PASS (parts run: N)" with N at least 1 (as phase 8's
+#    gate.sh judges them), output in GATE_OUT/gate/p08-<name>.txt; a folder with no such file fails.
+#    Phases 09 to 12: every .js directly in that phase's checks folder, by the marker rules of step 4, output in
+#    GATE_OUT/gate/p<NN>-<name>.txt.
+# 4. Phase 13's checks: every .js file in this folder: "// gate: none" is skipped; any other carries "// gate: node" or
 #    "// gate: browser" and, on a later line, // last "<the exact last line of a full run>". It is run, its output kept
-#    in GATE_OUT/gate/<name>.txt, and its last line must equal the quoted line. A file with no marker fails the gate, and
-#    so does a run in which no phase 11 check ran.
-#    Steps 3 and 4 run each check with P11_ROOT and P10_BASE set to (P10_ROOT unset) GATE_OUT/gate/base-tree (the base tree step 1
-#    extracted), P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots; browser checks go through heavy.sh.
+#    in GATE_OUT/gate/<name>.txt, and its last line must equal the quoted line. A file with no marker fails the gate.
+#    A tree with no phase 13 check yet prints "GATE ok   phase 13 checks: none in this tree".
+#    Steps 3 and 4 run each check with P13_BASE, P11_ROOT and P10_BASE set to GATE_OUT/gate/base-tree (P10_ROOT unset:
+#    gate10's rule), P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots; browser checks go through heavy.sh.
 # The last line is GATE_EXIT=0 or GATE_EXIT=1. Once it is known, the base tree, the screenshots, the checks' page
 # captures and PDFs (checks-out, the owner's folder), the reference copy and a server/node_modules link the gate made
 # are removed.
-# --self-test proves the gate can fail, on stand-ins and with none of the long steps: "GATE13 SELF-TEST: PASS (6)".
+# --self-test proves the gate can fail, on stand-ins and with none of the long steps: each of the eight faults (gate11's
+# six plus the phase 08 and GATE13_PHASES stand-ins) ends GATE FAIL and GATE_EXIT=1; the controls are not counted.
+# Its last line is "GATE13 SELF-TEST: PASS (8)".
 #
-# The GATE13_* variables below are for the self-test's stand-ins only. They are read only together with
-# GATE13_STANDIN=1, and a stand-in run that passes ends "GATE_EXIT=0 (stand-in)", never the passing line of a real gate.
+# GATE13_PHASES is a real setting. The other GATE13_* variables below are for the self-test's stand-ins only. They are
+# read only together with GATE13_STANDIN=1, and a stand-in run that passes ends "GATE_EXIT=0 (stand-in)", never the
+# passing line of a real gate.
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 ROOT="$PWD"
 # Resumable steps (.planning/checks/gate-lib.sh): a rerun into the same GATE_OUT keeps every step that passed under
@@ -34,19 +43,31 @@ ROOT="$PWD"
 . "$ROOT/.planning/checks/gate-lib.sh" || { echo "GATE FAIL $ROOT/.planning/checks/gate-lib.sh could not be loaded"; echo "GATE_EXIT=1"; exit 1; }
 S=/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad
 P=.planning/phases/13-email-overhaul
-P10=.planning/phases/10-investor-tax-documents-and-withholding
+OTHER_PHASES="08 09 10 11 12"
 STANDIN=0
 REF=.planning/checks/gate-reference.sh
 CHECKS=$P/checks
-CHECKS10=$P10/checks
 COUNTS=
+HEAVY="$S/exec-011/heavy.sh"
 if [ "$GATE13_STANDIN" = 1 ]; then
   STANDIN=1
   REF="$GATE13_REF"
   CHECKS="$GATE13_CHECKS"
-  CHECKS10="$GATE13_P10"
   COUNTS="$GATE13_COUNTS"
+  HEAVY="$GATE13_HEAVY"
 fi
+# The checks folder of another phase (NN), or nothing. Stand-ins: GATE13_P<NN>.
+phase_dir() {
+  local v d
+  if [ "$STANDIN" = 1 ]; then
+    v="GATE13_P$1"
+    printf '%s' "${!v}"
+    return
+  fi
+  for d in .planning/phases/"$1"-*/checks; do
+    [ -d "$d" ] && { printf '%s' "$d"; return; }
+  done
+}
 FAIL=0
 LINKED=0
 G=
@@ -187,16 +208,21 @@ count() {
   if [ "$TREE" = "$((BASEN + DELTA))" ]; then ok "server tests $TREE = base $BASEN + $DELTA declared"; else bad "server tests $TREE = base $BASEN + $DELTA declared"; fi
 }
 
-# ---------- 3 and 4. the phase 10 and phase 11 checks ----------
-run_checks() { # folder, prefix of the output files; sets RAN
+# ---------- 3 and 4. other phases' checks and phase 13's checks ----------
+check_env() { # the environment every check runs with
+  echo env -u P10_ROOT P13_BASE="$G/base-tree" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots"
+}
+run_checks() { # folder, prefix of the output files; sets RAN (checks run) and SEEN (files not marked none)
   GN=$(npm root -g 2>/dev/null)
   BASEC=$(cat "$GATE_OUT/base-commit.txt")
   RAN=0
+  SEEN=0
   for f in "$1"/*.js; do
     [ -e "$f" ] || continue
     NAME=$(basename "$f" .js)
     KIND=$(head -n 5 "$f" | sed -nE 's#^// gate: (node|browser|none)$#\1#p' | head -n 1)
     [ "$KIND" = none ] && continue
+    SEEN=$((SEEN + 1))
     LAST=$(head -n 5 "$f" | sed -nE 's#^// last "(.*)"$#\1#p' | head -n 1)
     if [ -z "$KIND" ] || [ -z "$LAST" ]; then
       bad "$NAME.js has no gate marker (\"// gate: node\", \"// gate: browser\" or \"// gate: none\", then // last \"<last line>\")"
@@ -205,9 +231,9 @@ run_checks() { # folder, prefix of the output files; sets RAN
     RAN=$((RAN + 1))
     OUTF="$G/$2$NAME.txt"
     if [ "$KIND" = browser ]; then
-      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT NODE_PATH="$GN" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" bash "$S/exec-011/heavy.sh" node "$f"
+      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- $(check_env) NODE_PATH="$GN" bash "$HEAVY" node "$f"
     else
-      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" node "$f"
+      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- $(check_env) node "$f"
     fi
     GOT=$(tail -n 1 "$OUTF")
     if ! gate_ok "${LAST%%:*}" "test $(quote "$GOT") = $(quote "$LAST")"; then
@@ -217,13 +243,53 @@ run_checks() { # folder, prefix of the output files; sets RAN
     gate_end
   done
 }
-checks10() {
-  if [ ! -d "$CHECKS10" ]; then ok "phase 10 checks: none in this tree"; return; fi
-  run_checks "$CHECKS10" p10-
+# Phase 8's gate checks: "// GATE CHECK: <NAME>" in the first five lines; passed by "<NAME>: PASS (parts run: N)", N >= 1.
+checks08() { # folder
+  local f NAME SLUG OUTF GOT REST N FOUND=0
+  GN=$(npm root -g 2>/dev/null)
+  BASEC=$(cat "$GATE_OUT/base-commit.txt")
+  for f in "$1"/*.js; do
+    [ -f "$f" ] || continue
+    NAME=$(head -n 5 "$f" | sed -n 's|^// GATE CHECK: \(.*[^ ]\) *$|\1|p' | head -n 1)
+    [ -n "$NAME" ] || continue
+    FOUND=$((FOUND + 1))
+    SLUG=$(printf '%s' "$NAME" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9' '-')
+    OUTF="$G/p08-$SLUG.txt"
+    gate_step "check-p08-$SLUG" "$OUTF" --base "$BASEC" -- $(check_env) NODE_PATH="$GN" bash "$HEAVY" node "$f"
+    GOT=$(tail -n 1 "$OUTF")
+    REST="${GOT#"$NAME: PASS (parts run: "}"
+    N=
+    if [ "$REST" != "$GOT" ] && [[ "$REST" =~ ^([0-9]+)\)$ ]]; then N="${BASH_REMATCH[1]}"; fi
+    if ! gate_ok "$NAME (${N:-not passed})" "test ${N:-0} -ge 1"; then
+      echo "  $(basename "$f"): the last line should be: $NAME: PASS (parts run: N), N at least 1"
+      echo "  $(basename "$f"): the last line was:       $GOT"
+    fi
+    gate_end
+  done
+  [ "$FOUND" -ge 1 ] || bad "phase 08 checks: no file in $1 carries \"// GATE CHECK: <NAME>\""
 }
-checks11() {
+other_phases() {
+  local LIST="$OTHER_PHASES" n d
+  if [ -n "$GATE13_PHASES" ]; then
+    if [ "$GATE13_PHASES" = none ]; then ok "other phases' checks: none run (GATE13_PHASES=none)"; return; fi
+    for n in $GATE13_PHASES; do
+      case " $OTHER_PHASES " in
+        *" $n "*) ;;
+        *) bad "GATE13_PHASES names \"$n\" (allowed: $OTHER_PHASES, or the word none); no other phase was run"; return ;;
+      esac
+    done
+    LIST="$GATE13_PHASES"
+  fi
+  for n in $LIST; do
+    d=$(phase_dir "$n")
+    if [ -z "$d" ] || [ ! -d "$d" ]; then ok "phase $n checks: none in this tree"; continue; fi
+    if [ "$n" = 08 ]; then checks08 "$d"; else run_checks "$d" "p$n-"; fi
+  done
+}
+checks13() {
+  if [ ! -d "$CHECKS" ]; then ok "phase 13 checks: none in this tree"; return; fi
   run_checks "$CHECKS" ""
-  [ "$RAN" -ge 1 ] || bad "no phase 13 check was run (none found in $CHECKS)"
+  [ "$SEEN" -ge 1 ] || ok "phase 13 checks: none in this tree"
 }
 
 # ---------- run ----------
@@ -243,6 +309,6 @@ if [ "$STANDIN" = 0 ] && [ ! -e server/node_modules ]; then
 fi
 reference
 count
-checks10
-checks11
+other_phases
+checks13
 finish
