@@ -63,7 +63,8 @@ Lib.describeShots([
   [/-co-signing\.png$/, 'The co-investor’s link opened: the agreement with only the co-investor’s own places to sign.'],
   [/-co-old-link\.png$/, 'The co-investor’s earlier link after their email was changed: "This sign-in link no longer works", with the firm’s contact.'],
   [/-co-managed\.png$/, 'The managed edition after "Add co-investor": the account window as before, no sign-in email.'],
-  [/-press-w8\.png$/, 'The step after the W-8BEN, reached with one press on the Finish found before the form’s page was drawn and the step redrawn.'],
+  [/-press-w8-loading\.png$/, 'The W-8BEN step on the phone while the form’s page is drawn: a blank page of its size holds its place, and Finish is already where it stays.'],
+  [/-press-w8\.png$/,'The step after the W-8BEN, reached with one press on the Finish found before the form’s page was drawn and the step redrawn.'],
   [/-co-none-email\.png$/, 'The co-investor’s sign-in email when the agreement has no place for a co-investor: the console says why and how to add one.'],
   [/-co-none-link\.png$/, 'The co-investor’s link on an agreement with no place for them: "Nothing for you to sign", why, and Go to Documents.'],
   [/-co-none-documents\.png$/, 'Go to Documents from that page: the account’s Documents, signed in as the co-investor.'],
@@ -402,6 +403,7 @@ function pressW8(dev) {
       return { placeholder: !!document.querySelector('.ivf-tax-sign .es-loading'), pages: window.__slow.need, form: env && env.taxForm ? env.taxForm.form : '' };
     }, inv.investorId);
     check('the W-8BEN is still drawing ("Loading document...") with Finish on screen', st0.placeholder && st0.form === 'W-8BEN' && st0.pages > 0, st0);
+    await A.page.screenshot({ path: path.join(OUT, `${tag}-press-w8-loading.png`) });
     // Finish as found on screen: the control the finger is on its way to.
     const found = await fr.$('.ivf-tax-sign .es-finish');
     const box0 = await found.boundingBox();
@@ -892,6 +894,8 @@ function coLinkNone(dev) {
     await fr.waitForTimeout(1500);
     let v = await pageNow(fr);
     texts.push(v.text);
+    // The owner's screenshot without the toast the check's own switch to Admin left a moment earlier.
+    await fr.waitForFunction(() => !(document.getElementById('toasts') || { children: [] }).children.length, null, { timeout: 10000 }).catch(() => {});
     await A.page.screenshot({ path: path.join(OUT, `${tag}-co-none-link.png`) });
     check('the link opens with no script error', v.errors.length === 0 && scriptErrors(A).length === 0, { errors: v.errors, console: scriptErrors(A) });
     check('the page is not left on "Opening your agreement…"', !/Opening your agreement/.test(v.text), v.text.slice(0, 300));
