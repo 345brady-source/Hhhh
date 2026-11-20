@@ -180,3 +180,9 @@
 - W2 (08-17 Task 1, replaceUsed): build `o` exactly as `reinvite()` does (invitations.js:637-648: Raising check, validate), plus `package: true` when the old invitation had one, plus `includeTax`. Close the old invitation locally before calling `create`. The part asserts the new invitation holds `package` before it is sent. Keep BALANCE 100000 (it covers two packages).
 - Info: server tests are 368; the phase-8 gate checks today are AML RECORD 7, PACKAGE INVITE 12, PACKAGE PANEL 7. In 08-17 Task 2, a toast "without a prefix" means editing the `inv8-resend` action's "Could not resend: " (invitations.js:2538-2541). The owed check in package.js `box` goes after `label` (line 105) and before the no-card return (line 107). 08-07 lists each provider behaviour it assumes in its summary for 08-03 and 08-12 (owner accounts and provider docs worked around with stand-ins; nothing confirmed is faked).
 - Parallel: 08-07 (integrations.js, checks/package-flow.js, checks/doubles/) and 08-17 (invitations.js, package.js, checks/package-console.js) share no file. Whichever merges second reruns its gate on the merged tree.
+
+## After 08-07 (merged 2026-11-20)
+- Fixed in 08-07: package connections now screen through the server (before, the investor's device used the identity result's screening, the server held no screening record, and the console screened again).
+- Open, small fix queued: server/lib/invitations.mjs `packageStart` turns only the provider's 402 and 403 into the plain sentence. Any other provider failure (5xx, timeout) reaches the investor as "Identity check answered 500". Every provider failure shows the plain sentence plus the firm's contact.
+- Provider behaviour assumed by the stand-ins (none confirmed; for 08-03 and 08-12) is listed in 08-07-SUMMARY.md.
+- On a 401 the console now shows the server's sentence ("Not authorized") first.
