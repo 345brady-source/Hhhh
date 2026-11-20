@@ -122,3 +122,10 @@ Waves: 1 = 10-01 (distribution record, gate10.sh), 10-02 (K-1 split core) · 2 =
 - D10 (all): each change to console.js, guide.md and taxdocs.js is a separate added block found by name; no existing line is reworded; after merging, help-guide.mjs is rebuilt with `node server/help/build.mjs`, never merged by hand.
 - D11 (all): before the final gate, run gate10.sh on the merged tree; a failing reference step blocks the plan only if it does not fail identically at the base; the summary shows both lines.
 - D12 (10-09): `checkTin`'s last four are `taxCert.tinLast4`, falling back to the investor's `tinLast4`, never `taxW8.ftinLast4`; case tincheck includes an investor whose only four digits are a foreign number (no form, reason "no signed W-9"); case `leftout` uses investors seated in the case, not sample data.
+
+## After 10-06 (merged 12c55c9, 2026-11-20)
+- An amended K-1 sits beside the earlier one, which reads "(replaced)" until its access period ends (C-09).
+- Not read by a CPA or counsel: the consent wording, and whether Form 8805 may be delivered electronically (the page tells the sponsor to ask their CPA).
+- An investor on another device, and the notice the portal sends, need the server (10-12, next window).
+- Its gate failed on FORM MAPS (a shared scratch PDF) and MEASURE (walkA waited 900 s in the browser queue); both passed when rerun alone. STATUS FLOW lean failed on old welcome words; fixed in dc3ea63. The merged-tree full gate is the proof.
+- Preview build adds assets/js/taxdocs-investor.js.
