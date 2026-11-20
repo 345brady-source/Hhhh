@@ -221,11 +221,10 @@ const cases = {
     const c1 = liveSrc(NS, ws, oid, 'call:fa-call-2:FA-1001');
     const c2 = liveSrc(NS, ws, oid, 'call:fa-call-2:FA-1002');
     check('the records post both call 2 payments, each a cash line of 10,000,000', !!(c1 && c2) && at(c1, '1000', 10000000) >= 0 && at(c2, '1000', 10000000) >= 0, { c1, c2 });
-    const im = importCsv(NS, A, [
-      ['01/12/2027', 'WIRE IN FA-1002 FUND A CALL 2', '100000.00'],
-      ['01/13/2027', 'WIRE IN FA-1001 FUND A CALL 2', '100000.00']
-    ]);
-    const [b2, b1] = im.lines;
+    // one bank line alone with two candidates: not matched automatically
+    const b2 = importCsv(NS, A, [['01/12/2027', 'WIRE IN FA-1002 FUND A CALL 2', '100000.00']]).lines[0];
+    check('a lone line with two candidates is not matched automatically', B.candidates(ws, oid, b2.id).length === 2 && B.autoMatch(ws, oid, 'ba-1') === 0 && !b2.match, B.candidates(ws, oid, b2.id));
+    const b1 = importCsv(NS, A, [['01/13/2027', 'WIRE IN FA-1001 FUND A CALL 2', '100000.00']]).lines[0];
     const k2 = B.candidates(ws, oid, b2.id);
     const k1 = B.candidates(ws, oid, b1.id);
     const keys = (ks) => ks.map((k) => k.entry + '|' + k.line).sort();
@@ -330,7 +329,7 @@ const cases = {
     const bad = refused(A, () =>
       B.categorize(ws, oid, id, { kind: 'split', lines: [{ account: '5200', cents: 600000, holding: 'fa-x' }, { account: '2500', cents: 399999, holding: 'fa-x' }] }, ACTOR)
     );
-    check('items summing to 999,999 are refused with one sentence and nothing is posted', bad.threw && sentence(bad.message) && bad.same && im.lines[0].entry === null, bad);
+    check('items summing to 999,999 are refused with one sentence naming their total and nothing is posted', bad.threw && sentence(bad.message) && /\$9,999\.99/.test(bad.message) && bad.same && im.lines[0].entry === null, bad);
     const e = B.categorize(ws, oid, id, { kind: 'split', lines: [{ account: '5200', cents: 600000, holding: 'fa-x' }, { account: '2500', cents: 400000, holding: 'fa-x' }] }, ACTOR);
     check('the split posts [5200 +600,000 fa-x][2500 +400,000 fa-x][1000 -1,000,000]', e && J(e.lines) === J([['5200', 600000, '', 'fa-x'], ['2500', 400000, '', 'fa-x'], ['1000', -1000000]]) && e.date === '2026-07-01', e);
   },
@@ -372,8 +371,9 @@ const cases = {
     const sentenceOk = (x) => x.threw && sentence(x.message) && x.same;
     const r1 = refused(A, () => B.match(ws, oid, extra.id, { entry: callA.id, line: at(callA, '1000', 30000000) }));
     check('matching a journal line already matched is refused', sentenceOk(r1) && extra.match === null, r1);
-    const r2 = refused(A, () => B.match(ws, oid, extra.id, { entry: callB.id, line: at(callB, '1000', 15000000) }));
-    check('matching a different amount is refused', sentenceOk(r2), r2);
+    const run = liveSrc(NS, ws, oid, 'run:fa-run-1');
+    const r2 = refused(A, () => B.match(ws, oid, extra.id, { entry: run.id, line: at(run, '1000', -300000) }));
+    check('matching a different amount (an unmatched cash line) is refused', sentenceOk(r2) && /300,000\.00/.test(r2.message), r2);
     const r3 = refused(A, () => B.match(ws, oid, A.lines()[2].id, { entry: callB.id, line: at(callB, '1000', 15000000) }));
     check('matching a line already decided is refused', sentenceOk(r3), r3);
     const r4 = refused(A, () => B.categorize(ws, oid, extra.id, { kind: 'account', account: '9999' }, ACTOR));
@@ -386,7 +386,8 @@ const cases = {
     check("a sale with costCents above the holding's cost is refused", sentenceOk(r7) && big.entry === null, r7);
     const r8 = refused(A, () => B.markReconciled(ws, oid, 'ba-1', '2026-12-31', 3500001, ACTOR));
     check('markReconciled with a difference of 1 cent is refused', sentenceOk(r8) && fundOf(ws, oid).bank.recs.length === 0, r8);
-    const r10 = refused(A, () => B.markReconciled(ws, oid, 'ba-1', '2026-12-31', 3500000, { at: ACTOR.at }));
+    const zero = 3500000 - B.reconcile(ws, oid, 'ba-1', '2026-12-31', 3500000).differenceCents; // the extra line is undecided
+    const r10 = refused(A, () => B.markReconciled(ws, oid, 'ba-1', '2026-12-31', zero, { at: ACTOR.at }));
     check('markReconciled without the name of the person storing it is refused', sentenceOk(r10) && fundOf(ws, oid).bank.recs.length === 0, r10);
     const r11 = refused(A, () => B.categorize(ws, oid, big.id, { kind: 'purchase', holding: 'fa-x' }, ACTOR));
     check('a purchase on a line of money in is refused', sentenceOk(r11), r11);
@@ -415,6 +416,15 @@ const cases = {
     const eL = B.categorize(ws, oid, imL.lines[0].id, { kind: 'sale', holding: h, costCents: 1e12 }, ACTOR);
     const wantL = [['1000', 1.2e12], ['1100', -1e12, '', h], ['6000', -2e11, '', h], ['6100', u, '', h], ['1150', -u, '', h]];
     check(`the unrealized gain given up on 1e12 of 3e12 cost with 1e12 + 1 carried is the BigInt value ${u}`, u === 333333333334 && eL && J(eL.lines) === J(wantL), { got: eL && eL.lines, want: wantL });
+    // the W3 numbers give the same u in floating point; these do not: 1e12 of 2e12 cost with 1e12 + 23 carried is
+    // exactly 500,000,000,011.5, which half-up makes ...012 (floating point gives ...011)
+    const h2 = NS.books.addHolding(ws, oid, { name: 'Large Co 2' }).id;
+    NS.books.post(ws, oid, { date: '2026-10-01', memo: 'Large Co 2 bought', src: 'man:large-buy-2', lines: [['1100', 2e12, '', h2], ['1000', -2e12]] }, ACTOR);
+    NS.books.post(ws, oid, { date: '2026-10-01', memo: 'Large Co 2 valued', src: 'mark:large-2', lines: [['1150', 1e12 + 23, '', h2], ['6100', -(1e12 + 23)]] }, ACTOR);
+    const u2 = Number((2n * 1000000000023n * 1000000000000n + 2000000000000n) / (2n * 2000000000000n));
+    const imL2 = importCsv(NS, A, [['10/02/2026', 'WIRE IN SALE LARGE CO 2', '10000000000.00']]);
+    const eL2 = B.categorize(ws, oid, imL2.lines[0].id, { kind: 'sale', holding: h2, costCents: 1e12 }, ACTOR);
+    check(`1e12 of 2e12 cost with 1e12 + 23 carried gives the BigInt value ${u2}, not floating point's ${Math.round(((1e12 + 23) * 1e12) / 2e12)}`, u2 === 500000000012 && eL2 && J(eL2.lines.slice(-2)) === J([['6100', u2, '', h2], ['1150', -u2, '', h2]]), eL2 && eL2.lines);
     // a line dated in a closed period cannot be decided and stays undecided
     NS.books.close(ws, oid, '2026-06-30', ACTOR);
     const r9 = refused(A, () => B.categorize(ws, oid, extra.id, { kind: 'account', account: '4090' }, ACTOR));
