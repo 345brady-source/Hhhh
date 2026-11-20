@@ -625,8 +625,32 @@
     document.getElementById('demo').innerHTML = state.remote ? '' : demoHTML(standalone);
     storageNote();
     const el = document.getElementById('view');
-    el.innerHTML = view.render(state.param);
+    drawKeeping(el, view.render(state.param));
     if (view.after) view.after(state.param);
+  }
+  /**
+   * Walkthrough 3 failure 7 (N4 again): a redraw that comes just before a press (the W-8BEN's page drawn as its Finish
+   * appears) replaced the control a finger, or a test, had already found. A control marked data-keep="<key>" (unique on the
+   * page) keeps its node through a redraw that draws it again under the same key and tag: the node takes the new drawing's
+   * attributes and content, and keeps focus if it had it. Handlers are delegated (data-action), so nothing else changes.
+   */
+  function drawKeeping(el, html) {
+    const kept = {};
+    el.querySelectorAll('[data-keep]').forEach((n) => (kept[n.getAttribute('data-keep')] = n));
+    const had = document.activeElement;
+    el.innerHTML = html;
+    if (!Object.keys(kept).length) return;
+    el.querySelectorAll('[data-keep]').forEach((n) => {
+      const key = n.getAttribute('data-keep');
+      const old = kept[key];
+      delete kept[key]; // one node for one key, even if a drawing repeated it
+      if (!old || old.tagName !== n.tagName) return;
+      Array.from(old.attributes).forEach((a) => !n.hasAttribute(a.name) && old.removeAttribute(a.name));
+      Array.from(n.attributes).forEach((a) => old.getAttribute(a.name) !== a.value && old.setAttribute(a.name, a.value));
+      if (old.innerHTML !== n.innerHTML) old.innerHTML = n.innerHTML;
+      n.replaceWith(old);
+      if (old === had) old.focus({ preventScroll: true });
+    });
   }
 
   /* ---------- Two-way binding for editors ---------- */

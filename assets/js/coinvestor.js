@@ -134,6 +134,7 @@
     U.dialog(
       `<div class="dlg-head"><div><h2>Co-investor sign-in email</h2><p>${local ? 'Send it from your email app. The portal prepared it with the co-investor’s link.' : 'The email your integration server sends.'}</p></div><div class="dlg-actions">${close}</div></div>
       <div class="dlg-body inv8-email">
+        ${placelessHTML(ws, inv)}
         <dl class="inv8-meta">
           <div><dt>From</dt><dd>${h(m.fromName)}${local ? ' <span class="cs-hint">(your own address, from your email app)</span>' : ''}</dd></div>
           <div><dt>To</dt><dd>${h(m.toName)} &lt;${h(m.to)}&gt;</dd></div>
@@ -182,6 +183,45 @@
     return offeringsOf(ws, inv).filter((o) => CS().coPlaces(ws, o.id));
   }
   const needing = (ws, offeringId) => (ws.investors || []).filter((inv) => need(ws, inv).some((o) => !offeringId || o.id === offeringId));
+  /**
+   * Walkthrough 3 failure 2. The offerings of an account with a co-investor where the co-investor has nothing to sign: the
+   * offering's agreement has no place for a co-investor, and the account's agreement for it is still to be made or out for
+   * signature without them (one signed by everyone is sealed and stays as it is). Self-serve edition (the managed edition is
+   * unchanged, C-03).
+   */
+  function placeless(ws, inv) {
+    if (!E.diy || !CS() || !coOf(inv) || !NS.esign) return [];
+    return offeringsOf(ws, inv).filter((o) => {
+      if (CS().coPlaces(ws, o.id)) return false;
+      const mine = (ws.envelopes || []).filter((e) => e.offeringId === o.id && e.status !== 'voided' && e.status !== 'draft' && e.signers.some((s) => s.investorId === inv.id));
+      if (mine.some((e) => e.signers.some((s) => s.investorId === inv.id && s.co))) return false;
+      return mine.length ? mine.some((e) => e.status === 'sent') : !!NS.esign.subscriptionTemplate(ws, o.id);
+    });
+  }
+  /** What the firm is told about it, with how to add a place for the co-investor ('' when it does not apply). */
+  function placelessHTML(ws, inv) {
+    const offs = placeless(ws, inv);
+    if (!offs.length) return '';
+    const c = coOf(inv);
+    const o = offs[0];
+    const who = c.first || c.name;
+    return `<div class="co-note co-none" role="status"><p><strong>Nothing for ${h(c.name)} to sign yet.</strong> The ${h(o.name)} subscription agreement has no place for a co-investor, so ${h(who)} has nowhere to sign on ${h(inv.contact || inv.title)}’s agreement${offs.length > 1 ? ` (nor on ${offs.length - 1 === 1 ? 'one other offering’s' : `${offs.length - 1} other offerings’`})` : ''}.</p><p>To add one: on the ${h(o.name)} offering, choose Edit fields on the subscription agreement, give a signature field the signer “Co-investor (if any)” and save. ${h(who)} is then added to the agreement, and the sign-in link opens it.</p>${
+      canEdit() ? `<div class="cs-row"><button class="cs-btn cs-btn-small" type="button" data-action="co-open-offering" data-id="${h(o.id)}">Open ${h(o.name)}</button></div>` : ''
+    }</div>`;
+  }
+  NS.actions['co-open-offering'] = (el) => {
+    const id = el.getAttribute('data-id');
+    if (!(W().offerings || []).some((o) => o.id === id)) return;
+    U.closeDialog();
+    // The offering's page, at its subscription agreement panel (where Edit fields is).
+    const toPanel = () =>
+      setTimeout(() => {
+        const a = document.getElementById('agreement');
+        if (a) a.scrollIntoView({ block: 'center' });
+      }, 0);
+    window.addEventListener('hashchange', toPanel, { once: true });
+    NS.app.go('console-offering-' + id);
+  };
 
   /* ---------- Words ---------- */
   const noticeText = (inv, offs) =>
@@ -235,6 +275,7 @@
           <div><dt>Account type</dt><dd>${h(type)}</dd></div>
           <div><dt>Offerings</dt><dd>${offs.length ? h(offs.map((o) => o.shortName || o.name).join(', ')) : 'None yet'}</dd></div>
         </dl>
+        ${placelessHTML(ws, inv)}
         ${noticeHTML(ws, inv)}
         <div class="cs-row cs-row-end">${acts}<button class="cs-btn" type="button" data-action="close-dialog">Close</button></div>
       </div>`;
@@ -297,13 +338,16 @@
     } else {
       const r = CS().coAttach(ws, inv);
       audit('Co-investor added', `${inv.title}: ${name} <${d.email}>`, inv.id);
+      const none = placeless(ws, inv);
       said = r.added.length
         ? E.diy
           ? `${name} was added to the account and to ${r.added.length === 1 ? 'the agreement' : `${r.added.length} agreements`} to sign. ${inv.contact || inv.title} does not sign again.`
           : `${name} was added to the account and emailed ${r.added.length === 1 ? 'the agreement' : `${r.added.length} agreements`} to sign (simulated in this demo). ${inv.contact || inv.title} does not sign again.`
         : r.sealed.length
           ? `${name} was added to the account. ${r.sealed[0].title} was already signed by everyone and is sealed with its certificate, so it stays as it is: ${name} is not a signer on it.`
-          : `${name} was added to the account. They sign their own places on each agreement made for it.`;
+          : none.length
+            ? `${name} was added to the account. The ${none[0].name} agreement has no place for a co-investor, so ${d.first} has nothing to sign on it yet.`
+            : `${name} was added to the account. They sign their own places on each agreement made for it.`;
     }
     NS.app.save(true);
     // Plan 06-39 sends the sign-in by the integration server: a hook answering true has sent it (nothing to send by hand).
@@ -420,6 +464,8 @@
       const x = resolveSignIn(param);
       if (x.error === 'missing') return bare(`<h1>We could not find this sign-in link</h1><p class="lede">Open the link from your email again${t ? `, or contact ${contactOf(t)}` : ', or contact the firm that sent it'}.</p>`, t);
       if (x.error) return bare(`<h1>This sign-in link no longer works</h1><p class="lede">Contact ${contactOf(t)} for a new link.</p>`, t);
+      const task = taskOf(ws, x.inv);
+      if (!task.due && !task.signed) return bare(nothingHTML(ws, x.inv, task, t), t);
       return bare('<p class="lede ivf-loading" role="status">Opening your agreement…</p>', t);
     },
     after(param) {
@@ -427,6 +473,7 @@
       if (x.error) return;
       // Signed in as the account's co-investor: esign.js shows them only their own places (mySigner with state.co).
       const st = S();
+      const was = `${st.role}|${st.viewer}|${!!st.co}`;
       st.role = 'investor';
       NS.store.set('role', 'investor');
       st.viewer = x.inv.id;
@@ -436,11 +483,36 @@
         audit('Co-investor sign-in opened', `${x.inv.title}: ${coOf(x.inv).name}`, x.inv.id);
         NS.app.save(true);
       }
-      // What waits for their signature first (as the demo bar's co-investor choice), else the account's documents.
-      const due = NS.esign ? NS.esign.pendingFor(W(), x.inv.id) : [];
-      NS.app.go(due.length ? 'sign-' + due[0].id : 'documents');
+      const task = taskOf(W(), x.inv);
+      if (task.due || task.signed) {
+        // What waits for their signature first (as the demo bar's co-investor choice), else the account's documents.
+        const due = NS.esign ? NS.esign.pendingFor(W(), x.inv.id) : [];
+        return NS.app.go(due.length ? 'sign-' + due[0].id : 'documents');
+      }
+      // Nothing to sign now: the page says so (render). Drawn once more as the co-investor's page when this sign-in changed who
+      // is signed in (the preview bar then names them); the second time nothing changes, so it stops there.
+      if (was !== `investor|${x.inv.id}|true`) NS.app.render();
     }
   };
+  /** What the co-investor has to do on the account's agreements (esign.js coTask); without esign.js, as before: to the account. */
+  const taskOf = (ws, inv) => (CS() && CS().coTask ? CS().coTask(ws, inv) : { signed: true });
+  /**
+   * Walkthrough 3 failure 2: the link of a co-investor with nothing to sign now says so, why, whom to ask, and a way on (the
+   * account's Documents), instead of staying on "Opening your agreement…".
+   */
+  function nothingHTML(ws, inv, task, t) {
+    const out = `<p><a class="btn btn-primary" href="#documents">Go to Documents</a></p>`;
+    const owner = h(inv.contact || inv.title);
+    if (task.before) {
+      const who = task.who ? h(task.who.name) : owner;
+      return `<h1>Not your turn yet</h1><p class="lede">${h(task.before.title)} is signed in order: ${who} signs first. Once they have, this link opens it for your signature.</p><p>Questions? Contact ${contactOf(t)}.</p>${out}`;
+    }
+    const offs = placeless(ws, inv);
+    const why = offs.length
+      ? `${owner}’s subscription agreement${offs.length === 1 ? ` for ${h(offs[0].name)}` : 's'} ${offs.length === 1 ? 'has' : 'have'} no place for a co-investor to sign, so nothing on ${offs.length === 1 ? 'it' : 'them'} is waiting for you.`
+      : `No agreement on ${h(inv.title)}’s account is waiting for your signature.`;
+    return `<h1>Nothing for you to sign</h1><p class="lede">${why}</p><p>If you expected to sign, contact ${contactOf(t)}.${offs.length ? ' Once a place is added for you, this link opens the agreement.' : ''}</p>${out}`;
+  }
 
   /* ---------- "This investor has no co-investor": one click, and one click back ---------- */
   const setNone = (el, none) => {

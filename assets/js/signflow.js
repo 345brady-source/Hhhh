@@ -75,6 +75,8 @@
           <button class="sf-zoom-btn" type="button" data-action="${action}" data-d="1" aria-label="Zoom in"${z === ZOOMS[ZOOMS.length - 1] ? ' disabled' : ''}>${PLUS}</button>
         </div>`;
   }
+  // Back, Start/Next and Finish keep their nodes through a redraw (data-keep, app.js drawKeeping): a press on its way to one
+  // when the pages arrive still lands on it (walkthrough 3 failure 7).
   function barHTML(env, s, st, o) {
     const con = o.ctx === 'console';
     const cls = (primary, extra) => `${con ? `cs-btn${primary ? ' cs-btn-primary' : ''}` : `btn${primary ? ' btn-primary' : ''}`} ${extra}`;
@@ -90,9 +92,9 @@
         <div class="sf-tray" hidden><label class="sf-tray-label" for="sf-tray-in"></label><input class="sf-tray-in" id="sf-tray-in" type="text" maxlength="200" autocomplete="off" enterkeyhint="next" data-input="sf-tray"></div>
         ${zoomHTML(z, 'sf-zoom')}
         <div class="sf-acts">
-          ${o.back ? `<button class="${cls(false, 'sf-back')}" type="button" data-action="${h(o.back)}">Back</button>` : ''}
-          <button class="${cls(m.left > 0, 'sf-next')}" type="button" data-action="es-next"${o.preview || st.busy ? ' disabled' : ''}${m.left || m.open ? '' : ' hidden'}><span>${st.started ? 'Next' : 'Start'}</span>${icon('arrow')}</button>
-          <button class="${cls(!m.left, 'es-finish sf-finish')}" type="button" data-action="es-finish" ${ids}${o.preview || st.busy ? ' disabled' : ''}${m.left ? ' aria-disabled="true"' : ''}>${st.busy ? 'Finishing…' : 'Finish'}</button>
+          ${o.back ? `<button class="${cls(false, 'sf-back')}" type="button" data-action="${h(o.back)}" data-keep="sf-back">Back</button>` : ''}
+          <button class="${cls(m.left > 0, 'sf-next')}" type="button" data-action="es-next" data-keep="sf-next"${o.preview || st.busy ? ' disabled' : ''}${m.left || m.open ? '' : ' hidden'}><span>${st.started ? 'Next' : 'Start'}</span>${icon('arrow')}</button>
+          <button class="${cls(!m.left, 'es-finish sf-finish')}" type="button" data-action="es-finish" data-keep="sf-finish" ${ids}${o.preview || st.busy ? ' disabled' : ''}${m.left ? ' aria-disabled="true"' : ''}>${st.busy ? 'Finishing…' : 'Finish'}</button>
         </div>
       </div>`;
   }

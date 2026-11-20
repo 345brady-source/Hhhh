@@ -35,6 +35,18 @@
 //                      longer works; a made-up one is not found.
 //   co-managed         1280x800, the managed edition: adding a co-investor behaves as before (same toast, no sign-in
 //                      dialog, no sign-in record).
+//   press-w8-phone     walkthrough 3 failure 7 (N4 again, run iphone-a2): a foreign individual's W-8BEN at CPU 4x, Finish
+//                      pressed the moment it appears. The form has one page, so its image arrives about then and the step is
+//                      redrawn after Finish was found and before the finger lands (no press is pending yet, so the guard
+//                      cannot hold it). The Finish found must still be the one in the page, and one press on it moves on.
+//   co-link-none-phone walkthrough 3 failure 2 (iphone-a2, iphone-b-2): the account investor signed an agreement that waits
+//                      for the firm's countersignature and has no place for a co-investor; "Add co-investor", then "Open the
+//                      co-investor's link". No script error, never left on "Opening your agreement…": the page says there
+//                      is nothing to sign and why, with a way out (Documents); the console says why (no place for a
+//                      co-investor) and how to add one. Following that (Edit fields, a signature field given to
+//                      "Co-investor (if any)", Save), the co-investor is on the agreement and the same link opens it.
+//   co-link-wait-desktop the co-investor's link before their turn (the investor has not signed yet): "Not your turn yet",
+//                      who signs first, the firm's contact, Go to Documents; after the investor signs, it opens the agreement.
 //   NODE_PATH=$(npm root -g) node press-and-co-investor.js [--only press-tax-desktop,...]
 // The last line is "PRESS AND CO-INVESTOR: PASS (parts run: N)" or "PRESS AND CO-INVESTOR: FAIL (parts run: N) - <failed parts>".
 const path = require('path');
@@ -52,7 +64,13 @@ Lib.describeShots([
   [/-co-row-sent\.png$/, 'The investors list after Mark as sent: the row reads "Sign-in sent" and the date.'],
   [/-co-signing\.png$/, 'The co-investor’s link opened: the agreement with only the co-investor’s own places to sign.'],
   [/-co-old-link\.png$/, 'The co-investor’s earlier link after their email was changed: "This sign-in link no longer works", with the firm’s contact.'],
-  [/-co-managed\.png$/, 'The managed edition after "Add co-investor": the account window as before, no sign-in email.']
+  [/-co-managed\.png$/, 'The managed edition after "Add co-investor": the account window as before, no sign-in email.'],
+  [/-press-w8-loading\.png$/, 'The W-8BEN step on the phone while the form’s page is drawn: a blank page of its size holds its place, and Finish is already where it stays.'],
+  [/-press-w8\.png$/,'The step after the W-8BEN, reached with one press on the Finish found before the form’s page was drawn and the step redrawn.'],
+  [/-co-none-email\.png$/, 'The co-investor’s sign-in email when the agreement has no place for a co-investor: the console says why and how to add one.'],
+  [/-co-none-link\.png$/, 'The co-investor’s link on an agreement with no place for them: "Nothing for you to sign", why, and Go to Documents.'],
+  [/-co-none-documents\.png$/, 'Go to Documents from that page: the account’s Documents, signed in as the co-investor.'],
+  [/-co-none-then-place\.png$/, 'After the firm gave a signature field to the co-investor and saved: the same link opens the agreement for them.']
 ]);
 
 const SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads';
@@ -326,6 +344,104 @@ function pressTax(dev) {
       check(`a press on Finish ${dev.hasTouch ? 'cancelled' : 'moved off and released elsewhere'} while the redraw is asked for: the pages are drawn within 1 s after the press ends`, r2.drawn && r2.asked && drawn && ms <= 1000, { r2, drawn, ms });
       check('that press did not finish the form', still === 'Tax certification', still);
     }
+    await quiet(check, A, fr, texts);
+    await A.context.close();
+  };
+}
+
+/* ---------- Walkthrough 3 failure 7: the W-8BEN's Finish redrawn between being found and the finger landing ---------- */
+/** A foreign individual (Germany) invited and walked to the tax step, which asks for the W-8BEN. */
+async function toW8(check, fr, portal, name) {
+  const inv = await Lib.createInvitation(fr, { name, email: `${name.split(' ')[0].toLowerCase().replace(/[^a-z]/g, '')}.${Date.now().toString(36)}@example.de`, type: 'individual', account: '', offeringId: portal.offeringId });
+  await fr.evaluate((id) => {
+    const NS = window.CVPortal;
+    NS.state.ws.investors.find((x) => x.id === id).taxType = 'foreign-individual';
+    NS.app.save(true);
+  }, inv.investorId);
+  await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  const w = await Lib.walk(fr, {
+    name,
+    acc: 'yes',
+    basis: 0,
+    until: /Tax certification/,
+    onFilled: async (hd) => {
+      if (!/Investor information/.test(hd)) return;
+      await fr.selectOption('#ob-country', 'Germany');
+      await fr.waitForTimeout(200);
+      if (await fr.locator('input[name="ob-citizen"][value="other"]').count()) await fr.check('input[name="ob-citizen"][value="other"]');
+      await fr.fill('#ob-street', 'Königsallee 27');
+      await fr.fill('#ob-city', 'Düsseldorf');
+      await fr.fill('#ob-st', '');
+      await fr.fill('#ob-zip', '40212');
+    }
+  });
+  const w8 = w.reached ? await fr.evaluate(() => /Form W-8BEN is filled in from your answers/.test((document.querySelector('.ivf-form') || {}).innerText || '')) : false;
+  check(`${name} (a foreign individual) reaches the tax step, which asks for the W-8BEN`, w.reached && w.at === 'Tax certification' && w8, w.seen);
+  return w.reached && w8 ? inv : null;
+}
+function pressW8(dev) {
+  const tag = tagOf(dev);
+  return async ({ check, S }) => {
+    const { A, fr } = await framed(S, dev);
+    await proveFrame(check, fr, dev);
+    const cdp = dev.hasTouch ? await A.context.newCDPSession(A.page) : null;
+    const portal = await Lib.setupPortal(S, { page: fr, context: A.context });
+    const texts = [];
+    const inv = await toW8(check, fr, portal, 'Zoë Müller');
+    if (!inv) return A.context.close();
+    // The walk's answers: the country of citizenship, and "a foreign tax identifying number is not legally required".
+    await fr.selectOption('#ob-w8Citizen', 'Germany');
+    await fr.check('#ob-noFtin');
+    // A slow phone from "Continue to the form" on; the form's page image held until the moment chosen below.
+    if (cdp) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    await fr.evaluate(() => (window.__slow.on = true));
+    await press(fr, dev, '.ivf-form .ob-actions button[type=submit]');
+    await fr.waitForSelector('.ivf-tax-sign .es-finish', { state: 'visible', timeout: 90000 });
+    const st0 = await fr.evaluate((invId) => {
+      const NS = window.CVPortal;
+      const i = NS.state.ws.investors.find((x) => x.id === invId);
+      const env = (NS.state.ws.envelopes || []).find((e) => e.id === i.onboarding.flow.taxEnvelopeId);
+      window.__slow.need = env ? Number(env.pages) || 0 : 0;
+      return { placeholder: !!document.querySelector('.ivf-tax-sign .es-loading'), pages: window.__slow.need, form: env && env.taxForm ? env.taxForm.form : '' };
+    }, inv.investorId);
+    check('the W-8BEN is still drawing ("Loading document...") with Finish on screen', st0.placeholder && st0.form === 'W-8BEN' && st0.pages > 0, st0);
+    await A.page.screenshot({ path: path.join(OUT, `${tag}-press-w8-loading.png`) });
+    // Finish as found on screen: the control the finger is on its way to.
+    const found = await fr.$('.ivf-tax-sign .es-finish');
+    const box0 = await found.boundingBox();
+    const asks = await countAsks(fr);
+    // The page image arrives and the step asks for its redraw before the finger lands (nothing is pressed yet).
+    await fr.evaluate(() => window.__slow.release());
+    const drawn = await fr.waitForFunction(() => window.__slow.need > 0 && window.__slow.done >= window.__slow.need, null, { timeout: 120000 }).then(() => true, () => false);
+    const asked = await fr.waitForFunction((n) => window.CVPortal.app.__asks.n > n, asks, { timeout: 30000 }).then(() => true, () => false);
+    const redrawn = await fr.waitForFunction(() => document.querySelectorAll('.ivf-tax-sign .es-page img').length > 0 && !document.querySelector('.ivf-tax-sign .es-loading'), null, { timeout: 30000 }).then(() => true, () => false);
+    const kept = await found.evaluate((el) => el.isConnected && el === document.querySelector('.ivf-tax-sign .es-finish'));
+    const box1 = await fr.locator('.ivf-tax-sign .es-finish').first().boundingBox();
+    console.log(`NOTE ${tag}: Finish at ${Math.round(box0.x)},${Math.round(box0.y)} when found and at ${Math.round(box1.x)},${Math.round(box1.y)} after the redraw`);
+    // The finger lands on the Finish found.
+    let lost = '';
+    try {
+      if (dev.hasTouch) await found.tap({ timeout: 5000 });
+      else await found.click({ timeout: 5000 });
+    } catch (e) {
+      lost = String(e && e.message).split('\n')[0];
+    }
+    const moved = await fr
+      .waitForFunction(() => {
+        const h = document.querySelector('.ivf-form h1');
+        return h && h.innerText !== 'Tax certification';
+      }, null, { timeout: 20000 })
+      .then(() => true, () => false);
+    if (cdp) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    const at = await Lib.heading(fr);
+    const pr = await pressNow(fr);
+    texts.push(await screen(fr));
+    await A.page.screenshot({ path: path.join(OUT, `${tag}-press-w8.png`) });
+    check('the page image arrived and the step was redrawn after Finish was found and before the finger landed', drawn && asked && redrawn, { drawn, asked, redrawn });
+    // A finger aims where Finish was seen: the page arriving must not move it (on the phone the guide sits after the document).
+    check('Finish is where it was found: the page image arriving moved it by at most 2 px', !!box1 && Math.abs(box1.x - box0.x) <= 2 && Math.abs(box1.y - box0.y) <= 2, { found: box0, after: box1 });
+    check('the Finish found is still the Finish in the page after that redraw', kept === true, { kept });
+    check('one press on it: the step after the tax step (Distribution payments) is on screen, and the press landed on that Finish', !lost && moved && at === 'Distribution payments' && pr.clickOnIt === true, { lost, at, press: pr });
     await quiet(check, A, fr, texts);
     await A.context.close();
   };
@@ -711,6 +827,191 @@ function coLink(dev) {
   };
 }
 
+/* ---------- Walkthrough 3 failure 2: the co-investor's link when the agreement has no place for a co-investor ---------- */
+const pageNow = (fr) =>
+  fr.evaluate(() => ({
+    hash: location.hash,
+    h1: ((document.querySelector('main h1') || {}).innerText || '').trim(),
+    text: document.body.innerText,
+    role: window.CVPortal.state.role,
+    co: !!window.CVPortal.state.co,
+    exits: Array.from(document.querySelectorAll('main a[href], main button')).map((b) => b.innerText.replace(/\s+/g, ' ').trim()).filter(Boolean),
+    errors: window.__slow.errors.slice()
+  }));
+function coLinkNone(dev) {
+  const tag = tagOf(dev);
+  return async ({ check, S }) => {
+    const { A, fr } = await framed(S, dev);
+    await proveFrame(check, fr, dev);
+    const portal = await Lib.setupPortal(S, { page: fr, context: A.context });
+    const texts = [];
+    const tplNow = () =>
+      fr.evaluate((oid) => {
+        const NS = window.CVPortal;
+        const t = NS.esign.subscriptionTemplate(NS.state.ws, oid);
+        return t ? { roles: t.roles, co: t.fields.filter((f) => f.signerRole === 'Investor 2').length } : null;
+      }, portal.offeringId);
+    const tpl0 = await tplNow();
+    check('the offering’s agreement has no place for a co-investor (as in the walk)', !!tpl0 && tpl0.roles.indexOf('Investor 2') < 0 && tpl0.co === 0, tpl0);
+    // Maya Okonkwo invited, onboarded and signed: her agreement waits for the firm's countersignature.
+    const name = 'Maya Okonkwo';
+    const inv = await Lib.createInvitation(fr, { name, email: `maya.okonkwo.${Date.now().toString(36)}@example.com`, type: 'individual', account: '', offeringId: portal.offeringId });
+    await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+    const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0 });
+    check('Maya reaches the subscription agreement', w.reached, w.seen);
+    if (!w.reached) return A.context.close();
+    await investorSigns(fr);
+    let env = await envOf(fr, inv.investorId);
+    check('Maya signed; the agreement waits for the firm’s countersignature and has no co-investor signer', env.status === 'sent' && !!env.investor && env.investor.status === 'signed' && env.firm !== 'signed' && !env.co, env);
+
+    // "Add co-investor" on her account: Ruth Okonkwo, as in the walk.
+    await investorsPage(fr, inv.investorId);
+    await press(fr, dev, `[data-action=co-record][data-id="${inv.investorId}"]`);
+    await fr.waitForSelector('#dlg[open] [data-action=co-add]', { timeout: 10000 });
+    await toasts(fr);
+    await press(fr, dev, '#dlg [data-action=co-add]');
+    await fillCo(fr, dev, 'Ruth', 'Okonkwo', 'ruth.okonkwo.b@example.com');
+    const said = await toasts(fr);
+    let d = await dialogNow(fr);
+    let st = await coState(fr, inv.investorId);
+    texts.push(d.text || '', said.join('\n'));
+    await A.page.screenshot({ path: path.join(OUT, `${tag}-co-none-email.png`) });
+    const WHY = /has no place for a co-investor/;
+    const HOW = ['Edit fields', 'Co-investor (if any)'];
+    check('the toast says Ruth was added and has nothing to sign on the agreement, because it has no place for a co-investor', said.some((t) => /^Ruth Okonkwo was added to the account/.test(t) && WHY.test(t)) && !said.some((t) => /They sign their own places on each agreement made for it/.test(t)), said);
+    check('the sign-in email still opens with the link; the console says above it that Ruth has nothing to sign (no place for a co-investor) and how to add one (Edit fields, "Co-investor (if any)")', d.open && d.h2 === 'Co-investor sign-in email' && /#co-/.test(d.link || '') && WHY.test(d.text || '') && HOW.every((x) => (d.text || '').indexOf(x) >= 0), (d.text || '').slice(0, 900));
+    // The Account window says the same.
+    await fr.evaluate(() => window.CVPortal.ui.closeDialog());
+    await investorsPage(fr, inv.investorId);
+    await press(fr, dev, `[data-action=co-record][data-id="${inv.investorId}"]`);
+    d = await dialogNow(fr);
+    texts.push(d.text || '');
+    check('the Account window says the same (nothing to sign, why, and how to add a place)', d.open && d.record && WHY.test(d.text || '') && HOW.every((x) => (d.text || '').indexOf(x) >= 0), (d.text || '').slice(0, 900));
+
+    // The co-investor's link, opened as the preview offers it ("Sign-in link", then "Open the co-investor's link").
+    if (d.open && (await fr.locator('#dlg :is(button,a)', { hasText: 'Sign-in link' }).count())) await pressText(fr, dev, '#dlg', 'Sign-in link');
+    d = await dialogNow(fr);
+    check('"Open the co-investor’s link" is offered', d.open && d.open2, { h2: d.h2 });
+    if (d.open2) await pressText(fr, dev, '#dlg', 'Open the co-investor’s link');
+    await fr.waitForTimeout(1500);
+    let v = await pageNow(fr);
+    texts.push(v.text);
+    // The owner's screenshot without the toast the check's own switch to Admin left a moment earlier.
+    await fr.waitForFunction(() => !(document.getElementById('toasts') || { children: [] }).children.length, null, { timeout: 10000 }).catch(() => {});
+    await A.page.screenshot({ path: path.join(OUT, `${tag}-co-none-link.png`) });
+    check('the link opens with no script error', v.errors.length === 0 && scriptErrors(A).length === 0, { errors: v.errors, console: scriptErrors(A) });
+    check('the page is not left on "Opening your agreement…"', !/Opening your agreement/.test(v.text), v.text.slice(0, 300));
+    const contact = (t) => t.indexOf(st.team) >= 0 && (!st.email || t.indexOf(st.email) >= 0);
+    check('it says plainly there is nothing for Ruth to sign and why (Maya Okonkwo’s agreement has no place for a co-investor), with the firm’s contact', v.h1 === 'Nothing for you to sign' && WHY.test(v.text) && v.text.indexOf(name) >= 0 && contact(v.text), { h1: v.h1, text: v.text.slice(0, 600) });
+    check('it signs Ruth in as the co-investor and has a way out: Go to Documents', v.role === 'investor' && v.co && v.exits.indexOf('Go to Documents') >= 0, { role: v.role, co: v.co, exits: v.exits });
+    if (v.exits.indexOf('Go to Documents') >= 0) await pressText(fr, dev, 'main', 'Go to Documents');
+    await fr.waitForTimeout(900);
+    v = await pageNow(fr);
+    texts.push(v.text);
+    await A.page.screenshot({ path: path.join(OUT, `${tag}-co-none-documents.png`) });
+    check('Go to Documents opens the account’s Documents, signed in as Ruth, with no script error and no "Signed by you" (Ruth signed nothing)', v.hash === '#documents' && v.h1 === 'Documents' && v.role === 'investor' && v.co && !/Signed by you/.test(v.text) && v.errors.length === 0 && scriptErrors(A).length === 0, { hash: v.hash, h1: v.h1, errors: v.errors, console: scriptErrors(A), text: v.text.slice(0, 400) });
+
+    // How to add one, as the console says: Edit fields, a signature field given to "Co-investor (if any)", Save.
+    await selectRole(fr, 'admin');
+    // The agreement prints a second signature line, which the reading gave to the investor (as co-link's).
+    await fr.evaluate((f) => {
+      const NS = window.CVPortal;
+      const t = NS.state.ws.esignTemplates.find((x) => x.id === 'tpl-sub-test');
+      t.fields.push(Object.assign({}, f));
+      NS.app.save(true);
+    }, CO_SIG);
+    const draftId = await openEditor(fr, dev, portal.offeringId);
+    const pick = await fr.evaluate((id) => {
+      const e = (window.CVPortal.state.ws.envelopes || []).find((x) => x.id === id);
+      const f = e.fields.find((x) => x.label === 'Second signature');
+      const co = e.signers.find((s) => s.co);
+      return { fid: f ? f.id : '', co: co ? co.id : '' };
+    }, draftId);
+    if (pick.fid && pick.co) {
+      await press(fr, dev, `.fe-doc .es-fld[data-fid="${pick.fid}"]`);
+      await fr.waitForTimeout(300);
+      if (!(await fr.locator('#es-fs').isVisible().catch(() => false))) {
+        await press(fr, dev, '.fe-tools [data-action="fe-props"]');
+        await fr.waitForTimeout(300);
+      }
+      await fr.selectOption('#es-fs', pick.co);
+      await fr.waitForTimeout(300);
+      if (await fr.locator('.fe-props [data-action="fe-props-close"]').isVisible().catch(() => false)) await press(fr, dev, '.fe-props [data-action="fe-props-close"]');
+      await toasts(fr);
+      await press(fr, dev, '[data-action="es-agreement-save"]');
+      await fr.waitForTimeout(700);
+    }
+    const saved = await toasts(fr);
+    const tpl1 = await tplNow();
+    env = await envOf(fr, inv.investorId);
+    check('saved: the agreement has a place for the co-investor', !!tpl1 && tpl1.roles.indexOf('Investor 2') >= 0 && tpl1.co === 1, tpl1);
+    check('Ruth is now a signer on Maya’s agreement, with her own places, and the save says so', !!env.co && env.co.name === 'Ruth Okonkwo' && env.co.fields.length > 0 && !!env.co.sig && env.status === 'sent' && env.investor.status === 'signed' && saved.some((t) => /Ruth Okonkwo/.test(t)), { co: env.co, status: env.status, saved });
+    st = await coState(fr, inv.investorId);
+    await fr.evaluate((t) => (location.hash = 'co-' + t), st.signIn ? st.signIn.token : '');
+    const opened = await fr.waitForFunction((id) => location.hash === '#sign-' + id && !!document.querySelector('.es-doc-sign, #es-consent-box'), env.id, { timeout: 20000 }).then(() => true, () => false);
+    v = await pageNow(fr);
+    texts.push(v.text);
+    await A.page.screenshot({ path: path.join(OUT, `${tag}-co-none-then-place.png`) });
+    check('the same sign-in link now opens Maya’s agreement for Ruth’s signature', opened && v.co && v.text.indexOf('Ruth Okonkwo') >= 0, { hash: v.hash, co: v.co });
+    await quiet(check, A, fr, texts);
+    await A.context.close();
+  };
+}
+
+/**
+ * The co-investor's link before their turn: the agreement has their place, but the investor has not signed yet. The page
+ * says so (who signs first), with the firm's contact and Go to Documents; once the investor has signed, the same link
+ * opens the agreement for the co-investor.
+ */
+async function coLinkWait({ check, S }) {
+  const dev = DESKTOP;
+  const { A, fr } = await framed(S, dev);
+  await proveFrame(check, fr, dev);
+  const portal = await Lib.setupPortal(S, { page: fr, context: A.context });
+  const texts = [];
+  // The agreement as saved with a place for the co-investor (what co-link makes in "Edit fields").
+  await fr.evaluate((f) => {
+    const NS = window.CVPortal;
+    const t = NS.state.ws.esignTemplates.find((x) => x.id === 'tpl-sub-test');
+    t.roles = ['Investor', 'Investor 2', 'Sponsor'];
+    t.fields.push(Object.assign({}, f, { signerRole: 'Investor 2' }));
+    NS.app.save(true);
+  }, CO_SIG);
+  const name = 'Aurelio Bassani';
+  const inv = await Lib.createInvitation(fr, { name, email: `aurelio.${Date.now().toString(36)}@example.org`, type: 'individual', account: '', offeringId: portal.offeringId });
+  await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  const w = await Lib.walk(fr, { name, acc: 'yes', basis: 0 });
+  let env = await envOf(fr, inv.investorId);
+  check('the investor is at the subscription agreement and has not signed it', w.reached && env.status === 'sent' && !!env.investor && env.investor.status !== 'signed', { seen: w.seen, env });
+  if (!w.reached) return A.context.close();
+  await investorsPage(fr, inv.investorId);
+  await press(fr, dev, `[data-action=co-record][data-id="${inv.investorId}"]`);
+  await fr.waitForSelector('#dlg[open] [data-action=co-add]', { timeout: 10000 });
+  await press(fr, dev, '#dlg [data-action=co-add]');
+  await fillCo(fr, dev, 'Livia', 'Bassani', 'livia.bassani@example.net');
+  let d = await dialogNow(fr);
+  env = await envOf(fr, inv.investorId);
+  check('the co-investor is added to the agreement after the investor, and the sign-in email opens with no "nothing to sign" note', !!env.co && env.co.status !== 'signed' && d.open && d.h2 === 'Co-investor sign-in email' && !/has no place for a co-investor/.test(d.text || ''), { co: env.co, h2: d.h2 });
+  const st = await coState(fr, inv.investorId);
+  if (d.open2) await pressText(fr, dev, '#dlg', 'Open the co-investor’s link');
+  await fr.waitForTimeout(1500);
+  let v = await pageNow(fr);
+  texts.push(v.text);
+  check('the link before their turn: no script error, "Not your turn yet", the investor signs first, the firm’s contact and Go to Documents', v.errors.length === 0 && scriptErrors(A).length === 0 && v.h1 === 'Not your turn yet' && v.text.indexOf(`${name} signs first`) >= 0 && v.text.indexOf(st.team) >= 0 && v.exits.indexOf('Go to Documents') >= 0 && v.co, { h1: v.h1, text: v.text.slice(0, 500), exits: v.exits, errors: v.errors, console: scriptErrors(A) });
+  // The investor signs (their own link), then the same co-investor link opens the agreement for the co-investor.
+  await fr.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  await fr.waitForSelector('.es-finish', { timeout: 30000 }).catch(() => {});
+  if (await fr.locator('.es-finish').count()) await investorSigns(fr);
+  env = await envOf(fr, inv.investorId);
+  await fr.evaluate((t) => (location.hash = 'co-' + t), st.signIn ? st.signIn.token : '');
+  const opened = await fr.waitForFunction((id) => location.hash === '#sign-' + id && !!document.querySelector('.es-doc-sign, #es-consent-box'), env.id, { timeout: 20000 }).then(() => true, () => false);
+  v = await pageNow(fr);
+  texts.push(v.text);
+  check('once the investor has signed, the same link opens the agreement for the co-investor', !!env.investor && env.investor.status === 'signed' && opened && v.co, { investor: env.investor, hash: v.hash });
+  await quiet(check, A, fr, texts);
+  await A.context.close();
+}
+
 /* ---------- The managed edition: unchanged ---------- */
 async function coManaged({ check, S }) {
   const { A, fr } = await framed(S, DESKTOP, 'index.html');
@@ -759,7 +1060,10 @@ Lib.runParts(
     'press-nav-phone': pressNav(IPHONE),
     'co-link-desktop': coLink(DESKTOP),
     'co-link-phone': coLink(IPHONE),
-    'co-managed': coManaged
+    'co-managed': coManaged,
+    'press-w8-phone': pressW8(IPHONE),
+    'co-link-none-phone': coLinkNone(IPHONE),
+    'co-link-wait-desktop': coLinkWait
   },
   { name: 'PRESS AND CO-INVESTOR', browser: true }
 );
