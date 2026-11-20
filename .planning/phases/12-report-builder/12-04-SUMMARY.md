@@ -45,3 +45,20 @@ PASS selfcheck an unknown --case name exits 1 with a FAIL line
 PASS selfcheck an empty --case list exits 1 with a FAIL line
 REPORTS RECORD: PASS (cases run: 10)
 ```
+
+## RED 3 (Task 3: gate12.sh with the full self-test of 8 but no phase 11 step and no --only-phase12 mode yet; SCRATCH/exec-12-04/red-3.txt)
+
+```
+SELF-TEST FAIL control: the stand-ins pass when nothing is wrong
+SELF-TEST ok   a phase 12 check whose last line differs from its marker
+SELF-TEST ok   a check file with no marker
+SELF-TEST ok   a reference whose folder line is missing (and nothing was run)
+SELF-TEST ok   a reference that prints one GATE FAIL line
+SELF-TEST ok   a tree whose test count differs from the base plus the markers
+SELF-TEST ok   a phase 10 check whose last line differs from its marker
+SELF-TEST FAIL a phase 11 check whose last line differs from its marker
+SELF-TEST FAIL a phase-12-only run
+GATE12 SELF-TEST: FAIL - control (control) p11 only
+```
+The control failed because no "GATE ok   ELEVEN STAND IN" line was printed (no phase 11 step); the only-run printed
+the reference step and the server test line and ended "GATE_EXIT=0 (stand-in)".
