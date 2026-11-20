@@ -123,4 +123,20 @@ BANK STEP TYPING: PASS (parts run: 2)               (bank.txt)
 ```
 W3, base tree 12c55c9: phase-2 field editor `104/104 passed`, phase-3 signatures `70/70 passed` (no FAIL line on the base).
 
+### W3 failure on the first fix run, and its fix
+
+**The phase-2 field editor check failed 2 lines on the fix that the base does not fail** (`102/104 passed`; the W3 diff
+showed 2 new FAIL lines, 0 gone; signatures 70/70 on both):
+
+```
+FAIL a field placement was unsure of is marked on the page and listed in the left column :: {"flag":false,"tag":false,"list":0,"needs":true}
+FAIL a field placement was unsure of is confirmed by being moved (and unconfirmed again by undo), keeping its confidence and reason :: ...
+```
+
+Cause: the check drags a field (mouse down, move, up) and at once redraws from code (as another part of the portal would). The
+editor redraws during the drag, so the field pressed is replaced and no click follows; the guard kept the press pending for
+its 500 ms wait after pointerup and held the code's redraw past the moment the check read the page. A drag has no click to
+keep. Fix in the guard: at pointerup the press ends at once when the pointer moved more than 10 px, or when the control
+pressed was already redrawn by the person's own input. Rerun results below.
+
 <!-- gsd:write-continue -->
