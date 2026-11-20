@@ -82,3 +82,16 @@ FAIL charts dist in a letter: the fund's distributions :: {"actual":[],"expected
 FAIL sheets ran to the end :: TypeError: R.sheets is not a function
 REPORTS MODEL: FAIL (cases run: 11) - consolidated, leak, formats, charts, sheets
 ```
+
+### Task 3 verify (the plan's command, run from a script file because the worktree guard refuses inline `$(git ...)`; verbatim, VERIFY_EXIT=0; 215 PASS lines, 0 FAIL)
+
+```
+PASS selfcheck "--case no-such-case" exits 1 with a FAIL line
+PASS selfcheck "--case " exits 1 with a FAIL line
+REPORTS MODEL: PASS (cases run: 11)
+VERIFY_EXIT=0
+```
+
+The check can fail: four bugs injected one at a time into reports.js (then reverted) were each caught:
+summary grouped without currency -> `REPORTS MODEL: FAIL (cases run: 1) - consolidated`; othersIn never finding anyone -> `FAIL ... - leak`;
+a split one cent off -> `FAIL ... - split`; another investor's row in the performance table -> `FAIL ... - leak`.
