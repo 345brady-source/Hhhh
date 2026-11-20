@@ -144,13 +144,13 @@ async function seatD(fr, opts) {
       W.setReporting(w, o.id, 'notes', { by: arg.by, at: '2026-03-01T15:00:00.000Z' });
       const rec = (id, date, type, total, withBackup) => {
         const run = { offeringId: o.id, date, type, total };
-        let held = [];
+        let held = null;
         if (withBackup) {
           const ds = W.propose(w, o, NS.data.buildLines(w, run), { date });
           if (ds.length !== 1 || ds[0].investorId !== 'A-1002' || ds[0].cents !== 80000) throw new Error('seatD: the proposal is not example D: ' + JSON.stringify(ds.map((d) => [d.investorId, d.cents])));
           held = W.toWithheld(ds.map((d) => W.confirm(d, { by: arg.by, at: `${date}T09:00:00.000Z` })));
         }
-        NS.data.recordRun(w, Object.assign(run, held.length ? { withheld: held } : {}), { by: arg.by, today: date, id });
+        NS.data.recordRun(w, Object.assign(run, held ? { withheld: held } : {}), { by: arg.by, today: date, id });
       };
       rec('exd-mar', '2026-03-16', 'Interest', 1000000, false);
       rec('exd-jun', '2026-06-15', 'Interest', 1000000, false);
@@ -249,6 +249,19 @@ async function download(A, fr, sel) {
   await dl.delete().catch(() => {});
   return { name: dl.suggestedFilename(), text };
 }
+/** A screenshot of a view that shows 'ending' and four digits and holds no typed number (C-05), scrolled to sel. */
+async function shot(A, fr, sel, name) {
+  const ok = await fr.evaluate((sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return false;
+    el.scrollIntoView({ block: 'start' });
+    window.scrollBy(0, -70);
+    const typed = Array.from(document.querySelectorAll('input')).some((i) => /\d{5}/.test(i.value || ''));
+    return /ending \d{4}/.test(el.innerText) && !typed;
+  }, sel);
+  if (ok) await A.page.screenshot({ path: path.join(OUT, name), fullPage: false });
+  return ok;
+}
 /** A column's index from its letter (A = 0, AN = 39, AQ = 42). */
 const col = (letters) => letters.split('').reduce((a, c) => a * 26 + (c.charCodeAt(0) - 64), 0) - 1;
 const lines = (text) => text.split(/\r\n/).filter((l) => l !== '');
@@ -292,7 +305,7 @@ const parts = {
     await fr.waitForTimeout(400);
     check('with one form confirmed and one not, still no copy and no file', !(await has(fr, '[data-action=t99-copies]')) && !(await has(fr, '[data-action=t99-file]')));
     const conf = await yearRec(fr);
-    check("A-1001's confirmation is stored with its two amounts, who and when", !!conf && !!conf.confirmed['A-1001'] && conf.confirmed['A-1001'].box1Cents === 2000000 && conf.confirmed['A-1001'].box4Cents === 0 && conf.confirmed['A-1001'].by === BY, conf && conf.confirmed);
+    check("A-1001's confirmation is stored with its two amounts, who and when", !!conf && !!conf.confirmed['A-1001'] && conf.confirmed['A-1001'].box1Cents === 2000000 && conf.confirmed['A-1001'].box4Cents === 0 && !!conf.confirmed['A-1001'].by && !!conf.confirmed['A-1001'].at, conf && conf.confirmed);
     await toNumbers(check, fr);
     const nums = await rowsOf(fr, 'numbers');
     const n1 = nums.find((r) => r.id === 'A-1001') || { text: '' };
@@ -300,7 +313,7 @@ const parts = {
     check("the payer's typed number is accepted: 'ending 4321'", /ending 4321/.test(await fr.evaluate(() => (document.querySelector('[data-panel="numbers"]') || {}).innerText || '')) && !(await has(fr, '#t99-payer-tin')));
     const page = await fr.evaluate(() => document.body.innerText);
     check('the screen holds no full number, only last fours', numberHits(page).hits.length === 0 && numberHits(page).shapes.length === 0, numberHits(page));
-    await A.page.screenshot({ path: path.join(OUT, 'review-phone-numbers.png'), fullPage: false });
+    await shot(A, fr, '[data-panel="numbers"]', 'review-phone-numbers.png');
     const got = await download(A, fr, '[data-action=t99-file]');
     const want = await fr.evaluate(() => window.CVPortal.tax1099.iris.header('1099-INT').join(','));
     const L = got ? lines(got.text) : [];

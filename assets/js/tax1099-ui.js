@@ -261,10 +261,9 @@
     const r = held.rec[id];
     const v = cells(ws, id);
     const field = (k) => `<label class="cs-field" for="t99-r-${h(id)}-${k}"><span>${LABEL[k]}</span><input id="t99-r-${h(id)}-${k}" type="text" autocomplete="off" value="${h(v[k] || '')}"></label>`;
-    const name =
-      v.nameType === 'B'
-        ? field('bname')
-        : ['first', 'middle', 'last', 'suffix'].map(field).join('');
+    // the name split the IRS file needs (asked); the address is the W-9's or the record's (shown, corrected only when a rule names it)
+    const name = v.nameType === 'B' ? field('bname') : ['first', 'last'].map(field).join('');
+    const where = [[v.address1, v.address2].filter(Boolean).join(' '), [v.city, [v.state, v.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')].filter(Boolean).join(', ');
     const num = r
       ? `<span class="tx-detail" data-number>Number ${ending(r.tin.slice(5))} · ${r.from === 'w9' ? 'read from the signed W-9' : 'typed'}</span>`
       : fromW9(ws, id)
@@ -273,10 +272,10 @@
          <label class="cs-field" for="t99-tint-${h(id)}"><span>Number type</span><select id="t99-tint-${h(id)}"><option value="SSN">SSN</option><option value="EIN"${inv.type && inv.type !== 'individual' ? ' selected' : ''}>EIN</option></select></label>`;
     const rowSaid = (ui().rowMsg || {})[id] ? `<p class="tx-note is-stop" role="alert">${h(ui().rowMsg[id])}</p>` : '';
     const shown = r || fromW9(ws, id);
-    return `<li class="tx-row" data-id="${h(id)}"${r ? ` data-from="${r.from}"` : ''}><div class="tx-what"><span class="tx-title">${h(inv.title || id)} · ${h(id)} · ${ending(X().last4Of(inv))} on record</span>${shown ? num : ''}</div>
+    return `<li class="tx-row" data-id="${h(id)}"${r ? ` data-from="${r.from}"` : ''}><div class="tx-what"><span class="tx-title">${h(inv.title || id)} · ${h(id)} · ${ending(X().last4Of(inv))} on record</span>${shown ? num : ''}<span class="tx-detail" data-address>${h(where)}</span></div>
       <div class="tx-form">${shown ? '' : num}
         <label class="cs-field" for="t99-r-${h(id)}-nameType"><span>Name type</span><select id="t99-r-${h(id)}-nameType" data-change="t99-nametype" data-id="${h(id)}"><option value="I"${v.nameType !== 'B' ? ' selected' : ''}>Individual</option><option value="B"${v.nameType === 'B' ? ' selected' : ''}>Business</option></select></label>
-        ${name}${['address1', 'address2', 'city', 'state', 'zip'].map(field).join('')}
+        ${name}
       </div>${rowSaid}</li>`;
   }
   function numbersHTML(ws, c, F) {
@@ -292,8 +291,8 @@
     const typedLeft = !p || F.forms.some((f) => !held.rec[f.investorId]);
     return CK().panel(
       'Numbers',
-      `${said('numbers')}${payer}${waiting}<ul class="tx-list" data-list="numbers">${F.forms.map((f) => recipientRow(ws, f)).join('')}</ul>
-      <div class="cs-row">${typedLeft ? '<button type="button" class="cs-btn" data-action="t99-check">Check numbers</button>' : ''}</div>`
+      `<div data-panel="numbers">${said('numbers')}${payer}${waiting}<ul class="tx-list" data-list="numbers">${F.forms.map((f) => recipientRow(ws, f)).join('')}</ul>
+      <div class="cs-row">${typedLeft ? '<button type="button" class="cs-btn" data-action="t99-check">Check numbers</button>' : ''}</div></div>`
     );
   }
 
@@ -303,7 +302,7 @@
     const files = yr.files || [];
     const last = files[files.length - 1];
     const made = last ? `<p class="tx-detail" data-made>Last file: ${h(U.date(String(last.at).slice(0, 10), 'long'))} · ${last.rows} form${last.rows === 1 ? '' : 's'} · ${h(last.by)}</p>` : '';
-    return CK().panel('IRS file', `${said('file')}${made}<div class="cs-row"><button type="button" class="cs-btn cs-btn-primary" data-action="t99-file">Download the IRS file</button></div>`);
+    return CK().panel('IRS file', `<div data-panel="file">${said('file')}${made}<div class="cs-row"><button type="button" class="cs-btn cs-btn-primary" data-action="t99-file">Download the IRS file</button></div></div>`);
   }
 
   function render(ws) {
