@@ -36,3 +36,9 @@ Owner instruction (2026-11-20, verbatim): "work around whatever bullshit you thi
 - W2 (12-06 Task 2, rich-text editor): the input handler calls `NS.app.save()` without rendering, then replaces only the preview container's innerHTML (and the three buttons' disabled state) in place. It never calls NS.app.render() while the editor has focus (follow the typing()/focusout pattern at taxdocs-ui.js:185-200). Toolbar buttons call preventDefault on pointerdown so the selection survives a tap. Part editor-phone asserts the caret stays after the typed text (document.getSelection()).
 - W3 (12-06 Task 3, help guide): the sponsor guide is 46,286 of 48,000 bytes, and the remaining room is shared. On a conflict in server/lib/help-guide.mjs, take either side, then run `node server/help/build.mjs` and `--verify`; never hand-merge it. Record the measured sponsor size in the summary. The stop rule stands.
 - Info: addStarter takes one fundType, so 12-08's starter picker applies the pe/vc mapping.
+
+## After 12-03 (merged 2026-11-20)
+- The shared check runner keeps each part's result in checks-out/.parts on purpose (resumable checks). Any "checks-out is empty" verify excludes `.parts`.
+- The composer draws chart values between 0 and 1 as fractions of the chart height, and scales any other values against the largest. 12-05 and 12-06 check that the model's column and line values and its ticks (`at`) line up on the drawn chart (fractions from 12-02's model), and fix the model side if they do not.
+- compose also returns `.logos` (where each logo was drawn). An uploaded logo on a coloured band sits on a white plate. The support contact goes at the foot of the cover, or under the title when there is no cover.
+- Font names inside the PDF data: DejaVuSans-Bold-5348 and DejaVuSans-5083 (C-02, for the owner's check). Measured: layout-a composes in 256 ms in Node and 383 ms in the phone frame.
