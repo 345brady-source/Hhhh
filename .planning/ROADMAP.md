@@ -411,9 +411,22 @@ Plans:
 ### Phase 12: Report builder
 
 **Goal:** A premium report builder inside the portal: report templates per report type (investor statements, capital account statements, distribution notices, quarterly and annual investor letters, fund performance and holdings summaries, tax-season summaries), each built from the data the portal already holds (capital accounts, journal, distributions, calls, holdings, tax documents), highly customizable by the sponsor (sections on or off and reordered, the firm's branding, wording blocks, date range, per-fund or per-investor), previewed on screen and exported as PDF and spreadsheet with the shipped writers, and delivered to investors through the portal's documents; no outside API; all in the browser with no server, proven in the owner's iPhone conditions. Nothing is called ready before the owner has checked it.
-**Requirements**: defined in 12-RESEARCH.md
+**Requirements**: RB-01, RB-02, RB-03, RB-04, RB-05, RB-06, RB-07, RB-08, RB-09, RB-10, RB-11, RB-12, RB-13, RB-14, RB-15, RB-16 (defined in 12-RESEARCH.md Part 5; choices C-01 to C-14 of 12-CONTEXT.md)
 **Depends on:** Phase 11 (journal, workbook and PDF writers), Phase 10 (investor documents delivery)
-**Plans:** TBD
+**Plans:** 9 plans
+
+Waves: 1 = 12-01, 12-02, 12-03, 12-04 · 2 = 12-05, 12-06, 12-07 · 3 = 12-08 · 4 = 12-09. Plans in one wave share no file. Wave 1 is new files only plus two export lines in audit.js (C-14) and needs no phase 11 plan still merging; 12-02 and 12-03 build on the data and model shapes written into 12-01's and 12-02's plans, so all four run at once. In wave 2 merge 12-05, then 12-07, then 12-06. The spreadsheet writer is loaded on demand whether or not 11-16 has merged (C-10). 12-09 waits for 12-08 and ends with the owner's iPhone check; nothing is called ready before the owner has checked it.
+
+Plans:
+- [ ] 12-01-PLAN.md — The report figures: read-only adapters in whole cents from the engine (statements, consolidated per currency, distributions, performance net only, holdings, fees in the ILPA order, NOI, tax year and tax documents), closedPerformance and openPerformance exported; fund A by hand and every sample investor against the engine (RB-04, RB-05, RB-06, RB-08, RB-09) (wave 1)
+- [ ] 12-02-PLAN.md — The report model: templates saved per firm or offering, the section catalogue, the rich-text block model, merge fields that refuse unknown names, the distribution split, one layout model per recipient with no other investor's data, the spreadsheet sheets (RB-02, RB-03, RB-11 and the model side of RB-04 to RB-09) (wave 1)
+- [ ] 12-03-PLAN.md — The page composer: portrait PDFs in the firm's brand on the shipped writer and font (cover, text, tiles, tables across pages, vector charts, photos, page numbers), the firm's name in the file properties, identical bytes for the same model, proven in the phone frame; the shared check helpers (RB-10, RB-15) (wave 1)
+- [ ] 12-04-PLAN.md — The delivery record as pure functions (runs with snapshot and hashes, delivery to Documents, the send-on-paper list, opens, withdraw, replace, the Notices draft) and the phase gate gate12.sh (RB-13, RB-16) (wave 1)
+- [ ] 12-05-PLAN.md — Starter templates for the six report types and the fund types, run end to end with real figures on every sample firm and fund A; every report type's spreadsheet reopened to the cent (RB-01, RB-07, RB-11) (wave 2)
+- [ ] 12-06-PLAN.md — The builder's screens: the Investor reports tab on the Reports page, the section and rich-text editor, cover, photos, chart, disclosures, period and audience, the preview equal to the PDF, the PDF drawn in the page, downloads; the full gate (RB-02, RB-03, RB-12, RB-14) (wave 2)
+- [ ] 12-07-PLAN.md — Batch generation one file at a time with progress and stop, refused before anything is written when a report would be wrong, and archived files given back byte-identical (RB-13, RB-16) (wave 2)
+- [ ] 12-08-PLAN.md — Generate, deliver and the archive on screen, the paper list, withdraw and replace, the Notices prefill, the investor's opens; speed measured on the phone frame; the full gate (RB-13, RB-14, RB-16) (wave 3)
+- [ ] 12-09-PLAN.md — The white-label sweep, the owner-path walkthrough on four firms with screenshots, the two phone flows in the reference gate, the full gate on the merged tree, then the owner's iPhone check (RB-14, RB-15) (wave 4)
 
 ### Phase 13: Email overhaul
 
