@@ -39,3 +39,15 @@ PASS full the typed taxpayer number is in no file this part writes (2)
 PACKAGE FLOW: PASS (parts run: 1)
 ```
 verify-1 exit 0.
+
+## Task 2: letter-phone and letter-none (guards), the mutation, the guide line
+Both parts against Task 1's commit 42cd627 ($O/red2.txt): 62 PASS, `PACKAGE FLOW: PASS (parts run: 2)`. The phone layout needed no code (the details row already stacks at 390 px), so letter-phone passed as a guard; letter-none passes because the control exists only with a server.
+Mutation (kycLetter without its server condition, reverted with `git checkout -- assets/js/console.js` right after; $O/red2-mutation.txt):
+```
+FAIL letter-none no "Download letter" without a server :: [1,0]
+FAIL letter-none no waiting line without a server :: ["Accreditation: verified · Accreditation check · Third-party verification letter · ref ver_standin_acc · valid until Jan 19, 2027 · Download letter","Accreditation: waiting for the result · Accreditation check · ref ver_standin_acc2 A reviewer's letter usually arrives within two business days; this page updates when it does."]
+FAIL letter-none no "Download letter" without a server :: [1,0]
+FAIL letter-none no waiting line without a server :: [...the same at 390x844...]
+PACKAGE FLOW: FAIL (parts run: 1) - letter-none
+```
+Guide: one added line at the end of the bullets of `## console-kyc`, then `node server/help/build.mjs` ("wrote server/lib/help-guide.mjs (77997 bytes)"). help-guide.test.mjs: `# tests 9`, `# pass 9`, `# fail 0`. Sponsor guide 46,452 bytes of 48,000 (was 46,286; +166).
