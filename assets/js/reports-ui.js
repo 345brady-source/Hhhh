@@ -259,7 +259,7 @@
         }<span class="rb-sec-acts">${
           fixed
             ? ''
-            : `<button type="button" class="cs-btn rb-move" data-action="rb-move" data-key="${sec.key}" data-dir="up" aria-label="Move ${h(label)} up"${k <= 0 ? ' disabled' : ''}>↑</button><button type="button" class="cs-btn rb-move" data-action="rb-move" data-key="${sec.key}" data-dir="down" aria-label="Move ${h(label)} down"${k >= movable.length - 1 ? ' disabled' : ''}>↓</button>`
+            : `<button type="button" class="cs-btn rb-move" data-action="rb-move" data-key="${sec.key}" data-dir="up" aria-label="Move up: ${h(label)}"${k <= 0 ? ' disabled' : ''}>Move up</button><button type="button" class="cs-btn rb-move" data-action="rb-move" data-key="${sec.key}" data-dir="down" aria-label="Move down: ${h(label)}"${k >= movable.length - 1 ? ' disabled' : ''}>Move down</button>`
         }${OPTS[sec.key] ? `<button type="button" class="cs-btn" data-action="rb-sec" data-key="${sec.key}" aria-expanded="${isOpen}" aria-label="Edit ${h(label)}">Edit</button>` : ''}</span></div>`;
         return `<li class="rb-sec${sec.on ? '' : ' is-off'}" data-key="${sec.key}">${head}${isOpen ? `<div class="rb-opts">${optsHTML(ws, t, sec)}${msgHTML()}</div>` : ''}</li>`;
       })

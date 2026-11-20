@@ -84,7 +84,7 @@
 .rb-switch input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--cv-accent); }
 .rb-sec.is-off .rb-switch span { color: var(--cv-ink-3); }
 .rb-sec-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs); }
-.rb .rb-move { width: 44px; padding: 0; font-size: var(--text-base, 1rem); }
+.rb .rb-move { padding: var(--space-2xs) var(--space-sm); }
 .rb-opts { display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-sm) 0 var(--space-xs); }
 .rb-accent { display: flex; align-items: center; gap: var(--space-xs); }
 .rb-accent input[type="color"] { width: 44px; height: 44px; padding: 2px; border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); }

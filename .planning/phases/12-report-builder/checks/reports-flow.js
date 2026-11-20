@@ -101,6 +101,7 @@ async function download(A, fr, selector, name) {
   if (!dl) return '';
   const file = path.join(OUT(), name);
   await dl.saveAs(file);
+  download.offered = dl.suggestedFilename();
   return file;
 }
 /** A solid-color PNG of w x h pixels, made here (zlib only). */
@@ -252,7 +253,7 @@ const parts = {
     await T.press(fr, '.rb-sec[data-key=performance] [data-action=rb-move][data-dir=up]');
     const st2 = await previewState(fr);
     const after = titles(st2);
-    check("'Move up' on Performance puts 'Net performance' before 'Distributions' in the preview", after.indexOf('Net performance') >= 0 && after.indexOf('Net performance') < after.indexOf('Distributions'), after);
+    check("'Move up' on Performance puts 'Net performance' before the distributions' 'Totals' in the preview", after.indexOf('Net performance') >= 0 && after.indexOf('Totals') >= 0 && after.indexOf('Net performance') < after.indexOf('Totals'), after);
     const order = await fr.evaluate(() => Array.from(document.querySelectorAll('.rb-sec')).map((x) => x.getAttribute('data-key')));
     check('the editor lists Performance before Distributions now', order.indexOf('performance') < order.indexOf('distributions'), order);
     // the letter
@@ -344,7 +345,7 @@ const parts = {
     const btns = await sizes(fr, '.rb-sec [data-action=rb-move], .rb-sec[data-key=letter] .rb-tools button, .rb-sec[data-key=letter] .rb-tools select');
     check("'Move up', 'Move down' and the letter's toolbar measure at least 44 x 44 px", btns.length >= 6 && btns.every((b) => b.w >= 44 && b.h >= 44), btns.filter((b) => b.w < 44 || b.h < 44).concat([{ n: btns.length }]));
     const labels = await fr.evaluate(() => Array.from(document.querySelectorAll('.rb-sec[data-key=performance] [data-action=rb-move]')).map((b) => b.getAttribute('aria-label')));
-    check('the move buttons are named for their section', labels.indexOf('Move Performance up') >= 0 && labels.indexOf('Move Performance down') >= 0, labels);
+    check('the move buttons are named for their section', labels.indexOf('Move up: Performance') >= 0 && labels.indexOf('Move down: Performance') >= 0, labels);
     await A.page.screenshot({ path: path.join(OUT(), 'phone-editor.png') });
     await T.press(fr, '[data-action=rb-save]');
     await fr.waitForTimeout(250);
@@ -492,9 +493,7 @@ const parts = {
     const pdfFile = await download(A, fr, '[data-action=rb-dl-pdf]', 'same.pdf');
     check('Download PDF gives a PDF', !!pdfFile && fs.readFileSync(pdfFile).subarray(0, 5).toString() === '%PDF-', pdfFile);
     if (!pdfFile || !m) return A.context.close();
-    const name = path.basename(pdfFile);
-    const offered = await fr.evaluate(() => '');
-    void offered;
+    const name = download.offered;
     const pdfText = L12.text(pdfFile);
     const pw = {};
     wordsOf(pdfText).forEach((x) => (pw[x] = (pw[x] || 0) + 1));
@@ -514,9 +513,9 @@ const parts = {
     });
     const notBoth = money.filter((s) => st.text.indexOf(s) < 0 || flat.indexOf(s) < 0);
     check(`every money string of the model (${money.length}) is in the preview and in the PDF`, money.length > 20 && notBoth.length === 0, notBoth.slice(0, 10));
-    check('the file is named for the firm, the report, the period and the investor', /^Kestrel_Bay[A-Za-z_]*_Quarterly_report_Q4_2026_KBC_1001\.pdf$/.test(name) || /Quarterly_report_Q4_2026_KBC_1001\.pdf$/.test(name), name);
+    check("the PDF is offered as 'Kestrel_Bay_Quarterly_report_Q4_2026_KBC_1001.pdf' (firm, report, period, investor)", name === 'Kestrel_Bay_Quarterly_report_Q4_2026_KBC_1001.pdf', name);
     const xlsxFile = await download(A, fr, '[data-action=rb-dl-xlsx]', 'same.xlsx');
-    check('Download spreadsheet gives a workbook', !!xlsxFile && fs.readFileSync(xlsxFile).subarray(0, 2).toString() === 'PK', xlsxFile);
+    check("Download spreadsheet gives a workbook named 'Kestrel_Bay_Quarterly_report_Q4_2026_KBC_1001.xlsx'", !!xlsxFile && fs.readFileSync(xlsxFile).subarray(0, 2).toString() === 'PK' && download.offered === 'Kestrel_Bay_Quarterly_report_Q4_2026_KBC_1001.xlsx', [xlsxFile, download.offered]);
     if (xlsxFile) {
       const X = L12.xlsx(xlsxFile);
       const col = (i) => String.fromCharCode(65 + i);
