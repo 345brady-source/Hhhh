@@ -1,5 +1,5 @@
 // gate: node
-// last "TAXDOCS MATH: PASS (cases run: 10)"
+// last "TAXDOCS MATH: PASS (cases run: 11)"
 // The delivery record of phase 10 (assets/js/taxdocs.js): confirming, confirming together, delivery, consent, paper,
 // amended and withdrawn documents, opens, the notice and the dates, against Rev. Proc. 2012-17 sections 4, 5, 7, 8, 9
 // and 10 and the plan's hand-worked example F. No browser and no PDF: packages come from page facts written here.
@@ -100,7 +100,7 @@ const cases = {
     check('a second one for the same investor, kind and year is refused unless it names the one it replaces', !!refusal(() => T.deliver(ws, 'gen-2', { at: AT, by: BY, how: 'email' })) && g2.tax.state === 'confirmed', g2.tax.state);
     T.deliver(ws, 'gen-2', { at: AT, by: BY, how: 'email', replaces: 'gen-1' });
     T.withdraw(ws, 'gen-2', { at: AT, by: BY, why: 'figures to be corrected' });
-    check('it is replaced and withdrawn by the same functions as any other', g1.tax.state === 'replaced' && g1.hidden === true && g2.tax.replaces === 'gen-1' && g2.tax.state === 'withdrawn' && g2.hidden === true, [g1.tax.state, g2.tax.state]);
+    check('it is replaced and withdrawn by the same functions as any other (C-09: the replaced one stays shown, marked)', g1.tax.state === 'replaced' && g1.hidden === false && g1.tax.replacedBy === 'gen-2' && g2.tax.replaces === 'gen-1' && g2.tax.state === 'withdrawn' && g2.hidden === true, [g1.tax.state, g2.tax.state]);
   },
 
   together({ check }) {
@@ -212,8 +212,8 @@ const cases = {
     T.confirm(ws, batch.id, pk2.id, { investorId: 'INV-1001', by: BY, at: AT });
     const a2 = T.toDocument(ws, batch.id, pk2.id, { id: 'doc-a2', size: 1, sha256: 'cd'.repeat(32), fileName: 'k1.pdf', title: 'K-1 amended', at: AT, by: BY });
     T.deliver(ws, a2.id, { at: AT, by: BY, how: 'email', replaces: a.id });
-    check('replaced: listed for nobody, and only the amended one is listed for its investor', a.tax.state === 'replaced' && ws.investors.every((i) => listed(i.id).indexOf(a.id) < 0) && same(listed('INV-1001'), ['doc-a2']), listed('INV-1001'));
-    check('hidden is false only in the delivered state', ws.docs.filter((d) => d.tax).every((d) => d.hidden === (d.tax.state !== 'delivered')), ws.docs.map((d) => [d.tax.state, d.hidden]));
+    check('replaced (C-09): still listed for its own investor beside the amended one, for nobody else', a.tax.state === 'replaced' && ws.investors.filter((i) => i.id !== 'INV-1001').every((i) => listed(i.id).indexOf(a.id) < 0) && same(listed('INV-1001').sort(), [a.id, 'doc-a2'].sort()), listed('INV-1001'));
+    check('hidden is false only in the delivered state, and for a delivered document replaced within its access period', ws.docs.filter((d) => d.tax).every((d) => d.hidden === !(d.tax.state === 'delivered' || (d.tax.state === 'replaced' && !!d.tax.deliveredAt))), ws.docs.map((d) => [d.tax.state, d.hidden]));
   },
 
   consent({ check }) {
@@ -301,14 +301,14 @@ const cases = {
     const b = docFor(2, 'INV-1003');
     check('replaces must name the live one (not another investor\'s)', !!refusal(() => T.deliver(ws, a2.id, { at: AT, by: BY, how: 'email', replaces: b.id })) && a2.tax.state === 'confirmed', a2.tax.state);
     T.deliver(ws, a2.id, { at: '2026-06-01T10:00:00Z', by: BY, how: 'email', replaces: a.id });
-    check('the earlier is replaced and hidden; the new one carries replaces and is delivered', a.tax.state === 'replaced' && a.hidden === true && a2.tax.replaces === a.id && a2.tax.state === 'delivered' && a2.hidden === false, [a.tax.state, a2.tax.state]);
-    check('only one is listed for the investor', same(listed('INV-1001'), ['doc-a2']), listed('INV-1001'));
+    check('the earlier is replaced and stays shown, marked (C-09); the new one carries replaces and is delivered', a.tax.state === 'replaced' && a.hidden === false && a.tax.replacedBy === a2.id && a2.tax.replaces === a.id && a2.tax.state === 'delivered' && a2.hidden === false, [a.tax.state, a2.tax.state]);
+    check('both are listed for the investor until the earlier one\'s access period ends', same(listed('INV-1001').sort(), [a.id, 'doc-a2'].sort()), listed('INV-1001'));
     check('the amended one has its own access date (six months after it was issued, if later)', a2.tax.availableUntil === '2026-12-31', a2.tax.availableUntil);
     check('the change log says which document it replaced', ws.audit.some((e) => e.action === 'Tax document delivered' && e.record === 'doc-a2' && /replaces doc-/.test(e.detail)), 'missing');
     check('a replaced document cannot be delivered again', !!refusal(() => T.deliver(ws, a.id, { at: AT, by: BY, how: 'email' })), 'went through');
     const other = T.addGenerated(ws, { kind: 'k1-1065', year: '2024', offeringId: B.OFFERING, investorId: 'INV-1001', id: 'gen-2024', size: 1, sha256: 'ef'.repeat(32), fileName: 'k1.pdf', title: '2024 K-1', confirmedBy: BY, confirmedAt: AT });
     T.deliver(ws, other.id, { at: AT, by: BY, how: 'email' });
-    check('another tax year sits beside it', other.tax.state === 'delivered' && same(listed('INV-1001').sort(), ['doc-a2', 'gen-2024']), listed('INV-1001'));
+    check('another tax year sits beside it', other.tax.state === 'delivered' && same(listed('INV-1001').sort(), [a.id, 'doc-a2', 'gen-2024'].sort()), listed('INV-1001'));
   },
 
   withdraw({ check }) {
@@ -334,6 +334,46 @@ const cases = {
     const e = entries(ws, 'Tax document withdrawn');
     check('the change log records who withdrew it, when and why', e.length === 1 && e[0].actor === BY && e[0].at === '2026-04-01T09:00:00Z' && /figures to be corrected/.test(e[0].detail), e.length);
     check('the change log records opens', entries(ws, 'Tax document opened').length === 2, entries(ws, 'Tax document opened').length);
+  },
+
+  replaced({ check }) {
+    // C-09 (Rev. Proc. 2012-17 section 9.01): an amended K-1 does not hide the earlier one; the earlier stays reachable,
+    // marked replaced, until its own access period ends. D9: a withdrawal made in the portal is confirmed there in writing.
+    const { T, ws, batch, listed, docFor, inv } = setup();
+    T.consent(ws, 'INV-1001', { at: AT, where: 'portal' });
+    const a = docFor(0, 'INV-1001');
+    T.deliver(ws, a.id, { at: AT, by: BY, how: 'email' });
+    T.opened(ws, a.id, '2026-03-11T08:00:00Z');
+    const pk = T.addPackage(ws, batch.id, { first: 1, last: 1, by: BY, at: AT });
+    T.confirm(ws, batch.id, pk.id, { investorId: 'INV-1001', by: BY, at: AT });
+    const a2 = T.toDocument(ws, batch.id, pk.id, { id: 'doc-a2', size: 1, sha256: 'cd'.repeat(32), fileName: 'k1.pdf', title: 'Schedule K-1 (Form 1065) 2025', at: AT, by: BY });
+    T.deliver(ws, a2.id, { at: '2026-06-01T10:00:00Z', by: BY, how: 'email', replaces: a.id });
+    check('the earlier one is marked replaced, by which document and when, and is still shown', a.tax.state === 'replaced' && a.tax.replacedBy === 'doc-a2' && a.tax.replacedAt === '2026-06-01T10:00:00Z' && a.hidden === false, [a.tax.state, a.tax.replacedBy, a.hidden]);
+    check('its investor sees both, the amended one and the earlier one; nobody else sees either', same(listed('INV-1001').sort(), [a.id, 'doc-a2'].sort()) && ws.investors.filter((i) => i.id !== 'INV-1001').every((i) => listed(i.id).length === 0), listed('INV-1001'));
+    check('its title says it was replaced; the amended one keeps its own title', /\(replaced\)$/.test(a.title) && a2.title === 'Schedule K-1 (Form 1065) 2025', a.title);
+    T.opened(ws, a.id, '2026-07-01T08:00:00Z');
+    check('opening the earlier one is still recorded', a.tax.opens.count === 2 && a.tax.opens.last === '2026-07-01T08:00:00Z', a.tax.opens);
+    const l = T.lists(ws, { offeringId: B.OFFERING, kind: 'k1-1065', year: '2025' });
+    check('lists() gives the replaced documents apart, and the amended one as delivered', l.replaced.length === 1 && l.replaced[0] === a && l.delivered.length === 1 && l.delivered[0] === a2 && Array.isArray(l.withdrawn), [l.replaced.length, l.delivered.length]);
+    check('expire on its last day changes nothing (available until is inclusive)', a.tax.availableUntil === '2026-12-31' && T.expire(ws, '2026-12-31') === 0 && a.hidden === false, a.tax.availableUntil);
+    const before = ws.audit.length;
+    check('expire the day after hides it and says so once', T.expire(ws, '2027-01-01') === 1 && a.hidden === true && T.expire(ws, '2027-01-02') === 0, a.hidden);
+    check('the access period ending writes one change-log entry', ws.audit.slice(before).filter((e) => e.action === 'Tax document access period ended' && e.record === a.id).length === 1, ws.audit.slice(before).map((e) => e.action));
+    check('then only the amended one is listed, and the earlier one keeps its record of opens', same(listed('INV-1001'), ['doc-a2']) && a.tax.opens.count === 2, listed('INV-1001'));
+    check('expire never hides a current document past its date', T.expire(ws, '2030-01-01') === 0 && a2.hidden === false, a2.hidden);
+    // a document replaced before it was ever delivered (waiting for consent) was never shown and stays hidden
+    const c = docFor(7, 'INV-1008');
+    T.deliver(ws, c.id, { at: AT, by: BY, how: 'email' });
+    const pk2 = T.addPackage(ws, batch.id, { first: 1, last: 1, by: BY, at: AT });
+    T.confirm(ws, batch.id, pk2.id, { investorId: 'INV-1008', by: BY, at: AT });
+    const c2 = T.toDocument(ws, batch.id, pk2.id, { id: 'doc-c2', size: 1, sha256: 'cd'.repeat(32), fileName: 'k1.pdf', title: 'K-1', at: AT, by: BY });
+    T.deliver(ws, c2.id, { at: AT, by: BY, how: 'email', replaces: c.id });
+    check('a waiting document that is replaced stays hidden and is listed for nobody', c.tax.state === 'replaced' && c.hidden === true && listed('INV-1008').length === 0, [c.tax.state, c.hidden]);
+    // D9
+    T.withdrawConsent(ws, 'INV-1001', { at: '2026-08-01T09:00:00Z', where: 'portal' });
+    check('a withdrawal made in the portal is confirmed there: withdrawalConfirmed { at, how: portal }', same(inv('INV-1001').taxDelivery.withdrawalConfirmed, { at: '2026-08-01T09:00:00Z', how: 'portal' }), inv('INV-1001').taxDelivery.withdrawalConfirmed);
+    T.withdraw(ws, a2.id, { at: '2026-08-02T09:00:00Z', by: BY, why: 'sent in error' });
+    check('lists() gives the withdrawn documents apart', T.lists(ws, { offeringId: B.OFFERING, kind: 'k1-1065', year: '2025' }).withdrawn.some((d) => d === a2), 'missing');
   },
 
   dates({ check }) {
