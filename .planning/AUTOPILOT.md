@@ -76,3 +76,7 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 ## Choice recorded (2026-11-20, work-around rule): help guide room
 - The sponsor guide is capped at 48,000 bytes; after 11-13 (cap 450), 12-06 (222) and 08-18 (~150) about 480 bytes remain for 11-15, 11-16, 10-11, 12-08, 13-09 and 13-10.
 - Choice: a small guide-trim plan (quick task, GSD executor) runs before 11-15 and the phase 13 guide plans: it shortens existing entries' wording only, keeps every fact, step and screen name, and must keep the help chat's existing practice-set score (no paid run; the local guide tests and the HELP CHAT/HELP PREVIEW gate steps). Raising the 48,000 cap (server/test/help-guide.test.mjs:130, set in phase 07) was not chosen: the whole guide is sent with every help question, so a larger guide costs more per question, and the paid help test was measured at the current size.
+
+## STOPPED (2026-11-20, owner: "stop working completely, turn off everything")
+- Weekly usage limit hit (resets Nov 26, 5am UTC); 11-12, 11-13 and the 11-18 planner died on it. The owner then ordered a full stop: 12-06, 08-18, 08-19 and 10-10 executors stopped; every gate, heavy.sh and browser process killed.
+- Work saved on wip branches: wip/12-06, wip/08-18, wip/08-19, wip/10-10, wip/11-12 (11-13 and 11-18 had only started). Their worktrees are left in place under .claude/worktrees. Nothing runs. Resume only on the owner's word.
