@@ -480,7 +480,8 @@
       base = blank(s.type, ws);
       const tp = clone(s.template);
       Object.keys(tp).forEach((k) => {
-        if (k !== 'id' && k !== 'type' && k !== 'version') base[k] = tp[k];
+        if (k === 'disclosures') base.disclosures = base.disclosures.concat(tp.disclosures);
+        else if (k !== 'id' && k !== 'type' && k !== 'version') base[k] = tp[k];
       });
       base.starter = s.id;
       base.fundType = s.fundType;
