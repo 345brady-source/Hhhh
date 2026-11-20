@@ -29,3 +29,20 @@ PASS identity every investor screen of this part: no provider name or address (v
 PACKAGE FLOW: PASS (parts run: 1)
 ```
 verify-1 exit 0.
+
+## Task 2 (refusals)
+RED2 (parts refused and start-limit against Task 1's code, $O/red2.txt):
+```
+FAIL refused the step shows exactly "This check could not start. Please try again later." :: []
+FAIL refused the line stays on the step once the toast has gone (not only a toast) :: []
+FAIL refused a start shows "This check is not part of this invitation" followed by the firm's contact as its settings hold it :: {"refusal":[],"contact":{"team":"Kestrel Bay Investor Relations","email":"ir@kestrelbaycap.com","phone":"(212) 555-0148","hours":""}}
+FAIL start-limit the fourth start shows "This check was already started." followed by the firm's contact as the page holds it :: {"refusal":[],"contact":{"team":"Kestrel Bay Investor Relations","email":"ir@kestrelbaycap.com","phone":"(212) 555-0148","hours":""}}
+PACKAGE FLOW: FAIL (parts run: 2) - refused, start-limit
+```
+verify-2 (GREEN, $O/flow2.txt last lines):
+```
+PASS start-limit every investor screen of this part: no vendor, library or forbidden word (leak check)
+PASS start-limit every investor screen of this part: no provider name or address (vendor scan)
+PACKAGE FLOW: PASS (parts run: 3)
+```
+verify-2 exit 0.
