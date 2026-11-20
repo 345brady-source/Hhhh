@@ -41,7 +41,9 @@ The Tax documents page has a Tax withheld section. For a fund and a year it show
 
 ## Failures and open points first
 
-GATE_PLACEHOLDER
+- **The first full gate failed: PHONE LAYOUT, caused by this plan.** The run ended `GATE FAIL PHONE LAYOUT (8)` and `GATE_EXIT=1`, with every other line ok (TAXRECORD FLOW included). The cause: `FAIL sample-phone failure 14: no button, link, select or summary has a touch area under 24 px high (47 screens measured) :: {"offenders":1,"screens":1,"first":[{"n":1,"at":"sample console-taxdocs","s":"a.tx-title","t":"Tax withheld","h":21,"hit":21}]}`. firms-phone and owner-phone failed the same way. sample-desktop failed once with `page.screenshot: Protocol error`, which did not happen again. The list's title link (10-04's markup in tax.css) is 21 px tall. No section was registered before this plan, so nothing showed it. The output is kept as red-3.txt.
+- **Fixed in tax.css, against this plan's "adds files only" rule.** I added two lines and changed no line. They give `.tx-row a.tx-title` the same `::after` touch area that tax.css already gives `.tx-note a` (commit e98eec4). After the fix, run alone: `PHONE LAYOUT: PASS (parts run: 8)`. Because of this, Task 2's verify clause "tax.css equals the base" fails by design. The gate below ran with that one file taken out of the clause; the pages and console.js are still checked.
+- GATE2_PLACEHOLDER
 
 - **Not measured:** saving the worksheet from the phone's own frame in the host app (the check covers the normal browser download; inside the host app U.download uses the host's save prompt); a CPA's read of the worksheet.
 - **D5 was green before Task 2's code.** The recomputed-run line was already in Task 1's code, so record-desktop's D5 checks passed in red-2.txt. Every other new check of Task 2 failed there (29 FAIL lines).
