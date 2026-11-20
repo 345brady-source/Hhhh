@@ -18,6 +18,26 @@ FAIL fund-a ran to the end :: Error: ENOENT: no such file or directory, open '/h
 REPORTS MATH: FAIL (cases run: 1) - fund-a
 ```
 
+### red-2 (Task 2 cases written before their adapters; fund-a lines PASS from Task 1, omitted here)
+
+```
+FAIL statement ran to the end :: TypeError: D.holders is not a function
+FAIL consolidated ran to the end :: TypeError: D.consolidated is not a function
+FAIL distribution ran to the end :: TypeError: D.runs is not a function
+PASS performance NS.audit.closedPerformance and NS.audit.openPerformance are functions
+PASS performance kestrel-bay: every fund and preset: performance = the engine's closedPerformance or openPerformance
+PASS performance ashwell-ridge: every fund and preset: performance = the engine's closedPerformance or openPerformance
+PASS performance greywater: every fund and preset: performance = the engine's closedPerformance or openPerformance
+PASS performance pellbrook: every fund and preset: performance = the engine's closedPerformance or openPerformance
+PASS performance both kinds were compared (open and closed funds)
+PASS performance no key named gross in any performance result or statement perf (C-07)
+FAIL holdings ran to the end :: TypeError: D.holdings is not a function
+FAIL fees ran to the end :: TypeError: D.fees is not a function
+FAIL noi ran to the end :: TypeError: D.noi is not a function
+REPORTS MATH: FAIL (cases run: 8) - statement, consolidated, distribution, holdings, fees, noi
+```
+Case performance passed at RED because Task 1 built performance() (the plan orders statement, distribution and performance into Task 1); its RED is red-1.
+
 ## Verify lines
 
 ### Task 1 (verify command run verbatim from a script file, after commit b8b927d)

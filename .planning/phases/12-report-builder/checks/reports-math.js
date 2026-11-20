@@ -311,6 +311,18 @@ const cases = {
     ws.runs.push(Object.assign(JSON.parse(J(run)), { id: 'fa-run-cancelled', cancelled: true }), Object.assign(JSON.parse(J(run)), { id: 'fa-run-future', date: '2027-03-15' }));
     check('a cancelled run and a run dated after today give null, and are not in runs', D.distribution(ws, 'fa-run-cancelled', 'FA-1001') === null && D.distribution(ws, 'fa-run-future', 'FA-1001') === null && J(D.runs(ws, 'fund-a').map((r) => r.id)) === J(['fa-run-1']), D.runs(ws, 'fund-a'));
     check('an investor with no line on the run gives null', D.distribution(ws, 'fa-run-1', 'NO-SUCH-INVESTOR') === null);
+    // No sample line carries tax withheld, so one is made: FA-1002's 3,000.00 with 24% backup withholding (720.00) taken.
+    const N3 = load();
+    const W = fundA(N3, (w) => {
+      const l = w.runs[0].lines.find((x) => x.investorId === 'FA-1002');
+      l.withheld = [{ kind: 'backup', cents: 72000, basisCents: 300000, ratePct: 24, source: 'rule', why: 'No taxpayer number certified', confirmedBy: 'Check Runner', confirmedAt: '2026-12-15T15:00:00.000Z' }];
+      l.netCents = 228000; // 300,000 - 72,000
+    }).ws;
+    const wl = N3.reportsData.distribution(W, 'fa-run-1', 'FA-1002');
+    const row = N3.data.runRows(W, W.runs[0]).find((x) => x.investor.id === 'FA-1002');
+    check('a line with tax withheld: FA-1002 gross 300,000, withheld 72,000, net 228,000 = runRows', wl && wl.gross === 300000 && wl.withheld === 72000 && wl.net === 228000 && row.withheldCents === 72000 && row.netCents === 228000, wl);
+    const ds = N3.reportsData.distributions(W, 'FA-1002', 'fund-a', '2026-01-01', '2026-12-31');
+    check('distributions for FA-1002 2026: one row, period gross 300,000, withheld 72,000, net 228,000', ds && ds.rows.length === 1 && J(ds.period) === J({ gross: 300000, withheld: 72000, net: 228000 }), ds);
   },
 
   /**
@@ -372,6 +384,27 @@ const cases = {
       });
       check(`${ws.tenant.id}: every fund: holdings rows and NAV = the engine's (period().hold)`, !bad.length, bad.slice(0, 2));
     });
+    // The fund's statements ('al', 'ops', 'chg') are the audit package's own schedules, built on a copy of ws (W3).
+    // Fund A's fixture investors carry no onboarding block (every path that adds an investor sets one; NS.audit.build
+    // reads it), so this seat adds the one the portal gives an investor added by hand.
+    const N2 = load();
+    const A2 = fundA(N2, (w) => w.investors.forEach((i) => (i.onboarding = { status: 'complete', step: 0, invited: '2026-01-05', completed: '2026-01-05' }))).ws;
+    const kb = sampleWorkspaces(N2).find((w) => w.tenant.id === 'kestrel-bay');
+    [
+      [A2, 'fund-a'],
+      [kb, 'kb-fund-ii'],
+      [kb, 'kb-note-24a']
+    ].forEach(([ws, oid]) => {
+      const before = J(ws);
+      const got = N2.reportsData.statements(ws, oid, '2026-01-01', '2026-12-31');
+      const copy = JSON.parse(before);
+      const list = N2.audit.build(copy, copy.offerings.find((o) => o.id === oid), '2026-01-01', '2026-12-31').list;
+      const want = ['al', 'ops', 'chg'].map((id) => list.find((s) => s.id === id));
+      check(`${oid}: statements = the audit package's 'al', 'ops', 'chg' schedules in that order; ws unchanged`, got && got.length === 3 && J(got) === J(want) && J(ws) === before, got && got.map((s) => s.id));
+    });
+    // Fund A's total net assets in the statement of assets and liabilities = 51,750,000 (expect.statements.netAssets)
+    const al = N2.reportsData.statements(A2, 'fund-a', '2026-01-01', '2026-12-31')[0];
+    check("fund A: the statement of assets and liabilities carries net assets 51,750,000", al && J(al.rows).indexOf('51750000') >= 0, al && al.rows);
   },
 
   /**
