@@ -445,6 +445,252 @@ const parts = {
     const last = m.blocks.slice(-2);
     same(check, 'the last blocks are the disclosures with the tenant disclaimer', last.map((b) => (b.k === 'h2' ? ['h2', b.text] : [b.k, plainRuns(b.runs)])), [['h2', 'Disclosures'], ['p', DISCLAIMER]]);
     check('no HTML anywhere in the model', strings(m).every((s) => !/<[a-z\/!]/i.test(s)));
+  },
+
+  /** Task 2: templates keep order, scope, version and the change log. */
+  async template({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const ws = seat();
+    const by = 'gp@fund-a.example';
+    const at = '2027-01-20T12:00:00Z';
+    const logOf = () => NS.audit.verify(ws);
+    const tail = () => (Array.isArray(ws.audit) ? ws.audit[ws.audit.length - 1] : null);
+    R.ensure(ws);
+    same(check, 'ensure creates ws.reports', ws.reports, { v: 1, templates: [], runs: [], splits: {} });
+    ws.reports.runs.push({ id: 'keep' });
+    R.ensure(ws);
+    same(check, 'ensure leaves existing keys untouched', ws.reports.runs, [{ id: 'keep' }]);
+    ws.reports.runs = [];
+    const before = logOf().count;
+    const t = R.startFrom(ws, 'quarterly', { name: 'Q letter', scope: { firm: true }, by, at });
+    same(check, 'startFrom stores rt-1 version 1', [t.id, t.version, t.name, t.type, ws.reports.templates.length], ['rt-1', 1, 'Q letter', 'quarterly', 1]);
+    same(check, 'startFrom: updatedBy and updatedAt', [t.updatedBy, t.updatedAt], [by, at]);
+    check('one log entry added', logOf().count === before + 1, { before, after: logOf().count });
+    check("logged 'Report template created'", tail() && tail().action === 'Report template created' && tail().actor === by && tail().at === at, tail());
+    check('audit verify ok after create', logOf().ok === true, logOf());
+
+    const keys = () => t.sections.map((s) => s.key);
+    const i = keys().indexOf('holdings');
+    const above = keys()[i - 1];
+    R.move(t, 'holdings', -1);
+    same(check, "move('holdings', -1) swaps it with the section above", [keys()[i - 1], keys()[i]], ['holdings', above]);
+    const k0 = keys().slice();
+    R.move(t, 'cover', +1);
+    same(check, 'cover cannot move down from first', keys(), k0);
+    R.move(t, keys()[1], -1);
+    same(check, 'nothing moves above the cover', keys(), k0);
+    R.move(t, 'disclosures', -1);
+    same(check, 'disclosures cannot move up from last', keys(), k0);
+    R.move(t, keys()[keys().length - 2], +1);
+    same(check, 'nothing moves below the disclosures', keys(), k0);
+    t.sections.find((s) => s.key === 'disclosures').on = false;
+    t.sections.find((s) => s.key === 'fees').on = false;
+    const saved = R.save(ws, t, { by, at: '2027-01-21T09:00:00Z' });
+    same(check, 'save gives version 2', [saved.version, ws.reports.templates[0].version], [2, 2]);
+    same(check, 'save keeps the order the sponsor set', saved.sections.map((s) => s.key), k0);
+    check('save keeps disclosures on and fees off', saved.sections.find((s) => s.key === 'disclosures').on === true && saved.sections.find((s) => s.key === 'fees').on === false);
+    check("logged 'Report template saved' with name, version and scope", tail() && tail().action === 'Report template saved' && /Q letter/.test(tail().detail) && /version 2/.test(tail().detail) && /firm/.test(tail().detail), tail());
+    check('audit verify ok after save', logOf().ok === true, logOf());
+
+    const bad = clone(saved);
+    bad.stray = 1;
+    bad.sections = bad.sections.filter((s) => s.key !== 'fees');
+    bad.sections.unshift({ key: 'bogus', on: true, opts: {}, text: [] });
+    bad.sections.push(clone(bad.sections.find((s) => s.key === 'holdings')));
+    const cov = bad.sections.findIndex((s) => s.key === 'cover');
+    bad.sections.push(bad.sections.splice(cov, 1)[0]);
+    bad.cover.accent = 'red';
+    bad.chart = 'pie';
+    bad.name = 'N'.repeat(120);
+    const n = R.normalise(bad);
+    check('normalise drops the stray property', !('stray' in n), Object.keys(n));
+    check('normalise drops the unknown section', n.sections.every((s) => s.key !== 'bogus'));
+    check('normalise removes the duplicate', n.sections.filter((s) => s.key === 'holdings').length === 1);
+    same(check, 'normalise: cover first, disclosures last', [n.sections[0].key, n.sections[n.sections.length - 1].key], ['cover', 'disclosures']);
+    const fees = n.sections.find((s) => s.key === 'fees');
+    check('normalise appends the missing fees section, off', fees && fees.on === false, fees);
+    same(check, "normalise rejects the accent 'red'", n.cover.accent, '');
+    same(check, "normalise: accent '#abc' becomes '#AABBCC'", R.normalise(Object.assign(clone(saved), { cover: { style: 'band', accent: '#abc', photoId: '' } })).cover.accent, '#AABBCC');
+    same(check, 'normalise: a chart outside the list becomes none', n.chart, 'none');
+    same(check, 'normalise: name at most 80 characters', n.name.length, 80);
+    same(check, 'normalise: every section of the type present once', n.sections.map((s) => s.key).sort(), R.CATALOGUE.filter((c) => c.types.indexOf('quarterly') >= 0).map((c) => c.key).sort());
+
+    const t2 = R.startFrom(ws, 'statement', { name: 'Fund A statement', scope: { offeringIds: ['fund-a'] }, by, at });
+    const t3 = R.startFrom(ws, 'statement', { name: 'Open statement', scope: { offeringIds: ['fund-o'] }, by, at });
+    same(check, 'ids rt-2 and rt-3', [t2.id, t3.id], ['rt-2', 'rt-3']);
+    same(check, 'templatesFor(fund-a): firm-wide and those naming fund-a', R.templatesFor(ws, 'fund-a').map((x) => x.id), ['rt-1', 'rt-2']);
+    R.remove(ws, 'rt-3', { by, at });
+    same(check, 'remove deletes the template', ws.reports.templates.map((x) => x.id), ['rt-1', 'rt-2']);
+    check("logged 'Report template deleted'", tail() && tail().action === 'Report template deleted', tail());
+    check('audit verify ok after delete', logOf().ok === true, logOf());
+
+    const st = R.starters('quarterly');
+    check('starters(quarterly) always offers the blank', st.some((s) => s.blank === true && s.type === 'quarterly'), st);
+    R.addStarter({ id: 'q-re', name: 'Real estate quarterly', type: 'quarterly', fundType: 'realestate', template: { chart: 'dist' } });
+    check('addStarter registers it for its type only', R.starters('quarterly').some((s) => s.id === 'q-re') && !R.starters('tax').some((s) => s.id === 'q-re'));
+    const t4 = R.startFrom(ws, 'q-re', { name: 'RE letter', scope: { firm: true }, by, at });
+    same(check, 'startFrom a starter keeps its choices', [t4.starter, t4.fundType, t4.chart, t4.version], ['q-re', 'realestate', 'dist', 1]);
+    check('audit verify ok at the end', logOf().ok === true, logOf());
+  },
+
+  /** Task 2: wording is the block model only. */
+  async richtext({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const run = (s, b, i) => ({ s, b: !!b, i: !!i });
+    const s1 = R.sanitize([
+      { t: 'p', runs: [{ s: 'Hello ', b: true, i: false, color: 'red' }, { s: 'world', b: 'yes' }], style: 'x' },
+      { t: 'div', runs: [{ s: 'dropped' }] },
+      { t: 'h', runs: [{ s: 'Head\u0000ing‮' }] },
+      { t: 'ul', items: [[{ s: 'one' }], [{ s: '' }], [{ s: 'two', i: true }]] },
+      { t: 'p', runs: [{ s: '<script>x</script>', b: false, i: false }] }
+    ]);
+    same(check, 'sanitize keeps p, h and ul with runs { s, b, i } only', s1, [
+      { t: 'p', runs: [run('Hello ', true), run('world')] },
+      { t: 'h', runs: [run('Heading')] },
+      { t: 'ul', items: [[run('one')], [run('two', false, true)]] },
+      { t: 'p', runs: [run('<script>x</script>')] }
+    ]);
+    same(check, 'sanitize caps 60 blocks', R.sanitize(Array.from({ length: 61 }, (x, k) => ({ t: 'p', runs: [{ s: 'p' + k }] }))).length, 60);
+    const long = R.sanitize([{ t: 'p', runs: [{ s: 'a'.repeat(3000) }, { s: 'b'.repeat(3000), b: true }] }]);
+    same(check, 'sanitize caps 5,000 characters per block', long[0].runs.map((r) => r.s.length), [3000, 2000]);
+    same(check, 'sanitize strips control characters', R.sanitize([{ t: 'p', runs: [{ s: 'a\u0007b\u0000c‮d' }] }])[0].runs[0].s, 'abcd');
+    same(check, 'sanitize of a non-array is empty', R.sanitize('<b>x</b>'), []);
+
+    const tree = [
+      { tag: 'p', children: [{ text: 'Hi ' }, { tag: 'b', children: [{ text: 'all' }] }] },
+      { tag: 'script', children: [{ text: 'alert(1)' }] },
+      { tag: 'ul', children: [{ tag: 'li', children: [{ text: 'one' }] }] },
+      { tag: 'img', children: [] }
+    ];
+    const b = R.fromTree(tree);
+    same(check, 'fromTree: a p with a bold run and a ul with one item', b, [{ t: 'p', runs: [run('Hi '), run('all', true)] }, { t: 'ul', items: [[run('one')]] }]);
+    check('fromTree: no trace of alert(1)', !JSON.stringify(b).includes('alert'));
+    same(check, 'plain() gives the text', R.plain(b), 'Hi all\none');
+    same(
+      check,
+      'fromTree: h2 → h, em → italic, br ends the paragraph, style dropped, span keeps its text',
+      R.fromTree([
+        { tag: 'h2', children: [{ text: 'Title' }] },
+        { tag: 'div', children: [{ text: 'a' }, { tag: 'br', children: [] }, { tag: 'em', children: [{ text: 'b' }] }, { tag: 'span', children: [{ text: 'c' }] }] },
+        { tag: 'style', children: [{ text: 'p{color:red}' }] },
+        { tag: 'ol', children: [{ tag: 'li', children: [{ tag: 'strong', children: [{ text: 'x' }] }] }, { tag: 'li', children: [{ text: 'y' }] }] },
+        { text: 'tail' }
+      ]),
+      [
+        { t: 'h', runs: [run('Title')] },
+        { t: 'p', runs: [run('a')] },
+        { t: 'p', runs: [run('b', false, true), run('c')] },
+        { t: 'ul', items: [[run('x', true)], [run('y')]] },
+        { t: 'p', runs: [run('tail')] }
+      ]
+    );
+    const t = R.blank('quarterly', seat());
+    t.sections.find((s) => s.key === 'letter').text = [{ t: 'p', runs: [{ s: '<img src=x onerror=alert(1)>' }] }];
+    const n = R.normalise(t);
+    same(check, 'typed markup stays as plain text in a run (never HTML)', n.sections.find((s) => s.key === 'letter').text, [{ t: 'p', runs: [run('<img src=x onerror=alert(1)>')] }]);
+  },
+
+  /** Task 2: merge fields filled from the resolved figures; unknown and unavailable fields are errors. */
+  async merge({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    same(check, 'MERGE_FIELDS is exactly the 12 names', R.MERGE_FIELDS, ['first_name', 'account_name', 'investment', 'firm', 'team', 'phone', 'period', 'period_end', 'ending_capital', 'distributions_period', 'commitment', 'unfunded']);
+    const ws = seat();
+    const D = standIn(ws);
+    const letter = (s, type) => {
+      const t = R.blank(type || 'quarterly', ws);
+      t.sections.find((x) => x.key === 'letter').text = [{ t: 'p', runs: [{ s, b: false, i: false }] }];
+      return t;
+    };
+    const ALLF = R.MERGE_FIELDS.map((f) => `${f}={${f}}`).join('|');
+    const spec = Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001', offeringId: 'fund-a' } }, Q4);
+    const r = R.resolve(ws, letter(ALLF), spec, 'FA-1001', D);
+    same(check, 'no errors', r.errors, []);
+    const p = r.model && r.model.blocks.find((x) => x.k === 'p' && /first_name=/.test(plainRuns(x.runs)));
+    same(
+      check,
+      'every field filled per recipient',
+      p && plainRuns(p.runs),
+      [
+        'first_name=Investor',
+        'account_name=Investor One',
+        'investment=Fund A, L.P.',
+        'firm=Fund A Sponsor',
+        'team=Investor Relations',
+        'phone=+1 (555) 010-0100',
+        'period=Quarter ended December 31, 2026',
+        'period_end=December 31, 2026',
+        'ending_capital=$345,000.00',
+        'distributions_period=$6,000.00',
+        'commitment=$600,000.00',
+        'unfunded=$300,000.00'
+      ].join('|')
+    );
+    const e1 = R.resolve(ws, letter('Dear {frist_name},'), spec, 'FA-1001', D);
+    same(check, "'{frist_name}' is refused naming the field and the section", e1.errors, [{ section: 'letter', field: 'frist_name', message: 'Unknown field {frist_name} in Letter' }]);
+    check('no model while an error stands', e1.model === null, e1.model);
+    const toAll = { audience: { kind: 'letter', offeringIds: ['fund-a'], statements: false }, from: Q4.from, to: Q4.to, when: WHEN };
+    same(check, 'a letter to everyone goes to [null]', R.recipients(ws, letter('x'), toAll, D), [null]);
+    const e2 = R.resolve(ws, letter('Dear {first_name},'), toAll, null, D);
+    check('an investor field in a letter to everyone is an error naming the field', e2.model === null && e2.errors.length === 1 && e2.errors[0].field === 'first_name' && e2.errors[0].section === 'letter' && /\{first_name\}/.test(e2.errors[0].message), e2.errors);
+    const ok2 = R.resolve(ws, letter('From {firm} for {investment}, {period}.'), toAll, null, D);
+    check('fund fields in a letter to everyone fill', ok2.errors.length === 0 && ok2.model && ok2.model.blocks.some((x) => x.k === 'p' && plainRuns(x.runs) === 'From Fund A Sponsor for Fund A, L.P., Quarter ended December 31, 2026.'), ok2);
+    same(check, 'the letter with statements goes to every holder', R.recipients(ws, letter('x'), Object.assign({}, toAll, { audience: { kind: 'letter', offeringIds: ['fund-a'], statements: true } }), D), ['FA-1001', 'FA-1002']);
+    const open = Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001', offeringId: 'fund-o' } }, Q4);
+    const e3 = R.resolve(ws, letter('Unfunded: {unfunded}'), open, 'FA-1001', D);
+    check('{unfunded} for an open-ended fund is an error', e3.model === null && e3.errors.length === 1 && e3.errors[0].field === 'unfunded', e3.errors);
+    const e4 = R.resolve(ws, letter('Commitment: {commitment}'), open, 'FA-1001', D);
+    check('{commitment} for an open-ended fund is an error', e4.model === null && e4.errors.length === 1 && e4.errors[0].field === 'commitment', e4.errors);
+    const lit = R.resolve(ws, letter('{ x } and {A} and {first_name'), spec, 'FA-1001', D);
+    check('braces that are not a field name stay as typed', lit.errors.length === 0 && lit.model.blocks.some((x) => x.k === 'p' && plainRuns(x.runs) === '{ x } and {A} and {first_name'), lit);
+    const out = R.fill([{ t: 'p', runs: [{ s: 'Hi {first_name} {zzz}', b: true, i: false }] }], { first_name: 'Ann' });
+    same(check, 'fill() fills known values and leaves others as typed', out, [{ t: 'p', runs: [{ s: 'Hi Ann {zzz}', b: true, i: false }] }]);
+    same(check, 'fields() lists the names used', R.fields([{ t: 'p', runs: [{ s: '{a_b} {first_name} {a_b}' }] }, { t: 'ul', items: [[{ s: '{firm}' }]] }]), ['a_b', 'first_name', 'firm']);
+    const oth = letter('ok');
+    oth.sections.find((x) => x.key === 'outlook').text = [{ t: 'p', runs: [{ s: '{nope}' }] }];
+    const e5 = R.resolve(ws, oth, spec, 'FA-1001', D);
+    same(check, 'an unknown field in the outlook names the Outlook section', e5.errors, [{ section: 'outlook', field: 'nope', message: 'Unknown field {nope} in Outlook' }]);
+  },
+
+  /** Task 2: the distribution split (C-06) is exact per investor and stays out of the run's record. */
+  async split({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const ws = seat();
+    const by = 'gp@fund-a.example';
+    const at = '2027-01-20T12:00:00Z';
+    const runsBefore = JSON.stringify(ws.runs);
+    same(check, 'SPLIT_LABELS', R.SPLIT_LABELS, ['Return of capital', 'Income', 'Interest', 'Capital gain', 'Other']);
+    const off = R.setSplit(ws, 'fa-run-1', [{ label: 'Return of capital', cents: 450000 }, { label: 'Capital gain', cents: 449999 }], { by, at });
+    same(check, "a split one cent short is refused with 'Off by $0.01'", [off.ok, off.error], [false, 'Off by $0.01']);
+    check('nothing stored after a refusal', !(ws.reports && ws.reports.splits && ws.reports.splits['fa-run-1']));
+    const lab = R.setSplit(ws, 'fa-run-1', [{ label: 'Dividend', cents: 900000 }], { by, at });
+    check('a label outside SPLIT_LABELS is refused', lab.ok === false && /Dividend/.test(lab.error), lab);
+    const frac = R.setSplit(ws, 'fa-run-1', [{ label: 'Income', cents: 450000.5 }, { label: 'Other', cents: 449999.5 }], { by, at });
+    check('cents that are not whole are refused', frac.ok === false, frac);
+    const zero = R.setSplit(ws, 'fa-run-1', [{ label: 'Income', cents: 900000 }, { label: 'Other', cents: 0 }], { by, at });
+    check('a zero part is refused', zero.ok === false, zero);
+    const n0 = NS.audit.verify(ws).count;
+    const ok = R.setSplit(ws, 'fa-run-1', [{ label: 'Return of capital', cents: 450000 }, { label: 'Capital gain', cents: 450000 }], { by, at });
+    check('450000 + 450000 is stored', ok.ok === true && ws.reports.splits['fa-run-1'] && ws.reports.splits['fa-run-1'].parts.length === 2, { ok, splits: ws.reports && ws.reports.splits });
+    const L = ws.audit || [];
+    check("logged 'Distribution split entered'", NS.audit.verify(ws).count === n0 + 1 && L.length && L[L.length - 1].action === 'Distribution split entered', L.slice(-1));
+    check('audit verify ok', NS.audit.verify(ws).ok === true);
+    same(check, 'splitFor FA-1001 (gross 600000)', R.splitFor(ws, 'fa-run-1', 600000), [{ label: 'Return of capital', cents: 300000 }, { label: 'Capital gain', cents: 300000 }]);
+    same(check, 'splitFor FA-1002 (gross 300000)', R.splitFor(ws, 'fa-run-1', 300000), [{ label: 'Return of capital', cents: 150000 }, { label: 'Capital gain', cents: 150000 }]);
+    check('splitFor without a stored split is null', R.splitFor(ws, 'no-such-run', 100) === null);
+    // a run of 3 cents split 1 + 2: every investor's split still sums exactly to its own gross
+    ws.runs.push({ id: 'tiny', offeringId: 'fund-a', date: '2026-12-20', type: 'Income', total: 3, status: 'paid', source: 'recorded', lines: [{ investorId: 'FA-1001', grossCents: 2, withheld: [], netCents: 2 }, { investorId: 'FA-1002', grossCents: 1, withheld: [], netCents: 1 }] });
+    const tiny = R.setSplit(ws, 'tiny', [{ label: 'Income', cents: 1 }, { label: 'Return of capital', cents: 2 }], { by, at });
+    check('parts 1 and 2 on a 3-cent run are stored', tiny.ok === true, tiny);
+    const sums = [100, 2, 1, 7].map((g) => [g, (R.splitFor(ws, 'tiny', g) || []).reduce((a, x) => a + x.cents, 0)]);
+    check('each investor split sums to its own gross (100, 2, 1, 7 cents)', sums.every(([g, s]) => g === s), sums);
+    check('every split part is a safe integer', (R.splitFor(ws, 'tiny', 100) || []).every((x) => Number.isSafeInteger(x.cents)));
+    ws.runs.pop();
+    same(check, 'ws.runs is unchanged (JSON before and after)', JSON.stringify(ws.runs), runsBefore);
+    check('the split lives in ws.reports.splits only', !JSON.stringify(ws.runs).includes('Capital gain'));
   }
 };
 
