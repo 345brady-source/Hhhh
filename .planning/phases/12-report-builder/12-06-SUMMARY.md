@@ -41,6 +41,40 @@ REPORTS FLOW: FAIL (parts run: 5) - editor-phone, cover-photos-desktop, preview-
 ```
 logo-canvas passed at RED: the logo paths are 12-03's composer (logoFor), and the screens it needs (Create, the preview, Download PDF) came with Task 1. It proves the screens hand the tenant's logo to the composer.
 
+### red-3 (Task 3, parts roles-managed and ways-out, on 9fb85c7 plus the check)
+
+```
+PASS roles-managed the frame refuses fetch() (connect-src none is in force)
+PASS roles-managed a team member sees the tab Investor reports
+PASS roles-managed a team member creates and saves a template (version 2)
+PASS roles-managed a team member sees no 'Delete'
+FAIL roles-managed ran to the end :: frame.waitForSelector: Timeout 30000ms exceeded.
+PASS ways-out the frame refuses fetch() (connect-src none is in force)
+PASS ways-out a way out of the view is on screen at the top, the middle and the end of the page
+PASS ways-out phone, the list: the page does not scroll sideways (width 390 <= 390)
+PASS ways-out a way out of the view is on screen at the top, the middle and the end of the page
+PASS ways-out phone, the editor with the letter open: the page does not scroll sideways (width 390 <= 390)
+PASS ways-out a way out of the view is on screen at the top, the middle and the end of the page
+PASS ways-out phone, the preview: the page does not scroll sideways (width 390 <= 390)
+PASS ways-out a way out of the view is on screen at the top, the middle and the end of the page
+PASS ways-out phone, the PDF panel: the page does not scroll sideways (width 390 <= 390)
+PASS ways-out the policy refused nothing (no fetch, no outside script)
+PASS ways-out no script error in the browser
+PASS ways-out no request outside the page's origin
+PASS ways-out no vendor, model or library name and no forbidden word on screen
+PASS ways-out the frame refuses fetch() (connect-src none is in force)
+PASS ways-out a way out of the view is on screen at the top, the middle and the end of the page
+PASS ways-out a way out of the view is on screen at the top, the middle and the end of the page
+PASS ways-out a way out of the view is on screen at the top, the middle and the end of the page
+PASS ways-out a way out of the view is on screen at the top, the middle and the end of the page
+PASS ways-out the policy refused nothing (no fetch, no outside script)
+PASS ways-out no script error in the browser
+PASS ways-out no request outside the page's origin
+PASS ways-out no vendor, model or library name and no forbidden word on screen
+REPORTS FLOW: FAIL (parts run: 2) - roles-managed
+```
+ways-out passed at RED: the views it walks were built in Tasks 1 and 2 (the editor bar is sticky, the phone menu row is sticky, and at 1280x800 the frame's fixed role control stays on screen). roles-managed failed on my own check's flow: after switching to admin the check waited for the list without opening the tab again (the role switch draws the role's home page). Fixed in the check (it opens the tab again); no product change.
+
 ## Verify lines
 
 ### Task 1 verify (the plan's command from a script file; VERIFY-1 EXIT=0)

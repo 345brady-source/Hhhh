@@ -631,7 +631,7 @@ const parts = {
       const teamDel = await fr.locator('[data-action=rb-del]').count();
       check("a team member sees no 'Delete'", teamDel === 0, teamDel);
       await T.sample(fr, { role: 'admin' });
-      await fr.evaluate(() => window.CVPortal.app.render());
+      await toTab(fr);
       await fr.waitForSelector('.rb-home');
       const adminDel = await fr.evaluate(() => Array.from(document.querySelectorAll('[data-action=rb-del]')).filter((b) => b.offsetWidth && b.innerText.trim() === 'Delete').length);
       check("an admin sees 'Delete'", adminDel >= 1, adminDel);
