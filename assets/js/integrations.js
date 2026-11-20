@@ -244,6 +244,12 @@
    * exemption and the firm asks about accreditation. Another offering being Rule 506(c) does not make it required:
    * subscribing to that offering is gated on its own (subscribeGate, and the invitation flow's offering check).
    */
+  /**
+   * Plan 06-25: what the sponsor is told when the rule is "Never". Rule 506(c) allows accredited purchasers only, and the
+   * issuer must take reasonable steps to verify their status (Rule 506(c)(2)(ii)); with no verification step, investors in
+   * those offerings answer the accredited question themselves, and the verification is the sponsor's to do.
+   */
+  const NOTE_506C_NEVER = 'Rule 506(c) offerings take accredited investors only, and you must take reasonable steps to verify that each one is accredited. With this rule, investors in those offerings only answer the accredited question themselves: taking those verification steps is your responsibility.';
   function needsAccreditation(ws, inv, offering) {
     const r = ensure(ws).rules;
     if (r.accreditationFor === 'all') return true;
@@ -291,8 +297,22 @@
     if (body) headers['Content-Type'] = 'application/json';
     if (s.token) headers.Authorization = `Bearer ${s.token}`;
     const res = await fetch(serverUrl(ws) + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-    if (res.status === 401) throw new Error('The integration server did not accept the access token.');
-    if (!res.ok) throw new Error(`The integration server answered ${res.status}.`);
+    if (!res.ok) {
+      // The server's own sentence (plan 08-07): its refusals are written for the person reading them; the status and
+      // code travel with it. The two older sentences remain for a reply without one.
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = null;
+      }
+      const said = data && typeof data.error === 'string' && data.error.trim() ? data.error.trim() : '';
+      const err = new Error(said || (res.status === 401 ? 'The integration server did not accept the access token.' : `The integration server answered ${res.status}.`));
+      err.status = res.status;
+      err.code = data && typeof data.code === 'string' ? data.code : '';
+      err.server = !!said;
+      throw err;
+    }
     return res.json();
   }
   function investorPayload(ws, inv, extra) {
@@ -379,7 +399,9 @@
     log(ws, inv, RESULT[kind][outcome], `${v.via || 'Unknown connection'}${v.method ? `, ${v.method}` : ''}${v.ref ? ` (ref ${v.ref})` : ''}${v.expiresAt && outcome === 'verified' ? `; valid until ${date(v.expiresAt)}` : ''}${d.note ? `; note: ${d.note}` : ''}`, actor);
     if (kind === 'identity' && outcome === 'passed' && vOf(inv).aml.status !== 'clear') {
       // A connector on for identity and screening that screened with this check: use that result instead of calling again.
-      const pre = d.screening && d.screening.status && ensure(ws).use.aml.indexOf(v.connection) >= 0 ? { connection: v.connection, screening: d.screening } : null;
+      // Not for a package connection (plan 08-07): its names are screened through the server, which keeps the screening
+      // record the import is confirmed against (a result carried on the identity check has none).
+      const pre = d.screening && d.screening.status && ensure(ws).use.aml.indexOf(v.connection) >= 0 && !(conn(ws, v.connection) || {}).package ? { connection: v.connection, screening: d.screening } : null;
       await screen(ws, inv, pre);
     }
     decide(ws, inv);
@@ -757,6 +779,8 @@
         (x, i) => `<li class="iv-option"><div class="iv-option-text"><span class="iv-option-name">${h(x.name)}</span>${x.note ? `<span class="hint">${h(x.note)}</span>` : x.builtin === 'sandbox' ? '<span class="hint">Simulated, for trying the flow</span>' : x.builtin === 'manual' ? `<span class="hint">Upload a document for ${h(W().tenant.support.team)} to review</span>` : ''}</div><button class="btn${primary && i === 0 ? ' btn-primary' : ''}" type="button" data-action="iv-start" data-kind="${kind}" data-connection="${h(x.id)}">Continue with ${h(x.name)}</button></li>`
       )
       .join('')}</ul>`;
+  // The last start the server refused, per investor and check, in memory only (cleared by the next start or a reload).
+  const refusals = {};
   /** The verification panel inside the onboarding identity or accreditation step. */
   function stepPanel(ws, inv, kind) {
     const opts = options(ws, kind);
@@ -768,7 +792,8 @@
     const what = kind === 'identity'
       ? 'Take a photo of your government-issued ID and a quick selfie. It takes about two minutes.'
       : 'Show that you are an accredited investor: income, net worth, a letter from your CPA, attorney or adviser, or an existing verification.';
-    const handled = (x) => (x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
+    // The verification package (D-01, C-01): the provider's own page is seen only in the new tab, so the step names no one.
+    const handled = (x) => (x.package ? 'A secure page opens in a new tab for this step.' : x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
     const one = opts.length === 1 ? opts[0] : null;
     const url = v.status === 'pending' ? safeUrl(v.url) : '';
     // While an attempt through another connection (perhaps one since removed) is open, do not describe the remaining option as if it ran.
@@ -782,6 +807,7 @@
       ${v.status === 'pending' && v.how === 'server' ? `<p class="hint iv-note">Finish in the tab that opened. This page updates when you are done.${url ? ` <a href="${h(url)}" target="_blank" rel="noopener">Open it again</a>` : ''}</p>` : ''}
       ${v.status === 'failed' || v.status === 'rejected' ? `<p class="field-error">We could not complete this check. Try again, or contact ${h(t.support.team)} at ${h(t.support.email)}.</p>` : ''}
       ${one ? `<button class="btn ${done ? '' : 'btn-primary'}" type="button" data-action="iv-start" data-kind="${kind}" data-connection="${h(one.id)}">${done ? 'Start again' : startLabel(kind)}</button>` : `<p class="iv-choose">${done ? 'Start again with' : 'Choose how to verify'}</p>${optionRows(kind, opts, !done)}`}
+      ${refusals[`${inv.id}:${kind}`] ? `<p class="field-error iv-refused" role="alert">${h(refusals[`${inv.id}:${kind}`])}</p>` : ''}
     </div>`;
   }
   function canContinue(ws, inv, kind) {
@@ -872,6 +898,7 @@
     const id = el.getAttribute('data-connection');
     if (!id && opts.length > 1) return chooserDialog(kind, opts, back);
     const x = opts.find((y) => y.id === id) || opts[0];
+    delete refusals[`${inv.id}:${kind}`]; // a new start clears the last refusal
     // Open the tab while the click still counts as the investor's, so the browser does not block it.
     const tab = x.type === 'server' || x.type === 'link' ? window.open('', '_blank') : null;
     if (tab) tab.opener = null;
@@ -887,7 +914,14 @@
       NS.app.render();
     } catch (e) {
       if (tab) tab.close();
-      U.toast(`Could not start the check: ${e.message}`);
+      if (e && e.server) {
+        // The server's own sentence, alone (plan 08-07). Nothing the investor can retry (a returned package, the start
+        // limit) also gives the firm's contact. The line stays on the step until the next start.
+        const firm = e.status === 403 || e.status === 409 ? ` Contact ${ws.tenant.support.team} at ${ws.tenant.support.email}.` : '';
+        refusals[`${inv.id}:${kind}`] = `${e.message}${firm && !/[.!?]$/.test(e.message) ? '.' : ''}${firm}`;
+        U.toast(e.message);
+        NS.app.render();
+      } else U.toast(`Could not start the check: ${e.message}`);
     }
   };
   NS.actions['iv-sandbox-finish'] = async (el) => {
@@ -1035,12 +1069,13 @@
         `${K.head('Integrations', 'Investors are verified while they onboard: identity, sanctions and PEP screening, and accredited investor status for Rule 506(c) offerings. Plug in the verification services you already use, as many as you need for each check, then set the rules for approval.', `<button class="cs-btn cs-btn-primary" type="button" data-action="iv-save">${c.configured ? 'Save' : 'Save and turn on'}</button>`)}
         ${errs.length ? `<div class="iv-errors" role="alert"><p>Fix these before turning verification on:</p><ul class="cs-errors">${errs.map((e) => `<li>${h(e)}</li>`).join('')}</ul></div>` : ''}
         ${summaryPanel(ws)}
+        ${NS.pkg && NS.pkg.panel ? NS.pkg.panel(ws) : ''}
         ${connectionsPanel(ws)}
         ${K.panel(
           'Approval rules',
           `<div class="cs-grid cs-grid-3">
             <label class="cs-check" for="iv-auto"><input id="iv-auto" type="checkbox" data-bind="ivr:autoApprove"${r.autoApprove ? ' checked' : ''}><span>Approve investors automatically when every check passes<span class="cs-hint">Anything flagged waits on the AML/KYC page for your team.</span></span></label>
-            <label class="cs-field" for="iv-accfor"><span>Require verified accreditation</span><select id="iv-accfor" data-bind="ivr:accreditationFor"><option value="506c"${r.accreditationFor === '506c' ? ' selected' : ''}>For Rule 506(c) offerings</option><option value="all"${r.accreditationFor === 'all' ? ' selected' : ''}>For every offering</option><option value="none"${r.accreditationFor === 'none' ? ' selected' : ''}>Never (self-certification only)</option></select></label>
+            <label class="cs-field" for="iv-accfor"><span>Require verified accreditation</span><select id="iv-accfor" data-bind="ivr:accreditationFor"><option value="506c"${r.accreditationFor === '506c' ? ' selected' : ''}>For Rule 506(c) offerings</option><option value="all"${r.accreditationFor === 'all' ? ' selected' : ''}>For every offering</option><option value="none"${r.accreditationFor === 'none' ? ' selected' : ''}>Never (self-certification only)</option></select>${r.accreditationFor === 'none' ? `<span class="cs-hint iv-warn" id="iv-accfor-note">${h(NOTE_506C_NEVER)}</span>` : ''}</label>
             <label class="cs-field" for="iv-valid"><span>Accreditation valid for (days)</span><input id="iv-valid" type="number" min="30" max="365" step="1" data-bind="ivr:validDays" value="${h(r.validDays)}"><span class="cs-hint">90 days is the common practice for Rule 506(c). A provider’s shorter expiry wins.</span></label>
             <label class="cs-field" for="iv-rescreen"><span>Re-screen investors every (days)</span><input id="iv-rescreen" type="number" min="1" max="365" step="1" data-bind="ivr:rescreenDays" value="${h(r.rescreenDays)}"></label>
             <label class="cs-check" for="iv-pep"><input id="iv-pep" type="checkbox" data-bind="ivr:holdOnPep"${r.holdOnPep ? ' checked' : ''}><span>Hold politically exposed persons for enhanced due diligence</span></label>
@@ -1086,6 +1121,12 @@
     const r = ensure(W()).rules;
     if (RULE_DAYS[path]) r[path] = days(v, r[path], RULE_DAYS[path][0], RULE_DAYS[path][1]);
     else r[path] = v;
+    // The note under "Require verified accreditation" follows the choice (plan 06-25).
+    if (path === 'accreditationFor') {
+      NS.app.render();
+      const again = document.getElementById('iv-accfor');
+      if (again) again.focus();
+    }
   };
   NS.binders.ivserver = (path, v) => {
     if (path === 'url' || path === 'token') ensure(W()).server[path] = String(v).trim();
@@ -1328,5 +1369,5 @@
     return `<div class="iv-banner" role="status">${icon('alert')}<span>${msg}</span></div>`;
   });
 
-  NS.integrations = { CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
+  NS.integrations = { NOTE_506C_NEVER, CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
 })(window.CVPortal);

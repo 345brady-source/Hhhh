@@ -1,6 +1,6 @@
 /*
  * The built-in reader for offering documents: finds a fund's terms without
- * Claude. It splits the documents into sections by their headings (summary
+ * the host assistant. It splits the documents into sections by their headings (summary
  * of terms entries, memorandum and agreement headings, term-sheet rows),
  * reads each term from the section that defines it, falls back to patterns
  * across the whole text, keeps the passage and page behind every value,

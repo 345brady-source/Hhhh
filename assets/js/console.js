@@ -49,6 +49,8 @@
     ['console-reports', 'Reports'],
     ['console-audit', 'Audit'],
     ['console-kyc', 'AML/KYC'],
+    ['console-aml', 'AML program'],
+    ['console-filings', 'Filings'],
     ['console-integrations', 'Integrations'],
     ['console-ach', 'ACH origination'],
     ['console-brand', 'Portal and brand'],
@@ -59,9 +61,11 @@
     ['', ['console', 'console-notifications']],
     ['Raise', ['console-offerings', 'console-intake', 'console-investors', 'console-esign']],
     ['Operate', ['console-calls', 'console-distributions', 'console-requests', 'console-notices', 'console-docs']],
-    ['Report', ['console-reports', 'console-audit', 'console-kyc']],
+    ['Report', ['console-reports', 'console-audit', 'console-kyc', 'console-aml']],
     ['Settings', ['console-brand', 'console-integrations', 'console-ach', 'console-team']]
   ];
+  NAV_SECTIONS.find((g) => g[0] === 'Report')[1].push('console-filings'); // Filings (filings-ui.js) closes the Report section; kept on its own line
+  NAV.splice(NAV.findIndex((n) => n[0] === 'console-docs') + 1, 0, ['console-taxdocs', 'Tax documents']); NAV_SECTIONS.find((g) => g[0] === 'Operate')[1].push('console-taxdocs'); // Tax documents (taxdocs-ui.js) after Documents; kept on its own line
   const NAV_GROUPS = NAV_SECTIONS.map(([label, keys], i) => [label, i < NAV_SECTIONS.length - 1 ? keys : keys.concat(NAV.map(([k]) => k).filter((k) => !NAV_SECTIONS.some((g) => g[1].indexOf(k) >= 0)))]);
   /** Counts other modules show beside their menu entry: NS.navCounts[key] = (ws) => n. */
   NS.navCounts = NS.navCounts || {};
@@ -75,8 +79,27 @@
     if (k === 'console-kyc') return w.investors.filter((i) => ['review', 'due'].indexOf(NS.ops.kycLabel(NS.ops.kycOf(i)).key) >= 0).length;
     return 0;
   }
+  /**
+   * On a phone the menu row stays on screen as the page scrolls (console.css): how far it lies below the top of the menu (the
+   * firm's name, the bell and Help above it scroll away) and how tall it is with its line. Measured once each page is drawn,
+   * and again when the screen's width or the fonts change.
+   */
+  function pinMenu() {
+    const nav = document.querySelector('.cs > .cs-nav');
+    const row = nav && nav.querySelector(':scope > nav');
+    if (!row) return;
+    const a = nav.getBoundingClientRect();
+    const b = row.getBoundingClientRect();
+    const root = document.documentElement.style;
+    root.setProperty('--cs-nav-lift', `${Math.max(0, b.top - a.top)}px`);
+    root.setProperty('--cs-nav-pin', `${Math.max(0, a.bottom - b.top)}px`);
+  }
+  window.addEventListener('resize', pinMenu);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(pinMenu);
   function shell(inner, active) {
     const t = T();
+    // the page is put on screen right after this returns; the menu is measured then
+    Promise.resolve().then(pinMenu);
     return `<div class="cs">
       <aside class="cs-nav" aria-label="Sponsor console">
         <div class="cs-client">${B.lockup(t)}<span class="cs-client-meta">${h(t.domain)}</span></div>
@@ -102,7 +125,9 @@
   const ok = (good, label) => `<span class="cs-flag ${good ? 'is-ok' : 'is-todo'}">${icon(good ? 'check' : 'alert')}${label}</span>`;
 
   function raised(oid) {
-    return NS.data.holdersAt(W().investors, oid, '9999-12-31').reduce((a, x) => a + x.amount, 0);
+    // Capital raised counts every subscription, including a position since redeemed in full (holdersAt leaves those out
+    // after their dealing date, item A8 of plan 10-01).
+    return W().investors.reduce((a, i) => a + i.positions.filter((p) => p.offeringId === oid).reduce((s, p) => s + p.amount, 0), 0);
   }
   function holdersCount(oid) {
     return new Set(NS.data.holdersAt(W().investors, oid, '9999-12-31').map((x) => x.investor.id)).size;
@@ -123,6 +148,61 @@
     if (o.status === 'complete') return `Active${o.completed ? ' since ' + date(o.completed) : ''}`;
     if (o.status === 'in_progress') return `In progress · ${o.step || 0} of 6 steps`;
     return `Invited ${date(o.invited)}`;
+  }
+
+  /**
+   * Plan 06-16: the investor's official tax form, one line under Activation: signed, with a download of the signed copy
+   * (its Documents entry), or not signed, or uploaded (plan 06-21); nothing when the investor has no such form.
+   */
+  function taxLine(w, inv) {
+    return taxState(w, inv) + taxAsked(w, inv) + (NS.withholdingUI ? NS.withholdingUI.paperLine(w, inv) : ''); // plan 10-07: "W-9 signed on paper"
+  }
+  /**
+   * Plan 06-26: an open tax-form request, one line under the tax form's ("Tax form requested <date>"), while the investor has
+   * not finished it (invitations.js openTaxRequest; self-serve edition only).
+   */
+  function taxAsked(w, inv) {
+    const it = E.diy && NS.invitations && NS.invitations.openTaxRequest ? NS.invitations.openTaxRequest(w, inv) : null;
+    return it ? `<span class="sub">Tax form requested ${date(String(it.sentAt || '').slice(0, 10))}</span>` : '';
+  }
+  /**
+   * Plan 06-26 (owner decision on the verification's human item 3): "Request tax form" for an active investor whose tax form
+   * is not on file (missing, not signed, or its signed copy not received: NS.inviteFlow.taxOnFile, the one rule), in the
+   * self-serve edition only (C-03: the managed edition's Investors page is unchanged), for staff who may invite investors.
+   */
+  const taxAskButton = (i) =>
+    E.diy && NS.invitations && NS.invitations.requestTax && NS.inviteFlow && NS.app.can('operate') && i.onboarding.status === 'complete' && !NS.inviteFlow.taxOnFile(i) ? `<button class="cs-btn cs-btn-small" type="button" data-action="tax-request" data-id="${h(i.id)}">Request tax form</button>` : '';
+  function taxState(w, inv) {
+    const tc = inv.taxCert;
+    // plan 06-21 (D-01, T-06-45): a form completed elsewhere and uploaded by the investor, with a download of that file when
+    // it is stored under the investor's own tax- id (onboarding.js names it tax-<investor id>-<time>)
+    if (tc && tc.uploaded && tc.form) {
+      // plan 06-23: uploaded on the investor's device in server mode, but the file did not reach this console
+      if (tc.received === false) return `<span class="sub">${h(tc.form)} uploaded, copy not received: ask the investor for it</span>`;
+      const idRe = String(inv.id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const own = typeof tc.fileId === 'string' && new RegExp('^tax-' + idRe + '-[a-z0-9]+$').test(tc.fileId);
+      return `<span class="sub">${h(tc.form)} uploaded ${date(String(tc.at || '').slice(0, 10))}${own ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(tc.fileId)}" data-name="${h(tc.fileName || 'tax-form')}">Download</button>` : ''}</span>`;
+    }
+    if (!tc || !tc.envelopeId || !tc.form) return '';
+    // plan 06-22: signed on the investor's device in server mode, but its signed copy did not reach this console
+    if (tc.received === false) return `<span class="sub">${h(tc.form)} signed, copy not received: ask the investor for it</span>`;
+    if (!NS.inviteFlow.taxOnFile(inv)) return `<span class="sub">${h(tc.form)} not signed</span>`;
+    const doc = (w.docs || []).find((d) => d.envelopeId === tc.envelopeId && (d.investors || []).indexOf(inv.id) >= 0);
+    // plans 06-18 and 06-20: a W-8BEN or W-8BEN-E also says until when it is valid (31 December of the third year after signing)
+    return `<span class="sub">${h(tc.form)} signed ${date(String(tc.at || '').slice(0, 10))}${tc.validUntil ? `, valid until ${date(tc.validUntil)}` : ''}${doc ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(doc.id)}" data-name="${h(doc.fileName || 'tax-form.pdf')}">Download</button>` : ''}</span>`;
+  }
+
+  /**
+   * Plan 06-26: the Type column. A foreign investor shows the investor type the sponsor chose (D-09): "Foreign individual"
+   * or "Foreign entity", or the kind of account marked foreign when it is another (a foreign joint account, a foreign trust).
+   * A U.S. investor shows the kind of account, as before.
+   */
+  function typeLabel(i) {
+    const acct = (NS.ENTITY_TYPES[i.type] || {}).label || i.type;
+    const kind = NS.INVESTOR_TYPES && /^foreign-/.test(i.taxType || '') ? NS.INVESTOR_TYPES[i.taxType] : null;
+    if (!kind) return acct;
+    if ((i.taxType === 'foreign-individual' && (i.type || 'individual') === 'individual') || (i.taxType === 'foreign-entity' && i.type === 'entity')) return kind.label;
+    return `${acct} (foreign)`;
   }
 
   /** Net asset value and capital by fund at the last month-end (from the capital accounts in audit.js). */
@@ -160,7 +240,8 @@
     render() {
       const w = W();
       const t = T();
-      const branded = t.domain && t.domain !== NS.TENANT_TEMPLATE.domain && t.support.email !== NS.TENANT_TEMPLATE.support.email;
+      // Self-serve: sign-up gives the domain and email; the step is complete once the firm has entered its support phone too.
+      const branded = t.domain && t.domain !== NS.TENANT_TEMPLATE.domain && t.support.email !== NS.TENANT_TEMPLATE.support.email && (!E.diy || !!String(t.support.phone || '').trim());
       const allSteps = (E.diy
         ? [
             ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand', true],
@@ -179,13 +260,13 @@
             ['Invite investors', 'Add investors one at a time or import a list. Each receives an activation email.', w.investors.length > 0, 'console-investors'],
             ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
           ]
-      ).filter((s) => (canConfigure() || !s[4]) && NS.views[s[3]]);
+      ).filter((s) => (canConfigure() || !s[4]) && NS.views[s[3].replace(/^console-offering-.+$/, 'console-offering')]);
       // Steps the firm removed from its list (kept by name; Restore brings them back).
       const removed = (t.setupRemoved || []).filter((k) => allSteps.some((s) => s[0] === k));
       const steps = allSteps.filter((s) => removed.indexOf(s[0]) < 0);
       const done = steps.filter((s) => s[2]).length;
       const yearAgo = NS.dates.addMonths(today(), -12);
-      const paid12 = w.runs.filter((r) => r.status === 'paid' && r.date > yearAgo).reduce((a, r) => a + r.total, 0);
+      const paid12 = w.runs.filter((r) => NS.data.runPaid(r, today()) && r.date > yearAgo).reduce((a, r) => a + r.total, 0);
       const pending = w.investors.filter((i) => i.onboarding.status !== 'complete');
       const checks = w.investors.filter((i) => !(i.payment && i.payment.method === 'ach'));
       const soon = w.offerings
@@ -316,7 +397,7 @@
             <td class="num">${holdersCount(o.id)}</td>
             <td>${h((o.distribution || {}).frequency || '')}${nextOf(o) ? `<span class="sub">Next ${date(nextOf(o).date)}</span>` : ''}</td>
             <td>${h(x.value)}<span class="sub">${h(x.label)}</span></td>
-            <td>${h(o.status)}</td>
+            <td>${badge('adj', o.status)}</td>
           </tr>`;
         })
         .join('');
@@ -386,7 +467,9 @@
   const EXEMPTIONS = [
     ['Rule 506(b)', 'Rule 506(b)'],
     ['Rule 506(c)', 'Rule 506(c): verified accredited investors only'],
-    ['Regulation A', 'Regulation A'],
+    ['Regulation A Tier 1', 'Regulation A Tier 1'],
+    ['Regulation A Tier 2', 'Regulation A Tier 2: 10 percent investment limit for non-accredited investors'],
+    ['Regulation A Tier 2, exchange-listed', 'Regulation A Tier 2: listed on a national securities exchange'],
     ['Regulation Crowdfunding', 'Regulation Crowdfunding'],
     ['Regulation S', 'Regulation S'],
     ['Section 4(a)(2)', 'Section 4(a)(2)']
@@ -395,6 +478,20 @@
     const cur = ((o.structure || {}).exemption || '').trim();
     const known = EXEMPTIONS.some(([v]) => v === cur);
     return [['', 'Not set']].concat(cur && !known ? [[cur, cur]] : [], EXEMPTIONS);
+  }
+  /**
+   * The exemption field's hint (self-serve edition). C-04: a Regulation A value with no tier (read from documents) is
+   * treated as Tier 2 until the sponsor chooses, and the hint says so. The Rule 506(c) note shows only under Rule 506(c).
+   */
+  function exemptionHint(o) {
+    if (!E.diy || !NS.eligibility) return '';
+    const ex = ((o.structure || {}).exemption || '').trim();
+    const reg = NS.eligibility.regime(o);
+    if (reg === 'regA2' && !/\bTier\b/i.test(ex)) return 'This offering names Regulation A without a tier: choose Tier 1 or Tier 2 above. Until you do, investors who are not accredited are asked the Tier 2 questions and shown their 10 percent limit.';
+    // Plan 06-25: under the Integrations rule "Never" no verification step runs, so the hint says whose the verification is.
+    if (reg === '506c' && NS.integrations && !NS.integrations.needsAccreditation(W(), null, o)) return 'Rule 506(c) offerings take accredited investors only, and you must take reasonable steps to verify that each one is accredited. Your Integrations rules never require verified accreditation, so investors in this offering only answer the accredited question themselves: taking those verification steps is your responsibility.';
+    if (reg === '506c') return 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.';
+    return '';
   }
   function offPreview(o) {
     const x = NS.exitInfo(o);
@@ -410,6 +507,95 @@
       </div>
     </div>`;
   }
+  /**
+   * Rule 506(b) eligibility (self-serve edition, D-01, C-02): purchasers who are not accredited, counted once per investor
+   * from the status answers on this offering's subscription requests, against the limit of 35. Declined ones are left out;
+   * pending ones are counted and shown apart.
+   */
+  function eligibilityPanel(o) {
+    if (!E.diy || !NS.eligibility) return '';
+    return exemptionPanel(o) + bpiPanel(o);
+  }
+  /**
+   * D-08 (1) (owner, plan 06-15): the investors who answered that they are benefit plan investors, with what each has
+   * committed and what is pending, for the sponsor's own judgment of the 25 percent test (the sponsor's view only: T-06-09).
+   * No percentages are worked out and nothing is flagged.
+   */
+  const PLAN_SAID = { title1: 'Employee benefit plan under Title I of ERISA', 4975: 'Plan or account under Code section 4975 (such as an IRA)', planAssets: 'Entity holding plan assets' };
+  function bpiPanel(o) {
+    const EL = NS.eligibility;
+    const rows = EL.planInvestors(W(), o);
+    const list = rows
+      .map((x) => {
+        const inv = invById(x.investorId);
+        const what = `${PLAN_SAID[x.plan]}${x.plan === 'planAssets' ? (x.planPct == null ? ', share held by benefit plan investors not given' : `, ${h(String(x.planPct))}% of its equity held by benefit plan investors`) : ''}`;
+        const money = [x.cents ? `${h(EL.usd(x.cents))} committed` : '', x.pendingCents ? `${h(EL.usd(x.pendingCents))} pending` : ''].filter(Boolean).join(' · ') || 'nothing committed yet';
+        return `<li class="cs-bpi-row" data-investor="${h(x.investorId)}"><strong>${h(inv ? inv.title : x.investorId)}</strong> · ${what} · ${money}</li>`;
+      })
+      .join('');
+    return panel(
+      'Benefit plan investors',
+      `<p class="cs-hint">Investors who answered that they are benefit plan investors, with what each has committed. Whether benefit plan investors hold 25 percent or more of a class is for you to judge.</p>
+      ${rows.length ? `<ul class="cs-bpi-list">${list}</ul>` : '<p class="cs-muted cs-bpi-none">No investor has answered that they are a benefit plan investor.</p>'}`
+    );
+  }
+  /** The panel for the offering's exemption: Rule 506(b)'s count, or Regulation A Tier 2's limits; none for others. */
+  function exemptionPanel(o) {
+    const EL = NS.eligibility;
+    if (EL.regime(o) === 'regA2') return regAPanel(o);
+    if (EL.regime(o) !== '506b') return '';
+    const n = EL.nonAccredited(W(), o);
+    const a = n.accepted.length;
+    const p = n.pending.length;
+    const lim = EL.LIMIT_506B;
+    // C-01: the sponsor is told, nothing is blocked. At the limit a warning, past it the red badge.
+    const state = n.count > lim ? ` ${badge('bad', 'Over the limit')}` : n.count === lim ? ` ${badge('warn', 'At the limit')}` : '';
+    return panel(
+      'Investor eligibility',
+      `<p class="cs-elig-count"><strong>Non-accredited purchasers: ${h(String(n.count))} of ${h(String(lim))}</strong>${state}</p>
+      <p class="cs-muted">${h(String(a))} accepted${p ? ` and ${h(String(p))} more pending` : ''}. Declined subscriptions are not counted.</p>
+      ${unansweredLine(n)}
+      ${n.count ? '<p class="cs-hint">Rule 502(b): each purchaser who is not accredited must be given the disclosure and financial information the rule calls for a reasonable time before the sale.</p>' : ''}
+      <p class="cs-hint">Counted for this offering only. Offerings by the same issuer made within 90 days of each other may be treated as one offering, and their purchasers counted together.</p>`
+    );
+  }
+  /**
+   * Regulation A Tier 2 (D-07, C-01): the subscribers who said they are not accredited, and which of them attested that the
+   * total they put into this offering is within 10 percent of the greater of their income or net worth (organizations:
+   * revenue or net assets). The portal asks for no figures and works out no limit. Nothing is blocked: the sponsor decides
+   * on each subscription.
+   */
+  function regAPanel(o) {
+    const EL = NS.eligibility;
+    const s = EL.regAStatus(W(), o);
+    const n = s.rows.length;
+    const nameOf = (id) => {
+      const inv = invById(id);
+      return inv ? inv.title : id;
+    };
+    const not = s.rows
+      .filter((r) => r.attested !== true)
+      .map((r) => `<p class="cs-elig-noattest" data-investor="${h(r.investorId)}">${badge('warn', 'Not attested')} <strong>${h(nameOf(r.investorId))}</strong> has not attested that this investment is within their 10 percent limit</p>`)
+      .join('');
+    const yes = s.rows.filter((r) => r.attested === true).map((r) => nameOf(r.investorId));
+    const attestedLine = yes.length ? `<p class="cs-muted cs-elig-attested">Attested to the 10 percent limit: ${h(yes.join(', '))}</p>` : '';
+    // D-06, D-30: one line, only when someone left the accredited question unanswered (no limit was asked of them).
+    const open = s.unanswered.map((x) => nameOf(x.investorId));
+    const openLine = open.length ? `<p class="cs-muted cs-elig-unanswered">Left the accredited question unanswered, so not asked about the 10 percent limit: ${h(open.join(', '))}</p>` : '';
+    return panel(
+      'Investor eligibility',
+      `<p class="cs-elig-count"><strong>Regulation A Tier 2: ${h(String(n))} non-accredited subscriber${n === 1 ? '' : 's'}, ${h(String(s.notAttested))} not attested to the 10 percent limit</strong></p>
+      ${not}${attestedLine}${openLine}
+      <p class="cs-hint">An investor who is not accredited may put no more than 10 percent of the greater of their annual income and net worth (for an organization, its revenue and net assets for the most recent fiscal year) into this offering. Each one is asked to attest to it; the portal asks for no figures. Declined subscriptions are not counted, and accredited investors have no limit.</p>`
+    );
+  }
+  /** D-30: investors who left the status question open, and holders with no subscription made here, shown apart from the count. */
+  function unansweredLine(n) {
+    const u = n.unanswered;
+    if (!u) return '';
+    const held = n.holders ? `; ${h(String(n.holders))} of them hold${n.holders === 1 ? 's' : ''} the offering without a subscription made here` : '';
+    return `<p class="cs-muted">${h(String(u))} investor${u === 1 ? ' has' : 's have'} no status answer on file and ${u === 1 ? 'is' : 'are'} not in the count${held}.</p>`;
+  }
   /** The read-only view of an offering for people who cannot configure it. */
   function offReadOnly(o) {
     const n = holdersCount(o.id);
@@ -424,7 +610,8 @@
       <p class="cs-muted cs-locked-note">${icon('lock')}${E.managed ? 'Set up and maintained by Carrow &amp; Vale. To change anything on this offering, contact your Carrow &amp; Vale team.' : 'Set up and maintained by your admins. To change anything on this offering, ask an admin on your team.'}</p>
       <div class="cs-split">
         <div class="cs-split-main">
-          ${panel('Basics', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
+          ${panel('Offering details', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
+          ${NS.withholdingUI ? panel('Tax reporting', NS.withholdingUI.reportingField(W(), o)) : ''}
           ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, false) : ''}
           ${panel('Exit timing', kv([[h(x.label), h(x.value)], ['How exit is defined', h((BASIS.find((b) => b[0] === (o.exit || {}).basis) || ['', ''])[1])], ['Note shown to investors', h((o.exit || {}).note || '')]]))}
           ${panel('Distributions', kv([['Frequency', h(d.frequency || '')], ['Payment day', periodMonths(d.frequency) && d.day ? NS.data.ordinal(Number(d.day)) + ' of the month' : ''], ['Next payment', nextOf(o) ? date(nextOf(o).date, 'wd') : ''], ['Payment type', h(d.type || '')], ['Target or rate', h(d.target || '')]]))}
@@ -493,7 +680,7 @@
         ${head(h(o.name), `${h(o.type)} · ${n} investor${n === 1 ? '' : 's'} · ${usd(raised(o.id))} raised`, `${E.diy && o.status === 'Raising' ? `<button class="cs-btn" type="button" data-action="join-link" data-id="${h(o.id)}">Investor sign-up link</button>` : ''}${n ? `<button class="cs-btn" type="button" data-action="off-preview">Preview as investor</button>` : ''}`)}
         <div class="cs-split">
           <div class="cs-split-main">
-            ${panel('Basics', `<div class="cs-grid">
+            ${panel('Offering details', `<div class="cs-grid">
               ${offField('Offering name', 'name', { wide: true, max: 90 })}
               ${offField('Short name', 'shortName', { max: 32 })}
               ${offField('Type', 'type', { select: Object.keys(NS.OFFERING_TYPES) })}
@@ -501,8 +688,10 @@
               ${offField('Closing date', 'closeDate', { type: 'date' })}
               ${offField('One-line description', 'summary', { wide: true, max: 100 })}
               ${offField('Minimum investment ($)', 'minimum', { type: 'number' })}
-              ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: E.diy ? 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.' : '' })}
+              ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: exemptionHint(o) })}
+              ${NS.withholdingUI ? NS.withholdingUI.reportingField(W(), o) : ''}
             </div>`)}
+            ${eligibilityPanel(o)}
             ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, true) : ''}
             ${panel('Exit timing', `<div class="cs-grid">
               ${offField('How exit is defined', 'exit.basis', { select: BASIS, wide: true })}
@@ -572,7 +761,12 @@
     }
     NS.app.save();
     if (path === 'exit.basis' || path === 'type' || path === 'distribution.day' || path === 'distribution.frequency') NS.app.render();
-    else {
+    else if (path === 'structure.exemption') {
+      // The eligibility panel and the exemption's hint follow the exemption chosen; focus stays on the select.
+      NS.app.render();
+      const sel = document.getElementById('of-structure-exemption');
+      if (sel) sel.focus();
+    } else {
       const pv = document.getElementById('off-preview');
       if (pv) pv.innerHTML = offPreview(o);
     }
@@ -654,14 +848,14 @@
           const done = i.onboarding.status === 'complete';
           // The committed line shows only while some of the commitment is still to be called (compared in cents).
           return `<tr>
-            <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span></th>
-            <td>${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</td>
-            <td class="num">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
-            <td>${activation(i)}</td>
-            <td>${payLabel(i)}</td>
-            <td class="cs-row-actions">${
+            <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span>${NS.coInvestor ? NS.coInvestor.statusHTML(w, i) : ''}</th>
+            <td data-label="Type">${h(typeLabel(i))}</td>
+            <td class="num" data-label="Invested">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
+            <td data-label="Activation">${activation(i)}${taxLine(w, i)}</td>
+            <td data-label="Paid by">${payLabel(i)}</td>
+            <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done
-                ? `<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
+                ? `${taxAskButton(i)}<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
                 : `<button class="cs-btn cs-btn-small" type="button" data-action="invite-preview" data-id="${h(i.id)}">Invitation</button><button class="cs-btn cs-btn-small" type="button" data-action="remind" data-id="${h(i.id)}">Send reminder</button>`
             }</td>
           </tr>`;
@@ -683,7 +877,7 @@
         ${panel(
           '',
           list.length
-            ? `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Investor</th><th scope="col">Type</th><th scope="col" class="num">Invested</th><th scope="col">Activation</th><th scope="col">Paid by</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>`
+            ? `<div class="tbl-scroll"><table class="cs-tbl cs-stack"><thead><tr><th scope="col">Investor</th><th scope="col">Type</th><th scope="col" class="num">Invested</th><th scope="col">Activation</th><th scope="col">Paid by</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>`
             : `<p class="cs-muted">${w.investors.length ? 'No investors match this filter.' : `No investors yet. Use ${I8 ? 'Invite an investor' : 'Invite investors'} to add them.`}</p>`
         )}`,
         'console-investors'
@@ -847,7 +1041,7 @@
           <p>${h(t.shortName)} now shares account information through a secure ${h(t.portalName.toLowerCase())}. Once you activate your account you can see each of your investments, the distributions you have received, projected exit timing, and your statements and tax documents.</p>
           <p>Activation takes about five minutes. You will create a login, confirm your investor details${t.onboarding.accreditation ? ' and accreditation' : ''}, and tell us where to send distributions.</p>
           <p><span class="email-btn">Activate your account</span></p>
-          <p>This link expires on ${by}. Questions? Contact ${h(t.support.team)} at ${h(t.support.phone)}.</p>
+          <p>This link expires on ${by}. Questions? Contact ${h(t.support.team)} at ${h(t.support.phone || t.support.email)}.</p>
         </div>
         <div class="email-foot">${h(t.legalName)} · ${h(t.domain)}</div>
       </article>
@@ -865,6 +1059,7 @@
     U.toast(`Reminder prepared for ${inv.email}. No email is sent in this demo.`);
   };
   NS.actions['view-as'] = (el) => {
+    S().co = false;
     S().viewer = el.getAttribute('data-id');
     NS.app.go('overview');
   };
@@ -872,11 +1067,12 @@
   /* ---------- Distributions and NACHA ---------- */
   function runsTable(runs, withFile) {
     const name = (id) => (W().offerings.find((o) => o.id === id) || {}).shortName || id;
-    return `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Payment date</th><th scope="col">Offering</th><th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Investors</th><th scope="col">Status</th>${withFile ? '<th scope="col"><span class="sr-only">ACH file</span></th>' : ''}</tr></thead><tbody>${runs
+    return `<div class="tbl-scroll"><table class="cs-tbl${withFile ? ' cs-stack' : ''}"><thead><tr><th scope="col">Payment date</th><th scope="col">Offering</th><th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Investors</th><th scope="col">Status</th>${withFile ? '<th scope="col"><span class="sr-only">ACH file</span></th>' : ''}</tr></thead><tbody>${runs
       .map((r) => {
-        const n = NS.data.allocate(W(), r).filter((a) => a.cents > 0).length;
-        return `<tr><td class="nowrap">${date(r.date)}</td><td>${h(name(r.offeringId))}</td><td>${h(r.type)}</td><td class="num">${usdc(r.total)}</td><td class="num">${n}</td><td>${r.status === 'scheduled' ? 'Scheduled' : 'Paid'}</td>${
-          withFile ? `<td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button></td>` : ''
+        const n = NS.data.runRows(W(), r).filter((a) => a.cents > 0).length;
+        const st = NS.data.runState(r, today());
+        return `<tr><td class="nowrap" data-label="Payment date">${date(r.date)}</td><td data-label="Offering">${h(name(r.offeringId))}</td><td data-label="Type">${h(r.type)}</td><td class="num" data-label="Amount">${usdc(r.total)}</td><td class="num" data-label="Investors">${n}</td><td data-label="Status">${st === 'cancelled' ? badge('mute', 'Cancelled') : st === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
+          withFile ? `<td class="num">${st === 'cancelled' ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button>${distCancelButton(r)}`}</td>` : ''
         }</tr>`;
       })
       .join('')}</tbody></table></div>`;
@@ -930,10 +1126,13 @@
     const t = T();
     const a = t.ach;
     const o = W().offerings.find((x) => x.id === d.offeringId);
-    const rows = draftAlloc(d);
+    // A file built again for a recorded run pays the net amounts stored on it; a line with nothing left to pay has no entry.
+    const run = d.fromRun ? W().runs.find((x) => x.id === d.fromRun && Array.isArray(x.lines) && !x.cancelled) : null;
+    const rows = run ? NS.data.runRows(W(), run).map((x) => ({ investor: x.investor, cents: x.netCents })) : draftAlloc(d);
     const entries = rows
       .filter((r) => r.investor.payment && r.investor.payment.method === 'ach' && r.investor.payment.bank && r.cents > 0)
       .map((r) => ({ name: r.investor.payment.bank.holder || r.investor.title, id: r.investor.id, routing: r.investor.payment.bank.routing, account: r.investor.payment.bank.account, accountType: r.investor.payment.bank.type, cents: r.cents, sec: (NS.ENTITY_TYPES[r.investor.type] || { sec: 'PPD' }).sec }));
+    if (!run) distNetEntries(d, entries); // plan 10-07: a new draft's file pays each investor the net of the confirmed lines
     const log = (W().achLog = W().achLog || []);
     const todayIso = today();
     const used = log.filter((x) => x.date === todayIso).length;
@@ -955,6 +1154,8 @@
     file.filename = `${slug}_${d.date.replace(/-/g, '')}_${modifier}.ach`;
     file.modifier = modifier;
     file.company = co;
+    // what the file pays each investor, compared with the record's net amounts when the distribution is recorded
+    file.paid = entries.map((e) => ({ id: e.id, cents: e.cents }));
     log.push({ date: todayIso, modifier, filename: file.filename });
     NS.app.save();
     return file;
@@ -1001,6 +1202,8 @@
     );
   }
 
+  /** Why "Generate NACHA file" cannot be pressed yet, shown beside it ('' when it can). */
+  const distWhy = (d, total, ach, reason) => (!achReady() ? 'Complete ACH origination first.' : !total ? 'Enter an amount.' : !ach.length ? 'No investors in this offering have a bank account on file.' : reason ? `The payment date ${reason}.` : d.date < today() ? 'The payment date is in the past.' : '');
   NS.views['console-distributions'] = {
     mode: 'console',
     render() {
@@ -1021,8 +1224,9 @@
       const months = periodMonths(o.distribution.frequency);
       const invested = NS.data.investedAt(w.investors, o.id, d.date);
       const annualized = invested && months ? (total / 100 / invested) * (12 / months) : 0;
-      const canFile = ach.length && total > 0 && achReady() && !reason && d.date >= today();
-      const why = !achReady() ? 'Complete ACH origination first.' : !total ? 'Enter an amount.' : !ach.length ? 'No investors in this offering have a bank account on file.' : reason ? `The payment date ${reason}.` : d.date < today() ? 'The payment date is in the past.' : '';
+      const taxWait = distTaxWait(o, d, rows); // plan 10-07: a proposed tax withheld line not yet decided
+      const canFile = ach.length && total > 0 && achReady() && !reason && d.date >= today() && !taxWait;
+      const why = taxWait || distWhy(d, total, ach, reason);
       const history = ui.histAll ? w.runs : w.runs.slice(0, 12);
       return shell(
         `${head('Distributions', 'Allocate a payment pro rata by amount invested, then generate the NACHA file for the bank.')}
@@ -1045,9 +1249,10 @@
           </div>
           ${wfPreview(o, d)}
           <div id="ds-alloc">${allocTable(rows, ach, chk, total)}</div>
+          ${distTaxBlock(o, d, rows)}
           <div class="cs-row">
             <button class="cs-btn cs-btn-primary" type="button" data-action="nacha-build"${canFile ? '' : ' disabled'}>Generate NACHA file</button>
-            <button class="cs-btn" type="button" data-action="dist-record"${total > 0 && rows.length ? '' : ' disabled'}>Record distribution</button>
+            <button class="cs-btn" type="button" data-action="dist-record"${total > 0 && rows.length && !taxWait ? '' : ' disabled'}>Record distribution</button>
             ${why ? `<span class="cs-hint">${h(why)}</span>` : ''}
           </div>`
         )}
@@ -1059,6 +1264,8 @@
   };
   function allocTable(rows, ach, chk, total) {
     if (!rows.length) return '<p class="cs-muted">No investors hold this offering on the payment date.</p>';
+    const cut = distWithheldCents(draft()); // plan 10-07: with a confirmed tax withheld line the table shows withheld and net
+    if (cut) return allocTableNet(rows, ach, chk, total, cut);
     const sum = (arr) => arr.reduce((a, r) => a + r.cents, 0);
     return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact">
       <thead><tr><th scope="col">Investor</th><th scope="col">Account</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Share</th><th scope="col" class="num">Amount</th><th scope="col">Paid by</th></tr></thead>
@@ -1073,6 +1280,8 @@
   }
   NS.binders.dist = (path, v) => {
     const d = draft();
+    // a draft loaded from a recorded run is that run only until one of its fields is edited
+    d.fromRun = null;
     if (path === 'gross') {
       d.gross = v;
       const el = document.getElementById('ds-wf-body');
@@ -1114,6 +1323,13 @@
       const reason = NS.nacha.bankingDayReason(d.date);
       if (file) file.disabled = !(ach.length && total > 0 && achReady() && !reason && d.date >= today());
       if (rec) rec.disabled = !(total > 0 && rows.length);
+      // The reason beside the buttons follows the amount as it is typed ("Enter an amount." goes once there is one)
+      const why = distWhy(d, total, ach, reason);
+      const bar = rec && rec.parentElement;
+      const said = bar && bar.querySelector(':scope > .cs-hint');
+      if (said && why) said.textContent = why;
+      else if (said) said.remove();
+      else if (bar && why) bar.insertAdjacentHTML('beforeend', `<span class="cs-hint">${h(why)}</span>`);
       const fs = document.getElementById('ds-file');
       if (fs) fs.innerHTML = '';
       return;
@@ -1149,11 +1365,29 @@
     const d = draft();
     const total = draftTotalCents(d);
     if (!(total > 0)) return;
-    const id = `${d.offeringId}-${d.date}-${Date.now().toString(36)}`;
+    const taxWait = distTaxWait(W().offerings.find((x) => x.id === d.offeringId), d, draftAlloc(d)); // plan 10-07
+    if (taxWait) return U.toast(taxWait);
     const wf = d.wf && d.wf.lp === total ? d.wf : null;
-    W().runs.unshift(Object.assign({ id, offeringId: d.offeringId, date: d.date, type: d.type, total, status: d.date > today() ? 'scheduled' : 'paid', source: 'console', file: d.file ? d.file.filename : '' }, wf ? { gp: wf.gp, gross: wf.gross } : {}));
+    // The record keeps what each investor is paid (NS.data.recordRun); the console adds its change-log entry. An ACH file
+    // already built must pay exactly the net amounts about to be stored; a refusal records nothing and says why in one line.
+    const spec = Object.assign({ offeringId: d.offeringId, date: d.date, type: d.type, total, file: d.file ? d.file.filename : '' }, wf ? { gp: wf.gp, gross: wf.gross } : {});
+    if (NS.withholdingUI) spec.withheld = NS.withholdingUI.withheld(d); // plan 10-07: each confirmed line is stored with who and when
+    let id;
+    try {
+      if (d.file && d.file.paid) {
+        const net = {};
+        NS.data.buildLines(W(), spec, spec.withheld).forEach((l) => (net[l.investorId] = l.netCents));
+        if (d.file.paid.some((e) => net[e.id] !== e.cents)) {
+          U.toast('The ACH file was built before the investor register changed; generate it again before recording.');
+          return;
+        }
+      }
+      id = NS.data.recordRun(W(), spec, { by: NS.app.actor(), today: today() }).id;
+    } catch (e) {
+      U.toast(String((e && e.message) || e));
+      return;
+    }
     audit('Distribution recorded', `${d.type}: ${usdc(total)} ${d.date > today() ? 'scheduled for' : 'paid'} ${date(d.date)}${wf ? ` (waterfall: ${usdc(wf.gross)} gross, ${usdc(wf.gp)} to the GP)` : ''}; ${d.file ? d.file.filename : 'no NACHA file'}`, d.offeringId, id);
-    W().runs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     NS.app.save(true);
     const o = W().offerings.find((x) => x.id === d.offeringId);
     S().ui.dist = null;
@@ -1162,8 +1396,8 @@
   };
   NS.actions['dist-load'] = (el) => {
     const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
-    if (!r) return;
-    S().ui.dist = { offeringId: r.offeringId, type: r.type, date: r.date, mode: 'total', rate: '', total: (r.total / 100).toFixed(2), desc: T().ach.entryDescription || 'DISTRIB', file: null, line: null };
+    if (!r || r.cancelled) return;
+    S().ui.dist = { offeringId: r.offeringId, type: r.type, date: r.date, mode: 'total', rate: '', total: (r.total / 100).toFixed(2), desc: T().ach.entryDescription || 'DISTRIB', file: null, line: null, fromRun: Array.isArray(r.lines) ? r.id : null };
     const reason = NS.nacha.bankingDayReason(r.date);
     if (achReady() && !reason) {
       // Rebuilding a past date is allowed for reference; the checks flag the date.
@@ -1177,6 +1411,119 @@
     S().ui.histAll = true;
     NS.app.render();
   };
+
+  /* ---------- Tax withheld at a distribution (plan 10-07) ---------- */
+  /*
+   * withholding-ui.js (self-serve edition only) draws the tax withheld block and keeps the person's decision on each line.
+   * Without it (the managed edition) none of this changes the screen. Only confirmed lines reach the table's net column, the
+   * ACH file's entries and the record (NS.data.buildLines through spec.withheld), and both buttons wait while a proposed line
+   * is neither confirmed nor removed.
+   */
+  const WUI = () => NS.withholdingUI || null;
+  /** Why the file and the record must wait ('' when they need not). */
+  const distTaxWait = (o, d, rows) => (WUI() && o && rows.length ? WUI().blocked(W(), o, d, rows) : '');
+  const distTaxBlock = (o, d, rows) => (WUI() ? `<div id="ds-tax">${WUI().block(W(), o, d, rows)}</div>` : '');
+  /** The confirmed withheld cents of the draft by investor, or null when nothing is withheld. */
+  function distWithheldCents(d) {
+    const wh = WUI() && d ? WUI().withheld(d) : {};
+    const ids = Object.keys(wh);
+    if (!ids.length) return null;
+    const out = {};
+    ids.forEach((id) => (out[id] = wh[id].reduce((a, w) => a + w.cents, 0)));
+    return out;
+  }
+  /** A new draft's ACH entries pay the net: each confirmed line is taken off its investor's entry; an entry left at 0 goes. */
+  function distNetEntries(d, entries) {
+    const cut = distWithheldCents(d);
+    if (!cut) return;
+    for (let k = entries.length - 1; k >= 0; k--) {
+      entries[k].cents -= cut[entries[k].id] || 0;
+      if (entries[k].cents <= 0) entries.splice(k, 1);
+    }
+  }
+  /** The allocation table with the tax withheld and the net of each investor. */
+  function allocTableNet(rows, ach, chk, total, cut) {
+    const off = (r) => cut[r.investor.id] || 0;
+    const sum = (arr, f) => arr.reduce((a, r) => a + f(r), 0);
+    const gross = (r) => r.cents;
+    const net = (r) => r.cents - off(r);
+    const foot = (label, arr, cls) => `<tr${cls ? ` class="${cls}"` : ''}><th scope="row" colspan="4">${label}</th><td class="num">${usdc(sum(arr, gross))}</td><td class="num">${usdc(sum(arr, off))}</td><td class="num">${usdc(sum(arr, net))}</td><td></td></tr>`;
+    return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact">
+      <thead><tr><th scope="col">Investor</th><th scope="col">Account</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Share</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Tax withheld</th><th scope="col" class="num">Net</th><th scope="col">Paid by</th></tr></thead>
+      <tbody>${rows
+        .map((r) => `<tr><td>${h(r.investor.title)}</td><td class="nowrap">${h(r.investor.id)}</td><td class="num">${usd(r.amount)}</td><td class="num">${(r.share * 100).toFixed(3)}%</td><td class="num">${usdc(r.cents)}</td><td class="num">${off(r) ? usdc(off(r)) : ''}</td><td class="num">${usdc(net(r))}</td><td>${payLabel(r.investor)}${r.investor.payment && r.investor.payment.method === 'ach' ? ` · ${(NS.ENTITY_TYPES[r.investor.type] || {}).sec}` : ''}</td></tr>`)
+        .join('')}</tbody>
+      <tfoot>${foot(`ACH (${ach.length})`, ach)}${foot(`Check (${chk.length})`, chk)}${foot('Total', rows, 'cs-total')}</tfoot></table></div>`;
+  }
+  // Changing the offering, the date or the amount drops every decision (the amounts they were made for have changed); while
+  // the amount is typed, the block, the two buttons and the line beside them follow it without redrawing the page.
+  const distBind = NS.binders.dist;
+  NS.binders.dist = (path, v, el) => {
+    if (WUI() && ['offeringId', 'date', 'mode', 'rate', 'total'].indexOf(path) >= 0) WUI().reset(draft());
+    distBind(path, v, el);
+    if (!WUI() || ['rate', 'total', 'desc'].indexOf(path) < 0) return;
+    const d = draft();
+    const o = W().offerings.find((x) => x.id === d.offeringId);
+    const rows = draftAlloc(d);
+    const box = document.getElementById('ds-tax');
+    if (box) box.innerHTML = WUI().block(W(), o, d, rows);
+    const wait = distTaxWait(o, d, rows);
+    if (!wait) return;
+    const file = document.querySelector('[data-action="nacha-build"]');
+    const rec = document.querySelector('[data-action="dist-record"]');
+    if (file) file.disabled = true;
+    if (rec) rec.disabled = true;
+    const bar = rec && rec.parentElement;
+    const said = bar && bar.querySelector(':scope > .cs-hint');
+    if (said) said.textContent = wait;
+    else if (bar) bar.insertAdjacentHTML('beforeend', `<span class="cs-hint">${h(wait)}</span>`);
+  };
+  const distBuild = NS.actions['nacha-build'];
+  NS.actions['nacha-build'] = function () {
+    const d = draft();
+    const wait = distTaxWait(W().offerings.find((x) => x.id === d.offeringId), d, draftAlloc(d));
+    if (wait) return U.toast(wait);
+    return distBuild.apply(this, arguments);
+  };
+  /*
+   * Cancel on a recorded distribution (planner's choice P-1, plan-check D7): admins in the self-serve edition and Carrow &
+   * Vale staff in the managed edition (the role that may configure), with a reason. A cancelled distribution is paid nowhere
+   * (NS.data.cancelRun, plan 10-01); its lines stay, and the change log says who cancelled it and why.
+   */
+  const distCancelButton = (r) => (canConfigure() && !r.cancelled ? `<button class="cs-btn cs-btn-small" type="button" data-action="dist-cancel" data-id="${h(r.id)}">Cancel</button>` : '');
+  function distCancelDialog(r, err) {
+    const o = W().offerings.find((x) => x.id === r.offeringId) || {};
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Cancel this distribution</h2><p>${h(o.shortName || r.offeringId)} · ${usdc(r.total)} · ${date(r.date)}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body">
+        <label class="cs-field" for="dist-cancel-why"><span>Reason</span><textarea id="dist-cancel-why" rows="2" maxlength="300" autofocus></textarea></label>
+        ${err ? `<p class="cs-error">${h(err)}</p>` : ''}
+        <div class="cs-row cs-row-end"><button class="cs-btn cs-btn-danger" type="button" data-action="dist-cancel-go" data-id="${h(r.id)}">Cancel distribution</button></div>
+      </div>`,
+      'dlg-email'
+    );
+  }
+  NS.actions['dist-cancel'] = staffGuard((el) => {
+    const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
+    if (r && !r.cancelled) distCancelDialog(r, '');
+  });
+  NS.actions['dist-cancel-go'] = staffGuard((el) => {
+    const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
+    if (!r || r.cancelled) return U.closeDialog();
+    const why = String((document.getElementById('dist-cancel-why') || {}).value || '').trim();
+    if (!why) return distCancelDialog(r, 'Enter the reason for cancelling.');
+    try {
+      NS.data.cancelRun(W(), r.id, { by: NS.app.actor(), why });
+    } catch (e) {
+      return distCancelDialog(r, String((e && e.message) || e));
+    }
+    const o = W().offerings.find((x) => x.id === r.offeringId) || {};
+    audit('Distribution cancelled', `${r.type}: ${usdc(r.total)} dated ${date(r.date)} for ${o.shortName || r.offeringId}; reason: ${why}`, r.offeringId, r.id);
+    NS.app.save(true);
+    U.closeDialog();
+    NS.app.render();
+    U.toast(`The ${usdc(r.total)} distribution of ${date(r.date)} is cancelled. Investors no longer see it.`);
+  });
 
   /* ---------- Investor notices (mass email) ---------- */
   function latestQuarter() {
@@ -1484,11 +1831,12 @@
     const w = W();
     const rows = [];
     w.runs
-      .filter((run) => run.date >= r.from && run.date <= r.to && (r.offering === 'all' || run.offeringId === r.offering) && (r.scheduled || run.status === 'paid'))
+      // a cancelled run is in no report, scheduled payments ticked or not
+      .filter((run) => !run.cancelled && run.date >= r.from && run.date <= r.to && (r.offering === 'all' || run.offeringId === r.offering) && (r.scheduled || NS.data.runPaid(run, today())))
       .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
       .forEach((run) => {
         const o = w.offerings.find((x) => x.id === run.offeringId) || { name: run.offeringId, shortName: run.offeringId };
-        NS.data.allocate(w, run).forEach((a) => {
+        NS.data.runRows(w, run).forEach((a) => {
           if (a.cents > 0) rows.push({ run, o, inv: a.investor, cents: a.cents });
         });
       });
@@ -1507,7 +1855,7 @@
       head = ['Payment date', 'Offering', 'Investor', 'Account', 'Type', 'Paid by', 'Amount'];
       body = rows.map((x) => [date(x.run.date), h(x.o.shortName || x.o.name), h(x.inv.title), h(x.inv.id), h(x.run.type), payMethod(x.inv), usdc(x.cents)]);
       csvRows = [['Payment date', 'Offering', 'Investor', 'Account', 'Contact', 'Type', 'Status', 'Paid by', 'Amount']].concat(
-        rows.map((x) => [x.run.date, x.o.name, x.inv.title, x.inv.id, x.inv.contact, x.run.type, x.run.status === 'paid' ? 'Paid' : 'Scheduled', payMethod(x.inv), dollars(x.cents)])
+        rows.map((x) => [x.run.date, x.o.name, x.inv.title, x.inv.id, x.inv.contact, x.run.type, NS.data.runState(x.run, today()) === 'paid' ? 'Paid' : 'Scheduled', payMethod(x.inv), dollars(x.cents)])
       );
       foot = [`${rows.length} payments`, '', '', '', '', '', usdc(total)];
     } else if (r.view === 'offering') {
@@ -1862,6 +2210,19 @@
     if (r.type === 'redemption') return `Redemption: ${r.full ? 'full' : usdc(r.cents || 0)}`;
     return `${r.additional ? 'Additional subscription' : OPS().isOpen(o) ? 'Subscription' : 'New commitment'}: ${usdc(r.cents)}`;
   }
+  /** Rule 501(i): the purchaser representative an investor named on the status step, and their written acknowledgment. */
+  function repLine(r) {
+    const q = E.diy && NS.eligibility ? NS.eligibility.qualOf(r) : null;
+    const rep = q && q.sophistication && q.sophistication.rep;
+    if (!rep || typeof rep !== 'object') return '';
+    const who = [rep.name, rep.firm].map((x) => String(x || '').trim()).filter(Boolean).join(', ') || 'name not given';
+    const file = rep.fileId
+      ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(rep.fileId)}" data-name="${h(rep.fileName || 'acknowledgment')}">Download the written acknowledgment</button>`
+      : rep.note
+        ? `; ${h(String(rep.note).slice(0, 400))}`
+        : '; no written acknowledgment uploaded';
+    return `<span class="sub">Purchaser representative: ${h(who)}${file}</span>`;
+  }
   function reqStatus(r) {
     return { pending: badge('warn', 'Pending review'), approved: badge('adj', 'Approved'), rejected: badge('mute', 'Declined'), paid: badge('ok', `Paid ${date(r.paid)}`), funded: badge('ok', 'Funded'), accepted: badge('ok', 'Accepted') }[r.status] || badge('mute', r.status);
   }
@@ -1889,13 +2250,15 @@
           if (r.status === 'pending') act = `<button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="req-approve" data-id="${h(r.id)}">Approve</button> <button class="cs-btn cs-btn-small" type="button" data-action="req-decline" data-id="${h(r.id)}">Decline</button>`;
           else if (r.status === 'approved' && r.type === 'redemption') act = r.dealing <= lastEnd ? `<button class="cs-btn cs-btn-small" type="button" data-action="req-paid" data-id="${h(r.id)}">Record payment</button>` : `<span class="sub">Payable after ${date(r.dealing)}</span>`;
           else if (r.status === 'approved') act = `<button class="cs-btn cs-btn-small" type="button" data-action="req-funded" data-id="${h(r.id)}">${OPS().isOpen(o) ? 'Record funding' : 'Countersign'}</button>`;
-          return `<tr><td class="nowrap">${date(r.submitted)}</td><td>${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td>${h(o.shortName || o.name)}</td><td>${h(reqLabel(r, o))}<span class="sub">E-signed by ${h(r.signedBy || inv.contact)}</span></td><td class="nowrap">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num">${est}</td><td>${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
+          // Eligibility warnings (C-01): shown under the request; Approve stays as it is, the sponsor decides.
+          const warn = E.diy && NS.eligibility ? NS.eligibility.flags(w, r).map((f) => `<span class="sub"><span class="iv-warn">${h(f)}</span></span>`).join('') : '';
+          return `<tr><td class="nowrap" data-label="Submitted">${date(r.submitted)}</td><td data-label="Investor">${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td data-label="Fund">${h(o.shortName || o.name)}</td><td data-label="Request">${h(reqLabel(r, o))}${warn}${repLine(r)}<span class="sub">${OPS().unsignedAgreement && OPS().unsignedAgreement(w, r) ? 'Agreement not signed' : `E-signed by ${h(r.signedBy || inv.contact)}`}</span></td><td class="nowrap" data-label="Date">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num" data-label="Amount">${est}</td><td data-label="Status">${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
         })
         .join('');
       return shell(
         `${head('Investor requests', 'Redemptions and subscriptions investors submit and e-sign in their portal. Approve or decline, then record the payment or the funding: the investor register, capital accounts and audit schedules update automatically.')}
         <div class="cs-tabs" role="group" aria-label="Requests"><button type="button" class="cs-tab" data-action="req-tab" data-t="pending" aria-pressed="${tab === 'pending'}">Open <span class="cs-count">${open.length}</span></button><button type="button" class="cs-tab" data-action="req-tab" data-t="all" aria-pressed="${tab === 'all'}">All <span class="cs-count">${all.length}</span></button></div>
-        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Submitted</th><th scope="col">Investor</th><th scope="col">Fund</th><th scope="col">Request</th><th scope="col">Date</th><th scope="col" class="num">Amount</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Redemptions are paid at net asset value on the dealing date, which follows the fund’s notice period and lock-up. Payment can be recorded once that month’s valuation is final.</p>` : '<p class="cs-muted">No open requests.</p>')}`,
+        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">Submitted</th><th scope="col">Investor</th><th scope="col">Fund</th><th scope="col">Request</th><th scope="col">Date</th><th scope="col" class="num">Amount</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Redemptions are paid at net asset value on the dealing date, which follows the fund’s notice period and lock-up. Payment can be recorded once that month’s valuation is final.</p>` : '<p class="cs-muted">No open requests.</p>')}`,
         'console-requests'
       );
     }
@@ -1937,6 +2300,8 @@
   };
   NS.actions['req-funded'] = (el) => {
     const r = reqById(el.getAttribute('data-id'));
+    // Countersign on an agreement still waiting for the firm's signature opens that signing (esign.js); it is accepted when signed.
+    if (r && NS.esign && NS.esign.countersign && NS.esign.countersign(W(), r)) return;
     if (r && OPS().markFunded(W(), r)) {
       NS.app.render();
       U.toast(r.status === 'funded' ? `Subscription funded, effective ${date(r.dealing)}.` : 'Subscription countersigned. The commitment is on the investor register.');
@@ -1956,12 +2321,13 @@
       const w = W();
       const d = dupState();
       const docs = (w.docs || []).slice().sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+      for (let k = docs.length - 1; k >= 0; k--) if (docs[k].tax) docs.splice(k, 1); // a tax document is handled on the Tax documents page only (plan 10-04)
       const matches = d.audience === 'investors' ? d.files.map((f) => ({ f, ids: OPS().matchIds(w, f.name) })) : [];
       const rows = docs
         .map((x) => {
           const o = x.offeringId ? offById(x.offeringId) : null;
           const n = OPS().recipientsOf(w, x).length;
-          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden ? ', not shown to investors' : ''}` : ''}</span></td><td>${h(o ? o.shortName || o.name : 'All investors')}</td><td>${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td>${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
+          return `<tr><td class="nowrap" data-label="Date">${date(x.date)}</td><td data-label="Document">${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden ? ', not shown to investors' : ''}` : ''}</span></td><td data-label="Fund">${h(o ? o.shortName || o.name : 'All investors')}</td><td data-label="Recipients">${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td data-label="Type">${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td data-label="SHA-256"><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
         })
         .join('');
       return shell(
@@ -1982,7 +2348,7 @@
           ${d.errors.length ? `<p class="cs-error">${h(d.errors.join(' '))}</p>` : ''}
           <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="docs-publish"${d.files.length && !d.busy ? '' : ' disabled'}>${d.busy ? 'Publishing…' : 'Publish'}</button></div>`
         )}
-        ${panel(`Published <span class="cs-count">${docs.length}</span>`, docs.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Date</th><th scope="col">Document</th><th scope="col">Fund</th><th scope="col">Recipients</th><th scope="col">Type</th><th scope="col">SHA-256</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Each file’s SHA-256 fingerprint is recorded in the change log when it is published. In this demo, files are kept in this browser; in production they are stored in the document vault.</p>` : '<p class="cs-muted">Nothing published from this page yet. Generated statements and reports already appear in investor portals.</p>')}`,
+        ${panel(`Published <span class="cs-count">${docs.length}</span>`, docs.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">Date</th><th scope="col">Document</th><th scope="col">Fund</th><th scope="col">Recipients</th><th scope="col">Type</th><th scope="col">SHA-256</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Each file’s SHA-256 fingerprint is recorded in the change log when it is published. In this demo, files are kept in this browser; in production they are stored in the document vault.</p>` : '<p class="cs-muted">Nothing published from this page yet. Generated statements and reports already appear in investor portals.</p>')}`,
         'console-docs'
       );
     }
@@ -2056,6 +2422,7 @@
     const w = W();
     const doc = (w.docs || []).find((x) => x.id === el.getAttribute('data-id'));
     if (!doc) return;
+    if (doc.tax) return; // a tax document leaves only by the Tax documents page's logged Withdraw (plan 10-04)
     w.docs = w.docs.filter((x) => x !== doc);
     OPS().files.del(doc.id).catch(() => {});
     audit('Document removed', `${doc.title} (${doc.fileName}) removed from investor portals`, doc.offeringId || '', doc.id);
@@ -2109,7 +2476,7 @@
                 <label class="cs-field" for="kyc-note"><span>${rec.length ? 'Note (required to record a result or decide; kept in the change log)' : 'Review note (kept in the change log)'}</span><textarea id="kyc-note" rows="2" maxlength="300" data-input="kyc-note">${h(S().ui.kycNote || '')}</textarea></label>
                 <div class="cs-row">${k.match && !ivd ? `<button class="cs-btn cs-btn-primary" type="button" data-action="kyc-clear" data-id="${h(i.id)}">Clear as false positive</button>` : ''}${ivd ? `<button class="cs-btn${rec.length ? '' : ' cs-btn-primary'}" type="button" data-action="kyc-iv-approve" data-id="${h(i.id)}">Approve investor</button><button class="cs-btn" type="button" data-action="kyc-iv-decline" data-id="${h(i.id)}">Decline</button>` : ''}<button class="cs-btn" type="button" data-action="kyc-escalate" data-id="${h(i.id)}">Escalate to compliance officer</button><button class="cs-btn" type="button" data-action="kyc-open" data-id="">Cancel</button></div>${k.escalated ? `<p class="cs-hint">Escalated ${date(k.escalated)}.</p>` : ''}</div></td></tr>`
               : '';
-          return `<tr><td>${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td>${h(k.risk || '—')}</td><td>${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td>${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : k.screening === 'pending' ? 'Waiting for results' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap">${k.nextReview ? date(k.nextReview) : '—'}</td><td>${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td>${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
+          return `<tr><td data-label="Investor">${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td data-label="Risk">${h(k.risk || '—')}</td><td data-label="Identity verified">${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td data-label="Screening">${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : k.screening === 'pending' ? 'Waiting for results' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap" data-label="Next review">${k.nextReview ? date(k.nextReview) : '—'}</td><td data-label="Beneficial owners">${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td data-label="Status">${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
         })
         .join('');
       const due = rows0.filter((r) => r.lab.key === 'due');
@@ -2123,7 +2490,7 @@
           <div><dt>In progress or not started</dt><dd>${count('pending') + count('not_started')}</dd></div>
         </dl>
         <div class="cs-tabs" role="group" aria-label="Filter"><button type="button" class="cs-tab" data-action="kyc-tab" data-t="attention" aria-pressed="${tab === 'attention'}">Needs attention <span class="cs-count">${attention.length}</span></button><button type="button" class="cs-tab" data-action="kyc-tab" data-t="all" aria-pressed="${tab === 'all'}">All investors <span class="cs-count">${rows0.length}</span></button></div>
-        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Investor</th><th scope="col">Risk</th><th scope="col">Identity verified</th><th scope="col">Screening</th><th scope="col">Next review</th><th scope="col">Beneficial owners</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="cs-muted">Every investor is cleared and current.</p>')}
+        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">Investor</th><th scope="col">Risk</th><th scope="col">Identity verified</th><th scope="col">Screening</th><th scope="col">Next review</th><th scope="col">Beneficial owners</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="cs-muted">Every investor is cleared and current.</p>')}
         <p class="cs-hint">${E.diy ? 'Screening runs through every screening connection that is on; any potential match holds the investor for review. Re-screening follows the interval set on the Integrations page.' : 'Screening covers OFAC SDN and consolidated lists, UN, EU and UK HMT sanctions, politically exposed persons and adverse media. Low-risk investors are re-screened every 24 months, medium every 12, high every 6. In production this connects to the screening provider; here results are simulated.'}</p>`,
         'console-kyc'
       );
@@ -2214,7 +2581,7 @@
   NS.actions['kyc-iv-file'] = (el) => {
     OPS()
       .files.get(el.getAttribute('data-id'))
-      .then((blob) => (blob ? U.download(el.getAttribute('data-name'), blob, { mime: blob.type }) : U.toast('This file was uploaded in a different browser.')));
+      .then((blob) => (blob ? U.download(el.getAttribute('data-name'), blob, { mime: blob.type }) : U.toast(NS.esign.lostText('this file'))));
   };
   NS.actions['kyc-approve'] = (el) => {
     const inv = invById(el.getAttribute('data-id'));
@@ -2267,14 +2634,14 @@
       if (t === 'check') return `<input id="${id}" type="checkbox" aria-label="${h(path)}" data-bind="ik:${path}"${v ? ' checked' : ''}>`;
       return `<input id="${id}" type="${t === 'number' ? 'number' : 'text'}"${t === 'number' ? ' step="any"' : ''} aria-label="${h(path)}" data-bind="ik:${path}" value="${h(v == null ? '' : v)}">`;
     };
-    const rows = arr.map((row, i) => `<tr>${cols.map(([k, , t, opt]) => `<td>${cell(`${list}.${i}.${k}`, row[k], t, opt)}</td>`).join('')}<td class="num"><button class="cs-icon" type="button" data-action="ik-row-del" data-list="${list}" data-i="${i}" aria-label="Remove">${icon('x')}</button></td></tr>`).join('');
+    const rows = arr.map((row, i) => `<tr>${cols.map(([k, label, t, opt]) => `<td data-label="${h(label)}">${cell(`${list}.${i}.${k}`, row[k], t, opt)}</td>`).join('')}<td class="num"><button class="cs-icon" type="button" data-action="ik-row-del" data-list="${list}" data-i="${i}" aria-label="Remove">${icon('x')}</button></td></tr>`).join('');
     return `<div class="ik-list cs-wide"><div class="ik-list-head"><strong>${title}</strong> ${ikChip(list, arr)} ${ikSrc(list)}</div>
-      <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact ik-tbl"><thead><tr>${cols.map((c) => `<th scope="col">${c[1]}</th>`).join('')}<th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows || `<tr><td colspan="${cols.length + 1}" class="cs-muted">None.</td></tr>`}</tbody></table></div>
+      <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact ik-tbl cs-stack"><thead><tr>${cols.map((c) => `<th scope="col">${c[1]}</th>`).join('')}<th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows || `<tr><td colspan="${cols.length + 1}" class="cs-muted">None.</td></tr>`}</tbody></table></div>
       <button class="cs-btn cs-btn-small" type="button" data-action="ik-row-add" data-list="${list}">${icon('plus')}Add</button>${hint ? `<p class="cs-hint">${hint}</p>` : ''}</div>`;
   }
   function ikUpload() {
     const st = ikState();
-    IK().claudeSample(); // start connecting to Claude now, so reading starts at once
+    IK().serverSample(); // look up the reading server now, so reading starts at once
     const w = W();
     const names = st.files.map((f) => f.name).concat(st.samples.map((x) => x.name));
     const ready = st.files.length || st.samples.length || String(st.pasted).trim().length > 40;
@@ -2292,7 +2659,7 @@
           <label class="cs-check" for="ik-publish"><input id="ik-publish" type="checkbox" data-bind="ikt:publish"${st.publish ? ' checked' : ''}><span>Make uploaded documents available to investors in this offering (and on its subscription page)</span></label>
         </div>
         ${st.error ? `<p class="cs-error">${h(st.error)}</p>` : ''}
-        <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ik-read"${ready ? '' : ' disabled'}>Read documents</button><span class="cs-hint">The documents are read and their terms filled in for you to review (you may be asked to allow reading once).</span></div>`
+        <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ik-read"${ready ? '' : ' disabled'}>Read documents</button><span class="cs-hint">The documents are read and their terms filled in for you to review.</span></div>`
       )}`,
       'console-intake'
     );
@@ -2307,6 +2674,26 @@
       'console-intake'
     );
   }
+  /**
+   * D-44: the subscription agreement the reading found inside an uploaded PDF, on the review screen: the pages found, the
+   * pages that will be used (the sponsor can change them) and whether to use them. Applying uses whatever stands here.
+   */
+  function ikAgreement(st, target) {
+    const a = st.agreement;
+    // An offering with an agreement (or one being prepared) keeps it: apply prepares nothing then.
+    const kept = !!target && ((NS.esign && NS.esign.subscriptionTemplate && !!NS.esign.subscriptionTemplate(W(), target.id)) || (W().envelopes || []).some((e) => e.agreementFor === target.id && e.status === 'draft'));
+    const off = a.use === false ? ' disabled' : '';
+    return panel(
+      'Subscription agreement',
+      `<p id="ika-found">Subscription agreement found on pages ${a.foundFirst} to ${a.foundLast} of ${h(a.name)}.</p>
+      <div class="cs-grid cs-grid-3">
+        <label class="cs-check cs-wide" for="ika-use"><input id="ika-use" type="checkbox" data-bind="ika:use"${a.use !== false ? ' checked' : ''}><span>Use these pages as this offering’s subscription agreement</span></label>
+        <label class="cs-field" for="ika-first"><span>First page</span><input id="ika-first" type="number" min="1" max="${a.pages}" step="1" data-bind="ika:firstPage" data-change="ika-pages" value="${a.firstPage}"${off}></label>
+        <label class="cs-field" for="ika-last"><span>Last page</span><input id="ika-last" type="number" min="1" max="${a.pages}" step="1" data-bind="ika:lastPage" data-change="ika-pages" value="${a.lastPage}"${off}></label>
+      </div>
+      <p class="cs-hint" id="ika-hint">${kept ? 'This offering already has a subscription agreement; it is kept.' : 'When you apply, these pages become the offering’s subscription agreement, read and placed automatically as if you had uploaded it on its own. Change the pages if the agreement starts or ends elsewhere.'}</p>`
+    );
+  }
   function ikReview() {
     const st = ikState();
     const p = st.profile;
@@ -2318,7 +2705,7 @@
     const n = IK().filled(p);
     const tiersHint = 'Tiers run in order: return of capital, preferred return (simple or compounding), GP catch-up, then splits that end when investors reach an IRR or a multiple of their capital. Leave empty to use carry and preferred return with a full catch-up.';
     return shell(
-      `${head(target && st.method === 'manual' ? `Structure: ${h(target.name)}` : 'Review the setup', st.method === 'manual' ? 'Edit the offering’s structure and terms, then apply.' : `${method} from ${st.docs.filter((d) => d.text != null).length} document${st.docs.filter((d) => d.text != null).length === 1 ? '' : 's'}: ${n} terms found${st.trimmed ? ' (long documents: the cover pages and every passage that mentions terms were read)' : ''}. Check each term against its source, then apply.`, `<button class="cs-btn" type="button" data-action="ik-restart">${st.method === 'manual' ? 'Cancel' : 'Start over'}</button><button class="cs-btn cs-btn-primary" type="button" data-action="ik-apply"${st.busy ? ' disabled' : ''}>${target ? `Apply to ${h(target.shortName || target.name)}` : 'Create the offering'}</button>`)}
+      `${head(target && st.method === 'manual' ? `Structure: ${h(target.name)}` : 'Review the setup', st.method === 'manual' ? 'Edit the offering’s structure and terms, then apply.' : `${method} from ${st.docs.filter((d) => d.text != null).length} document${st.docs.filter((d) => d.text != null).length === 1 ? '' : 's'}: ${n} terms found${st.trimmed ? ' (long documents: the cover pages and every passage that mentions terms were read)' : ''}. Check each term against its source, then apply.`, `<button class="cs-btn" type="button" data-action="ik-restart">${st.method === 'manual' ? 'Cancel' : 'Start over'}</button><button class="cs-btn cs-btn-primary" type="button" data-action="ik-apply"${st.busy ? ' disabled' : ''}>${target ? `Apply to ${h(target.shortName || target.name)}` : 'Create the offering'}</button>`)}${st.agreement && st.method !== 'manual' ? ikAgreement(st, target) : ''}
       ${p.notes.length ? panel('Notes', `<ul class="cs-list">${p.notes.map((x) => `<li>${h(x)}</li>`).join('')}</ul>`) : ''}
       ${panel('Offering', `<div class="cs-grid cs-grid-3">
         ${ikField('Name', 'offering.name', { wide: true })}
@@ -2391,6 +2778,11 @@
       'console-intake'
     );
   }
+  /** D-44: true while the agreement found inside the offering's documents is read in the background. */
+  const ikReadingAgreement = (id) => {
+    const e = IK().agreementReading ? IK().agreementReading(id) : null;
+    return !!e && e.state === 'reading';
+  };
   function ikDone() {
     const st = ikState();
     const o = W().offerings.find((x) => x.id === st.done);
@@ -2411,7 +2803,7 @@
     ].filter(Boolean);
     return shell(
       `${head(`${h(o.name)} is set up`, o.status === 'Raising' ? 'Investors can now review the terms and subscribe online; capital calls, statements and audit schedules use these terms.' : 'Capital accounts, statements and audit schedules now use these terms.', `<a class="cs-btn" href="#console-intake" data-action="ik-restart">Set up another</a><a class="cs-btn cs-btn-primary" href="#console-offering-${h(o.id)}">Open the offering</a>`)}
-      ${NS.esign && NS.esign.agreementPanel && !NS.esign.templateReady(W(), o.id) ? `<p class="cs-hint ik-next">Next: add the subscription agreement, so every investor you invite signs it during onboarding.</p>${NS.esign.agreementPanel(W(), o, true)}` : ''}
+      ${NS.esign && NS.esign.agreementPanel && !NS.esign.templateReady(W(), o.id) ? `${ikReadingAgreement(o.id) ? '' : '<p class="cs-hint ik-next">Next: add the subscription agreement, so every investor you invite signs it during onboarding.</p>'}${NS.esign.agreementPanel(W(), o, true)}` : ''}
       ${panel('What was applied', `<ul class="cs-list">${items.map((x) => `<li>${x}</li>`).join('')}</ul><p class="cs-hint">Valuations and holdings come from the fund’s books once investors are in; until then the offering carries a placeholder portfolio line.</p>`)}`,
       'console-intake'
     );
@@ -2450,12 +2842,54 @@
   NS.binders.ikt = (path, v) => {
     ikState()[path] = v;
   };
-  NS.binders.ik = (path, v) => {
+  NS.binders.ik = (path, v, el) => {
     const st = ikState();
     if (!st.profile) return;
+    if (path === 'offering.name' && el && String(v).trim()) el.removeAttribute('aria-invalid');
     if (path === 'fees.other') v = String(v).split('\n').map((x) => x.trim()).filter(Boolean);
+    // A corrected Name corrects the Short name, until the sponsor types a short name of their own (an existing offering's
+    // counts as theirs unless it is its Name's own short form). Set in place, so typing in the Name is never interrupted.
+    const off = st.profile.offering;
+    const follow = path === 'offering.name' && !st.shortOwn && (st.method !== 'manual' || off.shortName === IK().shortOf(off.name));
+    if (path === 'offering.shortName') st.shortOwn = true;
     NS.app.setPath(st.profile, path, v);
+    if (follow) {
+      off.shortName = IK().shortOf(v);
+      const el = document.getElementById('ik-offering-shortName');
+      if (el) el.value = off.shortName;
+    }
     if (/\.kind$|^offering\.type$|^term\.basis$|^liquidity\.frequency$/.test(path)) NS.app.render();
+  };
+  /*
+   * D-44: the agreement's pages on review. use is a tick box (the screen follows it). A page is a whole number kept within
+   * 1 to the file's pages; it is stored as typed, without redrawing the screen, so typing is never interrupted. When the
+   * field is left (ika-pages) and the edit put the first page after the last, the other page is set equal to the edited one.
+   */
+  const ikaOrder = (a) => {
+    if (a.firstPage <= a.lastPage) return false;
+    if (a.edited === 'lastPage') a.firstPage = a.lastPage;
+    else a.lastPage = a.firstPage;
+    return true;
+  };
+  NS.binders.ika = (path, v) => {
+    const a = ikState().agreement;
+    if (!a) return;
+    if (path === 'use') {
+      a.use = !!v;
+      return NS.app.render();
+    }
+    if ((path !== 'firstPage' && path !== 'lastPage') || v === '' || !Number.isFinite(Number(v))) return;
+    a[path] = Math.min(a.pages, Math.max(1, Math.round(Number(v))));
+    a.edited = path;
+  };
+  NS.changes['ika-pages'] = () => {
+    const a = ikState().agreement;
+    if (!a) return;
+    ikaOrder(a);
+    const first = document.getElementById('ika-first');
+    const last = document.getElementById('ika-last');
+    if (first && String(first.value) !== String(a.firstPage)) first.value = a.firstPage;
+    if (last && String(last.value) !== String(a.lastPage)) last.value = a.lastPage;
   };
   NS.actions['ik-row-add'] = (el) => {
     const list = el.getAttribute('data-list');
@@ -2498,7 +2932,7 @@
     }
     st.samples.forEach((x) => st.docs.push({ name: x.name, text: x.text, chars: x.text.length, pages: null, sha256: NS.audit.sha256(x.text), type: 'text/plain', size: new Blob([x.text]).size, file: new Blob([x.text], { type: 'text/plain' }) }));
     if (String(st.pasted).trim()) st.docs.push({ name: 'Pasted terms', text: st.pasted, chars: st.pasted.length, pages: null, sha256: NS.audit.sha256(st.pasted), type: 'text/plain', size: st.pasted.length });
-    const good = st.docs.filter((d) => d.text && d.text.trim().length > 40);
+    const good = st.docs.filter((d) => (d.text && d.text.trim().length > 40) || (d.file && typeof d.pages === 'number' && !!NS.integrations && !!NS.integrations.serverUrl(W())));
     if (!good.length) {
       st.step = 'upload';
       st.error = 'No readable text was found. A scanned PDF needs OCR first, or paste the summary of terms.';
@@ -2509,20 +2943,20 @@
     let raw = null;
     let method = 'rules';
     let why = '';
-    const sample = await IK().claudeSample();
+    const sample = await IK().serverSample();
     if (sample) {
       st.ctl = new AbortController();
       st.progress = 'Reading the offering. This usually takes one to three minutes.';
       NS.app.render();
       try {
-        raw = await IK().readWithClaude(sample, corp.text, {
+        raw = await IK().readWithServer(sample, corp.text, {
           signal: st.ctl.signal,
           onText: ({ text }) => {
             const el = document.getElementById('ik-progress');
             if (el) el.textContent = `Reading the offering… ${text.length.toLocaleString('en-US')} characters`;
           }
         });
-        method = 'claude';
+        method = 'auto';
       } catch (e) {
         const c = e && e.code;
         why = c === 'cancelled' ? 'Reading was stopped. ' : c === 'not_granted' || c === 'sampling_disabled' ? 'Reading was not allowed. ' : c === 'prompt_too_large' ? 'The documents were too long to read at once. ' : c === 'rate_limited' ? 'Reading is busy right now. ' : 'Reading could not finish. ';
@@ -2531,6 +2965,7 @@
     }
     if (!raw) raw = IK().readWithRules(corp.text);
     const prof = IK().normalize(raw);
+    st.agreement = method === 'auto' ? IK().agreementPart(raw, st.docs) : null;
     if (why) prof.notes.unshift(`${why}The built-in reader was used instead.`);
     st.profile = prof;
     st.method = method;
@@ -2541,11 +2976,23 @@
   NS.actions['ik-apply'] = async () => {
     const st = ikState();
     if (!st.profile || st.busy) return;
-    if (!String(st.profile.offering.name || '').trim()) return U.toast('Enter the offering name.');
+    if (!String(st.profile.offering.name || '').trim()) {
+      // The field is marked and takes focus (the mark goes once a name is typed: NS.binders.ik)
+      const f = document.getElementById('ik-offering-name');
+      if (f) {
+        f.setAttribute('aria-invalid', 'true');
+        f.focus();
+      }
+      return U.toast('Enter the offering name.');
+    }
     st.busy = true;
     NS.app.render();
     const docs = st.docs.filter((d) => d.text != null).map((d) => ({ name: d.name, sha256: d.sha256, pages: d.pages, chars: d.chars, size: d.size || (d.text || '').length, type: d.type || '', file: d.file || null }));
-    const o = await IK().apply(W(), st.profile, { targetId: st.target, docs, publish: st.publish, method: st.method, fields: IK().filled(st.profile) });
+    // D-44: the agreement's pages as they stand on review (none when unticked or not found).
+    const ag = st.agreement && st.agreement.use !== false && st.method !== 'manual' ? st.agreement : null;
+    if (ag) ikaOrder(ag);
+    const agreement = ag ? { name: ag.name, pages: ag.pages, firstPage: ag.firstPage, lastPage: ag.lastPage } : null;
+    const o = await IK().apply(W(), st.profile, { targetId: st.target, docs, publish: st.publish, method: st.method, fields: IK().filled(st.profile), agreement });
     NS.app.save(true);
     st.busy = false;
     st.done = o.id;
@@ -2587,7 +3034,7 @@
         const list = [['Auditor', a0.auditor || pv.auditor], ['Administrator', a0.administrator || pv.administrator], ['Counsel', pv.counsel], ['Custodian', pv.custodian], ['Prime broker', pv.primeBroker]].filter((x) => x[1]).concat((pv.others || []).map((x) => [x.role, x.name]));
         return list.length ? ['Service providers', list.map(([r, n]) => `${h(r)}: ${h(n)}`).join('<br>')] : null;
       })(),
-      (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'claude' ? 'read automatically' : d.method === 'manual' ? 'edited' : 'built-in reader'}, ${date(d.readOn)})`).join('<br>')] : null
+      (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'manual' ? 'edited' : d.method === 'rules' ? 'built-in reader' : 'read automatically'}, ${date(d.readOn)})`).join('<br>')] : null
     ].filter(Boolean);
     return panel('Structure', `<dl class="cs-kv ik-kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`, canConfigure() ? `<button class="cs-btn cs-btn-small" type="button" data-action="struct-edit" data-id="${h(o.id)}">Edit structure</button>` : '');
   }
@@ -2601,7 +3048,7 @@
     const m = (c) => X.fmt(c, S0.currency);
     const L = NS.audit.ledger(W(), o);
     const flows = (L.contribs || []).filter((c) => c.date <= d.date).map((c) => ({ date: c.date, cents: -c.cents })).concat((L.dists || []).filter((x) => x.date <= d.date).map((x) => ({ date: x.date, cents: x.cents })));
-    const gpPrior = W().runs.filter((r) => r.offeringId === o.id && r.gp > 0 && r.date <= d.date).reduce((a, r) => a + r.gp, 0);
+    const gpPrior = NS.data.gpPaid(W(), o.id, d.date);
     const r = X.waterfall(S0.tiers || X.defaultTiers(S0.carry, S0.pref, S0.catchUp), flows, gpPrior, gross, d.date);
     S().ui.wf = { lp: r.lp, gp: r.gp, gross };
     return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Tier</th><th scope="col" class="num">Investors</th><th scope="col" class="num">GP</th></tr></thead><tbody>${r.tiers.map((t) => `<tr><td>${h(t.label)}</td><td class="num">${m(t.lp)}</td><td class="num">${m(t.gp)}</td></tr>`).join('')}</tbody><tfoot><tr class="cs-total"><th scope="row">Total</th><td class="num">${m(r.lp)}</td><td class="num">${m(r.gp)}</td></tr></tfoot></table></div>
@@ -2709,8 +3156,8 @@
         ${panel(
           `Audit package <span class="cs-count">${B.list.length + 2} files</span>`,
           `<p class="cs-muted">One .zip with every schedule as a CSV, a README that explains how they tie and the basis of preparation, and a SHA-256 manifest so the auditor can confirm nothing changed after export. Every download is recorded in the change log.</p>
-          <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">File</th><th scope="col">Schedule</th><th scope="col" class="num">Rows</th><th scope="col"><span class="sr-only">Download</span></th></tr></thead><tbody>
-          ${B.list.map((s) => `<tr><td class="nowrap"><code>${h(s.file)}</code></td><td>${h(s.title)}</td><td class="num">${s.rows.length}</td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="aud-csv" data-id="${s.id}">CSV</button></td></tr>`).join('')}
+          <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">File</th><th scope="col">Schedule</th><th scope="col" class="num">Rows</th><th scope="col"><span class="sr-only">Download</span></th></tr></thead><tbody>
+          ${B.list.map((s) => `<tr><td class="nowrap" data-label="File"><code>${h(s.file)}</code></td><td data-label="Schedule">${h(s.title)}</td><td class="num" data-label="Rows">${s.rows.length}</td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="aud-csv" data-id="${s.id}">CSV</button></td></tr>`).join('')}
           </tbody></table></div>
           ${lastExport ? `<p class="cs-hint">Last exported ${date(lastExport.at.slice(0, 10))} by ${h(lastExport.actor)}: <code>${h(lastExport.record)}</code>. ${h(lastExport.detail)}.</p>` : ''}`
         )}
@@ -2832,6 +3279,7 @@
 
   /* ---------- Portal and brand ---------- */
   const PRESETS = [
+    ['#006C95', '#77B6CA', 'Pool blue and water (standard)'],
     ['#0F2742', '#1F7A8C', 'Navy and teal'],
     ['#14304F', '#B4873F', 'Navy and brass'],
     ['#7A2E3A', '#B38B59', 'Burgundy and sand'],
@@ -2943,8 +3391,8 @@
               ${seg('Appearance', 'appearance', [['system', 'Follow device'], ['light', 'Light'], ['dark', 'Dark']])}
             </div>`)}
             ${panel('Investor onboarding', `<div class="cs-grid">
-              ${tCheck('Ask for accreditation', 'onboarding.accreditation', 'Regulation D 506(b) and 506(c) offerings.')}
-              ${tCheck('Collect a substitute W-9 certification', 'onboarding.taxForm')}
+              ${tCheck('Ask for accreditation', 'onboarding.accreditation', E.diy ? 'Rule 506(b), Rule 506(c) and Regulation A Tier 2 offerings always ask: through a verification where your Integrations rules require one, otherwise as the investor’s own answer. Turn this on to ask in every other invitation too.' : 'Regulation D 506(b) and 506(c) offerings.')}
+              ${/* Self-serve: no switch for the tax step. Every investor needs a W-9 or W-8 before distributions (owner, plan 06-24); the managed edition keeps it (C-03). */ E.diy ? '' : tCheck('Collect a substitute W-9 certification', 'onboarding.taxForm')}
               ${tCheck('Require consent to electronic delivery', 'onboarding.esign')}
               ${seg('Direct deposit', 'onboarding.ach', [['required', 'Required'], ['optional', 'Optional (check allowed)']])}
             </div>`)}

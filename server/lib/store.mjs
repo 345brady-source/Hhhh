@@ -7,7 +7,8 @@ import { dirname, join } from 'node:path';
 const BLOB_KEY = /^[\w-]{1,120}$/;
 
 export function openStore(file) {
-  let data = { verifications: {}, screenings: {}, invitations: {}, outbox: {}, events: [], seen: [] };
+  let data = { verifications: {}, screenings: {}, invitations: {}, outbox: {}, accounts: {}, events: [], seen: [] };
+  Object.assign(data, { billing: {}, entitlements: {}, ledger: {}, payments: {} }); // card payments (lib/billing.mjs)
   if (file) {
     try {
       data = Object.assign(data, JSON.parse(readFileSync(file, 'utf8')));
@@ -15,6 +16,8 @@ export function openStore(file) {
       /* new store */
     }
   }
+  data.filings = data.filings || {}; data.filingIssuers = data.filingIssuers || {};
+  data.taxdocs = data.taxdocs || {}; // tax documents delivered to the investor's own device (lib/taxdocs.mjs, plan 10-12)
   let timer = null;
   const flush = () => {
     if (!file) return;

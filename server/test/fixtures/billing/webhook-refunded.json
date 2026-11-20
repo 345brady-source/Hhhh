@@ -1,0 +1,20 @@
+{
+  "_source": "https://docs.stripe.com/api/events/types",
+  "_status": "unconfirmed: the reference page could not be opened from the build environment on 2026-11-19 (no provider page can be read from here); the event's id, type, created time and the charge object with its id and payment are written from the research and general knowledge of the interface, not from the page; to be confirmed in test mode by plan 08-12",
+  "reply": {
+    "id": "evt_fixture_refund1",
+    "object": "event",
+    "type": "charge.refunded",
+    "created": 1763553600,
+    "data": {
+      "object": {
+        "id": "ch_fixture1",
+        "object": "charge",
+        "payment_intent": "pi_fixture1",
+        "amount": 1900,
+        "amount_refunded": 1900,
+        "refunded": true
+      }
+    }
+  }
+}

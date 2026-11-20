@@ -1,0 +1,61 @@
+PASS preview-sponsor the preview dialog has the field "Ask a question" and Send, as with a server
+PASS preview-sponsor before a question it says nothing but its heading and Send (not the "connected" sentence)
+PASS preview-sponsor the answer shows under the question as text, in the same paragraphs a server answer uses, with no contact
+PASS preview-sponsor the preview asked `sample` exactly once for it
+PASS preview-sponsor the request carries the rules and the sponsor's guide, and not the investor's guide
+PASS preview-sponsor its last turn is the person's, with the question and the note "The person is an admin of the firm, on the console page "Investors"."
+PASS preview-sponsor it uses the product's settings (quick tier, the product's model, low effort, no replay) and a stop signal
+PASS preview-sponsor an answer naming a vendor is replaced by "I do not have that information." and followed by the contact
+PASS preview-sponsor the second request carries the first exchange (the question, then the answer shown, kept as the server keeps it) before the new question
+PASS preview-sponsor the rules and the sponsor's guide still go with it
+PASS preview-sponsor the address and the number never reach `sample`; "[removed]" stands in their place
+PASS preview-sponsor the person still sees their own question as typed, and the answer
+PASS preview-sponsor a failed call shows "Help is not available right now." and the contact
+PASS preview-sponsor a reply that is not the answer format shows the same sentence and the contact
+PASS preview-sponsor nothing was requested over the network (the frame refuses every connection)
+PASS preview-sponsor no script error in the browser
+PASS preview-sponsor no request went anywhere but this check's own servers
+PASS preview-sponsor no vendor, model or library name and no forbidden word on the screens read
+NOTE the tree changed while part preview-sponsor ran; its result is not kept for a rerun
+PASS preview-investor the investor's dialog has the field and Send
+PASS preview-investor the answer shows under the question, as a server answer does
+PASS preview-investor the request carries the rules and the investor's guide, and not the sponsor's guide
+PASS preview-investor its last turn holds the question and the note "The person is an investor, on the investor portal page "Home"."
+PASS preview-investor it uses the product's settings
+PASS preview-investor for an investor an answer naming the product is replaced by "I do not have that information.", followed by the firm's contact
+PASS preview-investor an answer of the kind "cannot" is followed by the firm's contact, as with a server
+PASS preview-investor nothing was requested over the network
+PASS preview-investor no script error in the browser
+PASS preview-investor no request went anywhere but this check's own servers
+PASS preview-investor no vendor, model or library name and no forbidden word on the screens read
+NOTE the tree changed while part preview-investor ran; its result is not kept for a rerun
+PASS no-adapter the product's own page (no preview lines) still reads exactly "Help" and "Help is available once the portal is connected.", with no field
+PASS no-adapter `sample` was never called
+PASS no-adapter no script error in the browser
+PASS no-adapter no request went anywhere but this check's own servers
+PASS no-adapter no vendor, model or library name and no forbidden word on the screens read
+NOTE the tree changed while part no-adapter ran; its result is not kept for a rerun
+PASS server-wins with a server address saved, the server answers
+PASS server-wins exactly one request went to the server
+PASS server-wins `sample` was never called
+PASS server-wins no script error in the browser
+PASS server-wins no request went anywhere but this check's own servers
+PASS server-wins no vendor, model or library name and no forbidden word on the screens read
+NOTE the tree changed while part server-wins ran; its result is not kept for a rerun
+PASS consent not yet allowed: the preview asks once for `sample`, then asks the question; the answer shows
+PASS consent allowed: it does not ask again
+PASS consent declined: "Help is not available right now." and the contact; `sample` is not called
+PASS consent denied earlier: no new ask, no call, the same sentence
+PASS consent no script error in the browser
+PASS consent no request went anywhere but this check's own servers
+PASS consent no vendor, model or library name and no forbidden word on the screens read
+NOTE the tree changed while part consent ran; its result is not kept for a rerun
+PASS files the preview page loads help-data.js, then help-preview.js, right before help.js
+PASS files none of the product's pages loads either preview file
+PASS files both preview files exist in .planning/tools/preview/
+PASS files help-data.js matches the server guide (make-help-data.mjs --verify passes)
+PASS files help.js still names no vendor or model
+PASS files help.js still has the one plain fetch and keeps nothing in storage
+NOTE the tree changed while part files ran; its result is not kept for a rerun
+HELP PREVIEW: PASS (parts run: 6)
+rc=0

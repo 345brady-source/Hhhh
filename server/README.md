@@ -1,6 +1,6 @@
 # Integration server
 
-A small Node server that does the provider work for automated investor verification in the portal: identity (KYC), sanctions and PEP screening (AML) and accredited investor verification. The portal runs in the browser and must never hold provider API keys, so it asks this server to start checks, and this server calls the providers, receives their webhooks and keeps the results.
+A small Node server that does the provider work for automated investor verification in the portal: identity (KYC), sanctions and PEP screening (AML) and accredited investor verification. The portal runs in the browser and must never hold provider API keys, so it asks this server to start checks, and this server calls the providers, receives their webhooks and keeps the results. It also reads offering documents for the portal's offering intake and the subscription agreements sponsors upload, with the reading key kept here and never in the browser (see Reading offering documents and Reading agreements).
 
 No verification vendor is built in or recommended. You plug in the services you already use, in whichever of three ways suits each one, and you can connect more than one per check (for example one identity service for individuals and another for entities, or two screening services). The portal shows every provider plugged in here and lets you choose per check.
 
@@ -14,7 +14,7 @@ Built in, with no accounts needed:
 
 The portal also offers options that need no server at all: upload for team review, team screening, and self-certification (Rule 506(b) offerings only).
 
-Node 18 or later. No dependencies.
+Node 18 or later. One dependency: the reading service's official client, pinned to an exact version in `package.json` (install it with `npm ci` in `server/`). It is needed only for reading offering documents and agreements; every other route works without it.
 
 ## Quick start
 
@@ -32,6 +32,7 @@ Then, in the portal, open Integrations and enter this server's URL.
 | `PUBLIC_URL` | This server's public https URL, used to build webhook and return URLs (default `http://localhost:PORT`). |
 | `PORTAL_ORIGIN` | Comma-separated origins allowed to call the API from the browser, for example `https://portal.example`. Empty allows any origin (development only). This server's own pages (`/sandbox/…`, `/hosted/…`) are not limited by it, so their forms can post back (see the API table). |
 | `API_TOKEN` | When set, every `/v1/` call except `/v1/results` and the investor's invitation calls needs `Authorization: Bearer <API_TOKEN>`. Required for invitations. |
+| `ADMIN_TOKEN` | Turns on the sponsor account routes (`/v1/admin/…`, see Sponsor accounts) and is the bearer token they require. Unset, they answer 404. |
 | `RESULTS_TOKEN` | Turns on `POST /v1/results` and is the bearer token it requires. Unset, that endpoint answers 404. |
 | `STORE_FILE` | Where records are kept (default `server/data/store.json`). |
 | `RATE_LIMIT_PER_MIN` | Calls per minute per client for calls that create or change records (POST, PUT, DELETE) and for invitation links that fail to authenticate (default 60; 0 turns it off). |
@@ -57,6 +58,15 @@ Then, in the portal, open Integrations and enter this server's URL.
 | `OFAC_CONSOLIDATED` | `0` screens the SDN list only (default: SDN and Consolidated). |
 | `OFAC_USER_AGENT` | User-Agent sent to the Sanctions List Service. |
 | `OFAC_BASE_URL` | Alternative location for the OFAC list files (a mirror). |
+| `CARROWVALE_API_KEY` | The reading key. Set it only in this server's environment, never in the portal or in a file in the repository. Unset, reading is off: `POST /v1/intake` and `POST /v1/read` answer 503, the intake screen uses its built-in reader and the agreement upload places fields with the portal's own reading. |
+| `CARROWVALE_READ_EFFORT` | How much effort each reading takes, for offering documents and agreements alike: `low`, `medium`, `high`, `xhigh` or `max` (default `high`; any other value is `high`). |
+| `CARROWVALE_READ_MAX_TOKENS` | The longest reply a reading may produce, in tokens (default 64000, kept between 1024 and 128000). |
+| `CARROWVALE_SPEND_CAP_USD` | A spend cap in US dollars. When set, a reading is refused (402) before anything is spent if its worst case would take the money already spent past the cap. Unset, there is no cap. |
+| `CARROWVALE_READ_LOG` | Optional. A file that gets one line per reading of either kind (numbers and outcome codes only, below). With a cap, the money already spent is counted from this file, so keep it for as long as the cap should cover. |
+| `CARROWVALE_HELP_DAILY_USD` | The most portal help may spend in one day (UTC), in US dollars (default 2, so the cap is on when nothing is set). A question is refused (402) before anything is spent when its worst case would take the day past it. `0`, or a value that is not an amount, refuses every question. |
+| `CARROWVALE_HELP_PER_HOUR` | How many help questions one address may ask in an hour (default 30; `0` turns this limit off; any other value that is not a whole number is 30). |
+| `CARROWVALE_HELP_EFFORT` | How much effort each help answer takes: `low` (the default), `medium` or `high`; any other value is `low`. |
+| `CARROWVALE_HELP_MODEL` | Leave unset; used only for measurement. |
 
 Provider keys and webhook secrets are environment variables too: each connector or plug-in lists the ones it needs, and `GET /v1/connectors` reports which are missing (by name, never by value). Keep them in a `.env` file or your host's secret store, never in `connectors.json` or the portal.
 
@@ -64,7 +74,7 @@ Provider keys and webhook secrets are environment variables too: each connector 
 
 | Call | What it does |
 | --- | --- |
-| `GET /health` | `{ ok, providers }`: the ids of providers whose environment variables are all set. |
+| `GET /health` | `{ ok, providers, reader }`: the ids of providers whose environment variables are all set, and whether reading is available for both reading routes (a reading key is set and the client is installed; the key itself is never shown). |
 | `GET /v1/connectors` | The providers plugged in, for the portal (below). |
 | `POST /v1/verifications` | Start an identity or accreditation check: `{ kind, provider, settings?, investor: { id, name, email?, ... }, returnUrl? }` → `{ id, status, url }`. Send the investor to `url`. |
 | `GET /v1/verifications/:id` | `{ id, kind, provider, status, method, detail, expiresAt, screening, evidence, url, providerStatus, updatedAt }`, refreshed from the provider while pending. |
@@ -81,6 +91,9 @@ Provider keys and webhook secrets are environment variables too: each connector 
 | `POST /v1/invitations/:id/resend` / `cancel` | A new link (the old one stops working) / cancel the invitation. |
 | `GET /v1/outbox` | Messages kept here when no SMTP server is set. |
 | `GET /v1/invite`, `PUT /v1/invite/progress`, `POST /v1/invite/complete` | The investor's browser, with the link's token in `X-Invite-Token`. |
+| `POST /v1/intake` | Read an offering's documents for the intake screen: `{ prompt }` → a stream of JSON lines ending `{ ok, json }` (below). API_TOKEN; invitation tokens are refused. |
+| `POST /v1/read` | Read an uploaded subscription agreement: `{ pdf, pages, text, list }` → `{ ok, fields, missing, ms }` (see Reading agreements). API_TOKEN; invitation tokens are refused. |
+| `POST /v1/help` | Answer a question about using the portal: `{ message, session?, page?, step?, role? }` → `{ ok, kind, answer, session }` (see Portal help). API_TOKEN, or an invitation link's token, which gets the investor's guide only. |
 
 `GET /v1/connectors` answers:
 
@@ -252,7 +265,7 @@ Rules that keep these checks meaningful:
 
 - A timestamp only protects against replays when it is signed, so `timestampHeader` or `timestampPattern` requires `{timestamp}` in `signed`.
 - Duplicates are dropped by a delivery id the signature covers: the `idHeader` value when `signed` includes `{id}`, otherwise the `id` path in the body. When `idHeader` is set but not signed and the body has no `id`, a hash of the exact body is used instead, so a replay with a changed header is still a duplicate.
-- `pattern` and `timestampPattern` run on headers anyone can send, before the signature is checked. They must be simple: a capture group around the value, no repeated groups such as `(a+)+`, no back-references or look-arounds, at most four quantifiers. They run with a 50 ms limit on signature headers of up to 2 KB.
+- `pattern` and `timestampPattern` run on headers anyone can send, before the signature is checked. They must be simple: a capture group around the value, no repeated groups such as `(a+)+`, no back-references or look-arounds, at most four quantifiers. They run with a 50 ms limit on signature headers of up to 2 KB; a match that misses it is tried once more with a 500 ms limit, because a busy machine can miss the first.
 - Deliveries for a provider whose environment variables are not all set (an empty webhook secret, say) are refused.
 
 ## Investor invitations
@@ -317,6 +330,7 @@ The token in the link authorizes only these calls, for that invitation's investo
 | `POST /v1/invite/complete` | `{ investor, request, envelope, files: { <docId>: base64 PDF, PNG or JPEG }, docs, audit, notifications }`. `files` holds only what this submission produced (see "What the server vouches for"): the envelope's copies, which must be PDFs, and the investor's own uploads for the firm to review (PDF, PNG or JPEG), checked by their first bytes; 25 MB together, body 40 MB. Any other file is dropped without failing the submission. `investor.id` must be the invited investor; `request.offeringId` must be the invited offering and, when the sponsor set a commitment, `request.cents` must be that commitment (otherwise 400). Answers `{ ok: true }` (`already: true` on a repeat) and emails the sponsor once. A cancel or resend that lands while the body uploads wins (410 or 401). |
 | `POST /v1/verifications`, `GET /v1/verifications/:id` | As for the console, but only for the invited investor in the invitation's workspace (another investor's id or check, or the same id in another workspace, is refused with 403). |
 | `POST /v1/screenings`, `GET /v1/screenings/:id` | The same. |
+| `POST /v1/help` | A question about using the portal, answered from the investor's guide only (see Portal help). |
 
 An unknown token answers 401; an expired or cancelled invitation answers 410 with a message naming the firm. The invitation token is refused (401) on every other route, including the sponsor's, even when sent together with `API_TOKEN`.
 
@@ -335,6 +349,38 @@ Everything in a submission comes from the investor's browser, so before it is st
 - **The commitment and offering** the sponsor set on the invitation are enforced (see `POST /v1/invite/complete`); an investor with no offering on the invitation cannot submit a subscription. When the sponsor set no commitment, the investor's amount must be a positive whole number of cents and at least the offering's minimum (400 otherwise); the console checks the share class minimum again when it imports.
 - **The sponsor's email** uses the investor's name and email from the invitation; other values from the browser (account name, investing as) are kept to one short line.
 
+## Tax documents
+
+When the portal is connected to this server, delivering a tax document (a Schedule K-1, Form 1099 or 1042-S, a tax letter) on the console's Tax documents page also sends that one document here (`lib/taxdocs.mjs`). This server keeps it sealed, emails the investor a link, and the investor opens it on any device with the last four digits of the tax number on record. No new setting: it uses `DATA_KEY`, `API_TOKEN` or the sponsor accounts, `PUBLIC_URL`, `PORTAL_ORIGIN` and the mail settings, as invitations do. With no mail server set the message waits in the outbox (`GET /v1/outbox`).
+
+1. The console posts the document. This server stores it, makes a token (32 random bytes, returned once inside the link; only its SHA-256 is kept), builds the link `<portalUrl>?server=<PUBLIC_URL>#taxdoc-<token>` and emails it from the firm. With the investor's consent to electronic delivery in effect, the subject is `IMPORTANT TAX RETURN DOCUMENT AVAILABLE` (Rev. Proc. 2012-17 section 7.01) and the text says how to open, save and print the document. Without it, the first message asks for consent and is not the notice.
+2. The investor's page calls `GET /v1/taxdoc` with `X-Doc-Token: <token>`, then `POST /v1/taxdoc/open` with the four digits. Where consent is needed, the page shows the consent's disclosure first and the document opens only with the consent; this server then records the consent with its time and the text's version and sends the section 7.01 notice.
+3. When the Tax documents page is opened, the console reads `GET /v1/taxdocs`: opens on the investor's device, a consent given at the link and a locked link are written into the workspace.
+
+An investor with no tax number on record is not sent a link: the console makes no call and the document stays on the send-on-paper list.
+
+**Sponsor calls** (`API_TOKEN` or a sponsor account's token; with an account's token every call acts on that account's workspace, whatever the body says, and another workspace's document answers 404):
+
+| Call | What it does |
+| --- | --- |
+| `POST /v1/taxdocs` | `{ workspace, docId, kind, year, title, fileName, pdf (base64), sha256, availableUntil, investor: { id, name, email, last4 }, firm: { name, contact: { name, address, phone, email } }, consent: { inEffect, version, lines }, portalUrl, sendEmail }` → `{ id, link, emailStatus, emailError? }`. 400 for a bad email, a `last4` that is not four digits, a file that is not a PDF or whose SHA-256 differs; 413 for a file over 10 MB. A message the mail server refuses answers `emailStatus: "failed"` with the reason (addresses removed); the document is still stored. |
+| `GET /v1/taxdocs?workspace=` | `{ documents: [{ id, docId, investorId, status, opens: { first, last, count }, consent, emailStatus, availableUntil }] }`; `status` is `sent`, `opened`, `locked`, `withdrawn` or `expired`. Never the file, the digits, the token, the name or the email. |
+| `POST /v1/taxdocs/:id/withdraw` | `{ id, status: "withdrawn" }`. The file is removed at once; the link then answers 410. |
+| `POST /v1/taxdocs/:id/resend` | `{ portalUrl, sendEmail }` → `{ id, link, status, emailStatus }`: a new token (the old link stops), the tries back to 0, the same message as the first time. |
+
+**Investor calls** (`X-Doc-Token` only; the token opens these two calls and nothing else, and an invitation's token opens neither; rate limited):
+
+| Call | What it does |
+| --- | --- |
+| `GET /v1/taxdoc` | `{ firm: { name, contact }, doc: { title, kind, year, availableUntil }, needs: { check: true, consent }, consent: { version, lines } }`. 404 for an unknown token, 410 once withdrawn or past `availableUntil`, 423 once locked. |
+| `POST /v1/taxdoc/open` | `{ last4, consent }` → `{ fileName, pdf (base64) }`. Wrong digits answer 403 `{ triesLeft }` and no file; the fifth wrong answer locks the link (423) until the sponsor resends it. 409 when consent is needed and not given. |
+
+**What is stored and for how long.** One record per document in the `taxdocs` collection: ids, kind, year, title, file name, SHA-256, `availableUntil`, the token's hash, status, tries, opens, consent `{ at, version }` and the email status. The file, the investor's name and email, the four digits, the firm's contact and the consent's text are sealed with `DATA_KEY`. The record and the file last until the document's available-until date (Rev. Proc. 2012-17 section 9: for a Schedule K-1, twelve months after the end of the tax year or six months after it was posted, whichever is later), not the 30 days of an invitation; the purge then removes both. Events carry ids and types only.
+
+**What this server never holds.** A full taxpayer number (the portal sends the last four digits only), and no name, email, digits or token in any event or log line.
+
+**Publishing.** The investor's link opens the firm's portal page with `?server=<this server>`; the page trusts the same servers as for invitations (`window.CVPortalConfig.integrationServers`, or the page's own origin), and refuses any other without fetching anything.
+
 ## Email
 
 Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` and `MAIL_FROM` to send through your own mail service (any provider that offers SMTP submission). The client is built in (no dependencies): implicit TLS on 465, STARTTLS required on other ports (a server that does not offer it is refused unless `SMTP_ALLOW_PLAIN=1`), certificate checks on, credentials only over TLS, AUTH PLAIN or LOGIN, timeouts at every step, and replies sent before a STARTTLS upgrade are discarded.
@@ -345,6 +391,180 @@ Four messages are sent: the invitation (who invited them, the offering and commi
 
 Without `SMTP_HOST`, messages are kept, encrypted, in an outbox: `GET /v1/outbox?workspace=…&invitation=…` (API_TOKEN) → `{ messages: [{ id, at, kind, invitationId, workspace, from, to, toName, replyTo, subject, text, html }] }`. Outbox messages carry live links, so they are deleted after `OUTBOX_DAYS`.
 
+## Reading offering documents
+
+The portal's offering intake (Offerings, set up from documents) proposes an offering's terms from its private placement memorandum, partnership or operating agreement, subscription documents or term sheet. When the workspace has this server's address under Integrations, the intake screen sends this server the same prompt it has always built (its instructions and the documents' text; the whole text, never cut to excerpts on this path), and this server has it read with `CARROWVALE_API_KEY`. Without the address, or when the reading cannot finish, the intake screen uses its built-in reader, as before. Either way the sponsor reviews every term before anything is applied.
+
+`POST /v1/intake` takes `{ "prompt": "..." }` or `{ "prompt": "...", "pdfs": [...] }`: a body of at most 32 MB and a prompt of at least 1 character. A prompt over 200000 characters is always counted first (free): over 900000 tokens is `413 too_large` before any reading (leaving room for the answer), and a failed count is `502 { reason: "failed" }` (or 402 with a spend cap). On a 413 the intake screen splits the text, by document first and then into halves at its page markers, sends every page's text exactly once, and merges the answers. Before any reading it answers `503 { ok: false, reason: "unavailable" }` (no reading key, or the client is not installed), `400 { reason: "invalid" }`, `413 { reason: "too_large" }` or `402 { reason: "spend_cap" }`. Otherwise it answers 200 with `Content-Type: application/x-ndjson`, one JSON object per line:
+
+- `{ "t": "..." }` for each piece of the reply's text as it arrives (the intake screen counts the characters while it waits);
+- `{ "h": 1 }` every 15 seconds while nothing else is sent, to keep the connection open;
+- exactly one last line: `{ "ok": true, "json": { ... } }` with the reply's JSON object, or `{ "ok": false, "reason": "declined" | "incomplete" | "invalid" | "timeout" | "failed" }`.
+
+No answer ever carries a key, a model or provider name, or the text of an error. A reading may take up to 600 seconds on this server; the intake screen waits up to 630 seconds. When the browser closes the connection, the reading is stopped.
+
+**Transient failures never show.** A network error or a status 429, 500, 502, 503, 504 or 529 is sent again by the intake screen, at most 3 attempts in all, after waits of 2 and 6 seconds, inside its time limit; nothing is shown while it retries. This server's client also retries such failures from the reading service up to 3 times, inside its own limit. Only a last failure falls back to the built-in reader.
+
+**PDFs whose text cannot be read.** When any page of an uploaded PDF cannot be read (a scan, pictures of pages, or a text layer that comes out scrambled; the intake screen judges each page by the share of common English words in it and, for a page under the threshold such as a table or a form, by whether its words are the document's own), the intake sends the PDF itself and the prompt names it in place of its text. Readable documents are sent as before, as text only. Each entry of `pdfs` is `{ name, data, pages, of }`: `data` is the PDF as base64 (it must start like a PDF), `pages` the pages it holds and `of` the pages of the whole document. At most 5 PDFs and 600 pages go in one request. The pages are read with the same instructions and give the same JSON shape. With PDFs, the request's tokens are always counted first (free): over 900000 tokens is `413 too_large` before any reading, and a failed count is `502 { reason: "failed" }` (or 402 with a spend cap).
+
+**Long PDFs are read whole.** A PDF over 600 pages, over 32 MB per request once encoded, or over the reading service's token limit (a 413 from this server) is cut into consecutive page ranges in the browser. Each range is read in its own request with the same instructions, and the answers are merged in page order: each term takes the first value found, with its source and confidence; lists are joined and duplicates dropped. Nothing is ever cut: every page is read.
+
+**Spend cap.** With `CARROWVALE_SPEND_CAP_USD` set, the prompt's tokens are counted first (counting is free) and the reading is refused with 402 unless the money already spent (every line of `CARROWVALE_READ_LOG`, priced at the published rates) plus the worst case of this reading (its prompt and any PDF pages at $10 and its whole reply limit at $50 per million tokens, the dearest published rates, since a refused reading may be answered by another model) stays within the cap. If the count itself fails, the reading is refused too.
+
+**Documents and the read log.** The documents' text and any PDFs pass through this server's memory for the reading only and are never stored. Each reading adds one line to `CARROWVALE_READ_LOG` (when set): `{ at, route, ms, chars, counted, outcome, stopReason, model, usage: { input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens }, cost }`, plus `pdfs` and `pdfPages` (how many PDFs and pages) when PDFs were sent (times, counts, outcome codes and the id of the model that answered, never any document text). A failure also prints one line to the console with its reason and HTTP status only.
+
+## Reading agreements
+
+When a sponsor uploads a subscription agreement and the workspace has this server's address under Integrations, the portal reads the PDF's pages as before, numbers every printed place it measured on them (each blank line, run of underscores, empty table cell, square and form field), and sends this server the PDF with that numbered list. This server has it read with `CARROWVALE_API_KEY`: the reading decides which numbered places a person completes, the kind of each (signature, initials, date of signing, name, title, address, amount, tick box and so on) and whether it is the investor's or the sponsor's (the sponsor only for acceptance, countersignature and places reserved for the firm's use). The portal then puts each field exactly on the printed line, box, cell or form field it measured itself; a place the reading names without a number is put on unclaimed printed geometry beside the place it names, and is dropped (never placed) when nothing is printed there. Investor fields are never required, and those the portal can fill from onboarding are filled in. The sponsor still reviews every field before saving.
+
+**Pages that are pictures.** A page with no text (a scan, a page printed to PDF as a picture) or whose text layer cannot be read is sent as a picture of the page, its long side 2000 pixels, on which the portal has outlined every place it found from the page's pixels and labelled each with its number; the page's words are left out of the numbered list. The reading chooses among those numbers exactly as on a text page, and each field lands on the line or box the portal found in the picture. The note that the document was read from page pictures still shows.
+
+**Long agreements are read whole.** An agreement over one request's limits (600 pages, 32 MB once encoded, 600 page pictures, or the reading service's token limit, which this server checks with a free count) is sent in consecutive page ranges, one after another. Each range carries a new PDF of exactly its pages, its own numbered places (numbered across the whole agreement) and its own page pictures; a range that does not fit, or that this server answers 413, is cut in two halves and sent again. The answers are merged by place number. Size is never a reason to fall back.
+
+**Transient failures never show.** A network error or a status 429, 500, 502, 503, 504 or 529 is sent again, at most 3 attempts in all, after waits of 2 and 6 seconds, inside the time limit; nothing is shown while it retries. This server's client also retries such failures from the reading service up to 3 times, inside its own limit.
+
+**Nowhere to sign never happens.** When a reading gives the firm fields but no signature of its own, the portal adds one firm signature field at the firm's acceptance or countersignature block, or directly below the firm's last field, so the agreement can be saved.
+
+**Fallback.** With no address under Integrations, no reading key on this server, a last network error after the retries, no answer within 330 seconds, a refusal, a cut-off answer or an answer of the wrong shape, the upload keeps the portal's own reading exactly as it is without this server, with the same note. While it waits, the upload button says "Finding every place to fill in…".
+
+`POST /v1/read` takes `{ "pdf": "<base64>", "pages": 1-600, "text": "<the numbered list as text, at most 4 MB>", "list": [[id, page, x0, y0, x1, y1, what], ...] }` (at most 20000 places, numbered 1 upwards) in a body of at most 32 MB, and optionally `"images": [{ page, data, marks }]` (one picture per page, base64 JPEG or PNG of at most 10 MB, at most 600; `marks` the numbers drawn on it; the portal sends one for every page that has a numbered place, its places outlined and numbered) and `"range": [first, last, of]` (the PDF holds only pages first to last of the agreement's `of` pages; the list's pages are then the agreement's own and its numbers increase but need not start at 1). With images, or a PDF of more than 100 pages or 8 MB, the request is always counted first (free): over 900000 tokens is `413 too_large` (the browser then sends smaller ranges) and a failed count is `502 { reason: "failed" }` (or 402 with a spend cap). Without images or a range, the request is read exactly as before. Before any reading it answers `503 { ok: false, reason: "unavailable" }` (no reading key, or the client is not installed; before the body is read), `400 { reason: "invalid" }`, `413 { reason: "too_large" }` or `402 { reason: "spend_cap" }` (the same cap as the intake, counted over both routes). Otherwise:
+
+- `200 { "ok": true, "fields": [{ id, kind, person, group }], "missing": [{ page, near, caption, side, kind, person, group }], "ms" }`: `person` is `investor` or `sponsor`; `group` is `all`, `individual` or `entity`; `near` is a numbered place or -1 (then `caption` holds the printed words beside the place); `side` is `on`, `right`, `left`, `below` or `above`;
+- `504 { ok: false, reason: "timeout" }` when the reading did not finish within 300 seconds on this server;
+- `502 { ok: false, reason: "declined" | "incomplete" | "invalid" | "failed" }` for a refusal, a cut-off answer, an answer of the wrong shape, or any other error.
+
+No answer ever carries a key, a model or provider name, or the text of an error. When the browser closes the connection, the reading is stopped. The PDF passes through this server's memory for the reading only and is never stored. Each reading adds one line to `CARROWVALE_READ_LOG` (when set): `{ at, route: "read", ms, pages, candidates, counted, outcome, stopReason, model, usage: { input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens }, cost }`, plus `images` (how many page pictures) when pictures were sent, never any document text. A failure also prints one line to the console with its reason and HTTP status only.
+
+## Sponsor accounts
+
+One server can serve several sponsors, each with its own token. A call made with a sponsor's token acts on that sponsor's workspace only:
+
+- What it creates (invitations, verifications, screenings) is stored in the account's workspace, whatever `workspace` the body names.
+- Lists (`GET /v1/invitations`, `GET /v1/outbox`) return the account's workspace only; the `workspace` query is ignored.
+- Another workspace's invitation, submission, verification, evidence or screening answers 404, exactly as an id that does not exist, and nothing is changed.
+
+The operator manages accounts with `ADMIN_TOKEN` (`Authorization: Bearer <ADMIN_TOKEN>`). These routes answer 404 until `ADMIN_TOKEN` is set, are rate limited, and refuse any call that carries an invitation token.
+
+| Route | What it does |
+| --- | --- |
+| `POST /v1/admin/accounts` | `{ workspace, name }` → `{ id, workspace, name, token }`. `workspace` is 1 to 120 letters, digits, dots, underscores or hyphens (the portal's tenant id) and can have one account; a used or bad one answers 400. |
+| `GET /v1/admin/accounts` | `{ accounts: [{ id, workspace, name, createdAt }] }`. |
+| `POST /v1/admin/accounts/:id/token` | A new token for the account → `{ id, token }`. The old one stops working at once. |
+
+A token (32 random bytes) is shown once, in the answer that makes it; only its SHA-256 is stored, so a lost token is replaced, not recovered. The sponsor enters it in the portal under Integrations where the server's token goes.
+
+On a server with accounts, the shared `API_TOKEN` is the operator's own: it still reaches every workspace, so give it to no sponsor. With no `API_TOKEN` and no account, `/v1/` calls need no token (development); once one account exists, every sponsor call needs a token. An account made for a workspace that already has records reaches those records. Make one account for each workspace in the portal, even for one firm: investor ids repeat from one workspace to the next, and a check is matched to an investor by id within a workspace.
+
+## Portal help
+
+The portal's Help answers questions about using the portal: where a page is, what a button does, how to finish a step. When the workspace has this server's address under Integrations, the portal sends each question here and this server has it answered with `CARROWVALE_API_KEY`, from a guide to the portal's own screens. It answers portal questions only: it gives no investment, legal or tax advice, and it cannot see anyone's account, documents or data. Help is available exactly when reading is (`reader` in `GET /health`): without a key, `POST /v1/help` answers 503 and the portal says help is not available.
+
+**Who may call it.** The console, with `API_TOKEN`, gets the sponsor's guide (every page of the console and of the investor portal). An investor's invitation link, with its token in `X-Invite-Token`, gets the investor's guide only, whatever the request says. A request can lower what it gets (`"role": "investor"`) and can never raise it. A conversation belongs to the credential that started it: its id is of no use with another credential.
+
+`POST /v1/help` takes JSON of at most 8 KB: `{ "message": "<the question, 1 to 500 characters>", "session": "<the id an earlier answer returned, optional>", "page": "<the key of the page the person is on, optional>", "step": "<the key of the step, optional>", "role": "admin" | "team" | "investor" (optional) }`. Every other field is ignored, and `page` and `step` are used only when they are keys the guide knows. The answers, all with `Cache-Control: no-store`:
+
+- `200 { "ok": true, "kind", "answer", "session" }`: `kind` is `answer`, `cannot` (the guide does not have it) or `out_of_scope` (not a question about using the portal). Send `session` back with the next question to continue the conversation;
+- `400 { ok: false, reason: "invalid" }` when the body is not a JSON object or has no question, and `413 { ok: false, reason: "too_large" }` when the body is over 8 KB or the question over 500 characters;
+- `429 { ok: false, reason: "limit" }` and `402 { ok: false, reason: "spend_cap" }` for the limits and caps below, before anything is spent;
+- `503 { ok: false, reason: "unavailable" }` without a key, answered before the body is read;
+- `504 { ok: false, reason: "timeout" }` when there is no answer within 15 seconds, and `502 { ok: false, reason: "incomplete" | "invalid" | "failed" }` for a cut-off answer, an answer of the wrong shape, or any other error.
+
+**Limits and cost.** A question is at most 500 characters and an answer is short. A conversation takes 20 questions (the next question starts a new conversation) and ends after 30 minutes without one; this server holds at most 5,000 conversations. One address may ask `CARROWVALE_HELP_PER_HOUR` questions an hour (30 unless set), on top of `RATE_LIMIT_PER_MIN`.
+
+Help spends at most `CARROWVALE_HELP_DAILY_USD` US dollars in one day (UTC): **$2 a day unless you set another amount**. Before each question this server takes its worst case (every byte it would send, priced at the dearest input price of the published price list, plus the longest reply it allows) and refuses the question with 402 when that, added to what help has already spent that day, would pass the amount. At the guide's present size the worst case of one question is under one US cent. The day's spending is counted again from `CARROWVALE_READ_LOG` when the server starts; without that file a restart starts the day's count at zero. `CARROWVALE_SPEND_CAP_USD`, when set, covers help together with reading, by the same worst-case rule.
+
+**What is kept.** Nothing but numbers. No question and no answer is written to a file or a log. The last three questions and answers of a conversation are held in this server's memory only, so a follow-up question makes sense, and are gone 30 minutes after the last question or when the server stops. Before a question is sent for an answer or held, email addresses, tax numbers and any run of 8 or more digits in it are replaced by `[removed]`. Each question adds one line to `CARROWVALE_READ_LOG` (when set): `{ at, route: "help", ms, audience, page, turn, bound, outcome, stopReason, model, usage: { input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens }, cost, guide }`: the time, the audience (`sponsor` or `investor`), the page's key, the question's number in its conversation, the worst-case input the caps used, an outcome code (`answer`, `cannot`, `out_of_scope`, `declined`, `guarded`, `incomplete`, `invalid`, `timeout`, `failed`, `spend_cap` or `limit`), the id of the model that answered, the counts, the cost and the guide's version, never a question, an answer, a name or an address. A question that is not well formed (400 or 413) adds no line. A failure also prints one line to the console with its reason and HTTP status only.
+
+No answer ever carries a key, a model or provider name, or the text of an error: an answer that would name one, repeat an address or a long number, or run past 1,200 characters is replaced by "I do not have that information." before it leaves this server. When the browser closes the connection, the question is stopped.
+
+**The guide.** `lib/help-guide.mjs` is generated from `help/guide.md` and `help/rules.md` with `node server/help/build.mjs` and is checked by the tests, which fail when a page, a step or a name on a screen changes without the guide.
+
+**The support contact.** The address a sponsor's people see beside an answer is set where the portal is published, as `window.CVPortalConfig.supportEmail`. Until it is set, a team member sees "Contact your administrator." and an administrator sees no contact line.
+
+## Filings
+
+On a server Carrow & Vale runs, sponsors order a Form D (new or amended) or state notice filings from the portal's Filings tab. Each order is emailed to staff, who work it with their own token and file it by hand. This server never files anything by itself: the Form D file is downloaded by a staff person and uploaded on EDGAR, and state notices are typed into the states' filing system by a staff person. Nothing here talks to that system.
+
+| Setting | What it does |
+| --- | --- |
+| `FILINGS` | `1` turns the module on. Unset, every `/v1/filings` address answers 404 and the rest of the server is unchanged. |
+| `FILINGS_STAFF_TOKEN` | The staff calls' bearer token: at least 24 characters, long and random, and different from `API_TOKEN`, `ADMIN_TOKEN`, `RESULTS_TOKEN`, every sponsor account's token and every invitation's token (otherwise the module is off). Unset, the staff calls answer 404. |
+| `FILINGS_STAFF_EMAIL` | Where each new or changed order is emailed (required). |
+| `FILINGS_CONTACT_NAME`, `FILINGS_CONTACT_PHONE`, `FILINGS_CONTACT_EMAIL` | The filer contact written into every Form D file. |
+| `EDGAR_TRANSPORT` | `staff` (the default and the only value accepted): staff download the file and upload it on EDGAR. Any other value leaves the module off. |
+| `EDGAR_ALLOW_LIVE` | `1` allows LIVE files. Unset, only TEST files are made. LIVE is always refused when `NODE_ENV=test`. |
+
+The module also needs `DATA_KEY` (orders and CCCs are sealed with it) and, outside tests, `API_TOKEN` or at least one sponsor account. When `FILINGS=1` but something is missing, `GET /v1/filings` answers `{ on: false, reason }` with what to set, and every other filings call answers 404. Tests can pass a recorded transport to `createServer({ edgarTransport })`; no setting selects one, so a running server can never report a made-up filing.
+
+**Portal calls** (`API_TOKEN` or a sponsor account's token; an invitation token is refused; bodies up to 1 MB):
+
+| Call | What it does |
+| --- | --- |
+| `GET /v1/filings` | `{ on: true, live }`. |
+| `POST /v1/filings/orders` | `{ workspace, clientId, key, firm: { name }, kind, offering: { id, name }, by, at }`, plus `draft` and `signoff: { by, name, title, at }` for `formd` and `formd-amendment`, or `package` (with `states`) for `bluesky` and `bluesky-renewal` → `201 { id, status, lines, dueCents, openFees }`. `key` is 32 random bytes chosen by the portal (only its SHA-256 is stored). The server checks the notice with the same rules as the portal and works out the lines itself ($100 Form D, $50 amendment, $100 state notice filings, $50 renewals; state and filing system fees are separate lines with no amount until staff record what was paid). The same `clientId` and `key` again answers 200 with the same order; a changed notice or package replaces the stored one while nothing has been filed from it (afterwards 409). Another key, or another kind, answers 409. A notice with errors (with `messages`), a Form D order with no sign-off, or no `by` or `at` answers 422. With a sponsor account's token the order belongs to the account's workspace, whatever `workspace` says. |
+| `POST /v1/filings/orders/:id/status` | `{ key }` → `{ id, kind, status, lines, dueCents, openFees, formD: { status, accession, filedOn, messages }, states: { <code>: { filedOn, efdId, feeCents, renewsOn } }, updatedAt }`. A wrong key, or another account's order, answers 404 exactly as an unknown id. |
+
+**Staff calls** (`Authorization: Bearer <FILINGS_STAFF_TOKEN>`; no other token is accepted; rate limited):
+
+| Call | What it does |
+| --- | --- |
+| `GET /v1/filings/staff/orders[?status=]` | `[{ id, firm, offering, kind, status, formD, dueCents, at }]`. |
+| `GET /v1/filings/staff/orders/:id` | The order with its notice or package, who placed it and the sign-off, each issuer with `cccOnFile`, `edgar: { open, nextOpen }` and `live: { ok, reason }`. |
+| `PUT /v1/filings/staff/issuers/:cik` | `{ ccc, name }` → `{ ok: true }`. `ccc` is exactly 8 characters and is stored only sealed (needs `DATA_KEY`); `name` is the issuer's name exactly as EDGAR shows it, used in the file's signature block. |
+| `GET /v1/filings/staff/orders/:id/file?mode=TEST\|LIVE` | The Form D file as an attachment (`Cache-Control: no-store`). It answers 403 to any request carrying `Origin` or `Sec-Fetch-Mode` (download it with a command-line tool, never from a web page) and 409 naming each CIK with no CCC on file. LIVE answers 403 unless `EDGAR_ALLOW_LIVE=1`, and 409 until a test of the notice as it is now stored was accepted. |
+| `POST /v1/filings/staff/orders/:id/submit` | `{ mode }` → with the staff transport `{ ok: true, pending: 'staff' }` (nothing is sent; upload the file yourself). |
+| `POST /v1/filings/staff/orders/:id/outcome` | `{ step: 'test' \| 'live', result: 'accepted' \| 'suspended', accession, filedOn, messages }` for a Form D order; `{ states: { <code>: { filedOn, efdId, feeCents, renewsOn } }, systemFeeCents }` for a state notice order; `{ cancelled: true }` for an order nothing was filed for. A live outcome answers 409 unless live filing is allowed and a test of the notice was accepted; an accepted live outcome needs an accession number of the form `0001234567-26-000123` and a filed date not in the future. |
+
+Statuses: an order is `received`, `done` or `cancelled`; a Form D order's `formD.status` is `in_review`, `test_passed`, `submitted`, `accepted` or `suspended`. A state notice order is `done` when every state is filed and every fee is recorded.
+
+**Filing a Form D (staff):**
+
+1. The order arrives by email at `FILINGS_STAFF_EMAIL` with its id, the firm, the offering, the service and the amount due.
+2. Open it: `GET /v1/filings/staff/orders/<id>`. Check the notice and the sign-off.
+3. For each issuer without `cccOnFile`, record its CCC and its name exactly as EDGAR shows it: `PUT /v1/filings/staff/issuers/<cik>` with `{ "ccc": "…", "name": "…" }`.
+4. Download the TEST file: `curl -H "Authorization: Bearer $FILINGS_STAFF_TOKEN" -o formd-test.xml "<server>/v1/filings/staff/orders/<id>/file?mode=TEST"`.
+5. On EDGAR Online Forms, choose Transmit XML Submission, send it as a test, and upload the file.
+6. Record the outcome: `POST /v1/filings/staff/orders/<id>/outcome` with `{ "step": "test", "result": "accepted" }`, or `"suspended"` with EDGAR's `messages`. A suspended test keeps LIVE refused; the sponsor corrects the notice in the portal and the order returns to review.
+7. When the test is accepted and `EDGAR_ALLOW_LIVE=1`, download the LIVE file (`?mode=LIVE`), upload it the same way as a live submission, and record `{ "step": "live", "result": "accepted", "accession": "…", "filedOn": "YYYY-MM-DD" }`. The order is done and the portal shows the accession number and date.
+
+**State notices (staff):** open the order, type its package into the states' filing system by hand, and record each state's date, filing ID, fee paid in cents and renewal date with the outcome call (`systemFeeCents` for the filing system's fee). The fees become the order's pass-through lines, at cost.
+
+**EDGAR's hours.** EDGAR takes submissions from 06:00 to 22:00 Eastern on business days (not weekends or federal holidays); a submission begun after 17:30 Eastern is filed the next business day. The order's `edgar` field shows whether EDGAR is open now and, if not, when it next opens.
+
+**What is sealed.** Notices, packages, sign-offs, EDGAR's messages and each issuer's CCC are sealed with `DATA_KEY`. A CCC is entered only by staff and is never returned by any call, emailed, logged or written to an event: it leaves the server only inside the Form D file of the staff file call. The staff email holds the order id, firm, offering, service and amount only.
+
+## Verification package (for the operator)
+
+A sponsor with an account can add the verification package to an invitation: an identity check with sanctions screening, and, for an offering that requires it, accreditation. The sponsor's card on file is charged when the invitation is sent; the investor never pays and never sees a price. Payments go to your payment provider's account, and your check providers' accounts pay for the checks. Nothing here has been run against the real providers yet: every request, reply and delivery was built from recorded examples, and the card is not to be charged for real before your payment provider's test mode has been run end to end.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `BILLING_SECRET_KEY` | none | Your payment provider's secret key. Without it and `BILLING_PUBLISHABLE_KEY`, card payments are off and the package is not offered. |
+| `BILLING_PUBLISHABLE_KEY` | none | Your payment provider's publishable key, used only by the card page this server hosts. |
+| `BILLING_WEBHOOK_SECRET` | none | The signing secret of the delivery address below. Until it is set, `POST /billing/webhook` answers 404 and refunds, disputes and unconfirmed payments are not settled. |
+| `PACKAGE_PRICE_FULL_CENTS` | `9900` | The full package, in cents. |
+| `PACKAGE_PRICE_IDENTITY_CENTS` | `1900` | Identity check and screening only, in cents. |
+| `PACKAGE_PRICE_REVERIFY_CENTS` | the full price | An accreditation check again, in cents. |
+| `PACKAGE_IDENTITY_PROVIDER` | `idcheck` | The plug-in that runs the identity check and screening. |
+| `PACKAGE_ACCREDITATION_PROVIDER` | `accredit` | The plug-in that runs accreditation. A tier is offered only when its plug-ins are installed and their settings filled. |
+| `IDCHECK_API_KEY`, `IDCHECK_WORKFLOW`, `IDCHECK_WEBHOOK_SECRET` | none | The identity check provider's key, the workflow it runs and its delivery secret. |
+| `OPERATOR_EMAIL` | none | Where this server writes, at most once a day, when a check provider refuses to start a paid check (check that provider account's balance and keys). Without it nothing is sent. |
+| `ADMIN_TOKEN` | none | The operator's token: sponsor accounts and the card refund below. |
+
+A price must be a whole number of cents of at least 50; any other value switches card payments off. Prices can be changed at any time; a package already paid keeps its price.
+
+**Addresses to register.** At your payment provider, a delivery address `<PUBLIC_URL>/billing/webhook` for refunds, disputes and payment results. At your identity check provider, `<PUBLIC_URL>/webhooks/idcheck`.
+
+**The rules.**
+
+- The sponsor's card is charged when an invitation with the package is sent: credit first, then the card, at this server's price. One charge covers a list of invitations.
+- An invitation that ends (cancelled, expired, completed or deleted) with no check started returns the package as credit, which pays for the sponsor's next package. Once a check has started, nothing is returned. A package paid but not put on an invitation within 24 hours also returns as credit.
+- On request, you can refund an unused package to the sponsor's card instead of credit. The card fee is not returned to you. `POST /billing/admin/refund` with `Authorization: Bearer <ADMIN_TOKEN>` and `{ "entitlement": "<id>" }` → `200 { refunded: true, cents }`. Only a package paid by card whose check has not started can be refunded, and a package returned as credit only while that credit is unspent; any other answers `409 refund_not_allowed`. A refusal by the provider answers `409 refund_refused` and nothing changed. When the provider's answer is not known, the package is held as being refunded (it cannot be used) and the answer is `409 refund_unconfirmed`: call again later with the same id; the provider is asked with the same key, so the money goes back once. The route answers 404 while `ADMIN_TOKEN` is unset and 401 to any other token or to a call that carries an invitation token.
+- A package whose money was refunded, or whose charge is disputed, can no longer be used, and credit it gave is taken back. Credit the sponsor had already spent is owed instead: the sponsor's billing view shows the amount owed, no new package is paid until it is settled. Credit returned later pays it first; otherwise settle it with the sponsor and set the account's `owedCents` to 0 in the store file's `billing` table while the server is stopped. If you win a dispute, restore the package the same way.
+- A payment whose result could not be confirmed is asked again with the same key for up to 23 hours, then left alone. The sponsor's billing view shows it as being confirmed until your payment provider's delivery settles it: a payment the provider reports as paid becomes the packages it paid for; one reported as failed is closed with nothing owed.
+
+**Limits.** Card sessions, the queue that runs one account's payments one after another, and the hold while a check is starting live in this server's memory: run one server process for one store file. A restart only means asking for the card page again.
+
 ## Data protection
 
 Invitations hold investors' personal details, bank details and signed documents, so:
@@ -352,7 +572,7 @@ Invitations hold investors' personal details, bank details and signed documents,
 - **Encryption at rest.** Snapshots, submissions, outbox messages and the investor's details on verification and screening records (name, email, address, phone, the names screened) are sealed with AES-256-GCM using `DATA_KEY`, each with a fresh IV and the record id and field bound in as additional data (a sealed value cannot be moved to another record). Offering documents, the agreement PDF and signed PDFs are kept as sealed files in `<STORE_FILE>.blobs/`. The store file keeps only what the console's list needs in plain form: ids, statuses, steps and times. Email addresses quoted in a mail server's refusal are replaced with `[address]` before the error is stored. Without `DATA_KEY` the invitation routes answer 400 (`Set DATA_KEY on the integration server`) unless `NODE_ENV=test` or `ALLOW_PLAINTEXT_STORE=1`. To rotate, set the new key as `DATA_KEY` and the old one as `DATA_KEY_PREVIOUS`.
 - **Tokens.** 32 random bytes, returned once to the console (in the link) and never stored; the server keeps their SHA-256 and compares every stored hash in constant time on each lookup. Resend replaces the token. Links expire after `INVITE_DAYS`.
 - **What is deleted, and when.** A submission is deleted when the console deletes it after importing (it does so straight away), or automatically `SUBMISSION_DAYS` (30) after completion if it was never imported; the sponsor is emailed a reminder a week before that (half-way when `SUBMISSION_DAYS` is 7 or less). The whole invitation (snapshot, documents and record) is deleted `SUBMISSION_DAYS` after it ends: completed, cancelled or expired. Outbox messages are deleted after `OUTBOX_DAYS`. Deletion runs every hour and on requests.
-- **Scope.** The invitation token reaches only its own investor's onboarding, verifications and screenings (the same investor id in the same workspace). Sponsor routes need `API_TOKEN`, which invitations require to be set.
+- **Scope.** The invitation token reaches only its own investor's onboarding, verifications and screenings (the same investor id in the same workspace). Sponsor routes need `API_TOKEN` or a sponsor account's own token (see Sponsor accounts); invitations require one of the two. A sponsor account's token reaches only its own workspace.
 - **Limits.** Request bodies are capped per route (32 MB to create, 40 MB to complete, 16 KB for small calls) and oversized bodies answer 413. Writes and failed tokens are rate limited.
 
 ## Security notes
@@ -364,11 +584,16 @@ Invitations hold investors' personal details, bank details and signed documents,
 - Webhooks are verified over the raw bytes, timestamp-checked and de-duplicated; unsigned webhooks are refused.
 - `GET /hosted/:id` never redirects to a link the portal supplied (the `link` provider), so this server's domain cannot be used as an open redirect.
 - Error messages are scrubbed of every secret, raw, URL-encoded or inside base64 (for example a basic-auth `user:password` echoed back by a provider).
+- Reading: the reading key is read from `CARROWVALE_API_KEY` only (no other key, token, profile or address setting is used, and the service address is fixed), it is built into one client in `lib/model.mjs`, and it never leaves this server. `POST /v1/intake` and `POST /v1/read` sit behind `PORTAL_ORIGIN`, `API_TOKEN`, the rate limit, the size limits and the spend cap. Text inside an uploaded agreement is treated as data: the reading can only choose among places the browser measured on the page, and every field lands on printed geometry.
+- Portal help: `POST /v1/help` uses the same key and client and sits behind `PORTAL_ORIGIN`, a credential (`API_TOKEN` or an invitation link's token), the rate limit, its own hourly limit and both caps. Who is asking comes from the credential, never from the request; the conversation is kept by this server, so a request cannot supply earlier turns; a person's question is treated as a question, never as an instruction, and every answer is checked before it is sent.
 - Invitations: personal data encrypted at rest with `DATA_KEY`, tokens stored only as hashes, links scoped to one investor, submissions deleted after import (see Data protection). SMTP credentials are never sent unencrypted or included in error messages.
+- Filings, the CCC: each issuer's EDGAR filer code is stored only sealed with `DATA_KEY`, entered only through the staff call, and leaves the server only inside the Form D file of the staff file call, which no web page can read (403 to any request with `Origin` or `Sec-Fetch-Mode`); it is in no other answer, email, log line, event or error message.
+- Filings, the live guard: a LIVE file is refused unless `EDGAR_ALLOW_LIVE=1`, always when `NODE_ENV=test`, and until a TEST of the same notice was accepted; only `EDGAR_TRANSPORT=staff` is accepted, so this server never sends a filing by itself.
 
 Before production:
 
 - Replace `API_TOKEN` with authenticated portal sessions (for example a signed session token checked in `authorize()` in `index.mjs`), so only signed-in sponsors and investors can start checks and only for their own records.
+- With more than one sponsor, give each its own account token (see Sponsor accounts) and keep `API_TOKEN` to yourself. Keep `ADMIN_TOKEN` long and random, different from `API_TOKEN`, out of the portal, and rotate it if it leaks; leave it unset when no account needs making.
 - Replace the JSON-file store (`lib/store.mjs`) with a real database, keeping the same methods (blobs can go to object storage; keep them sealed). With a database, look invitations up by an index on the token hash.
 - Set `DATA_KEY` from your secret store and back it up: sealed records cannot be read without it.
 - Serve over HTTPS (`PUBLIC_URL` must be https for providers to call back), set `PORTAL_ORIGIN`, keep `RATE_LIMIT_PER_MIN` on, and set `TRUST_PROXY=1` only behind your own proxy.

@@ -1,0 +1,12 @@
+{
+  "_source": "https://docs.stripe.com/api/setup_intents/object",
+  "_status": "unconfirmed: the reference page could not be opened from the build environment on 2026-11-19 (the connection was refused); only the id, status, customer and payment method fields and the fields the research names are written here, from general knowledge of the interface, not from the page; to be confirmed in test mode by plan 08-12",
+  "reply": {
+    "id": "seti_fixture1",
+    "object": "setup_intent",
+    "status": "succeeded",
+    "customer": "cus_fixture1",
+    "payment_method": "pm_fixture1",
+    "usage": "off_session"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "_source": "https://docs.stripe.com/api/refunds/create",
+  "_status": "unconfirmed: the reference page could not be opened from the build environment on 2026-11-19 (no provider page can be read from here); the refund call's form (payment_intent, amount, metadata[entitlement]) and its reply's id, amount, status, payment and metadata are written from general knowledge of the interface, not from the page; that succeeded means the money went back, failed or canceled that it did not, and pending that it is not known yet, is an assumption too; to be confirmed in test mode by plan 08-12",
+  "reply": {
+    "id": "re_fixture1",
+    "object": "refund",
+    "amount": 1900,
+    "currency": "usd",
+    "payment_intent": "pi_fixture1",
+    "status": "succeeded",
+    "metadata": { "entitlement": "ent_fixture1" }
+  }
+}

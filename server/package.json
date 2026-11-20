@@ -4,9 +4,14 @@
   "private": true,
   "description": "Provider calls and webhooks for automated investor verification (identity, sanctions screening, accreditation) in the Carrow & Vale investor portal.",
   "type": "module",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node index.mjs",
     "test": "node --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.8.0"
   }
 }

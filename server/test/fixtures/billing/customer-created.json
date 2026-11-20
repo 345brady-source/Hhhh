@@ -1,0 +1,8 @@
+{
+  "_source": "https://docs.stripe.com/api/customers/create",
+  "_status": "unconfirmed: the reference page could not be opened from the build environment on 2026-11-19 (the connection was refused); only the id, status, customer and payment method fields and the fields the research names are written here, from general knowledge of the interface, not from the page; to be confirmed in test mode by plan 08-12",
+  "reply": {
+    "id": "cus_fixture1",
+    "object": "customer"
+  }
+}

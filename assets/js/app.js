@@ -70,6 +70,7 @@
     const d = document.getElementById('dlg');
     d.className = 'dlg ' + (cls || '');
     d.innerHTML = html;
+    if (!d.open && !d.hasAttribute('open')) markDialog();
     if (typeof d.showModal === 'function') {
       if (!d.open) d.showModal();
     } else d.setAttribute('open', '');
@@ -81,7 +82,59 @@
     if (d.close) d.close();
     else d.removeAttribute('open');
   }
-  /** Offer a generated file: the viewer's save prompt when the page runs inside Claude, a normal download elsewhere. */
+  /*
+   * Browser back while a dialog is open closes the dialog instead of changing the page under it (plan 06-29). Opening one
+   * adds a history entry with the same address, and marks the entry below it with the same id; back from it closes the
+   * dialog. A dialog closed any other way (its X, Escape, an action) leaves that entry behind, spent: it shows the same page
+   * as the entry below, so a later back or forward passes over it and one press still moves one page. History is traversed
+   * here only in answer to the person's own back or forward, never after the portal's own navigation, so nothing races it.
+   */
+  let dlgMark = '';
+  let skipping = false;
+  let lastState = {};
+  const histState = () => (history.state && typeof history.state === 'object' ? history.state : {});
+  function markDialog() {
+    try {
+      const st = histState();
+      // Opened again on a spent entry: that entry serves this dialog too.
+      if (st.dlg) return (dlgMark = st.dlg);
+      const id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      history.replaceState(Object.assign({}, st, { dlgBase: id }), '');
+      history.pushState({ dlg: id }, '');
+      dlgMark = id;
+      lastState = histState();
+    } catch (e) {
+      dlgMark = '';
+    }
+  }
+  function onHistory() {
+    const st = histState();
+    const prev = lastState;
+    lastState = st;
+    if (skipping) {
+      skipping = false;
+      return;
+    }
+    const d = document.getElementById('dlg');
+    const open = !!(d && d.open);
+    const pass = (dir) => {
+      skipping = true;
+      setTimeout(() => (skipping = false), 1500);
+      if (dir > 0) history.forward();
+      else history.back();
+    };
+    // Back from the open dialog's entry: the dialog closes, the page stays.
+    if (open && dlgMark && st.dlgBase === dlgMark) {
+      dlgMark = '';
+      closeDialog();
+      return;
+    }
+    // A spent dialog entry: passed over in the direction of travel (forward when coming from the entry below it).
+    if (st.dlg && !(open && st.dlg === dlgMark)) return pass(prev.dlgBase === st.dlg ? 1 : -1);
+    // Back from a spent entry onto the same page below it: one more step, so the press leaves the page.
+    if (!open && st.dlgBase && prev.dlg === st.dlgBase) pass(-1);
+  }
+  /** Offer a generated file: the viewer's save prompt when the page runs inside the host assistant, a normal download elsewhere. */
   async function download(filename, data, opts) {
     opts = opts || {};
     let dl = null;
@@ -188,8 +241,9 @@
       state.viewer = null;
       B.apply(NS.TENANT_TEMPLATE);
       applyAppearance();
-      // An investor's invitation link opened where its portal is not stored: the invitation page explains (never the sign-up page).
-      if (!route && state.route === 'invite') return render();
+      // An investor's invitation link (or a co-investor's sign-in link, coinvestor.js) opened where its portal is not stored:
+      // its page explains (never the sign-up page).
+      if (!route && (state.route === 'invite' || state.route === 'co')) return render();
       go(route || 'diy-start');
       return;
     }
@@ -285,11 +339,12 @@
 
   /* ---------- Appearance ---------- */
   const rootEl = document.documentElement;
-  const hostTheme = rootEl.getAttribute('data-theme');
-  /** The viewer's own choice (Settings) wins; otherwise the client's default; otherwise the device. */
+  // What a host frame asked for before the app loaded (the preview). The page's own static light default is not a host's choice.
+  const hostTheme = rootEl.hasAttribute('data-theme-static') ? null : rootEl.hasAttribute('data-host-theme') ? rootEl.getAttribute('data-host-theme') || null : rootEl.getAttribute('data-theme');
+  /** The viewer's own choice (Settings) wins; otherwise the client's default; otherwise light, the standard look. */
   function applyAppearance() {
     const mine = NS.store.get('appearance', null);
-    const pref = mine || (ws() ? ws().tenant.appearance : 'system');
+    const pref = mine || (ws() && ws().tenant.appearance) || 'light';
     if (pref === 'light' || pref === 'dark') rootEl.setAttribute('data-theme', pref);
     else if (!mine && hostTheme) rootEl.setAttribute('data-theme', hostTheme);
     else rootEl.removeAttribute('data-theme');
@@ -305,15 +360,20 @@
     ['subscribe-', 'subscribe'],
     ['console-offering-', 'console-offering'],
     ['console-envelope-', 'console-envelope'],
+    ['console-filings-', 'console-filings'],
+    ['console-taxdocs-', 'console-taxdocs'],
     ['sign-', 'sign'],
     ['join-', 'join'],
-    ['invite-', 'invite']
+    ['invite-', 'invite'],
+    ['taxdoc-', 'taxdoc'],
+    ['co-', 'co']
   ];
   function parseHash() {
     const raw = (location.hash || '').replace(/^#/, '');
     // A page's own name wins over a prefix: "sign-in" is the sign-in page, not the signing page for a document called "in".
     if (NS.views[raw]) return { key: raw, param: null };
-    for (const [p, key] of PREFIXED) if (raw.indexOf(p) === 0) return { key, param: raw.slice(p.length) };
+    // A prefix applies only where its page is registered: an edition without the page gets the default below.
+    for (const [p, key] of PREFIXED) if (raw.indexOf(p) === 0 && NS.views[key]) return { key, param: raw.slice(p.length) };
     return { key: NS.views.overview ? 'overview' : 'investments', param: null };
   }
   function go(route) {
@@ -326,12 +386,16 @@
     state.route = r.key;
     state.param = r.param;
     state.navOpen = false;
-    render();
-    if (prev !== state.route + ':' + state.param) {
-      window.scrollTo(0, 0);
-      const m = document.getElementById('main');
-      if (m) m.focus({ preventScroll: true });
-    }
+    const moved = prev !== state.route + ':' + state.param;
+    press.afterHeld = null;
+    // Held under a pending press (see "A press is never lost"): the new page's top and focus follow its drawing.
+    if (render() === false) press.afterHeld = moved ? toTop : null;
+    else if (moved) toTop();
+  }
+  function toTop() {
+    window.scrollTo(0, 0);
+    const m = document.getElementById('main');
+    if (m) m.focus({ preventScroll: true });
   }
   const modeOf = (key) => (NS.views[key] && NS.views[key].mode) || 'portal';
 
@@ -411,11 +475,14 @@
     // The sign-up page offers the sample sponsors. Other standalone pages (an investor's invitation, a signing link) show no demo controls.
     if (standalone || !w) return E.diy && state.route === 'diy-start' ? `<div class="demo-bar">${sponsorPickHTML('')}</div>` : '';
     const inv = w.investors.find((x) => x.id === state.viewer);
-    const opt = (v, label) => `<option value="${v}"${state.role === v ? ' selected' : ''}>${label}</option>`;
+    // An account's co-investor signs in as themselves: offered beside the investor while the account has one.
+    const co = inv && inv.coInvestor && inv.coInvestor.email ? inv.coInvestor : null;
+    if (!co) state.co = false;
+    const opt = (v, label) => `<option value="${v}"${state.role === v && !(v === 'investor' && state.co) ? ' selected' : ''}>${label}</option>${v === 'investor' && co ? `<option value="co-investor"${state.role === 'investor' && state.co ? ' selected' : ''}>Co-investor · ${h(co.name)}</option>` : ''}`;
     const labels = E.diy
       ? { admin: `Admin · ${h(w.tenant.shortName)}`, team: `Team member · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` }
       : { staff: 'Carrow &amp; Vale staff', sponsor: `Sponsor staff · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` };
-    return `<div class="demo-bar">${sponsorPickHTML(w.tenant.id)}<label class="demo-role" for="demo-role"><span>${E.diy ? 'Signed in as' : 'Demo · signed in as'}</span><select id="demo-role" data-change="demo-role">
+    return `<div class="demo-bar">${sponsorPickHTML(w.tenant.id)}<label class="demo-role" for="demo-role"><span>${E.diy ? 'Signed in as' : 'Demo · signed in as'}</span><select id="demo-role" data-change="demo-role" title="${state.role === 'investor' && state.co && co ? `Co-investor · ${h(co.name)}` : labels[state.role] || ''}">
       ${ROLES.map((r) => opt(r, labels[r])).join('')}
     </select></label>${E.diy ? '<button class="demo-start" type="button" data-action="diy-start-over">New sign-up</button>' : ''}</div>`;
   }
@@ -436,8 +503,102 @@
     </div>`;
   }
 
+  /**
+   * Storage refused is never silent: when this browser will not keep the portal's records or files, the firm's people
+   * are told once, at the top of the page, for as long as that is so. The work itself goes on in memory.
+   */
+  function storageNote() {
+    const el = document.getElementById('notes');
+    if (!el) return;
+    const lost = NS.workspace.saveFailed() || NS.store.refused() || !!(NS.ops && NS.ops.files.refused());
+    const html = lost && state.role !== 'investor' && !state.remote ? `<div class="pvbar pvbar-note" role="alert">${icon('alert')}<span><span class="pvbar-label">This browser is not letting the portal save.</span> Your work will be lost when you close this page.</span></div>` : '';
+    // Written only when it appears or goes, so a screen reader announces it once and not at every redraw.
+    if (!!el.firstChild !== !!html) el.innerHTML = html;
+  }
+
+  /* ---------- A press is never lost to a redraw (walkthrough-2 N4) ----------
+   * render() rewrites the whole page. When something that finished in the background (page images drawn, a file stored, a
+   * navigation queued by the press before) redraws between a finger or mouse button going down and its click, the pressed
+   * control is replaced: with a mouse the click then reaches no control at all; with touch it lands on whatever the new page
+   * has under the finger. So from a primary pointerdown until that press's click has been dispatched (or pointercancel, or
+   * POINTER_UP_WAIT after pointerup with no click, or PRESS_MAX after pointerdown; at pointerup already when the pointer moved
+   * more than TAP_SLOP, a drag, or the control pressed was redrawn by the person's own input: no click to keep then) a press
+   * is pending, and a render asked for
+   * outside a user input event is held. When the press ends the held render runs once, on the next task, unless a render ran
+   * since (the click's own handler drew the current state). Renders inside user input events (typing, the field editor's
+   * dragging, the signature pad, every data-action handler) run at once, as before. Only trusted events count: a click made
+   * by code is not a person's press. */
+  const PRESS_MAX = 1000;
+  const POINTER_UP_WAIT = 500;
+  const TAP_SLOP = 10;
+  const USER_INPUT = /^(pointer|mouse|touch|click|dblclick|auxclick|contextmenu|key|input|beforeinput|change|submit|focus|blur)/;
+  const press = { pending: false, held: false, heldAt: 0, renders: 0, timer: 0, upTimer: 0, afterHeld: null, x: 0, y: 0, target: null };
+  const inUserInput = () => {
+    const e = window.event;
+    return !!e && USER_INPUT.test(e.type);
+  };
+  function pressEnd() {
+    clearTimeout(press.timer);
+    clearTimeout(press.upTimer);
+    if (!press.pending) return;
+    press.pending = false;
+    if (!press.held) return;
+    press.held = false;
+    const at = press.heldAt;
+    // After the click's own handlers (they run in this same dispatch, after these capture listeners).
+    setTimeout(() => {
+      const after = press.afterHeld;
+      press.afterHeld = null;
+      if (press.renders === at) {
+        if (render() === false) {
+          press.afterHeld = after;
+          return;
+        }
+      }
+      if (after && press.renders !== at + 1) return; // another navigation drew and placed its own page since
+      if (after) after();
+    }, 0);
+  }
+  function pressWatch() {
+    document.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (!e.isTrusted || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        clearTimeout(press.timer);
+        clearTimeout(press.upTimer);
+        press.pending = true;
+        Object.assign(press, { x: e.clientX, y: e.clientY, target: e.target });
+        press.timer = setTimeout(pressEnd, PRESS_MAX);
+      },
+      true
+    );
+    document.addEventListener(
+      'pointerup',
+      (e) => {
+        if (!e.isTrusted || !e.isPrimary || !press.pending) return;
+        clearTimeout(press.upTimer);
+        const dragged = Math.hypot(e.clientX - press.x, e.clientY - press.y) > TAP_SLOP || !(press.target && press.target.isConnected);
+        press.target = null;
+        if (dragged) return pressEnd();
+        press.upTimer = setTimeout(pressEnd, POINTER_UP_WAIT);
+      },
+      true
+    );
+    document.addEventListener('pointercancel', (e) => e.isTrusted && e.isPrimary && pressEnd(), true);
+    document.addEventListener('click', (e) => e.isTrusted && pressEnd(), true);
+  }
+
   /* ---------- Render ---------- */
+  /** Draws the page; false when the drawing is held under a pending press (it runs when the press ends). */
   function render() {
+    if (press.pending && !inUserInput()) {
+      if (!press.held) {
+        press.held = true;
+        press.heldAt = press.renders;
+      }
+      return false;
+    }
+    press.renders++;
     const w = ws();
     const key = state.route;
     const standalone = NS.views[key] && NS.views[key].standalone;
@@ -463,9 +624,34 @@
     // Carrow & Vale staff get the operator bar; a sponsor's own people get a plain preview bar in the investor view.
     document.getElementById('opbar').innerHTML = !w || standalone ? '' : E.managed && state.role === 'staff' ? opbarHTML() : state.role !== 'investor' && mode === 'portal' ? previewBarHTML() : '';
     document.getElementById('demo').innerHTML = state.remote ? '' : demoHTML(standalone);
+    storageNote();
     const el = document.getElementById('view');
-    el.innerHTML = view.render(state.param);
+    drawKeeping(el, view.render(state.param));
     if (view.after) view.after(state.param);
+  }
+  /**
+   * Walkthrough 3 failure 7 (N4 again): a redraw that comes just before a press (the W-8BEN's page drawn as its Finish
+   * appears) replaced the control a finger, or a test, had already found. A control marked data-keep="<key>" (unique on the
+   * page) keeps its node through a redraw that draws it again under the same key and tag: the node takes the new drawing's
+   * attributes and content, and keeps focus if it had it. Handlers are delegated (data-action), so nothing else changes.
+   */
+  function drawKeeping(el, html) {
+    const kept = {};
+    el.querySelectorAll('[data-keep]').forEach((n) => (kept[n.getAttribute('data-keep')] = n));
+    const had = document.activeElement;
+    el.innerHTML = html;
+    if (!Object.keys(kept).length) return;
+    el.querySelectorAll('[data-keep]').forEach((n) => {
+      const key = n.getAttribute('data-keep');
+      const old = kept[key];
+      delete kept[key]; // one node for one key, even if a drawing repeated it
+      if (!old || old.tagName !== n.tagName) return;
+      Array.from(old.attributes).forEach((a) => !n.hasAttribute(a.name) && old.removeAttribute(a.name));
+      Array.from(n.attributes).forEach((a) => old.getAttribute(a.name) !== a.value && old.setAttribute(a.name, a.value));
+      if (old.innerHTML !== n.innerHTML) old.innerHTML = n.innerHTML;
+      n.replaceWith(old);
+      if (old === had) old.focus({ preventScroll: true });
+    });
   }
 
   /* ---------- Two-way binding for editors ---------- */
@@ -505,7 +691,8 @@
   /* ---------- Events ---------- */
   function boot() {
     const app = document.getElementById('app');
-    app.innerHTML = `<div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div><div id="demo"></div>`;
+    pressWatch();
+    app.innerHTML = `<div id="notes"></div><div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div><div id="demo"></div>`;
     document.addEventListener('click', (e) => {
       const a = e.target.closest('[data-action]');
       if (a && NS.actions[a.getAttribute('data-action')]) NS.actions[a.getAttribute('data-action')](a, e);
@@ -541,6 +728,8 @@
       if (e.target === dlg) closeDialog();
     });
     window.addEventListener('hashchange', onRoute);
+    window.addEventListener('popstate', onHistory);
+    window.addEventListener('hashchange', () => (lastState = histState()));
 
     const r = parseHash();
     state.route = r.key;
@@ -579,14 +768,22 @@
     setClient(el.value, 'console');
   };
   NS.changes['demo-role'] = (el) => {
-    state.role = el.value;
+    state.co = el.value === 'co-investor';
+    state.role = state.co ? 'investor' : el.value;
     NS.store.set('role', state.role);
     const inv = ws().investors.find((x) => x.id === state.viewer);
+    if (state.co) {
+      // The co-investor goes straight to what waits for their signature; with nothing waiting, to the account's documents.
+      const due = NS.esign ? NS.esign.pendingFor(ws(), inv.id) : [];
+      go(due.length ? 'sign-' + due[0].id : 'documents');
+      return NS.ui.toast(`Signed in as ${inv.coInvestor.name}`);
+    }
     if (state.role === 'investor' && inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
     else go(homeFor(state.role));
     NS.ui.toast(state.role === 'investor' ? `Signed in as ${inv ? inv.title : 'an investor'}` : state.role === 'staff' ? 'Signed in as Carrow & Vale staff' : `Signed in as ${E.roleLabel[state.role].toLowerCase()} of ${ws().tenant.shortName}`);
   };
   NS.changes.viewer = (el) => {
+    state.co = false;
     state.viewer = el.value;
     const inv = ws().investors.find((x) => x.id === el.value);
     if (inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
@@ -599,6 +796,7 @@
     const firm = w ? w.tenant.shortName : '';
     if (state.role === 'investor') {
       const inv = w && w.investors.find((i) => i.id === state.viewer);
+      if (inv && state.co && inv.coInvestor) return `${inv.coInvestor.name} (co-investor)`;
       return inv ? `${inv.title} (investor)` : 'Investor';
     }
     if (E.managed) return state.role === 'staff' ? 'Carrow & Vale staff' : `${firm || 'Sponsor'} staff`;
@@ -616,7 +814,7 @@
     setClient(null, 'diy-start');
   };
 
-  NS.app = { state, config, allowed, can, actor, render, go, setClient, useWorkspace, publishedServer, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
+  NS.app = { state, config, allowed, can, actor, render, go, setClient, useWorkspace, publishedServer, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf, storageNote };
 
   // Views register after this file loads, so boot once every script has run.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

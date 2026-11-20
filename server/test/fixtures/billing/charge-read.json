@@ -1,0 +1,17 @@
+{
+  "_source": "https://docs.stripe.com/api/charges/retrieve",
+  "_status": "unconfirmed: the reference page could not be opened from the build environment on 2026-11-19 (no provider page can be read from here); the charge's id, its payment, amount, amount refunded, the refunded and disputed flags and the refunds list (each refund's id, amount, status and metadata) are written from general knowledge of the interface, not from the page; that the refunds list must be asked for (expanded) is an assumption too; to be confirmed in test mode by plan 08-12",
+  "reply": {
+    "id": "ch_fixture1",
+    "object": "charge",
+    "payment_intent": "pi_fixture1",
+    "amount": 1900,
+    "amount_refunded": 0,
+    "refunded": false,
+    "disputed": false,
+    "refunds": {
+      "object": "list",
+      "data": []
+    }
+  }
+}

@@ -21,6 +21,13 @@
     payment: 'Distribution payments',
     review: 'Review and sign'
   };
+  /**
+   * The substitute W-9 certification of this typed activation. The managed edition's firm setting decides (C-03); the
+   * self-serve edition has no switch for it: every investor needs a W-9 or W-8 before distributions (owner, plan 06-24).
+   * Since plan 06-25 a self-serve investor activates through the guided invitation flow (NS.startOnboarding), whose tax
+   * step is the official W-9 or W-8; here the self-serve edition only updates a bank account, which has no review step.
+   */
+  const substituteW9 = () => !!(NS.EDITION && NS.EDITION.diy) || !!T().onboarding.taxForm;
   function stepsFor(mode) {
     const t = T();
     if (mode === 'bank') return ['payment'];
@@ -33,6 +40,19 @@
   function splitAddress(a) {
     const m = String(a || '').match(/^(.*?),\s*([^,]+),\s*([A-Z]{2})\s+(\d{5})$/);
     return m ? { street: m[1], city: m[2], st: m[3], zip: m[4] } : { street: a || '', city: '', st: '', zip: '' };
+  }
+  /**
+   * Plan 06-26: an investor's address on file as the invitation flow's fields, a foreign one too. Investor information keeps
+   * a foreign address as "street, city, state or province and postal code, country" (applyFlowStep); a U.S. one as
+   * splitAddress reads it. Used where the flow starts from the record (a tax-form request pre-fills the official form).
+   */
+  function splitAddressFor(i) {
+    const a = String((i && i.address) || '');
+    const us = splitAddress(a);
+    if (us.city || !a) return us;
+    const parts = a.split(/,\s*/).map((x) => x.trim()).filter(Boolean);
+    if (i.country && parts.length > 2 && parts[parts.length - 1] === i.country) parts.pop();
+    return parts.length < 2 ? us : { street: parts[0], city: parts[1], st: '', zip: parts.slice(2).join(' ') };
   }
 
   /* ---------- Names ----------
@@ -193,6 +213,16 @@
     // DIY: an investor with an open invitation goes through the invitation flow (every step, one link).
     const open = mode !== 'bank' && NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
     if (open) return NS.app.go('invite-' + open.token);
+    // DIY with no open invitation (none was sent, or it expired or was cancelled): a guided invitation of the investor's own,
+    // for the account only, as the offering link gives (selfInvite). Its tax step is the official W-9, W-8BEN or W-8BEN-E by
+    // the investor's type (D-09), never the typed U.S.-only certification below (plan 06-25). The managed edition keeps the
+    // typed activation (C-03); an active account has nothing to activate.
+    if (mode !== 'bank' && NS.EDITION && NS.EDITION.diy && NS.inviteFlow) {
+      if (inv.onboarding.status === 'complete') return NS.app.go('overview');
+      const it = NS.inviteFlow.selfInvite(W(), inv, null, { portal: true });
+      NS.app.save(true);
+      return NS.app.go('invite-' + it.token);
+    }
     const bank = (inv.payment && inv.payment.bank) || {};
     const steps = stepsFor(mode);
     // onboarding.step counts completed steps, so it is also the index to resume at.
@@ -442,7 +472,7 @@
       <div class="form-grid">
         ${t.onboarding.esign ? check('edelivery', `I consent to receive statements, tax documents and notices electronically through this portal. I can withdraw consent at any time by contacting ${h(t.support.team)}.`) : ''}
         ${
-          t.onboarding.taxForm
+          substituteW9()
             ? `<div class="field-wide cert"><p class="cert-title">Substitute Form W-9 certification</p><p>Under penalties of perjury, I certify that: (1) the taxpayer identification number shown above is correct; (2) I am not subject to backup withholding; (3) I am a U.S. citizen or other U.S. person; and (4) any FATCA code entered is correct.</p></div>
           ${check('w9', 'I certify the statements above.')}`
             : ''
@@ -506,7 +536,7 @@
     if (step === 'review') {
       const t = T();
       if (t.onboarding.esign && !d.edelivery) e.edelivery = 'Electronic delivery is required for this portal.';
-      if (t.onboarding.taxForm && !d.w9) e.w9 = 'Certify the W-9 statements to continue.';
+      if (substituteW9() && !d.w9) e.w9 = 'Certify the W-9 statements to continue.';
       // The name to sign with is the one given in the investor information step (it becomes the name on file below).
       if (!sameName(d.signature, personOf(d, inv()))) e.signature = `Type your name exactly as ${personOf(d, inv())}.`;
     }
@@ -534,7 +564,7 @@
     i.phone = d.phone;
     i.tinLast4 = d.tin.replace(/\D/g, '').slice(-4);
     if (T().onboarding.accreditation && !accVerified()) i.accreditation = { basis: d.accBasis, date: now };
-    if (T().onboarding.taxForm) i.taxForm = 'W-9';
+    if (substituteW9()) i.taxForm = 'W-9';
     i.edelivery = !!d.edelivery;
     i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: bankHolder(d), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } } : { method: 'check', bank: null };
     i.onboarding = Object.assign({}, i.onboarding, { status: 'complete', step: 5, completed: now });
@@ -627,7 +657,21 @@
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stSoph', 'stPlan', 'w8Citizen', 'w8Country', 'w8MailCountry', 'e8Country', 'e8Res', 'e8MailCountry', 'e8Ch3', 'e8Ch4', 'e8Owners', 'e8Treaty', 'e8Lob', 'w9Class', 'w9Llc', 'w9Disregarded'].indexOf(path) >= 0) {
+      // under "Change your answers" lines 1 and 2 follow the disregarded answer (the owner and the LLC, or the LLC alone)
+      // a Passive NFFE listing its U.S. owners: one row per beneficial owner onboarding collected, names pre-filled (once)
+      if (path === 'e8Owners' && v === 'listed' && !ob().d.e8OwnersSet) {
+        const od = ob().d;
+        const names = [1, 2].map((n) => ownerName(od, n)).filter(Boolean);
+        names.forEach((x, n) => (od['e8Owner' + (n + 1) + 'Name'] = x));
+        od.e8OwnerRows = Math.max(1, names.length);
+        od.e8OwnersSet = true;
+      }
+      const fc = (path === 'w9Class' || path === 'w9Disregarded') && ob().d.w9Edit ? fctx() : null;
+      if (fc) {
+        const k = w9Known(fc, ob().d);
+        Object.assign(ob().d, { w9Name: k.name, w9Business: k.business });
+      }
       NS.app.render();
       // Keep keyboard focus on the control that changed (the page was redrawn).
       const again = el.type === 'radio' ? document.querySelector(`input[name="${el.name}"][value="${CSS.escape(el.value)}"]`) : el.id && document.getElementById(el.id);
@@ -710,6 +754,7 @@
     profile: 'Investor information',
     identity: 'Identity verification',
     accreditation: 'Accreditation',
+    status: 'Investor status',
     tax: 'Tax certification',
     payment: 'Distribution payments',
     subscribe: 'Subscription',
@@ -724,7 +769,9 @@
   const digitsOf = (s) => String(s || '').replace(/\D/g, '');
   const clone = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
   /** Fields of the flow's form kept on the investor record between visits (never the password or full ID and account numbers). */
-  const SECRET = ['password', 'password2', 'tin', 'ftin', 'routing', 'account', 'account2'];
+  // T-06-44: the W-8BEN-E's substantial U.S. owners' taxpayer IDs, typed by row, are never saved either
+  const E8_OWNER_TINS = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `e8Owner${n}Tin`);
+  const SECRET = ['password', 'password2', 'tin', 'ftin', 'w8UsTin', 'ownerTin', 'e8UsTin', 'routing', 'account', 'account2'].concat(E8_OWNER_TINS);
   const MAX_FILES = 25 * 1024 * 1024;
 
   /** 32 random bytes, base64url: an invitation token (local mode). */
@@ -742,6 +789,13 @@
     // An active investor's only open invitation is one to subscribe to a new offering (invitations.js marks it existing).
     const active = inv.onboarding.status === 'complete';
     return (ws.invitations || []).filter((x) => x.investorId === inv.id && x.token && (!active || x.existing) && ['cancelled', 'expired', 'completed'].indexOf(x.status) < 0 && !expired(x)).pop() || null;
+  }
+  /** Server mode: the invitation of an investor on file this device opened from the integration server, until it is finished. */
+  function remoteOpen(ws, inv) {
+    if (!ED.diy || !isRemote(ws) || !inv) return null;
+    const it = (ws.invitations || [])[0];
+    const fl = inv.onboarding.flow;
+    return it && it.investorId === inv.id && it.existing && ['cancelled', 'expired', 'completed'].indexOf(it.status) < 0 && !expired(it) && !(fl && fl.itId === it.id && fl.completedAt) ? it : null;
   }
   function byToken(ws, token) {
     if (!ws || !token) return null;
@@ -767,17 +821,28 @@
     ws.notifications = ws.notifications || [];
     ws.notifications.push({ id: uid('ntf'), at: new Date().toISOString(), kind, title, detail, route, read: false });
   }
-  /** The investor's own invitation, for someone who signed up from an offering's sign-up link (diy.js). */
-  function selfInvite(ws, inv, o) {
-    const have = openFor(ws, inv);
+  /**
+   * The investor's own invitation, for someone who signed up from an offering's sign-up link (diy.js). opts.existing (plan
+   * 06-08): an investor on file subscribing from the portal (offering link, Investments, a subscribe address) gets the
+   * guided subscription an invitation to an investor on file gives (status step by exemption, subscription, agreement):
+   * their open invitation for this same offering, never one for another offering, or a new one marked existing.
+   * opts.portal (plan 06-25): an investor activating from the portal with no open invitation (NS.startOnboarding).
+   */
+  function selfInvite(ws, inv, o, opts) {
+    const onFile = !!(opts && opts.existing);
+    const portal = !onFile && !!(opts && opts.portal);
+    const have = onFile ? (ws.invitations || []).filter((x) => x.investorId === inv.id && x.token && x.existing && x.offeringId === (o ? o.id : '') && ['cancelled', 'expired', 'completed'].indexOf(x.status) < 0 && !expired(x)).pop() || null : openFor(ws, inv);
     if (have) return have;
     const at = new Date().toISOString();
-    const it = { id: uid('invt'), investorId: inv.id, offeringId: o ? o.id : '', cents: 0, cls: '', note: '', token: newToken(), serverId: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: at, openedAt: at, completedAt: '', expiresAt: new Date(Date.now() + 30 * 864e5).toISOString(), emailStatus: 'not_sent', emailError: '', importedAt: '', sentBy: 'Offering sign-up link' };
+    const it = { id: uid('invt'), investorId: inv.id, offeringId: o ? o.id : '', cents: 0, cls: '', note: '', token: newToken(), serverId: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: at, openedAt: at, completedAt: '', expiresAt: new Date(Date.now() + 30 * 864e5).toISOString(), emailStatus: 'not_sent', emailError: '', importedAt: '', sentBy: onFile || portal ? 'Investor portal' : 'Offering sign-up link' };
+    if (onFile) it.existing = true;
     it.link = `${location.origin}${location.pathname}?tenant=${encodeURIComponent(ws.tenant.id)}#invite-${it.token}`;
     ws.invitations = ws.invitations || [];
     ws.invitations.push(it);
     inv.onboarding = Object.assign({}, inv.onboarding, { invitationId: it.id, offeringId: it.offeringId });
-    notify(ws, 'invite_opened', `${inv.title} signed up${o ? ` for ${o.name}` : ''}`, 'From the offering sign-up link; onboarding has started', 'console-investors');
+    if (onFile) notify(ws, 'invite_opened', `${inv.title} started a subscription${o ? ` to ${o.name}` : ''}`, 'From the investor portal', 'console-investors');
+    else if (portal) notify(ws, 'invite_opened', `${inv.title} started activating their account`, 'From the investor portal, with no open invitation', 'console-investors');
+    else notify(ws, 'invite_opened', `${inv.title} signed up${o ? ` for ${o.name}` : ''}`, 'From the offering sign-up link; onboarding has started', 'console-investors');
     return it;
   }
 
@@ -785,7 +850,14 @@
   async function remoteCall(server, token, method, path, body) {
     const headers = { 'X-Invite-Token': token };
     if (body) headers['Content-Type'] = 'application/json';
-    const res = await fetch(server + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    let res;
+    try {
+      res = await fetch(server + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    } catch (e) {
+      const err = new Error('The connection failed.');
+      err.network = true;
+      throw err;
+    }
     let data = null;
     try {
       data = await res.json();
@@ -931,8 +1003,24 @@
     const onFile = ex
       ? { identity: { status: 'passed', onFile: true }, aml: { status: 'clear', onFile: true }, accreditation: ex.accredited === true ? { status: 'verified', expiresAt: until, onFile: true } : { status: 'not_started' }, decision: { status: 'approved', at: nowIso(), onFile: true } }
       : null;
-    ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}));
-    ws.invitations.push(Object.assign({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) }, ex ? { existing: true, holds: ex.holds === true } : {}));
+    // D-01: their own status answers on file (the ground on their record, their benefit plan answers) prefill the status step.
+    const exBasis = ex && typeof ex.accBasis === 'string' ? str(ex.accBasis, 300) : '';
+    const exPlan = ex && ex.erisa && typeof ex.erisa === 'object' ? ex.erisa : null;
+    const exErisa = exPlan
+      ? { plan: ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(exPlan.plan) >= 0 ? exPlan.plan : '', planPct: typeof exPlan.planPct === 'number' && isFinite(exPlan.planPct) && exPlan.planPct >= 0 && exPlan.planPct <= 100 ? exPlan.planPct : null }
+      : null;
+    // Plan 06-26: a tax-form request pre-fills the official form from the console's record (no taxpayer ID ever travels).
+    // Plan 06-27 (D-10): so does an invitation to subscribe the sponsor included the tax form in.
+    const withTax = !!(ex && sv.includeTax === true && so && sv.taxRequest !== true);
+    const tp = ex && ((sv.taxRequest === true && !so) || withTax) && si.taxPrefill && typeof si.taxPrefill === 'object' ? si.taxPrefill : null;
+    const tpAt = tp && /^\d{4}-\d{2}-\d{2}T/.test(String(tp.consentAt || '')) ? str(tp.consentAt, 40) : '';
+    const tpFill = tp
+      ? Object.assign({ address: str(tp.address, 300), country: str(tp.country, 60) }, tp.citizen === 'us' || tp.citizen === 'other' ? { citizenship: tp.citizen } : {}, tp.citizenship ? { knownCitizenship: str(tp.citizenship, 60) } : {}, tpAt ? { esignConsent: { at: tpAt, scope: 'Electronic records and signatures (ESIGN Act, UETA)' } } : {})
+      : null;
+    // Plan 06-39: a co-investor's sign-in (06-38 contract) holds one agreement that waits for them, with its current copy.
+    if (sv.coSign === true && sv.existing === true) return coSnapshot(ws, server, token, key, snap, invId);
+    ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', taxType: NS.INVESTOR_TYPES[si.taxType] ? si.taxType : '', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: exBasis, date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}, exErisa && exErisa.plan ? { erisa: exErisa } : {}, tpFill || {}));
+    ws.invitations.push(Object.assign({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) }, ex ? { existing: true, holds: ex.holds === true } : {}, ex && sv.taxRequest === true && !so ? { taxRequest: true } : {}, withTax ? { includeTax: true } : {}));
     const v = snap.verification || {};
     ws.integrations = { connections: Array.isArray(v.connections) ? clone(v.connections) : [], use: v.use && typeof v.use === 'object' ? clone(v.use) : {}, rules: v.rules && typeof v.rules === 'object' ? clone(v.rules) : {}, server: { url: server, token: '' }, configured: true };
     if (NS.integrations) NS.integrations.ensure(ws);
@@ -940,6 +1028,35 @@
     // The console's own answer, worked out on all its offerings and this investor's holdings (absent from an older console).
     if (typeof v.accreditationRequired === 'boolean') ws.invite.accRequired = v.accreditationRequired;
     alignAccreditation(ws);
+    return ws;
+  }
+  /**
+   * Plan 06-39: the workspace of a co-investor's sign-in. The account (its id and name; the co-investor's name and email as
+   * the person signing in), the agreement as the console sent it (every signer's order and status, only the co-investor's own
+   * places) and its current copy, stored as the envelope's work copy and drawn as its pages (the investor's values are printed
+   * on it). Nothing about the account investor's record is held or asked.
+   */
+  async function coSnapshot(ws, server, token, key, snap, invId) {
+    const si = snap.investor || {};
+    const sv = snap.invitation || {};
+    const st = snap.esign && snap.esign.template;
+    const envId = st ? str(st.id, 70) : '';
+    if (!st || !snap.esign.pdf || !/^[\w.-]{1,70}$/.test(envId) || envId !== str(sv.envelopeId, 70)) throw new Error('This sign-in link is incomplete. Contact the firm that sent it.');
+    const files = NS.ops && NS.ops.files;
+    const work = `${envId}-work`;
+    if (files) await files.put(work, b64Blob(snap.esign.pdf, 'application/pdf'));
+    const name = str(si.contact, 120);
+    const words = name.split(/\s+/);
+    const signers = (Array.isArray(st.signers) ? st.signers : []).slice(0, 12).filter((x) => x && typeof x === 'object').map((x, n) => ({ id: str(x.id, 80), investorId: x.investorId ? invId : null, name: str(x.name, 120), email: x.co === true ? str(x.email, 160) : '', account: str(x.account, 160), role: x.role === 'investor' ? 'investor' : 'countersigner', order: Number(x.order) || n + 1, color: hex(x.color, '#2f6fb0'), status: ['waiting', 'sent', 'viewed', 'signed', 'declined'].indexOf(x.status) >= 0 ? x.status : 'waiting', viewedAt: x.co === true ? x.viewedAt || null : null, consentAt: x.co === true ? x.consentAt || null : null, signedAt: x.status === 'signed' ? str(x.signedAt, 40) : null, declinedReason: '', signature: null, initials: null, userAgent: '', co: x.co === true }));
+    const co = signers.find((x) => x.co);
+    if (!co) throw new Error('This sign-in link is incomplete. Contact the firm that sent it.');
+    const fields = (Array.isArray(st.fields) ? st.fields : []).filter((f) => f && typeof f === 'object' && f.signerId === co.id).slice(0, 200).map((f) => clone(f));
+    ws.envelopes.push({ id: envId, title: str(st.title, 200) || 'Subscription agreement', subject: '', message: str(st.message, 1000), fileName: str(st.fileName, 160) || 'Subscription_Agreement.pdf', docId: null, workDocId: work, pages: Number(st.pages) || 1, pageSizes: Array.isArray(st.pageSizes) ? st.pageSizes.slice(0, 500) : [], sha256Original: '', offeringId: null, templateId: null, status: st.status === 'sent' ? 'sent' : str(st.status, 20), sequential: st.sequential !== false, createdAt: nowIso(), createdBy: '', sentAt: str(st.sentAt, 40) || null, completedAt: null, signedDocId: null, sha256Signed: null, signers, fields, events: [] });
+    ws.investors.push({ id: invId, contact: name, title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', taxType: '', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, coInvestor: { first: words[0] || name, last: words.slice(1).join(' '), name, email: str(si.email, 160), added: '' }, onboarding: { status: 'complete', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: '' }, payment: { method: 'check', bank: null }, positions: [] });
+    ws.invitations.push({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: '', cents: 0, cls: '', note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || snap.sentBy, 120), existing: true, coSign: true, envelopeId: envId });
+    ws.integrations = { connections: [], use: {}, rules: {}, server: { url: server, token: '' }, configured: true };
+    if (NS.integrations) NS.integrations.ensure(ws);
+    ws.invite = { mode: 'server', key, token, server, loadedAt: nowIso() };
     return ws;
   }
   /**
@@ -1038,8 +1155,9 @@
     }
     return i.onboarding.flow;
   }
-  const envOf = (c) => (c.req && c.req.envelopeId ? (c.ws.envelopes || []).find((e) => e.id === c.req.envelopeId) || null : null);
-  const signerOf = (env, i) => (env ? env.signers.find((s) => s.investorId === i.id) || null : null);
+  // Plan 06-39: a co-investor's sign-in signs the agreement it names, as the co-investor (state.co, set by ensureFlow).
+  const envOf = (c) => (c.it && c.it.coSign ? (c.ws.envelopes || []).find((e) => e.id === c.it.envelopeId) || null : c.req && c.req.envelopeId ? (c.ws.envelopes || []).find((e) => e.id === c.req.envelopeId) || null : null);
+  const signerOf = (env, i) => (env ? env.signers.find((s) => s.investorId === i.id && !!s.co === !!S().co) || null : null);
   /** The records the flow works on: workspace, invitation, investor, the subscription request and the invited offering. */
   function fctx() {
     const o = ob();
@@ -1084,6 +1202,15 @@
     if (c.req ? !!envOf(c) : true) s.push('agreement');
   };
   function flowSteps(c) {
+    // Plan 06-39: a co-investor's sign-in: the consent, the agreement, done. Nothing about the account is asked.
+    if (c.it.coSign) return ['welcome', 'agreement', 'done'];
+    // Plan 06-26 (owner decision on the verification's human item 3): the sponsor asked an investor on file for their tax form
+    // again. The link holds the tax step and the done screen; the consent to electronic records and signatures is asked
+    // first only when none is on the record (decided once, so the step count stays as the investor first saw it).
+    if (c.it.taxRequest) {
+      if (c.fl.taxConsent === undefined) c.fl.taxConsent = !!(c.inv.esignConsent && c.inv.esignConsent.at);
+      return c.fl.taxConsent ? ['tax', 'done'] : ['welcome', 'tax', 'done'];
+    }
     if (c.it.existing) {
       // An active investor invited to a new offering: their account is on file, so the link covers the subscription.
       const s = ['welcome'];
@@ -1100,16 +1227,117 @@
         }
       }
       if (c.fl.accStep) s.push('accreditation');
+      // A new Rule 506(b) offering (or the firm's accreditation question) asks an investor on file about their status too.
+      if (statusStep(c)) s.push('status');
+      // Plan 06-27 (D-10): the sponsor chose "Include tax form" on this invitation: the tax step (the official form for the
+      // investor's type, pre-filled from the record, signed or uploaded; nothing required) comes before subscribe.
+      if (c.it.includeTax) s.push('tax');
       subSteps(c, s);
       s.push('done');
       return s;
     }
     const s = ['welcome', 'login', 'profile', 'identity'];
-    if (accVerifiedFor(c) || c.ws.tenant.onboarding.accreditation) s.push('accreditation');
+    // Verified accreditation (Rule 506(c), or the firm's rules) keeps its own step; otherwise the investor status step asks.
+    if (accVerifiedFor(c)) s.push('accreditation');
+    if (statusStep(c)) s.push('status');
     s.push('tax', 'payment');
     subSteps(c, s);
     s.push('done');
     return s;
+  }
+  /**
+   * The investor status step (D-01). It asks the accredited question where accreditation is self-certified, not verified:
+   * when the invited offering is Rule 506(b) or Regulation A Tier 2, or when the firm asks about accreditation (then the
+   * accredited question only). Every invitation with an offering to subscribe to also asks the benefit plan (ERISA)
+   * questions there, under every exemption: under Rule 506(c) the verification step is unchanged and the status step
+   * shows only those questions. Nothing on it is required (D-30).
+   * Rule 506(c) with the firm's rule "Require verified accreditation: Never" (plan 06-25): Rule 506(c) allows accredited
+   * purchasers only, so with no verification step the status step asks the accredited question (self-certified) and the
+   * request records the answer, null when it is left open: nobody is recorded as accredited without an answer. The
+   * reasonable steps to verify it are the sponsor's (the console says so).
+   */
+  const EL = () => NS.eligibility;
+  const regimeOf = (c) => (EL() && c.off ? EL().regime(c.off) : '');
+  const accAsked = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || regimeOf(c) === '506c' || regimeOf(c) === 'regA2' || !!c.ws.tenant.onboarding.accreditation);
+  const statusStep = (c) => accAsked(c) || (!!EL() && !!c.off);
+  /** Offerings any investor may buy, accredited or not, with no investment limit: Regulation A Tier 1, and Tier 2 listed on an exchange. */
+  const openToAll = (c) => regimeOf(c) === 'regA1' || regimeOf(c) === 'regA2listed';
+  /**
+   * Exemptions that are not limited to accredited investors, read from the offering's exemption text (regime 'other'):
+   * 'regCF' for Regulation Crowdfunding, 'regS' for Regulation S (not Regulation S-K or S-X), else ''. Plan 06-05, Rule 1 fix.
+   */
+  const openKind = (c) => {
+    if (regimeOf(c) !== 'other') return '';
+    const ex = String(((c.off && c.off.structure) || {}).exemption || '');
+    if (/\bRegulation Crowdfunding\b|\bReg\.? ?CF\b/i.test(ex)) return 'regCF';
+    if (/\bRegulation S(?![\w-])|\bReg\.? S(?![\w-])/.test(ex)) return 'regS';
+    return '';
+  };
+  /**
+   * The benefit plan answer on the form (D-08 (1)): { plan, planPct (an entity holding plan assets: 0 to 100, or null) }.
+   * 'other' is an answer an earlier version offered (a governmental, church or non-U.S. plan); it is kept as given.
+   */
+  function erisaFrom(d) {
+    const plan = ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(d.stPlan) >= 0 ? d.stPlan : '';
+    const planPct = plan === 'planAssets' ? EL().planPct(String(d.stPlanPct == null ? '' : d.stPlanPct).trim()) : null;
+    return { plan, planPct };
+  }
+  const PLAN_SAID = { title1: 'a plan under Title I of ERISA', 4975: 'a plan or account under Code section 4975', planAssets: 'an entity holding plan assets', other: 'a governmental, church or non-U.S. plan', none: 'not a benefit plan investor' };
+  /** T-06-01: the benefit plan answer, for the change log. */
+  function erisaLogText(d) {
+    const e = erisaFrom(d);
+    const plan = e.plan ? `${PLAN_SAID[e.plan]}${e.plan === 'planAssets' ? ` (${e.planPct == null ? 'percentage not given' : `${e.planPct}% held by benefit plan investors`})` : ''}` : 'not answered';
+    return `benefit plan: ${plan}`;
+  }
+  /** D-08 (2): the answer to Rule 506(b)(2)(ii)'s question ('alone', 'rep', 'no' or ''); an earlier version's "representative: yes" reads as 'rep'. */
+  const sophOf = (d) => (['alone', 'rep', 'no'].indexOf(d.stSoph) >= 0 ? d.stSoph : d.stRep === 'yes' ? 'rep' : '');
+  /** Regulation A Tier 2: a person attests against annual income or net worth, an organization against revenue or net assets. */
+  const raKindDefault = (c, d) => (['trust', 'entity'].indexOf(d.type || c.inv.type) >= 0 ? 'entity' : 'person');
+  /** Under Regulation A Tier 2, an investor who said they are not accredited is asked to attest to the 10 percent limit. */
+  const raAsked = (c, d) => accAsked(c) && regimeOf(c) === 'regA2' && d.stAcc === 'no';
+  /**
+   * D-07 (owner, Rule 251(d)(2)(i)(C)): the investor's own statement that the total they put into this offering is within
+   * the limit. The portal asks for no figures and works out no limit; the issuer may rely on the statement. Optional (D-30).
+   */
+  function raAttestText(c, d) {
+    if (raKindDefault(c, d) === 'entity') return `The total ${h(c.inv.title)} is investing in this offering, counting anything it already holds or has subscribed for in it, is not more than 10 percent of its revenue or its net assets for the most recent fiscal year, whichever is greater.`;
+    if ((d.type || c.inv.type) === 'joint') return 'The total we are investing in this offering, counting anything we already hold or have subscribed for in it, is not more than 10 percent of our annual income or our net worth (not counting our primary residence), whichever is greater.';
+    return 'The total I am investing in this offering, counting anything I already hold or have subscribed for in it, is not more than 10 percent of my annual income or my net worth (not counting my primary residence), whichever is greater.';
+  }
+  /** T-06-08: the attestation, for the change log. */
+  const raLogText = (c, d) => `; Regulation A Tier 2: ${d.stRaAttest === true ? 'attested' : 'did not attest'} that the total invested in this offering is within 10 percent of the greater of income or net worth (organizations: revenue or net assets)`;
+  /**
+   * C-01 on the subscribe step: a plain warning when the investor did not attest to the limit. They can still subscribe;
+   * nothing is required.
+   */
+  function raSubLine(c, d) {
+    if (!c || !c.off || !raAsked(c, d) || d.stRaAttest === true) return '<div class="field-wide" id="ra-sub" hidden></div>';
+    const t = c.ws.tenant;
+    return `<div class="field-wide" id="ra-sub"><p class="wire-warn" role="note">${icon('alert')}<span>You have not confirmed that your total investment in this offering is within your limit under Regulation A (10 percent of the greater of your income or net worth).</span></p></div>`;
+  }
+  /** The status answers kept on the subscription request (request.qual). */
+  function qualFrom(c, d) {
+    const reg = regimeOf(c);
+    // The answer counts only where the step asked it (a ground prefilled from the record is not an answer elsewhere).
+    const asked = accAsked(c);
+    const accredited = asked && d.stAcc === 'yes' ? true : asked && d.stAcc === 'no' ? false : accVerifiedFor(c) && IV() && NS.integrations.accreditationValid(c.ws, c.inv) ? true : null;
+    const q = { regime: reg, at: nowIso(), accredited, basis: accredited === true && asked && d.stAcc === 'yes' ? String(d.stBasis || '') : '' };
+    if (accredited === false && reg === '506b') {
+      const name = String(d.stRepName || '').trim();
+      // Rule 501(i): the investor's written acknowledgment of the representative, when uploaded (rep-<investor>-<time>).
+      const file = d.stRepFileId ? { fileId: String(d.stRepFileId), fileName: String(d.stRepFileName || '') } : {};
+      // D-08 (2) (owner, plan 06-15): only what Rule 506(b)(2)(ii) and Rule 501(i) need: whether the investor, alone or with a
+      // purchaser representative, has the knowledge and experience to evaluate the investment, and who the representative is.
+      const soph = sophOf(d);
+      q.sophistication = { knowledge: soph, rep: soph === 'rep' ? Object.assign({ name }, file) : null };
+    }
+    if (accredited === false && reg === 'regA2') {
+      // D-07: the attestation only (true ticked, false shown and left unticked, null when the step never showed it).
+      q.regA = { attested: d.stRaAttest === true ? true : d.stRaAttest === false ? false : null };
+    }
+    // D-01: the benefit plan answers, with the share of this interest counted as held by benefit plan investors.
+    if (statusStep(c)) q.erisa = erisaFrom(d);
+    return q;
   }
   const stepLabel = (c, k) => (k === 'accreditation' && accVerifiedFor(c) ? 'Accredited investor verification' : FL[k]);
   /** Why the verification step appeared after the investor had moved past it (flowSteps sets fl.accLate). */
@@ -1122,8 +1350,12 @@
   function currentKey(c, steps) {
     // Finished, unless the investor is signing the agreement again (its signed copy could not be sent: ivf-resign).
     if (c.fl.completedAt && !c.fl.resignAt) return 'done';
-    const k = c.fl.at || 'welcome';
-    return steps.indexOf(k) >= 0 ? k : 'welcome';
+    // (a tax-form request may start on its tax step: plan 06-26)
+    const k = c.fl.at || steps[0] || 'welcome';
+    if (steps.indexOf(k) >= 0) return k;
+    // A flow saved at the self-certified Accreditation step (before the investor status step replaced it) resumes there.
+    if (k === 'accreditation' && steps.indexOf('status') >= 0) return 'status';
+    return steps.indexOf('welcome') >= 0 || !steps.length ? 'welcome' : steps[0];
   }
   const curOf = (o) => (NS.structures ? NS.structures.curOf(o) : 'USD');
   const money = (o, n) => (curOf(o) === 'USD' ? U.usd(n) : NS.structures.fmtWhole(n, curOf(o)));
@@ -1137,10 +1369,14 @@
     const u = S().ui;
     S().viewer = i.id;
     S().role = 'investor';
+    S().co = !!it.coSign;
     if (u.ob && u.ob.mode === 'invite' && u.ob.itId === it.id) return u.ob;
     const fl = flowOf(i, it);
+    // Plan 06-26: a tax-form request signs with the consent on the investor's record (given when they started onboarding,
+    // with the same disclosures as the consent screen), recorded on the form's envelope as an invitation's welcome step does.
+    if (it.taxRequest && !fl.consentAt && i.esignConsent && /^\d{4}-\d{2}-\d{2}T/.test(String(i.esignConsent.at || ''))) fl.consentAt = i.esignConsent.at;
     const bank = (i.payment && i.payment.bank) || {};
-    const addr = splitAddress(i.address);
+    const addr = splitAddressFor(i);
     const off = NS.state.ws.offerings.find((x) => x.id === it.offeringId);
     const saved = Object.assign({}, fl.d || {});
     // Answers saved before the form asked for first and last names hold the account name on one line. A person's own name
@@ -1161,14 +1397,15 @@
           password2: '',
           type: i.type || 'individual',
           title: orgTitle(i),
-          country: i.country || US,
+          // D-09: a foreign investor type starts with no country chosen and, for a person, another citizenship.
+          country: i.country || (foreignType(i) ? '' : US),
           street: addr.street,
           city: addr.city,
           st: addr.st,
           zip: addr.zip,
           phone: i.phone || '',
           dob: '',
-          citizen: i.citizenship || 'us',
+          citizen: i.citizenship || (foreignType(i) && PERSONAL(i.type || 'individual') ? 'other' : 'us'),
           tin: '',
           formation: '',
           owner1: splitName(i.contact)[0],
@@ -1179,17 +1416,100 @@
           owner2pct: '',
           pep: '',
           accBasis: (i.accreditation && i.accreditation.basis) || '',
+          // Investor status (D-01): prefilled only from an accreditation basis already on the record; never required.
+          stAcc: i.accreditation && i.accreditation.basis ? 'yes' : '',
+          stBasis: (i.accreditation && i.accreditation.basis) || '',
+          stSoph: '',
+          stRepName: '',
+          stRepFileId: '',
+          stRepFileName: '',
+          // The benefit plan question (D-01, D-08 (1)): from the answer on the investor record (an IRA starts at Code section
+          // 4975 when the step is first shown: planQuestions); never required.
+          stPlan: (i.erisa && i.erisa.plan) || '',
+          stPlanPct: i.erisa && i.erisa.planPct != null ? String(i.erisa.planPct) : '',
+          // Regulation A Tier 2 (D-07): the investor's attestation to the 10 percent limit, never required.
+          stRaAttest: false,
           accAttest: false,
           accFile: '',
           usPerson: '',
           backup: false,
           w9: false,
-          taxCountry: '',
+          // The W-9's answers the investor changed on the tax step (empty: the form takes them from Investor information).
+          w9Name: '',
+          w9Street: '',
+          w9City: '',
+          w9Exempt: '',
+          w9Fatca: '',
+          // Plan 06-19: the W-9 classification (line 3a) asked of an entity's account, its LLC tax letter, the "other" text
+          // and line 3b; w9ClassFor is the account type they were answered for (a changed type starts them again).
+          w9Class: '',
+          w9ClassFor: '',
+          w9Llc: '',
+          w9Other: '',
+          w9Foreign: false,
+          // an LLC disregarded for U.S. tax: line 1 its owner, line 2 the LLC, the owner's SSN (ownerTin, memory only: SECRET)
+          w9Disregarded: false,
+          ownerTin: '',
+          w9Business: '',
+          // under "Change your answers": which taxpayer ID the number is (empty: an SSN for a person's account, else an EIN)
+          w9TinKind: '',
           ftin: '',
           noFtin: false,
           treaty: '',
-          w8: false,
-          taxSig: '',
+          // The W-8BEN's answers the investor changed on the tax step (plan 06-18; empty: taken from Investor information).
+          w8Name: '',
+          // plan 06-26: the country of citizenship is asked on the W-8BEN, pre-selected only from the investor's own earlier answer
+          w8Citizen: citizenPick(givenCitizenship(i)).pick,
+          w8CitizenOther: citizenPick(givenCitizenship(i)).other,
+          w8Street: '',
+          w8City: '',
+          w8Country: '',
+          w8CountryOther: '',
+          w8MailStreet: '',
+          w8MailCity: '',
+          w8MailCountry: '',
+          w8MailCountryOther: '',
+          w8UsTin: '',
+          w8Ref: '',
+          w8Dob: '',
+          w8Article: '',
+          w8Rate: '',
+          w8Income: '',
+          w8Explain1: '',
+          w8Explain2: '',
+          w8Capacity: false,
+          // The W-8BEN-E's answers (plan 06-20): the two statuses, and those the investor changed on the tax step (empty:
+          // taken from Investor information); e8UsTin is memory only (SECRET).
+          e8Ch3: '',
+          e8Ch4: '',
+          e8Giin: '',
+          e8Owners: '',
+          e8OwnerRows: 1,
+          e8OwnersSet: false,
+          e8Treaty: '',
+          e8Lob: '',
+          e8LobOther: '',
+          e8Article: '',
+          e8Rate: '',
+          e8Income: '',
+          e8Explain1: '',
+          e8Explain2: '',
+          e8Explain3: '',
+          e8Name: '',
+          e8Country: '',
+          e8CountryOther: '',
+          e8Street: '',
+          e8City: '',
+          e8Res: '',
+          e8ResOther: '',
+          e8MailStreet: '',
+          e8MailCity: '',
+          e8MailCountry: '',
+          e8MailCountryOther: '',
+          e8UsTin: '',
+          e8Ref: '',
+          e8Print: '',
+          e8Capacity: true,
           method: i.payment && i.payment.method === 'check' && fl.d ? 'check' : 'ach',
           holder: '',
           acctType: bank.type || 'checking',
@@ -1222,32 +1542,22 @@
     const first = String(c.inv.contact || '').split(/\s+/)[0];
     const ent = ENTITY_KYC(c.inv.type);
     const offName = (c.off || c.closed) && (c.off || c.closed).name.replace(/\.$/, '');
-    const intro = c.it.existing
+    // D-06 (plan 06-15): who invited the investor and to what, in one sentence (the account named when it is not the
+    // person); no description of the page, no facts list repeating it, no "what you will need" list or time estimate.
+    const forAcct = c.inv.title && !sameName(c.inv.title, c.inv.contact) ? ` for ${h(c.inv.title)}` : '';
+    const intro = c.it.coSign
+      ? `${h(t.name)} asks you to sign the subscription agreement for ${h(c.inv.title)} as co-investor. Only your places on it are yours to complete.`
+      : c.it.taxRequest
+      ? `${h(t.name)} asks you for your tax form${forAcct}. This link covers that form only.`
+      : c.it.existing
       ? c.off
-        ? `${h(t.name)} invited you to subscribe to ${h(offName)}. Your account details are already on file, so this page takes you through the subscription: the offering documents, your commitment and the subscription agreement.`
+        ? `${h(t.name)} invited you to subscribe to ${h(offName)}${forAcct}. Your account details are already on file.`
         : `${h(t.name)} invited you to subscribe to ${h(offName || 'an offering')}, which is no longer accepting subscriptions. Contact ${h(sup.team || 'investor relations')} about other opportunities.`
-      : `${h(t.name)} invited you to open your investor account${c.off ? ` and subscribe to ${h(offName)}` : ''}. This page takes you through every step, from creating your login to ${c.off ? 'signing your subscription documents' : 'setting up your distribution payments'}.`;
+      : `${h(t.name)} invited you to open an investor account${forAcct}${c.off ? ` and subscribe to ${h(offName)}` : ''}.`;
     return `${ivfH1(`Welcome${first ? `, ${h(first)}` : ''}`)}
       <p class="lede">${intro}</p>
       ${c.closed && !c.it.existing ? `<p class="meta ivf-closed">${h(offName)} is no longer accepting subscriptions, so this page sets up your account only. ${h(sup.team || 'Investor relations')} will contact you about it.</p>` : ''}
-      <dl class="terms ivf-facts">
-        <div><dt>Invited by</dt><dd>${sender && sender !== 'Offering sign-up link' ? `${h(sender)}, ${h(t.name)}` : h(t.name)}</dd></div>
-        <div><dt>Account</dt><dd>${h(c.inv.title)} · ${h((NS.ENTITY_TYPES[c.inv.type] || {}).label || c.inv.type)}</dd></div>
-        ${c.off ? `<div><dt>Offering</dt><dd>${h(c.off.name)}${c.off.type ? ` · ${h(c.off.type)}` : ''}</dd></div>` : ''}
-        ${c.off && c.it.cents ? `<div><dt>Commitment</dt><dd>${money(c.off, c.it.cents / 100)}${cls ? ` · ${h(cls.name)}` : ''}</dd></div>` : ''}
-      </dl>
       ${c.it.note ? `<figure class="ivf-note"><blockquote>${h(c.it.note)}</blockquote>${sender && sender !== 'Offering sign-up link' ? `<figcaption>${h(sender)}</figcaption>` : ''}</figure>` : ''}
-      <h2 class="ivf-h2">What you will need</h2>
-      <ul class="ivf-need">
-        ${
-          c.it.existing
-            ? `<li>About 5 minutes. Your investor information, tax form and distribution account stay as they are on file.</li>${c.fl.accStep ? '<li>Proof of your accredited investor status for the verification step</li>' : ''}`
-            : `<li>${ent ? 'Where the account was formed, and the name of anyone who owns 25% or more of it' : 'A government-issued photo ID: a driver’s license, passport or state ID'}</li>
-        <li>${ent ? 'The account’s taxpayer ID (EIN), or its foreign tax number' : 'Your Social Security number, or your foreign tax number if you are not a U.S. person'}</li>
-        <li>Your bank’s routing number and your account number, for distributions</li>
-        <li>About 10–15 minutes. Your progress is saved after each step: you can stop and come back with the same link.</li>`
-        }
-      </ul>
       <div class="cert ivf-consent" id="ivf-consent">
         <p class="cert-title">Consent to electronic records and signatures</p>
         <p>${h(t.legalName || t.name)} asks to provide your account documents to you electronically and to have you sign them electronically, under the U.S. Electronic Signatures in Global and National Commerce Act (ESIGN) and the Uniform Electronic Transactions Act (UETA).</p>
@@ -1260,20 +1570,18 @@
       </div>
       <div class="form-grid">
         ${check('esignConsent', 'I agree to use electronic records and signatures, and I have read the information above.')}
-        ${t.onboarding.esign ? check('edelivery', `I consent to receive statements, tax documents and notices electronically through this portal. I can withdraw consent at any time by contacting ${h(sup.team || 'investor relations')}.`) : ''}
+        ${t.onboarding.esign && !c.it.coSign ? check('edelivery', `I consent to receive statements and notices electronically through this portal. I can withdraw consent at any time by contacting ${h(sup.team || 'investor relations')}.`) : ''}
       </div>`;
   }
   function fLogin(c) {
     const i = c.inv;
     return `${ivfH1(FL.login)}
-      <p class="lede">You will sign in to ${h(c.ws.tenant.portalName)} with this email and password.</p>
       <div class="form-grid">
         ${loginNames(ob().d, i)}
         <label class="field" for="ob-email"><span>Email</span><input id="ob-email" type="email" value="${h(i.email)}" readonly autocomplete="username"></label>
         ${input('password', 'Password', { type: 'password', auto: 'new-password', hint: c.fl.loginAt ? 'Your login is set up. Enter a new password only to change it.' : 'At least 10 characters' })}
         ${input('password2', 'Confirm password', { type: 'password', auto: 'new-password' })}
-      </div>
-      <p class="meta">Each time you sign in from a new device you will also enter a 6-digit code from an authenticator app or a text message.</p>`;
+      </div>`;
   }
   function countrySelect(k, label, opts) {
     opts = opts || {};
@@ -1290,11 +1598,10 @@
     const req = needTin(d);
     const onFile = c.inv.tinLast4 ? ` On file: ending ${h(c.inv.tinLast4)}; leave empty to keep it.` : '';
     return `${ivfH1(FL.profile)}
-      <p class="lede">This appears on your account, your subscription documents and your tax forms.</p>
       <div class="form-grid">
         ${radios('type', 'Investing as', Object.keys(NS.ENTITY_TYPES).map((k) => [k, NS.ENTITY_TYPES[k].label]))}
         ${nameFields()}
-        ${countrySelect('country', 'Country of mailing address', { wide: true })}
+        ${countrySelect('country', 'Country of mailing address', { wide: true, empty: d.country ? '' : 'Choose a country' })}
         ${input('street', 'Mailing address', { wide: true, auto: 'street-address' })}
         ${input('city', 'City', { auto: 'address-level2' })}
         ${us ? `<div class="field-pair">${input('st', 'State', { max: 2, upper: true, narrow: true, auto: 'address-level1' })}${input('zip', 'ZIP code', { max: 10, mode: 'numeric', narrow: true, auto: 'postal-code' })}</div>` : `<div class="field-pair">${input('st', 'State, province or region <em>Optional</em>', { max: 60, auto: 'address-level1' })}${input('zip', 'Postal code <em>Optional</em>', { max: 12, narrow: true, auto: 'postal-code' })}</div>`}
@@ -1309,57 +1616,872 @@
             : `${input('dob', 'Date of birth', { type: 'date', auto: 'bday' })}
           ${radios('citizen', 'Citizenship', [['us', 'United States'], ['other', 'Another country']])}`
         }
-        ${input('tin', req ? tinLabel : `U.S. taxpayer ID <em>Optional</em>`, { mode: 'numeric', max: 11, hint: (req ? 'Nine digits. Stored encrypted; only the last four are shown again.' : 'Only if you have one. You give your foreign tax number in the tax step.') + onFile })}
-        ${radios('pep', `Is ${ent ? 'any owner or controlling person' : 'any account owner'} a senior political figure, or a close family member or associate of one?`, [['no', 'No'], ['yes', 'Yes', `${c.ws.tenant.support.team} will contact you for enhanced due diligence`]])}
+        ${input('tin', req ? tinLabel : `U.S. taxpayer ID <em>Optional</em>`, { mode: 'numeric', max: 11, hint: (req ? 'Nine digits.' : 'Only if you have one.') + onFile })}
+        ${radios('pep', `Is ${ent ? 'any owner or controlling person' : 'any account owner'} a senior political figure, or a close family member or associate of one?`, [['no', 'No'], ['yes', 'Yes']])}
       </div>`;
   }
   function fIdentity(c) {
     const ent = ENTITY_KYC(c.inv.type);
+    // D-06 (plan 06-15): whose identity is checked, for an account a person controls; no explanation of the firm's duty and
+    // no note about the screening the investor has nothing to do for.
     return `${ivfH1(FL.identity)}
-      <p class="lede">${h(c.ws.tenant.shortName)} is required to verify the identity of every investor before accepting an investment.${ent ? ` The check is for ${h(c.inv.contact)}, who controls the account.` : ''}</p>
-      <div class="form-grid">${IV() ? IV().stepPanel(c.ws, c.inv, 'identity') : ''}${err('ivIdentity')}</div>
-      <p class="meta">Sanctions and politically exposed person screening of ${ent ? 'the account and each beneficial owner' : 'your name'} runs automatically once your identity is verified. There is nothing to fill in for it, and your details are used only for anti-money-laundering compliance.</p>`;
+      ${ent ? `<p class="lede">The check is for ${h(c.inv.contact)}, who controls the account.</p>` : ''}
+      <div class="form-grid">${IV() ? IV().stepPanel(c.ws, c.inv, 'identity') : ''}${err('ivIdentity')}</div>`;
+  }
+  /**
+   * The grounds offered on the status step. An investor on file whose record holds a ground worded another way (an earlier
+   * list) sees it first, selected, so the prefilled answer is visible and can be kept or changed.
+   */
+  function groundsFor(d) {
+    const list = EL().BASES.map((x) => [x, x]);
+    const own = String(d.stBasis || '');
+    return own && EL().BASES.indexOf(own) < 0 ? [[own, own, 'The ground on your record']].concat(list) : list;
+  }
+  /** Rule 501(i): the investor's written acknowledgment of their purchaser representative, optional (D-30). */
+  function repFile(d) {
+    const e = ob().errors.stRepFile;
+    return `<label class="field field-wide" for="ob-stRepFile"><span>Your written acknowledgment that this person is your purchaser representative <em>Optional</em></span>
+      <input id="ob-stRepFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ivf-repfile"${e ? ' aria-invalid="true" aria-describedby="err-stRepFile"' : ''}>
+      <span class="hint" id="hint-stRepFile">${d.stRepFileName ? `Attached: ${h(d.stRepFileName)}` : `PDF, PNG or JPEG, up to ${mb(MAX_FILES)} MB.`}</span>${err('stRepFile')}</label>`;
+  }
+  function fStatus(c) {
+    const d = ob().d;
+    const reg = regimeOf(c);
+    // D-06 (plan 06-15): no lede beyond the one notice the law asks for: under Regulation A Tier 2 the investor is told of the
+    // 10 percent limit (Rule 251(d)(2)(i)(C)). The "506(b) may be full" warning, the explanations of the firm's reasons, the
+    // "you may leave any question unanswered" line and the "kept with your subscription" note are gone.
+    const raName = /\bTier\s*(?:2|II|two)\b/i.test(String((c.off && c.off.structure && c.off.structure.exemption) || '')) ? 'Tier 2 of Regulation A' : 'Regulation A';
+    const lede = reg === 'regA2' && accAsked(c) ? `<p class="lede">${h(c.off.name)} is offered under ${raName}. If you are not an accredited investor, what you may put into this offering is limited to 10 percent of your annual income or your net worth, whichever is greater (for an organization, its revenue or its net assets for the most recent fiscal year).</p>` : '';
+    if (!accAsked(c)) return `${ivfH1(FL.status)}${planQuestions(c, d, false)}`;
+    // Rule 506(b), not accredited: Rule 506(b)(2)(ii)'s question and, with a representative, who it is and the investor's
+    // written acknowledgment (Rule 501(i)). D-08 (2): nothing else.
+    const no = d.stAcc === 'no' && reg === '506b';
+    const soph = sophOf(d);
+    const who = h(c.inv.title);
+    return `${ivfH1(FL.status)}
+      ${lede}
+      <div class="form-grid">
+        ${radios('stAcc', `Is ${who} an accredited investor?`, [['yes', 'Yes'], ['no', 'No']])}
+        ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', groundsFor(d)) : ''}
+        ${reg === 'regA2' && d.stAcc === 'no' ? check('stRaAttest', raAttestText(c, d)) : ''}
+        ${
+          no
+            ? `${radios('stSoph', `Does ${who}, alone or with a purchaser representative, have enough knowledge and experience of business and financial matters to judge the merits and risks of this investment?`, [['alone', 'Yes, alone'], ['rep', 'Yes, with a purchaser representative'], ['no', 'No']])}
+        ${soph === 'rep' ? `${input('stRepName', 'Purchaser representative’s name', { max: 120 })}${repFile(d)}` : ''}`
+            : ''
+        }
+      </div>
+      ${c.off ? planQuestions(c, d, true) : ''}`;
+  }
+  /**
+   * The benefit plan question on the status step (D-01, D-08 (1)), not required (D-30): whether the account is a benefit plan
+   * investor (29 CFR 2510.3-101(f)(2)) and, for an entity holding plan assets, the share of its equity held by benefit plan
+   * investors (the 25 percent count needs it). The sponsor judges the 25 percent test from the plain list of who said yes.
+   * An IRA account starts at Code section 4975 the first time the step is shown in a session; the investor can change it.
+   * withHead: a heading over the question when it follows the accredited questions on the same screen.
+   */
+  function planQuestions(c, d, withHead) {
+    const o = ob();
+    if (!o.planSeen) {
+      o.planSeen = true;
+      if (!d.stPlan && (d.type || c.inv.type) === 'ira') d.stPlan = '4975';
+    }
+    const who = h(c.inv.title);
+    const opts = [
+      ['title1', 'Yes: an employee benefit plan subject to Title I of ERISA', 'Such as a company pension or 401(k) plan'],
+      ['4975', 'Yes: a plan or account subject to section 4975 of the Internal Revenue Code', 'Such as an IRA or a Keogh plan'],
+      ['planAssets', 'Yes: an entity whose assets include plan assets', 'Such as a fund or account in which benefit plans invest'],
+      ['none', 'No']
+    ];
+    // An answer an earlier version offered stays visible and selected until changed.
+    if (d.stPlan === 'other') opts.push(['other', 'A governmental, church or non-U.S. plan', 'Your earlier answer']);
+    return `${withHead ? '<h2 class="ivf-h2">Benefit plans</h2>' : ''}
+      <div class="form-grid">
+        ${radios('stPlan', `Is ${who} a benefit plan investor?`, opts)}
+        ${d.stPlan === 'planAssets' ? input('stPlanPct', 'Share of the entity’s equity held by benefit plan investors (%)', { type: 'number', mode: 'decimal', narrow: true }) : ''}
+      </div>`;
+  }
+  /* ---------- The tax step (D-01, D-04, D-06, D-09) ----------
+   * The investor type the sponsor chose decides the form, and one plain line lets the investor correct it (otherwise the
+   * wrong form would be signed). A U.S. person gets the official Form W-9 in two views: the answers, pre-filled from what
+   * onboarding already knows so that only what is missing is asked, then the filled, flattened form to sign on the page
+   * (built on Continue, never while rendering). A foreign individual (or the first holder of a foreign joint account) gets
+   * the official Form W-8BEN the same way (plan 06-18). A foreign entity or trust gets the official Form W-8BEN-E for the
+   * statuses a pre-filled form can honestly cover (plan 06-20); any other status is pointed to the form that usually
+   * applies, and no W-8BEN-E is built. Nothing on any form is required (D-30).
+   */
+  // T-06-35: the nine digits typed at the profile step, by investor id, in this page's memory only until the form is built;
+  // never saved (SECRET keeps tin out of saved answers). After a reload the tax step asks for the number again.
+  const TINS = {};
+  const W9_KEY = 'W-9 2024-03';
+  const W8_KEY = 'W-8BEN 2021-10';
+  const W8E_KEY = 'W-8BEN-E 2021-10';
+  // T-06-40, T-06-44: the foreign tax ID and the U.S. taxpayer IDs typed on the W-8BEN or W-8BEN-E answers (the entity's
+  // own, and its substantial U.S. owners' by row), by investor id, in this page's memory only until the form is finished
+  // (so a corrected answer rebuilds the form with them); never saved (SECRET).
+  const W8MEM = {};
+  // Research FORM-07: the answers each tax form was built from, by envelope id, in this page's memory only (no stored
+  // fingerprint), without the tax numbers. Continue compares the new answers with them to keep or rebuild the form.
+  const BUILT = {};
+  // Plan 06-21 (D-01, T-06-45): the completed form chosen on the upload view, by investor id, in this page's memory only
+  // until Continue stores it (after its first bytes and size were checked when it was chosen, and again then).
+  const UPLOADS = {};
+  const SECRET_ANSWERS = ['ssn', 'ein', 'ftin', 'usTin'];
+  const secretAnswer = (k) => SECRET_ANSWERS.indexOf(k) >= 0 || /^owner\dTin$/.test(k);
+  // The countries of the list (COUNTRIES) with an income tax treaty with the United States in force: the IRS list "United
+  // States Income Tax Treaties - A to Z" (irs.gov, last reviewed 3 January 2026). Hungary is on that list but its treaty was
+  // terminated (effective 8 January 2023, the IRS Hungary treaty page), so it is left out.
+  const TREATY = ['Australia', 'Austria', 'Belgium', 'Canada', 'Chile', 'China', 'Cyprus', 'Czech Republic', 'Denmark', 'Egypt', 'Finland', 'France', 'Germany', 'Greece', 'Iceland', 'India', 'Indonesia', 'Ireland', 'Israel', 'Italy', 'Japan', 'Luxembourg', 'Malta', 'Mexico', 'Netherlands', 'New Zealand', 'Norway', 'Philippines', 'Poland', 'Portugal', 'South Africa', 'South Korea', 'Spain', 'Sweden', 'Switzerland', 'Thailand', 'Turkey', 'United Kingdom'];
+  const OTHER_COUNTRY = 'Another country';
+  /**
+   * D-30, research Pitfall 1: the one rule for "a tax form is on file", used by every reader (the console row, the
+   * investor's Account page, the audit's tax-forms check and register). A form finished without a signature
+   * (taxCert.signed false) is not on file; a record from before signing existed (no signed flag) still is.
+   */
+  // plan 06-22: a signed form whose copy the firm's console did not receive (received false, set by the console's import) is not on file
+  const taxOnFile = (i) => !!(i && i.taxForm) && (i.taxCert || {}).signed !== false && (i.taxCert || {}).received !== false;
+  const foreignType = (i) => /^foreign-/.test((i && i.taxType) || '');
+  /** A U.S. person for the tax form: an IRA always (its custodian is one); otherwise the investor type, as corrected here. */
+  const usTax = (c, d) => d.type === 'ira' || (d.usPerson ? d.usPerson === 'yes' : !foreignType(c.inv));
+  const tinOf = (c, d) => (digitsOf(d.tin).length === 9 ? digitsOf(d.tin) : TINS[c.inv.id] || '');
+  /**
+   * The official form of the tax step: W-9 for a U.S. person, W-8BEN for a foreign individual or joint account, W-8BEN-E for
+   * a foreign entity or trust; '' when the entity gave a status the W-8BEN-E here does not cover (e8Routed).
+   */
+  const taxKey = (c, d) => (usTax(c, d) ? W9_KEY : PERSONAL(d.type) ? W8_KEY : e8Routed(d) ? '' : W8E_KEY);
+  /**
+   * Plan 06-21 (D-01): the completed forms an investor can upload instead, for the account as it stands on the step (value,
+   * label, hint). "other" is recorded as "Tax form".
+   */
+  function upForms(c, d) {
+    const other = [['other', 'Another tax form']];
+    if (usTax(c, d)) return [['W-9', d.type === 'ira' ? 'The custodian’s Form W-9' : 'Form W-9']].concat(other);
+    const eci = ['W-8ECI', 'Form W-8ECI', 'Income effectively connected with a U.S. trade or business'];
+    if (PERSONAL(d.type)) return [['W-8BEN', 'Form W-8BEN'], eci].concat(other);
+    return [['W-8BEN-E', 'Form W-8BEN-E'], ['W-8IMY', 'Form W-8IMY', 'Partnerships, grantor trusts and intermediaries'], eci, ['W-8EXP', 'Form W-8EXP', 'Governments and tax-exempt organizations']].concat(other);
+  }
+  /** A country name the form can print: not the United States, not the list's "Another country", not empty. */
+  const realCountry = (v) => (v && v !== US && v !== OTHER_COUNTRY ? v : '');
+  /** A country answer of the W-8BEN: from the fixed list, or the name typed beside "Another country" (T-06-40). */
+  const w8CountryOf = (d, k) => (d[k] === OTHER_COUNTRY ? tidy(d[k + 'Other']).slice(0, 40) : realCountry(d[k]));
+  /** YYYY-MM-DD (the date input) as the W-8BEN's MM-DD-YYYY; anything else is left empty. */
+  const mdy = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(String(iso || '')) ? `${iso.slice(5, 7)}-${iso.slice(8, 10)}-${iso.slice(0, 4)}` : '');
+  /**
+   * What onboarding already knows for the W-8BEN: the beneficial owner (the investor, or the first holder of a joint
+   * account), the permanent residence, the date of birth and, for another citizenship, the residence country as the country
+   * of citizenship (the step says so); the treaty country is the residence country when it has a treaty (TREATY).
+   */
+  /**
+   * Plan 06-26 (owner decision on the verification's human item 2): the W-8BEN's country of citizenship (line 2) is the
+   * investor's own answer, never the residence country copied in its place (a resident of a country is not always its citizen,
+   * and line 2 is signed under penalties of perjury). The one earlier answer it is pre-selected from: the citizenship given on
+   * a W-8BEN this investor completed before (taxCert.citizenship, kept on the record from plan 06-26 on).
+   */
+  function givenCitizenship(i) {
+    const tc = i && i.taxCert;
+    if (tc && tc.form === 'W-8BEN' && typeof tc.citizenship === 'string' && tc.citizenship && tc.citizenship !== US) return tc.citizenship.trim().slice(0, 60);
+    // server mode: the same earlier answer, as the console sent it with a tax-form request (fromSnapshot)
+    return i && typeof i.knownCitizenship === 'string' && i.knownCitizenship !== US ? i.knownCitizenship.trim().slice(0, 60) : '';
+  }
+  /** A country name as the W-8BEN country choice holds it: one of the list, or "Another country" with the name typed beside it. */
+  function citizenPick(name) {
+    if (!name) return { pick: '', other: '' };
+    return COUNTRIES.indexOf(name) >= 0 && name !== OTHER_COUNTRY ? { pick: name, other: '' } : { pick: OTHER_COUNTRY, other: name };
+  }
+  function w8Known(c, d) {
+    const res = realCountry(d.country);
+    const place = [tidy(d.city), tidy(d.st)].filter(Boolean).join(', ');
+    const cityLine = [place, tidy(d.zip)].filter(Boolean).join(' ');
+    return { name: tidy(c.inv.contact), citizenship: givenCitizenship(c.inv), street: tidy(d.street), cityLine, country: res, countryPick: res || (d.country === OTHER_COUNTRY ? OTHER_COUNTRY : ''), dob: /^\d{4}-\d{2}-\d{2}$/.test(String(d.dob || '')) ? d.dob : '', treaty: TREATY.indexOf(res) >= 0 ? res : '' };
+  }
+  /** The W-8BEN's answers, by the map's own keys: what onboarding knows, with any answer changed on this step. */
+  function w8Answers(c, d) {
+    const k = w8Known(c, d);
+    const ed = !!d.w8Edit;
+    // after "Change your answers" (d.w8Edit) the answers are used as given, an emptied one too (D-30)
+    const own = (v, known) => (ed ? v : v || known);
+    const m = W8MEM[c.inv.id] || {};
+    const name = own(tidy(d.w8Name), k.name);
+    const a = {
+      name,
+      citizenship: own(w8CountryOf(d, 'w8Citizen'), k.citizenship),
+      street: own(tidy(d.w8Street), k.street),
+      cityLine: own(tidy(d.w8City), k.cityLine),
+      country: own(w8CountryOf(d, 'w8Country'), k.country),
+      birthDate: mdy(own(d.w8Dob, k.dob)),
+      treatyCountry: ed ? (TREATY.indexOf(d.treaty) >= 0 ? d.treaty : '') : k.treaty,
+      printName: name
+    };
+    const ftin = tidy(d.ftin) || m.ftin || '';
+    if (d.noFtin) a.noFtin = true;
+    else if (ftin) a.ftin = ftin;
+    if (ed) {
+      const us = digitsOf(d.w8UsTin).length === 9 ? digitsOf(d.w8UsTin) : m.usTin || '';
+      Object.assign(a, {
+        mailStreet: tidy(d.w8MailStreet),
+        mailCityLine: tidy(d.w8MailCity),
+        mailCountry: w8CountryOf(d, 'w8MailCountry'),
+        usTin: us ? `${us.slice(0, 3)}-${us.slice(3, 5)}-${us.slice(5)}` : '',
+        reference: tidy(d.w8Ref),
+        treatyArticle: tidy(d.w8Article),
+        treatyRate: tidy(d.w8Rate),
+        treatyIncome: tidy(d.w8Income),
+        treatyExplain1: tidy(d.w8Explain1),
+        treatyExplain2: tidy(d.w8Explain2),
+        capacity: !!d.w8Capacity
+      });
+    }
+    Object.keys(a).forEach((x) => (a[x] === '' || a[x] === false) && delete a[x]);
+    return a;
+  }
+  /*
+   * The W-8BEN-E (plan 06-20, research Pattern 3): the chapter 3 and chapter 4 statuses a pre-filled form can honestly
+   * cover, each with the map's own box key. 06-12: fill() does not stop two boxes being ticked, so the step offers exactly
+   * one answer for each (radios) and each answer ticks exactly one box.
+   */
+  const E8_CH3 = [
+    ['corporation', 'Corporation', 'ch3Corporation'],
+    ['simpleTrust', 'Simple trust', 'ch3SimpleTrust'],
+    ['complexTrust', 'Complex trust', 'ch3ComplexTrust'],
+    ['estate', 'Estate', 'ch3Estate']
+  ];
+  const E8_CH4 = [
+    ['activeNffe', 'Active NFFE', 'ch4ActiveNffe', 'Not a financial institution; less than half of its income and of its assets is passive'],
+    ['passiveNffe', 'Passive NFFE', 'ch4PassiveNffe', 'Not a financial institution, with mainly passive income or assets'],
+    ['participatingFfi', 'Participating FFI', 'ch4ParticipatingFfi', 'A financial institution with its own agreement with the IRS'],
+    ['model1Ffi', 'Reporting Model 1 FFI', 'ch4ReportingModel1Ffi', 'A financial institution that reports to its own government under a Model 1 agreement'],
+    ['model2Ffi', 'Reporting Model 2 FFI', 'ch4ReportingModel2Ffi', 'A financial institution that reports to the IRS under a Model 2 agreement']
+  ];
+  const E8_FFI = ['participatingFfi', 'model1Ffi', 'model2Ffi'];
+  /** Line 14b: the limitation on benefits provision the entity meets (one answer), by the map's own box keys. */
+  const E8_LOB = [
+    ['government', 'A government', 'lobGovernment'],
+    ['pension', 'A tax-exempt pension trust or pension fund', 'lobPension'],
+    ['taxExempt', 'Another tax-exempt organization', 'lobTaxExempt'],
+    ['publiclyTraded', 'A publicly traded corporation', 'lobPubliclyTraded'],
+    ['subsidiary', 'A subsidiary of a publicly traded corporation', 'lobSubsidiary'],
+    ['ownershipBaseErosion', 'Meets the ownership and base erosion test', 'lobOwnershipBaseErosion'],
+    ['derivative', 'Meets the derivative benefits test', 'lobDerivative'],
+    ['activeTrade', 'The income meets the active trade or business test', 'lobActiveTrade'],
+    ['discretionary', 'Received a favorable discretionary determination from the U.S. competent authority', 'lobDiscretionary'],
+    ['noArticle', 'The treaty has no limitation on benefits article', 'lobNoArticle'],
+    ['other', 'Another provision (give its article and paragraph)', 'lobOther']
+  ];
+  const E8_ROWS = 9;
+  const e8Pick = (list, v) => list.find((x) => x[0] === v) || null;
+  /** T-06-43: "Something else" on either status builds no W-8BEN-E (the step names the form that usually applies). */
+  const e8Routed = (d) => d.e8Ch3 === 'other' || d.e8Ch4 === 'other';
+  /** A U.S. owner's nine-digit taxpayer ID as typed in the EIN layout (XX-XXXXXXX), else in the SSN layout (XXX-XX-XXXX). */
+  const ownerTinText = (raw) => {
+    const t = digitsOf(raw);
+    if (t.length !== 9) return '';
+    return /^\s*\d{2}-\d{7}\s*$/.test(String(raw)) ? `${t.slice(0, 2)}-${t.slice(2)}` : `${t.slice(0, 3)}-${t.slice(3, 5)}-${t.slice(5)}`;
+  };
+  /** The owner rows shown for a Passive NFFE that lists its substantial U.S. owners (at least one, at most nine). */
+  const e8Rows = (d) => Math.min(E8_ROWS, Math.max(1, Number(d.e8OwnerRows) || 1));
+  /** Line 2: the country of organization, when the formation answer names a listed country (the whole answer, or its last part after a comma). */
+  function e8FormationCountry(d) {
+    const f = tidy(d.formation).replace(/\.$/, '');
+    const parts = [f, tidy(f.split(',').pop())].map((x) => x.toLowerCase());
+    return COUNTRIES.find((x) => x !== US && x !== OTHER_COUNTRY && parts.indexOf(x.toLowerCase()) >= 0) || '';
+  }
+  /**
+   * What onboarding already knows for the W-8BEN-E: the entity (the account name), its country of organization (from the
+   * formation answer), its permanent residence address, the U.S. taxpayer ID given at Investor information (an EIN), and
+   * the controlling person who signs for it (print name, capacity box ticked).
+   */
+  function e8Known(c, d) {
+    const res = realCountry(d.country);
+    const place = [tidy(d.city), tidy(d.st)].filter(Boolean).join(', ');
+    const tin = tinOf(c, d);
+    return { name: tidy(c.inv.title), country: e8FormationCountry(d), street: tidy(d.street), cityLine: [place, tidy(d.zip)].filter(Boolean).join(' '), residence: res, residencePick: res || (d.country === OTHER_COUNTRY ? OTHER_COUNTRY : ''), usTin: tin, printName: tidy(c.inv.contact) };
+  }
+  /** A tax number typed on this step now (a change: it is not in the answers BUILT compares). */
+  const e8Typed = (c, d) => !!(tidy(d.ftin) || digitsOf(d.e8UsTin) || TINS[c.inv.id] || E8_OWNER_TINS.some((k) => digitsOf(d[k])));
+  /** D-30: nothing on the W-8BEN-E is required; a number typed only in part is pointed out. */
+  function e8Problems(d) {
+    const e = {};
+    const t = digitsOf(d.e8UsTin);
+    if (t.length && t.length !== 9) e.e8UsTin = 'Enter all nine digits, or leave this empty.';
+    if (E8_FFI.indexOf(d.e8Ch4) >= 0 && tidy(d.e8Giin) && !/^[A-Z0-9]{6}\.[A-Z0-9]{5}\.[A-Z]{2}\.[0-9]{3}$/.test(tidy(d.e8Giin).toUpperCase())) e.e8Giin = 'Enter the GIIN as its 19 characters, like 98Q96B.00000.LE.250, or leave this empty.';
+    if (d.e8Ch4 === 'passiveNffe' && d.e8Owners === 'listed') {
+      for (let n = 1; n <= e8Rows(d); n++) {
+        const o = digitsOf(d['e8Owner' + n + 'Tin']);
+        if (o.length && o.length !== 9) e['e8Owner' + n + 'Tin'] = 'Enter all nine digits, or leave this empty.';
+      }
+    }
+    return e;
+  }
+  /** A nine-digit U.S. taxpayer ID as the entity's EIN (XX-XXXXXXX). */
+  const einText = (t) => (t.length === 9 ? `${t.slice(0, 2)}-${t.slice(2)}` : '');
+  /** The W-8BEN-E's answers, by the map's own keys: what onboarding knows, with any answer changed on this step. */
+  function w8eAnswers(c, d) {
+    const k = e8Known(c, d);
+    const ed = !!d.e8Edit;
+    // after "Change your answers" (d.e8Edit) the answers are used as given, an emptied one too (D-30)
+    const own = (v, known) => (ed ? v : v || known);
+    const m = W8MEM[c.inv.id] || {};
+    const a = {
+      name: own(tidy(d.e8Name), k.name),
+      country: own(w8CountryOf(d, 'e8Country'), k.country),
+      street: own(tidy(d.e8Street), k.street),
+      cityLine: own(tidy(d.e8City), k.cityLine),
+      residenceCountry: own(w8CountryOf(d, 'e8Res'), k.residence),
+      printName: own(tidy(d.e8Print), k.printName),
+      // the controlling person signs for the entity: the capacity box is ticked unless unticked under "Change your answers"
+      capacity: ed ? !!d.e8Capacity : true
+    };
+    const ch3 = e8Pick(E8_CH3, d.e8Ch3);
+    const ch4 = e8Pick(E8_CH4, d.e8Ch4);
+    if (ch3) a[ch3[2]] = true;
+    if (ch4) a[ch4[2]] = true;
+    if (d.e8Ch4 === 'activeNffe') a.activeNffe = true;
+    // an FFI's GIIN on line 9a
+    if (E8_FFI.indexOf(d.e8Ch4) >= 0 && tidy(d.e8Giin)) a.giin = tidy(d.e8Giin).toUpperCase();
+    if (d.e8Ch4 === 'passiveNffe') {
+      // Part XXVI: no substantial U.S. owners (40b), or each one listed in Part XXIX (40c), filled from the first row on
+      a.passiveNffe = true;
+      if (d.e8Owners === 'none') a.passiveNoOwners = true;
+      if (d.e8Owners === 'listed') {
+        a.passiveOwnersListed = true;
+        const owners = m.owners || {};
+        let row = 0;
+        for (let n = 1; n <= e8Rows(d); n++) {
+          const nm = tidy(d['e8Owner' + n + 'Name']);
+          const ad = tidy(d['e8Owner' + n + 'Addr']);
+          const typed = ownerTinText(d['e8Owner' + n + 'Tin']);
+          if (!nm && !ad && !typed) continue;
+          row++;
+          Object.assign(a, { ['owner' + row + 'Name']: nm.slice(0, 60), ['owner' + row + 'Address']: ad.slice(0, 120), ['owner' + row + 'Tin']: typed || owners[n] || '' });
+        }
+      }
+    }
+    const treaty = ed && TREATY.indexOf(d.e8Treaty) >= 0 ? d.e8Treaty : '';
+    // line 4: a simple trust answers whether it is a hybrid making a treaty claim (yes exactly when it claims one in Part III)
+    if (d.e8Ch3 === 'simpleTrust') a[treaty ? 'hybridYes' : 'hybridNo'] = true;
+    if (treaty) {
+      // Part III: the treaty country (14a), the limitation on benefits provision met (14b, one box), line 15
+      Object.assign(a, { treatyResident: true, treatyCountry: treaty });
+      const lob = e8Pick(E8_LOB, d.e8Lob);
+      if (lob) {
+        a.treatyLob = true;
+        a[lob[2]] = true;
+        if (lob[0] === 'other') a.lobOtherText = tidy(d.e8LobOther).slice(0, 30);
+      }
+      Object.assign(a, { treatyArticle: tidy(d.e8Article).slice(0, 30), treatyRate: tidy(d.e8Rate).slice(0, 6), treatyIncome: tidy(d.e8Income).slice(0, 20), treatyExplain1: tidy(d.e8Explain1).slice(0, 20), treatyExplain2: tidy(d.e8Explain2).slice(0, 110), treatyExplain3: tidy(d.e8Explain3).slice(0, 110) });
+    }
+    const ftin = tidy(d.ftin) || m.ftin || '';
+    if (d.noFtin) a.noFtin = true;
+    else if (ftin) a.ftin = ftin;
+    // line 8: typed here, else given at Investor information since the last form (TINS), else the one the last form carried
+    const us = digitsOf(d.e8UsTin).length === 9 ? digitsOf(d.e8UsTin) : k.usTin || m.usTin || '';
+    if (us) a.usTin = einText(us);
+    if (ed) {
+      Object.assign(a, {
+        mailStreet: tidy(d.e8MailStreet),
+        mailCityLine: tidy(d.e8MailCity),
+        mailCountry: w8CountryOf(d, 'e8MailCountry'),
+        reference: tidy(d.e8Ref).slice(0, 19)
+      });
+    }
+    Object.keys(a).forEach((x) => (a[x] === '' || a[x] === false) && delete a[x]);
+    return a;
+  }
+  /** Line 3a of the W-9 (plan 06-19): the federal tax classifications in the form's printed order, by the map's own keys. */
+  const W9_CLASSES = [
+    ['individual', 'Individual or sole proprietor'],
+    ['ccorp', 'C corporation'],
+    ['scorp', 'S corporation'],
+    ['partnership', 'Partnership'],
+    ['trust', 'Trust or estate'],
+    ['llc', 'Limited liability company (LLC)'],
+    ['other', 'Other']
+  ];
+  /** How an LLC is taxed, the letter line 3a asks for. */
+  const W9_LLC = [
+    ['C', 'As a C corporation'],
+    ['S', 'As an S corporation'],
+    ['P', 'As a partnership']
+  ];
+  /**
+   * The accounts whose classification the step asks (D-06: onboarding does not know it): an entity's, and an IRA's (planner's
+   * choice, research A6: asked like an entity's, trust or estate chosen to start).
+   */
+  const w9Asks = (d) => d.type === 'entity' || d.type === 'ira';
+  /**
+   * The classification onboarding already knows (D-09: the investor type the sponsor chose): a person's account (individual
+   * or joint) is an individual; an entity whose name ends in LLC is an LLC (its tax letter is still asked).
+   */
+  function w9ClassKnown(c, d) {
+    if (PERSONAL(d.type)) return 'individual';
+    if (d.type === 'trust' || d.type === 'ira') return 'trust';
+    if (d.type === 'entity' && /\bP?L\.?\s?L\.?\s?C\.?$/i.test(tidy(c.inv.title))) return 'llc';
+    return '';
+  }
+  /** The account's line 3a classification: as answered on the step where it is asked, else as known; a changed account type starts the answers again. */
+  function w9Class(c, d) {
+    if (d.w9ClassFor !== d.type) Object.assign(d, { w9Class: w9ClassKnown(c, d), w9Llc: '', w9Other: '', w9Foreign: false, w9Disregarded: false, ownerTin: '', w9TinKind: '', w9ClassFor: d.type });
+    return w9Asks(d) ? d.w9Class || '' : w9ClassKnown(c, d);
+  }
+  /** An LLC answered as disregarded for U.S. tax ("disregarded" is asked only for an LLC). */
+  const w9Disregarded = (c, d) => d.type === 'entity' && w9Class(c, d) === 'llc' && !!d.w9Disregarded;
+  /**
+   * Line 3b is offered only for a partnership, a trust or estate, or an LLC taxed as a partnership; never for a person's
+   * account or an IRA (a tax-exempt account, not a flow-through entity).
+   */
+  const w9Offers3b = (d, cls) => (d.type === 'entity' || d.type === 'trust') && (cls === 'partnership' || cls === 'trust' || (cls === 'llc' && !d.w9Disregarded && d.w9Llc === 'P'));
+  /** Which boxes of Part I the number goes in: the owner's SSN for a disregarded LLC, else the answer, else by the account. */
+  const w9TinBox = (c, d) => (w9Disregarded(c, d) ? 'ssn' : PERSONAL(d.type) ? 'ssn' : d.w9TinKind === 'ssn' ? 'ssn' : 'ein');
+  /** The classification questions of the step: line 3a as radios, the LLC's letter or the "other" text, and line 3b where it applies. */
+  function w9ClassFields(c, d, cls) {
+    let f = '';
+    if (w9Asks(d)) {
+      f += radios('w9Class', 'Federal tax classification', W9_CLASSES);
+      if (cls === 'llc' && d.type === 'entity') {
+        f += check('w9Disregarded', 'The LLC is disregarded for U.S. tax: it has one owner and has not chosen to be taxed as a corporation.');
+        if (d.w9Disregarded) f += input('ownerTin', `Social Security number of ${h(tidy(c.inv.contact) || 'the owner')}, the LLC’s owner`, { mode: 'numeric', max: 11, hint: 'Nine digits. The form names the owner on line 1 and the LLC on line 2.' });
+      }
+      if (cls === 'llc' && !(d.type === 'entity' && d.w9Disregarded)) f += radios('w9Llc', 'How the LLC is taxed', W9_LLC);
+      if (cls === 'other') f += input('w9Other', 'The classification, as the form should show it', { wide: true, max: 30 });
+    }
+    if (w9Offers3b(d, cls)) f += check('w9Foreign', `The ${cls === 'trust' ? 'trust or estate' : cls === 'partnership' ? 'partnership' : 'LLC'} has foreign partners, owners, or beneficiaries (line 3b).`);
+    return f;
+  }
+  /** Line 1, the street and the city line as Investor information gave them. */
+  function w9Known(c, d) {
+    const cityLine = [tidy(d.city), [tidy(d.st).toUpperCase(), tidy(d.zip)].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    // a disregarded LLC: line 1 its owner (the controlling person on file), line 2 the LLC
+    const dis = w9Disregarded(c, d);
+    return { name: tidy(PERSONAL(d.type) || dis ? c.inv.contact : c.inv.title), business: dis ? tidy(c.inv.title) : '', street: tidy(d.street), city: d.country && d.country !== US ? [cityLine, d.country].filter(Boolean).join(', ') : cityLine };
+  }
+  /** The W-9's answers, by the map's own keys: what onboarding knows, with any answer changed on this step. */
+  function w9Answers(c, d) {
+    const t = c.ws.tenant;
+    const k = w9Known(c, d);
+    const tin = tinOf(c, d);
+    // after "Change your answers" (d.w9Edit) the answers are used as given, an emptied one too (D-30); otherwise what
+    // Investor information gave fills what the step did not ask
+    const own = (v, known) => (d.w9Edit ? tidy(v) : tidy(v) || known);
+    const a = { name: own(d.w9Name, k.name), address: own(d.w9Street, k.street), cityStateZip: own(d.w9City, k.city), requester: t.legalName || t.name };
+    // line 3a: one box, by the map's own key; an LLC's tax letter and the "other" text only beside their own box
+    const cls = w9Class(c, d);
+    const dis = w9Disregarded(c, d);
+    const business = own(d.w9Business, k.business);
+    if (business) a.business = business;
+    // a disregarded LLC is classified as its owner, the controlling person: an individual
+    if (dis) a.individual = true;
+    else if (cls) a[cls] = true;
+    if (cls === 'llc' && !dis && /^[CSP]$/.test(d.w9Llc)) a.llcLetter = d.w9Llc;
+    if (cls === 'other' && tidy(d.w9Other)) a.otherText = tidy(d.w9Other).slice(0, 30);
+    if (w9Offers3b(d, cls) && d.w9Foreign) a.foreignOwners = true;
+    // T-06-42: digits only, into the SSN or the EIN boxes by the account's answers (the fill splits them by the comb fields)
+    const owner = digitsOf(d.ownerTin).length === 9 ? digitsOf(d.ownerTin) : '';
+    if (dis ? owner : tin) a[w9TinBox(c, d)] = dis ? owner : tin;
+    // an IRA's exempt payee code 1 (any IRA, the form's instructions) is pre-filled; emptied under "Change your answers", none
+    const exempt = d.w9Edit ? tidy(d.w9Exempt) : tidy(d.w9Exempt) || (d.type === 'ira' ? '1' : '');
+    if (exempt) a.exemptPayee = exempt;
+    if (tidy(d.w9Fatca)) a.fatcaCode = tidy(d.w9Fatca);
+    // the IRS has notified the investor of backup withholding: certification item 2 is crossed out on the form
+    if (d.backup) a.backupWithholding = true;
+    return a;
   }
   function fTax(c) {
+    const view = fTaxView(c);
+    // Plan 06-26: a tax-form request says once what it is, under the heading
+    return c.it.taxRequest && c.fl.taxView !== 'upload' ? view.replace('</h1>', () => `</h1><p class="meta ivf-taxreq">${h(c.ws.tenant.name)} asked you for your tax form; this link covers that form only.</p>`) : view;
+  }
+  function fTaxView(c) {
     const d = ob().d;
-    const t = c.ws.tenant;
-    const ent = d.type === 'entity' || d.type === 'trust';
     const ira = d.type === 'ira';
-    // Prefilled from the citizenship (or, for an entity, the country) given earlier; the investor can change it.
-    if (!ira && !d.usPerson) d.usPerson = ent || d.type === 'ira' ? (d.country === US ? 'yes' : '') : d.citizen === 'us' ? 'yes' : 'no';
-    if (d.usPerson === 'no' && !d.taxCountry && d.country !== US && COUNTRIES.indexOf(d.country) >= 0) d.taxCountry = d.treaty = d.country;
-    const usp = ira || d.usPerson === 'yes';
-    const sig = input('taxSig', 'Type your full name to sign', { wide: true, hint: `Signing as ${h(c.inv.contact)}${ent || ira ? `, authorized to sign for ${h(c.inv.title)},` : ''} on ${U.date(NS.dates.today(), 'long')}` });
-    const choice = ira
-      ? '<p class="field-wide meta">An IRA’s custodian is a U.S. person, so the account certifies a Form W-9.</p>'
-      : radios('usPerson', ent ? 'Is the account a U.S. person for tax purposes?' : 'Are you a U.S. person for tax purposes?', ent
-          ? [['yes', 'Yes', 'Organized in the United States: a U.S. partnership, corporation, LLC, estate or trust'], ['no', 'No', 'Organized outside the United States']]
-          : [['yes', 'Yes', 'A U.S. citizen, or a resident alien (a green card holder, or present in the U.S. long enough to meet the substantial presence test)'], ['no', 'No', 'Neither a U.S. citizen nor a U.S. resident for tax purposes']]);
-    let form = '';
-    if (usp) {
-      form = `<div class="field-wide cert"><p class="cert-title">Substitute Form W-9: Request for Taxpayer Identification Number and Certification</p>
-          <dl class="ivf-certfacts"><div><dt>Name</dt><dd>${h(c.inv.title)}</dd></div><div><dt>Taxpayer ID</dt><dd>${c.inv.tinLast4 ? `ending ${h(c.inv.tinLast4)}` : 'Enter it below'}</dd></div><div><dt>Address</dt><dd>${h(c.inv.address || '')}</dd></div></dl>
-          <p>Under penalties of perjury, I certify that: (1) the number shown on this form is my correct taxpayer identification number (or I am waiting for a number to be issued to me); (2) I am not subject to backup withholding because (a) I am exempt from backup withholding, or (b) I have not been notified by the Internal Revenue Service (IRS) that I am subject to backup withholding as a result of a failure to report all interest or dividends, or (c) the IRS has notified me that I am no longer subject to backup withholding; (3) I am a U.S. citizen or other U.S. person; and (4) the FATCA code(s) entered on this form (if any) indicating that I am exempt from FATCA reporting is correct.</p>
-          <p>The Internal Revenue Service does not require your consent to any provision of this document other than the certifications required to avoid backup withholding.</p></div>
-        ${c.inv.tinLast4 ? '' : input('tin', ent ? 'Employer ID number (EIN)' : 'Social Security number', { mode: 'numeric', max: 11, hint: 'Nine digits. Only the last four are shown again.' })}
-        ${check('backup', 'The IRS has notified me that I am currently subject to backup withholding (this strikes out item 2 above).')}
-        ${check('w9', 'I certify the statements above.')}
-        ${sig}`;
-    } else if (d.usPerson === 'no') {
-      const formName = ent ? 'Form W-8BEN-E' : 'Form W-8BEN';
-      form = `<div class="field-wide cert"><p class="cert-title">${formName} certification: Certificate of Foreign Status of Beneficial Owner for United States Tax Withholding and Reporting${ent ? ' (Entities)' : ''}</p>
-          <p>Name: ${h(c.inv.title)}. ${ent ? 'Country of organization' : 'Permanent residence address'}: ${h(c.inv.address || '')}.</p></div>
-        ${countrySelect('taxCountry', 'Country of tax residence', { exclude: US, empty: 'Choose a country' })}
-        ${input('ftin', 'Foreign tax identifying number', { max: 30, hint: c.inv.taxCert && c.inv.taxCert.ftinLast4 ? `On file: ending ${h(c.inv.taxCert.ftinLast4)}; leave empty to keep it.` : 'The tax number your country of residence issued to you' })}
-        ${check('noFtin', 'My country of tax residence does not issue a tax identifying number, or does not require one for this account.')}
-        ${countrySelect('treaty', 'Claim U.S. tax treaty benefits as a resident of', { exclude: US, empty: 'I do not claim treaty benefits', wide: true, hint: 'Usually your country of tax residence, if it has an income tax treaty with the United States.' })}
-        <div class="field-wide cert"><p>Under penalties of perjury, I declare that I have examined the information on this form and to the best of my knowledge and belief it is true, correct, and complete. I further certify under penalties of perjury that: ${ent ? 'the entity identified above is the beneficial owner of all the income or proceeds to which this form relates and is not a U.S. person' : 'I am the individual that is the beneficial owner (or am authorized to sign for the individual that is the beneficial owner) of all the income or proceeds to which this form relates, and the person named on this form is not a U.S. person'}; the income to which this form relates is not effectively connected with the conduct of a trade or business in the United States; the beneficial owner is a resident of the treaty country listed (if any) within the meaning of the income tax treaty between the United States and that country; and I agree to submit a new form within 30 days if any certification on this form becomes incorrect. I authorize this form to be provided to any withholding agent that has control, receipt, or custody of the income of which I am the beneficial owner.</p></div>
-        ${check('w8', 'I certify the statements above.')}
-        ${sig}`;
+    if (!ira && !d.usPerson) d.usPerson = foreignType(c.inv) ? 'no' : 'yes';
+    if (c.fl.taxView === 'upload') return taxUploadView(c, d);
+    const usp = usTax(c, d);
+    const who = ira ? '' : `<p class="meta ivf-taxwho">${usp ? 'Not a U.S. person for tax purposes?' : 'A U.S. citizen or resident, or a U.S. entity?'} <button class="link-btn" type="button" data-action="ivf-taxwho">${usp ? 'Use the form for foreign investors' : 'Use Form W-9'}</button></p>`;
+    if (usp) return w9View(c, d, who);
+    if (PERSONAL(d.type)) return w8View(c, d, who);
+    return w8eView(c, d, who);
+  }
+  /**
+   * Plan 06-21 (D-01, D-06, D-30): the upload of a form completed elsewhere: which form it is, and the file (PDF, PNG or
+   * JPEG, at most MAX_FILES). Nothing is required; Back returns to the answers.
+   */
+  function taxUploadView(c, d) {
+    const up = UPLOADS[c.inv.id];
+    const e = ob().errors.taxUpFile;
+    return `${ivfH1(FL.tax)}
+      <div class="form-grid">${radios('taxUpForm', 'Which form is it?', upForms(c, d))}
+      <label class="field field-wide" for="ob-taxUpFile"><span>The completed, signed form</span>
+      <input id="ob-taxUpFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ivf-taxfile"${e ? ' aria-invalid="true" aria-describedby="err-taxUpFile"' : ''}>
+      <span class="hint" id="hint-taxUpFile">${up ? `Attached: ${h(up.name)}` : `PDF, PNG or JPEG, up to ${mb(MAX_FILES)} MB.`}</span>${err('taxUpFile')}</label></div>`;
+  }
+  /** The W-9 answers view: only what is missing; "Change your answers" shows every answer and the rare options. */
+  function w9View(c, d, who) {
+    const o = ob();
+    const person = PERSONAL(d.type);
+    const k = w9Known(c, d);
+    const tin = tinOf(c, d);
+    let body = '';
+    const edit = o.taxEdit || !!d.w9Edit;
+    const cls = w9Class(c, d);
+    const dis = w9Disregarded(c, d);
+    const tinLabel = w9TinBox(c, d) === 'ssn' ? 'Social Security number' : 'Employer identification number';
+    if (edit) {
+      const kind = person || dis ? '' : radios('w9TinKind', 'The taxpayer identification number is', [['ein', 'An employer identification number (EIN)'], ['ssn', 'A Social Security number (SSN)']]);
+      body = `${input('w9Name', 'Name', { wide: true })}
+        ${input('w9Business', 'Business name or disregarded entity name, if different from above', { wide: true })}
+        ${input('w9Street', 'Address (number, street, and apt. or suite no.)', { wide: true, auto: 'street-address' })}
+        ${input('w9City', 'City, state, and ZIP code', { wide: true })}
+        ${w9ClassFields(c, d, cls)}
+        ${dis ? '' : `${kind}${input('tin', tinLabel, { mode: 'numeric', max: 11, hint: tin ? `Ending ${h(tin.slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}`}
+        ${input('w9Exempt', 'Exempt payee code, if any', { narrow: true, max: 2 })}
+        ${input('w9Fatca', 'Exemption from FATCA reporting code, if any', { narrow: true, max: 1 })}
+        ${check('backup', 'The IRS has notified me that I am currently subject to backup withholding.')}`;
+    } else {
+      body += w9ClassFields(c, d, cls);
+      if (!k.name && !tidy(d.w9Name)) body += input('w9Name', 'Name', { wide: true });
+      if (!k.street && !tidy(d.w9Street)) body += input('w9Street', 'Address (number, street, and apt. or suite no.)', { wide: true, auto: 'street-address' });
+      if (!k.city && !tidy(d.w9City)) body += input('w9City', 'City, state, and ZIP code', { wide: true });
+      if (!tin && !dis) body += input('tin', tinLabel, { mode: 'numeric', max: 11, hint: 'Nine digits.' });
+    }
+    // a joint account's W-9 is the form of the holder whose SSN is given (planner's choice): one line says whose
+    const holderName = d.type === 'joint' ? (d.w9Edit ? tidy(d.w9Name) : tidy(d.w9Name) || k.name) : '';
+    const holder = holderName ? `<p class="meta ivf-taxholder">This is the form of ${h(holderName)}, the first holder of the account.</p>` : '';
+    return `${ivfH1(FL.tax)}
+      <p class="lede">Your Form W-9 is filled in from your answers${body && !edit ? ', except what is asked below' : ''}. You check it and sign it on the next screen.</p>
+      ${holder}
+      ${body ? `<div class="form-grid">${body}</div>` : ''}
+      ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
+      ${upLink()}
+      ${who}`;
+  }
+  /** A W-8BEN country answer: the fixed list (no United States), and a typed name only beside "Another country" (T-06-40). */
+  function w8CountryField(k, label, empty) {
+    const d = ob().d;
+    return `${countrySelect(k, label, { exclude: US, empty, wide: true })}${d[k] === OTHER_COUNTRY ? input(k + 'Other', 'Name of the country', { wide: true, max: 40 }) : ''}`;
+  }
+  /**
+   * The W-8BEN answers view (plan 06-18, D-06): the foreign tax ID or its not-required tick, and anything onboarding does not
+   * know; "Change your answers" shows every answer, with the mailing address, the U.S. taxpayer ID, the reference, the
+   * special rates and conditions of line 10 and the capacity box (for someone signing for another person; unticked here).
+   */
+  function w8View(c, d, who) {
+    const o = ob();
+    const k = w8Known(c, d);
+    const m = W8MEM[c.inv.id] || {};
+    const edit = o.taxEdit || !!d.w8Edit;
+    const ftin = `${d.noFtin ? '' : input('ftin', 'Foreign tax identifying number', { max: 30, hint: m.ftin ? `Ending ${h(m.ftin.slice(-4))}. Leave empty to keep it.` : 'The tax number your country of residence issued to you.' })}
+      ${check('noFtin', 'A foreign tax identifying number is not legally required for me (for example, my country does not issue one).')}`;
+    let body = '';
+    if (edit) {
+      body = `${input('w8Name', 'Name of the individual who is the beneficial owner', { wide: true, max: 120 })}
+        ${w8CountryField('w8Citizen', 'Country of citizenship', 'Choose a country')}
+        ${input('w8Street', 'Permanent residence address (street, apt. or suite no.)', { wide: true, max: 120, auto: 'street-address' })}
+        ${input('w8City', 'City or town, state or province, and postal code', { wide: true, max: 120 })}
+        ${w8CountryField('w8Country', 'Country of permanent residence', 'Choose a country')}
+        ${input('w8MailStreet', 'Mailing address, only if different (street, apt. or suite no.)', { wide: true, max: 120 })}
+        ${input('w8MailCity', 'Mailing address: city or town, state or province, and postal code', { wide: true, max: 120 })}
+        ${w8CountryField('w8MailCountry', 'Mailing address: country', 'No different mailing address')}
+        ${input('w8UsTin', 'U.S. taxpayer identification number (SSN or ITIN), if you have one', { mode: 'numeric', max: 11, hint: m.usTin ? `Ending ${h(m.usTin.slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}
+        ${ftin}
+        ${input('w8Ref', 'Reference number, if any', { max: 40 })}
+        ${input('w8Dob', 'Date of birth', { type: 'date', auto: 'bday' })}
+        ${select('treaty', 'Claim U.S. tax treaty benefits as a resident of', [['', 'No treaty claim']].concat(TREATY.map((x) => [x, x])), { wide: true })}
+        ${input('w8Article', 'Special rates and conditions: treaty article and paragraph, if any', { max: 40 })}
+        ${input('w8Rate', 'Rate of withholding claimed (%)', { narrow: true, max: 6, mode: 'decimal' })}
+        ${input('w8Income', 'Type of income', { wide: true, max: 60 })}
+        ${input('w8Explain1', 'Additional conditions in the article you meet', { wide: true, max: 40 })}
+        ${input('w8Explain2', 'Additional conditions, continued', { wide: true, max: 120 })}
+        ${check('w8Capacity', 'I am signing for the beneficial owner, and I have the capacity to sign for them.')}`;
+    } else {
+      if (!k.name && !tidy(d.w8Name)) body += input('w8Name', 'Name of the individual who is the beneficial owner', { wide: true, max: 120 });
+      if (!k.country && !w8CountryOf(d, 'w8Country')) body += w8CountryField('w8Country', 'Country of permanent residence', 'Choose a country');
+      // plan 06-26: always asked (one country choice), pre-selected only from the investor's own earlier answer
+      body += w8CountryField('w8Citizen', 'Country of citizenship', 'Choose a country');
+      if (!k.street && !tidy(d.w8Street)) body += input('w8Street', 'Permanent residence address (street, apt. or suite no.)', { wide: true, max: 120, auto: 'street-address' });
+      if (!k.cityLine && !tidy(d.w8City)) body += input('w8City', 'City or town, state or province, and postal code', { wide: true, max: 120 });
+      body += ftin;
+    }
+    const holder = d.type === 'joint' ? `<p class="meta">This is the form of ${h(k.name)}, the first holder of the account.</p>` : '';
+    return `${ivfH1(FL.tax)}
+      <p class="lede">Your Form W-8BEN is filled in from your answers${!edit ? ', except what is asked below' : ''}. You check it and sign it on the next screen.</p>
+      ${holder}
+      <div class="form-grid">${body}</div>
+      ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
+      ${upLink()}
+      ${who}`;
+  }
+  /** The two status questions of the W-8BEN-E (lines 4 and 5): one answer each, or "Something else". */
+  function e8StatusFields() {
+    return `${radios('e8Ch3', 'Type of entity (chapter 3 status)', E8_CH3.map((x) => [x[0], x[1]]).concat([['other', 'Something else', 'For example a partnership, a grantor trust, a government or a tax-exempt organization']]))}
+      ${radios('e8Ch4', 'FATCA status (chapter 4 status)', E8_CH4.map((x) => [x[0], x[1], x[3]]).concat([['other', 'Something else', 'Any other FATCA status']]))}`;
+  }
+  /**
+   * T-06-43: the one line for a status the W-8BEN-E here does not cover: the form that usually applies, and the upload of
+   * that form when completed (plan 06-21, D-01; D-30: the investor can continue without it).
+   */
+  function e8RouteLine() {
+    return `<p class="field-wide meta ivf-taxroute">This status needs a form the portal does not fill in: usually Form W-8IMY (partnerships, grantor trusts and intermediaries), Form W-8ECI (income effectively connected with a U.S. trade or business) or Form W-8EXP (governments and tax-exempt organizations), or a Form W-8BEN-E completed for the status that applies. <button class="link-btn" type="button" data-action="ivf-taxupload">Upload the completed form</button>, or continue without it now.</p>`;
+  }
+  /** Plan 06-21 (D-01): the one link from the answers to the upload of a form completed elsewhere. */
+  const upLink = () => '<p class="meta ivf-taxupload">Already have a completed form? <button class="link-btn" type="button" data-action="ivf-taxupload">Upload it instead</button></p>';
+  /** A Passive NFFE: the owners statement, and the substantial U.S. owners' rows when it lists them (Part XXIX). */
+  function e8OwnerFields(d, m) {
+    let f = radios('e8Owners', 'Substantial U.S. owners (U.S. persons who own more than 10 percent)', [['none', 'The entity has none'], ['listed', 'The entity has them; they are listed below']]);
+    if (d.e8Owners !== 'listed') return f;
+    const owners = m.owners || {};
+    for (let n = 1; n <= e8Rows(d); n++) {
+      f += `${input('e8Owner' + n + 'Name', `U.S. owner ${n}: name`, { wide: true, max: 60, hint: n === 1 ? 'From the beneficial owners you gave. Empty a row for anyone who is not a U.S. person.' : '' })}
+        ${input('e8Owner' + n + 'Addr', `U.S. owner ${n}: address`, { wide: true, max: 120 })}
+        ${input('e8Owner' + n + 'Tin', `U.S. owner ${n}: U.S. taxpayer identification number`, { mode: 'numeric', max: 11, hint: owners[n] ? `Ending ${h(owners[n].slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}`;
+    }
+    if (e8Rows(d) < E8_ROWS) f += '<p class="field-wide meta"><button class="link-btn" type="button" data-action="ivf-e8owner">Add a U.S. owner</button></p>';
+    return f;
+  }
+  /** Part III under "Change your answers": the treaty country, then the limitation on benefits provision and line 15. */
+  function e8TreatyFields(d) {
+    let f = select('e8Treaty', 'Claim U.S. tax treaty benefits as a resident of', [['', 'No treaty claim']].concat(TREATY.map((x) => [x, x])), { wide: true });
+    if (TREATY.indexOf(d.e8Treaty) < 0) return f;
+    f += radios('e8Lob', 'Limitation on benefits provision the entity meets', E8_LOB.map((x) => [x[0], x[1]]));
+    if (d.e8Lob === 'other') f += input('e8LobOther', 'Article and paragraph of that provision', { max: 30 });
+    return `${f}
+      ${input('e8Article', 'Special rates and conditions: treaty article and paragraph, if any', { max: 30 })}
+      ${input('e8Rate', 'Rate of withholding claimed (%)', { narrow: true, max: 6, mode: 'decimal' })}
+      ${input('e8Income', 'Type of income', { max: 20 })}
+      ${input('e8Explain1', 'Conditions of the article the entity meets', { max: 20, hint: 'Continue on the lines below if needed.' })}
+      ${input('e8Explain2', 'Conditions, continued', { wide: true, max: 110 })}
+      ${input('e8Explain3', 'Conditions, continued', { wide: true, max: 110 })}`;
+  }
+  /**
+   * The W-8BEN-E answers view (plan 06-20, D-06): the two statuses and the foreign tax ID or its not-required tick, and
+   * anything onboarding does not know, the GIIN for an FFI and the owners statement (and rows) for a Passive NFFE;
+   * "Change your answers" shows every answer, with the mailing address, the U.S. taxpayer ID, the reference, the treaty
+   * claim (Part III), the print name and the capacity box.
+   */
+  function w8eView(c, d, who) {
+    const o = ob();
+    const k = e8Known(c, d);
+    const m = W8MEM[c.inv.id] || {};
+    const edit = o.taxEdit || !!d.e8Edit;
+    const ftin = `${d.noFtin ? '' : input('ftin', 'Foreign tax identifying number', { max: 30, hint: m.ftin ? `Ending ${h(m.ftin.slice(-4))}. Leave empty to keep it.` : 'The tax number the entity’s country of residence issued to it.' })}
+      ${check('noFtin', 'A foreign tax identifying number is not legally required for the entity (for example, its country does not issue one).')}`;
+    let body = e8StatusFields();
+    // "Something else" on either status: one line names the form that usually applies; nothing else is asked
+    if (e8Routed(d)) {
+      return `${ivfH1(FL.tax)}
+      <div class="form-grid">${body}${e8RouteLine()}</div>
+      ${who}`;
+    }
+    if (E8_FFI.indexOf(d.e8Ch4) >= 0) body += input('e8Giin', 'GIIN (global intermediary identification number)', { max: 19, upper: true, hint: '19 characters, for example 98Q96B.00000.LE.250.' });
+    if (d.e8Ch4 === 'passiveNffe') body += e8OwnerFields(d, m);
+    if (edit) {
+      const us = m.usTin || k.usTin;
+      body += `${input('e8Name', 'Name of the organization that is the beneficial owner', { wide: true, max: 120 })}
+        ${w8CountryField('e8Country', 'Country of incorporation or organization', 'Choose a country')}
+        ${input('e8Street', 'Permanent residence address (street, apt. or suite no.)', { wide: true, max: 120, auto: 'street-address' })}
+        ${input('e8City', 'City or town, state or province, and postal code', { wide: true, max: 120 })}
+        ${w8CountryField('e8Res', 'Country of permanent residence', 'Choose a country')}
+        ${input('e8MailStreet', 'Mailing address, only if different (street, apt. or suite no.)', { wide: true, max: 120 })}
+        ${input('e8MailCity', 'Mailing address: city or town, state or province, and postal code', { wide: true, max: 120 })}
+        ${w8CountryField('e8MailCountry', 'Mailing address: country', 'No different mailing address')}
+        ${input('e8UsTin', 'U.S. taxpayer identification number, if the entity has one', { mode: 'numeric', max: 11, hint: us ? `Ending ${h(us.slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}
+        ${ftin}
+        ${input('e8Ref', 'Reference number, if any', { max: 19 })}
+        ${e8TreatyFields(d)}
+        ${input('e8Print', 'Name of the person signing for the entity', { wide: true, max: 120 })}
+        ${check('e8Capacity', 'The person signing has the capacity to sign for the entity.')}`;
+    } else {
+      if (!k.name && !tidy(d.e8Name)) body += input('e8Name', 'Name of the organization that is the beneficial owner', { wide: true, max: 120 });
+      if (!k.country && !w8CountryOf(d, 'e8Country')) body += w8CountryField('e8Country', 'Country of incorporation or organization', 'Choose a country');
+      if (!k.street && !tidy(d.e8Street)) body += input('e8Street', 'Permanent residence address (street, apt. or suite no.)', { wide: true, max: 120, auto: 'street-address' });
+      if (!k.cityLine && !tidy(d.e8City)) body += input('e8City', 'City or town, state or province, and postal code', { wide: true, max: 120 });
+      if (!k.residence && !w8CountryOf(d, 'e8Res')) body += w8CountryField('e8Res', 'Country of permanent residence', 'Choose a country');
+      body += ftin;
     }
     return `${ivfH1(FL.tax)}
-      <p class="lede">${h(t.shortName)} needs a tax form on file before paying distributions. Your answer decides which form you certify.</p>
-      <div class="form-grid">${choice}${form}</div>`;
+      <p class="lede">Your Form W-8BEN-E is filled in from your answers${!edit ? ', except what is asked below' : ''}. You check it and sign it on the next screen.</p>
+      <div class="form-grid">${body}</div>
+      ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
+      ${upLink()}
+      ${who}`;
+  }
+  /** The flow's W-9 envelope while it is the step's signing view (unsigned, or signed and not yet recorded). */
+  function taxSignEnv(c) {
+    const fl = c.fl;
+    if (fl.taxView !== 'sign' || !fl.taxEnvelopeId || !taxKey(c, ob().d)) return null;
+    const env = (c.ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
+    return env && (env.status === 'sent' || env.status === 'completed') && signerOf(env, c.inv) ? env : null;
+  }
+  function fTaxSign(c, env) {
+    return `${ivfH1(FL.tax)}
+      <p class="lede">Check your Form ${h((env.taxForm && env.taxForm.form) || 'W-9')}, sign it, then select Finish.</p>
+      ${NS.esign.embed(env.id, c.inv.id, 'ivf-taxanswers')}`;
+  }
+  /** The answers without the tax numbers, in key order: what BUILT keeps and compares (memory only). */
+  const plainAnswers = (a) => JSON.stringify(Object.keys(a).filter((k) => !secretAnswer(k)).sort().map((k) => [k, a[k]]));
+  /**
+   * Continue on the tax answers (W-9 or W-8BEN). Research FORM-07, T-06-41: an edited answer always reaches the form, and
+   * the flow has one live tax envelope at most.
+   *  - The answers are compared, in this page's memory only, with those the flow's current form was built from. A tax number
+   *    typed now is a change; one not typed again is not (it left memory once it was in the form).
+   *  - Unchanged: a signed form is kept (false: the flow moves on); an unsigned form still to sign is shown again.
+   *  - Changed (or not known after a reload): the filled, flattened official form is built now and becomes an envelope for
+   *    this investor to sign on the page. An unsigned earlier form is voided first ("answers changed before signing") and
+   *    its files deleted; a signed earlier form stays in the record and in Documents until the new one is finished, then
+   *    taxSigned applies plan 06-34's rule (a new signed form supersedes it; a new unsigned form is retired and it stays).
+   * The W-9's full taxpayer ID leaves this page's memory once it is in the form (T-06-35). Returns true to stay on the step.
+   */
+  async function buildTax(c, d) {
+    const ws = c.ws;
+    const i = c.inv;
+    const fl = c.fl;
+    const key = taxKey(c, d);
+    const w8 = key === W8_KEY;
+    const w8e = key === W8E_KEY;
+    const map = NS.taxforms.MAPS[key];
+    const a = w8 ? w8Answers(c, d) : w8e ? w8eAnswers(c, d) : w9Answers(c, d);
+    const old = fl.taxEnvelopeId && (ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
+    const os = old && signerOf(old, i);
+    const typed = w8 ? !!(tidy(d.ftin) || digitsOf(d.w8UsTin)) : w8e ? e8Typed(c, d) : !!(digitsOf(d.tin) || TINS[i.id] || digitsOf(d.ownerTin));
+    const same = !!old && !!old.taxForm && old.taxForm.form === map.form && BUILT[old.id] === plainAnswers(a) && !typed;
+    const unsignedOld = !!old && old.status === 'sent' && !(os && os.status === 'signed');
+    if (same && old.status === 'completed' && i.taxCert && i.taxCert.envelopeId === old.id && i.taxCert.signed === true) return false;
+    if (same && unsignedOld) {
+      fl.taxView = 'sign';
+      ob().taxEdit = false;
+      return true;
+    }
+    const blob = await NS.taxforms.prepare(key, a);
+    if (unsignedOld) {
+      NS.esign.void(ws, old.id, 'Answers changed before signing; a new form was prepared', { quiet: true, actor: `${i.title} (investor)` });
+      await Promise.all([old.docId, old.workDocId].filter((id) => id && id.indexOf(old.id) === 0).map((id) => NS.ops.files.del(id).catch(() => {})));
+    }
+    const env = await NS.esign.createFromPdf(ws, { blob, title: `Form ${map.form} - ${w8 ? a.name || i.title : i.title}`, fileName: `Form_${map.form}.pdf`, investorId: i.id, taxForm: { form: map.form, revision: map.revision }, overlays: map.overlays });
+    BUILT[env.id] = plainAnswers(a);
+    fl.taxEnvelopeId = env.id;
+    fl.taxView = 'sign';
+    if (w8) {
+      const m = (W8MEM[i.id] = W8MEM[i.id] || {});
+      if (tidy(d.ftin)) m.ftin = tidy(d.ftin);
+      if (digitsOf(d.w8UsTin).length === 9) m.usTin = digitsOf(d.w8UsTin);
+      const f = String(a.ftin || '').replace(/[\s-]/g, '');
+      fl.taxW8 = { country: a.country || '', citizenship: a.citizenship || '', ftinLast4: f ? f.slice(-4) : '', noFtin: !!a.noFtin, treatyCountry: a.treatyCountry || '' };
+      i.taxType = 'foreign-individual';
+      d.ftin = d.w8UsTin = '';
+    } else if (w8e) {
+      // T-06-44: the typed numbers stay in this page's memory until the form is finished, never in the saved answers
+      const m = (W8MEM[i.id] = W8MEM[i.id] || {});
+      if (tidy(d.ftin)) m.ftin = tidy(d.ftin);
+      const us = digitsOf(d.e8UsTin).length === 9 ? digitsOf(d.e8UsTin) : TINS[i.id] || '';
+      if (us) m.usTin = us;
+      delete TINS[i.id];
+      // T-06-44: the owners' numbers by row, until the form is finished
+      m.owners = m.owners || {};
+      for (let n = 1; n <= E8_ROWS; n++) {
+        const t = ownerTinText(d['e8Owner' + n + 'Tin']);
+        if (t) m.owners[n] = t;
+        d['e8Owner' + n + 'Tin'] = '';
+      }
+      const f = String(a.ftin || '').replace(/[\s-]/g, '');
+      const ch3 = e8Pick(E8_CH3, d.e8Ch3);
+      const ch4 = e8Pick(E8_CH4, d.e8Ch4);
+      fl.taxW8 = { country: a.country || '', ftinLast4: f ? f.slice(-4) : '', noFtin: !!a.noFtin, chapter3: ch3 ? ch3[1] : '', chapter4: ch4 ? ch4[1] : '' };
+      i.taxType = 'foreign-entity';
+      d.ftin = d.e8UsTin = '';
+    } else {
+      const tin = tinOf(c, d);
+      // the last four digits of the number the form carries (a disregarded LLC's owner's SSN; the account's number otherwise)
+      const onForm = String(a.ssn || a.ein || '');
+      fl.taxTinLast4 = onForm ? onForm.slice(-4) : '';
+      fl.taxBackup = !!d.backup;
+      if (digitsOf(d.tin).length === 9) i.tinLast4 = tin.slice(-4);
+      i.taxType = PERSONAL(d.type) ? 'us-individual' : 'us-entity';
+      delete TINS[i.id];
+      d.tin = d.ownerTin = '';
+    }
+    ob().taxEdit = false;
+    return true;
+  }
+  /** The calendar year of the date stamped beside the signature (the form's own date place), else today's. */
+  function signYear(env, signer) {
+    const f = env.fields.find((x) => x.signerId === signer.id && x.type === 'date' && /\d{4}$/.test(String(x.value || '')));
+    return Number(f ? String(f.value).slice(-4) : NS.dates.today().slice(0, 4));
+  }
+  /**
+   * The W-9 finished (signed or not, D-30): the investor record keeps the form and its certificate facts, never the
+   * taxpayer ID beyond its last four digits, and the flow moves to the step after the tax step.
+   */
+  function taxSigned(c, env, signer) {
+    const i = c.inv;
+    const fl = c.fl;
+    const signed = env.fields.some((f) => f.signerId === signer.id && f.type === 'signature' && !!f.value);
+    // Plan 06-34 (walkthrough-2 N1): one tax form per investor. A form finished without a signature never replaces a signed
+    // form on file (a signed certification is the stronger one): the new one is retired and the record stays as it is.
+    if (!signed && !(i.taxCert && i.taxCert.envelopeId === env.id) && signedOnFile(c.ws, i, env)) {
+      const on = i.taxCert;
+      retireTax(c.ws, i, env, `Finished without a signature; the signed Form ${on.form} on file stays`, { actor: `${i.title} (investor)`, action: 'Tax form kept', what: `Form ${env.taxForm.form} finished on ${U.date(nowIso().slice(0, 10), 'long')} without a signature; the signed Form ${on.form}${on.at ? ` of ${U.date(String(on.at).slice(0, 10), 'long')}` : ''} stays on file` });
+      fl.taxKeptSigned = env.id;
+    } else if (!(i.taxCert && i.taxCert.envelopeId === env.id)) {
+      // The new form is the one on record: every earlier tax form of this investor is retired (a signed one is kept as
+      // superseded with its signed copy, an unsigned one voided and its files deleted).
+      const when = U.date(String(signer.signedAt || nowIso()).slice(0, 10), 'long');
+      const why = `Replaced by the Form ${env.taxForm.form} ${signed ? 'signed' : 'finished'} on ${when}`;
+      (c.ws.envelopes || []).filter((e) => e.kind === 'tax' && e.id !== env.id && e.status !== 'voided' && e.status !== 'superseded' && !!signerOf(e, i)).forEach((e) => retireTax(c.ws, i, e, why, { by: env.id, actor: `${i.title} (investor)` }));
+      delete fl.taxKeptSigned;
+      const base = { form: env.taxForm.form, revision: env.taxForm.revision, envelopeId: env.id, at: signer.signedAt || nowIso(), signed, signedBy: signed ? signer.name : '' };
+      i.taxForm = env.taxForm.form;
+      if (env.taxForm.form === 'W-8BEN' || env.taxForm.form === 'W-8BEN-E') {
+        // a W-8BEN or W-8BEN-E stays valid until 31 December of the third calendar year after the year it was signed
+        const w = fl.taxW8 || {};
+        const until = signed ? `${signYear(env, signer) + 3}-12-31` : '';
+        const facts = env.taxForm.form === 'W-8BEN' ? { country: w.country || '', citizenship: w.citizenship || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin, treatyCountry: w.treatyCountry || '' } : { chapter3: w.chapter3 || '', chapter4: w.chapter4 || '', country: w.country || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin };
+        i.taxCert = Object.assign(base, facts, { validUntil: until });
+        delete W8MEM[i.id];
+      } else i.taxCert = Object.assign(base, { tinLast4: fl.taxTinLast4 || '', backupWithholding: !!fl.taxBackup });
+      if (NS.audit) NS.audit.log(c.ws, { action: signed ? 'Tax form signed' : 'Tax form completed without a signature', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: Form ${env.taxForm.form} (${env.taxForm.revision})${fl.taxBackup ? '; subject to backup withholding' : ''}${signed ? `; signed by ${signer.name}` : ''}`, actor: `${i.title} (investor)` });
+    }
+    delete fl.taxView;
+    const steps = flowSteps(c);
+    fl.at = steps[steps.indexOf('tax') + 1] || 'done';
+    ob().errors = {};
+    S().ui.ivfFocus = true;
+    NS.app.save(true);
+  }
+  /** Whether the investor signed this tax form: their own signature field holds a value (D-30: nothing on it is required). */
+  const signedTax = (env, i) => {
+    const s = signerOf(env, i);
+    return !!s && env.fields.some((f) => f.signerId === s.id && f.type === 'signature' && !!f.value);
+  };
+  /**
+   * Plan 06-34: a signed tax form the record holds, other than env: a completed form the investor signed (its envelope still
+   * here), or one recorded as signed whose envelope this browser does not hold (server mode: the console keeps it), or a
+   * completed form they uploaded instead. Never a form recorded as not signed or not received.
+   */
+  function signedOnFile(ws, i, env) {
+    const tc = i.taxCert;
+    if (!tc || !taxOnFile(i)) return false;
+    if (tc.uploaded === true) return true;
+    if (tc.signed !== true || !tc.envelopeId || tc.envelopeId === env.id) return false;
+    const held = (ws.envelopes || []).find((e) => e.id === tc.envelopeId);
+    return !held || (held.status === 'completed' && signedTax(held, i));
+  }
+  /**
+   * Plan 06-34 (walkthrough-2 N1; plan-check B1): an earlier tax form leaves the record. A completed form the investor signed
+   * is kept as superseded (its envelope and signed copy stay; a payer keeps a signed W-9 for four years and a W-8 as long as
+   * it may be relevant), its Documents listing and its drafts go; a form never signed is voided and every file of it deleted
+   * (they hold the full taxpayer ID). One change-log line says which form, when, and why. The envelope changes at once; the
+   * promise settles once its files are deleted. opts: { by, actor, action, what }.
+   */
+  function retireTax(ws, i, env, reason, opts) {
+    opts = opts || {};
+    if (!env || !NS.esign || !NS.esign.retire || env.status === 'voided' || env.status === 'superseded') return Promise.resolve(false);
+    const keep = env.status === 'completed' && signedTax(env, i);
+    const form = `Form ${(env.taxForm && env.taxForm.form) || 'W-9'}`;
+    const s = signerOf(env, i);
+    const when = s && s.signedAt ? ` of ${U.date(String(s.signedAt).slice(0, 10), 'long')}` : '';
+    const done = NS.esign.retire(ws, env.id, keep ? 'superseded' : 'voided', reason, { by: opts.by || '', actor: opts.actor });
+    delete BUILT[env.id];
+    if (NS.audit) NS.audit.log(ws, Object.assign({ action: opts.action || 'Tax form replaced', record: i.id, fund: '', detail: `${i.title}: ${opts.what || `the ${keep ? 'signed' : 'unsigned'} ${form}${when}`}; ${keep ? 'kept as superseded with its signed copy, no longer listed' : 'voided and its files deleted'}. ${reason}.` }, opts.actor ? { actor: opts.actor } : {}));
+    return done;
   }
   function docsHTML(c) {
     const docs = (c.ws.docs || []).filter((x) => x.offeringDoc && !x.hidden && x.offeringId === c.off.id);
@@ -1383,51 +2505,48 @@
     const clsLocked = !!c.it.cls && classes.some((x) => x.id === c.it.cls);
     const cls = classes.find((x) => x.id === d.cls);
     const min = Math.max(Number(o.minimum) || 0, (cls && Number(cls.minimum)) || 0);
-    const terms = (o.terms || []).filter((r) => r.show && r.label && r.value).slice(0, 8);
     const e = ob().errors;
     const ready = tplReady(c);
     const acc = c.inv.accreditation && c.inv.accreditation.basis;
+    // The accreditation tick follows the investor status answer (D-01) and is never required (D-30). Without the
+    // accredited question (verified accreditation, or no question asked) today's sentence stays, except where the offering
+    // is open to investors who are not accredited (Regulation A Tier 1, Tier 2 listed on an exchange, Regulation
+    // Crowdfunding, Regulation S): there no statement about accreditation is asked for. Plan 06-15 (owner): the tick is
+    // simply left out there, with no sentence saying why.
+    const accAns = accVerifiedFor(c) ? 'yes' : accAsked(c) ? d.stAcc : openToAll(c) || openKind(c) ? '' : 'yes';
+    const accTick =
+      accAns === 'yes'
+        ? check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)
+        : accAns === 'no'
+          ? check('subAcc', `${h(c.inv.title)} is not an accredited investor, and the answers given under Investor status remain accurate.`)
+          : '';
+    // D-06 (plan 06-15): the offering named; its summary, type, first close and terms are in the offering documents, and the
+    // minimum is on the commitment field.
     return `${ivfH1(FL.subscribe)}
-      <p class="lede">${h(o.name)}${o.type ? ` · ${h(o.type)}` : ''}${o.summary ? ` · ${h(o.summary)}` : ''}</p>
-      <dl class="terms ivf-facts">
-        <div><dt>Minimum commitment</dt><dd>${money(o, min)}</dd></div>
-        ${o.closeDate ? `<div><dt>First close</dt><dd>${U.date(o.closeDate)} (targeted)</dd></div>` : ''}
-        ${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}
-      </dl>
+      <p class="lede">${h(o.name)}</p>
       <h2 class="ivf-h2">Offering documents</h2>
       ${docsHTML(c)}
       <div class="form-grid">
         ${
           locked
-            ? `<label class="field" for="ob-amount"><span>Commitment</span><input id="ob-amount" type="text" value="${money(o, c.it.cents / 100)}" readonly><span class="hint">Set by ${h(t.shortName)} for this invitation.</span></label>`
+            ? `<label class="field" for="ob-amount"><span>Commitment</span><input id="ob-amount" type="text" value="${money(o, c.it.cents / 100)}" readonly></label>`
             : `<label class="field" for="ob-amount"><span>Commitment (${curOf(o) === 'USD' ? '$' : h(curOf(o))})</span><input id="ob-amount" type="number" inputmode="numeric" min="${min}" step="1000" data-bind="ob:amount" value="${h(d.amount)}"${e.amount ? ' aria-invalid="true" aria-describedby="err-amount"' : ''}><span class="hint">Minimum ${money(o, min)}.</span>${err('amount')}</label>`
         }
-        ${classes.length > 1 ? `<label class="field" for="ob-cls"><span>Share class</span><select id="ob-cls" data-bind="ob:cls"${clsLocked ? ' disabled' : ''}>${classes.map((x) => `<option value="${h(x.id)}"${x.id === d.cls ? ' selected' : ''}>${h(x.name)}${x.minimum ? `, minimum ${money(o, Number(x.minimum))}` : ''}</option>`).join('')}</select>${clsLocked ? `<span class="hint">Set by ${h(t.shortName)} for this invitation.</span>` : ''}</label>` : ''}
-        <label class="field field-wide" for="ob-acct"><span>Investing as</span><input id="ob-acct" type="text" value="${h(c.inv.title)} (${h((NS.ENTITY_TYPES[c.inv.type] || {}).label || c.inv.type)})" readonly></label>
-        ${check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)}
+        ${raSubLine(c, d)}
+        ${classes.length > 1 ? `<label class="field" for="ob-cls"><span>Share class</span><select id="ob-cls" data-bind="ob:cls"${clsLocked ? ' disabled' : ''}>${classes.map((x) => `<option value="${h(x.id)}"${x.id === d.cls ? ' selected' : ''}>${h(x.name)}${x.minimum ? `, minimum ${money(o, Number(x.minimum))}` : ''}</option>`).join('')}</select></label>` : ''}
+        ${accTick}
         ${check('subDocs', 'I have received and read the offering documents listed above, including the subscription agreement, and I make the representations in the subscription agreement.')}
         ${ready ? '' : `${check('subEsign', 'I agree to sign these subscription documents electronically.')}${input('subSig', 'Type your full name to sign', { wide: true, hint: `Signing as ${h(c.inv.contact)} for ${h(c.inv.title)} on ${U.date(NS.dates.today(), 'long')}` })}`}
-      </div>
-      <p class="meta">${ready ? `Next you sign ${h(t.shortName)}’s subscription agreement on this page, with your commitment and details filled in.` : 'Your investor information, tax certification and accreditation are carried into the subscription agreement.'} ${fundingText(c)}</p>`;
-  }
-  /** When money is due: a closed-end fund calls capital later; an open-ended fund is funded once the subscription is accepted. */
-  function fundingText(c) {
-    const t = c.ws.tenant;
-    return c.off && NS.ops && NS.ops.isOpen(c.off)
-      ? `No money is due until ${h(t.shortName)} accepts your subscription. You will then get wire instructions for funding it before the dealing date.`
-      : `No money is due now; ${h(t.shortName)} will send wire instructions when capital is called.`;
+      </div>`;
   }
   function fAgreement(c) {
     const env = envOf(c);
     const s = signerOf(env, c.inv);
     const declined = env && (env.status === 'declined' || (s && s.status === 'declined'));
     return `${ivfH1(FL.agreement)}
-      <p class="lede">${declined ? `You declined to sign. ${h(c.ws.tenant.support.team)} has been told and will contact you; you can also reach them at ${h(c.ws.tenant.support.email)}.` : `Review ${h(c.ws.tenant.shortName)}’s subscription agreement. Your commitment and details are filled in. Sign each highlighted field, then select Finish.`}</p>
+      <p class="lede">${declined ? `You declined to sign. ${h(c.ws.tenant.support.team)} has been told and will contact you; you can also reach them at ${h(c.ws.tenant.support.email)}.` : 'Select Start to go to each field that needs you, then Finish.'}</p>
       ${c.fl.resignAt && !declined ? '<p class="meta ivf-why">The copy you signed earlier could not be sent from this device, so this is a new copy to sign. Your details and commitment are the same.</p>' : ''}
-      ${env ? NS.esign.embed(env.id, c.inv.id) : ''}`;
-  }
-  function statusRow(label, value, cls) {
-    return `<div><dt>${label}</dt><dd>${cls ? `<span class="iv-chip ${cls}">${value}</span>` : value}</dd></div>`;
+      ${env ? NS.esign.embed(env.id, c.inv.id, 'ivf-back') : ''}`;
   }
   function fDone(c) {
     const t = c.ws.tenant;
@@ -1443,24 +2562,23 @@
         const todo = o.finishContact ? `Contact ${h(sup.team || 'investor relations')}${sup.email ? ` at ${h(sup.email)}` : ''}${sup.phone ? ` or ${h(sup.phone)}` : ''} for help.` : 'Check your connection, then try again. Nothing you entered is lost.';
         const resign = o.finishContact && o.canResign;
         const action = !o.finishContact ? '<button class="btn btn-primary" type="button" data-action="ivf-retry">Try again</button>' : resign ? '<button class="btn btn-primary" type="button" data-action="ivf-resign">Sign again</button>' : '';
-        return `${ivfH1('Almost done')}<p class="lede" role="alert">We could not send your details to ${h(t.name)}${why} ${todo}</p>
+        // No answer from the firm's server (offline, the server down): one plain sentence, never the browser's error text.
+        const said = o.finishNetwork && !o.finishContact ? `We could not reach ${h(t.name)} to send your details, but nothing you entered is lost: check your connection, then try again.` : `We could not send your details to ${h(t.name)}${why} ${todo}`;
+        return `${ivfH1('Almost done')}<p class="lede" role="alert">${said}</p>
           ${resign ? `<p class="meta ivf-why">Or sign the agreement again on this page: ${h(t.shortName)}’s agreement is prepared again with the same details and commitment, and your details are sent once you sign it.</p>` : ''}
           ${action ? `<div class="ob-actions">${action}</div>` : ''}`;
       }
+      if (c.it.coSign) return `${ivfH1('Sending your signature…')}<p class="lede ivf-loading" role="status">Sending your signature to ${h(t.name)}.</p>`;
       return `${ivfH1('Finishing your account…')}<p class="lede ivf-loading" role="status">Saving your details and sending them to ${h(t.name)}.</p>`;
     }
-    // Read only (peek): showing the summary must not create a verification record (vOf does, for an investor without one).
-    const v = IV() ? (IV().peek ? IV().peek(i) : IV().vOf(i)) : null;
+    if (c.it.coSign) return coDone(c);
+    if (c.it.taxRequest) return taxDone(c);
+    // D-06 (plan 06-15): no summary of what the investor just did; the lede says whether the firm is still reviewing and
+    // "What happens next" says what is still open.
     const dec = IV() ? IV().status(c.ws, i).key : 'approved';
-    const id = v ? v.identity.status : 'passed';
     const held = dec !== 'approved';
-    // While the firm reviews, the investor sees one verification status: never which check (a screening match is not disclosed).
-    const idTxt = held ? (dec === 'review' || dec === 'rejected' ? ['In review', 'iv-wait'] : ['Waiting for the results', 'iv-wait']) : id === 'passed' ? ['Verified', 'iv-ok'] : ['Submitted, waiting for the result', 'iv-wait'];
-    const a = v ? v.accreditation : {};
-    const accTxt = a.status === 'verified' && a.connection !== 'self' ? ['Verified', 'iv-ok'] : a.status === 'pending' || a.status === 'review' ? ['In review', 'iv-wait'] : i.accreditation && i.accreditation.basis ? ['Self-certified', 'iv-ok'] : ['Not provided', 'iv-wait'];
     const env = envOf(c);
     const s = signerOf(env, i);
-    const bank = i.payment && i.payment.method === 'ach' ? i.payment.bank : null;
     const signed = env && (env.status === 'completed' || (s && s.status === 'signed'));
     const allSigned = !!env && env.status === 'completed';
     // A countersignature is still to come only while one of the firm's signers has not signed. An agreement for the investor
@@ -1479,13 +2597,14 @@
     } else if (c.closed) next.push(`${closedName} stopped accepting subscriptions before you reached that step, so no subscription was made. ${h(t.support.team)} has been told and will contact you about it.`);
     else next.push('Your investments, distributions, statements and tax documents will appear in your portal.');
     // Evidence the integration server could not take with the rest (sendCompletion): the investor hears it from this page first.
-    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : 'the verification letter you uploaded'));
+    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : k === 'rep' ? 'the acknowledgment of your purchaser representative you uploaded' : k === 'tax' ? (c.inv.taxForm ? `the Form ${h(c.inv.taxForm)} you signed` : 'the tax form you signed') : k === 'taxup' ? (c.inv.taxForm && c.inv.taxForm !== 'Tax form' ? `the Form ${h(c.inv.taxForm)} you uploaded` : 'the tax form you uploaded') : 'the verification letter you uploaded'));
     if (unsent.length) next.push(`${unsent.join(' and ').replace(/^t/, 'T')} could not be sent with your details, so ${h(t.support.team)} may ask you for ${unsent.length > 1 ? 'them' : 'it'} again.`);
     next.push(`Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.`);
-    const verifyRows = held
-      ? statusRow('Verification', idTxt[0], idTxt[1])
-      : `${statusRow('Identity', idTxt[0], idTxt[1])}${statusRow('Sanctions screening', v && v.aml.status === 'clear' ? 'Clear' : 'Runs automatically', v && v.aml.status === 'clear' ? 'iv-ok' : 'iv-wait')}`;
-    const lede = c.it.existing
+    // Plan 06-34: the agreement could not be shown in this browser ("Continue and sign later"): said plainly, with what happens.
+    const later = c.req && c.fl.signLater && !signed ? `Your subscription is recorded. The subscription agreement could not be shown in this browser, and ${h(t.support.team || t.shortName)} has been told. Once they add it again, it waits for your signature under Documents.` : '';
+    const lede = later
+      ? later
+      : c.it.existing
       ? c.req
         ? `Your subscription to ${h(c.off.name.replace(/\.$/, ''))} is submitted.${held ? ` ${h(t.support.team)} is reviewing your verification and will contact you if anything else is needed.` : ''}`
         : `No subscription was made: ${closedName || 'the offering'} is no longer accepting subscriptions. ${h(t.support.team)} will contact you.`
@@ -1493,19 +2612,58 @@
         ? `Your account is set up. ${dec === 'review' || dec === 'rejected' ? `${h(t.support.team)} is reviewing your verification and will contact you if anything else is needed.` : 'Your verification results are still coming in.'}`
         : `Your account with ${h(t.name)} is active.`;
     return `<div class="ivf-done">
-      ${ivfH1(c.it.existing ? (c.req ? 'Thank you. Your subscription is submitted' : 'This offering has closed') : held ? 'Thank you. Your paperwork is complete' : 'You’re all set')}
+      ${ivfH1(later ? 'Thank you. One document is still to sign' : c.it.existing ? (c.req ? 'Thank you. Your subscription is submitted' : 'This offering has closed') : held ? 'Thank you. Your paperwork is complete' : 'You’re all set')}
       <p class="lede">${lede}</p>
-      <dl class="terms ivf-summary">
-        ${c.it.existing ? '' : statusRow('Account', `Activated · ${h(i.title)}`, 'iv-ok')}
-        ${c.it.existing && !held ? '' : verifyRows}
-        ${c.it.existing && !c.fl.accStep ? '' : statusRow('Accreditation', accTxt[0], accTxt[1])}
-        ${c.it.existing ? '' : statusRow('Tax form', h(i.taxForm || 'Not provided'), i.taxForm ? 'iv-ok' : 'iv-wait')}
-        ${c.it.existing ? '' : statusRow('Distributions', bank ? `ACH to the ${h(bank.type)} account ending ${h(U.last4(bank.account))}` : 'Check by mail')}
-        ${c.req && c.off ? statusRow('Subscription', `Submitted for ${money(c.off, c.req.cents / 100)} in ${h(c.off.name)}`, 'iv-ok') : c.closed ? statusRow('Subscription', `Not made: ${closedName} is no longer accepting subscriptions`, 'iv-wait') : ''}
-        ${env ? statusRow('Subscription agreement', allSigned ? 'Signed by everyone' : s && s.status === 'signed' ? (counter ? `Signed; waiting for ${h(t.shortName)}’s countersignature` : 'Signed') : 'Waiting for your signature', signed ? 'iv-ok' : 'iv-wait') : ''}
-      </dl>
       <h2 class="ivf-h2">What happens next</h2>
       <ul class="ivf-need">${next.map((x) => `<li>${x}</li>`).join('')}</ul>
+      <a class="btn btn-primary" href="#overview">Go to your portal</a>
+    </div>`;
+  }
+
+  /** Plan 06-39: the co-investor's done screen (read from the flow: after the send this device holds no copy of the agreement). */
+  function coDone(c) {
+    const t = c.ws.tenant;
+    const name = c.fl.coName || c.inv.contact;
+    return `<div class="ivf-done">
+      ${ivfH1(`Thank you, ${h(name)}`)}
+      <p class="lede">Your signature is recorded and sent to ${h(t.name)}.</p>
+      <p class="meta">Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.</p>
+    </div>`;
+  }
+  /**
+   * Plan 06-26: what a tax-form request brought: { form, how: 'signed' | 'uploaded' | 'unsigned' | 'none' }, from the record's
+   * tax form when this flow made it (the form signed or finished on its tax step, or the file uploaded on it).
+   */
+  function taxOutcome(c) {
+    const tc = c.inv.taxCert;
+    // Plan 06-34: the form this flow finished without a signature, retired because a signed form stays on file
+    const kept = !!c.fl.taxKeptSigned && c.fl.taxKeptSigned === c.fl.taxEnvelopeId ? (c.ws.envelopes || []).find((e) => e.id === c.fl.taxKeptSigned) : null;
+    if (kept && kept.taxForm) return { form: kept.taxForm.form, how: 'unsigned' };
+    const fresh = !!tc && ((!!tc.envelopeId && tc.envelopeId === c.fl.taxEnvelopeId) || (tc.uploaded === true && !!tc.fileId && tc.fileId === c.fl.taxUploadId));
+    const form = (fresh && tc.form) || (NS.INVESTOR_TYPES[c.inv.taxType] || { form: 'W-9' }).form;
+    return { form, how: !fresh ? 'none' : tc.uploaded ? 'uploaded' : tc.signed === false ? 'unsigned' : 'signed' };
+  }
+  /** Plan 06-26: the done screen of a tax-form request: whether the form is signed (or uploaded), and what happens next. */
+  function taxDone(c) {
+    const t = c.ws.tenant;
+    const sup = t.support || {};
+    const remoteWs = isRemote(c.ws);
+    const x = c.fl.taxOutcome || taxOutcome(c);
+    const form = `Form ${h(x.form)}`;
+    const back = x.how === 'signed' || x.how === 'uploaded';
+    const team = h(sup.team || 'Investor relations');
+    const lede = back ? `Your ${form} is ${x.how}${remoteWs ? ` and sent to ${h(t.name)}` : ''}.` : x.how === 'unsigned' ? `You finished without signing your ${form}, so ${team} may ask you for it again.` : `No tax form was completed, so ${team} may ask you for it again.`;
+    const next = [];
+    if (back && !remoteWs) next.push(x.how === 'signed' ? 'A copy of the signed form is in your Documents.' : 'The form you uploaded is kept with your account records.');
+    if (back && remoteWs) next.push(`${h(t.shortName)} adds it to your account records. For your privacy, this browser keeps no copy.`);
+    const unsent = (c.fl.unsent || []).filter((k) => k === 'tax' || k === 'taxup');
+    if (unsent.length) next.push(`The ${form} you ${unsent[0] === 'tax' ? 'signed' : 'uploaded'} could not be sent with your details, so ${team} may ask you for it again.`);
+    next.push(`Questions? ${team}${sup.email ? ` at ${h(sup.email)}` : ''}${sup.phone ? ` or ${h(sup.phone)}` : ''}.`);
+    return `<div class="ivf-done">
+      ${ivfH1(back ? 'Thank you. Your tax form is complete' : 'Your tax form request is finished')}
+      <p class="lede">${lede}</p>
+      <h2 class="ivf-h2">What happens next</h2>
+      <ul class="ivf-need">${next.map((y) => `<li>${y}</li>`).join('')}</ul>
       <a class="btn btn-primary" href="#overview">Go to your portal</a>
     </div>`;
   }
@@ -1517,7 +2675,7 @@
     const e = {};
     if (key === 'welcome') {
       if (!d.esignConsent) e.esignConsent = 'Agree to electronic records and signatures to continue.';
-      if (t.onboarding.esign && !d.edelivery) e.edelivery = 'Electronic delivery is required for this portal.';
+      if (t.onboarding.esign && !d.edelivery && !c.it.coSign) e.edelivery = 'Electronic delivery is required for this portal.';
     }
     if (key === 'login' && !(c.fl.loginAt && !d.password && !d.password2)) Object.assign(e, validate('login'));
     else if (key === 'login') personErrors(e, d.loginFirst, d.loginLast, 'loginFirst', 'loginLast', 'your');
@@ -1560,19 +2718,22 @@
       } else if (!d.accBasis) e.accBasis = 'Select the basis that applies.';
       if (!d.accAttest) e.accAttest = 'Confirm the statement to continue.';
     }
-    if (key === 'tax') {
-      const ira = d.type === 'ira';
-      if (!ira && !d.usPerson) e.usPerson = 'Answer this question to continue.';
-      else if (ira || d.usPerson === 'yes') {
-        if (!c.inv.tinLast4 && digitsOf(d.tin).length !== 9) e.tin = 'Enter your nine-digit taxpayer ID.';
-        if (!d.w9) e.w9 = 'Certify the statements to continue.';
-      } else {
-        if (!d.taxCountry) e.taxCountry = 'Choose your country of tax residence.';
-        const have = c.inv.taxCert && c.inv.taxCert.ftinLast4;
-        if (!d.noFtin && String(d.ftin).trim().length < 4 && !(have && !String(d.ftin).trim())) e.ftin = 'Enter your foreign tax identifying number, or tick the box below it.';
-        if (!d.w8) e.w8 = 'Certify the statements to continue.';
+    // the upload view (plan 06-21) asks nothing that can be wrong: the answers behind it are not on screen
+    if (key === 'tax' && c.fl.taxView !== 'upload') {
+      if (usTax(c, d)) {
+        // D-30: nothing on the W-9 is required; a taxpayer ID typed only in part is pointed out, as on Investor information.
+        const tin = digitsOf(d.tin);
+        if (tin.length && tin.length !== 9) e.tin = 'Enter all nine digits, or leave this empty.';
+        const own = digitsOf(d.ownerTin);
+        if (w9Disregarded(c, d) && own.length && own.length !== 9) e.ownerTin = 'Enter all nine digits, or leave this empty.';
+      } else if (taxKey(c, d) === W8_KEY) {
+        // D-30: nothing on the W-8BEN is required; a U.S. taxpayer ID typed only in part is pointed out.
+        const t = digitsOf(d.w8UsTin);
+        if (t.length && t.length !== 9) e.w8UsTin = 'Enter all nine digits, or leave this empty.';
+      } else if (taxKey(c, d) === W8E_KEY) {
+        // D-30: nothing on the W-8BEN-E is required; a number typed only in part is pointed out.
+        Object.assign(e, e8Problems(d));
       }
-      if (!e.usPerson && !sameName(d.taxSig, c.inv.contact)) e.taxSig = `Type your name exactly as ${c.inv.contact}.`;
     }
     if (key === 'payment') Object.assign(e, validate('payment'));
     if (key === 'subscribe' && !c.req && c.off) {
@@ -1581,7 +2742,6 @@
       const min = Math.max(Number(o.minimum) || 0, (cls && Number(cls.minimum)) || 0);
       const cents = Math.round((Number(d.amount) || 0) * 100);
       if (!(c.it.cents > 0) && cents < Math.round(min * 100)) e.amount = `The minimum ${cls && cls.minimum ? `for ${cls.name} ` : ''}is ${money(o, min)}.`;
-      if (!d.subAcc) e.subAcc = 'Confirm your accreditation to continue.';
       if (!d.subDocs) e.subDocs = 'Confirm you have read the offering documents.';
       if (!tplReady(c)) {
         if (!d.subEsign) e.subEsign = 'Agree to electronic signature to continue.';
@@ -1592,6 +2752,59 @@
   }
 
   /* ---------- Saving each step to the investor record ---------- */
+  /** The flow's tax form built and not signed is voided (its files deleted); a signed one stays in the record and Documents. */
+  async function voidUnsignedTax(c, reason) {
+    const fl = c.fl;
+    const old = fl.taxEnvelopeId && (c.ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
+    const os = old && signerOf(old, c.inv);
+    if (!old || old.status !== 'sent' || (os && os.status === 'signed')) return;
+    NS.esign.void(c.ws, old.id, reason, { quiet: true, actor: `${c.inv.title} (investor)` });
+    await Promise.all([old.docId, old.workDocId].filter((id) => id && id.indexOf(old.id) === 0).map((id) => NS.ops.files.del(id).catch(() => {})));
+    delete fl.taxEnvelopeId;
+  }
+  /**
+   * Plan 06-21 (D-01, T-06-45): Continue on the upload view. A file chosen there that is a PDF, PNG or JPEG by its first
+   * bytes and at most MAX_FILES is stored under the investor's own id tax-<investor id>-<time in base 36>; the record names
+   * the form (taxForm) and keeps where the file is (taxCert, uploaded). A form built here and not signed is voided; one signed
+   * earlier stays in the record's Documents. The tax numbers typed for the forms here leave this page's memory. Without a
+   * file nothing is stored and the flow moves on (D-30).
+   */
+  async function storeTaxUpload(c, d, log) {
+    const i = c.inv;
+    const fl = c.fl;
+    const up = UPLOADS[i.id];
+    const ok = !!up && up.file.size > 0 && up.file.size <= MAX_FILES && (await sendable(up.file, false));
+    const pick = upForms(c, d).find((x) => x[0] === d.taxUpForm);
+    const form = pick && pick[0] !== 'other' ? pick[0] : 'Tax form';
+    let id = '';
+    if (ok) {
+      id = `tax-${i.id}-${Date.now().toString(36)}`;
+      try {
+        await NS.ops.files.put(id, up.file);
+      } catch (e) {
+        throw new Error('The form could not be kept in this browser. Try again, or go Back and continue without it.');
+      }
+    }
+    delete UPLOADS[i.id];
+    delete fl.taxView;
+    if (!ok) {
+      if (!taxOnFile(i)) log('Tax form not completed', 'continued from the upload of a completed form without a file');
+      return;
+    }
+    await voidUnsignedTax(c, 'The investor uploaded a completed form instead');
+    delete W8MEM[i.id];
+    delete TINS[i.id];
+    ['tin', 'ownerTin', 'ftin', 'w8UsTin', 'e8UsTin'].concat(E8_OWNER_TINS).forEach((k) => (d[k] = ''));
+    // An upload this one replaces leaves this browser's file store (plan 06-23, research Pitfall 2: a completed form carries
+    // the full taxpayer ID, and nothing points at it any more).
+    const prev = i.taxCert && i.taxCert.uploaded === true && typeof i.taxCert.fileId === 'string' && i.taxCert.fileId !== id && new RegExp(`^tax-${reEsc(i.id)}-[a-z0-9]+$`).test(i.taxCert.fileId) ? i.taxCert.fileId : '';
+    i.taxForm = form;
+    i.taxCert = { form, uploaded: true, fileId: id, fileName: up.name, at: nowIso() };
+    fl.taxUploadId = id;
+    if (prev) await NS.ops.files.del(prev).catch(() => {});
+    i.taxType = usTax(c, d) ? (PERSONAL(d.type) ? 'us-individual' : 'us-entity') : PERSONAL(d.type) ? 'foreign-individual' : 'foreign-entity';
+    log('Tax form uploaded', form === 'Tax form' ? 'a completed tax form' : `Form ${form}, completed outside the portal`);
+  }
   function persistable(d) {
     const out = {};
     Object.keys(d).forEach((k) => {
@@ -1607,6 +2820,13 @@
     const actor = () => `${i.title} (investor)`;
     const log = (action, detail) => NS.audit && NS.audit.log(ws, { action, record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: ${detail}`, actor: actor() });
     if (i.onboarding.status === 'invited') i.onboarding = Object.assign({}, i.onboarding, { status: 'in_progress' });
+    if (key === 'welcome' && c.it.coSign) {
+      // Plan 06-39: the co-investor's consent is recorded on their own signer on the agreement (esign.js recordConsent),
+      // never on the account investor's record.
+      fl.consentAt = nowIso();
+      if (NS.audit) NS.audit.log(ws, { action: 'Electronic records consent given', record: i.id, fund: '', detail: `${i.contact}, co-investor on ${i.title}: agreed to use electronic records and signatures`, actor: `${i.contact} (co-investor)` });
+      return false;
+    }
     if (key === 'welcome') {
       fl.consentAt = nowIso();
       i.edelivery = !!d.edelivery;
@@ -1628,8 +2848,21 @@
       i.address = us ? `${d.street.trim()}, ${d.city.trim()}, ${String(d.st).toUpperCase()} ${String(d.zip).trim()}` : [d.street.trim(), d.city.trim(), [String(d.st).trim(), String(d.zip).trim()].filter(Boolean).join(' '), d.country].filter(Boolean).join(', ');
       i.phone = d.phone;
       if (!ENTITY_KYC(d.type)) i.citizenship = d.citizen;
-      if (digitsOf(d.tin).length === 9) i.tinLast4 = digitsOf(d.tin).slice(-4);
+      if (digitsOf(d.tin).length === 9) {
+        i.tinLast4 = digitsOf(d.tin).slice(-4);
+        TINS[i.id] = digitsOf(d.tin);
+      }
       d.tin = '';
+      // The W-9 takes its name and address from these answers again (an earlier change on the tax step no longer applies).
+      d.w9Name = d.w9Business = d.w9Street = d.w9City = '';
+      d.w9Edit = false;
+      // the same for the W-8BEN (plan 06-18)
+      ['w8Name', 'w8Citizen', 'w8CitizenOther', 'w8Street', 'w8City', 'w8Country', 'w8CountryOther', 'w8Dob'].forEach((k) => (d[k] = ''));
+      d.w8Edit = false;
+      // and the W-8BEN-E (plan 06-20); the statuses, which Investor information does not ask, stay
+      ['e8Name', 'e8Country', 'e8CountryOther', 'e8Street', 'e8City', 'e8Res', 'e8ResOther', 'e8Print'].forEach((k) => (d[k] = ''));
+      d.e8Capacity = true;
+      d.e8Edit = false;
       if (IV()) await IV().finishOnboarding(ws, i, d);
       refreshSubscription(c);
       log('Investor information confirmed', `${(NS.ENTITY_TYPES[i.type] || {}).label || i.type}; ${i.address}${i.tinLast4 ? `; taxpayer ID ending ${i.tinLast4}` : ''}${sameName(was, i.contact) ? '' : `; the investor gave their name as ${i.contact} (it was ${was || 'not'} on file)`}`);
@@ -1641,17 +2874,53 @@
       if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, accVerifiedFor(c) ? Object.assign({}, d, { accBasis: '' }) : d);
       else if (IV()) IV().decide(ws, i);
     }
-    if (key === 'tax') {
-      const usp = d.type === 'ira' || d.usPerson === 'yes';
-      if (usp && digitsOf(d.tin).length === 9) i.tinLast4 = digitsOf(d.tin).slice(-4);
-      const form = usp ? 'W-9' : d.type === 'entity' || d.type === 'trust' ? 'W-8BEN-E' : 'W-8BEN';
-      const prev = i.taxCert || {};
-      i.taxForm = form;
-      i.taxCert = usp
-        ? { form, at: nowIso(), signedBy: d.taxSig.trim(), tinLast4: i.tinLast4, backupWithholding: !!d.backup }
-        : { form, at: nowIso(), signedBy: d.taxSig.trim(), country: d.taxCountry, ftinLast4: d.noFtin ? '' : String(d.ftin).trim() ? String(d.ftin).trim().slice(-4) : prev.ftinLast4 || '', noFtin: !!d.noFtin, treatyCountry: d.treaty || '' };
-      d.tin = d.ftin = '';
-      log('Tax certification signed', `${usp ? 'Substitute Form W-9' : `${form} certification`}${usp ? (d.backup ? '; subject to backup withholding' : '') : `; tax residence ${d.taxCountry}${d.treaty ? `; treaty benefits as a resident of ${d.treaty}` : ''}`}; signed by ${d.taxSig.trim()}`);
+    if (key === 'status') {
+      let gone = '';
+      // The accredited answer is saved only where the step asked it (where a verification is required, its step decides).
+      const asked = accAsked(c);
+      if (asked && d.stAcc === 'yes' && d.stBasis) {
+        i.accreditation = Object.assign({}, i.accreditation, { basis: d.stBasis, date: NS.dates.today() });
+        if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, Object.assign({}, d, { accBasis: d.stBasis }));
+        else if (IV()) IV().decide(ws, i);
+      } else if (asked && d.stAcc === 'no') gone = withdrawGround(c);
+      // D-01: the benefit plan answers are kept on the investor record to prefill their next subscription.
+      const e = c.off ? erisaFrom(d) : null;
+      if (e && e.plan) i.erisa = { plan: e.plan, planPct: e.planPct, at: nowIso() };
+      const accSaid = d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered';
+      const said = asked ? accSaid : e ? erisaLogText(d) : 'not answered';
+      log('Investor status answered', `${said}${gone ? `; the self-certified ground on the record (${gone}) no longer applies` : ''}${raAsked(c, d) ? raLogText(c, d) : ''}${asked && e ? `; ${erisaLogText(d)}` : ''}`);
+      // Corrected after subscribing: a request still pending carries the new answers; a decided one keeps what it was decided on.
+      if (c.req && c.req.status === 'pending') {
+        c.req.qual = qualFrom(c, d);
+        if (NS.audit) NS.audit.log(ws, { action: 'Investor status updated', record: c.req.id, fund: c.off ? c.off.id : '', detail: `${i.title}: subscription ${c.req.id} now records ${said}`, actor: actor() });
+      }
+    }
+    // Plan 06-21 (D-01): Continue on the upload view stores the chosen form, or moves on without one (D-30).
+    if (key === 'tax' && fl.taxView === 'upload') {
+      await storeTaxUpload(c, d, log);
+      fl.d = persistable(d);
+      NS.app.save(true);
+      return false;
+    }
+    // Continue on the W-9, W-8BEN or W-8BEN-E answers builds the form and shows it to sign on this same step (true: the flow
+    // stays on the step); a signed form kept unchanged lets the flow move on.
+    if (key === 'tax' && taxKey(c, d)) {
+      const stay = await buildTax(c, d);
+      fl.d = persistable(d);
+      NS.app.save(true);
+      if (stay) return true;
+    }
+    // T-06-43 (plan 06-20): a status the W-8BEN-E here does not cover builds no form; an unsigned W-8BEN-E built before is
+    // voided (its files deleted), a signed one stays; nothing is required (D-30), the flow moves on.
+    if (key === 'tax' && !taxKey(c, d)) {
+      await voidUnsignedTax(c, 'The investor gave a status this form does not cover; no form was prepared');
+      delete fl.taxView;
+      delete W8MEM[i.id];
+      d.ftin = d.e8UsTin = '';
+      E8_OWNER_TINS.forEach((k) => (d[k] = ''));
+      i.taxType = 'foreign-entity';
+      const said = [d.e8Ch3 === 'other' ? 'chapter 3: something else' : '', d.e8Ch4 === 'other' ? 'chapter 4: something else' : ''].filter(Boolean).join(', ');
+      log('Tax form not completed', `the status given (${said}) needs a form other than the W-8BEN-E filled in here, usually W-8IMY, W-8ECI or W-8EXP`);
     }
     if (key === 'payment') {
       i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: bankHolder(d), routing: digitsOf(d.routing), account: digitsOf(d.account), type: d.acctType } } : { method: 'check', bank: null };
@@ -1666,12 +2935,37 @@
       // also in server mode, where the temporary investor record has no positions to tell from.
       const r = NS.ops.submitSubscription(ws, i, o, { cents, signature: tplReady(c) ? i.contact : d.subSig.trim(), cls: cls ? cls.id : '', embedded: true, additional: holds(c) });
       if (r) {
+        r.qual = qualFrom(c, d);
         fl.requestId = r.id;
         if (r.envelopeId) fl.envelopeId = r.envelopeId;
       }
     }
     fl.d = persistable(d);
     NS.app.save(true);
+  }
+
+  /**
+   * The investor answered that they are not accredited (on the status step, also as a correction of an earlier yes): a ground
+   * self-certified before no longer stands. The record then holds no ground, as for an investor who never gave one (every
+   * reader of i.accreditation takes its basis as the accredited status: the portal's own subscribe form, the activity log,
+   * the investor's profile), and keeps the withdrawn ground as superseded, with when it was given and when it was withdrawn.
+   * A self-certification record made from it, or the record on file seeded from it, is withdrawn the same way. A ground
+   * another connection verified (verifiedBy) is the firm's record and stays. Returns the ground withdrawn, or ''.
+   */
+  function withdrawGround(c) {
+    const i = c.inv;
+    const a = i.accreditation;
+    if (!a || typeof a !== 'object' || !a.basis || a.verifiedBy) return '';
+    const today = NS.dates.today();
+    i.accreditation = Object.assign({}, a, { basis: '', date: '', superseded: { basis: a.basis, date: a.date || '', at: today } });
+    const I = NS.integrations;
+    if (I && I.recorded && I.recorded(i)) {
+      const v = i.verify.accreditation;
+      const fromIt = v && (I.selfCertified(v) || (v.legacy && v.method === a.basis));
+      if (fromIt && v.status !== 'not_started') i.verify.accreditation = { status: 'not_started', superseded: { method: String(v.method || ''), verifiedAt: v.verifiedAt || '', at: nowIso() } };
+      if (IV()) IV().decide(c.ws, i);
+    }
+    return a.basis;
   }
 
   /**
@@ -1682,7 +2976,7 @@
     const env = envOf(c);
     const s = signerOf(env, c.inv);
     if (!c.req || !env || !s || s.status === 'signed' || env.status !== 'sent') return;
-    if (s.account === c.inv.title && s.name === c.inv.contact && s.email === c.inv.email) return;
+    // The agreement follows every detail it shows (name, account, address, email, phone, kind of account): esign.js says whether anything changed.
     if (NS.esign.refreshSubscription && NS.esign.refreshSubscription(c.ws, env.id, c.inv, c.off, { cents: c.req.cents, cls: c.req.cls })) {
       // The request is signed when its agreement is: until then it names the investor as now on file.
       if (!c.req.signedAt) c.req.signedBy = c.inv.contact;
@@ -1752,7 +3046,82 @@
     return pdf || (!pdfOnly && (png || jpeg));
   }
   const mb = (n) => (n / 1048576).toFixed(1).replace(/\.0$/, '');
+  const reEsc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  /** The purchaser representative on a request's status answers (request.qual.sophistication.rep), or null. */
+  const repOf = (r) => {
+    const so = r && r.qual && typeof r.qual === 'object' ? r.qual.sophistication : null;
+    return so && typeof so === 'object' && so.rep && typeof so.rep === 'object' ? so.rep : null;
+  };
+  /**
+   * Research Pitfall 2 (plan 06-23, T-06-50): once the firm has confirmed it received the investor's details, this device (it
+   * may be a shared computer) keeps no copy that carries the full taxpayer ID. Every file of this investor's tax envelopes
+   * goes (the filled form, its work and signed copies, the files of a form voided on the way), and the tax form they uploaded
+   * instead (tax-<investor id>-<time>); so do the Documents entries for them, and the envelopes, which would point at files
+   * no longer here. Called only after the send is confirmed: a send that fails keeps everything, so Try again sends the same
+   * file.
+   */
+  async function wipeTax(c, tc) {
+    const ws = c.ws;
+    const i = c.inv;
+    const envs = (ws.envelopes || []).filter((e) => e.kind === 'tax' && !!signerOf(e, i));
+    const ids = new Set();
+    envs.forEach((e) => [e.docId, e.workDocId, e.signedDocId, `${e.id}-orig`, `${e.id}-work`, `${e.id}-signed`].forEach((x) => x && String(x).indexOf(e.id) === 0 && ids.add(String(x))));
+    if (tc && typeof tc.fileId === 'string' && new RegExp(`^tax-${reEsc(i.id)}-[a-z0-9]+$`).test(tc.fileId)) ids.add(tc.fileId);
+    if (NS.ops && NS.ops.files) await Promise.all(Array.from(ids).map((id) => NS.ops.files.del(id).catch(() => {})));
+    const gone = new Set(envs.map((e) => e.id));
+    ws.envelopes = (ws.envelopes || []).filter((e) => !gone.has(e.id));
+    ws.docs = (ws.docs || []).filter((d) => !(d.envelopeId && gone.has(d.envelopeId)) && !ids.has(d.id));
+    gone.forEach((id) => delete BUILT[id]);
+    delete c.fl.taxEnvelopeId;
+    delete c.fl.taxView;
+  }
+  /**
+   * Plan 06-39: the co-investor's completion, exactly the 06-38 contract: the agreement (same id) with the work copy now holding
+   * their signature (and the signed copy only when it is complete), the account's id and nothing else. After the send is
+   * confirmed this device keeps no copy of the agreement (it carries the investor's signature; plan 06-23's rule).
+   */
+  async function sendCoSign(c) {
+    const ws = c.ws;
+    const env = envOf(c);
+    const s = signerOf(env, c.inv);
+    const fail = (msg) => Object.assign(new Error(msg), { contact: true, code: 'missing' });
+    if (!env || !s || s.status !== 'signed') throw fail('Your signed agreement could not be found in this browser.');
+    const ids = [env.workDocId].concat(env.status === 'completed' && env.signedDocId ? [env.signedDocId] : []);
+    const files = {};
+    for (const id of ids) {
+      let b = null;
+      try {
+        b = NS.ops && NS.ops.files ? await NS.ops.files.get(id) : null;
+      } catch (e) {
+        b = null;
+      }
+      if (!b) throw fail('Your signed agreement could not be read from this browser’s storage.');
+      if (b.size > MAX_FILES || !(await sendable(b, true))) throw Object.assign(fail(b.size > MAX_FILES ? `Your signed agreement is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB this page can send.` : 'Your signed agreement is not a PDF file this page can send.'), { code: b.size > MAX_FILES ? 'size' : 'format' });
+      files[id] = await blobB64(b);
+    }
+    const payload = { investor: { id: c.inv.id }, request: null, envelope: clone(env), files, docs: [], audit: (ws.audit || []).map((x) => ({ at: x.at, actor: x.actor, action: x.action, detail: x.detail, fund: '', record: x.record || '' })), notifications: [] };
+    await remote.complete(ws.invite.server, ws.invite.token, payload);
+    c.fl.sentAt = nowIso();
+    c.fl.coName = c.inv.contact;
+    // The send is confirmed: the agreement, its copies and the investor's signature leave this device.
+    const gone = [env.docId, env.workDocId, env.signedDocId, `${env.id}-work`, `${env.id}-signed`].filter(Boolean);
+    try {
+      if (NS.ops && NS.ops.files) await Promise.all(gone.map((id) => NS.ops.files.del(id).catch(() => {})));
+    } catch (e) {
+      if (window.console) console.error(e);
+    }
+    ws.envelopes = (ws.envelopes || []).filter((e) => e.id !== env.id);
+    ws.docs = (ws.docs || []).filter((d) => d.envelopeId !== env.id && gone.indexOf(d.id) < 0);
+    ws.notifications = [];
+    ws.audit = [];
+    ws.invite.token = '';
+    ws.invite.sentAt = c.fl.sentAt;
+    c.it.status = 'completed';
+    c.it.completedAt = new Date().toISOString();
+    NS.app.save(true);
+  }
   async function sendCompletion(c) {
+    if (c.it.coSign) return sendCoSign(c);
     const ws = c.ws;
     const i = c.inv;
     const env = envOf(c);
@@ -1761,6 +3130,17 @@
     // everyone has signed, otherwise the work copy with the investor's signature, which the firm countersigns.
     const agreement = env ? (env.status === 'completed' ? env.signedDocId : env.workDocId) : null;
     const ids = agreement ? [agreement] : [];
+    // Then the investor's official tax form (plan 06-22, research Pattern 6): the signed copy of the W-9, W-8BEN or W-8BEN-E
+    // they signed on the tax step, with its envelope (the integration server and the console take it only for a completed tax
+    // envelope this investor alone signed). A form finished without a signature is recorded as not signed and sends no file.
+    const tc = i.taxCert || null;
+    const taxEnv = tc && !tc.uploaded && tc.signed === true && tc.envelopeId ? (ws.envelopes || []).find((e) => e.id === tc.envelopeId && e.kind === 'tax' && e.status === 'completed' && e.signedDocId === `${e.id}-signed` && !!signerOf(e, i)) || null : null;
+    const taxId = taxEnv ? taxEnv.signedDocId : '';
+    if (taxId && ids.indexOf(taxId) < 0) ids.push(taxId);
+    // Or the tax form they uploaded instead of filling one in (plan 06-23, D-01): the file their record names under their own
+    // tax- name (the integration server and the console take no other), a PDF, PNG or JPEG.
+    const upId = tc && tc.uploaded === true && typeof tc.fileId === 'string' && new RegExp(`^tax-${reEsc(i.id)}-[a-z0-9]+$`).test(tc.fileId) ? tc.fileId : '';
+    if (upId && ids.indexOf(upId) < 0) ids.push(upId);
     // Then the investor's evidence: the ID or verification letter they uploaded for the firm to review.
     const v = i.verify || {};
     const kindOf = {};
@@ -1771,6 +3151,14 @@
         kindOf[id] = k;
       }
     });
+    // Then the written acknowledgment of their purchaser representative (Rule 501(i), D-30), named by the request's status
+    // answers under the investor's own rep- name (the server and the console take no other).
+    const repRec = repOf(c.req);
+    const repId = repRec && typeof repRec.fileId === 'string' && new RegExp(`^rep-${reEsc(i.id)}-[a-z0-9]+$`).test(repRec.fileId) ? repRec.fileId : '';
+    if (repId && ids.indexOf(repId) < 0) {
+      ids.push(repId);
+      kindOf[repId] = 'rep';
+    }
     const files = {};
     const unsent = []; // evidence that stays on this device: { kind, name, why }
     let total = 0;
@@ -1782,9 +3170,20 @@
         b = null;
       }
       const fits = !!b && total + b.size <= MAX_FILES;
-      if (fits && (await sendable(b, id === agreement))) {
+      if (fits && (await sendable(b, id === agreement || id === taxId))) {
         total += b.size;
         files[id] = await blobB64(b);
+        continue;
+      }
+      if (id === taxId) {
+        // The signed tax form that cannot go (planner's choice, plan 06-22: after the agreement, before evidence) never stops
+        // the completion: reported like unsent evidence (below).
+        unsent.push({ kind: 'tax', name: (taxEnv.taxForm && taxEnv.taxForm.form) || tc.form || '', why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF file' });
+        continue;
+      }
+      if (id === upId) {
+        // The uploaded tax form that cannot go never stops the completion either: reported like unsent evidence (below).
+        unsent.push({ kind: 'taxup', name: tc.form && tc.form !== 'Tax form' ? tc.form : '', file: str(tc.fileName, 120), why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF, PNG or JPEG file' });
         continue;
       }
       if (id === agreement) {
@@ -1799,7 +3198,7 @@
       // Evidence that cannot go (no room left, or not a PDF, PNG or JPEG) is not sent: the firm's copy of the record says so
       // (below), and the investor's summary tells them the firm may ask for it again.
       const k = kindOf[id];
-      unsent.push({ kind: k, name: str(v[k].fileName, 120), why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF, PNG or JPEG file' });
+      unsent.push({ kind: k, name: str(k === 'rep' ? repRec.fileName : v[k].fileName, 120), why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF, PNG or JPEG file' });
     }
     const investor = clone(i);
     delete investor.onboarding.flow;
@@ -1811,8 +3210,23 @@
     }
     // Evidence left on this device: the firm's copy of the record says what happened and to ask the investor for it, and
     // points at no file (the console would offer a file it never received). This device's own record is left as it is.
-    const what = (x) => `${x.kind === 'identity' ? 'the ID' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`;
+    const what = (x) => (x.kind === 'tax' ? `the Form ${x.name || 'tax form'} the investor signed` : x.kind === 'taxup' ? `the ${x.name ? `Form ${x.name}` : 'tax form'} the investor uploaded${x.file ? ` (${x.file})` : ''}` : `${x.kind === 'identity' ? 'the ID' : x.kind === 'rep' ? 'the written acknowledgment of their purchaser representative' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`);
+    // The signed tax form that stays on this device: the firm's copy of the record says so in one line (its envelope and copy
+    // are not sent, so the firm's console says the copy was not received).
+    unsent.filter((x) => x.kind === 'tax').forEach((x) => {
+      if (investor.taxCert && typeof investor.taxCert === 'object') investor.taxCert.note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
+    });
+    // The uploaded tax form that stays on this device: the same one line, and the firm's copy points at no file (the console
+    // says the upload was not received).
+    unsent.filter((x) => x.kind === 'taxup').forEach((x) => {
+      if (!investor.taxCert || typeof investor.taxCert !== 'object') return;
+      investor.taxCert.note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
+      delete investor.taxCert.fileId;
+      delete investor.taxCert.fileName;
+    });
+    const evidence = unsent.filter((x) => x.kind !== 'tax' && x.kind !== 'taxup');
     unsent.forEach((x) => {
+      if (x.kind === 'rep' || x.kind === 'tax' || x.kind === 'taxup') return;
       const r = investor.verify && investor.verify[x.kind];
       if (!r || typeof r !== 'object') return;
       const note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
@@ -1820,24 +3234,44 @@
       delete r.fileId;
       delete r.fileName;
     });
+    const request = c.req ? clone(c.req) : null;
+    // An acknowledgment that cannot go: the firm's copy of the request says so and points at no file.
+    const repOut = repOf(request);
+    unsent.filter((x) => x.kind === 'rep').forEach((x) => {
+      if (!repOut) return;
+      const note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
+      repOut.note = repOut.note ? `${repOut.note} ${note}` : note;
+      delete repOut.fileId;
+      delete repOut.fileName;
+    });
     const payload = {
       investor,
-      request: c.req ? clone(c.req) : null,
+      request,
       envelope: env ? clone(env) : null,
+      // the tax envelope only with its signed copy: without the file the firm's console could not show the form
+      taxEnvelope: taxEnv && files[taxId] ? clone(taxEnv) : null,
       files,
       docs: (ws.docs || []).filter((x) => !x.fromSnapshot).map(clone),
       audit: (ws.audit || []).map((x) => ({ at: x.at, actor: x.actor, action: x.action, detail: x.detail, fund: x.fund || '', record: x.record || '' })),
       notifications: (ws.notifications || []).filter((n) => n.kind !== 'onboarding_completed').map(clone)
     };
     // One entry in the firm's change log for it (on the payload only: a retry must not log it twice on this device).
-    if (unsent.length) payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: 'Uploaded evidence not sent', detail: `${i.title}: ${unsent.map((x) => `${what(x)} ${x.why}`).join('; ')}; ask the investor for ${unsent.length > 1 ? 'them' : 'it'}`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id });
+    if (evidence.length) payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: 'Uploaded evidence not sent', detail: `${i.title}: ${evidence.map((x) => `${what(x)} ${x.why}`).join('; ')}; ask the investor for ${evidence.length > 1 ? 'them' : 'it'}`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id });
+    unsent.filter((x) => x.kind === 'tax' || x.kind === 'taxup').forEach((x) => payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: x.kind === 'tax' ? 'Signed tax form not sent' : 'Uploaded tax form not sent', detail: `${i.title}: ${what(x)} ${x.why}; ask the investor for it`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id }));
     await remote.complete(ws.invite.server, ws.invite.token, payload);
     c.fl.sentAt = nowIso();
     if (unsent.length) c.fl.unsent = unsent.map((x) => x.kind);
+    // The send is confirmed: no copy of the full taxpayer ID stays on this device (research Pitfall 2).
+    // A wipe that fails never turns the confirmed send into an error.
+    try {
+      await wipeTax(c, tc);
+    } catch (e) {
+      if (window.console) console.error(e);
+    }
     // This device keeps only what the summary shows (the last four digits of the bank account), and never the
     // invitation token: on a shared device the next person finds the summary, not the investor's details.
     if (i.payment && i.payment.bank) i.payment.bank = Object.assign({}, i.payment.bank, { account: '****' + U.last4(i.payment.bank.account), routing: '****' + U.last4(i.payment.bank.routing), holder: '' });
-    ['address', 'phone', 'tinLast4', 'citizenship', 'taxCert', 'kyc', 'owners', 'holders', 'tenancy', 'esignConsent'].forEach((k) => delete i[k]);
+    ['address', 'phone', 'tinLast4', 'citizenship', 'knownCitizenship', 'taxCert', 'kyc', 'owners', 'holders', 'tenancy', 'esignConsent'].forEach((k) => delete i[k]);
     if (i.verify) ['identity', 'accreditation', 'aml'].forEach((k) => i.verify[k] && (i.verify[k] = { status: i.verify[k].status, connection: i.verify[k].connection || '' }));
     ws.audit = [];
     ws.invite.token = '';
@@ -1863,12 +3297,18 @@
     o.finishing = true;
     o.finishError = '';
     o.finishContact = false;
+    o.finishNetwork = false;
     NS.app.render();
     try {
       const i = c.inv;
       const ws = c.ws;
       let first = false;
-      if (!c.fl.completedAt) {
+      if (!c.fl.completedAt && c.it.coSign) {
+        // Plan 06-39: the co-investor signed; nothing on the account is completed or changed here.
+        c.fl.at = 'done';
+        c.fl.completedAt = nowIso();
+        NS.app.save(true);
+      } else if (!c.fl.completedAt) {
         first = true;
         const steps = flowSteps(c);
         // An active investor's beneficial owners and screening stay as they are on file (their invitation covers a subscription only).
@@ -1877,9 +3317,14 @@
         c.fl.at = 'done';
         c.fl.completedAt = nowIso();
         delete c.fl.d;
+        // Plan 06-26: what a tax-form request brought, kept on the flow (the done screen reads it after a send in server mode
+        // has deleted the device's copy of the record).
+        if (c.it.taxRequest || c.it.includeTax) c.fl.taxOutcome = taxOutcome(c);
         const st = IV() ? IV().status(ws, i) : { key: 'approved', label: 'Verified' };
-        if (NS.audit && c.it.existing) NS.audit.log(ws, { action: 'Invitation to subscribe finished', record: i.id, fund: c.off ? c.off.id : c.it.offeringId, detail: `${i.title}: ${c.req && c.off ? `subscription of ${money(c.off, c.req.cents / 100)} submitted from the invitation link` : 'no subscription: the offering is no longer raising'}`, actor: `${i.title} (investor)` });
-        else if (NS.audit) NS.audit.log(ws, { action: 'Account activated', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: onboarding finished from the invitation link; ${i.taxForm || 'tax form'} and distribution account confirmed; verification ${st.label.toLowerCase()}${c.req && c.off ? `; subscription of ${money(c.off, c.req.cents / 100)} submitted` : ''}`, actor: `${i.title} (investor)` });
+        const tx = c.fl.taxOutcome;
+        if (NS.audit && c.it.taxRequest) NS.audit.log(ws, { action: 'Tax form request finished', record: i.id, fund: '', detail: `${i.title}: ${tx.how === 'none' ? 'no tax form completed' : `Form ${tx.form} ${tx.how === 'unsigned' ? 'not signed' : tx.how}`}`, actor: `${i.title} (investor)` });
+        else if (NS.audit && c.it.existing) NS.audit.log(ws, { action: 'Invitation to subscribe finished', record: i.id, fund: c.off ? c.off.id : c.it.offeringId, detail: `${i.title}: ${c.req && c.off ? `subscription of ${money(c.off, c.req.cents / 100)} submitted from the invitation link` : 'no subscription: the offering is no longer raising'}${c.it.includeTax && tx ? `; ${tx.how === 'none' ? 'no tax form completed' : `Form ${tx.form} ${tx.how === 'unsigned' ? 'not signed' : tx.how}`}` : ''}`, actor: `${i.title} (investor)` });
+        else if (NS.audit) NS.audit.log(ws, { action: 'Account activated', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: onboarding finished from the invitation link; ${i.taxForm && !taxOnFile(i) ? `${i.taxForm} not signed; distribution account confirmed` : `${i.taxForm || 'tax form'} and distribution account confirmed`}; verification ${st.label.toLowerCase()}${c.req && c.off ? `; subscription of ${money(c.off, c.req.cents / 100)} submitted` : ''}`, actor: `${i.title} (investor)` });
         if (st.key === 'review') notify(ws, 'verification_review', `${i.title} is held for verification review`, ((IV().peek ? IV().peek(i) : IV().vOf(i)).decision.reason || 'A check needs a person to look at it') + '. Their paperwork is complete.', 'console-kyc');
         NS.app.save(true);
         if (!isRemote(ws)) {
@@ -1900,9 +3345,10 @@
         }
       }
       if (isRemote(ws) && !c.fl.sentAt) await sendCompletion(c);
-      if (first && !isRemote(ws)) U.toast(c.it.existing ? 'Subscription submitted' : 'Account activated');
+      if (first && !isRemote(ws)) U.toast(c.it.taxRequest ? 'Tax form request finished' : c.it.existing ? 'Subscription submitted' : 'Account activated');
     } catch (e) {
       o.finishError = (e && e.message) || 'Something went wrong.';
+      o.finishNetwork = !!(e && e.network);
       // Retrying cannot help: the signed agreement cannot be sent from this device (sendCompletion), or the link no longer
       // works (expired, cancelled or replaced: the server's message says which). The page says who to contact instead.
       o.finishContact = !!(e && (e.contact || gone(e)));
@@ -1928,11 +3374,30 @@
       if (!c || !c.req || c.req.envelopeId !== env.id || !signer || signer.investorId !== c.inv.id) return false;
       c.fl.signedAt = signer.signedAt;
       // An agreement for the investor alone is complete with their signature: nothing waits for the firm's countersignature.
-      notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, complete ? `${env.title}: complete; this agreement needs no countersignature` : `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
+      notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, complete ? `${env.title}: complete; this agreement needs no countersignature` : env.signers.some((s) => s.co && s.status !== 'signed') ? `${env.title}: waiting for the co-investor to sign` : `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
       c.fl.at = 'done';
       delete c.fl.resignAt;
       NS.app.save(true);
       setTimeout(() => completeFlow(fctx()), 0);
+      return true;
+    });
+    // Plan 06-39: the co-investor signed the agreement of their sign-in: on to done, which sends it.
+    NS.esign.onSigned((env, signer) => {
+      const c = S().route === 'invite' ? fctx() : null;
+      if (!c || !c.it.coSign || env.id !== c.it.envelopeId || !signer || !signer.co) return false;
+      c.fl.signedAt = signer.signedAt;
+      c.fl.at = 'done';
+      NS.app.save(true);
+      setTimeout(() => completeFlow(fctx()), 0);
+      return true;
+    });
+    // The W-9 of this flow, finished on the tax step's signing view (signed or not, D-30).
+    NS.esign.onSigned((env, signer) => {
+      const c = S().route === 'invite' ? fctx() : null;
+      if (!c || env.kind !== 'tax' || c.fl.taxEnvelopeId !== env.id || !signer || signer.investorId !== c.inv.id) return false;
+      taxSigned(c, env, signer);
+      if (c.fl.at === 'done') setTimeout(() => completeFlow(fctx()), 0);
+      setTimeout(() => window.scrollTo(0, 0), 0);
       return true;
     });
   }
@@ -1987,21 +3452,29 @@
       const n = steps.indexOf(key);
       // The step on screen: Continue and Back act on it only while it is still the current step (shownChanged).
       o.shownKey = key;
-      const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">Account setup</span></div></header>`;
+      const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">${c.it.coSign ? 'Co-investor signature' : c.it.taxRequest ? 'Tax form' : 'Account setup'}</span></div></header>`;
       const list = steps.map((s, i) => `<li class="${i < n || (key === 'done' && c.fl.completedAt) ? 'done' : i === n ? 'current' : ''}"${i === n ? ' aria-current="step"' : ''}><span class="ob-num">${i < n || (key === 'done' && c.fl.completedAt) ? icon('check') : i + 1}</span><span>${h(stepLabel(c, s))}</span></li>`).join('');
       const progress = `<div class="ivf-progress"><p class="ob-count">Step ${n + 1} of ${steps.length}<span class="ivf-count-label">: ${h(stepLabel(c, key))}</span></p><div class="ivf-bar" role="progressbar" aria-label="Account setup progress" aria-valuemin="1" aria-valuemax="${steps.length}" aria-valuenow="${n + 1}" aria-valuetext="Step ${n + 1} of ${steps.length}: ${h(stepLabel(c, key))}"><span style="width:${(((n + 1) / steps.length) * 100).toFixed(1)}%"></span></div></div>`;
-      const body = { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
-      const back = n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
-      const submit = { welcome: 'Get started', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
+      const taxEnv = key === 'tax' ? taxSignEnv(c) : null;
+      const body = taxEnv ? fTaxSign(c, taxEnv) : { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, status: fStatus, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>\s*<p class="lede">[\s\S]*?<\/p>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
+      // the upload view (plan 06-21): Back returns to the tax answers, not to the step before
+      const upView = key === 'tax' && c.fl.taxView === 'upload';
+      // A tax-form request (plan 06-26) is opened from the portal and starts on its tax step (or Welcome): Back on that first
+      // step returns to the portal, so the pre-filled form can be left without finishing it (the page has no menu). The same
+      // for an investor on file's invitation to subscribe (plan 06-29): its Welcome returns to the portal that offers it.
+      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n === 0 && (c.it.taxRequest || c.it.existing) && !c.it.coSign && key !== 'done' ? '<button class="btn" type="button" data-action="ivf-leave">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
+      const submit = { welcome: c.it.coSign ? 'Continue to the agreement' : 'Get started', tax: key === 'tax' && !upView && taxKey(c, o.d) ? 'Continue to the form' : '', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';
       const inner =
         key === 'done'
           ? `<div class="ob-form ivf-form">${body}</div>`
-          : key === 'agreement'
-            ? `<div class="ob-form ivf-form ivf-agreement">${body}<div class="ob-actions">${back}</div>${saved}</div>`
+          : taxEnv
+            ? `<div class="ob-form ivf-form ivf-agreement ivf-tax-sign">${body}<div class="ob-actions"><button class="btn" type="button" data-action="ivf-taxanswers">Back</button></div>${saved}</div>`
+            : key === 'agreement'
+            ? `<div class="ob-form ivf-form ivf-agreement">${body}<div class="ob-actions">${back}${lostAgreement(c) ? '<button class="btn btn-primary" type="button" data-action="ivf-sign-later">Continue and sign later</button>' : ''}</div>${saved}</div>`
             : `<form class="ob-form ivf-form" data-form="ivf-step" novalidate>${body}<div class="ob-actions">${back}<button class="btn btn-primary" type="submit"${o.busy ? ' disabled' : ''}>${o.busy ? 'Saving…' : submit}</button></div>${saved}</form>`;
       return `<div class="pt pt-auth ivf">${head}
-        <main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ob ivf-wrap${key === 'agreement' ? ' ivf-wide' : ''}">
+        <main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ob ivf-wrap${key === 'agreement' || taxEnv ? ' ivf-wide' : ''}">
           <ol class="ob-steps" aria-label="Steps">${list}</ol>
           <div class="ivf-col">${progress}${inner}</div>
         </div></main>${NS.portalFooter ? NS.portalFooter() : ''}
@@ -2027,6 +3500,16 @@
           return completeFlow(c);
         }
         if (env) NS.esign.embedAfter(env.id, c.inv.id);
+      }
+      const taxEnv = key === 'tax' ? taxSignEnv(c) : null;
+      if (taxEnv) {
+        const s = signerOf(taxEnv, c.inv);
+        if (s.status !== 'signed' && !s.consentAt && c.fl.consentAt && NS.esign.recordConsent(c.ws, taxEnv.id, c.inv.id, c.fl.consentAt)) return NS.app.render();
+        if (s.status === 'signed') {
+          taxSigned(c, taxEnv, s);
+          return NS.app.render();
+        }
+        NS.esign.embedAfter(taxEnv.id, c.inv.id);
       }
       if (key === 'done' && (!c.fl.completedAt || (isRemote(c.ws) && !c.fl.sentAt)) && !ob().finishing && !ob().finishError && !ob().triedFinish) {
         ob().triedFinish = true;
@@ -2077,8 +3560,9 @@
     }
     o.busy = true;
     NS.app.render();
+    let stay = false;
     try {
-      await applyFlowStep(c, key);
+      stay = (await applyFlowStep(c, key)) === true;
     } catch (e) {
       o.busy = false;
       NS.app.render();
@@ -2087,10 +3571,172 @@
     }
     o.busy = false;
     const c2 = fctx();
+    if (stay) return moveTo(c2, key);
     const next = flowSteps(c2);
     const at = next[next.indexOf(key) + 1] || 'done';
     moveTo(c2, at);
     if (at === 'done') completeFlow(fctx());
+  };
+  // D-09: the one plain line correcting the investor type the sponsor chose (U.S. person or not) for the tax form.
+  NS.actions['ivf-taxwho'] = () => {
+    const c = fctx();
+    const o = ob();
+    if (!c || o.busy) return;
+    o.d.usPerson = usTax(c, o.d) ? 'no' : 'yes';
+    o.errors = {};
+    o.taxEdit = false;
+    NS.app.render();
+    const h1 = document.querySelector('.ivf-form h1');
+    if (h1) h1.focus();
+  };
+  /** "Change your answers": every answer of the W-9, editable, with the rare options. */
+  NS.actions['ivf-taxedit'] = () => {
+    const c = fctx();
+    const o = ob();
+    if (!c) return;
+    if (taxKey(c, o.d) === W8E_KEY) {
+      // the W-8BEN-E: every answer starts from what the form would carry now (an answer emptied later stays empty, D-30)
+      const d = o.d;
+      const w = e8Known(c, d);
+      if (!d.e8Edit) {
+        d.e8Name = tidy(d.e8Name) || w.name;
+        d.e8Country = d.e8Country || w.country;
+        d.e8Street = tidy(d.e8Street) || w.street;
+        d.e8City = tidy(d.e8City) || w.cityLine;
+        d.e8Res = d.e8Res || w.residencePick;
+        d.e8Print = tidy(d.e8Print) || w.printName;
+        d.e8Capacity = true;
+      }
+      d.e8Edit = true;
+      o.taxEdit = true;
+      NS.app.render();
+      const f = document.getElementById('ob-e8Name');
+      if (f) f.focus();
+      return;
+    }
+    if (taxKey(c, o.d) === W8_KEY) {
+      // the W-8BEN: every answer starts from what the form would carry now (an answer emptied later stays empty, D-30)
+      const d = o.d;
+      const w = w8Known(c, d);
+      if (!d.w8Edit) {
+        d.w8Name = tidy(d.w8Name) || w.name;
+        d.w8Citizen = d.w8Citizen || w.citizenship;
+        d.w8Country = d.w8Country || w.countryPick;
+        d.w8Street = tidy(d.w8Street) || w.street;
+        d.w8City = tidy(d.w8City) || w.cityLine;
+        d.w8Dob = d.w8Dob || w.dob;
+        d.treaty = w.treaty;
+      }
+      d.w8Edit = true;
+      o.taxEdit = true;
+      NS.app.render();
+      const f = document.getElementById('ob-w8Name');
+      if (f) f.focus();
+      return;
+    }
+    const k = w9Known(c, o.d);
+    o.d.w9Name = tidy(o.d.w9Name) || k.name;
+    o.d.w9Business = tidy(o.d.w9Business) || k.business;
+    if (o.d.type === 'ira') o.d.w9Exempt = tidy(o.d.w9Exempt) || '1';
+    if (!PERSONAL(o.d.type) && !o.d.w9TinKind) o.d.w9TinKind = w9TinBox(c, o.d);
+    o.d.w9Street = tidy(o.d.w9Street) || k.street;
+    o.d.w9City = tidy(o.d.w9City) || k.city;
+    o.d.w9Edit = true;
+    o.taxEdit = true;
+    NS.app.render();
+    const f = document.getElementById('ob-w9Name');
+    if (f) f.focus();
+  };
+  /** Back from the W-9 on screen to its answers (the form is built again on Continue). */
+  /** A Passive NFFE listing its substantial U.S. owners: one more row (Part XXIX has nine). */
+  NS.actions['ivf-e8owner'] = () => {
+    const o = ob();
+    if (!o || o.busy) return;
+    const n = Math.min(E8_ROWS, e8Rows(o.d) + 1);
+    o.d.e8OwnerRows = n;
+    NS.app.render();
+    const f = document.getElementById(`ob-e8Owner${n}Name`);
+    if (f) f.focus();
+  };
+  /** Back on the first step of a tax-form request or an investor on file's invitation: to the portal it is offered on (its done screen goes there too). */
+  NS.actions['ivf-leave'] = () => {
+    const c = fctx();
+    // Plan 06-39: a co-investor's sign-in has no portal behind it (this device holds only the agreement to sign).
+    if (!c || !(c.it.taxRequest || c.it.existing) || c.it.coSign || ob().busy) return;
+    NS.app.go('overview');
+  };
+  NS.actions['ivf-taxanswers'] = () => {
+    const c = fctx();
+    if (!c) return;
+    delete c.fl.taxView;
+    delete UPLOADS[c.inv.id];
+    moveTo(c, 'tax');
+  };
+  /**
+   * Plan 06-21 (D-01): from the tax answers (or the routing line) to the upload of a form completed elsewhere. The form the
+   * step would fill in is chosen to start (the IRA custodian's W-9 for an IRA); nothing for a status routed elsewhere.
+   */
+  NS.actions['ivf-taxupload'] = () => {
+    const c = fctx();
+    const o = ob();
+    if (!c || o.busy) return;
+    const d = o.d;
+    if (!upForms(c, d).some((x) => x[0] === d.taxUpForm)) d.taxUpForm = { [W9_KEY]: 'W-9', [W8_KEY]: 'W-8BEN', [W8E_KEY]: 'W-8BEN-E' }[taxKey(c, d)] || '';
+    o.taxEdit = false;
+    c.fl.taxView = 'upload';
+    moveTo(c, 'tax');
+  };
+  /**
+   * The completed form chosen on the upload view (T-06-45): a PDF, PNG or JPEG by its first bytes (the same tests the
+   * integration server applies) and at most MAX_FILES, held in this page's memory until Continue stores it. Anything else is
+   * refused with one plain sentence and not held; a file attached before it stays ("not added" changes nothing). The step
+   * can still be continued (D-30): the message is not a field error.
+   */
+  NS.changes['ivf-taxfile'] = async (el) => {
+    const c = fctx();
+    const o = ob();
+    const f = el.files && el.files[0];
+    if (!c || !o || !f) return;
+    delete o.errors.taxUpFile;
+    const refuse = (msg) => {
+      o.errors.taxUpFile = msg;
+      NS.app.render();
+    };
+    if (f.size > MAX_FILES) return refuse(`This file is ${mb(f.size)} MB, more than the ${mb(MAX_FILES)} MB this page accepts, so it was not added.`);
+    if (!f.size || !(await sendable(f, false))) return refuse('This file is not a PDF, PNG or JPEG, so it was not added.');
+    UPLOADS[c.inv.id] = { file: f, name: String(f.name || 'tax-form').slice(0, 200) };
+    NS.app.render();
+    const again = document.getElementById('ob-taxUpFile');
+    if (again) again.focus();
+  };
+  /**
+   * Plan 06-34 (walkthrough failure 1): the agreement step when this browser did not keep the agreement's file (it would not
+   * keep it, or it cleared it). Its pages cannot be shown, so nothing can be signed here; the investor goes on with the
+   * agreement unsigned and signs it from their portal once the firm adds it again (esign.js re-issues it then).
+   */
+  function lostAgreement(c) {
+    if (c.it.coSign) return false;
+    const env = envOf(c);
+    const s = signerOf(env, c.inv);
+    return !!env && env.status === 'sent' && !!s && s.status !== 'signed' && s.status !== 'declined' && !!NS.esign && !!NS.esign.fileLost && NS.esign.fileLost(env);
+  }
+  NS.actions['ivf-sign-later'] = () => {
+    const c = fctx();
+    if (!c || ob().busy) return;
+    const steps = flowSteps(c);
+    const key = currentKey(c, steps);
+    if (shownChanged(c, key) || key !== 'agreement' || !lostAgreement(c)) return;
+    const i = c.inv;
+    const oid = c.off ? c.off.id : c.it.offeringId;
+    // Nothing is recorded as signed: the subscription stays pending with its agreement unsigned, and Approve is refused until
+    // the investor signs it (operations.js decide).
+    if (NS.audit) NS.audit.log(c.ws, { action: 'Subscription agreement not shown: this browser did not keep its file', record: i.id, fund: oid || '', detail: `${i.title}: the subscription was submitted with the agreement unsigned. Add the agreement again from the offering page; ${i.title} then signs it from their portal.`, actor: `${i.title} (investor)` });
+    notify(c.ws, 'invite_progress', `${i.title} could not see the subscription agreement`, `This browser did not keep the agreement’s file. Add the agreement again from the offering page; ${i.title} then signs it from their portal.`, `console-offering-${oid}`);
+    c.fl.signLater = nowIso();
+    c.fl.at = 'done';
+    S().ui.ivfFocus = true;
+    NS.app.save(true);
+    completeFlow(c);
   };
   NS.actions['ivf-back'] = () => {
     const c = fctx();
@@ -2100,6 +3746,36 @@
     if (shownChanged(c, key)) return;
     const n = steps.indexOf(key);
     if (n > 0) moveTo(c, steps[n - 1]);
+  };
+  /**
+   * The purchaser representative's acknowledgment chosen on the status step (Rule 501(i), T-06-05): a PDF, PNG or JPEG by its
+   * first bytes (the same tests the integration server applies) and at most MAX_FILES, kept in this browser's file store
+   * under the investor's own rep- id. Anything else is refused with a plain message, nothing is kept, and the step can still
+   * be continued (D-30): the message is not a field error.
+   */
+  NS.changes['ivf-repfile'] = async (el) => {
+    const c = fctx();
+    const o = ob();
+    const f = el.files && el.files[0];
+    if (!c || !o || !f) return;
+    delete o.errors.stRepFile;
+    const refuse = (msg) => {
+      o.errors.stRepFile = msg;
+      NS.app.render();
+    };
+    if (f.size > MAX_FILES) return refuse(`This file is ${mb(f.size)} MB, more than the ${mb(MAX_FILES)} MB this page accepts, so it was not added.`);
+    if (!f.size || !(await sendable(f, false))) return refuse('This file is not a PDF, PNG or JPEG, so it was not added.');
+    const id = `rep-${c.inv.id}-${Date.now().toString(36)}`;
+    try {
+      await NS.ops.files.put(id, f);
+    } catch (e) {
+      return refuse('This file could not be kept in this browser, so it was not added.');
+    }
+    o.d.stRepFileId = id;
+    o.d.stRepFileName = String(f.name || 'acknowledgment').slice(0, 200);
+    NS.app.render();
+    const again = document.getElementById('ob-stRepFile');
+    if (again) again.focus();
   };
   NS.actions['ivf-retry'] = () => {
     const o = ob();
@@ -2139,7 +3815,7 @@
     // This device's notice of the first signature names an envelope the firm never receives.
     c.ws.notifications = (c.ws.notifications || []).filter((n) => n.route !== `console-envelope-${old.id}`);
     if (NS.audit) NS.audit.log(c.ws, { action: 'Subscription agreement prepared again', record: c.req.id, fund: c.off.id, detail: `${c.inv.title}: the copy signed earlier could not be sent from the investor's device, so a new copy was prepared from the template with the same details and commitment, for the investor to sign`, actor: `${c.inv.title} (investor)` });
-    Object.assign(o, { finishError: '', finishContact: false, canResign: false, triedFinish: false });
+    Object.assign(o, { finishError: '', finishContact: false, finishNetwork: false, canResign: false, triedFinish: false });
     moveTo(c, 'agreement');
   };
   NS.actions['ivf-reload'] = () => {
@@ -2153,10 +3829,22 @@
   // An active investor invited to subscribe to a new offering finds the invitation on their Investments page too.
   if (ED.diy) {
     NS.hooks.investmentsTop.push((inv) => {
-      const it = inv && inv.onboarding.status === 'complete' ? openFor(W(), inv) : null;
-      const o = it && W().offerings.find((x) => x.id === it.offeringId && x.status === 'Raising');
-      return o ? `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} invited you to subscribe to ${h(o.name)}.</p><a class="btn btn-primary" href="#invite-${h(it.token)}">Continue your subscription</a></div>` : '';
+      const ws = W();
+      const it = inv && inv.onboarding.status === 'complete' ? openFor(ws, inv) || remoteOpen(ws, inv) : null;
+      // Server mode (plan 06-29): the invitation this device opened has no token here; its page is opened by its key.
+      const href = it ? `#invite-${h(it.token || ws.invite.key)}` : '';
+      // Plan 06-26: the sponsor asked for the investor's tax form again
+      if (it && it.taxRequest) return `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} asked you for your tax form.</p><a class="btn btn-primary" href="${href}">Complete your tax form</a></div>`;
+      const o = it && ws.offerings.find((x) => x.id === it.offeringId && x.status === 'Raising');
+      return o ? `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} invited you to subscribe to ${h(o.name)}.</p><a class="btn btn-primary" href="${href}">Continue your subscription</a></div>` : '';
     });
+  }
+
+  /** Plan 06-26: the link of the tax-form request the firm sent this active investor, while it is open ('' when none). */
+  function taxAsk(inv) {
+    const ws = W();
+    const it = ED.diy && inv && inv.onboarding.status === 'complete' ? openFor(ws, inv) || remoteOpen(ws, inv) : null;
+    return it && it.taxRequest ? `#invite-${it.token || ws.invite.key}` : '';
   }
 
   /** The steps an invitation's flow has (for the console: "Step 6 of 10"). */
@@ -2167,5 +3855,5 @@
     const req = fl.requestId ? (ws.requests || []).find((r) => r.id === fl.requestId) || null : null;
     return flowSteps({ ws, it, inv: i, fl, req, off: ws.offerings.find((x) => x.id === it.offeringId && (x.status === 'Raising' || req)) || null });
   }
-  NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL };
+  NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL, taxOnFile, taxAsk, retireTax };
 })(window.CVPortal);

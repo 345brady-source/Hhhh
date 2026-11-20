@@ -1,0 +1,182 @@
+<?xml version="1.0"?>
+<edgarSubmission>
+
+    <schemaVersion>X0708</schemaVersion>
+
+    <submissionType>D/A</submissionType>
+
+    <testOrLive>LIVE</testOrLive>
+
+    <primaryIssuer>
+        <cik>9000000001</cik>
+        <entityName>Masked Entity 01</entityName>
+        <issuerAddress>
+            <street1>01 Masked Street</street1>
+            <city>Masked City 01</city>
+            <stateOrCountry>FL</stateOrCountry>
+            <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+            <zipCode>00001</zipCode>
+        </issuerAddress>
+        <issuerPhoneNumber>(555) 010-0001</issuerPhoneNumber>
+        <jurisdictionOfInc>Masked text 02</jurisdictionOfInc>
+        <issuerPreviousNameList>
+            <value>None</value>
+        </issuerPreviousNameList>
+        <edgarPreviousNameList>
+            <value>None</value>
+        </edgarPreviousNameList>
+        <entityType>Limited Partnership</entityType>
+        <yearOfInc>
+            <withinFiveYears>true</withinFiveYears>
+            <value>2026</value>
+        </yearOfInc>
+    </primaryIssuer>
+
+    <relatedPersonsList>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Given01</firstName>
+                <lastName>Family01</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>02 Masked Street</street1>
+                <street2>Suite 01</street2>
+                <city>Masked City 01</city>
+                <stateOrCountry>FL</stateOrCountry>
+                <stateOrCountryDescription>Masked text 01</stateOrCountryDescription>
+                <zipCode>00001</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Promoter</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification>Masked text 03</relationshipClarification>
+        </relatedPersonInfo>
+    </relatedPersonsList>
+
+    <offeringData>
+        <industryGroup>
+            <industryGroupType>Pooled Investment Fund</industryGroupType>
+            <investmentFundInfo>
+                <investmentFundType>Other Investment Fund</investmentFundType>
+                <is40Act>false</is40Act>
+            </investmentFundInfo>
+        </industryGroup>
+        <issuerSize>
+            <aggregateNetAssetValueRange>Decline to Disclose</aggregateNetAssetValueRange>
+        </issuerSize>
+        <federalExemptionsExclusions>
+            <item>06c</item>
+            <item>3C</item>
+            <item>3C.5</item>
+            <item>3C.6</item>
+        </federalExemptionsExclusions>
+        <typeOfFiling>
+            <newOrAmendment>
+                <isAmendment>true</isAmendment>
+                <previousAccessionNumber>9000000000-00-000001</previousAccessionNumber>
+            </newOrAmendment>
+            <dateOfFirstSale>
+                <yetToOccur>true</yetToOccur>
+            </dateOfFirstSale>
+        </typeOfFiling>
+        <durationOfOffering>
+            <moreThanOneYear>true</moreThanOneYear>
+        </durationOfOffering>
+        <typesOfSecuritiesOffered>
+            <isEquityType>true</isEquityType>
+            <isPooledInvestmentFundType>true</isPooledInvestmentFundType>
+            <isOtherType>true</isOtherType>
+            <descriptionOfOtherType>Masked text 04</descriptionOfOtherType>
+        </typesOfSecuritiesOffered>
+        <businessCombinationTransaction>
+            <isBusinessCombinationTransaction>false</isBusinessCombinationTransaction>
+            <clarificationOfResponse></clarificationOfResponse>
+        </businessCombinationTransaction>
+        <minimumInvestmentAccepted>0</minimumInvestmentAccepted>
+        <salesCompensationList>
+            <recipient>
+                <recipientName>Masked Entity 02</recipientName>
+                <recipientCRDNumber>None</recipientCRDNumber>
+                <associatedBDName>None</associatedBDName>
+                <associatedBDCRDNumber>None</associatedBDCRDNumber>
+                <recipientAddress>
+                    <street1>03 Masked Street</street1>
+                    <city>Masked City 02</city>
+                    <stateOrCountry>A6</stateOrCountry>
+                    <stateOrCountryDescription>Masked text 05</stateOrCountryDescription>
+                    <zipCode>00002</zipCode>
+                </recipientAddress>
+                <statesOfSolicitationList></statesOfSolicitationList>
+                <foreignSolicitation>true</foreignSolicitation>
+            </recipient>
+            <recipient>
+                <recipientName>Masked Entity 03</recipientName>
+                <recipientCRDNumber>900001</recipientCRDNumber>
+                <associatedBDName>None</associatedBDName>
+                <associatedBDCRDNumber>None</associatedBDCRDNumber>
+                <recipientAddress>
+                    <street1>04 Masked Street</street1>
+                    <city>Masked City 03</city>
+                    <stateOrCountry>CA</stateOrCountry>
+                    <stateOrCountryDescription>Masked text 06</stateOrCountryDescription>
+                    <zipCode>00003</zipCode>
+                </recipientAddress>
+                <statesOfSolicitationList></statesOfSolicitationList>
+                <foreignSolicitation>true</foreignSolicitation>
+            </recipient>
+            <recipient>
+                <recipientName>Masked Entity 04</recipientName>
+                <recipientCRDNumber>900002</recipientCRDNumber>
+                <associatedBDName>None</associatedBDName>
+                <associatedBDCRDNumber>None</associatedBDCRDNumber>
+                <recipientAddress>
+                    <street1>05 Masked Street</street1>
+                    <city>Masked City 04</city>
+                    <stateOrCountry>NY</stateOrCountry>
+                    <stateOrCountryDescription>Masked text 07</stateOrCountryDescription>
+                    <zipCode>00004</zipCode>
+                </recipientAddress>
+                <statesOfSolicitationList>
+                    <value>All States</value>
+                </statesOfSolicitationList>
+                <foreignSolicitation>false</foreignSolicitation>
+            </recipient>
+        </salesCompensationList>
+        <offeringSalesAmounts>
+            <totalOfferingAmount>Indefinite</totalOfferingAmount>
+            <totalAmountSold>0</totalAmountSold>
+            <totalRemaining>Indefinite</totalRemaining>
+            <clarificationOfResponse></clarificationOfResponse>
+        </offeringSalesAmounts>
+        <investors>
+            <hasNonAccreditedInvestors>false</hasNonAccreditedInvestors>
+            <totalNumberAlreadyInvested>0</totalNumberAlreadyInvested>
+        </investors>
+        <salesCommissionsFindersFees>
+            <salesCommissions>
+                <dollarAmount>0</dollarAmount>
+            </salesCommissions>
+            <findersFees>
+                <dollarAmount>0</dollarAmount>
+            </findersFees>
+            <clarificationOfResponse>Masked text 08</clarificationOfResponse>
+        </salesCommissionsFindersFees>
+        <useOfProceeds>
+            <grossProceedsUsed>
+                <dollarAmount>0</dollarAmount>
+                <isEstimate>true</isEstimate>
+            </grossProceedsUsed>
+            <clarificationOfResponse>Masked text 09</clarificationOfResponse>
+        </useOfProceeds>
+        <signatureBlock>
+            <authorizedRepresentative>false</authorizedRepresentative>
+            <signature>
+                <issuerName>Masked Entity 01</issuerName>
+                <signatureName>Masked Signer 01</signatureName>
+                <nameOfSigner>Masked Signer 02</nameOfSigner>
+                <signatureTitle>Masked text 10</signatureTitle>
+                <signatureDate>2026-11-19</signatureDate>
+            </signature>
+        </signatureBlock>
+    </offeringData>
+</edgarSubmission>

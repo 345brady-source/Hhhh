@@ -1,0 +1,13 @@
+{
+  "_source": "https://docs.stripe.com/payments/save-and-reuse-cards-only",
+  "_status": "unconfirmed: the reference page could not be opened from the build environment on 2026-11-19 (the connection was refused); only the id, status, customer and payment method fields and the fields the research names are written here, from general knowledge of the interface, not from the page; to be confirmed in test mode by plan 08-12",
+  "reply": {
+    "id": "pi_fixture1",
+    "object": "payment_intent",
+    "status": "succeeded",
+    "amount": 1900,
+    "currency": "usd",
+    "customer": "cus_fixture1",
+    "payment_method": "pm_fixture1"
+  }
+}

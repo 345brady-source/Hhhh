@@ -1,0 +1,55 @@
+FAIL preview-sponsor the preview dialog has the field "Ask a question" and Send, as with a server :: {"field":null,"send":null,"fields":0,"strangers":[],"items":[],"lines":["Help","Help is available once the portal is connected.","Contact support at help@platform.example."]}
+FAIL preview-sponsor before a question it says nothing but its heading and Send (not the "connected" sentence) :: ["Help","Help is available once the portal is connected.","Contact support at help@platform.example."]
+FAIL preview-investor the investor's dialog has the field and Send :: ["Help","Help is available once the portal is connected.","Contact Kestrel Bay Investor Relations at ir@kestrelbaycap.com."]
+PASS no-adapter the product's own page (no preview lines) still reads exactly "Help" and "Help is available once the portal is connected.", with no field
+PASS no-adapter `sample` was never called
+PASS no-adapter no script error in the browser
+PASS no-adapter no request went anywhere but this check's own servers
+PASS no-adapter no vendor, model or library name and no forbidden word on the screens read
+PASS server-wins with a server address saved, the server answers
+PASS server-wins exactly one request went to the server
+PASS server-wins `sample` was never called
+PASS server-wins no script error in the browser
+PASS server-wins no request went anywhere but this check's own servers
+PASS server-wins no vendor, model or library name and no forbidden word on the screens read
+FAIL files the preview page loads help-data.js, then help-preview.js, right before help.js
+PASS files none of the product's pages loads either preview file
+FAIL files both preview files exist in .planning/tools/preview/
+node:internal/modules/cjs/loader:1433
+  throw err;
+  ^
+
+Error: Cannot find module '/home/user/Hhhh/.claude/worktrees/agent-ad8dc6b8b5914732f/.planning/tools/preview/make-help-data.mjs'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    at Function._load (node:internal/modules/cjs/loader:1216:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.23.4
+FAIL files help-data.js matches the server guide (make-help-data.mjs --verify passes) :: Command failed: /opt/node22/bin/node /home/user/Hhhh/.claude/worktrees/agent-ad8dc6b8b5914732f/.planning/tools/preview/make-help-data.mjs --verify
+node:internal/modules/cjs/loader:1433
+  throw err;
+  ^
+
+Error: Cannot find module '/home/user/Hhhh/.claude/worktrees/agent-ad8dc6b8b5914732f/.planning/tools/preview/make-help-data.mjs'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+    at Function._load (node:internal/modules/cjs/loader:1216:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.23.4
+PASS files help.js still names no vendor or model
+PASS files help.js still has the one plain fetch and keeps nothing in storage
+HELP PREVIEW: FAIL (parts run: 5) - preview-sponsor, preview-investor, files

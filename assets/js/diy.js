@@ -40,7 +40,7 @@
     `<label class="${cls}" for="${idp}-name"><span>First name</span><input id="${idp}-name" type="text" autocomplete="given-name" maxlength="60" data-bind="${bind}:first" value="${h(f.first || '')}"${extra || ''}></label><label class="${cls}" for="${idp}-last"><span>Last name</span><input id="${idp}-last" type="text" autocomplete="family-name" maxlength="60" data-bind="${bind}:last" value="${h(f.last || '')}"${extra || ''}>${errHtml || ''}</label>`;
   function signupState() {
     const u = S().ui;
-    if (!u.signup) u.signup = { firm: '', name: '', email: '', password: '', focus: 'realestate', color: '#0F2742', logo: '', logoName: '', errors: {} };
+    if (!u.signup) u.signup = { firm: '', name: '', email: '', password: '', focus: 'realestate', color: '#006C95', logo: '', logoName: '', errors: {} };
     return u.signup;
   }
   const wordmark = () => `<span class="sd-brand">${NS.CV_MARK}<span class="sd-word">Carrow &amp; Vale</span></span>`;
@@ -126,7 +126,9 @@
     t.colors = Object.assign({}, t.colors, { primary: f.color || t.colors.primary });
     if (f.logo) t.logo = Object.assign({}, t.logo, { type: 'image', image: f.logo });
     t.domain = `investors.${domain}`;
-    t.support = Object.assign({}, t.support, { email: `investors@${domain}` });
+    // Investors see only what the firm enters: no sample phone, hours or disclosure (Portal and brand fills them in).
+    t.support = Object.assign({}, t.support, { email: `investors@${domain}`, phone: '', hours: '' });
+    t.disclaimer = '';
     t.legalName = /\b(llc|lp|l\.p\.|inc|ltd)\b/i.test(firm) ? firm : `${firm}, LLC`;
     const plain = firm.replace(/,?\s*(LLC|L\.L\.C\.|LP|L\.P\.|Inc\.?|Ltd\.?)$/i, '').trim();
     t.shortName = plain.length <= 24 ? plain : plain.split(/\s+/).slice(0, 2).join(' ');
@@ -255,6 +257,13 @@
     NS.app.save(true);
     if (inv.onboarding.status === 'complete') {
       S().viewer = inv.id;
+      // An account on file goes through the guided subscription of an investor on file (status step, subscription,
+      // agreement), never the typed form with its accredited statement (plan 06-08, C-05, D-30).
+      if (o && NS.inviteFlow) {
+        const it = NS.inviteFlow.selfInvite(ws, inv, o, { existing: true });
+        NS.app.save(true);
+        return NS.app.go('invite-' + it.token);
+      }
       return NS.app.go(o ? `subscribe-${o.id}` : 'overview');
     }
     // The same guided flow as an emailed invitation: an invitation record of their own, opened straight away.

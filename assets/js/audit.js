@@ -78,13 +78,24 @@
     }
     return null;
   }
+  /**
+   * A sample firm's own fund (its offering is one of tenants.js's seeds): only these keep the generated valuations and
+   * the profiles' default terms. Every other fund's income and gains come from its journal, and a fee, carried interest
+   * or preferred return the sponsor has not set is not charged.
+   */
+  function generated(o) {
+    return !!(o && seedConfig(o));
+  }
   function settings(o) {
     const type = NS.OFFERING_TYPES[o.type] || NS.OFFERING_TYPES.Other;
     const key = PROFILES[type.profile] ? type.profile : 'other';
     const P = PROFILES[key];
     const a = o.accounting || {};
-    const cfg = seedConfig(o) || {};
+    const seed = seedConfig(o);
+    const cfg = seed || {};
     const num = (v, d) => (v === '' || v == null || isNaN(Number(v)) ? d : Number(v) / 100);
+    // An unset term is no term, except for a sample firm's own fund.
+    const dflt = (v) => (seed ? v : 0);
     let yld = P.yield;
     if (cfg.seed && cfg.seed.rate) yld = cfg.seed.rate;
     else {
@@ -96,10 +107,10 @@
       label: P.label,
       structure: P.structure,
       open: P.structure === 'open',
-      mgmtFee: num(a.mgmtFee, P.mgmtFee),
+      mgmtFee: num(a.mgmtFee, dflt(P.mgmtFee)),
       feeBasis: FEE_BASIS[a.feeBasis] ? a.feeBasis : P.feeBasis,
-      carry: num(a.carry, P.carry),
-      pref: num(a.pref, P.pref),
+      carry: num(a.carry, dflt(P.carry)),
+      pref: num(a.pref, dflt(P.pref)),
       mu: P.mu,
       vol: P.vol,
       marks: P.marks,
@@ -166,9 +177,12 @@
     return inv.positions.filter((p) => p.offeringId === o.id).reduce((a, p) => a + Math.round((p.commitment != null ? p.commitment : p.amount) * 100), 0);
   }
 
-  function ledger(ws, o) {
-    const ckey = ws.tenant.id + ':' + o.id;
-    if (cache.has(ckey)) return cache.get(ckey);
+  /**
+   * The fund's money events, with no allocation: { S, invs, contribs, dists, strays, gpRuns, now }. gpRuns[investorId]
+   * lists the general partner's cash paid with each paid distribution (run.gp) as { date, cents }: each run's share is
+   * split over its lines' gross amounts with largest(), so the shares add up to run.gp exactly.
+   */
+  function events(ws, o) {
     const S = settings(o);
     const now = D.today();
     const invs = ws.investors.filter((i) => i.positions.some((p) => p.offeringId === o.id));
@@ -193,19 +207,48 @@
     }
     contribs.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
-    // Distributions: each paid run, split exactly as investors were paid.
+    // Distributions: each paid run, at the gross amounts stored when it was recorded (worked out from positions for a run
+    // saved before the record existed). A stored line for an investor who does not hold this fund is left out and kept
+    // in L.strays, which the readiness checks report.
     const dists = [];
+    const strays = [];
     ws.runs
-      .filter((r) => r.offeringId === o.id && r.status === 'paid' && r.date <= now)
+      .filter((r) => r.offeringId === o.id && NS.data.runPaid(r, now))
       .slice()
       .sort((a, b) => (a.date < b.date ? -1 : 1))
       .forEach((run) => {
-        NS.data.allocate(ws, run).forEach((row) => {
-          if (row.cents > 0) dists.push({ date: run.date, inv: row.investor, cents: row.cents, run });
+        NS.data.runRows(ws, run).forEach((row) => {
+          if (!(row.cents > 0)) return;
+          const inv = invs.find((i) => i.id === row.investor.id);
+          if (inv) dists.push({ date: run.date, inv, cents: row.cents, run });
+          else strays.push({ date: run.date, investorId: row.investor.id, cents: row.cents, run });
         });
       });
 
-    const L = { o, S, invs, contribs, dists, redemptions: [], keys: [], months: [], byKey: {}, prices: {}, exitKey: null, inception: contribs.length ? contribs[0].date : null };
+    const gpRuns = {};
+    ws.runs
+      .filter((r) => r.offeringId === o.id && NS.data.runPaid(r, now) && r.gp > 0)
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : 1))
+      .forEach((run) => {
+        const rows = NS.data.runRows(ws, run).filter((row) => row.cents > 0);
+        const shares = largest(Math.round(run.gp), rows.map((row) => row.cents));
+        rows.forEach((row, n) => {
+          if (shares[n]) (gpRuns[row.investor.id] = gpRuns[row.investor.id] || []).push({ date: run.date, cents: shares[n] });
+        });
+      });
+    return { S, invs, contribs, dists, strays, gpRuns, now };
+  }
+
+  function ledger(ws, o) {
+    // A fund that is not a sample fund reads its journal, which only grows (a reversal is a new entry): its length is in
+    // the key, so an entry posted after the engine was read is seen without clearing the caches.
+    const fb = ws.books && ws.books.funds && ws.books.funds[o.id];
+    const ckey = ws.tenant.id + ':' + o.id + (generated(o) ? '' : ':' + ((fb && fb.journal) || []).length);
+    if (cache.has(ckey)) return cache.get(ckey);
+    const { S, now, invs, contribs, dists, strays, gpRuns } = events(ws, o);
+
+    const L = { o, S, invs, contribs, dists, strays, redemptions: [], keys: [], months: [], byKey: {}, prices: {}, exitKey: null, inception: contribs.length ? contribs[0].date : null };
     cache.set(ckey, L);
     if (!contribs.length) return L;
 
@@ -215,10 +258,48 @@
     const endKey = exitKey && exitKey < lastDone ? exitKey : lastDone;
     for (let k = keyOf(L.inception); k <= endKey; k = nextKey(k)) L.keys.push(k);
 
-    // Valuation returns: quarterly marks for private funds, monthly NAV for open-ended funds.
+    // Valuation returns: quarterly marks for private funds, monthly NAV for open-ended funds. A fund that is not a sample
+    // fund takes each month's amounts from its journal instead (whole cents, no rate): income is minus the month's lines
+    // on income accounts and on expense accounts other than the management fee (5000, which this engine works out), gain
+    // minus its lines on gain accounts; the first month also takes everything dated before it. Zero with no books.
+    const gen = generated(o);
     const R = rng(hashStr(o.id + ':returns'));
     const ret = {};
-    L.keys.forEach((k) => {
+    // Opening balances (a fund that existed before its books), for a fund that is not a sample fund: the live entry
+    // 'open:<offeringId>' sets, at the end of the month holding its date (the first month when earlier), each investor's
+    // capital to minus their 3900 lines in it; the difference from the capital worked out is that month's gain.
+    const openCap = {};
+    let openKey = null;
+    if (!gen) {
+      const B = NS.books;
+      const f = ws.books && ws.books.funds && ws.books.funds[o.id];
+      const zero = () => L.keys.map(() => 0);
+      let incM = zero();
+      let gainM = zero();
+      const op = B && f && Array.isArray(f.journal) && L.keys.length ? B.live(f, 'open:' + o.id) : null;
+      if (op && Array.isArray(op.lines) && keyOf(op.date) <= L.keys[L.keys.length - 1]) {
+        op.lines.forEach((l) => {
+          if (Array.isArray(l) && String(l[0]) === '3900' && l[2]) openCap[l[2]] = (openCap[l[2]] || 0) - l[1];
+        });
+        openKey = keyOf(op.date) < L.keys[0] ? L.keys[0] : keyOf(op.date);
+      }
+      if (B && f && Array.isArray(f.journal) && f.journal.length && L.keys.length) {
+        const accts = B.accounts(ws, o.id);
+        const incCodes = accts.filter((a) => a.type === 'income' || (a.type === 'expense' && a.code !== '5000')).map((a) => a.code);
+        const gainCodes = accts.filter((a) => a.type === 'gain').map((a) => a.code);
+        const from = L.keys[0] + '-01';
+        const to = endOf(L.keys[L.keys.length - 1]);
+        const prior = endOf(prevKey(L.keys[0]));
+        const read = (codes) => {
+          const s = B.series(ws, o.id, codes, from, to).map((x) => 0 - x.cents);
+          s[0] -= B.balance(ws, o.id, codes, prior);
+          return s;
+        };
+        incM = read(incCodes);
+        gainM = read(gainCodes);
+      }
+      L.keys.forEach((k, i) => (ret[k] = { income: 0, gain: 0, sleeves: null, incomeCents: incM[i], gainCents: gainM[i] }));
+    } else L.keys.forEach((k) => {
       const m = Number(k.slice(5, 7));
       const income = S.yield / 12;
       let gain = 0;
@@ -276,14 +357,10 @@
     invs.forEach((i) => (flowsBy[i.id] = []));
     contribs.forEach((c) => flowsBy[c.inv.id].push({ date: c.date, cents: -c.cents }));
     dists.forEach((d) => flowsBy[d.inv.id].push({ date: d.date, cents: d.cents }));
-    const gpPaidBy = {};
-    ws.runs
-      .filter((r) => r.offeringId === o.id && r.status === 'paid' && r.gp > 0 && r.date <= now)
-      .forEach((run) =>
-        NS.data.allocate(ws, run).forEach((row) => {
-          if (row.cents > 0) (gpPaidBy[row.investor.id] = gpPaidBy[row.investor.id] || []).push({ date: run.date, cents: Math.round((run.gp * row.cents) / run.total) });
-        })
-      );
+    // (each run's shares add up to run.gp exactly; gBy holds each investor's share paid in each month, for F-3 below)
+    const gpPaidBy = gpRuns;
+    const gBy = {};
+    Object.keys(gpRuns).forEach((id) => gpRuns[id].forEach((x) => (gBy[id + '|' + keyOf(x.date)] = (gBy[id + '|' + keyOf(x.date)] || 0) + x.cents)));
     const upTo = (arr, end) => (arr || []).filter((f) => f.date <= end);
     // Side pocket (open-ended funds): investors at its creation share it; it has its own valuation.
     const SPc = S.open && S.sidePocket && S.sidePocket.created ? S.sidePocket : null;
@@ -296,9 +373,12 @@
     }
     const RS = rng(hashStr(o.id + ':sidepocket'));
     const spRet = {};
-    L.keys.forEach((k) => (spRet[k] = SPc && k > spKey && Number(k.slice(5, 7)) % 3 === 0 ? (Number(SPc.mu) || 0.1) / 4 + (Number(SPc.vol) || 0.06) * Math.sqrt(3) * gauss(RS) : 0));
+    // (A fund that is not a sample fund has no generated side-pocket return: its gains are the journal's, allocated above.)
+    L.keys.forEach((k) => (spRet[k] = gen && SPc && k > spKey && Number(k.slice(5, 7)) % 3 === 0 ? (Number(SPc.mu) || 0.1) / 4 + (Number(SPc.vol) || 0.06) * Math.sqrt(3) * gauss(RS) : 0));
     L.sidePocket = SPc ? { cfg: SPc, key: spKey, frac: spFrac } : null;
 
+    // Journal amounts of a month in which no investor has capital wait for the next month with capital.
+    const held = { income: 0, gain: 0 };
     L.keys.forEach((k, idx) => {
       const mNum = Number(k.slice(5, 7));
       const end = endOf(k);
@@ -308,10 +388,20 @@
       const exitNow = exitKey === k;
       const bases = invs.map((i) => st[i.id].cap + (cBy[i.id + '|' + k] || 0));
       const baseSum = bases.reduce((a, b) => a + b, 0);
-      const incs = largest(Math.round(r.income * baseSum), bases);
-      const gains = largest(Math.round(r.gain * baseSum), bases);
+      let incs;
+      let gains;
+      if (gen) {
+        incs = largest(Math.round(r.income * baseSum), bases);
+        gains = largest(Math.round(r.gain * baseSum), bases);
+      } else {
+        held.income += r.incomeCents;
+        held.gain += r.gainCents;
+        incs = largest(baseSum > 0 ? held.income : 0, bases);
+        gains = largest(baseSum > 0 ? held.gain : 0, bases);
+        if (baseSum > 0) held.income = held.gain = 0;
+      }
       const rows = {};
-      const F = { key: k, end, begin: 0, contrib: 0, dist: 0, income: 0, gain: 0, fee: 0, carry: 0, gpOut: 0, endCap: 0, gpBegin: 0, gpEnd: 0, sp: 0, r };
+      const F = { key: k, end, begin: 0, contrib: 0, dist: 0, income: 0, gain: 0, fee: 0, carry: 0, gpOut: 0, gpRun: 0, endCap: 0, gpBegin: 0, gpEnd: 0, sp: 0, r };
       invs.forEach((i, n) => {
         const s = st[i.id];
         const c = cBy[i.id + '|' + k] || 0;
@@ -340,8 +430,11 @@
         const fee = s.firstKey ? Math.round((feeBase * rate) / 12) : 0;
         if (S.open) s.hwm += c - d;
         const prevA = s.carry;
-        let pre = beginMain + c - d + inc + gain - fee + prevA;
-        let A = prevA;
+        // F-3: the general partner's cash paid with a distribution this month (g) is its distribution now: it leaves the
+        // capital before carry and, outside a waterfall month, the share accrued so far. Without g nothing changes.
+        const g = gBy[i.id + '|' + k] || 0;
+        let pre = beginMain + c - d + inc + gain - fee + prevA - g;
+        let A = g ? Math.max(0, prevA - g) : prevA;
         let out = 0;
         let hurdle = null;
         let profit = null;
@@ -364,14 +457,22 @@
             A = Math.max(0, Math.min(pre, w.gp));
           }
         }
+        // What crystallizes this month (an exit, December of an open-ended fund) resets the accrued share; g never does.
+        const crystal = out;
+        out += g;
         let endCap = pre - A;
         if (endCap < 0) {
           gain -= endCap;
           endCap = 0;
         }
-        const carryChg = A - prevA;
-        s.carry = out ? 0 : A;
-        if (S.open && mNum === 12 && out > 0) s.hwm = endCap;
+        // Opening balances: the capital the opening entry gives replaces the capital worked out; the difference is gain.
+        if (k === openKey && openCap[i.id] != null) {
+          gain += openCap[i.id] - endCap;
+          endCap = openCap[i.id];
+        }
+        const carryChg = A - prevA + g;
+        s.carry = crystal ? 0 : A;
+        if (S.open && mNum === 12 && crystal > 0) s.hwm = endCap;
         // Side pocket created this month: part of each existing investor's capital moves into it.
         if (spKey === k && endCap > 0) {
           const x = Math.round(endCap * spFrac);
@@ -405,6 +506,7 @@
         F.fee += fee;
         F.carry += carryChg;
         F.gpOut += out;
+        F.gpRun += g;
         F.endCap += endCap + s.sp;
         F.gpBegin += prevA;
         F.gpEnd += s.carry;
@@ -442,10 +544,109 @@
     return { date: d, doc: s.doc, age, stale: age > every };
   }
 
-  function holdingsAt(L, k) {
+  /* ---------- A fund that is not a sample fund: the balance sheet from its journal ---------- */
+  const booksOf = (ws, o) => (ws && ws.books && ws.books.funds && o && ws.books.funds[o.id]) || null;
+  /**
+   * The values entered for a holding dated from..to, latest first: the stored marks and the live 'mark:' entries with a
+   * line on it (a value recorded as an entry only). doc is the mark's document, else the entry's memo.
+   */
+  function valuesOf(ws, o, hid, from, to) {
+    const f = booksOf(ws, o);
+    if (!f) return [];
+    const out = [];
+    const docs = {};
+    (Array.isArray(f.marks) ? f.marks : []).forEach((m) => {
+      if (!m) return;
+      if (m.id) docs[m.id] = String(m.doc || '');
+      if (m.holding === hid && typeof m.date === 'string' && m.date >= from && m.date <= to) out.push({ date: m.date, doc: String(m.doc || '') });
+    });
+    const j = Array.isArray(f.journal) ? f.journal : [];
+    const reversed = new Set();
+    j.forEach((e) => e && e.rev && reversed.add(e.rev));
+    j.forEach((e) => {
+      if (!e || e.rev || reversed.has(e.id) || typeof e.src !== 'string' || e.src.indexOf('mark:') !== 0) return;
+      if (typeof e.date !== 'string' || e.date < from || e.date > to) return;
+      if (!(e.lines || []).some((l) => Array.isArray(l) && (l[3] || '') === hid)) return;
+      const id = e.src.slice(5);
+      out.push({ date: e.date, doc: docs[id] != null ? docs[id] : String(e.memo || '') });
+    });
+    return out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  }
+  /** Asset and liability accounts with a row of their own on the statement (cash is every asset account coded 10xx). */
+  const AL_ASSET = { 1100: 1, 1150: 1, 1200: 1, 1300: 1, 1400: 1, 1410: 1, 1490: 1 };
+  const AL_LIAB = { 2000: 1, 2100: 1, 2200: 1, 2250: 1, 2300: 1, 2400: 1, 2500: 1, 2600: 1 };
+  /**
+   * The balance sheet at the month-end from the journal: every figure is an account balance; investments are cost (1100)
+   * plus recorded value changes (1150), one row per holding; nothing is split by weights or made to balance. nav stays
+   * the capital accounts' (LP capital plus the GP's accrued share), so the 'nav' check compares the two.
+   */
+  function booksHoldings(L, k, ws, out) {
+    const o = L.o;
+    const B = NS.books;
+    const F = L.byKey[k];
+    const d = endOf(k);
+    const nav = F ? F.endCap + F.gpEnd : 0;
+    out.nav = nav;
+    const f = booksOf(ws, o);
+    const accts = B.accounts(ws, o.id);
+    const bal = (codes, opts) => B.balance(ws, o.id, codes, d, opts);
+    const every = L.S.open ? 1 : 3;
+    const missing = () => ({ date: '', doc: '', age: 999, stale: true });
+    let costKnown = 0;
+    let upKnown = 0;
+    const seen = new Set();
+    ((f && Array.isArray(f.holdings) && f.holdings) || []).forEach((h) => {
+      if (!h || !h.id || seen.has(h.id)) return;
+      seen.add(h.id);
+      const cost = bal('1100', { holding: h.id });
+      const up = bal('1150', { holding: h.id });
+      costKnown += cost;
+      upKnown += up;
+      if (!cost && !up) return;
+      const last = valuesOf(ws, o, h.id, '', d)[0];
+      const age = last ? monthsFrom(keyOf(last.date), k) : 999;
+      const fv = cost + up;
+      out.rows.push({ h, sidePocket: false, name: String(h.name || h.id), security: h.kind === 'property' ? 'Property' : 'Investment', sleeve: '', level: h.level || 3, method: '', input: '', qty: null, price: null, cost, fv, debt: 0, equity: fv, support: last ? { date: last.date, doc: last.doc || 'Value entered', age, stale: age > every } : missing() });
+    });
+    // Lines on 1100 and 1150 that name no holding of this fund.
+    const cost = bal('1100') - costKnown;
+    const up = bal('1150') - upKnown;
+    if (cost || up) out.rows.push({ h: {}, sidePocket: false, name: 'Investments', security: 'Investment', sleeve: '', level: 3, method: '', input: '', qty: null, price: null, cost, fv: cost + up, debt: 0, equity: cost + up, support: missing() });
+    out.rows.forEach((r) => {
+      out.longFV += r.fv;
+      out.longCost += r.cost;
+      r.pctNav = nav ? r.fv / nav : 0;
+    });
+    const assets = accts.filter((a) => a.type === 'asset');
+    const liabs = accts.filter((a) => a.type === 'liability');
+    out.cash = bal(assets.filter((a) => a.code.slice(0, 2) === '10').map((a) => a.code));
+    out.feePayable = -bal('2100');
+    out.redemptionsPayable = -bal('2200');
+    out.debt = -bal('2500');
+    out.shortFV = -bal('2300');
+    out.receivables = bal('1200');
+    out.prepaid = bal('1300');
+    out.land = bal('1400');
+    out.buildings = bal(['1410', '1490']);
+    out.payables = -bal('2000');
+    out.subscriptionsAdvance = -bal('2250');
+    out.taxWithheld = -bal('2400');
+    out.dueGp = -bal('2600');
+    out.totalAssets = bal(assets.map((a) => a.code));
+    out.totalLiabilities = -bal(liabs.map((a) => a.code));
+    // Rows the statement adds for this fund when not zero, in statement order; any account added beyond the template
+    // keeps its own name, so the rows always add up to the totals.
+    const nz = (rows) => rows.filter((r) => r[1] !== 0);
+    out.extraAssets = nz([['Land', out.land], ['Buildings and improvements, net', out.buildings], ['Interest, dividends and rents receivable', out.receivables], ['Prepaid expenses and other assets', out.prepaid]].concat(assets.filter((a) => a.code.slice(0, 2) !== '10' && !AL_ASSET[a.code]).map((a) => [a.name || a.code, bal(a.code)])));
+    out.extraLiabilities = nz([['Accounts payable and accrued expenses', out.payables], ['Tax withheld, payable', out.taxWithheld], ['Due to general partner', out.dueGp], ['Subscriptions received in advance', out.subscriptionsAdvance]].concat(liabs.filter((a) => !AL_LIAB[a.code]).map((a) => [a.name || a.code, -bal(a.code)])));
+    return out;
+  }
+
+  function holdingsAt(L, k, ws) {
     const F = L.byKey[k];
     const S = L.S;
     const out = { key: k, date: k ? endOf(k) : '', rows: [], cash: 0, feePayable: 0, redemptionsPayable: 0, debt: 0, longFV: 0, longCost: 0, shortFV: 0, shortProceeds: 0, nav: 0, totalAssets: 0, totalLiabilities: 0 };
+    if (k && ws && NS.books && !generated(L.o)) return booksHoldings(L, k, ws, out);
     if (!F) return out;
     const nav = F.endCap + F.gpEnd;
     out.nav = nav;
@@ -573,7 +774,8 @@
     const sum = (f) => inv.reduce((s, a) => s + a[f], 0);
     const fund = { begin: sum('begin'), contrib: sum('contrib'), dist: sum('dist'), income: sum('income'), gain: sum('gain'), fee: sum('fee'), carry: sum('carry'), gpOut: sum('gpOut'), end: sum('end'), gpBegin: sum('carryBegin'), gpEnd: sum('carryEnd'), contribCum: sum('contribCum'), distCum: sum('distCum'), commit: sum('commit'), sp: sum('sp') };
     inv.forEach((a) => (a.own = fund.end > 0 ? a.end / fund.end : 0));
-    const hold = holdingsAt(L, lastM && lastM.key >= fk ? lastM.key : lastM ? lastM.key : null);
+    // A fund that is not a sample fund with no completed month yet still shows what its books hold at the period end.
+    const hold = holdingsAt(L, lastM && lastM.key >= fk ? lastM.key : lastM ? lastM.key : generated(o) ? null : tk, ws);
     return { L, o, S: L.S, from, to, ms, inv, fund, hold, empty: !L.months.length, before };
   }
 
@@ -635,17 +837,27 @@
   function companyName(ws, o) {
     return (o.achOverride && o.achOverride.companyName) || ws.tenant.ach.companyName || ws.tenant.shortName;
   }
+  /** What was paid on a distribution line: net of tax withheld (gross when no net amount is stored). */
+  const paidOf = (r) => (Number.isSafeInteger(r.netCents) ? r.netCents : r.cents);
   function runEvidence(ws, o, run) {
-    const rows = NS.data.allocate(ws, run).filter((r) => r.cents > 0);
+    const rows = NS.data.runRows(ws, run).filter((r) => r.cents > 0);
     const ach = rows.filter((r) => r.investor.payment && r.investor.payment.method === 'ach' && r.investor.payment.bank);
     const chk = rows.filter((r) => ach.indexOf(r) < 0);
-    const slug = String(companyName(ws, o)).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
-    const file = run.source === 'console' ? run.file || '' : `${slug}_${run.date.replace(/-/g, '')}_A.ach`;
-    const odfi8 = String(ws.tenant.ach.odfiRouting || '00000000').slice(0, 8);
     const traces = {};
-    ach.forEach((r, n) => (traces[r.investor.id] = odfi8 + String(n + 1).padStart(7, '0')));
     const checks = {};
-    chk.forEach((r) => (checks[r.investor.id] = String(10000 + (hashStr(run.id + r.investor.id) % 89999))));
+    let file;
+    if (generated(o)) {
+      const slug = String(companyName(ws, o)).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+      file = run.source === 'console' ? run.file || '' : `${slug}_${run.date.replace(/-/g, '')}_A.ach`;
+      const odfi8 = String(ws.tenant.ach.odfiRouting || '00000000').slice(0, 8);
+      ach.forEach((r, n) => (traces[r.investor.id] = odfi8 + String(n + 1).padStart(7, '0')));
+      chk.forEach((r) => (checks[r.investor.id] = String(10000 + (hashStr(run.id + r.investor.id) % 89999))));
+    } else {
+      // A fund that is not a sample fund: only what was recorded. The file is the one the portal made for the run, if
+      // any; no file name, trace number or check number is made up.
+      file = run.file || '';
+    }
+    // What the bank paid: net of tax withheld (gross for a run with no stored lines, as runRows gives).
     return {
       rows,
       ach,
@@ -653,8 +865,8 @@
       file,
       traces,
       checks,
-      achCents: ach.reduce((a, r) => a + r.cents, 0),
-      chkCents: chk.reduce((a, r) => a + r.cents, 0),
+      achCents: ach.reduce((a, r) => a + paidOf(r), 0),
+      chkCents: chk.reduce((a, r) => a + paidOf(r), 0),
       allocated: rows.reduce((a, r) => a + r.cents, 0),
       missingFile: ach.length > 0 && !file
     };
@@ -851,7 +1063,7 @@
       });
     });
     ws.runs.forEach((run) => {
-      if (run.status !== 'paid' || run.date > now) return;
+      if (!NS.data.runPaid(run, now)) return;
       const o = ws.offerings.find((x) => x.id === run.offeringId);
       if (!o) return;
       CUR = settings(o).currency || 'USD';
@@ -975,16 +1187,48 @@
     const soi = H.rows.reduce((a, r) => a + (r.fv > 0 ? r.fv : 0), 0) === H.longFV && H.cash >= 0;
     add('soi', 'Schedule of investments agrees to the balance sheet', soi, H.rows.length ? `${H.rows.length} positions, ${money(H.longFV)} at fair value${H.shortFV ? `, ${money(H.shortFV)} sold short` : ''}; cash ${money(H.cash)}.` : 'No investments held at period end.', soi ? [] : ['Schedule of investments does not agree, or cash is negative']);
 
+    // A fund that is not a sample fund: its statements show only what is recorded, so each missing input is named.
+    if (!generated(o)) {
+      const fb = booksOf(ws, o) || {};
+      const bank = fb.bank || {};
+      const accts = (Array.isArray(bank.accounts) ? bank.accounts : []).filter((a) => a && a.id);
+      const recs = Array.isArray(bank.recs) ? bank.recs : [];
+      const items = [];
+      if (extra && extra.syncError) items.push(`The books could not be brought up to date (${String(extra.syncError).replace(/\.$/, '')}).`);
+      if (!accts.length) items.push('No bank account added.');
+      accts.forEach((a) => {
+        if (!recs.some((r) => r && r.account === a.id && typeof r.asOf === 'string' && r.asOf >= P.to)) items.push(`${a.name}${a.last4 ? ` ending ${a.last4}` : ''}: not reconciled through ${dateLong(P.to)}.`);
+      });
+      const undecided = (Array.isArray(bank.lines) ? bank.lines : []).filter((l) => l && !l.match && !l.entry && typeof l.date === 'string' && l.date <= P.to).length;
+      if (undecided) items.push(`${undecided} bank lines not yet decided.`);
+      if (NS.books)
+        ((Array.isArray(fb.holdings) && fb.holdings) || []).forEach((h) => {
+          if (!h || !h.id || !NS.books.balance(ws, o.id, '1100', P.to, { holding: h.id })) return;
+          if (!valuesOf(ws, o, h.id, P.from, P.to).length) items.push(`${h.name || h.id}: no value in this period; shown at cost.`);
+        });
+      const terms = o.accounting || {};
+      if (terms.mgmtFee === '' || terms.mgmtFee == null) items.push('Management fee terms not set.');
+      const ex = (Array.isArray(fb.exceptions) ? fb.exceptions : []).filter(Boolean);
+      const closedChanges = ex.filter((x) => x.kind === 'closed').length;
+      if (closedChanges) items.push(`${closedChanges} changes to records inside a closed period are not applied.`);
+      const unposted = ex.filter((x) => x.kind === 'amount' || x.kind === 'mismatch' || x.kind === 'overpaid').length;
+      if (unposted) items.push(`${unposted} records could not be posted to the books as recorded.`);
+      add('books', 'Books recorded for the period', !items.length, items.length ? 'The statements show only what is recorded; each line names an input that is missing.' : `Every bank account is reconciled through ${dateLong(P.to)}, every bank line is decided, each investment has a value in the period and the fee terms are set.`, items);
+    }
+
     const ownSum = P.inv.reduce((a, x) => a + x.own, 0);
     add('own', 'Ownership totals 100%', f.end <= 0 || Math.abs(ownSum - 1) < 1e-9, f.end > 0 ? `Ending capital percentages total ${(ownSum * 100).toFixed(4)}%.` : 'No capital outstanding at period end.', [], f.end <= 0);
 
-    const runs = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'paid' && r.date >= P.from && r.date <= P.to);
+    const runs = ws.runs.filter((r) => r.offeringId === o.id && NS.data.runPaid(r) && r.date >= P.from && r.date <= P.to);
     const runIssues = [];
     runs.forEach((r) => {
       const E = runEvidence(ws, o, r);
       if (E.allocated !== r.total) runIssues.push(`${dateShort(r.date)} ${r.type}: investor allocations differ from the total by ${money(E.allocated - r.total)}`);
       if (E.missingFile) runIssues.push(`${dateShort(r.date)} ${r.type} (${money(r.total)}): recorded without a NACHA file. Attach the bank’s ACH confirmation.`);
     });
+    (P.L.strays || [])
+      .filter((x) => x.date >= P.from && x.date <= P.to)
+      .forEach((x) => runIssues.push(`${dateShort(x.date)} ${x.run.type}: ${money(x.cents)} is stored for ${x.investorId}, who does not hold this fund; it is left out of the capital accounts.`));
     add('bank', 'Distributions agree to bank records', !runIssues.length, runs.length ? `${runs.length} distributions totaling ${money(runs.reduce((a, r) => a + r.total, 0))}; each split to the cent and matched to a NACHA file or check.` : 'No distributions in the period.', runIssues, !runs.length);
 
     const calls = P.L.contribs.filter((c) => c.date >= P.from && c.date <= P.to);
@@ -1019,8 +1263,9 @@
       add('kyc', 'AML/KYC cleared and current', !kycIssues.length, `Identity verified and sanctions and PEP screening clear for ${live.length - kycIssues.length} of ${live.length} investors.`, kycIssues);
     }
 
-    const noTax = live.filter((a) => !a.investor.taxForm);
-    add('tax', 'Tax forms on file', !noTax.length, `W-9 or W-8 on file for ${live.length - noTax.length} of ${live.length} investors.`, noTax.map((a) => `${a.investor.title} (${a.investor.id}): no tax form. Request a W-9 before year-end tax reporting.`));
+    // D-30 (plan 06-17): a form finished without a signature counts as missing (NS.inviteFlow.taxOnFile, the one rule).
+    const noTax = live.filter((a) => !NS.inviteFlow.taxOnFile(a.investor));
+    add('tax', 'Tax forms on file', !noTax.length, `W-9 or W-8 on file for ${live.length - noTax.length} of ${live.length} investors.`, noTax.map((a) => (a.investor.taxForm ? `${a.investor.title} (${a.investor.id}): ${a.investor.taxForm} not signed. Request a signed ${a.investor.taxForm} before year-end tax reporting.` : `${a.investor.title} (${a.investor.id}): no tax form. Request a W-9 before year-end tax reporting.`)));
 
     // DIY edition: an investor verified through a provider counts only while the verification is current.
     const accOk = (inv) => (NS.integrations && NS.integrations.active(ws) && inv.verify ? NS.integrations.accreditationValid(ws, inv) || !NS.integrations.needsAccreditation(ws, inv) : !!(inv.accreditation && inv.accreditation.basis));
@@ -1081,6 +1326,36 @@
 
   /* ---------- Schedules ---------- */
   const COL = (h, t, k) => ({ h, t: t || 'text', k });
+  /** The statement of operations of a fund that is not a sample fund, from its journal over P.from..P.to. */
+  function booksOperations(ws, P, f, gpWord) {
+    const o = P.o;
+    const tb = NS.books.trialBalance(ws, o.id, P.from, P.to);
+    const act = (r) => r.debits - r.credits;
+    const rows = (type, skip) => tb.filter((r) => r.type === type && act(r) !== 0 && !(skip && skip[r.code])).map((r) => [r.name || r.code, -act(r)]);
+    const sum = (xs) => xs.reduce((a, x) => a + x[1], 0);
+    const of = (code) => -tb.filter((r) => r.code === code).reduce((a, r) => a + act(r), 0);
+    const inc = rows('income');
+    const exp = rows('expense');
+    const ti = sum(inc);
+    const te = sum(exp);
+    const realized = of('6000');
+    const unrealized = of('6100');
+    // A gain account added beyond the template keeps its own row, so the rows add up to the journal's results.
+    const other = rows('gain', { 6000: 1, 6100: 1 });
+    return [
+      ...inc,
+      ['Total investment income', ti],
+      ...exp,
+      ['Total expenses', te],
+      ['Net investment income (loss)', ti + te],
+      ['Net realized gain (loss) on investments', realized],
+      ['Net change in unrealized appreciation (depreciation) on investments', unrealized],
+      ...other,
+      ['Net increase (decrease) in net assets from operations', ti + te + realized + unrealized + sum(other)],
+      [`Change in ${gpWord.toLowerCase()} allocated to the general partner`, -f.carry],
+      ['Net increase (decrease) in limited partners’ capital from operations', f.income - f.fee + f.gain - f.carry]
+    ];
+  }
   function sched(id, file, title, desc, cols, rows, total) {
     return { id, file, title, desc, cols, rows, total: total || null };
   }
@@ -1102,11 +1377,13 @@
     const al = [
       ['Investments, at fair value' + (H.longCost ? ` (cost ${money(H.longCost)})` : ''), H.longFV],
       ['Cash and cash equivalents', H.cash],
+      ...(H.extraAssets || []),
       ['Total assets', H.totalAssets],
       ...(H.shortFV ? [['Securities sold short, at fair value' + (H.shortProceeds ? ` (proceeds ${money(H.shortProceeds)})` : ''), H.shortFV]] : []),
       ...(H.debt ? [['Mortgage notes payable', H.debt]] : []),
       ...(H.redemptionsPayable ? [['Redemptions payable', H.redemptionsPayable]] : []),
       ['Management fees payable', H.feePayable],
+      ...(H.extraLiabilities || []),
       ['Total liabilities', H.totalLiabilities],
       ['Net assets (partners’ capital)', H.totalAssets - H.totalLiabilities],
       ['  Limited partners', f.end],
@@ -1114,8 +1391,10 @@
     ];
     out.push(sched('al', '01_Statement_of_assets_and_liabilities.csv', 'Statement of assets and liabilities', `As of ${dateLong(asOf)}.`, [COL('Line item'), COL('Amount', 'money')], al));
 
-    // 2. Statement of operations
-    const ops = [
+    // 2. Statement of operations. A fund that is not a sample fund: from the journal over the period, one row per
+    // income and expense account with activity (minus its activity), realized and unrealized gains from 6000 and 6100.
+    const fromBooks = !generated(o) && NS.books;
+    const ops = fromBooks ? booksOperations(ws, P, f, gpWord) : [
       ['Investment income', f.income],
       ['Management fees', -f.fee],
       ['Net investment income (loss)', f.income - f.fee],
@@ -1166,7 +1445,7 @@
       const kl = k ? NS.ops.kycLabel(k, P.to) : null;
       const acc = i.accreditation && i.accreditation.basis ? `Verified accredited investor, ${dateShort(i.accreditation.date)}` : 'Not verified';
       const first = i.positions.filter((p) => p.offeringId === o.id).map((p) => p.date).sort()[0];
-      return [i.id, i.title, ...xVals(a), i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, i.taxForm ? `${i.taxForm} on file` : 'Missing', i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', i.onboarding.status === 'complete' ? 'Active' : i.onboarding.status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
+      return [i.id, i.title, ...xVals(a), i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, !i.taxForm ? 'Missing' : NS.inviteFlow.taxOnFile(i) ? `${i.taxForm} on file` : `${i.taxForm} not signed`, i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', (i.onboarding || {}).status === 'complete' ? 'Active' : (i.onboarding || {}).status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
     });
     out.push(
       sched(
@@ -1186,6 +1465,12 @@
     const evid = {};
     P.L.dists.filter((d) => d.date >= P.from && d.date <= P.to).forEach((d) => {
       const E = (evid[d.run.id] = evid[d.run.id] || runEvidence(ws, o, d.run));
+      if (!generated(o)) {
+        // Only what was recorded: the run's file for an ACH payment (or 'No file'), 'Check' for a check, no number.
+        const viaAch = E.ach.some((r) => r.investor.id === d.inv.id);
+        act.push([d.date, d.inv.id, d.inv.title, `Distribution: ${d.run.type}`, 0, -d.cents, d.run.id, viaAch ? 'ACH' : 'Check', viaAch ? E.file || 'No file' : 'Check']);
+        return;
+      }
       const ach = E.traces[d.inv.id];
       act.push([d.date, d.inv.id, d.inv.title, `Distribution: ${d.run.type}`, 0, -d.cents, d.run.id, ach ? 'ACH' : 'Check', ach ? `${E.file || 'No file'} · trace ${ach}` : `Check ${E.checks[d.inv.id] || ''}`]);
     });
@@ -1196,7 +1481,7 @@
     );
 
     // 7. Distribution reconciliation to bank records
-    const runs = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'paid' && r.date >= P.from && r.date <= P.to).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
+    const runs = ws.runs.filter((r) => r.offeringId === o.id && NS.data.runPaid(r) && r.date >= P.from && r.date <= P.to).slice().sort((a, b) => (a.date < b.date ? -1 : 1));
     const rec = runs.map((r) => {
       const E = evid[r.id] || runEvidence(ws, o, r);
       return [r.date, r.id, r.type, r.total, E.allocated, E.allocated - r.total, E.ach.length, E.achCents, E.chk.length, E.chkCents, E.file || 'Missing', E.missingFile ? 'Exception: no bank file' : 'Agrees'];
@@ -1441,9 +1726,18 @@
     return String(s).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
   }
   function build(ws, o, from, to) {
+    // A fund that is not a sample fund: the books are brought up to date with the records before anything is read.
+    let syncError = '';
+    if (!generated(o) && NS.books && NS.books.sync) {
+      try {
+        NS.books.sync(ws);
+      } catch (e) {
+        syncError = String((e && e.message) || e);
+      }
+    }
     const P = period(ws, o, from, to);
     const ver = verify(ws);
-    const chk = checks(ws, P, { verify: ver });
+    const chk = checks(ws, P, { verify: ver, syncError });
     const list = schedules(ws, P, chk, ver);
     return { P, ver, chk, list };
   }
@@ -1466,8 +1760,12 @@
     PROFILES,
     FEE_BASIS,
     settings,
+    generated,
+    events,
     ledger,
     period,
+    closedPerformance,
+    openPerformance,
     presets,
     snap,
     checks,

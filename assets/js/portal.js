@@ -61,6 +61,8 @@
   function shell(inner, active, opts) {
     const t = T();
     const inv = viewer();
+    // The person signed in: the investor, or the account's co-investor under their own name.
+    const me = inv ? (S().co && inv.coInvestor ? inv.coInvestor.name : inv.contact) : '';
     const banner = (opts && opts.banner) || '';
     const links = NAV.map(([k, label]) => `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${label}</a>`).join('');
     return `<div class="pt${S().navOpen ? ' nav-open' : ''}">
@@ -68,7 +70,7 @@
         <div class="pt-head-in">
           <a class="pt-logo" href="#overview" aria-label="${h(t.name)} ${h(t.portalName)}">${B.lockup(t)}</a>
           <nav class="pt-nav" id="pt-nav" aria-label="${h(t.portalName)}">${links}<a class="pt-nav-out" href="#sign-in">Sign out</a></nav>
-          <div class="pt-user">${inv ? `<span class="pt-user-id"><span class="pt-user-name">${h(inv.contact)}</span>${inv.title && inv.title !== inv.contact ? `<span class="pt-user-acct">${h(inv.title)}</span>` : ''}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
+          <div class="pt-user">${inv ? `<span class="pt-user-id"><span class="pt-user-name">${h(me)}</span>${inv.title && inv.title !== me ? `<span class="pt-user-acct">${h(inv.title)}</span>` : ''}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
           <button class="pt-menu" type="button" data-action="nav-toggle" aria-controls="pt-nav" aria-expanded="${S().navOpen}">${icon('menu')}<span>Menu</span></button>
         </div>
       </header>
@@ -79,8 +81,8 @@
   function footer() {
     const t = T();
     return `<footer class="pt-foot"><div class="pt-wrap">
-      <div class="pt-foot-row"><span>${h(t.support.team)}</span><span>${h(t.support.phone)}</span><span>${h(t.support.email)}</span><span>${h(t.support.hours)}</span></div>
-      <p>${h(t.disclaimer)}</p>
+      <div class="pt-foot-row">${[t.support.team, t.support.phone, t.support.email, t.support.hours].filter(Boolean).map((x) => `<span>${h(x)}</span>`).join('')}${NS.EDITION.diy ? '<button class="pt-foot-help" type="button" data-action="help-open" aria-haspopup="dialog">Help</button>' : ''}</div>
+      ${t.disclaimer ? `<p>${h(t.disclaimer)}</p>` : ''}
       <p class="pt-foot-legal">© ${new Date().getFullYear()} ${h(t.legalName)}${NS.EDITION.poweredBy && t.showPoweredBy ? ` · Powered by ${h(NS.EDITION.poweredBy)}` : ''}</p>
     </div></footer>`;
   }
@@ -103,7 +105,9 @@
     const inv = viewer();
     const open = inv ? openOfferingsHTML(inv) : '';
     // A new subscriber (from an invitation or a sign-up link) sees the subscription they submitted, and can finish setting up.
-    const setup = inv && NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
+    // (a tax-form request, plan 06-26, is not account setup: the investmentsTop hook offers it)
+    const open1 = inv && NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
+    const setup = open1 && !open1.taxRequest ? open1 : null;
     const reqs = inv && myRequests(inv).length ? `<section class="sec">${sec('Your requests')}${requestsHTML(inv, null, true)}</section>` : '';
     const resume = setup ? `<div class="done-box"><p class="lede">Finish setting up your account. Your progress so far is saved.</p><a class="btn btn-primary" href="#invite-${h(setup.token)}">Continue account setup</a></div>` : '';
     return shell(`${title('Investments')}${resume}${inv ? NS.runHooks('investmentsTop', inv) : ''}${reqs}${open}<p class="empty">${open ? 'You have no investments yet. Offerings open for investment are listed above.' : 'No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.'}</p>`, 'portfolio');
@@ -119,7 +123,7 @@
         const o = n.audience === 'all' ? null : W().offerings.find((x) => x.id === n.audience);
         const subj = NS.mergeNotice(n.subject, inv, t, n, NS.noticeInvestment(W(), inv, n));
         return `<div class="notice">
-          <div class="notice-text"><span class="notice-date">${date(n.date)}</span><strong>${h(subj)}</strong></div>
+          <div class="notice-text"><time class="notice-date" datetime="${h(n.date)}">${date(n.date)}</time><strong>${h(subj)}</strong></div>
           <div class="notice-actions">${/^call/.test(n.kind || '') && o ? `<button class="link-btn" type="button" data-action="notice-call" data-id="${h(n.id)}" data-off="${h(o.id)}">View capital call</button>` : `<button class="link-btn" type="button" data-action="notice-open" data-id="${h(n.id)}" data-off="${o ? h(o.id) : 'all'}">View documents</button>`}<button class="link-btn notice-dismiss" type="button" data-action="notice-dismiss" data-id="${h(n.id)}">Dismiss</button></div>
         </div>`;
       })
@@ -165,7 +169,7 @@
     const wi = OPS().wire(W(), o, inv, c);
     const t = T();
     return `<dl class="wire"><div><dt>Bank</dt><dd>${h(wi.bank)}</dd></div><div><dt>ABA routing number</dt><dd>${h(wi.aba)}</dd></div><div><dt>Account number</dt><dd>${h(wi.accountFull || wi.account)}</dd></div><div><dt>Beneficiary</dt><dd>${h(wi.beneficiary)}</dd></div><div><dt>Reference</dt><dd>${h(wi.reference)}</dd></div></dl>
-      <p class="wire-warn">${icon('alert')}<span>Before you send a wire, call ${h(t.support.team)} at ${h(t.support.phone)} to confirm these instructions. ${h(t.shortName)} will never change wire instructions by email.</span></p>`;
+      <p class="wire-warn">${icon('alert')}<span>Before you send a wire, call ${h(t.support.team)}${t.support.phone ? ` at ${h(t.support.phone)}` : ''} to confirm these instructions. ${h(t.shortName)} will never change wire instructions by email.</span></p>`;
   }
   function callsDueHTML(inv) {
     const due = callsDue(inv);
@@ -201,14 +205,17 @@
   /** Offerings this investor can subscribe to now. */
   function openOfferings(inv) {
     const w = W();
-    if (!OPS() || !(inv.accreditation && inv.accreditation.basis) || inv.onboarding.status !== 'complete') return [];
+    // Self-serve edition: the guided subscription asks the status questions by exemption (D-01), so an investor on file who
+    // is not accredited is offered the offering too (C-05, D-30). The managed edition keeps its accredited-only list (C-03).
+    const diy = !!(NS.EDITION && NS.EDITION.diy && NS.inviteFlow);
+    if (!OPS() || (!diy && !(inv.accreditation && inv.accreditation.basis)) || inv.onboarding.status !== 'complete') return [];
     return w.offerings.filter((o) => o.status === 'Raising' && !inv.positions.some((p) => p.offeringId === o.id) && !myRequests(inv, o.id).some((r) => r.status === 'pending' || r.status === 'approved'));
   }
   function openOfferingsHTML(inv, label) {
     const list = openOfferings(inv);
     if (!list.length) return '';
     return `<section class="sec">${sec(label || 'Open for investment')}<div class="offers">${list
-      .map((o) => `<div class="offer"><div class="offer-main"><strong>${h(o.name)}</strong><span class="sub">${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}</span><span class="sub">Minimum ${usd(o.minimum)} · first close targeted ${date(o.closeDate)}</span></div><a class="btn btn-primary" href="#subscribe-${h(o.id)}">Review and subscribe</a></div>`)
+      .map((o) => `<div class="offer"><div class="offer-main"><strong>${h(o.name)}</strong><span class="sub">${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}</span><span class="sub">Minimum ${usd(o.minimum)} · first close targeted ${date(o.closeDate)}</span></div>${NS.EDITION && NS.EDITION.diy && NS.inviteFlow ? `<button class="btn btn-primary" type="button" data-action="sub-start" data-id="${h(o.id)}">Review and subscribe</button>` : `<a class="btn btn-primary" href="#subscribe-${h(o.id)}">Review and subscribe</a>`}</div>`)
       .join('')}</div></section>`;
   }
   function capitalHTML(inv, o) {
@@ -366,6 +373,13 @@
       // Self-serve edition: the investor signs the offering's own subscription agreement, never a typed form in its place.
       const agr = NS.EDITION && NS.EDITION.diy && NS.esign && NS.esign.templateReady ? NS.esign.templateReady(W(), o.id) : null;
       if (agr === false) return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">The subscription agreement for ${h(o.name)} is not available to sign online yet. Contact ${h(T().support.team)}${T().support.email ? ` at ${h(T().support.email)}` : ''}.</p></div>`, 'investments');
+      // Self-serve edition, no invitation for this offering (a typed or bookmarked address): never the typed form with its
+      // accredited statement (C-05, D-30). The button starts the same guided subscription as Investments (sub-start); a
+      // render never creates records.
+      if (NS.EDITION && NS.EDITION.diy && NS.inviteFlow) {
+        const onFile = inv.onboarding.status === 'complete';
+        return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">${onFile ? 'Your subscription takes you through the documents and the subscription agreement.' : 'Finish setting up your account first. Your subscription is the last step.'}</p><button class="btn btn-primary" type="button" data-action="sub-start" data-id="${h(o.id)}">${onFile ? 'Continue your subscription' : 'Continue account setup'}</button></div>`, 'investments');
+      }
       const f = subForm(o);
       const cfg = NS.audit ? NS.audit.settings(o) : null;
       if (f.done) {
@@ -466,8 +480,10 @@
     const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
     switch (e.basis) {
       case 'maturity':
+        if (!e.date) return ['Not set', ''];
         return now >= e.date ? ['Matured', `Matured ${date(e.date)}`] : [span(M(now, e.date)), `Matures ${date(e.date)}`];
       case 'range': {
+        if (!e.from || !e.to) return ['Not set', ''];
         const a = M(now, e.from);
         const b = M(now, e.to);
         const fy = e.from.slice(0, 4);
@@ -524,7 +540,7 @@
       ${sec(has ? 'Company overview' : 'Investor relations')}
       ${about ? `<p class="ov-text">${h(about)}</p>` : ''}
       ${metrics.length ? `<dl class="ov-metrics">${metrics.map((m) => `<div><dt>${h(m[1] || '')}</dt><dd>${h(m[0])}</dd></div>`).join('')}</dl>` : ''}
-      <div class="ov-contact"><strong>${h(has ? s.team : t.name)}</strong>${has ? '' : `<span>${h(s.team)}</span>`}<span>${h(s.phone)}</span>${s.email ? `<a href="mailto:${h(s.email)}">${h(s.email)}</a>` : ''}<span>${h(s.hours)}</span></div>
+      <div class="ov-contact"><strong>${h(has ? s.team : t.name)}</strong>${has ? '' : `<span>${h(s.team)}</span>`}${s.phone ? `<span>${h(s.phone)}</span>` : ''}${s.email ? `<a href="mailto:${h(s.email)}">${h(s.email)}</a>` : ''}${s.hours ? `<span>${h(s.hours)}</span>` : ''}</div>
     </section>`;
   }
   /**
@@ -656,10 +672,10 @@
             ? `<section class="sec feed" aria-label="Updates">${posts
                 .map(
                   (x) => `<article class="post">
-                    <span class="post-date">${x.date ? date(x.date, 'long') : 'Latest'}</span>
+                    ${x.date ? `<time class="post-date" datetime="${h(x.date)}">${date(x.date, 'long')}</time>` : '<span class="post-date">Latest</span>'}
                     <div class="post-body">
-                      <span class="post-topic">${h(x.topic)}${x.about ? ` · ${h(x.about)}` : ''}</span>
                       <h2>${h(x.title)}</h2>
+                      <span class="post-topic">${h(x.topic)}${x.about ? ` · ${h(x.about)}` : ''}</span>
                       ${x.body ? `<p>${h(x.body)}</p>` : ''}
                       <div class="post-foot">${
                         x.notice
@@ -811,7 +827,7 @@
       <thead><tr><th scope="col">Payment date</th>${showOffering ? '<th scope="col">Investment</th>' : ''}<th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col">Status</th></tr></thead>
       <tbody>${list
         .map(
-          (p) => `<tr><td class="nowrap td-lead">${date(p.date)}</td>${showOffering ? `<td class="td-full" data-label="Investment">${h(name(p.offeringId))}</td>` : ''}<td data-label="Type">${h(p.type)}</td><td class="num" data-label="Amount">${usdc(p.cents)}</td><td data-label="Status">${p.status === 'scheduled' ? '<span class="status status-pending">Scheduled</span>' : '<span class="status">Paid</span>'}</td></tr>`
+          (p) => `<tr><td class="nowrap td-lead">${date(p.date)}</td>${showOffering ? `<td class="td-full" data-label="Investment">${h(name(p.offeringId))}</td>` : ''}<td data-label="Type">${h(p.type)}</td><td class="num" data-label="Amount">${usdc(p.cents)}${p.withheldCents > 0 ? `<span class="sub">Tax withheld ${usdc(p.withheldCents)}</span><span class="sub">Amount paid ${usdc(p.netCents)}</span>` : ''}</td><td data-label="Status">${p.status === 'scheduled' ? '<span class="status status-pending">Scheduled</span>' : '<span class="status">Paid</span>'}</td></tr>`
         )
         .join('')}</tbody>
     </table></div>`;
@@ -853,7 +869,7 @@
           ${fig(h(x.label), h(x.value), h(x.state === 'exited' ? '' : NS.holdYear(o)))}
         </dl>
 
-        <section class="sec">${sec(x.state === 'exited' ? 'Holding period' : x.state === 'open' ? 'Term' : 'Time to exit')}${timeline}</section>
+        ${x.progress == null && !(e.note || x.remaining) ? '' : `<section class="sec">${sec(x.state === 'exited' ? 'Holding period' : x.state === 'open' ? 'Term' : 'Time to exit')}${timeline}</section>`}
 
         ${capitalHTML(v.investor, o)}
         ${callsHTML(v.investor, o)}
@@ -975,7 +991,7 @@
       <thead><tr><th scope="col">Date</th><th scope="col">Document</th>${showOffering ? '<th scope="col">Investment</th>' : ''}<th scope="col">Type</th><th scope="col"><span class="sr-only">Open</span></th></tr></thead>
       <tbody>${docs
         .map(
-          (d) => `<tr><td class="nowrap td-meta">${date(d.date)}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="open-doc" data-id="${h(d.id)}">${h(d.title)}</button></td>${showOffering ? `<td class="td-meta td-sep">${h(name(d.offeringId))}</td>` : ''}<td class="td-meta td-sep">${h(d.cat)}</td><td class="num td-action"><button class="btn btn-small" type="button" data-action="open-doc" data-id="${h(d.id)}">View</button></td></tr>`
+          (d) => `<tr><td class="nowrap td-meta">${date(d.date)}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="open-doc" data-id="${h(d.id)}">${h(d.title)}</button></td>${showOffering ? `<td class="td-meta td-sep">${h(name(d.offeringId))}</td>` : ''}<td class="td-meta td-sep">${h(d.cat)}</td><td class="num td-action"><button class="btn btn-small" type="button" data-action="open-doc" data-id="${h(d.id)}">View</button>${d.uploaded && NS.record ? NS.record.downloadButton(d) : ''}</td></tr>`
         )
         .join('')}</tbody>
     </table></div>`;
@@ -1035,7 +1051,7 @@
   }
   function openUploaded(doc) {
     U.dialog(
-      `<div class="dlg-head"><div><h2>${h(doc.title)}</h2><p>${date(doc.date)} · ${h(doc.fileName)} · ${(doc.size / 1024).toFixed(0)} KB</p></div>
+      `<div class="dlg-head"><div><h2>${h(doc.title)}</h2><p>${date(doc.date)} · ${h(doc.fileName)} · ${(doc.size / 1024).toFixed(0)} KB</p>${NS.runHooks('documentOpened', doc)}</div>
         <div class="dlg-actions"><button class="btn btn-small" type="button" data-action="up-download" data-id="${h(doc.id)}">${icon('download')}Download</button><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <div class="dlg-body"><p class="empty">Loading…</p></div>`,
       'dlg-doc'
@@ -1046,19 +1062,31 @@
         const body = document.querySelector('#dlg .dlg-body');
         if (!body) return;
         if (!blob) {
-          body.innerHTML = '<p class="empty">This file was published from a different browser. In production, documents are stored in the document vault and open on any device.</p>';
+          body.innerHTML = `<p class="empty">${h(NS.esign.lostText('this document’s file'))}</p>`;
           return;
         }
-        if (S().ui.upUrl) URL.revokeObjectURL(S().ui.upUrl);
-        const url = (S().ui.upUrl = URL.createObjectURL(blob));
         if (/^text\//.test(blob.type) || /\.(txt|md)$/i.test(doc.fileName)) return blob.text().then((t) => (body.innerHTML = `<pre class="doc-text">${h(t)}</pre>`));
-        body.innerHTML = /pdf/i.test(blob.type) || /\.pdf$/i.test(doc.fileName) ? `<iframe class="doc-frame" src="${url}" title="${h(doc.title)}"></iframe>` : '<p class="empty">Preview is not available for this file type. Use Download.</p>';
+        // A PDF is drawn in the page (esign.js viewPdf): the browser's own PDF viewer is refused inside a sandboxed frame.
+        if (/pdf/i.test(blob.type) || /\.pdf$/i.test(doc.fileName)) return NS.esign.viewPdf(body, blob, doc.title, true);
+        body.innerHTML = '<p class="empty">Preview is not available for this file type. Use Download.</p>';
       })
       .catch(() => {
         const body = document.querySelector('#dlg .dlg-body');
         if (body) body.innerHTML = '<p class="empty">This browser blocked document storage, so the file cannot be opened here.</p>';
       });
   }
+  /**
+   * Self-serve edition (plan 06-08): an investor subscribing from the portal goes through the guided subscription an
+   * invitation gives (status step by exemption, subscription, agreement), for this offering only.
+   */
+  NS.actions['sub-start'] = (el) => {
+    const inv = viewer();
+    const o = W().offerings.find((x) => x.id === el.getAttribute('data-id'));
+    if (!inv || !o || o.status !== 'Raising' || !NS.inviteFlow) return;
+    const it = NS.inviteFlow.selfInvite(W(), inv, o, inv.onboarding.status === 'complete' ? { existing: true } : undefined);
+    NS.app.save(true);
+    NS.app.go('invite-' + it.token);
+  };
   NS.actions['sub-doc'] = (el) => {
     const d = (W().docs || []).find((x) => x.id === el.getAttribute('data-id') && x.offeringDoc && !x.hidden);
     if (d) openUploaded(d);
@@ -1066,7 +1094,7 @@
   NS.actions['up-download'] = (el) => {
     const doc = (W().docs || []).find((d) => d.id === el.getAttribute('data-id'));
     if (!doc) return;
-    NS.ops.files.get(doc.id).then((blob) => (blob ? U.download(doc.fileName, blob, { mime: doc.type || 'application/octet-stream' }) : U.toast('This file is stored in a different browser.')));
+    NS.ops.files.get(doc.id).then((blob) => (blob ? U.download(doc.fileName, blob, { mime: doc.type || 'application/octet-stream' }) : U.toast(NS.esign.lostText('this document’s file'))));
   };
   NS.actions['open-doc'] = (el) => {
     const v = vm();
@@ -1105,6 +1133,8 @@
       const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
       const owners = jointOwners(inv);
       const heldAs = NS.names ? NS.names.tenancyLabel(inv) : '';
+      // Plan 06-26: a tax-form request the firm sent, offered here as on Home
+      const taxAsk = NS.inviteFlow.taxAsk ? NS.inviteFlow.taxAsk(inv) : '';
       return shell(
         `${title('Account', `${h(inv.title)} · Account ${h(inv.id)}`)}
         <div class="cols">
@@ -1117,7 +1147,7 @@
             ${row('Email', h(inv.email))}
             ${row('Phone', h(inv.phone || '—'))}
             ${row('Mailing address', h(inv.address || '—'))}
-          </dl><p class="meta">To change these details, contact ${h(t.support.team)} at ${h(t.support.phone)}.</p></section>
+          </dl><p class="meta">To change these details, contact ${h(t.support.team)} at ${h(t.support.phone || t.support.email)}.</p></section>
 
           <section class="sec">${sec('Distribution payments', '<button class="sec-link link-btn" type="button" data-action="update-bank">Update bank account</button>')}<dl class="terms">
             ${row('Method', bank ? 'Direct deposit (ACH)' : 'Check by mail')}
@@ -1128,7 +1158,7 @@
         </div>
         <div class="cols">
           <section class="sec">${sec('Tax and accreditation')}<dl class="terms">
-            ${row('Tax form', inv.taxForm ? `${h(inv.taxForm)} on file` : 'Not provided')}
+            ${row('Tax form', `${!inv.taxForm ? 'Not provided' : NS.inviteFlow.taxOnFile(inv) ? `${h(inv.taxForm)} on file` : `${h(inv.taxForm)} not signed`}${taxAsk ? ` <a class="link-btn" href="${h(taxAsk)}">Complete your tax form</a>` : ''}`)}
             ${row('Taxpayer ID', inv.tinLast4 ? `ending ${h(inv.tinLast4)}` : 'Not provided')}
             ${row('Accreditation', (() => {
               const IVN = NS.integrations;
@@ -1156,14 +1186,14 @@
   NS.actions['update-bank'] = () => NS.startOnboarding(viewer().id, 'bank');
 
   /* ---------- Settings ---------- */
-  // Route is #preferences: the bare name "settings" is reserved by the Claude artifact viewer.
+  // Route is #preferences: the bare name "settings" is reserved by the host's artifact viewer.
   const THEMES = [
     ['light', 'Light', 'White background'],
     ['dark', 'Dark', 'Dark background, easier on the eyes in low light'],
     ['system', 'Match this device', 'Switches automatically with your device’s light or dark setting']
   ];
   function appearanceHTML() {
-    const current = NS.store.get('appearance', null) || T().appearance || 'system';
+    const current = NS.store.get('appearance', null) || T().appearance || 'light';
     return `<section class="sec settings-sec">
           ${sec('Appearance')}
           <fieldset class="choice settings-choice">
@@ -1198,7 +1228,7 @@
       const art = B.safeImage((t.home || {}).hero);
       return `<div class="pt pt-auth">
         <header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span></div></header>
-        <main class="pt-main" id="main" tabindex="-1"><div class="auth${art ? ' has-art' : ''}">
+        <main class="pt-main" id="main" tabindex="-1"><div class="auth has-art">
           <div class="auth-card">
           <form class="auth-form" data-form="sign-in" novalidate>
             <h1>${h(t.signin.headline || t.portalName)}</h1>
@@ -1211,12 +1241,17 @@
               pending ? `<button class="link-btn" type="button" data-action="activate" data-id="${h(pending.id)}">First time here? Activate your account</button>` : ''
             }</div>
           </form>
-          <aside class="auth-help"><h2>Need help signing in?</h2><p>${h(t.support.team)}</p><p>${h(t.support.phone)}</p><p>${h(t.support.email)}</p><p>${h(t.support.hours)}</p></aside>
+          <aside class="auth-help"><h2>Need help signing in?</h2>${[t.support.team, t.support.phone, t.support.email, t.support.hours].filter(Boolean).map((x) => `<p>${h(x)}</p>`).join('')}</aside>
           </div>
-          ${art ? `<div class="auth-art" aria-hidden="true"><img src="${art}" alt=""></div>` : ''}
+          <div class="auth-art" aria-hidden="true">${art ? `<img src="${art}" alt="">` : '<canvas class="auth-engrave" aria-hidden="true"></canvas>'}</div>
         </div></main>
         ${footer()}
       </div>`;
+    },
+    after() {
+      // Decoration only: the engraved ground is drawn once the page is in place (engrave.js).
+      const c = document.querySelector('.auth-engrave');
+      if (c && NS.engrave) NS.engrave(c, T().id || T().name);
     }
   };
   NS.forms['sign-in'] = (f) => {

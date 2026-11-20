@@ -472,8 +472,10 @@ const STEPS_SENTENCE = 'The link takes you through everything in one place: crea
 /** The invitation: who invited them, to what, the note, what they will need, the link and its expiry. */
 export function invitationMessage({ firm, investor, offering, invitation, link, expiresAt }) {
   const name = investor.contact || investor.title || 'investor';
+  if (invitation.existing && invitation.coSign && !(offering && offering.name)) return coSignMessage({ firm, name, investor, invitation, link, expiresAt });
   if (invitation.existing && offering && offering.name) return subscribeMessage({ firm, name, offering, invitation, link, expiresAt });
   if (invitation.existing && invitation.access) return accessMessage({ firm, name, invitation, link, expiresAt });
+  if (invitation.existing && invitation.taxRequest) return taxRequestMessage({ firm, name, investor, invitation, link, expiresAt });
   const subject = offering && offering.name ? `${offering.name}: complete your investor onboarding` : `Complete your investor onboarding with ${firm.name}`;
   const rows = [];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
@@ -507,6 +509,41 @@ function accessMessage({ firm, name, invitation, link, expiresAt, again }) {
   });
 }
 
+/** Plan 06-26: the official form a tax-form request is for, by the investor type the sponsor chose (D-09). */
+const taxFormOf = (investor) => ({ 'foreign-individual': 'W-8BEN', 'foreign-entity': 'W-8BEN-E' })[investor && investor.taxType] || 'W-9';
+/** Plan 06-26: an investor already on file asked to complete their tax form again: that form only, nothing else asked. */
+function taxRequestMessage({ firm, name, investor, invitation, link, expiresAt, again }) {
+  const form = `Form ${taxFormOf(investor)}`;
+  return compose(firm, `${again ? 'Reminder: ' : ''}${firm.name}: your ${form}`, {
+    greeting: `Dear ${name},`,
+    paras: [
+      again ? `Here is a new link to complete your ${form} for ${firm.name}. Any earlier link we sent no longer works.` : `${firm.name} asks you to complete your ${form}.`,
+      `The link below opens your ${form}, filled in from the details we hold. You check it and sign it online, or upload a completed form instead. Nothing else is asked.`
+    ],
+    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
+    button: { label: 'Complete your tax form', href: link },
+    after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
+  });
+}
+
+/**
+ * Plan 06-38: the co-investor of an account on file asked to sign that account's subscription agreement: their own link,
+ * which opens the agreement with only their places to sign. investor.contact is the co-investor, investor.title the account.
+ */
+function coSignMessage({ firm, name, investor, invitation, link, expiresAt, again }) {
+  const account = investor.title || investor.contact || 'your account';
+  return compose(firm, `${again ? 'Reminder: ' : ''}${firm.name}: sign the subscription agreement for ${account}`, {
+    greeting: `Dear ${name},`,
+    paras: [
+      again ? `Here is a new link to sign the subscription agreement for ${account} as co-investor. Any earlier link we sent no longer works.` : `${firm.name} asks you to sign the subscription agreement for ${account} as co-investor.`,
+      'The link below opens the agreement with only your places to sign. Nothing else is asked.'
+    ],
+    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
+    button: { label: 'Review and sign', href: link },
+    after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
+  });
+}
+
 /** An investor already on file, invited to subscribe to another offering: no ID or bank details needed. */
 function subscribeMessage({ firm, name, offering, invitation, link, expiresAt }) {
   const rows = [['Offering', offering.name]];
@@ -518,7 +555,7 @@ function subscribeMessage({ firm, name, offering, invitation, link, expiresAt })
     note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
     button: { label: 'Review and subscribe', href: link },
     after: [
-      'The link takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file. It takes about 5 minutes.',
+      `The link takes you through your subscription in one place: the offering documents, ${invitation.includeTax ? 'your tax form, ' : ''}your commitment and the subscription agreement, which you sign online. Your account details are already on file. It takes about 5 minutes.`,
       `This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`,
       `Questions? Reply to this email or contact ${supportLine(firm)}.`
     ]
@@ -528,7 +565,9 @@ function subscribeMessage({ firm, name, offering, invitation, link, expiresAt })
 /** A new link for the same invitation (the earlier link stops working). */
 export function resendMessage({ firm, investor, offering, invitation, link, expiresAt, started }) {
   const name = investor.contact || investor.title || 'investor';
+  if (invitation.existing && invitation.coSign && !(offering && offering.name)) return coSignMessage({ firm, name, investor, invitation, link, expiresAt, again: true });
   if (invitation.existing && invitation.access && !(offering && offering.name)) return accessMessage({ firm, name, invitation, link, expiresAt, again: true });
+  if (invitation.existing && invitation.taxRequest && !(offering && offering.name)) return taxRequestMessage({ firm, name, investor, invitation, link, expiresAt, again: true });
   if (invitation.existing && offering && offering.name) {
     return compose(firm, `Reminder: ${offering.name}: your subscription`, {
       greeting: `Dear ${name},`,
@@ -558,11 +597,30 @@ export function resendMessage({ firm, investor, offering, invitation, link, expi
  * on its own) before the date, or the investor's paperwork is gone. For an investor already on file (existing) it is their
  * subscription that waits: the console keeps the record it holds and adds only what the link collected.
  */
-export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing }) {
+export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing, taxRequest, coSign }) {
   const who = investor.contact || investor.title || 'An investor';
   const rows = [['Investor', who], ['Email', investor.email]];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
   rows.push(['Finished', longDate(completedAt)], ['Deleted on', longDate(deleteOn)]);
+  // Plan 06-38: a co-investor's signature waiting to be imported (investor.contact is the co-investor, investor.title the account).
+  if (existing && coSign) {
+    const account = investor.title || who;
+    return compose(firm, `Waiting in your console: ${who}’s signature for ${account}`, {
+      paras: [`${who} went through your request to sign the subscription agreement for ${account} as co-investor on ${longDate(completedAt)}, but the console has not added it to your records yet.`],
+      rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [`Open the console before ${longDate(deleteOn)}: it adds the co-investor’s signature as soon as it opens.`, 'After that date the signed copy is deleted from the integration server to protect it, and the co-investor would have to sign again.']
+    });
+  }
+  // Plan 06-26: a tax-form request waiting to be imported.
+  if (existing && taxRequest) {
+    return compose(firm, `Waiting in your console: ${who}’s tax form`, {
+      paras: [`${who} finished your request for their Form ${taxFormOf(investor)} on ${longDate(completedAt)}, but the console has not added it to your records yet.`],
+      rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [`Open the console before ${longDate(deleteOn)}: it adds the form as soon as it opens.`, 'After that date the form is deleted from the integration server to protect it, and the investor would have to complete it again.']
+    });
+  }
   if (existing) {
     return compose(firm, `Waiting in your console: ${who}’s subscription`, {
       paras: [`${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''} on ${longDate(completedAt)}, but the console has not added it to your records yet.`],
@@ -598,6 +656,27 @@ export function notificationMessage({ firm, investor, offering, summary, console
       after: [summary.next]
     });
   }
+  // Plan 06-38: a co-investor sign-in: whether the co-investor (investor.contact) signed the account's (investor.title) agreement.
+  if (summary && summary.coSign) {
+    const account = summary.account || investor.title || who;
+    return compose(firm, summary.coSigned ? `${who} signed the subscription agreement for ${account}` : `${who} did not sign the subscription agreement for ${account}`, {
+      paras: [`${who}, co-investor on ${account}, went through your request to sign the subscription agreement on ${longDate(completedAt)}.`],
+      rows: summary.rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [summary.next, 'Nothing else in the account’s investor record changes.']
+    });
+  }
+  // Plan 06-26: a tax-form request: which form came back, and how; nothing else in the record changes.
+  if (summary && summary.taxRequest) {
+    const form = `Form ${summary.taxForm || taxFormOf(investor)}`;
+    const back = summary.taxState === 'signed' || summary.taxState === 'uploaded';
+    return compose(firm, back ? `${who} returned their ${form}` : summary.taxState === 'not signed' ? `${who} finished your tax form request without signing` : `${who} finished your tax form request without a form`, {
+      paras: [`${who} went through your request for their ${form} on ${longDate(completedAt)}.`],
+      rows: summary.rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [summary.next, 'Nothing else in their investor record changes.']
+    });
+  }
   // An investor on file who reached the end without subscribing (the offering stopped accepting subscriptions first).
   const none = existing && summary && summary.requested === false;
   const subject = none
@@ -621,7 +700,7 @@ export function notificationMessage({ firm, investor, offering, summary, console
       none
         ? 'Nothing is added to their investor record; the details you already hold for them stay as they are.'
         : existing
-        ? 'Their subscription, signed agreement and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.'
+        ? `Their subscription, signed agreement${summary.includeTax ? ', tax form' : ''} and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.`
         : 'Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.'
     ]
   });

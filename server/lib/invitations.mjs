@@ -22,6 +22,17 @@ const INVITATION_ID = /^ivt_[\w-]{1,64}$/;
 const STATUSES = ['sent', 'opened', 'in_progress', 'completed', 'cancelled', 'expired'];
 const ENDED = ['completed', 'cancelled', 'expired'];
 const NOTIFICATION_KINDS = ['invite_opened', 'invite_progress', 'verification_review', 'onboarding_completed', 'agreement_signed', 'subscription_accepted'];
+// The verification package (plan 08-05, D-01): the console's client id for the invitation (the billing key pattern), the
+// two connections only this server may put into a snapshot, and the sentences of its refusals. account_required and
+// tier_mismatch are lib/billing.mjs's own sentences, word for word.
+const PACKAGE_KEY = /^[A-Za-z0-9_-]{1,80}$/;
+const PACKAGE_IDS = ['package-id', 'package-acc'];
+const PACKAGE_SAYS = {
+  account_required: [403, 'Card payments need a sponsor account.'],
+  package_unavailable: [409, 'The verification package is not available on this server right now. Nothing was charged.'],
+  already_sent: [409, 'This invitation was already sent. Nothing was charged.'],
+  tier_mismatch: [409, "This invitation's package was paid at another level. Nothing was charged."]
+};
 
 const fail = (status, message) => Object.assign(new Error(message), { status });
 /** Send a reply and report the route as handled. */
@@ -89,16 +100,49 @@ function cleanFirm(x) {
     onboarding: cleanJson(f.onboarding, 32 * KB, 'firm.onboarding') || {}
   };
 }
+const TAX_TYPES = ['us-individual', 'us-entity', 'foreign-individual', 'foreign-entity'];
 function cleanInvestor(x) {
   const i = obj(x);
   if (!i || !/^[\w.-]{1,64}$/.test(String(i.id || ''))) throw fail(400, 'investor.id is required (letters, digits, dots, dashes; at most 64)');
   if (!clip(i.contact, 120).trim()) throw fail(400, 'investor.contact (the investor’s name) is required');
   if (!validAddress(i.email)) throw fail(400, 'investor.email is not a valid email address');
   const out = { id: String(i.id), contact: clip(i.contact, 120).trim(), title: clip(i.title || i.contact, 200).trim(), type: clip(i.type, 40), email: i.email };
-  // An investor already on the firm's books, invited to subscribe to another offering: flags and a date, no personal details.
+  // D-09: the investor type the sponsor chose (it decides the tax form the investor's page shows); one of the four or none.
+  if (TAX_TYPES.includes(i.taxType)) out.taxType = i.taxType;
+  // An investor already on the firm's books, invited to subscribe to another offering: flags and a date, no personal details;
+  // and (D-01) their own status answers to prefill the status step: the ground on their record and their benefit plan answers.
   const e = obj(i.existing);
-  if (e) out.existing = { accredited: e.accredited === true, accreditedUntil: /^\d{4}-\d{2}-\d{2}$/.test(String(e.accreditedUntil || '')) ? String(e.accreditedUntil) : '', holds: e.holds === true };
+  if (e) {
+    out.existing = { accredited: e.accredited === true, accreditedUntil: /^\d{4}-\d{2}-\d{2}$/.test(String(e.accreditedUntil || '')) ? String(e.accreditedUntil) : '', holds: e.holds === true };
+    // Only when there is one: the summary of an investor with no answers on file stays as it was.
+    const basis = typeof e.accBasis === 'string' ? clip(e.accBasis, 300) : '';
+    if (basis) out.existing.accBasis = basis;
+    const plan = obj(e.erisa);
+    if (plan) out.existing.erisa = cleanErisa(plan);
+  }
+  // Plan 06-26: a tax-form request (see create, which keeps this for such an invitation only, and for an invitation to subscribe
+  // that includes the tax form, plan 06-27) carries what the official form
+  // prints and the console holds: the address, the country, U.S. or other citizenship, the country of citizenship given on an
+  // earlier W-8BEN, and when the investor consented to electronic records and signatures. Never a taxpayer ID or bank detail.
+  const p = obj(i.taxPrefill);
+  if (p) {
+    out.taxPrefill = {
+      address: clip(p.address, 300).trim(),
+      country: clip(p.country, 60).trim(),
+      citizen: p.citizen === 'us' || p.citizen === 'other' ? p.citizen : '',
+      citizenship: clip(p.citizenship, 60).trim(),
+      consentAt: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?Z$/.test(String(p.consentAt || '')) ? String(p.consentAt) : ''
+    };
+  }
   return out;
+}
+/** Plan 06-26: the official form a tax-form request is for, by the investor type the sponsor chose (D-09). */
+export const taxFormOf = (investor) => ({ 'foreign-individual': 'W-8BEN', 'foreign-entity': 'W-8BEN-E' })[investor && investor.taxType] || 'W-9';
+/** D-01, D-08 (1): benefit plan answers as known fields only (assets/js/onboarding.js erisaFrom): plan, planPct (0 to 100 or null). */
+const PLANS = ['title1', '4975', 'planAssets', 'other', 'none'];
+function cleanErisa(e) {
+  const pct = typeof e.planPct === 'number' && Number.isFinite(e.planPct) && e.planPct >= 0 && e.planPct <= 100 ? e.planPct : null;
+  return { plan: PLANS.includes(e.plan) ? e.plan : '', planPct: pct };
 }
 /** Offering documents go to blob files (sealed); the snapshot keeps their names, sizes and hashes. */
 function cleanOffering(x) {
@@ -131,6 +175,7 @@ function cleanOffering(x) {
       classes: cleanJson(o.classes, 64 * KB, 'offering.classes'),
       currency,
       documents
+      // Owner (plan 06-15): the C-01 "may be full" flag is no longer sent to the investor (the warning is removed).
     },
     files
   };
@@ -143,7 +188,11 @@ function cleanInvitation(x, nowMs, maxDays) {
   const asked = Date.parse(i.expiresAt || '');
   const expires = Number.isFinite(asked) && asked > nowMs ? Math.min(asked, max) : max;
   // access: a link for an investor already on file (added by the firm from paper documents) to open their portal: nothing to fill in.
-  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, { expiresAt: new Date(expires).toISOString() });
+  // taxRequest (plan 06-26): a link for an investor already on file to complete their tax form again, nothing else.
+  // includeTax (plan 06-27, D-10): an invitation to subscribe for an investor already on file that also holds the tax step.
+  // coSign (plan 06-38): a link for the co-investor of an account on file to sign one agreement (envelopeId); create checks it
+  // and refuses it without an account on file, with an offering, or for an agreement it does not carry.
+  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, i.existing === true && i.taxRequest === true ? { taxRequest: true } : {}, i.existing === true && i.includeTax === true ? { includeTax: true } : {}, i.coSign === true ? { coSign: true, envelopeId: typeof i.envelopeId === 'string' ? i.envelopeId : '' } : {}, { expiresAt: new Date(expires).toISOString() });
 }
 function cleanEsign(x) {
   const e = obj(x);
@@ -155,6 +204,20 @@ function cleanEsign(x) {
     if (!isPdf(pdf)) throw fail(400, 'esign.pdf is not a PDF');
   }
   return { esign: { template, pdf: pdf ? { size: pdf.length, sha256: sha256Hex(pdf) } : null }, pdf };
+}
+/**
+ * Plan 06-38 (W2): the account investor's taxpayer number never reaches the co-investor. In a co-investor sign-in's template,
+ * a field value that is not the co-investor's own and holds a full SSN or EIN (dashed, spaced or nine bare digits) is
+ * blanked and marked withheld; the console keeps its own copy of those fields (only the co-investor's come back, see
+ * coSignEnvelope).
+ */
+const TIN = /\b\d{3}-\d{2}-\d{4}\b|\b\d{3} \d{2} \d{4}\b|\b\d{2}-\d{7}\b|(^|\D)\d{9}(\D|$)/;
+function withholdTins(template) {
+  const coIds = new Set((Array.isArray(template.signers) ? template.signers : []).filter((s) => obj(s) && s.co === true).map((s) => String(s.id)));
+  (Array.isArray(template.fields) ? template.fields : []).forEach((f) => {
+    if (obj(f) && !coIds.has(String(f.signerId)) && typeof f.value === 'string' && TIN.test(f.value)) Object.assign(f, { value: '', withheld: true });
+  });
+  return template;
 }
 
 /* ---------- What the investor's browser sends back ---------- */
@@ -182,11 +245,51 @@ function cleanEnvelope(env, snap) {
 }
 
 
+/**
+ * Plan 06-38 (T-06-66): what a co-investor's device may change on the agreement it signs: only the co-investor's own signing
+ * (their signer's status, times, adopted signature and initials, and the values of their own unlocked places). Every other
+ * signer and field is the snapshot's copy (the console's, with any withheld taxpayer number still blank); a signer or field
+ * the device added is dropped. The envelope's own state (status, copies, events) then goes through cleanEnvelope as for any
+ * agreement, so a countersignature never comes from the device.
+ */
+const SIGNING = ['status', 'viewedAt', 'consentAt', 'signedAt', 'declinedReason', 'signature', 'initials', 'userAgent'];
+function coSignEnvelope(env, snap) {
+  const tpl = obj(snap.esign && snap.esign.template) || {};
+  const tSigners = (Array.isArray(tpl.signers) ? tpl.signers : []).filter(obj);
+  const tFields = (Array.isArray(tpl.fields) ? tpl.fields : []).filter(obj);
+  const coIds = new Set(tSigners.filter((s) => s.co === true).map((s) => String(s.id)));
+  const byId = (list) => new Map((Array.isArray(list) ? list : []).filter(obj).map((x) => [String(x.id), x]));
+  const sentSigners = byId(env.signers);
+  const sentFields = byId(env.fields);
+  env.signers = tSigners.map((t) => {
+    const out = JSON.parse(JSON.stringify(t));
+    const s = sentSigners.get(String(t.id));
+    if (s && coIds.has(String(t.id))) SIGNING.forEach((k) => (k in s ? (out[k] = s[k]) : null));
+    return out;
+  });
+  env.fields = tFields.map((t) => {
+    const out = JSON.parse(JSON.stringify(t));
+    const f = sentFields.get(String(t.id));
+    if (f && coIds.has(String(t.signerId)) && !t.locked && 'value' in f) out.value = f.value;
+    return out;
+  });
+  return env;
+}
+
 function cleanSubmission(body, rec, snap) {
-  const investor = obj(body.investor);
+  // Plan 06-38: a co-investor sign-in brings back the co-investor's signature on one agreement and nothing else.
+  const coSign = !!(snap.invitation && snap.invitation.existing && snap.invitation.coSign);
+  const investor = coSign && (body.investor === undefined || body.investor === null) ? {} : obj(body.investor);
   if (!investor) throw fail(400, 'investor is required');
   if (investor.id !== undefined && String(investor.id) !== rec.investorId) throw fail(400, 'investor.id does not match this invitation');
-  const out = { investor: Object.assign(cleanJson(investor, 1 * MB, 'investor'), { id: rec.investorId }) };
+  // The co-investor changes nothing on the account's record: the investor is reduced to its id.
+  const out = { investor: coSign ? { id: rec.investorId } : Object.assign(cleanJson(investor, 1 * MB, 'investor'), { id: rec.investorId }) };
+  if (coSign && body.request !== undefined && body.request !== null) throw fail(400, 'A co-investor sign-in brings back no subscription request.');
+  if (coSign) {
+    const e = body.envelope === undefined || body.envelope === null ? null : obj(body.envelope);
+    if (!e) throw fail(400, 'envelope is required: the co-investor’s signature travels on the agreement.');
+    if (String(e.id === undefined || e.id === null ? '' : e.id) !== snap.invitation.envelopeId) throw fail(400, 'envelope.id does not match the agreement on this invitation.');
+  }
   const request = body.request === undefined || body.request === null ? null : obj(body.request);
   if (body.request && !request) throw fail(400, 'request must be an object or null');
   if (request && request.investorId !== undefined && String(request.investorId) !== rec.investorId) throw fail(400, 'request.investorId does not match this invitation');
@@ -211,14 +314,19 @@ function cleanSubmission(body, rec, snap) {
   }
   const envelope = body.envelope === undefined || body.envelope === null ? null : obj(body.envelope);
   if (body.envelope && !envelope) throw fail(400, 'envelope must be an object or null');
-  out.envelope = envelope ? cleanEnvelope(cleanJson(envelope, 1 * MB, 'envelope'), snap) : null;
+  // Plan 06-26: a tax-form request holds no subscription agreement, so none is kept (nor its files, below).
+  const taxReq = !!(snap.invitation && snap.invitation.existing && snap.invitation.taxRequest);
+  out.envelope = envelope && !taxReq ? cleanEnvelope(coSign ? coSignEnvelope(cleanJson(envelope, 1 * MB, 'envelope'), snap) : cleanJson(envelope, 1 * MB, 'envelope'), snap) : null;
   const env = out.envelope;
   // The files this submission may carry: what it produced itself. Its envelope's copies keep esign.js's names (<envelope id>-work
   // once the investor has signed, <envelope id>-signed once everyone has, so only for a completed envelope), and evidence is
-  // the investor's own upload named by their verification record (integrations.js names uploads kyc-<investor id>-<time>).
+  // the investor's own upload named by their verification record (integrations.js names uploads kyc-<investor id>-<time>), or
+  // their purchaser representative's acknowledgment named by the request (rep-<investor id>-<time>), or the signed copy of
+  // their official tax form (<tax envelope id>-signed, plan 06-22: only for a completed tax envelope this investor alone signed),
+  // or the tax form they uploaded instead, named by their record (tax-<investor id>-<time>, plan 06-23).
   // The console imports nothing else either (assets/js/invitations.js merge). An investor already on file brings back an
   // accreditation check at most, so only its evidence.
-  const allowed = Object.create(null); // file id -> 'agreement' (a PDF) or 'evidence' (a PDF, PNG or JPEG)
+  const allowed = Object.create(null); // file id -> 'agreement' (a PDF), 'evidence' (a PDF, PNG or JPEG) or 'tax' (a PDF, else dropped)
   let signedId = '';
   if (env && /^[\w.-]{1,70}$/.test(String(env.id || ''))) {
     if (env.workDocId === `${env.id}-work`) allowed[env.workDocId] = 'agreement';
@@ -226,10 +334,45 @@ function cleanSubmission(body, rec, snap) {
   }
   const v = obj(out.investor.verify) || {};
   const kycName = new RegExp(`^kyc-${reEsc(rec.investorId)}-[a-z0-9]+$`);
-  for (const k of snap.invitation && snap.invitation.existing ? ['accreditation'] : ['identity', 'accreditation']) {
+  // Plan 06-38: no evidence on a co-investor sign-in (its investor is reduced to its id, so no verification record names one).
+  for (const k of coSign ? [] : snap.invitation && snap.invitation.existing ? ['accreditation'] : ['identity', 'accreditation']) {
     const x = obj(v[k]);
     if (x && typeof x.fileId === 'string' && kycName.test(x.fileId) && !allowed[x.fileId]) allowed[x.fileId] = 'evidence';
   }
+  // D-30: the written acknowledgment of the investor's purchaser representative (Rule 501(i)), named by the request's own
+  // status answers (request.qual.sophistication.rep.fileId) under this investor's rep- name (onboarding.js: rep-<investor id>-<time>).
+  const q = out.request && obj(out.request.qual);
+  const so = q && obj(q.sophistication);
+  const rp = so && obj(so.rep);
+  const repName = new RegExp(`^rep-${reEsc(rec.investorId)}-[a-z0-9]+$`);
+  if (rp && typeof rp.fileId === 'string' && repName.test(rp.fileId) && !allowed[rp.fileId]) allowed[rp.fileId] = 'evidence';
+  // Plan 06-23 (D-01, T-06-51): a tax form the investor completed elsewhere and uploaded instead, named by their record
+  // (investor.taxCert { uploaded: true, fileId }) under this investor's tax- name (onboarding.js: tax-<investor id>-<time>).
+  // Never for an investor already on file, whose tax form stays as the console holds it, unless the console asked for it again
+  // (a tax-form request, plan 06-26).
+  const tc = obj(out.investor.taxCert);
+  const taxName = new RegExp(`^tax-${reEsc(rec.investorId)}-[a-z0-9]+$`);
+  // Plan 06-27 (D-10): or the sponsor included the tax form in this invitation to subscribe.
+  const withTax = !!(snap.invitation && snap.invitation.existing && snap.invitation.includeTax && snap.offering);
+  const keepsTax = !(snap.invitation && snap.invitation.existing) || taxReq || withTax;
+  if (tc && tc.uploaded === true && typeof tc.fileId === 'string' && taxName.test(tc.fileId) && keepsTax && !allowed[tc.fileId]) allowed[tc.fileId] = 'evidence';
+  // Plan 06-22 (research Pattern 6, T-06-47): the investor's official tax form (W-9, W-8BEN or W-8BEN-E), the envelope esign.js
+  // made on the tax step (kind 'tax'), kept only when this investor is its one signer (no countersigner: nobody else signs a
+  // tax form). Its signed copy, under esign.js's name, is allowed only once it is completed.
+  const taxIn = body.taxEnvelope === undefined || body.taxEnvelope === null ? null : obj(body.taxEnvelope);
+  if (body.taxEnvelope && !taxIn) throw fail(400, 'taxEnvelope must be an object or null');
+  let tax = taxIn ? cleanJson(taxIn, 1 * MB, 'taxEnvelope') : null;
+  if (tax) {
+    const ts = Array.isArray(tax.signers) ? tax.signers : [];
+    const own = ts.length === 1 && obj(ts[0]) && ts[0].role === 'investor' && String(ts[0].investorId || '') === rec.investorId;
+    // never the agreement's own id (its signed copy would pass as a tax form), and nothing for an investor already on file,
+    // whose tax form stays as the console holds it, unless the console asked for it again (a tax-form request, plan 06-26, or
+    // an invitation to subscribe that includes it, plan 06-27)
+    if (!/^[\w.-]{1,70}$/.test(String(tax.id || '')) || tax.kind !== 'tax' || !own || (env && String(env.id) === String(tax.id)) || !keepsTax) tax = null;
+  }
+  out.taxEnvelope = tax;
+  let taxSignedId = '';
+  if (tax && tax.status === 'completed' && tax.signedDocId === `${tax.id}-signed` && !allowed[tax.signedDocId]) allowed[(taxSignedId = tax.signedDocId)] = 'tax';
   if (body.docs !== undefined && !Array.isArray(body.docs)) throw fail(400, 'docs must be a list');
   if ((body.docs || []).length > 50) throw fail(400, 'docs: at most 50 entries');
   const docs = (cleanJson(body.docs || [], 1 * MB, 'docs') || []).filter(obj);
@@ -256,6 +399,23 @@ function cleanSubmission(body, rec, snap) {
     // agreement template (envelope.docId), and the investor's submission must not fail for a file the console never takes.
     if (!Object.prototype.hasOwnProperty.call(allowed, k)) {
       out.dropped++;
+      continue;
+    }
+    // The signed tax form never stops the completion: a copy that is unreadable, not a PDF, or more than the room left is
+    // dropped (its envelope is then not complete, below), and the subscription goes on as without it.
+    if (allowed[k] === 'tax') {
+      let tb = null;
+      try {
+        tb = decode64(val, INVITE_LIMITS.files, `files.${k}`);
+      } catch {
+        tb = null;
+      }
+      if (!tb || !isPdf(tb) || total + tb.length > INVITE_LIMITS.files) {
+        out.dropped++;
+        continue;
+      }
+      total += tb.length;
+      out.fileBufs.push([k, tb]);
       continue;
     }
     const buf = decode64(val, INVITE_LIMITS.files, `files.${k}`);
@@ -294,6 +454,29 @@ function cleanSubmission(body, rec, snap) {
         }
       ]
     : [];
+  if (tax) {
+    // Only the signed copy travels (the original and the work copy stay on the device); complete only with it.
+    tax.docId = null;
+    if (tax.workDocId && !got.has(tax.workDocId)) tax.workDocId = null;
+    if (tax.status === 'completed' && !(taxSignedId && got.has(taxSignedId))) Object.assign(tax, { status: 'sent', completedAt: null, signedDocId: null, sha256Signed: null });
+    else if (tax.signedDocId && !got.has(tax.signedDocId)) tax.signedDocId = null;
+  }
+  // Its listing (esign.js lists a completed tax form under Tax for its signer): rebuilt from known fields, for this investor
+  // alone, never an offering document (T-06-49).
+  const taxListed = tax && taxSignedId && tax.status === 'completed' && got.has(taxSignedId) ? docs.find((d) => d.id === taxSignedId) || {} : null;
+  if (taxListed)
+    out.docs.push({
+      id: taxSignedId,
+      title: clip(taxListed.title || tax.title, 200) || 'Tax form',
+      fileName: fileName(taxListed.fileName, 'Tax_form_signed.pdf'),
+      type: 'application/pdf',
+      cat: 'Tax',
+      date: /^\d{4}-\d{2}-\d{2}$/.test(String(taxListed.date || '')) ? String(taxListed.date) : '',
+      audience: 'investors',
+      investors: [rec.investorId],
+      offeringId: null,
+      envelopeId: String(tax.id)
+    });
   return out;
 }
 
@@ -312,6 +495,25 @@ const TO_CONFIRM = 'To be confirmed: your console checks this result against you
  */
 export function summarize(sub, snap, checks) {
   const inv = sub.investor || {};
+  // Plan 06-38: a co-investor sign-in: whether the co-investor signed, read from the agreement's co-investor signer.
+  if (snap.invitation && snap.invitation.existing && snap.invitation.coSign) {
+    const env = obj(sub.envelope);
+    const co = env && Array.isArray(env.signers) ? env.signers.find((s) => obj(s) && s.co === true) : null;
+    const coSigned = !!(co && co.status === 'signed');
+    return {
+      rows: [['Co-investor signature', coSigned ? 'Signed' : 'Not signed']],
+      next: coSigned ? 'Next: countersign the subscription agreement in the console.' : 'Next: ask the co-investor to sign.',
+      identity: '',
+      aml: '',
+      accreditation: '',
+      agreement: coSigned ? (env.status === 'completed' ? 'Signed by the co-investor' : 'Signed by the co-investor; waiting for your countersignature') : 'Not signed by the co-investor',
+      existing: true,
+      coSign: true,
+      coSigned,
+      account: snap.investor.title || '',
+      requested: false
+    };
+  }
   const c = checks || { identity: { status: 'not_started' }, accreditation: { status: 'not_started' }, aml: { status: 'not_started' } };
   const label = (x, dflt) => (x.unconfirmed ? (x.consoleRule ? TO_CONFIRM : UNCONFIRMED) : word(x.status === 'not_started' ? '' : x.status) || dflt);
   const identity = label(c.identity, 'Not started');
@@ -346,16 +548,34 @@ export function summarize(sub, snap, checks) {
     const r = [['Investor', snap.investor.contact], ['Email', snap.investor.email]];
     return { rows: r, next: 'Nothing to do: their record stays as you hold it.', identity: '', aml: '', accreditation: '', agreement: '', existing: true, access: true, requested: false };
   }
+  // A tax-form request (plan 06-26): which form came back, and how.
+  if (existing && snap.invitation.taxRequest && !offering) {
+    const tc = obj(inv.taxCert) || {};
+    const te = sub.taxEnvelope;
+    const taxState = te && te.status === 'completed' ? 'signed' : tc.uploaded === true ? 'uploaded' : tc.signed === false ? 'not signed' : 'not returned';
+    const taxForm = line((te && te.taxForm && te.taxForm.form) || tc.form || taxFormOf(snap.investor), 40);
+    const r = [['Investor', snap.investor.contact], ['Email', snap.investor.email], ['Tax form', taxState === 'not returned' ? 'Not returned' : `Form ${taxForm}, ${taxState}`]];
+    const back = taxState === 'signed' || taxState === 'uploaded';
+    return { rows: r, next: back ? 'Next: the console adds the form to the investor’s record the next time it is open.' : 'Next: ask the investor for their tax form again if you still need it.', identity: '', aml: '', accreditation: '', agreement: '', existing: true, taxRequest: true, taxState, taxForm, requested: false };
+  }
   if (existing && /^(Not started|Not required)$/.test(accreditation)) accreditation = 'On file';
   if (existing) rows.push(['Accredited investor', accreditation], ['Subscription agreement', agreement]);
   else rows.push(['Identity', identity], ['Sanctions screening', aml], ['Accredited investor', accreditation], ['Subscription agreement', agreement]);
+  // Plan 06-27 (D-10): the sponsor included the tax form in this invitation to subscribe: which form came back, and how.
+  if (existing && snap.invitation.includeTax && offering) {
+    const tc = obj(inv.taxCert) || {};
+    const te = sub.taxEnvelope;
+    const taxState = te && te.status === 'completed' ? 'signed' : tc.uploaded === true ? 'uploaded' : tc.signed === false ? 'not signed' : 'not returned';
+    const taxForm = line((te && te.taxForm && te.taxForm.form) || tc.form || taxFormOf(snap.investor), 40);
+    rows.push(['Tax form', taxState === 'not returned' ? 'Not returned' : `Form ${taxForm}, ${taxState}`]);
+  }
   const held = /review|Pending|Potential|Not confirmed|Not started|To be confirmed/.test(existing ? accreditation : `${identity} ${aml} ${accreditation}`);
   const next = waiting
     ? `Next: countersign the subscription agreement in the console.${held ? ' Verification is not complete yet, so the subscription is accepted once it clears.' : ''}`
     : req
       ? `Next: review the subscription in the console.${held ? ' Verification is not complete yet.' : ''}`
       : 'Next: review the investor’s details in the console.';
-  return { rows, next, identity, aml, accreditation, agreement, existing, requested: !!req };
+  return Object.assign({ rows, next, identity, aml, accreditation, agreement, existing, requested: !!req }, existing && snap.invitation.includeTax && offering ? { includeTax: true } : {});
 }
 
 /* ---------- The routes ---------- */
@@ -365,7 +585,8 @@ export function summarize(sub, snap, checks) {
  *   investorPath(method, path)  true for the calls an invitation token may make,
  *   authenticate(req, token)    the invitation record, or throws 401 / 410,
  *   investor(req, res, path, rec)   GET /v1/invite, PUT /v1/invite/progress, POST /v1/invite/complete,
- *   sponsor(req, res, url)      the API_TOKEN routes; false when the path is not one of them,
+ *   sponsor(req, res, url, auth)  the sponsor's routes (API_TOKEN or a sponsor account's token); false when the path is
+ *                               not one of them. With an account (auth.account) every call acts on its workspace only,
  *   purge(nowMs?)               expire, delete old submissions and invitations, trim the outbox,
  *   stop()
  * }
@@ -388,6 +609,170 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     return b ? vault.openBytes(b, key) : null;
   };
   const dropBlobs = (keys) => (keys || []).forEach((k) => store.removeBlob(k));
+
+  /*
+   * The verification package (plan 08-05, D-01): index.mjs hands over the billing module, the provider registry and the
+   * ids of the two package providers. Until then no invitation can carry a package. Plan 08-15 adds its route helpers to
+   * the object usePackages returns.
+   */
+  let packages = null;
+  function usePackages({ billing, providers, identity, accreditation }) {
+    packages = { billing, providers: providers || {}, identity, accreditation };
+    return { packageState, isPackage, gate, settings: packageSettings, start: packageStart, connectors: packageConnectors };
+  }
+  /*
+   * Plan 08-15: who may start a paid check. The package providers are reserved: an investor's token starts one only while
+   * its invitation holds its own paid package (N3, whoever created the invitation); a sponsor account never reaches them
+   * directly (N1); the shared or open token (the operator's own) behaves as before. Recorded trade-off: an operator who
+   * hands the shared token to a sponsor gives that sponsor the providers for free.
+   */
+  const isPackage = (provider) => !!packages && typeof provider === 'string' && (provider === packages.identity || provider === packages.accreditation);
+  const packageCheck = (scope, provider) => !!scope && isPackage(provider);
+  // C-08 (R3): at most three accepted starts of each kind per package (honest retries such as a blurred photo), so one
+  // payment cannot open any number of paid sessions. Starts still waiting on the provider count too.
+  const START_LIMIT = 3;
+  const startKind = (kind) => (kind === 'aml' ? 'screening' : kind === 'accreditation' ? 'accreditation' : 'identity');
+  const starting = new Map();
+  const startKey = (scope, kind) => `${scope.id}:${startKind(kind)}`;
+  const startsOf = (scope, kind) => {
+    const cur = store.get('invitations', scope.id) || scope;
+    return (Number((obj(cur.packageStarts) || {})[startKind(kind)]) || 0) + (starting.get(startKey(scope, kind)) || 0);
+  };
+  function gate(scope, auth, provider, kind) {
+    if (!isPackage(provider)) return;
+    if (scope) {
+      const s = scope.package ? packageState(scope) : null;
+      if (!s || !s.usable) throw fail(403, 'This check is not part of this invitation');
+      if (startsOf(scope, kind) >= START_LIMIT) throw fail(409, 'This check was already started.');
+      return;
+    }
+    if (auth && auth.account) throw fail(403, 'This check runs only from an invitation with the verification package.');
+  }
+  /** A package check runs with the invitation's own firm name as its only setting; any other call keeps what it sent. */
+  const packageSettings = (scope, provider, settings) => (packageCheck(scope, provider) ? { firm: clip(firmName(scope), 120) } : settings);
+  /**
+   * A package check's start: billing holds the package while the provider is called (a cancel meanwhile credits nothing
+   * if the check then runs); the first start accepted marks it started. Any provider failure (a refusal, a 5xx, a
+   * timeout, a network error, a malformed answer) leaves the package valid and unstarted, is put on the invitation's
+   * record and tells the investor one plain sentence, never the provider's status or words. A refusal for the provider's
+   * own billing or key reasons (402, 403) also alerts the operator.
+   */
+  async function packageStart(scope, provider, fn, kind) {
+    if (!packageCheck(scope, provider) || !scope.package) return fn();
+    const key = startKey(scope, kind);
+    starting.set(key, (starting.get(key) || 0) + 1);
+    const finish = packages.billing.hold(scope.package.entitlement);
+    let out;
+    try {
+      out = await fn();
+    } catch (e) {
+      finish(false);
+      const providerStatus = e && Number.isInteger(e.providerStatus) ? e.providerStatus : 0;
+      const cur = store.get('invitations', scope.id);
+      if (cur) addEvent(cur, 'package_check_failed');
+      // The operator's log keeps the provider's status (0: no answer or no usable answer), never its words.
+      store.event({ type: 'package_check_failed', id: scope.id, providerStatus });
+      if (providerStatus === 402 || providerStatus === 403) alertOperator(providerStatus);
+      // A fault in the server's own code (an error with no status) is still printed for the operator, as index.mjs does.
+      if (!(e && e.status) && env.NODE_ENV !== 'test') console.error(e);
+      throw fail(502, 'This check could not start. Please try again later.');
+    } finally {
+      const left = (starting.get(key) || 1) - 1;
+      if (left > 0) starting.set(key, left);
+      else starting.delete(key);
+    }
+    finish(true);
+    const cur = store.get('invitations', scope.id);
+    if (cur) {
+      const starts = Object.assign({}, obj(cur.packageStarts));
+      starts[startKind(kind)] = (Number(starts[startKind(kind)]) || 0) + 1;
+      store.put('invitations', { id: cur.id, packageStarts: starts });
+    }
+    return out;
+  }
+  /**
+   * I3: the operator (OPERATOR_EMAIL) learns at most once a day that the check provider refused a paid start, so its
+   * balance or keys can be fixed. The message names no workspace and no invitation, so no sponsor's outbox lists it.
+   */
+  function alertOperator(status) {
+    const to = env.OPERATOR_EMAIL;
+    if (!validAddress(to)) return;
+    const at = now();
+    const last = store.list('events').filter((x) => x && x.type === 'package_alert').map((x) => Date.parse(x.sentAt)).filter(Number.isFinite).pop();
+    if (last !== undefined && at - last < DAY) return;
+    store.event({ type: 'package_alert', sentAt: iso(at) });
+    const lines = [`A paid verification check was refused by the check provider (status ${Number(status)}).`, 'Check the balance and the keys of the provider account set on the integration server.', 'The investor’s package stays valid; the investor can try again once this is fixed.'];
+    mailer
+      .send({ kind: 'package_alert', fromName: 'Integration server', to, subject: 'A paid check could not start', text: lines.join('\n\n'), html: `<!doctype html><html lang="en"><body>${lines.map((l) => `<p>${l}</p>`).join('')}</body></html>`, headers: { 'Auto-Submitted': 'auto-generated' } })
+      .catch(() => {});
+  }
+  /**
+   * W4 (C-05): an unused package goes back as credit wherever its invitation ends. Billing credits it once and never once
+   * its check started; asked while a start is waiting on the provider, it credits only if that start fails.
+   */
+  function endPackage(rec) {
+    if (packages && rec && obj(rec.package)) packages.billing.release(rec.package.entitlement);
+  }
+  /** The provider list a sponsor account reads: without the package providers. */
+  const packageConnectors = (list) => (Array.isArray(list) ? list.filter((c) => !isPackage(c && c.id)) : list);
+  /** A package refusal with its code and sentence (the generic error handler would drop the code). */
+  const refusePackage = (res, code) => reply(res, PACKAGE_SAYS[code][0], { error: PACKAGE_SAYS[code][1], code });
+  /** A refusal from lib/billing.mjs, sent with its own status, code and sentence; anything else does not claim nothing was charged. */
+  function billingRefusal(res, e) {
+    const status = Number(e && e.status);
+    if (!(status >= 400 && status < 500) || typeof e.message !== 'string') return reply(res, 409, { error: 'The payment could not be confirmed. Try again in a few minutes.', code: 'billing_unavailable' });
+    return reply(res, status, e.code ? { error: e.message, code: e.code } : { error: e.message });
+  }
+  /**
+   * Where an invitation's package stands, from the billing records: null without one; status paid (started once its check
+   * began), credited, or refunded (refunded, disputed and refunding all read refunded); usable when the key's newest
+   * entitlement is this invitation's own, consumed by it (plan 08-15's check gate reads this).
+   */
+  function packageState(rec) {
+    const p = rec && obj(rec.package);
+    if (!p) return null;
+    const e = packages ? packages.billing.find(p.account, p.key) : null;
+    const own = e && e.id === p.entitlement ? e : store.get('entitlements', String(p.entitlement));
+    const s = own ? own.status : '';
+    const status = s === 'paid' || s === 'consumed' ? (own.startedAt ? 'started' : 'paid') : s === 'credited' ? 'credited' : 'refunded';
+    return { tier: p.tier, status, usable: !!(e && e.id === p.entitlement && e.status === 'consumed' && e.invitationId === rec.id) };
+  }
+  const packageRow = (rec) => {
+    const s = packageState(rec);
+    return s ? { tier: s.tier, status: s.status } : null;
+  };
+  /**
+   * N1 (create part): a sponsor account's snapshot may not name a package provider or a package id itself (that would run
+   * the paid checks without paying). Those connections, and every use of their ids, are dropped; the rest stay as sent.
+   */
+  function stripReserved(verification) {
+    const reserved = packages ? [packages.identity, packages.accreditation] : [env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit'];
+    const gone = new Set(PACKAGE_IDS);
+    if (Array.isArray(verification.connections))
+      verification.connections = verification.connections.filter((c) => {
+        const drop = !!obj(c) && (PACKAGE_IDS.includes(c.id) || reserved.includes(c.connector));
+        if (drop) gone.add(c.id);
+        return !drop;
+      });
+    const use = obj(verification.use);
+    if (use) for (const k of Object.keys(use)) if (Array.isArray(use[k])) use[k] = use[k].filter((cid) => !gone.has(cid));
+  }
+  /** The connections a paid snapshot holds, built here from the provider registry (names as the providers give them). */
+  function packageConnections(verification, tier) {
+    const name = (pid) => String((packages.providers[pid] && (packages.providers[pid].name || packages.providers[pid].label)) || pid);
+    const conns = Array.isArray(verification.connections) ? verification.connections : [];
+    const use = (verification.use = obj(verification.use) || {});
+    if (tier !== 'reverify') {
+      conns.push({ id: 'package-id', name: name(packages.identity), type: 'server', connector: packages.identity, checks: ['identity', 'aml'], package: true });
+      use.identity = ['package-id'];
+      use.aml = ['package-id'];
+    }
+    if (tier !== 'identity') {
+      conns.push({ id: 'package-acc', name: name(packages.accreditation), type: 'server', connector: packages.accreditation, checks: ['accreditation'], package: true });
+      use.accreditation = ['package-acc'];
+    }
+    verification.connections = conns;
+  }
 
   const addEvent = (rec, kind, extra) => {
     const events = (rec.events || []).concat(Object.assign({ at: iso(), kind }, extra)).slice(-50);
@@ -428,6 +813,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     for (let rec of store.list('invitations')) {
       if (!ENDED.includes(rec.status) && expired(rec, nowMs)) {
         rec = store.put('invitations', { id: rec.id, status: 'expired' });
+        endPackage(rec);
         rec = addEvent(rec, 'invite_expired');
         out.expired++;
       }
@@ -441,7 +827,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
           out.reminders++;
           const snap = unseal(rec, 'snapshot');
           if (snap && snap.notifyEmail) {
-            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing) });
+            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing), taxRequest: !!(snap.invitation && snap.invitation.taxRequest), coSign: !!(snap.invitation && snap.invitation.coSign) });
             const rid = rec.id;
             if (!(snap.invitation && snap.invitation.access && !snap.offering)) mailer
               .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
@@ -612,6 +998,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       (method === 'PUT' && path === '/v1/invite/progress') ||
       (method === 'POST' && path === '/v1/invite/complete') ||
       (method === 'POST' && (path === '/v1/verifications' || path === '/v1/screenings')) ||
+      (method === 'POST' && path === '/v1/help') ||
       (method === 'GET' && (/^\/v1\/verifications\/ver_[\w-]+$/.test(path) || /^\/v1\/screenings\/scr_[\w-]+$/.test(path)))
     );
   }
@@ -627,7 +1014,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     }
     if (rec.status === 'cancelled') throw fail(410, `This invitation was cancelled. Contact ${firmName(rec)} if you think this is a mistake.`);
     if (expired(rec)) {
-      if (!ENDED.includes(rec.status)) addEvent(store.put('invitations', { id: rec.id, status: 'expired' }), 'invite_expired');
+      if (!ENDED.includes(rec.status)) endPackage(addEvent(store.put('invitations', { id: rec.id, status: 'expired' }), 'invite_expired'));
       throw fail(410, `This link has expired. Ask ${firmName(rec)} to send you a new one.`);
     }
     return store.get('invitations', rec.id);
@@ -668,7 +1055,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       firm: snap.firm,
       investor: snap.investor,
       offering: snap.offering ? Object.assign({}, snap.offering, { documents }) : null,
-      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, { expiresAt: rec.expiresAt }),
+      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, snap.invitation.taxRequest ? { taxRequest: true } : {}, snap.invitation.includeTax ? { includeTax: true } : {}, snap.invitation.coSign ? { coSign: true, envelopeId: snap.invitation.envelopeId } : {}, { expiresAt: rec.expiresAt }),
       verification: snap.verification || {},
       esign
     };
@@ -713,7 +1100,8 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       rec = current(rec);
       if (rec.status === 'completed') return send(res, 200, { ok: true, already: true });
       const sub = cleanSubmission(body, rec, snap);
-      const checks = confirmChecks(sub.investor, rec);
+      // Plan 06-38: a co-investor sign-in runs no verification, and its investor stays reduced to its id.
+      const checks = snap.invitation && snap.invitation.coSign ? null : confirmChecks(sub.investor, rec);
       const blobs = [];
       const files = {};
       const dropped = sub.dropped;
@@ -738,6 +1126,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         submissionBlobs: blobs,
         hasSubmission: true
       });
+      endPackage(rec);
       rec = addEvent(rec, 'onboarding_completed');
       store.event(Object.assign({ type: 'invite_completed', id: rec.id, files: blobs.length }, dropped ? { filesDropped: dropped } : {}));
       // The sponsor's notification: never blocks or fails the investor's submission.
@@ -754,11 +1143,14 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     throw fail(404, 'Not found');
   }
 
-  /* --- Sponsor side (API_TOKEN) --- */
+  /* --- Sponsor side (API_TOKEN, or a sponsor account's own token) --- */
 
-  const requireSponsor = () => {
+  /** The workspace a sponsor account's call is pinned to; null for the shared API_TOKEN (the request then names it). */
+  const pinned = (auth) => (auth && auth.account ? auth.account.workspace : null);
+
+  const requireSponsor = (auth) => {
     requireVault();
-    if (!env.API_TOKEN) throw fail(400, 'Set API_TOKEN on the integration server: invitations carry investors’ personal and bank details');
+    if (pinned(auth) === null && !env.API_TOKEN) throw fail(400, 'Set API_TOKEN on the integration server: invitations carry investors’ personal and bank details');
     maybePurge();
   };
 
@@ -792,6 +1184,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       notifyStatus: rec.notifyStatus || '',
       hasSubmission: !!rec.hasSubmission,
       importedAt: rec.importedAt || '',
+      package: packageRow(rec),
       events: rec.events || []
     };
   }
@@ -805,8 +1198,9 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     return { link: url, emailStatus: r.emailStatus, emailError: r.error || '' };
   }
 
-  async function create(req, res) {
+  async function create(req, res, auth) {
     const body = parseObject(await readRaw(req, INVITE_LIMITS.create));
+    const pin = pinned(auth);
     const portalUrl = returnTo(body.portalUrl);
     if (!portalUrl) throw fail(400, 'portalUrl must be the portal page’s address (http or https, on PORTAL_ORIGIN)');
     if (body.notifyEmail && !validAddress(body.notifyEmail)) throw fail(400, 'notifyEmail is not a valid email address');
@@ -814,14 +1208,80 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const inv = cleanInvestor(body.investor);
     const { offering, files } = cleanOffering(body.offering);
     const invitation = cleanInvitation(body.invitation, now(), INVITE_DAYS);
-    const verification = cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
+    // Plan 06-38: a co-investor sign-in is for an account on file and one agreement already sent (no offering). It carries
+    // the account's name and the co-investor's name and email only: no amount, no status flags or tax details of the account
+    // investor, and none of the other kinds of link (access, tax-form request, included tax form, verification package).
+    if (invitation.coSign) {
+      if (!invitation.existing) throw fail(400, 'A co-investor sign-in is only for an account already on file.');
+      if (offering) throw fail(400, 'A co-investor sign-in has no offering: the co-investor signs the agreement already sent.');
+      delete invitation.access;
+      delete invitation.taxRequest;
+      delete invitation.includeTax;
+      Object.assign(invitation, { cents: 0, cls: '' });
+      delete inv.existing;
+      delete inv.taxType;
+      delete inv.taxPrefill;
+    } else delete invitation.envelopeId;
+    // Plan 06-26: a tax-form request is for an investor already on file and has no offering; only it carries the form's
+    // pre-fill (an invitation to subscribe, or to a new investor, never carries an address).
+    if (!(invitation.existing && invitation.taxRequest && !offering)) delete invitation.taxRequest;
+    // Plan 06-27 (D-10): the sponsor's "Include tax form" counts only on an invitation to subscribe for an investor on file;
+    // it carries the same pre-fill.
+    if (!(invitation.existing && invitation.includeTax && offering && !invitation.taxRequest)) delete invitation.includeTax;
+    if (!invitation.taxRequest && !invitation.includeTax) delete inv.taxPrefill;
+    // Plan 08-05 (D-01): the verification package the sponsor ticked, and the console's own id for this invitation. Never on
+    // a portal link or a tax-form request (W5). Neither value is written into the snapshot's invitation.
+    const asked = obj(body.invitation) || {};
+    const wantsPackage = asked.package === true && asked.access !== true && asked.taxRequest !== true && !invitation.coSign;
+    const clientId = typeof asked.clientId === 'string' ? asked.clientId : '';
+    // Plan 06-38: no verification runs on a co-investor sign-in, so its snapshot holds none.
+    const verification = invitation.coSign ? {} : cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
     const { esign, pdf } = cleanEsign(body.esign);
+    // Plan 06-38: the agreement the co-investor signs is the one the snapshot carries, with its current copy (the work copy
+    // holding the investor's signature).
+    if (invitation.coSign) {
+      if (!/^[\w.-]{1,70}$/.test(invitation.envelopeId) || !esign || String(esign.template.id) !== invitation.envelopeId) throw fail(400, 'invitation.envelopeId must be the id of the agreement sent in esign.template.');
+      if (!pdf) throw fail(400, 'A co-investor sign-in needs the agreement’s current copy as a PDF (esign.pdf).');
+      withholdTins(esign.template);
+    }
     const consoleUrl = returnTo(body.consoleUrl) || `${portalUrl.split('#')[0]}#console-investors`;
+    // With the shared or open token (the operator's own) nothing is dropped.
+    if (auth && auth.account) stripReserved(verification);
+
+    // The package is paid before anything is stored: by a sponsor account only, at the tier this server works out and the
+    // price billing holds for it (credit first, then the card). A refusal leaves nothing behind.
+    let paid = null;
+    if (wantsPackage) {
+      const account = auth && auth.account;
+      if (!account) return refusePackage(res, 'account_required');
+      if (!PACKAGE_KEY.test(clientId)) throw fail(400, 'invitation.clientId is required with the package (1 to 80 letters, digits, underscores or hyphens)');
+      if (!packages) return refusePackage(res, 'package_unavailable');
+      const tier = invitation.existing && invitation.reverify === true ? 'reverify' : verification.accreditationRequired === true ? 'full' : 'identity';
+      if (!packages.billing.available()[tier]) return refusePackage(res, 'package_unavailable');
+      // One client id is one package: while its invitation is open a second post is refused before any payment. A package
+      // whose invitation has ended or no longer exists goes back to credit (unless its check started), which pays this one.
+      const prev = packages.billing.find(account, clientId);
+      if (prev && prev.status === 'consumed') {
+        const owner = prev.invitationId ? store.get('invitations', prev.invitationId) : null;
+        if (owner && !ENDED.includes(owner.status) && !expired(owner)) return refusePackage(res, 'already_sent');
+        packages.billing.release(prev.id);
+      }
+      try {
+        await packages.billing.entitle(account, [{ key: clientId, tier }]);
+      } catch (e) {
+        return billingRefusal(res, e);
+      }
+      // From here to consume below nothing awaits, so of two requests for one client id only one can tie the package (N2).
+      const e = packages.billing.find(account, clientId);
+      if (!e || e.tier !== tier || !['paid', 'consumed'].includes(e.status)) return refusePackage(res, 'tier_mismatch');
+      paid = { entitlement: e.id, tier: e.tier, account: account.id, key: clientId };
+      packageConnections(verification, tier);
+    }
 
     // The link is built before anything is stored, so one that cannot be built leaves nothing behind.
     const token = newToken();
     const firstLink = link(portalUrl, token);
-    const rec = { id: id('ivt'), workspace: clip(body.workspace, 120), investorId: inv.id, offeringId: offering ? offering.id : '', status: 'sent', sentAt: iso(), createdAt: iso(), expiresAt: invitation.expiresAt, stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, events: [], hasSubmission: false, submission: null };
+    const rec = { id: id('ivt'), workspace: pin !== null ? pin : clip(body.workspace, 120), investorId: inv.id, offeringId: offering ? offering.id : '', status: 'sent', sentAt: iso(), createdAt: iso(), expiresAt: invitation.expiresAt, stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, events: [], hasSubmission: false, submission: null };
     const blobs = [];
     files.forEach((buf, i) => {
       const key = `${rec.id}-doc-${i}`;
@@ -839,7 +1299,18 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     rec.tokenHash = hashToken(token).toString('hex');
     rec.blobs = blobs;
     rec.snapshot = seal(rec, 'snapshot', snap);
+    if (paid) rec.package = paid;
     store.put('invitations', rec);
+    // N2: the package is tied to the stored invitation before its email; when it cannot be, the invitation and its files go.
+    if (paid) {
+      try {
+        packages.billing.consume(paid.entitlement, rec.id);
+      } catch (e) {
+        store.remove('invitations', rec.id);
+        dropBlobs(blobs);
+        return billingRefusal(res, e);
+      }
+    }
     store.event({ type: 'invitation_created', id: rec.id, workspace: rec.workspace });
     let out = { link: firstLink, emailStatus: 'not_sent', emailError: '' };
     if (body.sendEmail !== false) out = await sendInvite(rec, snap, token, 'invitation');
@@ -847,21 +1318,22 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     return send(res, 200, Object.assign({ id: rec.id, token, link: out.link, emailStatus: out.emailStatus, expiresAt: rec.expiresAt }, out.emailError ? { emailError: out.emailError } : {}));
   }
 
-  async function sponsor(req, res, url) {
+  async function sponsor(req, res, url, auth) {
     const path = url.pathname;
+    const pin = pinned(auth);
     if (path === '/v1/outbox') {
-      requireSponsor();
+      requireSponsor(auth);
       if (req.method !== 'GET') throw fail(405, 'Use GET');
-      return reply(res, 200, { messages: mailer.outbox({ workspace: url.searchParams.get('workspace') || '', invitationId: url.searchParams.get('invitation') || '' }) });
+      return reply(res, 200, { messages: mailer.outbox({ workspace: pin !== null ? pin : url.searchParams.get('workspace') || '', invitationId: url.searchParams.get('invitation') || '' }) });
     }
     if (path === '/v1/invitations') {
-      requireSponsor();
+      requireSponsor(auth);
       if (req.method === 'POST') {
-        await create(req, res);
+        await create(req, res, auth);
         return true;
       }
       if (req.method !== 'GET') throw fail(405, 'Use GET or POST');
-      const ws = url.searchParams.get('workspace');
+      const ws = pin !== null ? pin : url.searchParams.get('workspace');
       const list = store
         .list('invitations')
         .filter((r) => ws === null || r.workspace === ws)
@@ -871,9 +1343,10 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     }
     const m = path.match(/^\/v1\/invitations\/([^/]+)(?:\/(submission|resend|cancel))?$/);
     if (!m) return false;
-    requireSponsor();
+    requireSponsor(auth);
     let rec = INVITATION_ID.test(m[1]) ? store.get('invitations', m[1]) : null;
-    if (!rec) throw fail(404, 'No invitation with that id');
+    // Another sponsor's invitation answers as one that does not exist (never 403, which would confirm it does).
+    if (!rec || (pin !== null && rec.workspace !== pin)) throw fail(404, 'No invitation with that id');
     const action = m[2] || '';
 
     if (!action && req.method === 'GET') return reply(res, 200, listView(rec));
@@ -886,7 +1359,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         const buf = getBlob(f.blob);
         if (buf) files[docId] = buf.toString('base64');
       }
-      return reply(res, 200, { invitationId: rec.id, investorId: rec.investorId, completedAt: rec.completedAt, investor: sub.investor, request: sub.request, envelope: sub.envelope, files, docs: sub.docs, audit: sub.audit, notifications: sub.notifications, checks: sub.checks || null });
+      return reply(res, 200, { invitationId: rec.id, investorId: rec.investorId, completedAt: rec.completedAt, investor: sub.investor, request: sub.request, envelope: sub.envelope, taxEnvelope: sub.taxEnvelope || null, files, docs: sub.docs, audit: sub.audit, notifications: sub.notifications, checks: sub.checks || null });
     }
     if (action === 'submission' && req.method === 'DELETE') {
       const had = !!rec.submission;
@@ -901,6 +1374,9 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       if (!rec) throw fail(404, 'No invitation with that id');
       if (rec.status === 'completed') throw fail(409, 'This onboarding is already complete');
       if (rec.status === 'cancelled') throw fail(409, 'This invitation was cancelled; send a new one instead');
+      // N3 (08-15): a package returned as credit, refunded or disputed cannot be used again, so its invitation is not resent.
+      const held = packageState(rec);
+      if (held && (held.status === 'credited' || held.status === 'refunded')) throw fail(409, "This invitation's package was returned. Send a new invitation.");
       const snap = unseal(rec, 'snapshot');
       if (!snap) throw fail(410, 'This invitation is no longer available; send a new one');
       if (body.portalUrl !== undefined) {
@@ -922,6 +1398,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     if (action === 'cancel' && req.method === 'POST') {
       if (rec.status === 'completed') throw fail(409, 'This onboarding is already complete');
       const cur = store.put('invitations', { id: rec.id, status: 'cancelled', cancelledAt: rec.cancelledAt || iso() });
+      endPackage(cur);
       addEvent(cur, 'invite_cancelled');
       store.event({ type: 'invitation_cancelled', id: rec.id });
       return reply(res, 200, { ok: true, status: 'cancelled' });
@@ -938,6 +1415,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     purge,
     mailer,
     vault,
+    usePackages,
     stop: () => clearInterval(timer)
   };
 }
