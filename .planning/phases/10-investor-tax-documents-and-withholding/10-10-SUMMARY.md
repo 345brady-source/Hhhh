@@ -13,3 +13,13 @@ FAIL review-phone A-1003 is left out with its reason (Form 1042-S from your CPA)
 FAIL review-phone ran to the end :: locator.scrollIntoViewIfNeeded: Timeout 30000ms exceeded.
 TAX1099 FLOW: FAIL (parts run: 1) - review-phone
 ```
+
+### Task 1 verify (SCRATCH/exec-10-10/tracer.txt, code 730e63d)
+```
+PASS review-phone no script error in the browser
+PASS review-phone no request outside the page's origin
+TAX1099 FLOW: PASS (parts run: 1)
+```
+24 PASS, 0 FAIL; no full-number shape in the output. First GREEN run failed 4 checks: one was a bug in the check's seat
+(the backup lines were never handed to recordRun, so box 4 read empty), one asked for the sample's admin name instead of
+"who", two were missing data-panel markers in the page.
