@@ -86,7 +86,8 @@ started: same on 50d2d63 and on eb0d1f1 (after 06-36) — predates today's work
 
 ## Resolution
 
-root_cause:
-fix:
-verification:
-files_changed: []
+root_cause: "No product fault; three stale expectations in editor.js. (1)+(2) esign.js:2249-2253 (5f8db30, plan 01.4-69, 01.4-69-SUMMARY deviation 2) makes an investor's signature given to the firm required, on top of D-30 (46b1b66, plan 01.4-63) which had left it required:false; the check's text->signature->firm sequence therefore reaches the Required box already ticked, and its click unticks it (editor.js:414 wanted !wasReq && required true; editor.js:425 wanted required true after the label undo). (3) esign.js:174 isReq (46b1b66, D-30) makes no investor field required, so signflow.js:58 countHTML shows 'Ready to finish', never 'N of M left' (editor.js:616 / left$/). Every field reaches the investor exactly where the editor left it (DBG3)."
+fix: "editor.js only: item 1 asserts box ticked + is-req before the click, then required false, box unticked, is-opt after; item 2 asserts label 'Title', required false and the firm as signer after one undo (exactly one step back); item 3 replaces / left$/ with count 'Ready to finish' and hint /^Nothing is required\\./ (as signing-step.js was changed in 01.4-63), and adds boxes and the list of lost field keys to the printed detail. Each change carries a comment citing the commit and plan."
+oracle_type: specified (D-30 / 01.4-69 decisions and the matching signing-step.js expectations)
+verification: "(pending) full editor.js run on the worktree; mutation run (M1 Required box ignored in fieldeditor.js setProp, M2 investor fields required again in esign.js isReq) on a scratch copy must turn the three updated checks FAIL"
+files_changed: [.planning/phases/02-field-editor/checks/editor.js]
