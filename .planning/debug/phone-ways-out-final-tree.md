@@ -77,3 +77,10 @@ verification:
   revert_and_reconfirm: { result: pass, note: "RED on a178206 (no fix): record-phone/published/managed FAIL; with the fix: PASS" }
   guardrail_verdict: accepted
 files_changed: [assets/css/console.css, assets/js/console.js, .planning/phases/09-filings-tab-form-d-and-blue-sky/checks/filings-flow.js, .planning/phases/10-investor-tax-documents-and-withholding/checks/withholding-flow.js]
+
+## Commits (wip/debug-phone)
+
+- 7f13934 wip(debug-phone): save -- assets/css/console.css, assets/js/console.js (fix A)
+- 7b129f9 wip(debug-phone): save -- filings-flow.js (B), withholding-flow.js (C)
+- 1a67dce wip(debug-phone): save -- withholding-flow.js: `ours` (the first C edit reused the name `mine`, a syntax error caught by the first verify run)
+- b2b97c1 fix(debug-phone): the record; its message names 7b129f9 and 1a67dce as holding the code, and leaves out 7f13934, which holds fix A
