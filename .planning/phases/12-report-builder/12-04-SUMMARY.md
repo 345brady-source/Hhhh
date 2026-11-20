@@ -22,3 +22,18 @@ PASS deliver no vendor name and never the forbidden word in the log
 REPORTS RECORD: PASS (cases run: 1)
 ```
 (20 PASS lines, 0 FAIL; SCRATCH/exec-12-04/deliver.txt)
+
+## RED 2 (Task 2, the nine further cases written before the code; SCRATCH/exec-12-04/red-2.txt)
+
+```
+FAIL paper ran to the end :: TypeError: R.paperList is not a function
+FAIL opens ran to the end :: TypeError: R.opened is not a function
+FAIL withdraw ran to the end :: TypeError: R.opened is not a function
+FAIL letter ran to the end :: TypeError: R.opened is not a function
+FAIL notice a run not delivered is refused :: R.noticeDraft is not a function
+FAIL notice ran to the end :: TypeError: R.noticeDraft is not a function
+FAIL archive ran to the end :: TypeError: R.verifyFile is not a function
+REPORTS RECORD: FAIL (cases run: 10) - paper, opens, withdraw, letter, notice, archive
+```
+Plainly: cases refuse, replace and selfcheck already passed at this RED. Task 1's deliver was written to the full
+interfaces block (its refusals and `replaces`), so those cases exercise code that existed; selfcheck tests the runner.
