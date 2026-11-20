@@ -17,6 +17,9 @@
  *   fee:<offeringId>:<YYYY-MM>   the month's management fee, at the month-end      [5000 +][2100 -]
  *   gp:<offeringId>:<YYYY-MM>    the general partner's share crystallized that month, less what was paid with a
  *                                distribution that month (already in its run: entry), owed until paid [3300 +][2600 -]
+ *   sim:<offeringId>:<YYYY-MM>   sample funds only (NS.audit.generated): the generator's income [4090 -] and gain
+ *                                [6100 -], and the balance sheet moved to the one the Audit page shows at the month-end;
+ *                                left out and listed ({ src, kind: 'unbalanced', cents }) when it does not balance (sample())
  * Entries dated before the fund's books start (fund.start) are left out.
  *
  * sync posts what is missing; reverses (dated its own date) and posts again an entry whose record changed inside an

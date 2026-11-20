@@ -196,6 +196,10 @@ const cases = {
     show(check, 'kb-fund-ii ties at every month-end after the entry made by hand (T3, 1000, 1100 + 1150, 2100, the trial balance)', tie(NS, ws, o));
     const again = sync(NS, ws);
     check('kb-fund-ii: a further sync changes nothing', again.posted === 0 && again.reversed === 0, again);
+    NS.books.close(ws, o.id, '2026-06-30', { by: 'Check Runner', at: AT });
+    NS.books.post(ws, o.id, { src: 'man:check-3', date: '2026-08-14', memo: 'Investment sold', lines: [['1000', 400000], ['1100', -400000]] }, { by: 'Check Runner', at: AT });
+    const r3 = sync(NS, ws);
+    show(check, `kb-fund-ii closed through 2026-06-30, then an entry made by hand in August: sync changed August only (${J(r3)}) and the fund ties at every month-end`, r3.posted === 1 && r3.reversed === 1 && r3.exceptions === 0 ? tie(NS, ws, o) : { bad: [J(r3)] });
 
     // The capital call in Pellbrook's pb-ventures-i.
     const DAY2 = '2026-12-05';
