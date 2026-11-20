@@ -113,3 +113,7 @@
 - Known limit: an expense or income entered by hand in a sample fund leaves that month and every later month out of the sample entries (listed in desired().unbalanced and fund.exceptions as kind 'unbalanced'). No balancing line is ever forced. Entries that only move the balance sheet tie fully. Sample funds are demonstration data, so this stays listed, not fixed.
 - Sizes: the four sample workspaces measure 758,989 bytes together (books 104-179 KB per firm). Sync on the largest takes 119-205 ms the first time and 64-94 ms after (Node).
 - Browser storage in the iPhone preview is not measured (assumed about 5 MB).
+
+## After 11-10 (merged 2026-11-20)
+- The gate stopped at the 2-hour background limit under queue congestion; resumed into the same folder (exec-11-10), every step passed: 41 GATE ok lines, GATE_EXIT=0 (server tests 368 at its base; 403 on the merged tree, all pass).
+- Next: plan checks for 11-12..11-16 and the businessDays fix plan.
