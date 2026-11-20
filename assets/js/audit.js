@@ -1576,6 +1576,8 @@
     events,
     ledger,
     period,
+    closedPerformance,
+    openPerformance,
     presets,
     snap,
     checks,
