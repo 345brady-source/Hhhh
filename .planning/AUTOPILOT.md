@@ -43,6 +43,10 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 - Orchestrator: merges and pushes as soon as a plan reports; records every decision and open item in CONTEXT files and pushes them at once; keeps "State now" below current after each merge round.
 - A stopped agent is continued from its pushed branch plus any files in its worktree (SCRATCH/continue-brief.md).
 
+## Usage window (owner, 2026-11-20: "You will likely run out of usage in 24 hrs")
+- Priority while usage lasts (default chosen at 15 min if the owner does not answer): the preview first. Finish the 06-34..06-39 fixes, add the gate lines, run the full gate on the merged tree, rebuild, walk Filings, AML program and Tax documents, then publish, so the owner can check. Builds already running are merged as they report. New waves start only with spare capacity. Steps 7-16 are not planned before the cutoff.
+- "State now" is kept current after every merge round, so the next session resumes without redoing work.
+
 ## State now (updated 2026-11-20)
 - Merged today: 09-04, 09-06, 09-07, Filings guide entries; 10-04; 11-05, 11-06, 11-08. Server tests 358.
 - Building: 11-07 (wip/11-07), 09-09 (wip/09-09), 10-06, 10-07, 10-08, 10-09 (wip/10-0x).
