@@ -12,3 +12,4 @@ server/data/
 
 # Integration server dependencies (installed from server/package-lock.json with npm ci)
 server/node_modules
+.planning/tools/locks/
