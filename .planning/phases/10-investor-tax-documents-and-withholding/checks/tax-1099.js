@@ -191,6 +191,35 @@ function numberHits(text, numbers) {
   if (/(?<![0-9a-f])[0-9]{9,}(?![0-9a-f])/.test(t)) hits.push('a run of nine or more digits');
   return hits;
 }
+/** A backup withholding entry of `cents` worked on `basis` (24%). */
+const bk = (cents, basis) => ({ kind: 'backup', cents, basisCents: basis, ratePct: 24, source: 'rule', why: 'No signed W-9 is on file.', confirmedBy: BY, confirmedAt: AT });
+/** An entered entry of another kind (foreign or state). */
+const other = (kind, cents, basis) => ({ kind, cents, basisCents: basis, ratePct: kind === 'foreign' ? 30 : null, source: kind === 'foreign' ? 'rule' : 'entered', why: 'Entered by the sponsor.', confirmedBy: BY, confirmedAt: AT });
+/**
+ * A workspace whose fund (set to notes, the payer's confirmations given) has one paid Interest payment on 2026-09-15
+ * with the lines given as stored ([ { investorId, grossCents, withheld } ]); the investors are seated here.
+ */
+function wsLines(NS, investors, lines) {
+  const ws = {
+    v: 2,
+    tenant: { id: 'example', shortName: 'Example' },
+    offerings: [{ id: 'f1', name: 'Fund One Notes', shortName: 'Fund One', type: 'Private credit', status: 'Active', closeDate: '2025-01-02', distribution: { frequency: 'Quarterly', type: 'Interest' } }],
+    investors,
+    runs: [],
+    requests: [],
+    audit: []
+  };
+  NS.withholding.setReporting(ws, 'f1', 'notes', { by: BY, at: AT });
+  NS.tax1099.setPayer(ws, 'f1', PAYER_STORED, { by: BY, at: AT });
+  const stored = lines.map((l) => ({ investorId: l.investorId, grossCents: l.grossCents, withheld: l.withheld || [], netCents: l.grossCents - (l.withheld || []).reduce((a, w) => a + w.cents, 0) }));
+  ws.runs.push({ id: 'r-sep', offeringId: 'f1', date: '2026-09-15', type: 'Interest', total: stored.reduce((a, l) => a + l.grossCents, 0), status: 'paid', source: 'console', file: '', lines: stored, linesBasis: 'recorded', linesAt: AT, linesBy: BY });
+  return ws;
+}
+const brief = (F) => (F.forms || []).map((f) => `${f.investorId}=${f.box1Cents}/${f.box4Cents}`).join(' ');
+const codes = (F) => (F.stops || []).map((s) => s.code).sort().join(' ');
+// Invented numbers for the W-9 reading (never-issued ranges).
+const W9_SSN = '000' + '12' + '7730';
+const W9_EIN = '00' + '1234567';
 
 const cases = {
   async figures({ check: raw }) {
@@ -250,6 +279,290 @@ const cases = {
       check("the recipient's nine digits appear nowhere on the copy, with or without dashes", squeezed.indexOf(TIN['A-1002']) < 0 && squeezed.indexOf(dashedSsn(TIN['A-1002'])) < 0 && all.replace(/\D/g, '').indexOf(TIN['A-1002']) < 0);
     });
     check('the workspace and its change log hold no taxpayer number', numberHits(J(ws), [PAYER_TIN, TIN['A-1001'], TIN['A-1002']]).length === 0, numberHits(J(ws), [PAYER_TIN, TIN['A-1001'], TIN['A-1002']]));
+  },
+
+  // Who is left out, each with its own reason and cents (TAX-10); investors seated here (D12).
+  async leftout({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const seat = [
+      inv('B-IRA', 1000, Object.assign(w9('1111'), { type: 'ira' })),
+      inv('B-FOR', 1000, w8ben()),
+      inv('B-EXM', 1000, w9('2222')),
+      inv('B-SMALL', 1000, w9('3333')),
+      inv('B-NOW9', 1000, { taxType: 'us-individual', taxForm: '', tinLast4: '' }),
+      inv('B-TEN', 1000, w9('4444')),
+      inv('B-SMALLBK', 1000, w9('5555', true)),
+      inv('B-EXP', 1000, w8ben({ validUntil: '2025-12-31' }))
+    ];
+    const lines = [
+      { investorId: 'B-IRA', grossCents: 50000 },
+      { investorId: 'B-FOR', grossCents: 50000 },
+      { investorId: 'B-EXM', grossCents: 50000 },
+      { investorId: 'B-SMALL', grossCents: 999 },
+      { investorId: 'B-NOW9', grossCents: 50000 },
+      { investorId: 'B-TEN', grossCents: 1000 },
+      { investorId: 'B-SMALLBK', grossCents: 999, withheld: [bk(240, 999)] },
+      { investorId: 'B-EXP', grossCents: 50000 }
+    ];
+    const ws = wsLines(NS, seat, lines);
+    await block(check, 'leftout', () => {
+      NS.withholding.markExempt(ws, 'B-EXM', { by: BY, at: AT });
+      const F = T.figuresInt(ws, ws.offerings[0], '2026', { today: TODAY });
+      check('24% of 999 cents is 240 (239.76 rounded), the amount stored', NS.withholding.amount(999, 24) === 240);
+      check('forms: B-SMALLBK $9.99 with $2.40 withheld, and B-TEN $10.00; nobody else', brief(F) === 'B-SMALLBK=999/240 B-TEN=1000/0', brief(F));
+      const lo = {};
+      (F.leftOut || []).forEach((x) => (lo[x.investorId] = x));
+      const want = { 'B-IRA': ['ira', /IRA/, 50000], 'B-FOR': ['foreign', /1042-S/, 50000], 'B-EXM': ['exempt', /exempt/i, 50000], 'B-SMALL': ['under-10', /\$10/, 999], 'B-NOW9': ['no-w9', /signed W-9/, 50000], 'B-EXP': ['no-form', /expired/, 50000] };
+      Object.keys(want).forEach((id) => {
+        const [code, re, cents] = want[id];
+        const x = lo[id] || {};
+        check(`${id} is left out (${code}) with its own reason and its ${cents} cents`, x.code === code && re.test(x.reason || '') && x.cents === cents, x);
+      });
+      check('exactly six are left out', (F.leftOut || []).length === 6, (F.leftOut || []).map((x) => x.investorId));
+      check('the expired W-8 is not left out as foreign: it is listed as having no valid form on file', lo['B-EXP'] && lo['B-EXP'].code !== 'foreign' && /no valid/i.test(lo['B-EXP'].reason));
+      check('every reason is one sentence', (F.leftOut || []).every((x) => /^[^.]+(\.[^.]+)*\.$/.test(x.reason) && x.reason.length < 220), (F.leftOut || []).map((x) => x.reason));
+      check('the sum of forms and left out is the whole interest paid', F.totalCents === 253998 && (F.forms || []).reduce((a, f) => a + f.box1Cents, 0) + (F.leftOut || []).reduce((a, x) => a + x.cents, 0) === 253998, F.totalCents);
+      // Copy B for $9.99 and $2.40
+      const a = T.copyBAnswers(F.forms.find((f) => f.investorId === 'B-SMALLBK'), payerObj(), Object.assign({ tin: '000' + '66' + '5555' }, RECIPIENT['A-1002']), '2026');
+      check("B-SMALLBK's Copy B answers show box 1 9.99 and box 4 2.40", a.box1 === '9.99' && a.box4 === '2.40', [a.box1, a.box4]);
+    });
+  },
+
+  // Every stop: one sentence naming the CPA, no form for the fund; with the stop cleared the forms return.
+  async stops({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const run = (ws) => T.figuresInt(ws, ws.offerings[0], '2026', { today: TODAY });
+    const sentence = (s) => !!s && /CPA/.test(s.text) && /^[^\n]+\.$/.test(s.text) && s.text.length < 300;
+    await block(check, 'reporting', () => {
+      const ws = wsD(NS, { reporting: 'partnership' });
+      let F = run(ws);
+      check('a fund set to partnership: the stop reporting and no form', codes(F) === 'reporting' && F.forms.length === 0 && sentence(F.stops[0]), F.stops);
+      F = run(wsD(NS, { reporting: '' }));
+      check('a fund with no reporting type: the stop reporting and no form', codes(F) === 'reporting' && F.forms.length === 0);
+      NS.withholding.setReporting(ws, 'f1', 'notes', { by: BY, at: AT });
+      F = run(ws);
+      check('set to notes, the forms return', !F.stops.length && brief(F) === 'A-1001=2000000/0 A-1002=1333332/160000', brief(F));
+    });
+    await block(check, 'registered', () => {
+      const ws = wsD(NS, { payerPatch: { registeredForm: false } });
+      let F = run(ws);
+      check('registered form not confirmed: the stop registered and no form', codes(F) === 'registered' && F.forms.length === 0 && sentence(F.stops[0]), F.stops);
+      T.setPayer(ws, 'f1', { registeredForm: true }, { by: BY, at: AT });
+      F = run(ws);
+      check('confirmed, the forms return', !F.stops.length && F.forms.length === 2);
+    });
+    await block(check, 'in-money', () => {
+      const ws = wsD(NS, { payerPatch: { paidInMoney: false } });
+      let F = run(ws);
+      check('paid in money not confirmed: the stop in-money, naming Form 1099-OID, and no form', codes(F) === 'in-money' && F.forms.length === 0 && sentence(F.stops[0]) && /1099-OID/.test(F.stops[0].text), F.stops);
+      T.setPayer(ws, 'f1', { paidInMoney: true }, { by: BY, at: AT });
+      check('confirmed, the forms return', run(ws).forms.length === 2);
+      const none = wsD(NS, { payer: false });
+      check('no payer record at all: both confirmation stops', codes(run(none)) === 'in-money registered', codes(run(none)));
+    });
+    await block(check, 'other-withholding', () => {
+      for (const kind of ['state', 'foreign']) {
+        const ws = wsD(NS);
+        rec(NS, ws, 'x-nov', '2026-11-16', 'Interest', 1000000, { 'A-1001': [other(kind, 5000, 500000)] });
+        let F = run(ws);
+        const s = (F.stops || [])[0];
+        check(`a line of A-1001 (on a form) carrying ${kind} withholding: the stop other-withholding naming that payment, no form`, codes(F) === 'other-withholding' && s.runId === 'x-nov' && sentence(s) && F.forms.length === 0, F.stops);
+        NS.data.cancelRun(ws, 'x-nov', { by: BY, at: AT, why: 'Recorded by mistake.' });
+        F = run(ws);
+        check(`with that payment cancelled (${kind}), the forms return as in example D`, !F.stops.length && brief(F) === 'A-1001=2000000/0 A-1002=1333332/160000', brief(F));
+      }
+      const ws = wsD(NS);
+      rec(NS, ws, 'x-nov', '2026-11-16', 'Interest', 1000000, { 'A-1003': [other('foreign', 50000, 166667)] });
+      check('foreign withholding on A-1003, who is left out (Form 1042-S), stops nothing', !run(ws).stops.length, run(ws).stops);
+    });
+    await block(check, 'backup-not-interest', () => {
+      const ws = wsD(NS);
+      rec(NS, ws, 'p-nov', '2026-11-16', 'Principal', 6000000, { 'A-1002': [bk(480000, 2000000)] });
+      let F = run(ws);
+      const s = (F.stops || [])[0];
+      check('backup withholding stored on a Principal payment: the stop backup-not-interest naming it, no form', codes(F) === 'backup-not-interest' && s.runId === 'p-nov' && sentence(s) && F.forms.length === 0, F.stops);
+      NS.data.cancelRun(ws, 'p-nov', { by: BY, at: AT, why: 'Recorded by mistake.' });
+      F = run(ws);
+      check('with it cancelled, box 4 is again 160,000 for A-1002', !F.stops.length && brief(F) === 'A-1001=2000000/0 A-1002=1333332/160000', brief(F));
+    });
+  },
+
+  // Which payments count as interest; a person's answer; cancelled, later and unpaid payments.
+  async kinds({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const run = (ws, today) => T.figuresInt(ws, ws.offerings[0], '2026', { today: today || TODAY });
+    const counts = (ws, today) => T.interestRuns(ws, ws.offerings[0], '2026', today || TODAY).map((r) => `${r.run.id}:${r.counts}`).join(' ');
+    await block(check, 'types', () => {
+      const ws = wsD(NS);
+      rec(NS, ws, 'roc', '2026-10-01', 'Return of capital', 600000);
+      check('Return of capital does not count and is listed as not interest', / roc:not-interest/.test(' ' + counts(ws)) && !run(ws).stops.length, counts(ws));
+      for (const type of ['Income', 'Distribution']) {
+        const w2 = wsD(NS);
+        rec(NS, w2, 'q', '2026-10-15', type, 600000);
+        let F = run(w2);
+        check(`a payment of type ${type} is ask and stops the fund's forms naming it`, / q:ask/.test(' ' + counts(w2)) && codes(F) === 'kind' && F.stops[0].runId === 'q' && /CPA/.test(F.stops[0].text) && F.forms.length === 0, F.stops);
+        check('setInterest needs a named person', refuses(w2, () => T.setInterest(w2, 'q', true, { at: AT })).threw);
+        T.setInterest(w2, 'q', true, { by: BY, at: AT });
+        F = run(w2);
+        check(`said to be interest (${type}): it counts (A-1001 2,000,000 + 300,000; A-1002 1,333,332 + 200,000)`, brief(F) === 'A-1001=2300000/0 A-1002=1533332/160000' && w2.runs.find((r) => r.id === 'q').tax.by === BY, brief(F));
+        T.setInterest(w2, 'q', false, { by: BY, at: AT });
+        F = run(w2);
+        check(`said not to be interest (${type}): it counts for nothing`, brief(F) === 'A-1001=2000000/0 A-1002=1333332/160000' && / q:not-interest/.test(' ' + counts(w2)), brief(F));
+      }
+      check('a payment whose type settles it cannot be answered (Principal)', refuses(ws, () => T.setInterest(ws, 'p-dec', true, { by: BY, at: AT })).threw);
+    });
+    await block(check, 'not paid', () => {
+      const ws = wsD(NS);
+      rec(NS, ws, 'c-nov', '2026-11-16', 'Interest', 1000000);
+      NS.data.cancelRun(ws, 'c-nov', { by: BY, at: AT, why: 'Recorded by mistake.' });
+      rec(NS, ws, 'next-jan', '2027-01-15', 'Interest', 1000000);
+      check('a cancelled payment and one dated in 2027 count for nothing in 2026', brief(run(ws)) === 'A-1001=2000000/0 A-1002=1333332/160000' && !/c-nov|next-jan/.test(counts(ws)), counts(ws));
+      // looked at on 2026-12-01: the December payments are not yet paid
+      check('looked at on 2026-12-01, the December payments are not yet paid and count for nothing', brief(run(ws, '2026-12-01')) === 'A-1001=1500000/0 A-1002=999999/80000', brief(run(ws, '2026-12-01')));
+    });
+  },
+
+  // A payment saved before the record existed; confirming the totals.
+  async legacy({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const ws = wsD(NS);
+    const o = ws.offerings[0];
+    const run = () => T.figuresInt(ws, o, '2026', { today: TODAY });
+    await block(check, 'legacy', () => {
+      ws.runs.push({ id: 'old-oct', offeringId: 'f1', date: '2026-10-15', type: 'Interest', total: 1000000, status: 'paid', source: 'console', file: '' });
+      let F = run();
+      check('an interest payment without stored lines: the stop stored naming it, no form', codes(F) === 'stored' && F.stops[0].runId === 'old-oct' && /CPA/.test(F.stops[0].text) && F.forms.length === 0, F.stops);
+      NS.data.confirmLines(ws, 'old-oct', { by: BY, at: AT });
+      F = run();
+      check('after confirmLines it counts with the confirmed amounts (A-1001 2,500,000; A-1002 1,666,665)', !F.stops.length && brief(F) === 'A-1001=2500000/0 A-1002=1666665/160000', brief(F));
+    });
+    await block(check, 'confirm', () => {
+      let F = run();
+      const form = () => F.forms.find((f) => f.investorId === 'A-1002');
+      check('not confirmed before confirmTotals', T.confirmed(ws, o, '2026', form()) === false);
+      check('confirmTotals needs a named person', refuses(ws, () => T.confirmTotals(ws, 'f1', '2026', 'A-1002', { at: AT, today: TODAY })).threw);
+      check('confirmTotals refuses an investor with no form (A-1003)', refuses(ws, () => T.confirmTotals(ws, 'f1', '2026', 'A-1003', { by: BY, at: AT, today: TODAY })).threw);
+      T.confirmTotals(ws, 'f1', '2026', 'A-1002', { by: BY, at: AT, today: TODAY });
+      const c = ((((o.tax || {}).years || {})['2026'] || {}).confirmed || {})['A-1002'] || {};
+      check('confirmTotals stores the two box amounts with who and when', c.box1Cents === 1666665 && c.box4Cents === 160000 && c.by === BY && c.at === AT, c);
+      check('confirmed answers true', T.confirmed(ws, o, '2026', form()) === true);
+      rec(NS, ws, 'late-dec', '2026-12-20', 'Interest', 1000000);
+      F = run();
+      check('after a later payment changes the figures, confirmed answers false again', T.confirmed(ws, o, '2026', form()) === false, form());
+      rec(NS, ws, 'bad-q', '2026-12-21', 'Income', 1000000);
+      check('confirmTotals refuses while a stop stands', refuses(ws, () => T.confirmTotals(ws, 'f1', '2026', 'A-1001', { by: BY, at: AT, today: TODAY })).threw);
+    });
+  },
+
+  // The number read from a signed, flattened W-9 (C-05).
+  async w9read({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const map = NS.taxmaps['W-9 2024-03'];
+    const blank = fs.readFileSync(path.join(ROOT, map.file));
+    const opts = fillOpts();
+    let rects = null;
+    await block(check, 'rects', async () => {
+      rects = await T.w9Rects(W(), blank, map, { sha256: opts.sha256 });
+      check('w9Rects gives the name, business, address and city lines, three SSN cells and two EIN cells', !!rects && ['name', 'business', 'address', 'cityStateZip'].every((k) => rects[k] && rects[k].w > 0) && rects.ssn.length === 3 && rects.ein.length === 2, rects && Object.keys(rects));
+      const bad = Buffer.from(blank);
+      bad[bad.length >> 1] ^= 0xff;
+      let got = 'untouched';
+      try {
+        got = await T.w9Rects(W(), bad, map, { sha256: opts.sha256 });
+      } catch (e) {
+        got = e;
+      }
+      check('a blank W-9 with one byte changed is refused', !!got && typeof got.message === 'string' && got.pin === true, String(got && got.message));
+    });
+    if (!rects) return;
+    const page1 = async (bytes) => (await readPdf(bytes, NS)).pages[0].items;
+    await block(check, 'individual', async () => {
+      const filled = await NS.taxforms.fill(W(), blank, map, { name: 'Morgan Testcase', address: '5 Pine Rd', cityStateZip: 'Denver, CO 80202', individual: true, ssn: W9_SSN }, opts);
+      const r = T.readW9(await page1(filled), rects);
+      check('an individual: the name line, the address lines', r.name === 'Morgan Testcase' && r.business === '' && r.address === '5 Pine Rd' && r.cityStateZip === 'Denver, CO 80202', r.name + ' | ' + r.address + ' | ' + r.cityStateZip);
+      check('the nine digits from the SSN boxes, type SSN (last four 7730)', r.tin === W9_SSN && r.tinType === 'SSN', 'type ' + r.tinType + ', last four ' + String(r.tin).slice(-4));
+      check('the number passes checkTin against 7730', T.checkTin(r.tin, '7730').ok === true);
+    });
+    await block(check, 'entity', async () => {
+      const filled = await NS.taxforms.fill(W(), blank, map, { name: 'Example Holdings LLC', business: 'Example Lending', llc: true, llcLetter: 'P', address: '77 Market St Ste 5', cityStateZip: 'Boston, MA 02110', ein: W9_EIN }, opts);
+      const r = T.readW9(await page1(filled), rects);
+      check('an entity: name, business name, the nine digits from the EIN boxes, type EIN (last four 4567)', r.name === 'Example Holdings LLC' && r.business === 'Example Lending' && r.tin === W9_EIN && r.tinType === 'EIN', 'type ' + r.tinType + ', last four ' + String(r.tin).slice(-4));
+    });
+    await block(check, 'empty', () => {
+      const r = T.readW9([], rects);
+      check('a page with no text gives an empty number and type', r.tin === '' && r.tinType === '' && r.name === '');
+    });
+  },
+
+  // The number check, truncation, the proposals, and no number stored anywhere (C-05, D4, D12).
+  async tincheck({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    await block(check, 'checkTin', () => {
+      const ok = T.checkTin(W9_SSN, '7730');
+      check('nine digits ending in the four on record are accepted', ok.ok === true);
+      check('the dashed form is accepted too', T.checkTin(`${W9_SSN.slice(0, 3)}-${W9_SSN.slice(3, 5)}-${W9_SSN.slice(5)}`, '7730').ok === true);
+      const bad = [
+        ['eight digits', W9_SSN.slice(0, 8)],
+        ['ten digits', W9_SSN + '1'],
+        ['letters', W9_SSN.slice(0, 8) + 'A'],
+        ['nine digits ending in other digits', W9_SSN.slice(0, 8) + '1']
+      ];
+      bad.forEach(([what, v]) => {
+        const r = T.checkTin(v, '7730');
+        check(`${what} are refused with the reason`, r.ok === false && typeof r.why === 'string' && r.why.length > 10, r.why);
+      });
+      check('no last four on record: refused', T.checkTin(W9_SSN, '').ok === false);
+      check('truncate gives ***-**-7730 for an SSN', T.truncate(W9_SSN, 'SSN') === '***-**-7730');
+      check('truncate gives **-***4567 for an EIN', T.truncate(W9_EIN, 'EIN') === '**-***4567');
+    });
+    await block(check, 'last four (D12)', () => {
+      const foreignOnly = inv('C-FTIN', 1000, { taxType: 'us-individual', taxForm: 'W-9', tinLast4: '', taxCert: { form: 'W-9', signed: true, signedBy: 'Signer', tinLast4: '', ftinLast4: '9911', backupWithholding: false } });
+      check('last4Of: never a foreign number', T.last4Of(foreignOnly) === '');
+      check('last4Of: taxCert first, then the record', T.last4Of(inv('x', 1, w9('7730'))) === '7730' && T.last4Of(inv('y', 1, { tinLast4: '1212' })) === '1212');
+      const ws = wsLines(NS, [foreignOnly, inv('C-OK', 1000, w9('7730'))], [{ investorId: 'C-FTIN', grossCents: 50000 }, { investorId: 'C-OK', grossCents: 50000 }]);
+      const F = T.figuresInt(ws, ws.offerings[0], '2026', { today: TODAY });
+      const x = (F.leftOut || []).find((v) => v.investorId === 'C-FTIN') || {};
+      check('an investor whose only four digits are a foreign number gets no form: reason no signed W-9', x.code === 'no-w9' && /signed W-9/.test(x.reason) && brief(F) === 'C-OK=50000/0', x);
+    });
+    await block(check, 'proposals', () => {
+      const n = T.splitName('Jane Q. Public Jr.');
+      check('splitName proposes first, middle, last and suffix without periods', n.first === 'Jane' && n.middle === 'Q' && n.last === 'Public' && n.suffix === 'Jr', n);
+      const a = T.splitName('José Núñez');
+      check('splitName proposes plain letters for accented ones', a.first === 'Jose' && a.last === 'Nunez', a);
+      const c = T.splitCityStateZip('Austin, TX 78701-1234');
+      check('splitCityStateZip proposes city, state and ZIP without the dash', c.city === 'Austin' && c.state === 'TX' && c.zip === '787011234', c);
+    });
+    await block(check, 'nothing stored', () => {
+      const ws = wsD(NS);
+      check('setPayer refuses a full number in any field', refuses(ws, () => T.setPayer(ws, 'f1', { tin: PAYER_TIN }, { by: BY, at: AT })).threw && refuses(ws, () => T.setPayer(ws, 'f1', { name: PAYER_TIN }, { by: BY, at: AT })).threw && refuses(ws, () => T.setPayer(ws, 'f1', { tinLast4: PAYER_TIN }, { by: BY, at: AT })).threw);
+      // every function that writes, run once with numbers in hand
+      rec(NS, ws, 'q', '2026-10-15', 'Income', 600000);
+      T.setInterest(ws, 'q', true, { by: BY, at: AT });
+      const F = T.figuresInt(ws, ws.offerings[0], '2026', { today: TODAY });
+      T.confirmTotals(ws, 'f1', '2026', 'A-1002', { by: BY, at: AT, today: TODAY });
+      T.copyBAnswers(F.forms[1], payerObj(), recipientObj('A-1002'), '2026');
+      T.iris.row('1099-INT', '2026', F.forms[1], payerObj(), recipientObj('A-1002'));
+      T.checkTin(TIN['A-1002'], '7310');
+      const nums = [PAYER_TIN, TIN['A-1001'], TIN['A-1002'], W9_SSN, W9_EIN];
+      const text = J(ws);
+      check('the workspace and its change log hold no taxpayer number of any shape', numberHits(text, nums).length === 0 && Array.isArray(ws.audit) && ws.audit.length > 0, numberHits(text, nums));
+      // the search can fail: an invented number put into a copy of the workspace is found in each of its forms
+      const planted = (s) => numberHits(text.replace('"title":"Investor A-1001"', `"title":"Investor ${s}"`), nums).length > 0;
+      const d = TIN['A-1001'];
+      check('the search finds a planted number as digits, dashed, and first five beside last four', planted(d) && planted(dashedSsn(d)) && planted(`${d.slice(0, 5)} ${d.slice(5)}`) && planted(dashedEin(W9_EIN)));
+    });
   }
 };
 
