@@ -357,7 +357,8 @@
 .sf-bar.is-ready .sf-ring > .i { opacity: 1; }
 .sf-count { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; margin: 0; }
 .sf-count strong { font-size: var(--text-md); font-weight: 500; line-height: 1.25; color: var(--es-fg); }
-.sf-hint { font-size: var(--text-sm); font-weight: 400; line-height: 1.35; color: var(--es-fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The hint is said in full at every size: where the sentence needs it, the bar grows by a line (06-WALKTHROUGH-2, failure 14). */
+.sf-hint { font-size: var(--text-sm); font-weight: 400; line-height: 1.35; color: var(--es-fg-3); }
 /* What a Finish pressed early still needs: said in the bar, in full. */
 .sf-hint.is-nudge { color: var(--es-bad); white-space: normal; }
 .sf-acts { grid-area: acts; display: flex; align-items: center; gap: var(--space-xs); }
@@ -440,8 +441,6 @@
 @media (max-width: 640px) {
   /* The guide sits at the bottom of the screen, within reach of a thumb, and above the keyboard while a blank is typed. */
   .es-sign .sf-bar, .es-sign .sf-bar.es-bar-portal { order: 5; top: auto; bottom: calc(var(--sf-kb, 0px) + max(var(--space-xs), env(safe-area-inset-bottom, 0px))); grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "status zoom" "acts acts"; padding: var(--space-sm); }
-  /* A preview's role switcher is fixed at the bottom too: the guide sits above it. */
-  body:has(.demo-bar) .es-sign .sf-bar { bottom: calc(var(--sf-kb, 0px) + var(--space-2xl) + env(safe-area-inset-bottom, 0px)); }
   .es-sign .sf-bar.has-tray { grid-template-areas: "status zoom" "tray acts"; align-items: end; }
   .sf-bar.has-tray .sf-status, .sf-bar.has-tray .sf-zoom { align-self: center; }
   .sf-bar .sf-acts .btn, .sf-bar .sf-acts .cs-btn { flex: 1 1 auto; padding-left: var(--space-md); padding-right: var(--space-md); }
@@ -642,6 +641,7 @@
 /* The editor fills what is left of the screen (fieldeditor.js measures --fe-h), so the document scrolls inside it. */
 .cs-main:has(> .es-editor.fe) { max-width: 1600px; padding-bottom: var(--space-lg); }
 body.has-demo .cs-main:has(> .es-editor.fe) { padding-bottom: 72px; }
+@media (max-width: 640px) { body.has-demo .cs-main:has(> .es-editor.fe) { padding-bottom: var(--space-lg); } }
 .es-editor.fe { position: relative; grid-template-columns: 232px minmax(0, 1fr) 272px; grid-template-areas: "rail stage props"; gap: var(--space-md); align-items: stretch; height: var(--fe-h, 640px); min-height: 440px; }
 .fe-rail, .fe-stage, .fe-props { min-width: 0; min-height: 0; border-radius: var(--cv-r-card); background: var(--cv-panel); box-shadow: var(--cv-edge-light), var(--cv-shadow-card); color: var(--cv-ink); }
 
