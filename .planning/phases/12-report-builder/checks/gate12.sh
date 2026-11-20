@@ -67,7 +67,10 @@ finish() {
   # Disk is short: the base tree, the screenshots and the checks' page captures and PDFs (checks-out; the owner's
   # folder) go as soon as the result is known. The text output of every step stays in GATE_OUT/gate.
   [ -n "$G" ] && rm -rf "$G/base-tree" "$G/shots" "$G/reference-run.sh" "$G/checks-out" "$G/owner"
-  if [ "$STANDIN" = 1 ] && [ "$FAIL" = 0 ]; then echo "GATE_EXIT=0 (stand-in)"; else echo "GATE_EXIT=$FAIL"; fi
+  # The phase-12-only form is never the line of a full gate, stand-in or not.
+  if [ "$ONLY" = 1 ] && [ "$FAIL" = 0 ]; then echo "GATE_EXIT=0 (phase 12 checks only)"
+  elif [ "$STANDIN" = 1 ] && [ "$FAIL" = 0 ]; then echo "GATE_EXIT=0 (stand-in)"
+  else echo "GATE_EXIT=$FAIL"; fi
   exit $FAIL
 }
 
@@ -110,7 +113,7 @@ self_test() {
   # also proves the reference's own count line is set aside (the good reference prints a failing one), a "none" file is
   # skipped and the base tree reaches the phase 10, 11 and 12 checks (each good stand-in fails without it).
   run control "$T/ref-good.sh" "$T/good" "197 197 0"
-  if [ "$(tail -n 1 "$T/control.txt")" = 'GATE_EXIT=0 (stand-in)' ] && ! grep -q '^GATE FAIL' "$T/control.txt" && grep -q '^GATE ok   stand-in step$' "$T/control.txt" && grep -q '^GATE ok   STAND IN$' "$T/control.txt" && grep -q '^GATE ok   TEN STAND IN$' "$T/control.txt" && grep -q '^GATE ok   ELEVEN STAND IN$' "$T/control.txt" && grep -q '^GATE ok   server tests 197 = base 197 + 0 declared$' "$T/control.txt" && ! grep -qE '^GATE (ok|FAIL) +server tests [0-9]+$' "$T/control.txt"; then note 'control: the stand-ins pass when nothing is wrong (base tree passed as P12_BASE, P11_ROOT and P10_BASE, P10_ROOT unset; never the line of a real gate)' 1 control; else note 'control: the stand-ins pass when nothing is wrong' 0 control; BADS="$BADS (control)"; fi
+  if [ "$(tail -n 1 "$T/control.txt")" = 'GATE_EXIT=0 (stand-in)' ] && ! grep -q '^GATE FAIL' "$T/control.txt" && grep -q '^GATE ok   stand-in step$' "$T/control.txt" && grep -q '^GATE ok   STAND IN$' "$T/control.txt" && grep -q '^GATE ok   TEN STAND IN$' "$T/control.txt" && grep -q '^GATE ok   ELEVEN STAND IN$' "$T/control.txt" && grep -q '^GATE ok   server tests 197 = base 197 + 0 declared$' "$T/control.txt" && ! grep -qE '^GATE (ok|FAIL) +server tests [0-9]+$' "$T/control.txt"; then note 'control: the stand-ins pass when nothing is wrong (base tree passed as P12_BASE, P11_ROOT and P10_BASE, P10_ROOT unset; never the line of a real gate)' 1 control; else note 'control: the stand-ins pass when nothing is wrong' 0 control; fi
   run lastline "$T/ref-good.sh" "$T/lastline" "197 197 0"
   fails lastline "a phase 12 check whose last line differs from its marker" 'STAND IN'
   run nomarker "$T/ref-good.sh" "$T/nomarker" "197 197 0"
@@ -237,6 +240,10 @@ checks10() {
   if [ ! -d "$CHECKS10" ]; then ok "phase 10 checks: none in this tree"; return; fi
   run_checks "$CHECKS10" p10-
 }
+checks11() {
+  if [ ! -d "$CHECKS11" ]; then ok "phase 11 checks: none in this tree"; return; fi
+  run_checks "$CHECKS11" p11-
+}
 checks12() {
   run_checks "$CHECKS" ""
   [ "$RAN" -ge 1 ] || bad "no phase 12 check was run (none found in $CHECKS)"
@@ -246,6 +253,11 @@ checks12() {
 [ -n "$GATE_OUT" ] || { bad "GATE_OUT is not set"; finish; }
 case "$GATE_OUT" in *[[:space:]]*) bad "GATE_OUT must be a path without spaces"; finish ;; esac
 [ "$1" = --self-test ] && self_test
+case "$1" in
+  '') ;;
+  --only-phase12) ONLY=1 ;;
+  *) bad "unknown argument $1 (none, --self-test or --only-phase12)"; finish ;;
+esac
 mkdir -p "$GATE_OUT/gate" || { bad "GATE_OUT/gate cannot be created"; finish; }
 GATE_OUT=$(cd "$GATE_OUT" && pwd)
 G="$GATE_OUT/gate"
@@ -253,6 +265,12 @@ G="$GATE_OUT/gate"
 cp "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"
 # A base tree left by an earlier run is reused only while its stamp names this base commit (gate_base_tree).
 gate_init "$G" || { bad "GATE_OUT/gate/.gate-steps cannot be created"; finish; }
+if [ "$ONLY" = 1 ]; then
+  # Step 5 alone: the base tree for P12_BASE, then phase 12's checks. No reference step, no server test count.
+  base_tree
+  checks12
+  finish
+fi
 if [ "$STANDIN" = 0 ] && [ ! -e server/node_modules ]; then
   ln -s /home/user/Hhhh/server/node_modules server/node_modules
   LINKED=1
@@ -260,5 +278,6 @@ fi
 reference
 count
 checks10
+checks11
 checks12
 finish
