@@ -277,9 +277,19 @@
     save(ws);
     return true;
   }
-  /** Capital redeemed at the dealing date, from the capital accounts (null until that month is closed). */
+  /**
+   * Capital redeemed at the dealing date, from the capital accounts (null until that month is closed). Once the books are
+   * finalized through the dealing date, it is the amount posted then (the live req:<id> entry's 2200 credit): a later
+   * change inside that month is listed by the books, not applied.
+   */
   function redemptionAmount(ws, r) {
     if (r.paidCents != null) return r.paidCents;
+    const books = ws.books && ws.books.funds && ws.books.funds[r.offeringId];
+    if (NS.books && books && r.dealing && NS.books.closedThrough(ws, r.offeringId) >= r.dealing) {
+      const e = NS.books.live(books, 'req:' + r.id);
+      const owed = e && Array.isArray(e.lines) ? e.lines.reduce((a, l) => (String(l[0]) === '2200' ? a - l[1] : a), 0) : 0;
+      if (e && owed > 0) return owed;
+    }
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     if (!o || !NS.audit) return null;
     const L = NS.audit.ledger(ws, o);
