@@ -94,6 +94,11 @@ started: same on 50d2d63 and on eb0d1f1 (after 06-36) — predates today's work
   found: the force push was refused by the permission classifier. Worktree clean; origin/wip/debug-editor == HEAD 6ae20a8.
   implication: nothing unsaved; each edit round is saved by commit + push to wip/debug-editor instead.
 
+- timestamp: 2026-11-20T02:30Z
+  checked: mutation run 1 on a scratch copy (git archive of 6ae20a8 + M1: fieldeditor.js setProp 'required' made a no-op; M2: esign.js isReq without the investor clause), desktop pass only (scratch dbg-editor/mut1.txt)
+  found: "FAIL EDIT-03 required or optional ... :: {wasReq:true, preDom:'... is-req ...', nowReq:true, rqDom:'... is-req ...'}" and "FAIL EDIT-05 typing a label is one step ... (required key absent)". Knock-on FAILs from the shifted undo history (lines 60-67) and the pass stopped at a 30s waitForSelector before the save, so item 3 was NOT reached: M2 is unproven by this run.
+  implication: the updated items 1 and 2 bite on a broken Required box. Item 3 needs its own run with M2 alone.
+
 ## Resolution
 
 root_cause: "No product fault; three stale expectations in editor.js. (1)+(2) esign.js:2249-2253 (5f8db30, plan 01.4-69, 01.4-69-SUMMARY deviation 2) makes an investor's signature given to the firm required, on top of D-30 (46b1b66, plan 01.4-63) which had left it required:false; the check's text->signature->firm sequence therefore reaches the Required box already ticked, and its click unticks it (editor.js:414 wanted !wasReq && required true; editor.js:425 wanted required true after the label undo). (3) esign.js:174 isReq (46b1b66, D-30) makes no investor field required, so signflow.js:58 countHTML shows 'Ready to finish', never 'N of M left' (editor.js:616 / left$/). Every field reaches the investor exactly where the editor left it (DBG3)."
