@@ -41,6 +41,11 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 - Researchers write RESEARCH.md in sections and commit and push each finished section.
 - Plan checkers and verifiers append each finding to a file in the scratchpad as it is found (`checks-<plan>.md`), so a stop loses nothing already found.
 - Orchestrator: merges and pushes as soon as a plan reports; records every decision and open item in CONTEXT files and pushes them at once; keeps "State now" below current after each merge round.
+- Owner, 2026-11-20 (third loss of the day, verbatim): "you must save everything as you go, as if you can loose usage any second". So, on top of the above:
+  - Uncommitted work: every agent saves its uncommitted state to the remote at least after every edit round and before any command longer than a minute, without touching its branch: `git add -A && c=$(git stash create) && git push -f origin "$c:refs/heads/save/<plan>"; git reset -q`. This is only needed when there is something uncommitted.
+  - Check runs: gate steps and check parts save each result the moment it ends, stamped to the exact tree, and a rerun keeps what passed on the same tree (quick task wip/gate-resume). Until it merges, agents start long runs only after saving.
+  - Evidence: RED outputs and run logs that a SUMMARY quotes are copied into the plan's SUMMARY as they are produced, not only at the end.
+  - Orchestrator: "State now" is updated and pushed after every event (merge, launch, failure, owner message), not only after merge rounds.
 - A stopped agent is continued from its pushed branch plus any files in its worktree (SCRATCH/continue-brief.md).
 
 ## Usage window (owner, 2026-11-20: "You will likely run out of usage in 24 hrs")
@@ -48,9 +53,9 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 - Owner's answer (verbatim): "Yeah don't start any new builds just finish what you have started, feel free to preform fixes". So: no new plan builds and no new waves (11-09 onward, 10-10 onward, 08-07 onward, steps 7-16 all wait). Finish what is running: 11-07, 09-09, 10-06, 10-07, 10-08, 10-09, 06-35, 06-36, 06-38. Fixes go ahead: 06-34, 06-37 and 06-39 (the walkthrough fixes and the co-investor sign-in), any failure found in merges or the full gate, then the preview rebuild, walk and publish.
 - "State now" is kept current after every merge round, so the next session resumes without redoing work.
 
-## State now (updated 2026-11-20)
-- Merged today: 09-04, 09-06, 09-07, Filings guide entries; 10-04; 11-05, 11-06, 11-08. Server tests 358.
-- Building: 11-07 (wip/11-07), 09-09 (wip/09-09), 10-06, 10-07, 10-08, 10-09 (wip/10-0x).
-- Plan check running: 06-34..06-39 (walkthrough 2 fixes plus the co-investor sign-in). Afterwards: build 06-34..06-38 in parallel, then 06-39; add six gate lines to gate-reference.sh; run one full gate on the merged tree; rebuild the preview from the current tree; walk Filings, AML program and Tax documents; publish to https://claude.ai/artifact/GPhQRgiF3Kkne2A5VHqDxP.
-- Next to plan-check: phase 11 wave 4 (11-09..11-11) after 11-07 merges; phase 10 wave 4 (10-10, 10-12) after wave 3; phase 08 wave 5 (08-07, 08-17) when the browser queue allows.
+## State now (updated 2026-11-20, after the container restart)
+- Merged today: 09-04, 09-06, 09-07, Filings guide entries; 10-04, 10-09; 11-05, 11-06, 11-08; 06-36, 06-38. Server tests 368.
+- Running (resumed after the restart; each branch pushed): 11-07 (wip/11-07, rerunning its gate), 09-09, 10-06, 10-07, 10-08, 06-35, the field editor debugger (wip/debug-editor: 3 old FAILs in .planning/phases/02-field-editor/checks/editor.js, one may mean an edited agreement does not reach the investor intact), and the gate-resume quick task (wip/gate-resume).
+- Waiting: 06-34 and 06-37 start after 10-06 merges; 06-39 after 06-34, 06-37, 06-38. Then add six gate lines (RECORD AND LOST AGREEMENT 7, SCREEN EDGES 5, TITLES AND EDITOR 4, PRESS AND CO-INVESTOR 7, CO-INVESTOR SERVER 5; GATE_SERVER_TESTS 368 plus any later change), run one full reference gate on the merged tree, rebuild the preview, walk Filings, AML program and Tax documents plus the fixes, and publish to https://claude.ai/artifact/GPhQRgiF3Kkne2A5VHqDxP.
+- Owner's choice for this usage window: no new builds; finish what is running, plus fixes.
 - Owner's help chat page: https://claude.ai/artifact/Sbf9kfcoaqJd3svbb7tezj (source in the scratchpad's help-chat/; refresh guide.json from server/lib/help-guide.mjs after guide merges).
