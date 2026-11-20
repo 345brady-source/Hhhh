@@ -19,6 +19,8 @@
 .tx-what { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; }
 .tx-title { font-weight: 500; color: var(--cv-ink); overflow-wrap: anywhere; }
 .tx-row a.tx-title { color: var(--cv-link); }
+/* a title link's touch area reaches 24 px and more (its line is 21 px); added by plan 10-08 */
+.tx-row a.tx-title { position: relative; } .tx-row a.tx-title::after { content: ""; position: absolute; inset: -4px 0; }
 .tx-detail { color: var(--cv-ink-3); font-size: var(--text-sm); overflow-wrap: anywhere; }
 .tx-when { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-sm); }
 .tx-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
