@@ -71,8 +71,38 @@ const PAGES = ['diy.html', 'index.html'];
 const DESKTOP_EXPECTED = [
   { at: /^field editor/, el: /^span\.es-rv-list /, why: 'failure 11: the sentence about fields marked Review is held in a span, so a phone can show its own in its place; its words and every element stay where they were' },
   { at: /^sample distribution, amount typed$/, el: /^span\.cs-hint /, why: 'failure 14: "Enter an amount." goes once an amount is typed (or gives way to the reason that holds then)' },
-  { at: /^investor Account with a tax-form request$/, el: /^a\.link-btn /, why: 'failure 14: the Account page offers the open tax-form request ("Complete your tax form"), as Home does' }
+  { at: /^investor Account with a tax-form request$/, el: /^a\.link-btn /, why: 'failure 14: the Account page offers the open tax-form request ("Complete your tax form"), as Home does' },
+  // plan 06-35 (06-WALKTHROUGH-2.md, earlier failure 14's remainder): the signing bar's hint is no longer cut on a desktop
+  // ("Nothing is required. Start goes to each em…"); it wraps, so the bar grows by a line where the sentence needs it.
+  // Allowed only on the signing screens: the elements inside the signing bar, and the elements below it moved down by one
+  // and the same distance (the extra line), at the same left, size and text size. Anything else still fails.
+  { at: /^onboarding: the (tax form to sign|agreement to sign|agreement, a field open)$/, test: (gone, added) => hintLine(gone, added), why: 'walkthrough 2, earlier failure 14 (the rest), plan 06-35: the signing bar’s hint is shown in full on a desktop; the bar grows by a line and what lies below it moves down by that line' }
 ];
+/** The signing bar grown by its hint's extra line: every change is inside the bar's box, or a move straight down by one shared distance. */
+function hintLine(gone, added) {
+  const parse = (x) => {
+    const m = /^(\S+) (-?\d+),(-?\d+) (\d+)x(\d+) (\S+)$/.exec(x);
+    return m ? { name: m[1], left: +m[2], top: +m[3], w: +m[4], h: +m[5], px: m[6] } : null;
+  };
+  const was = gone.map(parse);
+  const now = added.map(parse);
+  if (was.some((x) => !x) || now.some((x) => !x)) return false;
+  const barOf = (list) => list.find((x) => /(^|\.)sf-bar(\.|$)/.test(x.name));
+  const b0 = barOf(was);
+  const b1 = barOf(now);
+  if (!b0 || !b1 || b1.top !== b0.top || b1.h <= b0.h) return false;
+  const d = b1.h - b0.h;
+  const inBar = (x, b) => x.top >= b.top && x.top < b.top + b.h;
+  const used = new Set();
+  const nowOk = now.every((x) => {
+    if (inBar(x, b1)) return true;
+    const i = was.findIndex((y, k) => !used.has(k) && y.name === x.name && y.left === x.left && y.w === x.w && y.h === x.h && y.px === x.px && Math.abs(x.top - y.top - d) <= 1);
+    if (i < 0) return false;
+    used.add(i);
+    return true;
+  });
+  return nowOk && was.every((y, k) => used.has(k) || inBar(y, b0));
+}
 
 /** A fresh context whose page holds the portal (diy.html, or index.html for the managed edition) in a sandboxed iframe that refuses every connection. */
 async function framed(S, vp, file) {
@@ -351,7 +381,7 @@ function verdict(check, W) {
         const added = now.filter((x) => addedKeys.indexOf(key(x)) >= 0);
         if (!gone.length && !added.length) return;
         // a change the fix makes on every screen size on purpose, named with its reason (DESKTOP_EXPECTED); anything else fails
-        const why = DESKTOP_EXPECTED.find((e) => e.at.test(k) && gone.concat(added).every((x) => e.el.test(x)));
+        const why = DESKTOP_EXPECTED.find((e) => e.at.test(k) && (e.test ? e.test(gone, added) : gone.concat(added).every((x) => e.el.test(x))));
         (why ? expected : moved).push({ at: k, why: why ? why.why : undefined, before: gone.slice(0, 4), now: added.slice(0, 4), n: Math.max(gone.length, added.length) });
       });
       expected.forEach((e) => console.log(`NOTE ${W.part} desktop change made on purpose on "${e.at}": ${e.why} (before: ${JSON.stringify(e.before)}; now: ${JSON.stringify(e.now)})`));
