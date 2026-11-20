@@ -390,6 +390,11 @@ function titlePart(vp) {
     await Lib.consoleRoute(fr, 'console-docs', '.cs-panel-head h2');
     const pub = await fr.evaluate(() => Array.from(document.querySelectorAll('.cs-tbl tbody tr')).map((tr) => (tr.children[1] ? tr.children[1].innerText.replace(/\s+/g, ' ').trim() : '')).filter((t) => /Document\.pdf|Summary of terms\.pdf/.test(t)));
     await note(J);
+    await fr.evaluate(() => {
+      const tr = Array.from(document.querySelectorAll('.cs-tbl tbody tr')).find((x) => /Document\.pdf/.test(x.innerText));
+      if (tr) tr.scrollIntoView({ block: 'center' });
+    });
+    await fr.waitForTimeout(300);
     await J.shot('console-docs');
     check('the console’s Documents lists "Subscription Agreement" with Document.pdf beneath, "Summary of terms" as it was, and nothing titled "Document"', pub.length === 2 && pub.some((t) => /^Subscription Agreement Document\.pdf/.test(t)) && pub.some((t) => /^Summary of terms Summary of terms\.pdf/.test(t)) && !pub.some((t) => /^Document Document\.pdf/.test(t)), pub);
 
@@ -439,6 +444,11 @@ function titlePart(vp) {
       return { offering: texts('[data-action="sub-doc"]'), section: sec ? sec.innerText.replace(/\s+/g, ' ').trim() : '', mine: texts('.es-mine [data-action="es-open-mine"]'), signed: texts('.es-signed [data-action="es-open-doc"]') };
     });
     await note(J);
+    await fr.evaluate(() => {
+      const sec = Array.from(document.querySelectorAll('main .sec')).find((s) => /Offering documents/.test(s.innerText));
+      if (sec) sec.scrollIntoView({ block: 'center' });
+    });
+    await fr.waitForTimeout(300);
     await J.shot('investor-docs');
     check('the investor’s "Offering documents" lists "Subscription Agreement" and "Summary of terms", and no entry titled "Document"', docs.offering.length === 2 && docs.offering.indexOf('Subscription Agreement') >= 0 && docs.offering.indexOf('Summary of terms') >= 0 && docs.offering.indexOf('Document') < 0, docs);
     const title = `Subscription Agreement - ${name}`;
