@@ -43,7 +43,7 @@ plan_head_after: PENDING
 
 # Phase 10 Plan 07: tax withheld at the distribution Summary
 
-GATE: PENDING (filled in below when gate10.sh ends)
+GATE: first run ended GATE_EXIT=1 (one line, GATE FAIL FORMS FLOW (34), case upload-ira: an IRA custodian's uploaded W-9 row gained "W-9 signed on paper", and that case requires no "W-9 signed" text). Fixed in 73c6821 (no paper action for an IRA or an exempt payee); `FORMS FLOW: PASS (cases run: 2)` for upload and upload-ira and `WITHHOLDING FLOW: PASS (parts run: 1)` for paper-w9 afterwards. Second gate run: PENDING.
 
 ## RED outputs (kept in SCRATCH/exec-10-07)
 
