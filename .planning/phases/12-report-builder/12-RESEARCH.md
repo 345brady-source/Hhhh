@@ -340,7 +340,7 @@ Two independent anchors, both required:
 - `pdfinfo` Producer, Creator and Title equal the firm's name or report title; never `pdf-lib`, `fontkit`, a vendor, model or platform name. (pdf-lib writes its own Producer unless set; filesout.js sets it at lines 551-553, the composer must too.)
 - A banned-words scan over the PDF text, the preview HTML, the spreadsheet's shared text and every new screen: no vendor or library names (pdf-lib, fontkit, DejaVu, pdf.js, openpyxl, Claude, Anthropic, Carrow & Vale in the self-serve edition's investor-facing output) and never the word "basic" (case-insensitive, whole word). The font's internal name inside the PDF font dictionary (`DejaVuSans`, shown by `pdffonts`) is not page text; whether it counts as "a name a sponsor sees" is an open question (below).
 - Characters the font lacks: the composer counts them like filesout (`bytes.missing`); a report with missing characters is refused with a plain message. A test investor name with `Ł` and an accented firm name proves the Unicode path.
-- Logo and photos: `pdfimages -list` (poppler, same package as pdftotext `[ASSUMED]` present; check at plan time) shows the logo image and each photo on the expected pages.
+- Logo and photos: `pdfimages -list` (poppler; `/usr/bin/pdfimages` present `[VERIFIED: command -v this session]`) shows the logo image and each photo on the expected pages.
 
 ### 4.4 Spreadsheet reopened
 
@@ -462,4 +462,251 @@ The owner's note for this task says "no API". The rule still asks for the option
 
 Recommendation: A. B and C are recorded here so the owner can see they were considered; neither works without a network, and both cost money every month.
 
-<!-- gsd:write-continue -->
+## Project Constraints (from CLAUDE.md)
+
+- Every second and dollar of the owner's is costly: build only what moves the product toward launch; no waste.
+- Never call anything ready, working or done until it is tested on material it has never seen and the owner has checked it.
+- Never give a time that was not measured; report what is finished and what it measured.
+- Failures are reported first and plainly, then fixed.
+- If an outside API or service would do the task better, present it with cost, accuracy, speed and trade-offs before building in-house (done in Part 6).
+- Do not cut corners; deliver a market-ready product.
+- GSD for all work: researcher, planner, plan checker, executors in isolated copies, verifier; owner checks.
+- Questions to the owner get a push notification; after 15 minutes without an answer, choose, record the choice and why, and carry on (AUTOPILOT: owner inputs are worked around with recorded assumptions marked "To be confirmed").
+- Do not apologize; do not say "you're right"; no comments on the owner's state.
+
+## Standard Stack
+
+No new package. Everything the builder needs is already shipped in the repository.
+
+### Core
+| Library / module | Version | Purpose | Why |
+|---|---|---|---|
+| pdf-lib (shipped as assets/vendor/pdfwrite/write.js) | 1.17.1 | Write the report PDFs | Already shipped and used for tax forms, signed copies and phase 11's tables; `embedPng`, `embedJpg`, `drawRectangle`, `drawSvgPath`, `drawEllipse`, `setProducer`, `setCreator` present in the shipped file `[VERIFIED: grep of assets/vendor/pdfwrite/write.js and SOURCE.txt this session]` |
+| @pdf-lib/fontkit (shipped as assets/vendor/pdfwrite/fonts.js) | 1.1.1 | Embed the Unicode font | Same `[VERIFIED: SOURCE.txt this session]` |
+| DejaVu Sans regular and bold (assets/vendor/textfont/) | as shipped | The PDF typeface | The only shipped Unicode font; covers Latin, accents, symbols `[VERIFIED: directory listing this session]` |
+| NS.files.workbook (assets/js/filesout.js) | in repo | Spreadsheet export | Phase 11's writer, proven reopened by openpyxl |
+| NS.audit / NS.books / NS.ops / NS.data / NS.structures | in repo | Figures | The single source of truth (Part 2) |
+| NS.esign.viewPdf (pdf.js shipped as assets/vendor/pdfview) | in repo | Draw PDF pages in the page | Required by the no-browser-viewer rule |
+
+### Supporting (test only, already installed)
+| Tool | Version | Purpose |
+|---|---|---|
+| poppler pdftotext, pdfinfo, pdfimages, pdffonts | 24.02.0 | PDF read-back `[VERIFIED: command -v and pdftotext -v this session]` |
+| openpyxl via read-xlsx.py | 3.1.5 | Spreadsheet reopen `[VERIFIED: python3 import this session]` |
+| Playwright (Chromium) | /opt/node-tools/node_modules/playwright | Page checks `[VERIFIED: require.resolve this session]` |
+| Node | v22.23.4 | Checks `[VERIFIED]` |
+
+### Alternatives considered
+| Instead of | Could use | Why not |
+|---|---|---|
+| A new composer beside filesout.pdf | Extending filesout.pdf | Its layout is pinned by phase 11 checks; portrait, prose, charts and photos would change it for the CPA package |
+| Block model for rich text | Stored HTML; Markdown in a textarea | HTML is an injection and drift risk; Markdown in a textarea is not the "rich-text editor" the owner asked for |
+| Vector charts drawn with pdf-lib | Rasterizing the on-screen SVG charts | Vectors stay sharp, keep the file small and need no canvas taint workaround |
+| html2canvas / jsPDF-style "screenshot the preview" | — | New packages, blurry text, no text layer for pdftotext, breaks read-back validation |
+
+**Installation:** none.
+
+## Package Legitimacy Audit
+
+No external package is installed in this phase. All libraries used are already in the repository (assets/vendor, shipped and hashed in SHA256SUMS by earlier phases).
+
+| Package | Registry | Age | Downloads | Source repo | Verdict | Disposition |
+|---|---|---|---|---|---|---|
+| (none new) | — | — | — | — | — | — |
+
+**Packages removed due to [SLOP] verdict:** none. **Packages flagged [SUS]:** none.
+
+## Don't Hand-Roll
+
+| Problem | Don't build | Use instead | Why |
+|---|---|---|---|
+| Capital accounts, allocations, fees, carry | A second calculation in the builder | `NS.audit.period`, `NS.ops.capital` | Largest-remainder splits, waterfall, side pockets, classes, opening balances already handled and tested |
+| IRR, DPI, TVPI | A new IRR solver | `closedPerformance` / `NS.audit.xirr` (export the former) | Same numbers as the audit package |
+| Fees and expenses, NOI | Summing records | `NS.books.trialBalance` / `entries({ holding })` | The journal is the books of record |
+| Spreadsheet | A new xlsx writer | `NS.files.workbook` | Proven in phase 11 |
+| PDF objects, font subsetting | Any PDF byte writing | pdf-lib 1.17.1 shipped | Fonts, images, compression |
+| Storing files | localStorage or Blobs in IndexedDB | `NS.ops.files` (bytes) | Safari loses Blobs; quota |
+| Change log | A new history list | `NS.audit.log` | Hash chain, already in the audit package |
+| Email to investors | A mail path | The Notices page (phase 13 rebuilds email) | One mail system |
+| SHA-256 | Any hashing code | `NS.audit.sha256` | Exists |
+
+**Key insight:** every figure a report prints already exists in an engine the audit and CPA packages rely on; the builder's job is layout, choice and delivery. A second calculation would create a report that disagrees with the audit package.
+
+## Common Pitfalls
+
+### Pitfall 1: periods that do not exist in the books
+**What goes wrong:** a quarter ending after today, or a typed day mid-month, prints a figure for a date the engine never valued. **Why:** `snap()` moves periods to month-ends and cuts the end back to the last completed month-end (audit.js:627-633). **Avoid:** show the snapped dates on the report and in the preview; the check compares the printed period with `period().from/to`. **Warning sign:** any printed period end that differs from `period().to`.
+
+### Pitfall 2: adding money across currencies
+**What goes wrong:** a consolidated summary adds a EUR fund to a USD fund. **Why:** `NS.structures.curOf(o)` differs per fund (audit.js:127). **Avoid:** totals per currency; no converted total unless a rate is typed and shown. **Warning:** a total row under funds with different currency formats.
+
+### Pitfall 3: sample funds look like real figures
+**What goes wrong:** sample firms' returns are generated (audit.js header lines 20-22: "valuations and holdings are generated deterministically"); a real firm with no journal shows zero income. **Avoid:** real firms' reports carry "Preliminary: the books are not closed for this period" when `NS.books.status().closedThrough` is before the period end; sample firms stay demos.
+
+### Pitfall 4: the preview and the PDF disagree
+**Why:** two renderers. **Avoid:** one resolved model with every string formatted once; a check compares the preview's text tokens with pdftotext's.
+
+### Pitfall 5: the PDF names the library
+**What goes wrong:** pdf-lib writes `pdf-lib (https://github.com/Hopding/pdf-lib)` as Producer unless told otherwise `[VERIFIED: string present in shipped write.js this session]`. **Avoid:** set Title, Producer, Creator (and Author) to the firm, as filesout.js does (lines 551-553); pdfinfo check.
+
+### Pitfall 6: logo formats pdf-lib cannot embed
+webp, gif and svg logos and the generated mark need a canvas redraw to PNG; check the logo appears (pdfimages) in the phone frame; fall back to the firm's name in the brand color.
+
+### Pitfall 7: storage on the phone
+Bytes in localStorage overflow the quota; Blobs in IndexedDB vanish in Safari. Templates and runs as JSON in the workspace; photos and PDFs as bytes in `NS.ops.files`. A batch writes each PDF before generating the next.
+
+### Pitfall 8: unknown merge fields go out to every investor
+`NS.mergeNotice` leaves unknown fields as typed (data.js:325). The builder refuses to generate while any field is unknown and shows where.
+
+### Pitfall 9: IRR that does not exist
+`xirr` returns null without both a negative and a positive flow or without a sign change (audit.js:683-702). Print "Not meaningful yet" with no number, never 0%.
+
+### Pitfall 10: redemptions counted as distributions
+Open-ended funds put redemptions into the month's `dist` (`const dOut = d + (redeem || 0);`, audit.js:490). Label the column "Distributions and redemptions" for open-ended funds, as documents.js does.
+
+### Pitfall 11: the help guide has little room left
+10-06-SUMMARY: the sponsor guide is "43,848 of 48,000" bytes and the investor guide "14,810 of 20,000". The builder's help entries must fit; the UI plan measures the guide size.
+
+### Pitfall 12: a report shows another investor's data
+Batches loop over investors; a reused variable or a fund-level table with every investor's rows (the rollforward schedule lists all investors) in an investor's report leaks data. Investor-facing models are built from the recipient's own rows only; the fund-level investor tables (rollforward, register, performance by investor) are never investor-facing sections.
+
+### Pitfall 13: the managed edition changes
+The managed (Carrow & Vale) edition has its own documents (documents.js sample statements). The builder's tab and delivery are self-serve only unless a plan says otherwise; the C-03 slice guard stays green.
+
+### Pitfall 14: font embedding cost per document
+Each PDF subsets and embeds DejaVu (two weights) again; a large batch may be slow on the phone. Measure with the speed case; if needed, generate on demand per investor rather than all at once (decide on measured numbers, not estimates).
+
+## Code Examples
+
+Patterns from the repository (read this session); new code follows them.
+
+```js
+// Source: assets/js/filesout.js:276-305 and 551-559 — kit loading and white-label metadata
+const E = NS.esignKit || {};
+const L = kit.PDFLib || (E.writer ? await E.writer() : null);
+({ fontkit, fontBytes } = await E.unicodeFont());
+const out = await L.PDFDocument.create();
+out.registerFontkit(fontkit);
+const f = await out.embedFont(fontBytes, { subset: true, features: { liga: false } });
+// ... draw ...
+out.setTitle(title); out.setProducer(who); out.setCreator(who);   // never leave the library's own Producer
+const bytes = await out.save();
+```
+
+```js
+// Source: assets/js/operations.js:533-549 — one investor's capital account with IRR and multiple
+const C = NS.ops.capital(ws, inv, o, from, to);   // { a, P, irr, tvpi, paid, asOf }
+// a.begin, a.contrib, a.dist, a.income, a.gain, a.fee, a.carry, a.end, a.own, a.commit, a.contribCum, a.distCum
+```
+
+```js
+// Source: assets/js/data.js:601-609 — distribution notice lines
+NS.data.runRows(ws, run).forEach((row) => { /* row.investor, row.cents (gross), row.withheldCents, row.netCents */ });
+```
+
+```js
+// Source: assets/js/taxdocs.js:455-457 and 594-606 — the document record and the release step the builder mirrors
+{ id, title, fileName, type: 'application/pdf', size, sha256, cat, offeringId, audience: 'investors', investors: [investorId],
+  date, publishedAt: '', publishedBy: '', hidden: true }
+// release: doc.hidden = false; doc.publishedAt = at; doc.publishedBy = by; NS.audit.log(ws, { action, fund, record, actor, at, detail })
+```
+
+```js
+// Source: assets/js/operations.js:476-494 — keep bytes, never a Blob
+NS.ops.files.put(docId, new Blob([pdfBytes], { type: 'application/pdf' }));   // stored as { type, bytes }
+```
+
+## State of the Art
+
+| Old approach | Current approach | When | Impact |
+|---|---|---|---|
+| ILPA Reporting Template 2016 | Updated ILPA Reporting Template and new Performance Template (released January 2025; funds in investment period at Q1 2026 and new funds from 1 January 2026; performance data from Q1 2026, first delivery Q1 2027) | 2025-2027 | Fees-and-expenses schedule in the updated order; performance with and without subscription facilities for institutional LPs `[CITED]` |
+| SEC quarterly statement rule (2023) | Vacated (5 June 2024); reporting duties back to fund documents | 2024 | No federal quarterly statement mandate for private funds `[CITED]` |
+| ILPA Capital Call and Distribution Template 2011 | Updated 2025 template (cover letter, description, template) | 2025-2027 | Distribution notice layout `[CITED]` |
+| Marketing Rule FAQ requiring net beside gross extracted performance (2023) | March 2025 FAQ relaxes extracted gross performance with conditions | 2025 | Builder shows net only, so unaffected `[CITED]` |
+
+**Deprecated/outdated in this repo:** documents.js's sample capital account statement fixed to Q3 of the current year (demonstration for sample firms only).
+
+## Assumptions Log
+
+| # | Claim | Section | Risk if wrong |
+|---|---|---|---|
+| A1 | Rule 506 offerings carry no periodic investor reporting duty under federal law (inferred from Form D being the only listed filing) | 1.1 | Low: the builder lets sponsors send what their documents require anyway; on-screen text says "To be confirmed with counsel" |
+| A2 | Reg A Tier 1 has no ongoing reports besides Form 1-Z | 1.1 | Low: Reg A filings are out of scope |
+| A3 | Custody rule staff relief to 260 days for funds of funds of funds | 1.1 | Low: not used by the builder |
+| A4 | Delaware LP/LLC Act information rights (17-305 / 18-305) are on demand, not periodic | 1.1 | Low |
+| A5 | K-1 deadline moves with the Form 1065 extension | 1.1 | Low: the tax summary shows the sponsor-typed expected date, not a computed deadline |
+| A6 | Distribution notices customarily show character, withholding and net per investor | 1.2 | Low: matches stored data |
+| A7 | Consolidated multi-fund statements are customary in syndication portals | 1.2 | None: owner's decision |
+| A8 | `document.execCommand` still works in iOS Safari for bold/italic | 3.4 | Medium: the editor plan must test it in WebKit; fallback is direct range wrapping |
+| A9 | iOS Safari gives HEIC photos as JPEG to `accept="image/*"`; canvas redraw handles either way | 3.4 | Low: redraw covers both |
+| A10 | A data-URL SVG drawn to canvas is not tainted in current Safari | 3.4 | Medium: logo check in the phone frame; fallback is the firm name |
+| A11 | iPhone localStorage is a few MB | 3.4 | Low: design keeps bytes out of it |
+| A12 | Fund administrators charge per fund or in basis points | Part 6 | None (option not recommended) |
+| A13 | Investors without an e-delivery consent on record should still see reports in the portal, with the sponsor told to also mail them | Open question 1 | Medium: legal reading; marked "To be confirmed with counsel" |
+
+## Open Questions (each with the recommended default, so work continues without waiting)
+
+1. **Reports for investors with no electronic-delivery consent on record** (e.g. investors added by spreadsheet, never onboarded). Known: tax documents are held back without the Rev. Proc. 2012-17 consent (10-06); reports have no such IRS rule, and fund documents usually provide for electronic notices. **Default:** post the report to the investor's Documents for everyone, and list those without consent on record on a "Send on paper" list with a PDF download, the line marked "To be confirmed with counsel".
+2. **The font's internal name in PDFs** (`DejaVuSans`, visible only through a viewer's font properties, as in every PDF phases 10 and 11 already produce). **Default:** accept it (not page text, not a vendor of the portal), record it as an open point for the owner's check.
+3. **Where the builder lives.** **Default:** a new first tab "Investor reports" on the existing Reports page (Report section of the menu), no new menu entry.
+4. **Who may deliver and withdraw.** **Default:** the sponsor's team can build and generate; delivering and withdrawing follow the Tax documents page (admins withdraw).
+5. **Distribution notices for runs paid before the builder existed.** **Default:** any paid run can produce notices; the run's own date prints, the generation date is in the record.
+6. **Character split on distribution notices.** **Default:** optional sponsor-typed split per run, must add to gross exactly; otherwise the run's label only.
+7. **Gross performance.** **Default:** not shown anywhere (net only, labelled net); revisit only if a sponsor asks and counsel agrees.
+8. **Managed edition.** **Default:** the builder appears in the self-serve edition only; managed unchanged (C-03).
+9. **Reg A issuers' semiannual/annual investor letters.** **Default:** the annual review layout titled "Semiannual report to investors" / "Annual report to investors", with a disclosure that the SEC filing (Form 1-SA / 1-K) is separate.
+10. **Phase 11 not yet merged (11-14, 11-16).** **Default:** wave 1 runs now (Node checks load filesout.js directly); wave 2's UI plan uses a parts loader for filesout.js if 11-16 has not merged when it starts.
+11. **Photo limits.** **Default:** up to 12 photos per template, each redrawn to at most 1600 px on the long side as JPEG; one cover photo.
+
+## Environment Availability
+
+| Dependency | Required by | Available | Version | Fallback |
+|---|---|---|---|---|
+| Node | checks | yes | v22.23.4 | — |
+| Playwright + Chromium | flow checks | yes | /opt/node-tools/node_modules/playwright | — |
+| pdftotext / pdfinfo / pdfimages / pdffonts | PDF read-back | yes | poppler 24.02.0 | — |
+| python3 + openpyxl | xlsx reopen | yes | 3.1.5 | — |
+| Shared browser queue SCRATCH/exec-011/heavy.sh | browser checks | yes (file present) | — | — |
+| Disk | runs | 4.8 GB free (df this session) | — | keep outputs small, delete copies after the gate |
+| Network to ilpa.org, law.cornell.edu | research only | no (host outside the session's allowed domains) | — | search digests used; primary text to be read if those hosts are allowed |
+
+**Missing dependencies with no fallback:** none for building and checking.
+
+## Sources
+
+### Primary (read in this session)
+- Repository files at c8b65e7: assets/js/audit.js, operations.js, data.js, documents.js, portal.js, books.js, books-post.js, books-bank.js, filesout.js, esign.js, brand.js, tenants.js, taxdocs.js, onboarding.js, console.js, charts.js, structures.js; assets/vendor/pdfwrite/SOURCE.txt and write.js; .planning/phases/10-*/10-06-SUMMARY.md; .planning/phases/11-*/11-RESEARCH.md (lines 470-487), 11-14-PLAN.md, checks/fixtures/fund-a.js; .planning/ROADMAP.md, AUTOPILOT.md, SAVE-RULES.md, 01.4-RESUME.md.
+- [SEC Marketing Compliance FAQ](https://www.sec.gov/investment/marketing-faq) (fetched: subscription facility net IRR answer)
+
+### Secondary (search results, two or more sources agreeing)
+- [ILPA Reporting Template](https://ilpa.org/ilpa-reporting-template/), [ILPA updated templates news](https://ilpa.org/news/ilpa-releases-updated-reporting-template-and-new-performance-template-for-industry-adoption/), [RSM](https://rsmus.com/insights/industries/private-equity/essential-insights-on-new-ilpa-reporting-standards.html), [BDO](https://www.bdo.com/insights/industries/asset-management/preparing-for-q1-2026-the-new-era-of-ilpa-reporting-and-performance-templates), [Proskauer](https://www.proskauer.com/blog/ilpas-reporting-templates-after-pfar-what-fund-sponsors-should-know), [Alston](https://alston.com/en/insights/publications/2025/02/ilpa-updated-reporting-performance-templates)
+- [SEC Reg A adopting release 33-9741](https://www.sec.gov/rules/final/2015/33-9741.pdf), [investor.gov Reg A bulletin](https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/updated-1)
+- [Morrison Foerster](https://www.mofo.com/resources/insights/240612-fifth-circuit-vacates-sec-private-fund-adviser-rules), [Morgan Lewis](https://www.morganlewis.com/pubs/2024/06/fifth-circuit-vacates-sec-private-fund-adviser-rules-in-full), [Mayer Brown](https://www.mayerbrown.com/en/insights/publications/2024/06/fifth-circuit-vacates-private-fund-adviser-rules), [Holland & Knight](https://www.hklaw.com/en/insights/publications/2024/06/private-fund-advisers-breathe-easier-fifth-circuit-vacates)
+- [Winston custody rule](https://www.winston.com/en/insights-news/private-fund-advisers-have-additional-time-to-distribute-audited-financial-statements-under-sec-custody-rule), [SEC custody FAQ](https://www.sec.gov/divisions/investment/custody_faq_030510.htm)
+- [Morgan Lewis marketing rule paper](https://www.morganlewis.com/-/media/files/publication/morgan-lewis-title/white-paper/2021/the-secs-new-marketing-rule-key-takeaways-for-advisers.pdf), [Willkie](https://willkie.com/publications/2021/01/sec-adopts-investment-adviser-marketing-rule), [Federal Register 2020-28868](https://www.federalregister.gov/documents/2021/03/05/2020-28868/investment-adviser-marketing)
+- [SEC Rule 506(b)](https://www.sec.gov/smallbusiness/exemptofferings/rule506b), [SEC exemptions chart](https://www.sec.gov/file/overview-exemptions-chart)
+- [DOL Form 5500 2025 instructions](https://www.dol.gov/sites/dolgov/files/EBSA/employers-and-advisers/plan-administration-and-compliance/reporting-and-filing/form-5500/2025-instructions.pdf), [Ropes & Gray ERISA handbook ch. 7](https://www.ropesgray.com/en/sites/erisa-compliance-handbook-for-asset-managers/sections/important-policies-procedures)
+- [ILPA capital call and distribution best practices v1.1](https://ilpa.org/wp-content/uploads/2019/05/ILPA-Best-Practices-Capital-Calls-Distribution-Notices_Version-1.1.pdf), [Katten](https://katten.com/ilpa-updates-capital-call-distribution-template-implications-for-gps-and-lps)
+- [Carta PCAP guide](https://carta.com/learn/private-funds/management/portfolio-management/pcap-statement/), [StartEngine PCAP](https://www.startengine.com/blog/partner-capital-account-pcap-statement), [ILPA definitions](https://ilpa.org/wp-content/uploads/2025/02/Reporting-Template-Definitions.pdf)
+- [LawInsider reports to limited partners clauses](https://www.lawinsider.com/clause/reports-to-limited-partners)
+
+### Tertiary (single source or vendor marketing; LOW)
+- Competitor features: [Juniper Square investor reporting](https://www.junipersquare.com/platform/investor-reporting), [Agora](https://agorareal.com/real-estate-investor-reporting/), [FundCount portal](https://fundcount.com/investor-portal), [Carta for investors](https://carta.com/blog/how-we-improved-carta-for-investors), [Lotkeeper](https://www.lotkeeper.ai/features/investor-portal), [gitnux comparison](https://gitnux.org/best/lp-reporting-software/) (names for traceability only; never on screen)
+- Real published reports: [Starlight Western Canada LP Q2 2026 newsletter](https://assets.starlightinvest.com/news/Q2-2026-Starlight-Western-Canada-LP-Newsletter-FINAL.pdf), BiggerPockets threads on LP reporting ([1](https://www.biggerpockets.com/forums/432/topics/1040918-what-is-normal-reporting-from-sponsors-gps-to-lps), [2](https://biggerpockets.com/forums/432/topics/964184-syndication-quarterly-statement-for-investors))
+- K-1 timing: [Bench](https://www.bench.co/blog/tax-tips/partnership-tax-deadlines) and similar (sources conflict on extensions)
+- PDF API prices: [softwaresuggest DocRaptor](https://www.softwaresuggest.com/docraptor/pricing), [PDFMonkey pricing](https://pdfmonkey.io/pricing/)
+
+## Metadata
+
+**Confidence breakdown:**
+- Standard stack: HIGH — no new package; every library and function was read in the repository this session.
+- Data map and gaps: HIGH — every surface cited with file and lines read this session.
+- Architecture and customization model: MEDIUM — a recommendation; phone behaviours A8-A10 need proof in WebKit.
+- Legal and customary reporting: MEDIUM — search digests from several law firms and official pages agree; primary rule texts (eCFR, ILPA templates) could not be fetched from this session.
+- Competitor features: LOW — vendor marketing.
+- Pitfalls: HIGH for code-based ones (read), MEDIUM for phone ones.
+
+**Research date:** 2026-11-20
+**Valid until:** 2026-12-20 (code facts valid until phase 11's remaining plans merge; recheck `NS.books.status` and the audit exports at plan time)
+
