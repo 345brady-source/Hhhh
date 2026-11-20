@@ -145,8 +145,8 @@ A new fund of the Kestrel Bay sample, "Example C <b>Notes</b> Fund", with three 
 2. **[Rule 2] One change-log entry on each worksheet download** (T-10-23). The plan logged only changes.
 3. **A fourth, foreign holder seated in part worksheet** (expired W-8, holding after every 2026 distribution, so example C's figures do not move). The plan's behaviour needs an expired W-8 to show.
 4. **A fourth deposit refusal:** an amount with a fraction of a cent (whole cents only).
-6. **[Rule 1] tax.css: two lines added** (see Failures). The plan said tax.css stays as the base. PHONE LAYOUT showed the list's title link was under 24 px once a section exists. Plan 10-06 edits taxdocs-ui.js, and no other plan edits tax.css, so the fix went there to avoid a merge conflict.
-5. **Gate base:** the latest claude/refract-reskin (ab6e908) was merged in (not rebased) before the gate, so base-commit.txt for the gate is ab6e908. The starting base 6061fce is kept in base-commit-start.txt. The pages, tax.css and console.js do not differ from that base, and none of this plan's commits touches them.
+5. **[Rule 1] tax.css: two lines added** (see Failures). The plan said tax.css stays as the base. PHONE LAYOUT showed the list's title link was under 24 px once a section exists. Plan 10-06 edits taxdocs-ui.js, and no other plan edits tax.css, so the fix went there to avoid a merge conflict.
+6. **Gate base:** the latest claude/refract-reskin (ab6e908) was merged in (not rebased) before the gate, so base-commit.txt for the gate is ab6e908. The starting base 6061fce is kept in base-commit-start.txt. The pages, tax.css and console.js do not differ from that base, and none of this plan's commits touches them.
 
 Not touched: STATE.md, ROADMAP.md, REQUIREMENTS.md, the pages, console.js, other plans' files. No package was installed.
 
