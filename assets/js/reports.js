@@ -644,7 +644,8 @@
     capital(X, sec, o) {
       const s = X.st[o.id];
       if (!s) return;
-      const itd = sec.opts && sec.opts.second === 'itd';
+      // over a calendar year 'Year to date' would repeat the period's column, so the second column is since inception
+      const itd = (sec.opts && sec.opts.second === 'itd') || /^\d{4}$/.test(X.label.short);
       const a = s.period;
       const b = itd ? s.itd : s.ytd;
       const cur = s.currency;
@@ -1127,7 +1128,7 @@
     const accent = hex(t.cover && t.cover.accent) || hex(colors.accent) || hex(colors.primary) || '#1F2937';
     const sections = (t.sections || []).filter((s) => s.on && CAT[s.key] && CAT[s.key].types.indexOf(type) >= 0);
     const coverOn = sections.some((s) => s.key === 'cover');
-    const fundLine = multi ? (aud.kind === 'letter' ? funds.map((o) => o.name).join(', ') : 'All investments') : funds[0] ? funds[0].name : '';
+    const fundLine = funds.length > 1 ? (aud.kind === 'letter' ? andList(funds.map((o) => o.name)) : 'All investments') : funds[0] ? funds[0].name : '';
 
     const X = { ws, D, t, type, rid, inv, from, to, label, funds, st, multi, firm, errors, dist, tax, year, totals, B: [] };
     X.values = mergeValues(X);

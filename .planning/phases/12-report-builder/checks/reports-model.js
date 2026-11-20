@@ -152,7 +152,7 @@ function figures() {
         'FA-1001': {
           // end = 100,000.00 + 5,000.00 - 2,000.00 + 500.00 + 3,000.00 - 400.00 - 600.00 = 105,500.00
           period: [10000000, 500000, 200000, 50000, 300000, 40000, 60000],
-          ytd: [0, 10200000, 200000, 50000, 600000, 90000, 60000],
+          ytd: [0, 10200000, 200000, 50000, 650000, 90000, 60000], // end 105,500.00, as the period's
           commit: 0,
           contribCum: 10200000,
           unfunded: 0,
@@ -708,6 +708,8 @@ const parts = {
     if (!m) return;
     same(check, 'title', m.title, 'Consolidated statement');
     check('cover says All investments', m.cover.lines.indexOf('All investments') >= 0, m.cover.lines);
+    const caps = tables(m).filter((x) => x.title === 'Your capital account');
+    check('stand-in coherent: each fund ends the period and the year at the same capital', caps.length === 3 && caps.every((x) => x.total[1].v === x.total[2].v), caps.map((x) => x.total.map((c) => c.s)));
     const sums = tables(m).filter((x) => /^Summary/.test(x.title));
     same(check, 'two summary tables, one per currency', sums.map((x) => [x.title, x.currency]), [['Summary (USD)', 'USD'], ['Summary (EUR)', 'EUR']]);
     const usd = sums[0];
@@ -826,6 +828,9 @@ const parts = {
     const plainAnnual = res(R.blank('annual', ws), inv('fund-a', '2026-01-01', '2026-12-31')).model;
     same(check, 'annual for a year (not Regulation A)', plainAnnual && [plainAnnual.title, plainAnnual.subtitle], ['Annual review', 'Year ended December 31, 2026']);
     check('no SEC note when not Regulation A', plainAnnual && !plainAnnual.blocks.some((b) => b.k === 'note' && /SEC/.test(b.text)));
+    same(check, "a calendar year's capital columns: the year and since inception (never a repeated year to date)", plainAnnual && tableNamed(plainAnnual, 'Your capital account').cols.map((c) => c.h), ['Line item', '2026', 'Since inception']);
+    const taxCover = res(R.blank('tax', ws), { year: 2026, audience: { kind: 'investor', investorId: 'FA-1001' }, when: WHEN }).model;
+    check('a tax summary over two funds says All investments on the cover', taxCover && taxCover.cover.lines.indexOf('All investments') >= 0, taxCover && taxCover.cover.lines);
     ws.offerings.find((o) => o.id === 'fund-a').structure = { exemption: 'Regulation A Tier 2' };
     const ra = res(R.blank('annual', ws), inv('fund-a', '2026-01-01', '2026-12-31')).model;
     same(check, "Regulation A Tier 2, annual for a year: 'Annual report to investors'", ra && ra.title, 'Annual report to investors');
