@@ -434,6 +434,9 @@
         // How many names the server screened (plan 08-19): a package screening covers the names the server holds, not
         // the ones sent, so the count shown is the server's.
         if (Number.isInteger(res.screened) && res.screened >= 0) r.screened = res.screened;
+        // The provider keeps watching these names and alerts the server when they appear on a list (plan 08-08): no
+        // calendar re-screen for them.
+        if (res.monitoring === true) r.monitoring = true;
         return done(normScreen(res.status, res.hits), tagHits(res.hits, x.name), res.id);
       } catch (e) {
         r.error = e.message;
@@ -442,6 +445,19 @@
     }
     return r; // Screening by your team (or a connection that cannot screen): waits for the team to record a result.
   }
+  /** Every result of the newest screening is watched by its provider (its alerts reach the console, plan 08-08): no calendar re-screen. */
+  const monitored = (v) => {
+    const rs = (v && v.aml && v.aml.results) || [];
+    return rs.length > 0 && rs.every((r) => r.monitoring === true);
+  };
+  /** The verification package's connections (plan 08-05): an investor's device has them, the console never does. */
+  const PACKAGE_CONNECTIONS = ['package-id', 'package-acc'];
+  /** The newest screening ran through the verification package. */
+  const packageScreened = (v) => ((v && v.aml && v.aml.results) || []).some((r) => PACKAGE_CONNECTIONS.indexOf(r.connection) >= 0);
+  /** The free U.S. Treasury connection, when the firm's screening uses it. */
+  const freeConn = (ws) => (ensure(ws).use.aml.indexOf('ofac') >= 0 ? conn(ws, 'ofac') : null);
+  /** Can "Run now" re-screen this investor? One screened through the package only through the free Treasury connection (G4). */
+  const rescreenable = (ws, inv) => !packageScreened(peek(inv)) || !!freeConn(ws);
   function refreshAml(v) {
     const results = v.aml.results || [];
     v.aml.status = aggregate(results);
@@ -493,12 +509,31 @@
     }
     for (const x of activeFor(ws, 'aml')) results.push(await screenWith(ws, inv, x, names, pre));
     const pep = (inv.kyc && inv.kyc.pep) || false;
-    v.aml = { status: 'pending', results, names, screenedAt: today(), nextScreen: addDays(today(), ruleDays(ensure(ws).rules, 'rescreenDays')) };
+    v.aml = { status: 'pending', results, names, screenedAt: today(), nextScreen: results.length && results.every((r) => r.monitoring === true) ? '' : addDays(today(), ruleDays(ensure(ws).rules, 'rescreenDays')) };
     refreshAml(v);
     log(ws, inv, 'Sanctions and PEP screening run', `${screenedText(names, results)}. ${results.map((r) => `${r.via}: ${resultText(r)}`).join('. ')}${pep ? '. Self-declared politically exposed person' : ''}`);
     syncKyc(ws, inv);
     watch(ws, inv); // a screening the server answers later is polled until it does
     return v.aml;
+  }
+  /**
+   * Re-screen through one connection alone (the free Treasury connection), keeping every other result as it was (plan 08-08):
+   * "Run now" for an investor screened through the package, and the automatic re-screen. auto: the automatic run, which
+   * writes nothing when the connection did not answer, so the investor stays due with "Run now". Resolves to the result, or
+   * null when nothing was written.
+   */
+  async function rescreenWith(ws, inv, x, auto) {
+    const v = vOf(inv);
+    const names = screenNames(inv);
+    const r = await screenWith(ws, inv, x, names);
+    if (auto && (r.error || r.status === 'pending')) return null;
+    const results = (v.aml.results || []).filter((y) => y.connection !== x.id).concat([r]);
+    v.aml = Object.assign({}, v.aml, { results, names, screenedAt: today(), nextScreen: addDays(today(), ruleDays(ensure(ws).rules, 'rescreenDays')) });
+    refreshAml(v);
+    log(ws, inv, auto ? 'Re-screened automatically' : 'Sanctions and PEP screening run', `${screenedText(names, [r])}. ${r.via}: ${resultText(r)}`);
+    syncKyc(ws, inv);
+    watch(ws, inv);
+    return r;
   }
   /** The team records a screening result for one connection (Screening by your team, or a screening that never answered). */
   function recordScreen(ws, inv, connectionId, outcome, note, actor) {
@@ -660,6 +695,7 @@
     // Results from before connections keep the method already on file.
     k.method = idVia && (v.identity.connection || !k.method) ? `${idVia}${v.identity.ref ? ` (ref ${v.identity.ref})` : ''}` : k.method || '';
     if (v.aml.screenedAt) {
+      if (monitored(v)) v.aml.nextScreen = ''; // watched by its provider: no calendar re-screen (plan 08-08)
       k.screenedOn = v.aml.screenedAt;
       k.screening = v.aml.status === 'clear' ? 'clear' : v.aml.status === 'pending' ? 'pending' : 'potential_match';
       k.lists = listsText(v);
@@ -680,15 +716,18 @@
       if (v.decision.status === 'review') out.review.push(inv);
       else if (v.decision.status === 'pending' && v.identity.status !== 'not_started') out.pending.push(inv);
       if (awaitingTeam(ws, inv).length) out.record.push(inv);
-      if (v.aml.nextScreen && v.aml.nextScreen <= today()) out.rescreen.push(inv);
+      if (!monitored(v) && v.aml.nextScreen && v.aml.nextScreen <= today()) out.rescreen.push(inv);
       if (v.accreditation.status === 'verified' && v.accreditation.expiresAt && v.accreditation.expiresAt <= in14 && v.accreditation.expiresAt >= soon) out.expiring.push(inv);
     });
     return out;
   }
   async function rescreenDue(ws) {
-    const list = due(ws).rescreen;
+    // An investor screened through the package is re-screened through the free Treasury connection alone, or left out when
+    // the firm has none: the package provider is never called from here (G4).
+    const list = due(ws).rescreen.filter((inv) => rescreenable(ws, inv));
     for (const inv of list) {
-      await screen(ws, inv);
+      if (packageScreened(peek(inv))) await rescreenWith(ws, inv, freeConn(ws));
+      else await screen(ws, inv);
       decide(ws, inv);
     }
     NS.app.save(true);
@@ -731,6 +770,7 @@
       const s = await ask(`/v1/screenings/${encodeURIComponent(r.ref)}`);
       if (s.status && s.status !== 'pending') {
         Object.assign(r, { status: normScreen(s.status, s.hits), hits: tagHits(s.hits, r.via), screenedAt: today(), error: '' });
+        if (s.monitoring === true) r.monitoring = true;
         log(ws, inv, 'Screening result received', `${r.via}: ${resultText(r)}`);
         screened = true;
       }
@@ -1469,10 +1509,11 @@
     const d = due(ws);
     const c = ensure(ws);
     const items = [];
+    const runnable = d.rescreen.filter((inv) => rescreenable(ws, inv));
     if (d.review.length) items.push(`<li><a href="#console-kyc">${d.review.length} investor${d.review.length === 1 ? '' : 's'} held for review by automated verification</a></li>`);
     if (d.record.length) items.push(`<li><a href="#console-kyc">${d.record.length} investor${d.record.length === 1 ? '' : 's'} waiting for your team to record a verification result</a></li>`);
     else if (d.pending.length) items.push(`<li><a href="#console-kyc">${d.pending.length} investor verification${d.pending.length === 1 ? '' : 's'} waiting for a provider result</a></li>`);
-    if (d.rescreen.length) items.push(`<li><a href="#console-kyc" data-action="iv-rescreen">${d.rescreen.length} investor${d.rescreen.length === 1 ? ' is' : 's are'} due for re-screening. Run now</a></li>`);
+    if (runnable.length) items.push(`<li><a href="#console-kyc" data-action="iv-rescreen">${runnable.length} investor${runnable.length === 1 ? ' is' : 's are'} due for re-screening. Run now</a></li>`);
     if (d.expiring.length) items.push(`<li><a href="#console-kyc">${d.expiring.length} accreditation verification${d.expiring.length === 1 ? '' : 's'} expire within 14 days</a></li>`);
     if (NS.app.can('configure')) {
       if (!ready(ws)) items.push('<li><a href="#console-integrations">Investor verification is in sandbox mode. Plug in your verification providers</a></li>');

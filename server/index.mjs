@@ -969,7 +969,7 @@ export function createServer(opts = {}) {
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });
       store.event({ type: 'screening', provider: body.provider, id: rec.id, hits: (saved.hits || []).length });
-      return send(res, 200, { id: saved.id, status: saved.status, hits: saved.hits || [], screened: names.length });
+      return send(res, 200, { id: saved.id, status: saved.status, hits: saved.hits || [], screened: names.length, monitoring: !!r.monitoring });
     }
 
     const scr = path.match(/^\/v1\/screenings\/(scr_[\w-]+)$/);
