@@ -287,6 +287,10 @@ To confirm:
 
 "Pages with no package" and "No K-1 in this file" list what is left.
 
+"Tax withheld": "Mark deposited" records a deposit, "Download worksheet for your CPA" saves the worksheet, "Record notice" an IRS notice.
+
+"Form 1099": "Confirm" each form, give the numbers, then "Create recipient copies", "Download the IRS file" and "Record the IRS receipt". A corporation or REIT first needs your CPA's split of each distribution ("Save split"); none is proposed.
+
 To deliver:
 1. Under "Contact for tax documents", enter the "Mailing address" and choose "Save".
 2. In the import, choose "Deliver", check the list, then "Deliver to these".

@@ -1,6 +1,6 @@
 // gate: browser
-// last "TAX1099 FLOW: PASS (parts run: 8)"
-// The Form 1099 section of the Tax documents page (plan 10-10, D-02, C-01, C-05, TAX-07, TAX-08, TAX-10, TAX-11, TAX-12):
+// last "TAX1099 FLOW: PASS (parts run: 11)"
+// The Form 1099 section of the Tax documents page (plans 10-10 and 10-11, D-02, C-01, C-05, TAX-07, TAX-08, TAX-10, TAX-11, TAX-12):
 // the sponsor of a notes fund reviews the Form 1099-INT figures the portal's records prove, confirms each against the
 // bank, has each recipient's number read from the signed W-9 or types it, makes the recipients' copies and delivers them
 // through the consent path, downloads the file for the IRS's IRIS site and records the IRS's receipt. Every part runs the
