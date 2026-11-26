@@ -85,5 +85,49 @@ export function createAuditLog({ store, vault, now = () => Date.now() } = {}) {
     return { ok: true, count: n, brokenAt: 0 };
   }
 
-  return { append, verify };
+  /** Opens one stored entry and checks it against its dh; a box that does not open or does not match is refused. */
+  function opened(e) {
+    let p = null;
+    try {
+      p = vault.open(e.box, aadOf(e.workspace, e.seq));
+    } catch {
+      p = null;
+    }
+    if (!p || typeof p !== 'object' || sha(JSON.stringify(p)) !== e.dh) throw fail(`Change log entry ${e.seq} failed its check and was not read.`);
+    return { seq: e.seq, at: e.at, personId: e.personId, personName: p.personName, action: e.action, record: p.record, detail: p.detail };
+  }
+
+  function list(workspace, { before, limit = 100 } = {}) {
+    const head = headOf(workspace);
+    if (!head) return [];
+    const n = Math.min(1000, Math.max(1, Math.floor(Number(limit)) || 1));
+    const b = Number(before);
+    let seq = Number.isFinite(b) && b >= 1 ? Math.min(Math.ceil(b) - 1, head.seq) : head.seq;
+    const out = [];
+    for (; seq >= 1 && out.length < n; seq--) {
+      const e = store.get('auditlog', entryId(workspace, seq));
+      if (e) out.push(opened(e));
+    }
+    return out;
+  }
+
+  function exportAll(workspace) {
+    const head = headOf(workspace);
+    const v = verify(workspace);
+    const entries = store
+      .list('auditlog')
+      .filter((e) => e && e.workspace === workspace)
+      .sort((a, b) => a.seq - b.seq)
+      .map(opened);
+    return { workspace, entries, head: head ? head.hash : ZERO, verified: v.ok, brokenAt: v.brokenAt };
+  }
+
+  function removeWorkspace(workspace) {
+    const mine = store.list('auditlog').filter((e) => e && e.workspace === workspace);
+    mine.forEach((e) => store.remove('auditlog', e.id));
+    store.remove('auditheads', workspace);
+    return mine.length;
+  }
+
+  return { append, list, verify, exportAll, removeWorkspace };
 }
