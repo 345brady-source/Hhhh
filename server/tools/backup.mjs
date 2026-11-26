@@ -371,6 +371,72 @@ function restore(file, opts, env) {
   return [`Restored ${r.records} records and ${r.header.blobs.length} blobs into ${to}.`, `Start a server on it with STORE_FILE=${join(to, 'store.json')}.`];
 }
 
+const DAY = 864e5;
+/** ISO week of a UTC time as "YYYY-Www" (the week holding the Thursday of its Monday-to-Sunday span). */
+function isoWeek(ms) {
+  const d = new Date(ms);
+  const thursday = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) + (3 - ((d.getUTCDay() + 6) % 7)) * DAY;
+  const y = new Date(thursday).getUTCFullYear();
+  const week = 1 + Math.floor((thursday - Date.UTC(y, 0, 1)) / (7 * DAY));
+  return `${y}-W${String(week).padStart(2, '0')}`;
+}
+
+/**
+ * Keeps the newest archive of each of the last <d> days, <w> ISO weeks and <m> months (calendar periods in UTC,
+ * counted back from now, by the time in each file name); deletes the rest, or lists them with --dry-run. Files of
+ * any other name are never touched.
+ */
+function prune(opts, now = Date.now()) {
+  if (!opts.dir) stop('Name the archive folder: prune --dir <dir> --keep 7d,4w,12m.');
+  const m = /^(\d+)d,(\d+)w,(\d+)m$/.exec(String(opts.keep || ''));
+  if (!m) stop('Use --keep with days, weeks and months, for example: --keep 7d,4w,12m.');
+  const [days, weeks, months] = m.slice(1).map(Number);
+  const dir = resolve(opts.dir);
+  let names;
+  try {
+    names = readdirSync(dir);
+  } catch {
+    stop(`There is no folder at ${dir}.`);
+  }
+  const archives = names
+    .map((f) => [f, NAME.exec(f)])
+    .filter(([, x]) => x)
+    .map(([f, x]) => ({ f, ms: Date.UTC(+x[1], +x[2] - 1, +x[3], +x[4], +x[5], +x[6]) }))
+    .filter((a) => Number.isFinite(a.ms))
+    .sort((a, b) => b.ms - a.ms);
+  const n = new Date(now);
+  const today = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());
+  const dayOf = (ms) => new Date(ms).toISOString().slice(0, 10);
+  const monthOf = (ms) => new Date(ms).toISOString().slice(0, 7);
+  const rules = [
+    [dayOf, new Set(Array.from({ length: days }, (_, i) => dayOf(today - i * DAY)))],
+    [isoWeek, new Set(Array.from({ length: weeks }, (_, i) => isoWeek(today - i * 7 * DAY)))],
+    [monthOf, new Set(Array.from({ length: months }, (_, i) => monthOf(Date.UTC(n.getUTCFullYear(), n.getUTCMonth() - i, 1))))]
+  ];
+  const keep = new Set();
+  for (const [period, wanted] of rules) {
+    const taken = new Set();
+    for (const a of archives) {
+      const p = period(a.ms);
+      if (wanted.has(p) && !taken.has(p)) {
+        taken.add(p); // newest first, so the first seen in a period is its newest
+        keep.add(a.f);
+      }
+    }
+  }
+  const drop = archives.filter((a) => !keep.has(a.f)).map((a) => a.f);
+  const lines = [];
+  for (const f of drop) {
+    if (opts.dryRun) lines.push(`would delete ${f}`);
+    else {
+      unlinkSync(join(dir, f));
+      lines.push(`deleted ${f}`);
+    }
+  }
+  lines.push(opts.dryRun ? `Would keep ${keep.size}, would delete ${drop.length}. Nothing was deleted (dry run).` : `Kept ${keep.size}, deleted ${drop.length}.`);
+  return lines;
+}
+
 /** --name value pairs and bare words. */
 function parseArgs(argv) {
   const opts = { _: [] };
@@ -395,6 +461,7 @@ export function main(argv, env) {
     if (!opts._[1]) stop('Name the archive: restore <file> --to <empty dir>.');
     return restore(opts._[1], opts, env);
   }
+  if (cmd === 'prune') return prune(opts);
   stop('Use: backup.mjs create --out <dir> | verify <file> | restore <file> --to <empty dir> | prune --dir <dir> --keep 7d,4w,12m [--dry-run]');
 }
 
