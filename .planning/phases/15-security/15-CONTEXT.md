@@ -40,3 +40,9 @@
 - server/lib/pages.mjs merged (fixed file list, O_NOFOLLOW, security headers incl. CORP same-site and HSTS on https, CSP with 'wasm-unsafe-eval' and never 'unsafe-eval', security.txt builder, /health warnings); 7 tests; not mounted until 15-06. Server tests 444 on the merged tree, all pass; GATE_SERVER_TESTS=444 from here.
 - Chromium loaded the served portal.html under the policy with 0 violations at load; not yet run: e-sign preview, a document read, WebKit. 15-06's gate must run them (W6).
 - Open: the policy is built at server start (a page edited on disk needs a restart); esign.js's jsdelivr font fallback is refused by connect-src 'self' (only used if the shipped font fails); `CVPortalConfig.signInServer` is injected but read by no page yet (a later sign-in plan reads it).
+
+## After 15-12 (merged 2026-11-26)
+- assets/js/roles.js, server/lib/roles.mjs, server/lib/auditlog.mjs merged; 12 tests; ROLES TABLE check 3 cases. Server tests 456 on the merged tree, all pass; GATE_SERVER_TESTS=456 from here.
+- Change log entry: dh = SHA-256 of the sealed plaintext JSON { s (16 random bytes), personName, record, detail }; chain hash = sha256(JSON [prev, workspace, seq, at, personId, action, dh]); additional data audit:<workspace>:<seq>; id aud_<workspace>_<seq>. A reseal leaves the chain intact (15-03 proves it).
+- DEFAULT_PAGES exported (empty: all 21 menu pages have explicit rows). console-books has the Accountant on 'read'; the report builder is a tab inside console-reports (Accountant 'read'; 12-06's own can('operate') decides the tab). Extra rows console-offering (as Offerings) and console-envelope (as E-sign).
+- When 11-13 and 12-06 merge, rerun ROLES TABLE on the merged tree.
