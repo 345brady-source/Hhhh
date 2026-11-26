@@ -473,3 +473,207 @@ function addenda(rec) {
 **Deprecated/outdated:** a hand-written holiday table (replaced by the rule); one modifier per build.
 
 <!-- patterns, stack, pitfalls done -->
+
+## Validation Architecture
+
+`workflow.nyquist_validation` is `true` in `.planning/config.json` [VERIFIED: file read this session], so this section is required.
+
+### Test Framework
+
+| Property | Value |
+|----------|-------|
+| Pure-module checks | Node scripts in `.planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/`, each loading `assets/js/*.js` into a fresh `vm` context (phase 11 pattern, `11-*/checks/bank-files.js`), one PASS/FAIL line per case and a last line `<NAME>: PASS (cases run: N)` |
+| Independent reader | `achcli` v1.69.1, called by `lib16.js` on every generated and fixture file: `-validate-file` and `-validate-totals` must print nothing and exit 0 (or fail with the expected error for refusal cases); summaries only through `-mask` |
+| Browser checks | Playwright through `SCRATCH/exec-011/heavy.sh`, phase 06 `checks/lib.js` helpers, sandboxed iframe with connect-src blocked (`06-*/checks/no-network.js` pattern), 390x844 touch and 1280x800, `ways-out.js` |
+| Server tests | `cd server && node --test`; phase 16 adds none and changes one fixture value (C-09: `server/test/invitations.test.mjs:46`); the count stays the merged tree's |
+| Phase gate | `checks/gate16.sh` (phase 11's `gate11.sh` shape) plus `.planning/checks/gate-reference.sh` on the merged tree |
+| Quick run | `node .planning/phases/16-*/checks/nacha-build.js && node .planning/phases/16-*/checks/achreturns.js && node .planning/phases/16-*/checks/achrecord.js` |
+| Full suite | `bash .planning/phases/16-*/checks/gate16.sh` then the reference gate |
+
+### Phase Requirements -> Test Map
+
+| Req | Behaviour | Type | Command | Exists? |
+|-----|-----------|------|---------|---------|
+| AC-01 | Holiday rule = independent calendar 2025-2035 and = old table 2025-2028; next banking day; the schedule and the console use it | unit | `node checks/holidays.js` | Wave 0 |
+| AC-02 | Modifier `[A-Z0-9]` only; steps on download/copy only; 37th file of a day refused; counter per origin, destination and date | unit + browser | `node checks/nacha-build.js --case modifier` | Wave 0 |
+| AC-03 | No SEC type, unknown investor type or a wire payee: left out with a reason, never silent | unit | `node checks/nacha-build.js --case sec` | Wave 0 |
+| AC-04 | Same-day entry above the dated limit warns (amber), not split; $1,000,000.00 no warning, $1,000,000.01 warns; from 2027-09-17 the limit is $10M | unit | `node checks/nacha-build.js --case sameday` | Wave 0 |
+| AC-05 | Offset validated and required when balanced; override company ID 10 characters; reserved descriptions refused; Download and Copy disabled while a check is red | unit + browser | `nacha-build.js --case fields`, `ach-flow.js --case gating` | Wave 0 |
+| AC-06 | File record on the run (trace per entry, last four only); history shows the sent file; "Build again" needs a reason; the record-time net comparison unchanged | unit + browser | `node checks/achrecord.js --case filerecord` | Wave 0 |
+| AC-07 | Pre-notes: new or changed account -> pre-note file (23/33, $0) valid in the independent reader; live entry held until 3 banking days after; history exempts | unit + browser | `achrecord.js --case prenote`, `ach-flow.js --case prenote` | Wave 0 |
+| AC-08 | Return/NOC reader: NACHA (addenda 99/98), CSV with column map, by hand; size and line limits; malformed refused with one sentence; no network | unit | `node checks/achreturns.js` | Wave 0 |
+| AC-09 | Matching by trace, then ID + amount + date with one candidate; idempotent; line returned; account state; NOC pending until an admin confirms | unit | `achrecord.js --case returns,noc` | Wave 0 |
+| AC-10 | Books: return = cash in + payable; paid again = payable off + cash out; reconciliation matches the return credit; the 15 sample funds' packages byte-identical | unit | `node checks/posting-returns.js`, phase 11 `audit-same.js` | Wave 0 (audit-same exists) |
+| AC-11 | Investor sees "Returned by your bank" and the Account prompt; new details reset to pre-note; "Paid by wire" | browser | `ach-flow.js --case investor` | Wave 0 |
+| AC-12 | International wire details (BIC shape, IBAN mod 97), Wires list with net amounts, Mark sent, books cash line | unit + browser | `achrecord.js --case wires`, `ach-flow.js --case wires` | Wave 0 |
+| AC-13 | No checksum-valid routing number with an assigned prefix in fixtures, checks, server tests or sample data (except the listed BAI2 samples if C-09 keeps them) | scan | `node checks/ach-leak.js --case fixtures` | Wave 0 |
+| AC-14 | No full account or routing number in the change log, toasts, `achLog`, run records, help guide or check output; white label (no provider, vendor or tool name; never "basic"); mobile copy in sync; managed edition unchanged | scan + browser | `node checks/ach-leak.js`, status-math in the reference gate | Wave 0 |
+| AC-15 | Help guide entries within the caps (sponsor 48,000, investor 20,000 bytes) | server test | `cd server && node --test test/help-guide.test.mjs` | exists |
+
+### Sampling Rate
+- **Per task commit:** the plan's own check(s) (under 30 s each, no browser).
+- **Per wave merge:** `gate16.sh` (all phase 16 checks + `audit-same.js` + server tests).
+- **Phase gate:** the reference gate on the merged tree, preview build, owner-path walkthrough at phone size, then the owner's own check.
+
+### Wave 0 Gaps
+- `checks/lib16.js` (vm loader, never-issued number helper, `achcli` runner with `-mask`), `checks/achcli.sh` (pinned install, fails with the install line when missing)
+- `checks/fixtures/ach/holidays-2025-2035.txt` + `make-holidays.go` (provenance), `checks/fixtures/ach/make-fixtures.js` + the synthesized `.ach` and `.csv` files
+- `checks/nacha-build.js`, `holidays.js`, `achreturns.js`, `achrecord.js`, `posting-returns.js`, `ach-flow.js`, `ach-leak.js`, `gate16.sh`
+- No framework install for the product; Go 1.26 toolchain is fetched once by `achcli.sh`.
+
+<phase_requirements>
+## Phase Requirements
+
+| ID | Description | Traced to | Research support |
+|----|-------------|-----------|------------------|
+| AC-01 | Banking days for any year: the Federal Reserve's eleven holidays by rule (Sunday to Monday, Saturday no closure) plus a dated list of extra closed days (empty at launch); `isBankingDay`, `nextBankingDay`, `bankingDayReason` and the distribution schedule (`data.js` `bankingOnOrAfter`) use it; the 2025-2028 table removed | D-01 "bank holidays computed for any year"; F-1 | 3.1; probes `hol.js`, `holgo` |
+| AC-02 | File ID modifier: only `A-Z`, `0-9`; consumed when a file is downloaded or copied, not when previewed; counted per immediate origin, immediate destination and creation date; the 37th file of a day refused with one sentence | D-01 "file ID modifier stepping"; F-4; C-02 | 2 F-4; 3.2 |
+| AC-03 | Every entry is either in a batch of its SEC code or in "left out" with a reason: no SEC type, an investor type with no SEC code, a payee paid by wire, a held account (pre-note waiting, returned) | D-01 "entries with no SEC type"; F-2 | 2 F-2; 3.2 |
+| AC-04 | Same-day: when the effective date is the creation date, each entry above the limit for that date ($1,000,000.00 until 2027-09-16, $10,000,000.00 from 2027-09-17) gets an amber warning saying it settles the next banking day; nothing is split | D-01 "same-day ACH $1M per-entry warning"; F-3 | 3.6 |
+| AC-05 | Field checks complete and binding: settlement routing and account validated and required when "Balanced files" is ticked; an offering's company ID 10 characters; Nacha's reserved descriptions refused; Download and Copy disabled with the reason while any check is red | F-5, F-6, F-9, F-11 | 2; 3.2 |
+| AC-06 | The run's file record: when a file for a distribution is downloaded or copied, the run stores its name, modifier, creation stamp and each entry's investor, trace, amount, kind and last four; the history's "ACH file" shows that record and marks any copy as already sent; a new file for a recorded distribution needs "Build again" with a reason | F-7, F-8; C-05 | 2; 6.4 |
+| AC-07 | Pre-notes: an account added or changed is "new"; the ACH origination page builds a pre-note file ($0, codes 23/33) for every new account; a live entry to an account waits until three banking days after its pre-note's effective date (shown with that date); an account with a successful payment and no change needs none; the sponsor can turn pre-notes off | D-02 "bank accounts checked with pre-notes"; D-01 "pre-notes"; C-03, C-15 | 3.3 |
+| AC-08 | Reading returns and NOCs: a NACHA return/NOC file (addenda 99 and 98), a CSV report through a confirmed column map, or one entered by hand; refusals in one plain sentence (size, lines, not a return file, PDF); full numbers kept in memory only | D-01 "reading bank return and NOC files back in"; D-02 "return files uploaded back and matched to investors" | 6.1, 6.2, 6.5 |
+| AC-09 | Matching and effects: original trace first, then investor ID + amount + date with exactly one candidate (sponsor confirms); the same return applied once; the line marked returned with code and date; the account state per section 3.4; a NOC proposed and applied only when an admin confirms (old and new last four shown), followed by a pre-note and a notice to the investor | D-02; 3.4, 3.5 | 6.3, 6.4 |
+| AC-10 | Books and reconciliation: a returned line posts cash back in and a payable (C-07); paying it again (new entry or check) clears the payable; gross, tax withheld and net never change; phase 11's reconciliation matches the statement's return credit; the 15 sample funds' packages stay byte-identical | Phase 11 dependency (ROADMAP "Depends on"); 6.4 | 6.4; Pitfalls 5, 6 |
+| AC-11 | Investor side: a returned payment reads "Returned by your bank" with the date; the Account page asks for new bank details and the bank step takes them (new account, pre-note follows); a wire-paid line reads "Paid by wire to account ending NNNN" | D-02; F-15 | 6.4 |
+| AC-12 | Foreign accounts: "International wire" in the bank step (beneficiary, address, bank, country, BIC, IBAN or account, optional intermediary; BIC shape and IBAN check digits checked); the Distributions page's "Wires" list with each investor's net amount, details and reference, copy and download; "Mark sent" by who and when; one cash line per wire in the books | D-01 "IAT or wire instructions for foreign investors"; C-04; F-14 | 4 |
+| AC-13 | Fixture hygiene: never-issued routing numbers (unassigned prefixes, valid check digit) and `99`-prefixed account numbers in every phase 16 fixture, in the earlier checks and server test that use a bank's published number, and in the sample firms and investors | 16-CONTEXT carried rule; F-13; C-09 | 7 |
+| AC-14 | Proof and limits: the independent reader on every generated and fixture file; no full number in logs, events, toasts, run records, the guide or check output; white label (no provider, vendor or tool name, never "basic"); the mobile copy regenerated; the managed edition gets the builder fixes only (C-12); works in the no-server preview | CLAUDE.md; AUTOPILOT; F-18 | 7; Validation |
+| AC-15 | Help guide: the smallest entries that let the help chat answer the new buttons (about 440 bytes sponsor, 110 investor; section 8) | AUTOPILOT help guide cap | 8 |
+</phase_requirements>
+
+## 8. Recommended plan breakdown (waves, files)
+
+Ownership rule (as phases 10-13): a file is edited by one plan per wave; `console.js`, `portal.js`, `onboarding.js`, the three HTML pages and the help guide each have one owner plan in this phase. Plans sized for about 100k tokens each.
+
+| Wave | Plan | Delivers (requirements) | Owns (edits) | Depends on |
+|------|------|-------------------------|--------------|------------|
+| 1 | **16-01 Builder fixes** | Holiday rule + extra-days list; modifier validation; SEC refusal; same-day dated limit warning; offset validation; reserved descriptions; pre-note entries; per-entry trace in the result; `checks` split into blocking and warning; mobile copy synced; `lib16.js`, `achcli.sh`, holiday fixture from the independent calendar, `nacha-build.js`, `holidays.js` (AC-01, AC-02 builder part, AC-03, AC-04, AC-05 builder part, AC-07 entry, AC-14 reader runs) | `assets/js/nacha.js`, `mobile/src/core/nacha.js` (generated), `checks/lib16.js`, `checks/achcli.sh`, `checks/nacha-build.js`, `checks/holidays.js`, `checks/fixtures/ach/holidays-*` | - |
+| 1 | **16-02 Return and NOC reader** | `assets/js/achreturns.js` (detect, NACHA addenda 99/98, CSV column map over `NS.bankFiles.csvRows`, code tables in plain words, corrected data, limits); fixtures synthesized and each passed through the independent reader (AC-08) | `assets/js/achreturns.js` (new), `checks/achreturns.js`, `checks/fixtures/ach/make-fixtures.js` and its `.ach`/`.csv` outputs | - (uses `bankfiles.js` read-only) |
+| 1 | **16-03 Fixture hygiene** (C-09) | Never-issued numbers in `server/test/invitations.test.mjs`, the phase 01/04/05/06 checks, phase 11 fixtures `fund-a/b/c.js` and `posting.js`, `assets/js/tenants.js`, `assets/js/data.js` (`fakeRouting` prefixes, the sample trust's number); mobile copy synced; reference gate and `audit-same.js` run, any intended byte difference recorded; `ach-leak.js --case fixtures` (AC-13) | those files, `mobile/src/core/data.js`, `mobile/src/core/tenants.js` (generated), `checks/ach-leak.js` | - |
+| 2 | **16-04 ACH record** | `assets/js/achrecord.js`: file record on runs, modifier counter, account check states, pre-note eligibility (three banking days via `nacha.nextBankingDay`), match/apply returns and NOCs, admin confirmation, paid again, wires and Mark sent, which entries a file may hold (AC-02 counter, AC-06, AC-07 rules, AC-09, AC-12 record) | `assets/js/achrecord.js` (new), `checks/achrecord.js` | 16-01 (trace output), 16-02 (parsed record shape) |
+| 2 | **16-05 Books for returns** | `books-post.js` desired entries for a returned line and its second payment (C-07), reconciliation sees the cash line, sample packages unchanged (AC-10) | `assets/js/books-post.js`, `checks/posting-returns.js` | 16-04's interface block (shape only; may stub) |
+| 3 | **16-06 Console: files and pre-notes** | Distributions: gating, held entries with reasons and dates, same-day warnings, history file record and "Build again"; ACH origination: offset required, pre-notes panel and file, pre-note setting; offering override check; one hook for `ach-ui.js`; script tag for `achrecord.js` (AC-02, AC-05, AC-06, AC-07 screens) | `assets/js/console.js`, `diy.html`, `index.html`, `portal.html` (one line each), `.planning/tools/preview/` file list | 16-01, 16-04 |
+| 3 | **16-07 Investor side** | Bank step: international wire (BIC, IBAN mod 97), new details after a return; portal: returned payment, paid by wire, Account prompt (AC-11, AC-12 investor part) | `assets/js/onboarding.js`, `assets/js/portal.js` | 16-04 |
+| 4 | **16-08 Returns and wires screens** | `assets/js/ach-ui.js` (self-serve): Returns block on Distributions (upload NACHA or CSV with column confirmation, by-hand dialog, list, NOC confirmation by an admin), Wires block (list, copy, download with CSV formula guard, Mark sent); script tags for `bankfiles.js`, `achreturns.js`, `ach-ui.js` (AC-08 screen, AC-09 screen, AC-12 screen) | `assets/js/ach-ui.js` (new), `diy.html`, `index.html`, `portal.html` (script lines), preview file list | 16-02, 16-04, 16-06 (the hook) |
+| 5 | **16-09 Guide, proof and owner check** | Help guide lines (below), `help-data.js` regenerated; `ach-flow.js` (sandboxed frame, both sizes, no network, ways out), `ach-leak.js` full scan, white-label scan, `gate16.sh`, reference gate lines; preview build; owner checkpoint (AC-14, AC-15) | `server/lib/help-guide.mjs`, `.planning/tools/preview/help-data.js` (generated), `checks/ach-flow.js`, `checks/ach-leak.js` (extends), `checks/gate16.sh`, `.planning/checks/gate-reference.sh` (lines only) | all |
+| 6 | **16-10 The owner's inputs** (waits for the owner, as 11-17 does) | His bank's ACH origination guide (immediate origin, company ID form, balanced or not), a masked return/NOC report export from his bank (CSV map and wording), and, if he wants, a test upload at his bank; each applied when it arrives | as each input needs | 16-09 |
+
+Shared files and their single owners: `console.js` 16-06; `portal.js`, `onboarding.js` 16-07; `diy.html`/`index.html`/`portal.html` 16-06 (wave 3) and 16-08 (wave 4), different waves; `data.js`/`tenants.js` 16-03; `books-post.js` 16-05; help guide 16-09. `mobile/src/core/*` regenerated by the plan that edits the source.
+
+**Help guide (sponsor guide at 46,698 of 48,000 bytes on this tree, measured this session; investor guide 15,436 of 20,000; other phases' pending entries compete for the same 1,302 bytes, AUTOPILOT.md lines 76-78).** Recommended lines, measured at 451 bytes for the three sponsor lines as source strings (about 440 bytes of guide text) and 120 bytes for the investor line:
+- Distributions entry: `"Pre-notes" builds a $0 file that checks new bank accounts; an account is paid 3 banking days after its pre-note, unless the bank returns it.`
+- Distributions entry: `"Returns" reads the bank's return or change file (or enter one by hand): a returned payment is owed again and its account waits for new details; a change updates the account.`
+- Distributions entry: `Foreign investors paid by wire are listed in "Wires" with the amount and bank details to enter at your bank.`
+- Investor guide: `If your bank sends back a payment, Account asks you to update your bank details; the payment is then sent again.`
+If the sponsor guide test fails at 16-09's merge, the guide-trim quick task recorded in AUTOPILOT.md runs first; the cap is not raised.
+
+## 9. Choices the orchestrator must make (each with the recommended default)
+
+| ID | Choice | Recommended default | Why |
+|----|--------|---------------------|-----|
+| C-01 | Holiday source | The rule plus an empty dated list of extra closed days | Works for any year (D-01); reproduces the old table exactly; agrees with an independent calendar 2025-2035 |
+| C-02 | When a file ID modifier is used | On download or copy only; counted per origin, destination and creation date; the 37th file of a day refused | Previews never collide with real files; no silent wrap |
+| C-03 | Pre-notes | On by default: every new or changed account gets one; live entries wait three banking days after its effective date; accounts with a successful payment and no change exempt; a sponsor setting turns them off | D-02 chose pre-notes to check accounts; the wait is the rule once one is sent; the after-change pre-note is the sponsor's fraud control (3.7) |
+| C-04 | Foreign accounts | International wire details and a Wires list; no IAT files at launch | Most small banks cannot accept IAT; a wire works at every bank (section 4) |
+| C-05 | What a recorded distribution keeps of its file | The file record (name, modifier, stamp, per entry investor, trace, amount, kind, last four); never the file text | Matching returns needs the trace; the text holds every full number |
+| C-06 | Debit files for capital calls | Not at launch; calls stay on wire | Regulation E authorization and copy, Nacha WEB validation, the bank's debit approval, R01/R10 risk; Stripe later (D-02) |
+| C-07 | Where a returned distribution sits in the books | Existing `2000 Accounts payable and accrued expenses` (memo "Returned distribution"), cleared when paid again | No chart change, so the sample funds' packages stay byte-identical; a CPA's read (11-17) can move it to its own account later |
+| C-08 | Routing-number prefix test | Not added (checksum only, as today) | The check digit already catches every single-digit typo; a prefix test would refuse the never-issued fixture numbers the owner's rule requires |
+| C-09 | Fixture hygiene scope | Replace every bank-published routing number in the portal's own fixtures, checks, server test and sample data in one plan with the gate run (16-03); keep phase 11's two BAI2 samples byte for byte (an outside project's published test data under its licence) and tell the owner | Owner rule: never a real bank number in fixtures; the BAI2 samples are proven only as copied |
+| C-10 | Keep the uploaded return file? | No: name, size and SHA-256 only | It holds full account numbers |
+| C-11 | Show a return-rate figure | No (no extra text on screens); the sponsor's bank monitors Nacha's rates | Owner's rule against bloat |
+| C-12 | Editions | Builder fixes (AC-01 to AC-06) in both editions; pre-notes, returns and wires in the self-serve edition only, through `ach-ui.js` | Fixes prevent wrong or duplicate files everywhere; the managed edition stays unchanged otherwise (status-math slice guard) |
+| C-13 | Redemption payouts by NACHA file (`operations.js:308` says "by ACH" but builds no file) | Not in this phase; recorded for the owner | Not in D-01's list; one more plan if he wants it |
+| C-14 | Holiday-aware business days in `operations.js` and `books-bank.js` | Leave as they are | Not money movement; changing them moves phase 11 checks |
+| C-15 | Where pre-notes go | Their own pre-note file from the ACH origination page (count shown), not mixed into distribution files | One purpose per file; the sponsor sees exactly what is being checked |
+| C-16 | How the investor hears of a bank change or a returned payment | A portal notice plus the change log; an email through phase 13's renderer once that is merged and a server is connected | Works with no server; nothing claims an email was sent |
+
+## Assumptions Log
+
+| # | Claim | Section | Risk if wrong |
+|---|-------|---------|---------------|
+| A1 | The eleven Federal Reserve holidays as listed | 3.1 | Low: reproduces the code's table and an independent calendar |
+| A2 | Banks key duplicate-file detection on origin, destination, date and modifier | 2 F-4, F-7 | A rebuilt file could still be caught or missed differently; the file record makes it moot |
+| A3 | Reserved descriptions beyond PAYROLL, PURCHASE, ACCTVERIFY | 2 F-11 | A word refused needlessly, or one missed |
+| A4 | A trust account stays PPD | 3.2 | A bank could prefer CCD; no return expected for it |
+| A5 | Debit pre-note codes 28/38; pre-note returns come back as R/C codes like payments | 3.2, 3.3 | Only matters for debits (not built) and the reader's tables |
+| A6 | IAT entries are not same-day eligible; few small banks originate IAT; international wire fee $35-$50 | 3.6, 4 | Only affects wording and the C-04 rationale |
+| A7 | Regulation E 1005.10(d) notice of varying amounts (10 days) | 5 | Only if debits are built |
+| A8 | Banks' return report formats (NACHA, CSV, PDF) and the statement showing one return credit | 6.2 | The CSV map may need the owner's bank export (16-10) |
+| A9 | A return leaves gross, withheld and net unchanged; the amount is a payable | 6.4 | A CPA may want another treatment (11-17 read) |
+| A10 | BIC shape and IBAN mod 97 rules | 4 | A valid foreign number refused or a wrong one accepted |
+| A11 | Juneteenth from 2021 | Code Examples | None for 2025 onward |
+| A12 | Wise delivery time 1-2 days | 1 | Information only |
+
+## Open Questions (each with the default used if the owner does not answer in 15 minutes)
+
+1. **His bank's ACH implementation guide** (immediate origin form, company ID, balanced or not). What we know: the builder's fields match the standard and an independent reader. Unclear: the owner's bank's preferences. Default: build to the standard; 16-10 applies the guide when it arrives.
+2. **A masked return/NOC report from his bank.** Default: the CSV map is guessed and confirmed by the sponsor; NACHA return files are read exactly.
+3. **Keep phase 11's two BAI2 samples (C-09)?** Default: keep (outside project's published test data, byte for byte, licensed).
+4. **Redemptions by file (C-13)?** Default: not in this phase.
+
+## Environment Availability
+
+| Dependency | Required by | Available | Version | Fallback |
+|------------|------------|-----------|---------|----------|
+| Node | all checks | yes | v22.23.4 | - |
+| Go | `achcli.sh` (independent reader), holiday fixture generation | yes | go1.24.7, fetched go1.26 toolchain automatically | none: the check fails with the install line |
+| proxy.golang.org | first `achcli` install only | yes (install succeeded this session) | - | a pre-built binary path via `ACHCLI=` |
+| Playwright / Chromium | browser checks | yes (phases 06-13 checks use it) | not measured | - |
+| Python 3 | phase 11 workbook checks (unchanged) | yes | 3.13.18 | - |
+| Vendor pricing pages (stripe.com, dwolla.com, moov.io, moderntreasury.com), nacha.org, frbservices.org | research only | no (hosts outside this session's allowed network) | - | search excerpts, tagged; to be re-read by the owner before any paid choice |
+
+**Missing dependencies with no fallback:** none for building. **With fallback:** the vendor and rule pages (search excerpts used).
+
+## Security Domain
+
+| ASVS Category | Applies | Standard control |
+|---------------|---------|------------------|
+| V2 Authentication | no (unchanged) | - |
+| V4 Access Control | yes | Applying a NOC, marking an account fixed, "Build again" and "Mark sent": admin in the self-serve edition (the role that may configure), logged with who and when |
+| V5 Input Validation | yes | Return/NOC reader: size and line limits before parsing, 94-character records, codes from fixed tables, no eval, no DOM parser; CSV through the existing splitter; IBAN/BIC/routing checks; wire-list CSV cells starting with `=`, `+`, `-`, `@` prefixed with `'` |
+| V6 Cryptography | yes (fingerprint only) | `NS.audit.sha256`; never hand-rolled |
+| V7 Errors and Logging | yes | Change log and toasts carry last four only; check output through `achcli -mask` |
+| V8 Data Protection | yes | Full numbers only in `investor.payment.bank`; files never stored |
+
+| Threat | STRIDE | Mitigation |
+|--------|--------|-----------|
+| Email-borne bank-detail change (payment fraud) | Spoofing | Pre-note after every change (C-03), notice to the investor, change log |
+| A forged NOC file redirecting payments | Tampering | NOCs only proposed; an admin confirms with old and new last four; pre-note follows |
+| The same file uploaded twice at the bank | Repudiation / financial loss | File record per run; marked copies; "Build again" with a reason |
+| A crafted return or CSV file | Denial of service / injection | Limits, fixed tables, no evaluation; refusal in one sentence |
+| Full numbers in logs or check output | Information disclosure | Last four only; `ach-leak.js`; `-mask` |
+
+## Sources
+
+### Primary (read in full this session)
+- Repository files: `assets/js/nacha.js`, `assets/js/console.js` (lines 15, 136-137, 726, 1067-1500, 3211-3280), `assets/js/data.js` (96-140, 185, 200-232, 425-610, 675-700), `assets/js/operations.js` (1-40, 200-225, 280-312), `assets/js/onboarding.js` (429-470, 527-569), `assets/js/portal.js` (171, 916-917, 1131-1156), `assets/js/bankfiles.js`, `assets/js/books-bank.js` (1-71), `assets/js/books-post.js` (headers), `assets/js/tenants.js` (ACH blocks), `mobile/scripts/sync-core.js`, `server/lib/help-guide.mjs`, `server/test/help-guide.test.mjs:120-135`, `.planning/phases/11-*/checks/fixtures/bank/real/SOURCE.txt`, `.planning/config.json`, `.planning/AUTOPILOT.md`, `.planning/ROADMAP.md` (phases 10, 11, 16), `16-CONTEXT.md`.
+- moov-io/ach v1.69.1 module (Apache-2.0): `addenda99.go` (layout, return codes 344-422), `addenda98.go` (layout 118-143, change codes 246-266, corrected data 326-480), `LICENSE`, `NOTICE`, `go.mod`, `test/testdata/cor-example.ach`; `achcli` run on generated and synthesized files.
+- moov-io/base v0.68.3 `time.go` (`IsBankingDay`), run against the holiday rule for 2025-2035.
+
+### Secondary (search excerpts; the pages themselves could not be opened from this session)
+- Nacha: [Same Day ACH $1M rule](https://www.nacha.org/million), [$1M guidance](https://www.nacha.org/sites/default/files/2022-03/Same_Day_ACH_Guidance_%241M.pdf), [$10M rule](https://www.nacha.org/rules/increasing-same-day-ach-dollar-limit-10-million-0), [$10M news](https://www.nacha.org/news/same-day-ach-payment-limit-increase-10-million), [Banking day RFI (pre-note wait)](https://www.nacha.org/rules/request-information-definition-banking-day-and-related-operational-topics), [Company entry descriptions](https://www.nacha.org/rules/risk-management-topics-company-entry-descriptions), [Micro-entries](https://www.nacha.org/micro-entries), [WEB debit fraud detection](https://nacha.org/rules/supplementing-fraud-detection-standards-web-debits), [IAT FAQ](https://www.nacha.org/content/international-ach-transactions-faqs), [Unauthorized return rate](https://www.nacha.org/system/files/2021-03/Unauthorized-Return-Rate-Mar-2021.pdf), [Summary of upcoming rule changes](https://www.nacha.org/content/summary-upcoming-rule-changes)
+- Federal Reserve: [Holiday schedules](https://www.frbservices.org/about/holiday-schedules), [K.8 holidays](https://www.federalreserve.gov/aboutthefed/k8.htm), [2026 FedACH holiday notice](https://frbservices.org/news/fed360/issues/121625/ach-2026-holiday-schedule), [Same Day ACH FAQ](https://frbservices.org/resources/financial-services/ach/faq/same-day-ach.html), [FedACH processing schedule](https://frbservices.org/resources/resource-centers/same-day-ach/fedach-processing-schedule.html), [IAT FAQ](https://www.frbservices.org/resources/financial-services/ach/faq/iat.html), [FedACH 2026 fees](https://frbservices.org/resources/fees/ach-2026)
+- CFPB: [Regulation E 1005.10](https://www.consumerfinance.gov/rules-policy/regulations/1005/10/) and [its commentary](https://www.consumerfinance.gov/rules-policy/regulations/1005/interp-10/)
+- Bank rule summaries: [Capitol Federal NOC rules](https://www.capfed.com/business/treasury-management/true-blue-online-business/ach-rules), [Regions 2026 changes](https://www.regions.com/insights/commercial/article/2026-nacha-rule-changes), [JPMorgan rule changes](https://www.jpmorgan.com/payments/client-resource-center/industry/nacha-rule-changes), [FNBO 2024 rules](https://fnbo.com/content/dam/fnbo/documents/commercial/2024-nacha-rules-update.pdf)
+- Prices: [Stripe pricing](https://stripe.com/pricing), [Stripe Connect pricing](https://stripe.com/connect/pricing), [NerdWallet Stripe fees](https://www.nerdwallet.com/business/software/learn/stripe-fees), [Dwolla pricing](https://dwolla.com/pricing), [NerdWallet Dwolla review](https://www.nerdwallet.com/business/software/learn/dwolla), [Moov pricing](https://moov.io/pricing), [Modern Treasury pricing](https://moderntreasury.com/pricing), [Plaid billing](https://plaid.com/docs/account/billing/), [Wise batch payments](https://wise.com/us/blog/everything-about-batch-payments), bank fee schedules ([Baker Boyer](https://www.bakerboyer.com/business-banking/cash-management-services/ach-origination-services), [Forbright](https://www.forbrightbank.com/business-banking/fee-schedule/), [NVB](https://www.nvb.com/cash-management-fee-schedule), [Grasshopper](https://www.grasshopper.bank/forward-checking-commercial-fee-schedule/))
+- Routing numbers: [Routing transit number (Wikipedia)](https://en.wikipedia.org/wiki/Routing_transit_number); lookup sites for 021000021 (e.g. [bank-code.net](https://bank-code.net/routing-numbers/021000021-jpmorgan-chase))
+
+### Tertiary (low confidence, marked where used)
+- Study-guide and vendor-marketing pages quoted by the search excerpts (open-exam-prep.com, card-network articles, competitor comparison pages).
+
+## Metadata
+
+**Confidence breakdown:**
+- In-repo defects and the file format: HIGH - every file read; generated files parsed by an independent reader.
+- Holiday rule: HIGH - matches the old table and an independent calendar for 2025-2035.
+- Nacha and Federal Reserve rules: MEDIUM - search excerpts of the official pages; the pages themselves could not be opened.
+- Prices: LOW - search excerpts, several third-party; re-read on vendor pages before a paid choice.
+- IAT vs wire and debits: MEDIUM - rules cited; bank practice assumed.
+
+**Research date:** 2026-11-26
+**Valid until:** 2026-12-26 for prices and rules (Nacha changes take effect in March, June and September; the $10M limit on 2027-09-17).
+
+<!-- research complete -->
