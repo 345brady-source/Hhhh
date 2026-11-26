@@ -448,8 +448,8 @@ const parts = {
     await fr.fill('input[data-cap="D-1001"]', '700,000.00');
     await fr.fill('input[data-cap="D-1002"]', '349,999.99');
     await fr.waitForTimeout(200);
-    const ob = await fr.innerText('#bk-o-offby').catch(() => '');
-    check('lines that do not balance show "Off by $0.01"', ob.trim() === 'Off by $0.01', ob);
+    p = await page(fr);
+    check('lines that do not balance show "Off by $0.01"', p.offby === 'Off by $0.01', p.offby);
     await shot(A, 'opening-desktop');
     await T.press(fr, '[data-action=bk-o-save]');
     await fr.waitForTimeout(600);
