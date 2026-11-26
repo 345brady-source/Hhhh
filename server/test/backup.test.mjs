@@ -268,6 +268,8 @@ function mixedStore(dir, k1, k2) {
   const s1 = (value, aad) => oldFormat(v1.seal(value, aad));
   const file = join(dir, 'live', 'store.json');
   const st = openStore(file);
+  const d = st.data();
+  d.inbox = d.inbox || {}; // lib/inbox.mjs makes its collection through store.data()
   const plain = {};
   const ws = 'harbor-ridge-capital';
   plain['invitations/inv_1/snapshot'] = [{ investor: { name: 'Avery Testinvestor' } }, 'inv_1:snapshot'];
@@ -286,7 +288,6 @@ function mixedStore(dir, k1, k2) {
   plain['inbox/ixm_1/sealed'] = [{ author: 'Avery Testinvestor', body: 'Hello' }, 'inbox:ixm_1:sealed'];
   st.put('inbox', { id: 'ixm_1', sealed: s1(...plain['inbox/ixm_1/sealed']) });
   // 15-01's people record: sealed email and name, an email index under a key derived from DATA_KEY.
-  const d = st.data();
   d.people = d.people || {};
   plain['people/per_1/email'] = ['Pat@HarborRidge.example', 'person:per_1:email'];
   plain['people/per_1/name'] = ['Pat Owner', 'person:per_1:name'];
