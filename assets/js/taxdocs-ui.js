@@ -17,7 +17,8 @@
  *
  * Sections later plans add (withholding, the investor's tax record, Form 1099, the link to the server) are their own
  * scripts beside this one, registered with NS.taxUI.part(key, { order, title, summary(ws) -> html or '',
- * render(ws, rest) -> html }): the list page draws each summary line with a link to console-taxdocs-<key>, and that
+ * render(ws, rest) -> html, shown(ws) -> boolean (optional; false: no line on the list) }): the list page draws each
+ * summary line with a link to console-taxdocs-<key>, and that
  * address draws render() under the bar with Back. The scripts are a fixed list (PARTS), added in their order when this
  * file loads; one that does not load is left out for that visit and nothing is shown for it. No file name comes from data
  * or from the address.
@@ -154,13 +155,13 @@
   /* ---------- sections other files add (NS.taxUI) ---------- */
   const HERE = (document.currentScript && document.currentScript.src) || '';
   // Only files that are shipped: a part not in the build would be asked for, and refused, on every page load
-  // (06-WALKTHROUGH-3 failure 4). Plan 10-10 adds 'tax1099-ui.js' back after 'tax1099.js', plan 10-12 adds 'taxlink.js' last.
-  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js', 'taxlink.js']);
+  // (06-WALKTHROUGH-3 failure 4). Plan 10-10 added 'tax1099-ui.js' after 'tax1099.js'; plan 10-12 added 'taxlink.js' last.
+  const PARTS = Object.freeze(['withholding.js', 'withholding-ui.js', 'taxdocs-investor.js', 'taxrecord-ui.js', 'tax1099.js', 'tax1099-ui.js', 'taxlink.js']);
   const parts = {};
   const load = { settled: false, waiting: false };
   function part(key, spec) {
-    if (!/^[a-z][a-z0-9]*$/.test(String(key)) || key === 'batch' || !spec || typeof spec.render !== 'function') return false;
-    parts[key] = { key, order: Number(spec.order) || 0, title: String(spec.title || ''), summary: typeof spec.summary === 'function' ? spec.summary : null, render: spec.render };
+    if (!/^[a-z0-9]+$/.test(String(key)) || key === 'batch' || !spec || typeof spec.render !== 'function') return false;
+    parts[key] = { key, order: Number(spec.order) || 0, title: String(spec.title || ''), summary: typeof spec.summary === 'function' ? spec.summary : null, render: spec.render, shown: typeof spec.shown === 'function' ? spec.shown : null };
     return true;
   }
   /** One script from beside this file; resolves to whether it loaded. */
@@ -240,12 +241,13 @@
   const linkLine = (ws, doc) => (doc && connected(ws) && typeof API.link.rowLine === 'function' ? from(API.link.rowLine, ws, doc) : '');
   const sorted = () => Object.values(parts).sort((a, b) => a.order - b.order || a.key.localeCompare(b.key));
   function partsHTML(ws) {
-    const list = sorted();
+    // a section may say it has nothing for this workspace (shown(ws) false): no line on the list then (plan 10-10)
+    const list = sorted().filter((x) => !x.shown || from(x.shown, ws));
     return list.length ? CK().panel('', `<ul class="tx-list" data-list="parts">${list.map((x) => `<li class="tx-row"><div class="tx-what"><a class="tx-title" href="#${ROUTE}-${x.key}">${h(x.title)}</a>${x.summary ? `<span class="tx-detail">${from(x.summary, ws)}</span>` : ''}</div></li>`).join('')}</ul>`) : '';
   }
   /** A section's page: console-taxdocs-<key>[-<rest>]; null when no such section is registered. */
   function partHTML(ws, param) {
-    const m = /^([a-z][a-z0-9]*)(?:-(.*))?$/.exec(String(param || ''));
+    const m = /^([a-z0-9]+)(?:-(.*))?$/.exec(String(param || ''));
     if (!m || m[1] === 'batch' || !Object.prototype.hasOwnProperty.call(parts, m[1])) return null;
     const x = parts[m[1]];
     return `<div class="tx"><div class="tx-bar"><a class="tx-back" href="#${ROUTE}">Back</a><h1>${h(x.title)}</h1></div>${from(x.render, ws, m[2] || '')}</div>`;
