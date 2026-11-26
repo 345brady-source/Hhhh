@@ -374,9 +374,10 @@ function compareReadme(bt, tt, x) {
 }
 
 /* ---------- one side: the portal, its sample workspaces ---------- */
-function side(root, edition, extra) {
+function side(root, edition, extra, firm) {
   const NS = LD().loadPortal(root, { today: TODAY, edition, extra });
-  const wss = LD().sampleWorkspaces(NS).filter((ws) => !FIRM || ws.tenant.id === FIRM);
+  const only = firm || FIRM;
+  const wss = LD().sampleWorkspaces(NS).filter((ws) => !only || ws.tenant.id === only);
   return { NS, wss };
 }
 const clone = (NS, ws) => NS.util && NS.util.clone ? NS.util.clone(ws) : JSON.parse(JSON.stringify(ws));
@@ -396,10 +397,10 @@ function exportOf(NS, ws, o, p) {
  * The comparison over every sample fund of both sides in one edition. mutate(NS, ws) changes the tree side's
  * workspaces before anything is built. Returns { funds, schedules, zips, same, mismatches, hashes }.
  */
-function compare(base, edition, mutate) {
+function compare(base, edition, mutate, firm) {
   const extra = treeExtras(base);
-  const A = side(base, edition, []);
-  const T = side(ROOT, edition, extra);
+  const A = side(base, edition, [], firm);
+  const T = side(ROOT, edition, extra, firm);
   const changed = [];
   if (mutate) {
     T.wss.forEach((ws) => {
@@ -560,6 +561,7 @@ const parts = {
     check(`an empty --case list: a FAIL line and exit 1 (exit ${n.status})`, n.status === 1 && /^FAIL no cases to run/m.test(n.out), n.out.slice(-400));
     zipRules(check);
     noticeRules(check);
+    booksRules(check);
   }
 };
 
@@ -777,6 +779,43 @@ function noticeRules(check) {
   const rg = compareZip(exportOf(T.NS, wt, ob, pg), exportOf(T2.NS, wg, og, pg));
   const off = firmExpect(T.NS, wt);
   report(`(g) this tree's Kestrel Bay as the base (rule off: ${off === null}), ${cg.id} noticed one business day earlier (${cg.noticeDate}) in the tree: the itd log schedule differs (${sha(sb) !== sha(sg)}) and the package is reported`, rg, off === null && sha(sb) !== sha(sg));
+}
+
+/** One manual journal entry of one cent (Other expenses debit, Cash credit) in an offering's books, written as stored data. */
+function addBookCent(offeringId) {
+  return (NS, ws) => {
+    const o = (ws.offerings || []).find((x) => x.id === offeringId);
+    if (!o) return null;
+    const p = NS.audit.presets(ws, o).find((x) => x.id === 'fy');
+    if (!ws.books || typeof ws.books !== 'object') ws.books = { v: 1, funds: {} };
+    if (!ws.books.funds) ws.books.funds = {};
+    const f = (ws.books.funds[offeringId] = ws.books.funds[offeringId] || {});
+    if (!Array.isArray(f.journal)) f.journal = [];
+    f.journal.push({ id: 'je-' + String(f.journal.length + 1).padStart(6, '0'), date: p.to, memo: 'AUDIT SAME selfcheck: one cent', src: 'manual:audit-same-selfcheck', lines: [['5900', 1], ['1000', -1]], at: TODAY + 'T12:00:00.000Z', by: 'AUDIT SAME selfcheck' });
+    return `${offeringId}: one manual journal entry of one cent dated ${p.to} (5900 debit 1, 1000 credit 1)`;
+  };
+}
+
+/**
+ * The books on both sides (11-12 B1: build syncs every fund, and schedules 20 to 24 come from the journal): this tree
+ * against itself, Kestrel Bay, diy. With nothing changed nothing is reported and no schedule is this tree's alone; one
+ * cent in kb-fund-ii's journal on the tree side must be reported, naming the fund and the trial balance.
+ */
+function booksRules(check) {
+  const KB = 'kestrel-bay';
+  const listed = LD().listedScripts(ROOT);
+  const NS = LD().loadPortal(ROOT, { today: TODAY, edition: 'diy' });
+  const files = NS.__load11.files;
+  const books = listed.filter((f) => files.indexOf(f) >= 0 && /\bNS\.books\b/.test(fs.readFileSync(path.join(ROOT, 'assets/js', f), 'utf8')) && f !== 'audit.js' && f !== 'operations.js');
+  check(`books loaded: this tree's side loads the scripts its page lists that build NS.books (${books.join(', ') || 'none'}), and NS.books.sync and NS.books.trialBalance exist`, books.length > 0 && !!(NS.books && NS.books.sync && NS.books.trialBalance), files.join(', '));
+  const r0 = compare(ROOT, 'diy', null, KB);
+  const ids = new Set();
+  r0.hashes.forEach((h) => ids.add(h.split(' ')[3]));
+  check(`books unchanged: this tree against itself (Kestrel Bay, diy) reports nothing (${r0.schedules} schedules, ${r0.zips} packages); schedules compared: ${Array.from(ids).join(', ')}`, r0.schedules > 0 && !r0.mismatches.length && ids.has('tb'), r0.mismatches.slice(0, 4));
+  const r = compare(ROOT, 'diy', addBookCent('kb-fund-ii'), KB);
+  check(`books changed: ${r.mutated.join(', ') || 'nothing changed'}`, r.mutated.length === 1);
+  const hit = r.found.filter((f) => f.fund === 'kb-fund-ii' && f.schedules.indexOf('tb') >= 0);
+  check(`books reported: the one-cent journal entry is reported naming kb-fund-ii and the trial balance (${r.found.filter((f) => f.fund === 'kb-fund-ii').map((f) => `${f.period}: ${f.schedules.join(', ')}`).join('; ') || 'nothing reported'})`, hit.length > 0, r.mismatches.slice(0, 4));
 }
 
 L6.runParts(parts, { name: 'AUDIT SAME', unit: 'cases', flag: '--case' });
