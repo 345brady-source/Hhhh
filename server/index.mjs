@@ -58,6 +58,7 @@ import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
 import { createTaxDocs } from './lib/taxdocs.mjs';
 import { createAccounts } from './lib/accounts.mjs';
+import { createAuth } from './lib/auth.mjs';
 import { createBilling } from './lib/billing.mjs';
 import { createFilings } from './lib/filings.mjs';
 import { createIntake } from './lib/intake.mjs';
@@ -176,6 +177,7 @@ export function createServer(opts = {}) {
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   const accounts = createAccounts({ store, now });
+  const signin = createAuth({ env, store, vault: invites.vault, now, clientOf: (req) => clientOf(req, env), invites, accounts }); // people, passwords and the session cookie (plan 15-01)
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
   const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
@@ -697,6 +699,8 @@ export function createServer(opts = {}) {
     if (req.method === 'OPTIONS') return send(res, 204, '');
 
     if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS), reader: await readerOn() });
+    // Sign-in (lib/auth.mjs): before every token dispatch, so an invitation token sent to POST /v1/invite/login reaches it.
+    if (path.startsWith('/v1/auth/') || (req.method === 'POST' && path === '/v1/invite/login')) return signin.handle(req, res, path);
 
     // Provider callbacks: verify the signature over the exact bytes received, then update the record.
     const hook = path.match(/^\/webhooks\/([a-z0-9]+)$/);
@@ -987,10 +991,11 @@ export function createServer(opts = {}) {
   const server = http.createServer((req, res) =>
     route(req, res).catch((e) => {
       if (!e.status && env.NODE_ENV !== 'test') console.error(e);
-      if (!res.headersSent) send(res, e.status || 502, { error: e.status ? e.message : `Provider request failed: ${e.message}` });
+      if (!res.headersSent) send(res, e.status || 502, e.status && e.body ? e.body : { error: e.status ? e.message : `Provider request failed: ${e.message}` }); // e.body: lib/auth.mjs's refusals ({ error, code })
     })
   );
   server.store = store;
+  server.signin = signin;
   server.invitations = invites;
   server.taxdocs = taxdocs;
   server.on('close', () => invites.stop());
