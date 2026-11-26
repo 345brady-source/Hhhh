@@ -197,3 +197,9 @@
 - (small fixes, merged 2026-11-20; server tests 389) Every provider failure on a package start now returns 502 with the plain sentence. Queued after 08-19 merges (it owns integrations.js): the client adds the firm's contact line on any package start failure, and package-flow's `refused` part asserts it.
 - (08-17, merged 2026-11-20) Open, small fix queued with the contact-line follow-up after 08-19: a closed, never-sent invitation's row says "Sent <time>" under Activity (the label only says "Created" while the status is `sent`); replaceUsed now creates such rows. Show "Created <time>" for an invitation that was never sent.
 - CO-INVESTOR SERVER (06-39's check) failed once in 5 runs (part cosign-forged) while every browser slot was busy; it passed in the resumed gate and 3 more times alone. Watch it in the merged-tree gate; if it fails again, a debugger looks at its fixed waits.
+
+## After 08-19 (merged 2026-11-26)
+- Package screening screens the invitation's names plus up to 5 stored role names (beneficial owners or the joint holder), stored sealed before the screening; the console's "N names screened" shows the server's count. Tested against stand-ins only; per-name billing unconfirmed (R11, 08-12).
+- Gate GATE_EXIT=0 on 0a72858 (resumed after the 2026-11-20 stop); the owner-screenshot check fix (86991b3) passed alone (PACKAGE NAMES 4 parts). Server tests 408 on the merged tree (403 + 5), all pass; GATE_SERVER_TESTS=408 from here.
+- 08-18 merges second: it merges claude/refract-reskin and re-runs step0 before its merge.
+- Owner's iPhone check: an entity investor's link, profile step to identity step, same fields as before, "Second beneficial owner" still Optional, no error text.
