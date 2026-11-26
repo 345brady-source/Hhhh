@@ -43,7 +43,68 @@ const hashOf = (prev, m) => sha256(chainText(prev, m));
 export function fileKind(name, bytes) {
   const b = Buffer.from(bytes || []);
   if (b.length >= 5 && b.subarray(0, 5).toString('latin1') === '%PDF-') return 'pdf';
+  if (b.length >= 8 && b.subarray(0, 8).equals(PNG_SIG)) return 'png';
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpeg';
+  if (b.length >= 4 && b.subarray(0, 4).equals(ZIP_LOCAL)) {
+    const parts = zipNames(b);
+    if (parts.has('[Content_Types].xml') && parts.has('xl/workbook.xml')) return 'xlsx';
+    if (parts.has('[Content_Types].xml') && parts.has('word/document.xml')) return 'docx';
+    return '';
+  }
+  if (/\.csv$/i.test(String(name || '')) && plainText(b)) return 'csv';
   return '';
+}
+const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const ZIP_LOCAL = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
+const ZIP_CENTRAL = Buffer.from([0x50, 0x4b, 0x01, 0x02]);
+/** The part names a zip's local file headers and central directory carry (nothing is decompressed). */
+function zipNames(b) {
+  const names = new Set();
+  const scan = (sig, lenAt, nameAt) => {
+    for (let i = b.indexOf(sig); i >= 0 && names.size < 10000; i = b.indexOf(sig, i + 4)) {
+      if (i + nameAt > b.length) break;
+      const n = b.readUInt16LE(i + lenAt);
+      if (i + nameAt + n <= b.length) names.add(b.subarray(i + nameAt, i + nameAt + n).toString('utf8'));
+    }
+  };
+  scan(ZIP_LOCAL, 26, 30);
+  scan(ZIP_CENTRAL, 28, 46);
+  return names;
+}
+/** Valid UTF-8 with no control byte other than tab, CR and LF. */
+function plainText(b) {
+  for (const c of b) if (c < 0x20 && c !== 9 && c !== 10 && c !== 13) return false;
+  try {
+    new TextDecoder('utf-8', { fatal: true }).decode(b);
+    return true;
+  } catch {
+    return false;
+  }
+}
+const KIND_LIST = { party: 'PDF, PNG or JPEG', firm: 'PDF, PNG, JPEG, XLSX, CSV or DOCX' };
+/** null, or the one sentence the browser's NS.inbox.checkFiles gives for [{ name, size, kind }] on that side. */
+export function checkFiles(list, side) {
+  const files = list || [];
+  const s = side === 'firm' ? 'firm' : 'party';
+  if (files.length > LIMITS.files) return 'A message can carry at most 5 files.';
+  for (const f of files) if (f.size > LIMITS.file) return `${f.name} is larger than 10 MB.`;
+  if (files.reduce((n, f) => n + f.size, 0) > LIMITS.total) return 'The files together are larger than 25 MB.';
+  for (const f of files) if (!TYPES[s].includes(f.kind)) return `${f.name} is not a file type messages accept: ${KIND_LIST[s]}.`;
+  return null;
+}
+const SCREEN = {
+  bank: 'Bank and taxpayer numbers are not sent in messages. Payment instructions are on the capital call.',
+  password: 'Passwords are never sent in messages.',
+  party: 'Do not send taxpayer or bank numbers in a message; your Account page is the place for them.'
+};
+/** null when clean; firm: { refuse: true, reason }; party: { warn: true, reason } (C-11). */
+export function screen(text, side) {
+  const s = String(text || '');
+  const number = PATTERNS.slice(0, 3).some((re) => re.test(s));
+  const password = PATTERNS[3].test(s);
+  if (!number && !password) return null;
+  if (side !== 'firm') return { warn: true, reason: SCREEN.party };
+  return { refuse: true, reason: number ? SCREEN.bank : SCREEN.password };
 }
 
 const fail = (status, message, extra) => Object.assign(new Error(message), { status, extra: extra || null });
@@ -67,10 +128,16 @@ function parseObject(raw) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw fail(400, 'The request body must be a JSON object');
   return body;
 }
-function decode64(s) {
+/** Strict base64; the 10 MB limit is checked before and after decoding (413 with the browser's sentence). */
+function decode64(s, name) {
   if (typeof s !== 'string') throw fail(400, 'An attachment must be base64.', { field: 'attachments' });
   const b64 = s.replace(/^data:[\w.+/-]+;base64,/, '').replace(/\s+/g, '');
-  return Buffer.from(b64, 'base64');
+  if (!/^[A-Za-z0-9+/_-]*={0,2}$/.test(b64) || b64.length % 4 === 1) throw fail(400, 'An attachment must be base64.', { field: 'attachments' });
+  const tooBig = () => fail(413, `${fileName(name)} is larger than 10 MB.`, { field: 'attachments' });
+  if (Math.floor((b64.length * 3) / 4) > LIMITS.file + 3) throw tooBig();
+  const buf = Buffer.from(b64.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+  if (buf.length > LIMITS.file) throw tooBig();
+  return buf;
 }
 
 export function createInbox({ env = {}, store, vault, now = () => Date.now(), limited = () => false, notify = null } = {}) {
@@ -134,16 +201,26 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
 
   /* ---------- content rules (the same as the browser's) ---------- */
   /** files: [{ name, bytes }] → [{ name, bytes, kind, size, sha256 }]; throws a 4xx with one sentence. */
-  function checkContent({ side, author, body, files }) {
+  function checkContent({ side, author, body, files, anyway = false }) {
     const text = typeof body === 'string' ? body : body === undefined || body === null ? '' : null;
     if (text === null) throw fail(400, 'The message must be text.', { field: 'body' });
     if (side === 'firm' && !clip(author, 120).trim()) throw fail(422, 'Name the person sending.', { field: 'author' });
     const list = (files || []).map((f) => {
       const bytes = Buffer.from(f.bytes || []);
       const name = fileName(f.name);
-      return { name, bytes, kind: fileKind(name, bytes), size: bytes.length, sha256: sha256(bytes) };
+      return { name, bytes, kind: fileKind(name, bytes), size: bytes.length, sha256: '' };
     });
     if (!text.trim() && !list.length) throw fail(422, 'Write a message or attach a file.', { field: 'body' });
+    const bad = checkFiles(list, side);
+    if (bad) throw fail(/ is larger than 10 MB\.$/.test(bad) ? 413 : 422, bad, { field: 'attachments' });
+    // The body and every attachment name are screened; a bank or taxpayer shape is named before a password shape.
+    const hits = [{ field: 'body', s: screen(text, side) }].concat(list.map((f) => ({ field: 'attachments', s: screen(f.name, side) }))).filter((h) => h.s);
+    if (hits.length) {
+      const h = hits.find((x) => x.s.reason === SCREEN.bank) || hits[0];
+      if (h.s.refuse) throw fail(422, h.s.reason, { field: h.field });
+      if (!anyway) throw fail(422, h.s.reason, { field: h.field, warn: true });
+    }
+    for (const f of list) f.sha256 = sha256(f.bytes);
     return { author: clip(author, 120).trim(), body: text, files: list };
   }
 
@@ -304,10 +381,11 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
   function decodeFiles(list) {
     if (list === undefined || list === null) return [];
     if (!Array.isArray(list)) throw fail(400, 'attachments must be a list.', { field: 'attachments' });
+    if (list.length > LIMITS.files) throw fail(422, 'A message can carry at most 5 files.', { field: 'attachments' });
     return list.map((a) => {
       const o = obj(a);
       if (!o) throw fail(400, 'An attachment must have a name and base64 bytes.', { field: 'attachments' });
-      return { name: o.name, bytes: decode64(o.base64) };
+      return { name: o.name, bytes: decode64(o.base64, o.name) };
     });
   }
 
@@ -473,5 +551,5 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
     }
   }
 
-  return { sponsorPath, partyPath, sponsor, party, post, threadOf, list, verify, LIMITS, PATTERNS, TYPES, GENESIS, chainText, fileKind };
+  return { sponsorPath, partyPath, sponsor, party, post, threadOf, list, verify, LIMITS, PATTERNS, TYPES, GENESIS, chainText, fileKind, checkFiles, screen };
 }
