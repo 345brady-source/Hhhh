@@ -29,3 +29,15 @@ NEW SCHEDULES: FAIL (cases run: 1) - ties
 ```
 (28 FAIL lines: every sample fund, both periods.)
 Task 2 GREEN: `NEW SCHEDULES: PASS (cases run: 7)` (new.txt); ties over 15 sample funds, two periods each, 4,223 ms.
+
+Task 3 RED (red-3.txt: this check run on the base tree 6b3a4a3, extracted to the scratchpad):
+```
+FAIL real-phone the schedule tabs include Trial balance, General ledger, Statement of cash flows, Bank reconciliation and Financial highlights, after the existing ones :: ["Statement of assets and lia...
+FAIL sample-desktop ran to the end :: locator.scrollIntoViewIfNeeded: Timeout 30000ms exceeded.   (no Trial balance tab)
+FAIL managed the five new tabs are present :: [...]
+AUDIT FLOW: FAIL (parts run: 4) - real-phone, real-desktop, sample-desktop, managed
+```
+(The managed part's git line also fails there because the extracted base is not a git checkout.)
+Task 3 GREEN (flow.txt, 11-12 commits only): `AUDIT FLOW: PASS (parts run: 4)`, 53 PASS lines.
+
+Gate: running (exec-11-12/gate.txt).
