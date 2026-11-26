@@ -150,7 +150,10 @@ function part(engineName, removed) {
 }
 
 const PARTS = {
-  'chromium-subtle': part('chromium', false)
+  'chromium-subtle': part('chromium', false),
+  'chromium-fallback': part('chromium', true),
+  'webkit-subtle': part('webkit', false),
+  'webkit-fallback': part('webkit', true)
 };
 
 Lib.runParts(PARTS, { name: 'TOTP FRAME', unit: 'parts', flag: '--part', browser: true });
