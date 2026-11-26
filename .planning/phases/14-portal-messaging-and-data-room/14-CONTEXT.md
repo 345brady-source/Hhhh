@@ -58,3 +58,8 @@
 - W7: the interest fixture uses 'routing 190000018' (fails the ABA checksum) instead of 190000017 (passes it).
 - W8: LIMITS.nda = Math.ceil(20 MB * 4 / 3) + 256 KB for the e-sign assent; test esign: a 10 MB + 1 byte PDF → 413.
 - I1: days over 90 refused (422) or clamped, stated in the summary. I2: a cached copy keeps the first serve's view id in its footer; the summary says so.
+
+## Corrections from phase 15's planning (2026-11-26)
+- 14-13's header: the security_notice kind in emails.js is 15-14's, not 15-04's.
+- 14-08 also waits while 15-12, 15-15, 15-18 and 15-20 run (index.mjs, roles.mjs, workspace.mjs). 14-04 also waits for 15-17 (diy.html, portal.html).
+- 15-06's section table (server/lib/workspace.mjs) has one line per section; if 14's browser sections exist before 15-06 runs, 15-06 adds the inbox and rooms lines itself with 14-08's rules and 14-08 skips them. ROUTES in roles.mjs is a flat array with `who` (team, investor, link, public, operator); prospects are `who: 'link'`. Investors added before phase 15 get an access invitation (15-05 routes, 15-14 email, 15-08 button).
