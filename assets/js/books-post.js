@@ -59,7 +59,7 @@
     return f && typeof f.start === 'string' ? f.start : '';
   }
   /** Record prefixes this module owns; entries with any other prefix (mark:, bank:, open:, man:, rev:) are never touched. */
-  const MANAGED = /^(call|pos|run|req|reqpaid|fee|gp|sim):/;
+  const MANAGED = /^(call|pos|run|ret|repaid|req|reqpaid|reqret|reqrepaid|fee|gp|sim):/;
   /** [code, cents, partner, holding] with trailing empty ids left out (the stored form, as books.js compacts a line). */
   function compact(l) {
     const out = l.slice();
@@ -112,6 +112,14 @@
       const kept = lines.filter((l) => l[1] !== 0);
       if (kept.length < 2) return;
       entries.push({ src, date, memo, lines: kept });
+    };
+    // A returned payment or its second payment is posted only as recorded: the amount that was paid, in whole cents above
+    // zero, and a real date. Otherwise nothing is posted for it and it is listed (fallback dates the listing).
+    const isDay = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && NS.dates.isoOf(NS.dates.parse(s)) === s;
+    const returnable = (a, paid, src, date, fallback) => {
+      if (!Number.isSafeInteger(a.cents) || a.cents <= 0 || a.cents !== paid) return void flag(isDay(date) ? date : fallback, { src, kind: 'amount', account: '1000', value: String(a.cents) }, true);
+      if (!isDay(date)) return void flag(fallback, { src, kind: 'date', value: String(date) }, true);
+      return true;
     };
 
     // Contributions: call payments and funded positions, as the engine counts them (its event list, which runs no
@@ -176,6 +184,24 @@
         if (run.gp > 0) lines.push(ln('3300', run.gp), ln('1000', -run.gp));
         g.strays.forEach((s) => flag(run.date, { src, kind: 'stray', investorId: s.investorId, cents: s.cents }));
         add(src, run.date, `Distribution ${run.id}`, lines);
+      });
+
+    // Returned payments (C-07): a distribution line the bank sent back is cash back in and owed to that investor (2000)
+    // until it is paid again. The run's own entry is never touched, so gross, tax withheld and net stay as recorded.
+    (ws.runs || [])
+      .filter((run) => run && run.offeringId === o.id && NS.data.runPaid(run, today))
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      .forEach((run) => {
+        const lr = NS.data.runLines(ws, run);
+        if (!lr.stored) return;
+        lr.lines.forEach((line) => {
+          const a = line && line.ach;
+          if (!a || (a.status !== 'returned' && a.status !== 'repaid')) return;
+          const id = line.investorId;
+          const src = `ret:${run.id}:${id}`;
+          if (!returnable(a, line.netCents, src, a.date, run.date)) return;
+          add(src, a.date, `Returned distribution ${run.id}: ${id}`, [ln('1000', a.cents, id), ln('2000', -a.cents, id)]);
+        });
       });
 
     // Redemptions: capital out at the dealing date (owed), then the payment. The engine's cents are posted; a payment
