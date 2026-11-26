@@ -15,7 +15,7 @@
 - Owner (2026-11-26): build everything through step 11 that can be built without him; ask with a push notification and take the default after 15 minutes.
 
 ### Claude's Discretion
-16-CONTEXT.md has no discretion section. The orchestrator's choices are listed in section 9 below (C-01 ... C-14), each with a recommended default, so the 15-minute default rule can be applied.
+16-CONTEXT.md has no discretion section. The orchestrator's choices are listed in section 9 below (C-01 ... C-16), each with a recommended default, so the 15-minute default rule can be applied.
 
 ### Deferred Ideas (OUT OF SCOPE)
 - D-03: transfers and secondary sales (transfer agent API) - recorded, not built in this phase.
