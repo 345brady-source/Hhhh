@@ -1,5 +1,5 @@
 /*
- * Form 1099-INT (plan 10-09, D-02): the figures, who is left out and why, where the portal must stop and name the CPA,
+ * Form 1099-INT (plan 10-09, D-02) and Form 1099-DIV (plan 10-11, C-07; its own block below): the figures, who is left out and why, where the portal must stop and name the CPA,
  * the recipient's number read from the signed W-9 and never kept (finding F-3, C-05), the recipient's Copy B, and the
  * rows of the IRS's upload file with every published rule checked (C-01). No screen (plan 10-10 shows it).
  *
@@ -20,7 +20,7 @@
  * Stored (all additive):
  *   offering.tax.payer = { name, name2, address1, address2, city, state, zip, phone, tinLast4, registeredForm,
  *                          paidInMoney, confirmedBy, confirmedAt, setBy, setAt }       never a full taxpayer number
- *   offering.tax.years = { [year]: { confirmed: { [investorId]: { box1Cents, box4Cents, by, at } },
+ *   offering.tax.years = { [year]: { confirmed: { [investorId]: { box1Cents, box4Cents, by, at } | { form: '1099-DIV', boxes, by, at } },
  *                                    copyB: { [investorId]: docId }, filed: [ { form, receiptId, date, sha256, rows, by, at } ] } }
  *   run.tax = { interest: boolean, by, at }       a person's answer for a payment whose type does not settle it
  * The payer and recipient objects the functions below take ({ tinType, tin, nameType, name, name2, first, middle, last,
@@ -245,26 +245,352 @@
     r.filed = r.filed || [];
     return r;
   };
-  /** The sponsor confirms an investor's two box amounts against the bank: stored with who and when. opts: { by, at, today }. */
+  /**
+   * The sponsor confirms an investor's box amounts against the bank: stored with who and when. Form 1099-INT: boxes 1 and
+   * 4; Form 1099-DIV (a fund set to corporation or REIT): every box. opts: { by, at, today }.
+   */
   function confirmTotals(ws, offeringId, year, investorId, opts) {
     opts = opts || {};
     const y = yearOf(year);
     const o = offeringOf(ws, offeringId);
-    const by = who(opts.by, 'Confirming the totals of a Form 1099-INT');
-    const F = figuresInt(ws, o, y, { today: opts.today });
+    const type = formTypeOf(o);
+    const by = who(opts.by, `Confirming the totals of a Form ${type}`);
+    const F = figuresFor(ws, o, y, { today: opts.today });
     if (F.stops.length) throw new Error(F.stops[0].text);
     const form = F.forms.find((x) => x.investorId === investorId);
-    if (!form) throw new Error('This investor has no Form 1099-INT for the year.');
-    const entry = { box1Cents: form.box1Cents, box4Cents: form.box4Cents, by, at: opts.at || nowIso() };
+    if (!form) throw new Error(`This investor has no Form ${type} for the year.`);
+    const at = opts.at || nowIso();
+    const entry = type === '1099-DIV' ? { form: type, boxes: Object.assign({}, form.boxes), by, at } : { box1Cents: form.box1Cents, box4Cents: form.box4Cents, by, at };
     yearRec(o, y).confirmed[investorId] = entry;
-    log(ws, { action: 'Form 1099-INT totals confirmed', record: investorId, fund: o.id, detail: `${y}: box 1 $${money(form.box1Cents)}, box 4 $${money(form.box4Cents)}`, actor: by });
+    const detail = type === '1099-DIV' ? DIV_BOXES.filter((b) => form.boxes[b]).map((b) => `box ${b} $${money(form.boxes[b])}`).join(', ') : `box 1 $${money(form.box1Cents)}, box 4 $${money(form.box4Cents)}`;
+    log(ws, { action: `Form ${type} totals confirmed`, record: investorId, fund: o.id, detail: `${y}: ${detail}`, actor: by });
     return entry;
   }
-  /** True while the confirmed amounts equal the form's figures; false again once they differ. */
+  /** True while the confirmed amounts equal the form's figures (every box of a Form 1099-DIV); false once they differ. */
   function confirmed(ws, offering, year, form) {
     const c = (((((offering || {}).tax || {}).years || {})[yearOf(year)] || {}).confirmed || {})[form && form.investorId];
-    return !!c && c.box1Cents === form.box1Cents && c.box4Cents === form.box4Cents;
+    if (!c || !form) return false;
+    if (form.boxes) return !!c.boxes && DIV_BOXES.every((b) => c.boxes[b] === form.boxes[b]);
+    return !c.boxes && c.box1Cents === form.box1Cents && c.box4Cents === form.box4Cents;
   }
+
+  /* ---------- Form 1099-DIV (plan 10-11, D-02, C-07): only a split a person gives ---------- */
+  /*
+   * For a fund set to corporation or REIT the character of each distribution is the CPA's (it depends on the
+   * corporation's earnings and profits); the portal never proposes a split. It takes, for each distribution paid in the
+   * year, the split the sponsor or the CPA gives (as percents of the distribution or as amounts in cents), checks the
+   * arithmetic, and shares it out over each investor's stored amount of that distribution:
+   *   boxes 1a, 2a and 3 (Instructions for Form 1099-DIV, Rev. January 2024): the investor's gross in the proportions of
+   *     the split's 1a, 2a and 3, whole cents, the odd cents to the largest remainders (ties: box order 1a, 2a, 3), so the
+   *     three add up to exactly what the investor was paid;
+   *   the portions (the form's words: 1b, 2e and 5 are "the portion of the amount in box 1a"; 2b, 2c, 2d and 2f of the
+   *     amount in box 2a): the investor's own parent box shared out in the proportions of the split's portions and the
+   *     rest of the parent, by the same rule (ties: the portion first), so a portion equal to its parent in the split is
+   *     the investor's parent box, a single portion is the parent box times its share, half a cent up, and 2b + 2c + 2d
+   *     is never more than 2a;
+   *   box 4: the backup withholding stored on the investor's lines (NS.withholding.withheldFor, kind backup), as on
+   *     Form 1099-INT; every other box stays empty.
+   * Stored (additive):
+   *   run.tax.div = { cents: { 1a, 2a, 3 }, part: { 1b, 2b, 2c, 2d, 2e, 2f, 5 }, source: 'entered' | 'irs-default', by, at,
+   *                   pct, partPct (when given as percents) }        cents add up to run.total, each part within its parent
+   *   offering.tax.years[year].divYear = { pct, partPct, by, at }     one split for every distribution of the year
+   *                                                                     (a distribution's own split wins over it)
+   * Percents carry at most four decimals and are worked in exact integers (a percent is held as millionths of the
+   * distribution: 100 percent = 1,000,000).
+   */
+  const DIV_MAIN = ['1a', '2a', '3'];
+  const DIV_PART = ['1b', '2b', '2c', '2d', '2e', '2f', '5'];
+  const DIV_BOXES = ['1a', '1b', '2a', '2b', '2c', '2d', '2e', '2f', '3', '4', '5'];
+  // each group of portions shares out its parent box with the rest of it (2b, 2c and 2d together; the others alone)
+  const DIV_GROUPS = [['1a', ['1b']], ['1a', ['2e']], ['1a', ['5']], ['2a', ['2b', '2c', '2d']], ['2a', ['2f']]];
+  /** The arithmetic rules a split must keep, each with its name (a refusal names the rule it breaks). */
+  const DIV_RULES = {
+    sum: '1a + 2a + 3 must equal the distribution (100 percent of it)',
+    '1b': 'box 1b must be no more than box 1a',
+    '5': 'box 5 must be no more than box 1a',
+    '2e': 'box 2e must be no more than box 1a',
+    '2bcd': 'boxes 2b + 2c + 2d together must be no more than box 2a',
+    '2f': 'box 2f must be no more than box 2a',
+    negative: 'no box may be negative',
+    decimals: 'a percent has at most four decimals',
+    whole: 'an amount is a whole number of cents',
+    fund: 'a split is given only for a distribution of this fund',
+    reporting: 'a split is given only for a distribution of a fund set to corporation or REIT',
+    paid: 'a split is given only for a distribution that is not cancelled'
+  };
+  const breaks = (rule) => Object.assign(new Error(`The split breaks a rule: ${DIV_RULES[rule]}.`), { rule });
+  const DIV_STOP = {
+    reporting: 'Form 1099-DIV is prepared here only for a fund whose tax reporting type is corporation or REIT; ask your CPA which tax forms this fund’s investors receive.',
+    split: (r) => `Enter the split your CPA gives for the distribution of ${r.date} ($${money(r.total)}); until then no Form 1099-DIV is prepared.`,
+    stored: (r) => `The investors’ amounts of the distribution of ${r.date} were not stored when it was recorded; confirm them on that distribution, or ask your CPA, before any Form 1099-DIV is prepared.`
+  };
+  /** The two lines the screen shows in the IRS's words (Instructions for Form 1099-DIV, Rev. January 2024). */
+  const DIV_TEXT = {
+    whole: 'IRS rule: if you are unable to determine whether any part of a payment is a dividend by the time you must file Form 1099-DIV, the entire payment must be reported as a dividend.',
+    f5452: 'A corporation that paid nondividend distributions (box 3) files Form 5452; ask your CPA.'
+  };
+  const LEFT_TEXT_DIV = {
+    ira: 'An IRA is an exempt recipient: no Form 1099-DIV.',
+    exempt: 'You marked this investor as an exempt recipient: no Form 1099-DIV.',
+    foreign: LEFT_TEXT.foreign,
+    'under-10': 'Distributions under $10 with nothing withheld: no Form 1099-DIV is required.',
+    'no-w9': 'No signed W-9 on file: a Form 1099-DIV is still due, so record the signed W-9 or ask your CPA how to file without the number.',
+    'no-form': (f) => `No valid W-8 or signed W-9 on file (the ${f.form || 'W-8'} ${f.signed ? `expired on ${f.validUntil || 'a date not on record'}` : 'is not signed'}): ask your CPA whether this investor gets Form 1099-DIV or Form 1042-S.`
+  };
+  const MILLION = 1000000n;
+  /** A percent as millionths of the whole (70 -> 700,000; '33.3333' -> 333,333), or a refusal naming the rule. */
+  function units(v) {
+    const s = String(v == null || v === '' ? '0' : v).trim();
+    if (/^-/.test(s)) throw breaks('negative');
+    const m = /^(\d+)(?:\.(\d+))?$/.exec(s);
+    if (!m) throw breaks('decimals');
+    if ((m[2] || '').length > 4) throw breaks('decimals');
+    return BigInt(m[1]) * 10000n + BigInt((m[2] || '').padEnd(4, '0') || '0');
+  }
+  /**
+   * total (whole cents) shared out in proportion to weights (non-negative BigInts): whole cents, the odd cents to the
+   * largest remainders, ties to the earlier weight. Adds up to total whenever any weight is above zero.
+   */
+  function shareOut(total, weights) {
+    const W = weights.reduce((a, b) => a + b, 0n);
+    if (W === 0n) return weights.map(() => 0);
+    const T = BigInt(total);
+    const q = weights.map((w) => (T * w) / W);
+    const r = weights.map((w) => (T * w) % W);
+    let left = T - q.reduce((a, b) => a + b, 0n);
+    const order = weights.map((w, k) => k).sort((a, b) => (r[b] > r[a] ? 1 : r[b] < r[a] ? -1 : a - b));
+    for (let n = 0; left > 0n && n < order.length; n++, left--) q[order[n]] += 1n;
+    return q.map(Number);
+  }
+  /** The portions of each parent, shared out of the parent's amount `of` (an object of parent amounts) by split weights. */
+  function portions(of, weight) {
+    const out = {};
+    DIV_GROUPS.forEach(([parent, kids]) => {
+      const pw = weight(parent);
+      const kw = kids.map(weight);
+      const rest = pw - kw.reduce((a, b) => a + b, 0n);
+      const got = shareOut(of[parent], kw.concat([rest < 0n ? 0n : rest]));
+      kids.forEach((k, n) => (out[k] = got[n]));
+    });
+    return out;
+  }
+  /** The portion rules on parent and portion weights (percent units or cents, as BigInts). */
+  function portionRules(main, part) {
+    if (part['1b'] > main['1a']) throw breaks('1b');
+    if (part['5'] > main['1a']) throw breaks('5');
+    if (part['2e'] > main['1a']) throw breaks('2e');
+    if (part['2b'] + part['2c'] + part['2d'] > main['2a']) throw breaks('2bcd');
+    if (part['2f'] > main['2a']) throw breaks('2f');
+  }
+  /** A split given as percents, checked: { main, part } in millionths of the distribution. */
+  function pctUnits(pct, partPct) {
+    pct = pct || {};
+    partPct = partPct || {};
+    for (const k of Object.keys(pct)) if (DIV_MAIN.indexOf(k) < 0) throw new Error(`A split has no box "${k}" among 1a, 2a and 3.`);
+    for (const k of Object.keys(partPct)) if (DIV_PART.indexOf(k) < 0) throw new Error(`A split has no box "${k}" among 1b, 2b, 2c, 2d, 2e, 2f and 5.`);
+    // a negative box is named before any other fault of the same split
+    for (const v of DIV_MAIN.map((k) => pct[k]).concat(DIV_PART.map((k) => partPct[k]))) if (/^-/.test(String(v == null ? '' : v).trim())) throw breaks('negative');
+    const main = {};
+    const part = {};
+    DIV_MAIN.forEach((k) => (main[k] = units(pct[k])));
+    DIV_PART.forEach((k) => (part[k] = units(partPct[k])));
+    if (main['1a'] + main['2a'] + main['3'] !== 100n * 10000n) throw breaks('sum');
+    portionRules(main, part);
+    return { main, part };
+  }
+  /** Percents turned into amounts of a distribution of `total` cents: { cents, part }. */
+  function centsOfPct(total, u) {
+    const got = shareOut(total, DIV_MAIN.map((k) => u.main[k]));
+    const cents = {};
+    DIV_MAIN.forEach((k, n) => (cents[k] = got[n]));
+    return { cents, part: portions(cents, (k) => (u.main[k] !== undefined ? u.main[k] : u.part[k])) };
+  }
+  /** A split given as amounts of a distribution of `total` cents, checked: { cents, part } as Numbers. */
+  function centsChecked(total, c, p) {
+    c = c || {};
+    p = p || {};
+    const vals = DIV_MAIN.map((k) => c[k]).concat(DIV_PART.map((k) => p[k]));
+    vals.forEach((v) => {
+      if (typeof v === 'number' && v < 0) throw breaks('negative');
+    });
+    vals.forEach((v) => {
+      if (!(v === undefined || v === null || v === '' || Number.isSafeInteger(v))) throw breaks('whole');
+    });
+    const cents = {};
+    const part = {};
+    DIV_MAIN.forEach((k) => (cents[k] = Number(c[k] || 0)));
+    DIV_PART.forEach((k) => (part[k] = Number(p[k] || 0)));
+    if (cents['1a'] + cents['2a'] + cents['3'] !== total) throw breaks('sum');
+    const big = (o) => Object.keys(o).reduce((a, k) => Object.assign(a, { [k]: BigInt(o[k]) }), {});
+    portionRules(big(cents), big(part));
+    return { cents, part };
+  }
+  const plainPct = (o, keys) => keys.reduce((a, k) => (o && o[k] !== undefined && o[k] !== '' ? Object.assign(a, { [k]: String(o[k]).trim() }) : a), {});
+  const divRun = (ws, runId, opts, what) => {
+    const run = runOf(ws, runId);
+    if (opts && opts.offeringId && run.offeringId !== opts.offeringId) throw breaks('fund');
+    const o = offeringOf(ws, run.offeringId);
+    if (W().reporting(o) !== 'corp') throw breaks('reporting');
+    if (run.cancelled) throw breaks('paid');
+    return { run, o, by: who(opts && opts.by, what) };
+  };
+  const splitWords = (d) => DIV_BOXES.filter((b) => b !== '4' && ((d.cents && d.cents[b]) || (d.part && d.part[b]))).map((b) => `${b} $${money((d.cents && d.cents[b]) || d.part[b])}`).join(', ') || 'nothing';
+  /**
+   * The sponsor or the CPA gives one distribution's split: spec { pct: { 1a, 2a, 3 }, partPct: { ... } } or { cents: {
+   * 1a, 2a, 3 }, part: { ... } }. Refused (thrown, naming the rule, nothing stored) when a rule is broken. opts: { by, at,
+   * offeringId (when given, the distribution must be this fund's) }. Returns run.tax.div.
+   */
+  function setSplit(ws, runId, spec, opts) {
+    opts = opts || {};
+    spec = spec || {};
+    const { run, o, by } = divRun(ws, runId, opts, 'Giving the split of a distribution');
+    if (spec.source && spec.source !== 'entered') throw new Error('setSplit stores a split a person entered; the year’s split and the IRS’s rule have their own functions.');
+    let got;
+    let entered = {};
+    if (spec.pct) {
+      got = centsOfPct(run.total, pctUnits(spec.pct, spec.partPct));
+      entered = { pct: plainPct(spec.pct, DIV_MAIN), partPct: plainPct(spec.partPct, DIV_PART) };
+    } else if (spec.cents) got = centsChecked(run.total, spec.cents, spec.part);
+    else throw new Error('A split is given as percents (pct) or as amounts in cents (cents).');
+    const div = Object.assign({ cents: got.cents, part: got.part, source: 'entered', by, at: opts.at || nowIso() }, entered);
+    run.tax = Object.assign({}, run.tax || {}, { div });
+    log(ws, { action: 'Form 1099-DIV split entered', record: run.id, fund: o.id, detail: `The distribution of ${run.date} ($${money(run.total)}): ${splitWords(div)}`, actor: by });
+    return div;
+  }
+  /** One split for every distribution of the year, as percents; a distribution's own split wins over it. */
+  function setYearSplit(ws, offeringId, year, spec, opts) {
+    opts = opts || {};
+    spec = spec || {};
+    const y = yearOf(year);
+    const o = offeringOf(ws, offeringId);
+    if (W().reporting(o) !== 'corp') throw breaks('reporting');
+    const by = who(opts.by, 'Giving the split of the year');
+    pctUnits(spec.pct, spec.partPct);
+    const entry = { pct: plainPct(spec.pct, DIV_MAIN), partPct: plainPct(spec.partPct, DIV_PART), by, at: opts.at || nowIso() };
+    yearRec(o, y).divYear = entry;
+    log(ws, { action: 'Form 1099-DIV split entered for the year', record: o.id, fund: o.id, detail: `${o.shortName || o.name || o.id} ${y}: ${DIV_MAIN.concat(DIV_PART).filter((k) => entry.pct[k] || entry.partPct[k]).map((k) => `${k} ${entry.pct[k] || entry.partPct[k]}%`).join(', ')}, for every distribution of the year`, actor: by });
+    return entry;
+  }
+  /** The year's split no longer applies (each distribution then needs its own). */
+  function clearYearSplit(ws, offeringId, year, opts) {
+    opts = opts || {};
+    const y = yearOf(year);
+    const o = offeringOf(ws, offeringId);
+    const by = who(opts.by, 'Removing the split of the year');
+    const r = yearRec(o, y);
+    if (!r.divYear) return null;
+    delete r.divYear;
+    log(ws, { action: 'Form 1099-DIV split for the year removed', record: o.id, fund: o.id, detail: `${o.shortName || o.name || o.id} ${y}`, actor: by });
+    return true;
+  }
+  /** The IRS's rule for a split not known by the filing date, applied only when the sponsor chooses it: all of it box 1a. */
+  function wholeDividend(ws, runId, opts) {
+    opts = opts || {};
+    const { run, o, by } = divRun(ws, runId, opts, 'Reporting the whole payment as a dividend');
+    const part = {};
+    DIV_PART.forEach((k) => (part[k] = 0));
+    const div = { cents: { '1a': run.total, '2a': 0, '3': 0 }, part, source: 'irs-default', by, at: opts.at || nowIso() };
+    run.tax = Object.assign({}, run.tax || {}, { div });
+    log(ws, { action: 'Form 1099-DIV: whole payment reported as a dividend', record: run.id, fund: o.id, detail: `The distribution of ${run.date} ($${money(run.total)}): the IRS’s rule for a split not known by the filing date, chosen by ${by}`, actor: by });
+    return div;
+  }
+  /** The split that applies to a distribution: its own, else the year's (source 'year'), else null. */
+  function splitOf(ws, offering, run) {
+    const own = run && run.tax && run.tax.div;
+    if (own && own.cents) return own;
+    const yr = (((offering && offering.tax) || {}).years || {})[String(run.date).slice(0, 4)];
+    const dy = yr && yr.divYear;
+    if (!dy) return null;
+    const got = centsOfPct(run.total, pctUnits(dy.pct, dy.partPct));
+    return { cents: got.cents, part: got.part, source: 'year', by: dy.by, at: dy.at, pct: dy.pct, partPct: dy.partPct };
+  }
+  /** One investor's boxes from one distribution: their gross shared out by the split (see above). */
+  function divShare(grossCents, split) {
+    const got = shareOut(grossCents, DIV_MAIN.map((k) => BigInt(split.cents[k] || 0)));
+    const main = {};
+    DIV_MAIN.forEach((k, n) => (main[k] = got[n]));
+    const part = portions(main, (k) => BigInt((DIV_MAIN.indexOf(k) >= 0 ? split.cents[k] : split.part[k]) || 0));
+    return Object.assign({}, main, part);
+  }
+  /** The offering's distributions paid in the year: [ { run, split, stored } ], by date. */
+  function divRuns(ws, offering, year, today) {
+    const y = yearOf(year);
+    return (ws.runs || [])
+      .filter((r) => r.offeringId === offering.id && r.date >= `${y}-01-01` && r.date <= `${y}-12-31` && D().runPaid(r, today))
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1))
+      .map((run) => ({ run, split: splitOf(ws, offering, run), stored: D().runLines(ws, run).stored }));
+  }
+  /**
+   * The forms of Form 1099-DIV for an offering and year: { forms: [ { investorId, boxes: { 1a ... 5 } in cents, cashCents,
+   * runIds } ], leftOut, stops, totalCents } (as figuresInt; the $10 line is on cash paid, 1a + 2a + 3). f: { today }.
+   */
+  function figuresDiv(ws, offering, year, f) {
+    f = f || {};
+    const y = yearOf(year);
+    const today = f.today;
+    const stops = [];
+    const stop = (code, text, runId) => {
+      if (!stops.some((s) => s.code === code && s.runId === runId)) stops.push(Object.assign({ code, text }, runId ? { runId } : {}));
+    };
+    if (W().reporting(offering) !== 'corp') stop('reporting', DIV_STOP.reporting);
+    const runs = divRuns(ws, offering, y, today);
+    runs.forEach((r) => {
+      if (!r.stored) stop('stored', DIV_STOP.stored(r.run), r.run.id);
+      else if (!r.split) stop('split', DIV_STOP.split(r.run), r.run.id);
+    });
+    const counted = {};
+    runs.filter((r) => r.stored && r.split).forEach((r) => (counted[r.run.id] = r.split));
+    const yearLines = D().paidLines(ws, { offeringId: offering.id, from: `${y}-01-01`, to: `${y}-12-31`, today });
+    const per = {};
+    const order = [];
+    yearLines.forEach((p) => {
+      const split = counted[p.run.id];
+      if (!split) return;
+      const id = p.line.investorId;
+      if (!per[id]) {
+        per[id] = { investorId: id, boxes: {}, cashCents: 0, runIds: [], last: '' };
+        DIV_BOXES.forEach((b) => (per[id].boxes[b] = 0));
+        order.push(id);
+      }
+      const s = divShare(p.line.grossCents, split);
+      Object.keys(s).forEach((b) => (per[id].boxes[b] += s[b]));
+      per[id].cashCents += p.line.grossCents;
+      per[id].runIds.push(p.run.id);
+      per[id].last = p.run.date;
+    });
+    const forms = [];
+    const leftOut = [];
+    let totalCents = 0;
+    order.sort().forEach((id) => {
+      const x = per[id];
+      totalCents += x.cashCents;
+      const i = (ws.investors || []).find((v) => v.id === id);
+      const box4 = W().withheldFor(ws, { investorId: id, offeringId: offering.id, year: y, kind: 'backup', today });
+      const out = (code, reason) => leftOut.push({ investorId: id, code, reason, cents: x.cashCents });
+      const kind = i ? W().payee(i, x.last) : 'undocumented';
+      if (kind === 'ira' || kind === 'exempt' || kind === 'foreign') return out(kind, LEFT_TEXT_DIV[kind]);
+      if (x.cashCents < 1000 && box4 === 0) return out('under-10', LEFT_TEXT_DIV['under-10']);
+      if (kind !== 'us') {
+        const w8 = i ? W().w8(i, x.last) : { foreign: false };
+        return w8.foreign ? out('no-form', LEFT_TEXT_DIV['no-form'](w8)) : out('no-w9', LEFT_TEXT_DIV['no-w9']);
+      }
+      yearLines.forEach((p) => {
+        if (p.line.investorId !== id) return;
+        const odd = (p.line.withheld || []).find((w) => w.kind !== 'backup');
+        if (odd) stop('other-withholding', STOP_TEXT['other-withholding'](p.run, (i && (i.title || i.contact)) || id, odd.kind), p.run.id);
+      });
+      x.boxes['4'] = box4;
+      forms.push({ investorId: id, boxes: Object.assign({}, x.boxes), cashCents: x.cashCents, runIds: x.runIds.slice() });
+    });
+    return { forms: stops.length ? [] : forms, leftOut, stops, totalCents };
+  }
+
+  /* ---------- which form a fund gets ---------- */
+  /** '1099-DIV' for a fund set to corporation or REIT, '1099-INT' otherwise (whose figures stop unless it is notes). */
+  const formTypeOf = (offering) => (W().reporting(offering) === 'corp' ? '1099-DIV' : '1099-INT');
+  /** The figures of the fund's form: figuresDiv for corporation or REIT, figuresInt otherwise. */
+  const figuresFor = (ws, offering, year, f) => (formTypeOf(offering) === '1099-DIV' ? figuresDiv(ws, offering, year, f) : figuresInt(ws, offering, year, f));
 
   /* ---------- the recipient's number, from the signed W-9 (held by the caller, never stored) ---------- */
   /** The pinned blank W-9's own rectangles for the lines and number boxes the reading needs (points, top left). */
@@ -358,8 +684,13 @@
 
   /* ---------- Copy B, the recipient's copy ---------- */
   const COPY_B = '1099-INT 2024-01 Copy B';
-  /** The answers NS.taxforms.fill takes for Copy B: the payer in full, the recipient's number truncated, boxes 1 and 4. */
-  function copyBAnswers(form, payer, recipient, year) {
+  /** The Copy B map of each form (NS.tax1099data.MAPS). */
+  const COPY_B_OF = { '1099-INT': COPY_B, '1099-DIV': '1099-DIV 2024-01 Copy B' };
+  /**
+   * The answers NS.taxforms.fill takes for Copy B: the payer in full, the recipient's number truncated, and the form's
+   * boxes (Form 1099-INT: 1 and 4; Form 1099-DIV, formType '1099-DIV': 1a to 5, a box of zero left empty).
+   */
+  function copyBAnswers(form, payer, recipient, year, formType) {
     const y = yearOf(year);
     const cityLine = (p) => [[p.city, p.state].filter(Boolean).join(', '), p.zip].filter(Boolean).join(' ') + (p.country && p.country !== 'US' ? ` ${p.country}` : '');
     const payerLines = [payer.name, payer.name2, [payer.address1, payer.address2].filter(Boolean).join(' '), cityLine(payer), payer.phone].filter((s) => s && String(s).trim());
@@ -371,8 +702,9 @@
       recipientName: recipient.name || [recipient.first, recipient.middle, recipient.last, recipient.suffix].filter(Boolean).join(' '),
       recipientStreet: [recipient.address1, recipient.address2].filter(Boolean).join(' '),
       recipientCity: cityLine(recipient),
-      box1: money(form.box1Cents),
-      box4: form.box4Cents > 0 ? money(form.box4Cents) : ''
+      ...(formType === '1099-DIV'
+        ? DIV_BOXES.reduce((a, b) => Object.assign(a, { [`box${b}`]: form.boxes[b] > 0 ? money(form.boxes[b]) : '' }), {})
+        : { box1: money(form.box1Cents), box4: form.box4Cents > 0 ? money(form.box4Cents) : '' })
     };
   }
   /**
@@ -447,8 +779,14 @@
     put('AF', recipient.city);
     put('AG', recipient.state);
     put('AH', recipient.zip);
-    put('AN', dollars(form.box1Cents));
-    put('AQ', form.box4Cents > 0 ? dollars(form.box4Cents) : '');
+    if (formType === '1099-DIV') {
+      // the box columns of the form's own template (NS.tax1099data.IRIS.boxes); a box of zero is left empty
+      const boxCol = NS.tax1099data.IRIS.boxes[formType];
+      DIV_BOXES.forEach((b) => put(boxCol[b], form.boxes[b] > 0 ? dollars(form.boxes[b]) : ''));
+    } else {
+      put('AN', dollars(form.box1Cents));
+      put('AQ', form.box4Cents > 0 ? dollars(form.box4Cents) : '');
+    }
     return out;
   }
   /** Every fault of the rows against the published rules: [ { row (from 1), col, name, why } ]. */
@@ -522,9 +860,10 @@
     if (!ISO_DAY.test(String(opts.date || ''))) throw new Error('A filing needs the day it was made (YYYY-MM-DD).');
     if (!/^[0-9a-f]{64}$/i.test(String(opts.sha256 || ''))) throw new Error('A filing needs the fingerprint (SHA-256) of the file uploaded.');
     if (!(Number.isInteger(opts.rows) && opts.rows > 0)) throw new Error('A filing needs the number of forms in the file.');
-    const entry = { form: '1099-int', receiptId, date: opts.date, sha256: String(opts.sha256).toLowerCase(), rows: opts.rows, by, at: opts.at || nowIso() };
+    const type = formTypeOf(o);
+    const entry = { form: type.toLowerCase(), receiptId, date: opts.date, sha256: String(opts.sha256).toLowerCase(), rows: opts.rows, by, at: opts.at || nowIso() };
     yearRec(o, y).filed.push(entry);
-    log(ws, { action: 'Form 1099-INT file recorded as filed', record: o.id, fund: o.id, detail: `${y}: ${opts.rows} form${opts.rows === 1 ? '' : 's'}, receipt ${receiptId}, filed ${opts.date}`, actor: by });
+    log(ws, { action: `Form ${type} file recorded as filed`, record: o.id, fund: o.id, detail: `${y}: ${opts.rows} form${opts.rows === 1 ? '' : 's'}, receipt ${receiptId}, filed ${opts.date}`, actor: by });
     return entry;
   }
 
@@ -539,6 +878,7 @@
     INTEREST_TYPES,
     NOT_INTEREST_TYPES,
     COPY_B,
+    COPY_B_OF,
     interestRuns,
     setPayer,
     payerOf,
@@ -560,7 +900,25 @@
     recipientCopy,
     textItems,
     markFiled,
-    iris: { header, row, validate, files }
+    iris: { header, row, validate, files },
+    // Form 1099-DIV (plan 10-11)
+    DIV_BOXES,
+    DIV_MAIN,
+    DIV_PART,
+    DIV_RULES,
+    DIV_STOP,
+    DIV_TEXT,
+    LEFT_TEXT_DIV,
+    setSplit,
+    setYearSplit,
+    clearYearSplit,
+    wholeDividend,
+    splitOf,
+    divShare,
+    divRuns,
+    figuresDiv,
+    formTypeOf,
+    figuresFor
   };
   if (NS) NS.tax1099 = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
