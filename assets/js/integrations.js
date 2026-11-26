@@ -1027,10 +1027,102 @@
     };
     job.timer = setTimeout(tick, slow ? 3000 : 5000);
   }
-  /** Resume polling for every investor with an open check (after a reload). */
+  /**
+   * Resume polling for every investor with an open check (after a reload). In the sponsor's console (never on an
+   * invitation's device) this also asks the server which checks changed since it last asked (pullChanged).
+   */
   function resume(ws) {
     if (!active(ws) || !serverUrl(ws)) return;
     ws.investors.forEach((inv) => watch(ws, inv, true));
+    ongoing(ws);
+  }
+
+  /* ---------- Ongoing screening (plan 08-08, D-04): what the server learned after a check finished ---------- */
+  const PULL_MS = 10 * 60 * 1000;
+  const pulling = { key: '', at: 0, busy: null, timer: null };
+  const BEGINNING = '1970-01-01T00:00:00.000Z';
+  const ms = (s) => Date.parse(String(s || '')) || 0;
+  /**
+   * At console load and at most every ten minutes after (one run at a time): the changed checks. Only in the sponsor's
+   * console with a server connected; an invitation's device never asks. Nothing it does shows an error: a pull that fails
+   * asks again from the same time next time.
+   */
+  function ongoing(ws) {
+    if (!ws || ws.invite || !active(ws) || !serverUrl(ws)) return null;
+    if (pulling.busy) return pulling.busy;
+    const key = `${ws.tenant.id}|${serverUrl(ws)}`;
+    if (pulling.key === key && Date.now() - pulling.at < PULL_MS) return null;
+    pulling.key = key;
+    pulling.at = Date.now();
+    clearTimeout(pulling.timer);
+    pulling.busy = (async () => {
+      let changed = false;
+      try {
+        changed = await pullChanged(ws);
+      } catch (e) {
+        changed = false;
+      }
+      if (changed && W() === ws) NS.app.render();
+    })().finally(() => {
+      pulling.busy = null;
+      pulling.timer = setTimeout(() => W() === ws && ongoing(ws), PULL_MS);
+    });
+    return pulling.busy;
+  }
+  /** The hits a changed check carries, named for the reviewer: the server never sends the name screened, so the one screened when there was one. */
+  function pulledHits(v, hits, viaName) {
+    const names = v.aml.names || [];
+    return tagHits(hits, viaName).map((x) => Object.assign(x, { name: x.name || (names.length === 1 ? names[0] : 'One of the names screened') }));
+  }
+  /**
+   * GET /v1/checks/changed since the server's time of the last pull (ensure(ws).server.pulledAt; the beginning of time on the
+   * first). Each check is matched to an investor by its id (a screening result's ref, the identity check's ref) and applied
+   * only toward a hold: a screening that reads potential_match, an identity check that reads review. Never a clear: clearing
+   * stays a person's action on the AML/KYC page, and a person's decision made after the server's change stands. Each
+   * investor newly held gets one change-log entry "Monitoring alert". Resolves to whether anything changed.
+   */
+  async function pullChanged(ws) {
+    const s = ensure(ws).server;
+    const since = s.pulledAt || BEGINNING;
+    const r = await api(ws, 'GET', `/v1/checks/changed?since=${encodeURIComponent(since)}&workspace=${encodeURIComponent(ws.tenant.id)}`);
+    if (!r || !Array.isArray(r.checks)) return false;
+    const touched = [];
+    r.checks.forEach((c) => {
+      if (!c || typeof c.id !== 'string' || !c.id) return;
+      const inv = ws.investors.find((i) => {
+        if (!recorded(i)) return false;
+        const v = peek(i);
+        return c.table === 'verifications' ? v.identity.ref === c.id : (v.aml.results || []).some((x) => x.ref === c.id);
+      });
+      if (!inv) return;
+      const v = vOf(inv);
+      if (v.decision.manual && ms(v.decision.at) >= ms(c.changedAt)) return; // a person decided after this change
+      let news = '';
+      if (c.table === 'screenings') {
+        const x = (v.aml.results || []).find((y) => y.ref === c.id);
+        if (c.monitoring) x.monitoring = true;
+        if (c.status !== 'potential_match' || x.status === 'potential_match') return;
+        Object.assign(x, { status: 'potential_match', hits: pulledHits(v, c.hits, x.via), screenedAt: today(), error: '' });
+        news = `${x.via}: ${x.hits.length} new potential match${x.hits.length === 1 ? '' : 'es'}${x.hits.length ? ` (${x.hits.map((y) => `${y.listed || y.name} on ${y.list}`).join('; ')})` : ''}`;
+      } else if (c.table === 'verifications' && c.kind === 'identity') {
+        if (c.status !== 'review' || v.identity.status === 'review') return;
+        const sc = c.screening && typeof c.screening === 'object' ? { status: normScreen(c.screening.status, c.screening.hits), hits: pulledHits(v, c.screening.hits, v.identity.via || 'Identity check') } : null;
+        Object.assign(v.identity, { status: 'review', completedAt: nowIso() }, sc ? { screening: sc } : {});
+        news = `${v.identity.via || 'Identity check'}: identity check needs review${sc && sc.hits.length ? ` (${sc.hits.map((y) => `${y.listed || y.name} on ${y.list}`).join('; ')})` : ''}`;
+      } else return;
+      const t = touched.find((y) => y.inv === inv);
+      if (t) t.news.push(news);
+      else touched.push({ inv, news: [news] });
+    });
+    if (typeof r.now === 'string' && ms(r.now)) s.pulledAt = r.now;
+    touched.forEach(({ inv, news }) => {
+      refreshAml(vOf(inv));
+      log(ws, inv, 'Monitoring alert', news.join('. '));
+      syncKyc(ws, inv);
+      decide(ws, inv);
+    });
+    NS.app.save(true);
+    return touched.length > 0;
   }
 
   /* ---------- Console: the Integrations page ---------- */

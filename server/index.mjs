@@ -59,6 +59,7 @@ import { createInvitations } from './lib/invitations.mjs';
 import { createTaxDocs } from './lib/taxdocs.mjs';
 import { createAccounts } from './lib/accounts.mjs';
 import { createBilling } from './lib/billing.mjs';
+import { changedChecks } from './lib/changed.mjs'; // GET /v1/checks/changed (plan 08-08)
 import { createFilings } from './lib/filings.mjs';
 import { createIntake } from './lib/intake.mjs';
 import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
@@ -268,6 +269,7 @@ export function createServer(opts = {}) {
     // make an old result look new; cleared while the check is pending again.
     if (patch.status && patch.status !== rec.status) patch.completedAt = patch.status === 'pending' ? '' : new Date(now()).toISOString();
     if (r.data && typeof r.data === 'object') patch.data = Object.assign({}, rec.data, r.data);
+    if (['status', 'hits', 'screening'].some((k) => patch[k] !== undefined && JSON.stringify(patch[k]) !== JSON.stringify(rec[k]))) patch.changedAt = new Date(now()).toISOString(); // what GET /v1/checks/changed lists (plan 08-08)
     return store.put(table, patch);
   }
 
@@ -878,6 +880,7 @@ export function createServer(opts = {}) {
     const foreign = (rec) => pin !== null && (rec.workspace || '') !== pin;
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
+    if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)
 
     if (req.method === 'GET' && path === '/v1/connectors' && auth && auth.account) return send(res, 200, { connectors: pkg.connectors(describe(env, PROVIDERS)) }); // a sponsor account never sees the package providers (08-15)
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
