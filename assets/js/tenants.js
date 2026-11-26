@@ -8,7 +8,8 @@
  * "distributions" in their own way.
  *
  * The four sample clients are fictional firms, as are their holdings and auditors. Routing numbers pass the ABA
- * check digit but belong to no real bank; account numbers are invented.
+ * check digit but use prefixes no bank has (no routing number starts with them), so they belong to no real bank;
+ * account numbers are invented.
  */
 (function (NS) {
   'use strict';
@@ -102,8 +103,8 @@
       onboarding: { accreditation: true, taxForm: true, ach: 'required', esign: true },
       ach: {
         odfiName: 'First Harbor Bank',
-        odfiRouting: '021305810',
-        destinationRouting: '021305810',
+        odfiRouting: '131305810',
+        destinationRouting: '131305810',
         destinationName: 'FIRST HARBOR BANK',
         immediateOrigin: '1834201957',
         originName: 'KESTREL BAY CAPITAL',
@@ -111,7 +112,7 @@
         companyId: '1834201957',
         entryDescription: 'DISTRIB',
         balanced: false,
-        offset: { routing: '021305810', account: '7731004428', type: 'checking' }
+        offset: { routing: '131305810', account: '7731004428', type: 'checking' }
       },
       idPrefix: 'KBC',
       auditor: 'Halvorsen Pike LLP',
@@ -214,8 +215,8 @@
       onboarding: { accreditation: true, taxForm: true, ach: 'required', esign: true },
       ach: {
         odfiName: 'Cumberland State Bank',
-        odfiRouting: '061002157',
-        destinationRouting: '061002157',
+        odfiRouting: '171002157',
+        destinationRouting: '171002157',
         destinationName: 'CUMBERLAND STATE BANK',
         immediateOrigin: '1620487715',
         originName: 'ASHWELL RIDGE ADVISORS',
@@ -223,7 +224,7 @@
         companyId: '1620487715',
         entryDescription: 'DISTRIB',
         balanced: true,
-        offset: { routing: '061002157', account: '4400918265', type: 'checking' }
+        offset: { routing: '171002157', account: '4400918265', type: 'checking' }
       },
       idPrefix: 'ARR',
       auditor: 'Brandt & Ostrow LLP',
@@ -323,8 +324,8 @@
       onboarding: { accreditation: true, taxForm: true, ach: 'optional', esign: true },
       ach: {
         odfiName: 'Front Range National Bank',
-        odfiRouting: '112000781',
-        destinationRouting: '112000781',
+        odfiRouting: '882000781',
+        destinationRouting: '882000781',
         destinationName: 'FRONT RANGE NATL BANK',
         immediateOrigin: '1471203385',
         originName: 'GREYWATER INFRASTRUCTURE',
@@ -332,7 +333,7 @@
         companyId: '1471203385',
         entryDescription: 'DISTRIB',
         balanced: false,
-        offset: { routing: '112000781', account: '6602113790', type: 'checking' }
+        offset: { routing: '882000781', account: '6602113790', type: 'checking' }
       },
       idPrefix: 'GIP',
       auditor: 'Whitcombe Hale LLP',
@@ -428,8 +429,8 @@
       onboarding: { accreditation: true, taxForm: true, ach: 'required', esign: true },
       ach: {
         odfiName: 'Bayshore Commerce Bank',
-        odfiRouting: '121088639',
-        destinationRouting: '121088639',
+        odfiRouting: '901088639',
+        destinationRouting: '901088639',
         destinationName: 'BAYSHORE COMMERCE BANK',
         immediateOrigin: '1946205531',
         originName: 'PELLBROOK PARTNERS',
@@ -437,7 +438,7 @@
         companyId: '1946205531',
         entryDescription: 'DISTRIB',
         balanced: false,
-        offset: { routing: '121088639', account: '5530177204', type: 'checking' }
+        offset: { routing: '901088639', account: '5530177204', type: 'checking' }
       },
       idPrefix: 'PBP',
       auditor: 'Calder Reyes LLP',
