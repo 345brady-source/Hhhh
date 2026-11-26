@@ -211,3 +211,52 @@ Because some sponsors are registered and others may become registered, and becau
 No screen may say the product makes a sponsor "compliant with Rule 204-2" or "SEC-compliant archiving". The honest sentence (for the guide and the export README): "Messages and data room activity are kept unchanged and can be downloaded with a check that nothing was altered." [ASSUMED: wording; counsel-level claims are out of scope]
 
 <!-- section: record keeping done -->
+
+## 4. Data room law (what the room may and may not do)
+
+All law here is from law-firm summaries and SEC page titles found by search; the SEC's and eCFR's own pages could not be opened from this session. Every on-screen rule sentence must be marked "To be confirmed" until counsel or the owner confirms (AUTOPILOT work-around rule).
+
+### 4.1 Rule 506(b): no general solicitation, so the room is never public
+
+- A pre-existing, substantive relationship with each offeree is one way, not the only way, to show no general solicitation occurred; there is no fixed waiting period; a check-box self-certification of accredited status does not create one; an "enter your email to see the deck" page does not satisfy 506(b). [CITED: search excerpts of Akin Gump, McGuireWoods and Mondaq summaries of SEC C&DI 256.29-256.33 and the 2015 Citizen VC no-action letter]
+- "Substantive" means the issuer (or someone acting for it) has enough information to judge the offeree's financial circumstances and sophistication; "pre-existing" means formed before the offeree was approached about this offering. [CITED: same summaries] / [ASSUMED: the exact C&DI wording was not read]
+- Even with relationships, the SEC has found general solicitation (KCD Financial). [CITED: Mondaq summary]
+- A January 2026 C&DI addresses investors first solicited through a 506(c) offering and later offered a 506(b) offering: generally not allowed unless a substantive relationship existed before, or they were not solicited through the 506(c) offering. [CITED: search excerpt of thecorporatecounsel.net, 2026-01-26] / [ASSUMED: exact text]
+
+**What the product does for a 506(b) room (C-03):**
+1. No shareable or public link, ever: one personal link per prospect, created by the sponsor.
+2. Before a link is created the sponsor records the basis, per prospect: "How you know this person" (an investor in an earlier offering of the firm; a personal or business relationship; introduced by someone the firm knows, with their name; other, with a note), "Since" (a date before the offering), and a tick "I know enough about this person's finances and investing experience to judge whether this offering suits them". Stored on the prospect with who recorded it and when; the server refuses the link (422) without it. A date on or after the room's opening shows a warning ("A relationship that began with this offering is not pre-existing.") and is not blocked (the sponsor's counsel decides; never mandatory blocking of a sponsor's judgment beyond the record) [ASSUMED: warn-not-block, consistent with the 506(b) 36th-purchaser warning in phase 06].
+3. The room page shows the offering's legend (C-08) and no "invest now".
+4. **Existing gap found:** the offering sign-up link (diy.js:155-251) is offered for 506(b) offerings with the words "Share this link in your offering emails or on your website". For a 506(b) offering that invites general solicitation. Fix in this phase (C-09): for a 506(b) offering the dialog says the link is for people the firm already knows, never a website or public post, and the room is the recommended path.
+
+### 4.2 Rule 506(c): open is allowed, verification before the sale
+
+- General solicitation is allowed; every purchaser must be an accredited investor and the issuer must take reasonable steps to verify. A March 12, 2025 SEC staff no-action letter (Latham & Watkins) allows reliance on a high minimum investment (reported thresholds: at least $200,000 for individuals, $1,000,000 for entities) plus written representations that the purchaser is accredited and the minimum is not financed by a third party; new C&DIs 256.35 and 256.36. [CITED: SEC letter title at sec.gov "latham-watkins-503c-031225" and summaries by Alston, Dechert, Nixon Peabody, Morgan Lewis]
+- **What the product does:** a 506(c) room may have a shareable link (prospect enters name and email, then the NDA); verification stays where it is today (integrations.js, at subscription), never in the room. The room never states or implies the prospect is accredited.
+
+### 4.3 Soft commitments: an indication of interest, never a subscription
+
+- Under Rule 241 (testing the waters before choosing an exemption) an indication of interest must involve "no obligation or commitment of any kind", the materials must state that no money is solicited or accepted, and a Rule 241 communication can itself be general solicitation. [CITED: search excerpts of O'Melveny, Troutman summaries of SEC Release 33-10884 and 17 CFR 230.241] The data room is inside an offering already under way (the sponsor chose Rule 506), so Rule 241 is not the rule that governs it; its conditions are still the right model for a non-binding indication. [ASSUMED: applying 241's conditions by analogy]
+- An indication of interest is not a sale. Form D is due 15 days after the first sale, the date the first investor is irrevocably contractually committed, so indications do not start the Form D clock (phase 09). [ASSUMED: from training knowledge of Form D C&DI 257.03; not re-read]
+- **What the indication may be:** an optional amount and share class, an optional note, changeable or withdrawn at any time by the prospect, shown to the sponsor as a pipeline total per offering beside (never inside) "raised".
+- **What it may not be:** no signature, no subscription agreement, no bank details, no payment instructions, no "commit" wording, no deadline pressure, no count toward the 506(b) 35 non-accredited purchasers or toward raised capital; never turned into a subscription by the sponsor. The prospect becomes an investor only through the existing invitation (the sponsor's "Invite to subscribe" from the prospect's row creates a normal invitation, invitations.js), which brings the subscription agreement, status questions and e-signature.
+- **Legend on the indication form (C-08):** "This is not an offer to sell or a commitment to buy. No money is requested or accepted. You can change or withdraw this at any time." [ASSUMED: wording, To be confirmed]
+
+### 4.4 The NDA: click-through or e-signed
+
+- U.S. courts generally enforce clickwrap terms when the person had notice and affirmatively assented (an unticked box they tick, a button that says what it does), and the record ties a specific person, time and version to the assent; pre-ticked boxes weaken it. [CITED: search excerpts of Wilson Sonsini and Ironclad summaries] ESIGN and UETA give electronic signatures and records the same effect as paper. [ASSUMED: statute not re-read] No court decision squarely on a data-room clickwrap NDA was found. [CITED: search found none]
+- **Click-through (default, C-04):** the NDA text is shown in full and scrolls; the prospect types their full name and ticks "I agree to keep these documents confidential under the agreement above" (never pre-ticked); "Agree and open the documents". Recorded: the NDA's SHA-256 version, the name typed, the email of the link, time (server time in server mode), IP address and browser (server mode, sealed), and the room. The prospect can download a copy of the agreed text with their name and time.
+- **E-signed (option per room):** the sponsor uploads its own NDA PDF; it becomes an e-sign template (esign.js) and the prospect signs it in the room through the existing signing experience (consent screen, certificate of completion, signed copy). Needs one esign.js addition so a signer without an investor record can sign inside the room page (`embed` today finds the signer by investor id). Heavier for the prospect (more screens on a phone) and for the build (a shared, very large file, 285 KB).
+
+### 4.5 View tracking, watermarking, download control
+
+- **View tracking:** per prospect and document: first and last opened, number of opens, pages drawn, seconds on screen (counted while the page is visible); shown to the sponsor per prospect and per document; in server mode reported by the room page (`POST /v1/room/views`) and also counted by the server when it serves a document (so a viewer that blocks reporting is still logged as opened). No tracking in emails (13-CONTEXT C-10). The room says so: "Your views of these documents are recorded for <Firm>." (privacy notice; required honesty, one line) [ASSUMED: wording].
+- **Watermark:** every page stamped with the prospect's name, email, date and "Confidential", diagonal and light, plus a footer with a short view id; server mode stamps on the server so the clean file never leaves it; the preview stamps in the browser (the clean file is already in that browser, so it is a demonstration, and says nothing more).
+- **Download:** off by default (pages drawn in the page, no browser PDF viewer, as the product already does); the sponsor may allow watermarked download per room. Honest line in the console: "Viewing in the page does not stop screenshots or photos; the watermark shows whose copy it was." [ASSUMED: wording]
+- **Hiding and expiry:** a document can be hidden (never deleted); a prospect's access can be ended (link revoked) or set to expire; both logged.
+
+### 4.6 Regulation A and other exemptions
+
+- Regulation A offerings have their own testing-the-waters rule (Rule 255) with legends and filing of materials; a room for them is not built in this phase: the "Data room" button is offered for 506(b) and 506(c) offerings only, and for "other" with no rule text (C-10). [CITED: search excerpt naming 17 CFR 230.255] / [ASSUMED: scope decision]
+
+<!-- section: data room law done -->
