@@ -20,6 +20,8 @@ export function openStore(file) {
   data.taxdocs = data.taxdocs || {}; // tax documents delivered to the investor's own device (lib/taxdocs.mjs, plan 10-12)
   let timer = null;
   const flush = () => {
+    clearTimeout(timer);
+    timer = null;
     if (!file) return;
     mkdirSync(dirname(file), { recursive: true });
     const tmp = `${file}.tmp`;
@@ -102,6 +104,10 @@ export function openStore(file) {
     },
     blobDir,
     flush,
+    /** Writes a pending change now (tests and the tools in server/tools/ call this before they read the file). */
+    close() {
+      if (timer) flush();
+    },
     data: () => data
   };
 }

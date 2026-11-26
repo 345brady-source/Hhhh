@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -64,7 +64,8 @@ test('round trip', (t) => {
   const t2 = Date.now();
   assert.equal(ok.status, 0, ok.out);
   assert.match(ok.out, /^Backup OK: 2 records, 2 blobs, \d+ bytes, made \d{4}-\d\d-\d\dT/m);
-  t.diagnostic(`measured: create ${t1 - t0} ms, verify ${t2 - t1} ms, archive ${readdirSync(out).length} file`);
+  t.diagnostic(`measured: 2.5 MiB + 3000-byte blobs, archive ${statSync(arc).size} bytes, create ${t1 - t0} ms, verify ${t2 - t1} ms (each a child process)`);
+  assert.deepEqual(readdirSync(out), [arc.split('/').pop()]); // no temporary file left behind
   const to = join(dir, 'r');
   const back = run(BACKUP, ['restore', arc, '--to', to], { BACKUP_KEY });
   assert.equal(back.status, 0, back.out);
