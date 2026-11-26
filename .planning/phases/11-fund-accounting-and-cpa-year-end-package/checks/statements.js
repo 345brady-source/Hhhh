@@ -357,12 +357,15 @@ const cases = {
       NS.books.sync = sync;
     }
     check("when the books cannot be brought up to date the 'books' check says so first", !!x && x.items[0] === 'The books could not be brought up to date (Stand-in failure).', x);
-    // A sample fund: no 'books' check, and build leaves its books alone (W5).
+    // A sample fund: no 'books' check. Since plan 11-12 (wave 5 B1) build brings every fund's books up to date, a
+    // sample fund's too (its sample entries), and a second build posts nothing more.
     const sw = sampleWorkspaces(NS)[0];
     const so = sw.offerings[0];
-    const before = J(sw.books || null);
     const sb = NS.audit.build(sw, so, '2026-01-01', '2026-12-31');
-    check(`a sample fund (${so.id}) has no 'books' check and build does not touch its books`, NS.audit.generated(so) && !checkOf(sb, 'books') && J(sw.books || null) === before, { books: !!checkOf(sb, 'books'), same: J(sw.books || null) === before });
+    const after = J(sw.books || null);
+    const filled = !!(sw.books && sw.books.funds && sw.books.funds[so.id] && sw.books.funds[so.id].journal.length);
+    NS.audit.build(sw, so, '2026-01-01', '2026-12-31');
+    check(`a sample fund (${so.id}) has no 'books' check; build posts its sample entries once and a second build changes nothing`, NS.audit.generated(so) && !checkOf(sb, 'books') && filled && J(sw.books || null) === after, { books: !!checkOf(sb, 'books'), filled, same: J(sw.books || null) === after });
   },
 
   /** The managed edition's real firms get the same figures: fund A's case with the managed edition loaded. */

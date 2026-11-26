@@ -1431,7 +1431,56 @@
     out.push(
       sched('tb', '20_Trial_balance.csv', 'Trial balance', `${span} Book basis; the Schedule L line is a suggestion for the preparer.`, [COL('Account'), COL('Account name'), COL('Type'), COL('Schedule L line (suggested)'), COL('Beginning balance', 'money'), COL('Debits', 'money'), COL('Credits', 'money'), COL('Ending balance', 'money')], tb.map((r) => [r.code, r.name, capital(r.type), r.line, r.begin, r.debits, r.credits, r.end]), ['', 'Total', '', '', tsum('begin'), tsum('debits'), tsum('credits'), tsum('end')])
     );
+    const acc = {};
+    NS.books.accounts(ws, o.id).forEach((a) => (acc[a.code] = a.name));
+    const bf = booksOf(ws, o) || {};
+    const hname = {};
+    (Array.isArray(bf.holdings) ? bf.holdings : []).forEach((x) => x && x.id && (hname[x.id] = x.name || x.id));
+    const lines = NS.books.entries(ws, o.id, { from: P.from, to: P.to });
+    const gl = lines.map((l) => [l.date, l.id, l.code, acc[l.code] || '', l.memo, l.src, l.partner, l.holding ? hname[l.holding] || l.holding : '', l.cents > 0 ? l.cents : null, l.cents < 0 ? -l.cents : null]);
+    const glSum = (i) => gl.reduce((s, r) => s + (r[i] || 0), 0);
+    out.push(
+      sched('gl', '21_General_ledger.csv', 'General ledger', `${span} Every journal line.`, [COL('Date', 'date'), COL('Entry'), COL('Account'), COL('Account name'), COL('Memo'), COL('Source'), COL('Investor ID'), COL('Investment'), COL('Debit', 'money'), COL('Credit', 'money')], gl, ['', 'Total', '', '', '', '', '', '', glSum(8), glSum(9)])
+    );
     out.push(sched('cf', '22_Statement_of_cash_flows.csv', 'Statement of cash flows', `${span} Indirect method from the journal.`, [COL('Line item'), COL('Amount', 'money')], cashFlows(tb)));
+    // Bank reconciliation: each bank account's latest stored reconciliation dated on or before the period end.
+    const bank = (bf.bank && typeof bf.bank === 'object' && bf.bank) || {};
+    const accts = (Array.isArray(bank.accounts) ? bank.accounts : []).filter((x) => x && x.id);
+    const recs = Array.isArray(bank.recs) ? bank.recs : [];
+    const journal = Array.isArray(bf.journal) ? bf.journal : [];
+    const memoOf = (id) => ((journal.find((e) => e && e.id === id) || {}).memo || '');
+    const dateOf = (id) => ((journal.find((e) => e && e.id === id) || {}).date || '');
+    const br = [];
+    if (!accts.length) br.push(['', 'No bank account added', '', '', null]);
+    accts.forEach((ba) => {
+      const name = ba.last4 ? `${ba.name} ending ${ba.last4}` : ba.name;
+      let rec = null;
+      recs.forEach((r) => r && r.account === ba.id && typeof r.asOf === 'string' && r.asOf <= P.to && (!rec || r.asOf >= rec.asOf) && (rec = r));
+      if (!rec) return br.push([name, `Not reconciled through ${P.to}`, '', '', null]);
+      const os = Array.isArray(rec.outstanding) ? rec.outstanding : [];
+      br.push([name, 'Statement balance', rec.asOf, '', rec.statementCents]);
+      os.forEach((x) => br.push([name, 'Outstanding item', dateOf(x[0]), memoOf(x[0]), x[2]]));
+      br.push([name, 'Book balance', rec.asOf, '', rec.bookCents]);
+      br.push([name, 'Difference', rec.asOf, '', rec.statementCents - rec.bookCents + os.reduce((s, x) => s + x[2], 0)]);
+    });
+    out.push(sched('bankrec', '23_Bank_reconciliation.csv', 'Bank reconciliation', `Latest reconciliation of each bank account on or before ${dateLong(P.to)}.`, [COL('Bank account'), COL('Line'), COL('Date', 'date'), COL('Description'), COL('Amount', 'money')], br));
+    // Financial highlights. A figure that cannot be computed is never shown as 0: the value is empty and the measure
+    // names what is missing.
+    const actOf = (type) => tb.filter((r) => r.type === type).reduce((s, r) => s + r.debits - r.credits, 0);
+    const expenses = actOf('expense');
+    const income = -actOf('income');
+    const avg = P.ms.length ? P.ms.reduce((s, m) => s + m.endCap, 0) / P.ms.length : 0;
+    const NOCAP = ' (not available: no limited partners’ capital in the period)';
+    const ratio = (label, v) => (avg > 0 ? [label, v / avg] : [label + NOCAP, null]);
+    const hl = [ratio('Expenses to average limited partners’ capital', expenses), ratio('Net investment income (loss) to average limited partners’ capital', income - expenses)];
+    if (P.S.open) {
+      const pr = P.ms.length ? openPerformance(P).period : null;
+      hl.push(pr != null && isFinite(pr) ? ['Total return for the period', pr] : ['Total return for the period (not available: no completed month in the period)', null]);
+    } else {
+      const irr = closedPerformance(P).fund.irr;
+      hl.push(irr != null && isFinite(irr) ? ['Net internal rate of return since inception', irr] : ['Net internal rate of return since inception (not available: no cash flows to the period end)', null]);
+    }
+    out.push(sched('ratios', '24_Financial_highlights.csv', 'Financial highlights', `${span} Ratios to average limited partners’ capital.`, [COL('Measure'), COL('Value', 'pct')], hl));
     return out;
   }
   function payLabel(inv) {
@@ -1803,9 +1852,10 @@
     return String(s).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
   }
   function build(ws, o, from, to) {
-    // A fund that is not a sample fund: the books are brought up to date with the records before anything is read.
+    // Every fund: the books are brought up to date with the records before anything is read (a sample fund's journal
+    // holds its sample entries only once synced; its figures still come from the generator, so nothing else changes).
     let syncError = '';
-    if (!generated(o) && NS.books && NS.books.sync) {
+    if (NS.books && NS.books.sync) {
       try {
         NS.books.sync(ws);
       } catch (e) {

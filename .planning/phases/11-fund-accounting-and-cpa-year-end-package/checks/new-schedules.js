@@ -133,7 +133,22 @@ function ties(NS, ws, o, from, to) {
   const soi = schedOf(B, 'soi');
   const cost = bal('1100', P.to);
   const fv = bal(['1100', '1150'], P.to);
-  if (!soi || !soi.total || soi.total[5] !== cost || soi.total[6] !== fv) bad.push(`soi total cost ${soi && soi.total && soi.total[5]} / fair value ${soi && soi.total && soi.total[6]} != 1100 ${cost} / 1100+1150 ${fv}`);
+  // The schedule's total is net of securities sold short (cost less short proceeds, fair value less short fair value);
+  // the journal carries shorts at fair value in 2300. So the long rows tie to 1100 and 1100 + 1150, the short rows to
+  // 2300, and the total's fair value to 1100 + 1150 + 2300. A fund with no short is the plan's tie exactly.
+  const rs = soi ? soi.rows : [];
+  const shorts = rs.filter((r) => r[6] < 0);
+  const sumOf = (xs, i) => xs.reduce((s, r) => s + r[i], 0);
+  if (!soi || !soi.total) bad.push('no schedule of investments total');
+  else if (!shorts.length) {
+    if (soi.total[5] !== cost || soi.total[6] !== fv) bad.push(`soi total cost ${soi.total[5]} / fair value ${soi.total[6]} != 1100 ${cost} / 1100+1150 ${fv}`);
+  } else {
+    const longs = rs.filter((r) => !(r[6] < 0));
+    const short = bal('2300', P.to);
+    if (sumOf(longs, 5) !== cost || sumOf(longs, 6) !== fv) bad.push(`soi long rows cost ${sumOf(longs, 5)} / fair value ${sumOf(longs, 6)} != 1100 ${cost} / 1100+1150 ${fv}`);
+    if (sumOf(shorts, 6) !== short) bad.push(`soi short rows fair value ${sumOf(shorts, 6)} != 2300 ${short}`);
+    if (soi.total[6] !== fv + short || soi.total[5] !== sumOf(rs, 5)) bad.push(`soi total ${soi.total[5]} / ${soi.total[6]} != rows ${sumOf(rs, 5)} / 1100+1150+2300 ${fv + short}`);
+  }
   const inc = row('cf', 'Net increase (decrease) in cash');
   const cend = row('cf', 'Cash at end of period');
   const cbeg = row('cf', 'Cash at beginning of period');
