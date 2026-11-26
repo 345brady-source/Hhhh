@@ -721,3 +721,226 @@ test('esign: an e-signed NDA room serves the form and its template, keeps the si
     assert.equal((await t.as(p.token, 'GET', '/v1/room/nda.pdf')).status, 404, 'a click room has no form');
   });
 });
+
+/* ---------- 10. views ---------- */
+test('views: the room page reports pages and seconds against a view id the server issued to this prospect; served and page views come back apart', async () => {
+  await withRoom(async (t) => {
+    const roomId = await t.open();
+    const d = await t.addDoc(roomId, await memo(3));
+    const a = await t.invited(roomId, ONE);
+    const b = await t.invited(roomId, TWO);
+    await t.agree(a.token, ONE.name);
+    await t.agree(b.token, TWO.name);
+    const got = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`);
+    assert.equal(got.headers.get('x-pages'), '3');
+    const viewId = got.headers.get('x-view-id');
+    const bView = (await t.as(b.token, 'GET', `/v1/room/documents/${d.body.id}`)).headers.get('x-view-id');
+    const ok = await t.as(a.token, 'POST', '/v1/room/views', { docId: d.body.id, viewId, seconds: 41, pages: 3 });
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    for (const bad of [
+      { docId: d.body.id, viewId: 'unknownid1', seconds: 5, pages: 1 },
+      { docId: d.body.id, viewId: bView, seconds: 5, pages: 1 },
+      { docId: d.body.id, viewId, seconds: -1, pages: 1 },
+      { docId: d.body.id, viewId, seconds: 5, pages: -2 },
+      { docId: d.body.id, viewId, seconds: 2.5, pages: 1 },
+      { docId: d.body.id, viewId, seconds: 5, pages: 4 }
+    ]) {
+      const r = await t.as(a.token, 'POST', '/v1/room/views', bad);
+      assert.equal(r.status, 422, JSON.stringify(bad));
+    }
+    const views = (await t.activity(roomId)).items.filter((i) => i.kind === 'view' && i.prospectId === a.prospectId);
+    assert.deepEqual(views.map((v) => v.data.how), ['served', 'page']);
+    assert.deepEqual([views[1].data.seconds, views[1].data.pages, views[1].data.viewId], [41, 3, viewId]);
+    assert.equal(t.calls.filter((c) => c.kind === 'room_activity' && c.variant === 'view').length, 0, 'views are not emailed');
+  });
+});
+
+/* ---------- 11. interest ---------- */
+test('interest: indicated, changed and withdrawn are three entries in order; only an amount, a class and a note; no bank or taxpayer numbers; the notice has no amount', async () => {
+  await withRoom(async (t) => {
+    const roomId = await t.open();
+    const a = await t.invited(roomId, ONE);
+    const early = await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'indicated' });
+    assert.equal(early.status, 403, 'an indication needs the NDA first');
+    await t.agree(a.token);
+    const first = await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'indicated' });
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    assert.equal(first.body.interest.kind, 'indicated');
+    assert.equal(first.body.interest.cents, null);
+    const changed = await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'changed', cents: 25000000, cls: 'A', note: 'Prefers the A class' });
+    assert.equal(changed.status, 200);
+    assert.equal((await t.as(a.token, 'GET', '/v1/room')).body.interest.cents, 25000000);
+    const gone = await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'withdrawn' });
+    assert.equal(gone.status, 200);
+    assert.equal(gone.body.interest, null);
+    const extra = await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'indicated', bank: 'anything' });
+    assert.equal(extra.status, 422);
+    assert.equal(extra.body.error, 'Only an amount, a class and a note are recorded.');
+    const routing = await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'indicated', note: 'routing 190000018' });
+    assert.equal(routing.status, 422);
+    assert.equal(routing.body.error, 'Bank and taxpayer numbers are not asked for here.');
+    assert.equal((await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'indicated', cents: 12.5 })).status, 422);
+    assert.equal((await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'promised' })).status, 422);
+    const items = (await t.activity(roomId)).items.filter((i) => i.kind === 'interest');
+    assert.deepEqual(items.map((i) => i.data.kind), ['indicated', 'changed', 'withdrawn']);
+    assert.deepEqual(items[0].data, { kind: 'indicated', cents: null, cls: '', note: '' }, 'the earlier entry is unchanged');
+    assert.deepEqual(items[1].data, { kind: 'changed', cents: 25000000, cls: 'A', note: 'Prefers the A class' });
+    const notices = t.calls.filter((c) => c.kind === 'room_activity' && c.variant === 'interest');
+    assert.equal(notices.length, 3);
+    for (const n of notices) assert.ok(!JSON.stringify(n).includes('25000000') && !JSON.stringify(n).includes('Prefers'), 'no amount or note in the notice');
+  });
+});
+
+/* ---------- 12. questions ---------- */
+test("questions: a prospect's question goes to the firm through the inbox as the prospect's own thread; the prospect sees only their own", async () => {
+  await withRoom(async (t) => {
+    const roomId = await t.open();
+    const a = await t.invited(roomId, ONE);
+    const b = await t.invited(roomId, TWO);
+    const q = await t.as(a.token, 'POST', '/v1/room/messages', { body: 'What is the minimum investment?' });
+    assert.equal(q.status, 201, JSON.stringify(q.body));
+    assert.equal((await t.as(b.token, 'POST', '/v1/room/messages', { body: 'When does the offering close?' })).status, 201);
+    const warned = await t.as(a.token, 'POST', '/v1/room/messages', { body: 'My account is 190000018' });
+    assert.equal(warned.status, 422, 'a number shape warns first');
+    assert.equal(warned.body.warn, true);
+    assert.equal((await t.as(a.token, 'POST', '/v1/room/messages', { body: 'Reference 190000018 is from your letter', anyway: true })).status, 201);
+    const firm = await t.sponsor('GET', '/v1/inbox/updates?since=0');
+    assert.equal(firm.status, 200);
+    const msgs = firm.body.items.filter((i) => i.type === 'message');
+    assert.equal(msgs.length, 3);
+    assert.deepEqual(msgs[0].party, { kind: 'prospect', id: a.prospectId });
+    assert.equal(msgs[0].roomId, roomId);
+    assert.equal(msgs[0].author, ONE.name);
+    assert.equal(msgs[0].body, 'What is the minimum investment?');
+    const mine = await t.as(a.token, 'GET', '/v1/room/messages');
+    assert.equal(mine.status, 200);
+    assert.equal(mine.body.threads.length, 1);
+    assert.equal(mine.body.threads[0].roomId, roomId);
+    assert.deepEqual(mine.body.messages.map((m) => m.body), ['What is the minimum investment?', 'Reference 190000018 is from your letter']);
+    assert.ok(!JSON.stringify(mine.body).includes('When does the offering close?'));
+  });
+});
+
+/* ---------- 13. sealed ---------- */
+test('sealed: the store holds no name, email, basis note, NDA text, typed name, address, browser, title or file name; every blob differs from its file', async () => {
+  await withRoom(
+    async (t) => {
+      const roomId = await t.open();
+      const original = await memo(2);
+      const d = await t.addDoc(roomId, original, 'Harbor Fund II memorandum', 'Harbor_Fund_II_PPM.pdf');
+      const a = await t.invited(roomId, ONE);
+      const v = (await t.as(a.token, 'GET', '/v1/room')).body.nda.version;
+      assert.equal((await t.as(a.token, 'POST', '/v1/room/nda', { name: 'Prospect One Typed', ticked: true, version: v }, { 'User-Agent': 'Distinct Test Browser/9.9', 'X-Forwarded-For': '198.51.100.23' })).status, 200);
+      const copy = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`);
+      assert.equal(copy.status, 200);
+      assert.equal((await t.as(a.token, 'POST', '/v1/room/interest', { kind: 'indicated', cents: 5000000, cls: 'A', note: 'Interested in the second close' })).status, 200);
+      assert.equal((await t.as(a.token, 'POST', '/v1/room/messages', { body: 'Is the memorandum final?' })).status, 201);
+      const assent = (await t.activity(roomId)).items.find((i) => i.kind === 'assent');
+      assert.equal(assent.data.ip, '198.51.100.23');
+      const json = JSON.stringify(t.store.data());
+      for (const s of [ONE.name, ONE.email, BASIS.note, NDA_TEXT, 'Prospect One Typed', '198.51.100.23', 'Distinct Test Browser', 'Harbor Fund II memorandum', 'Harbor_Fund_II_PPM.pdf', 'Harbor Fund II', FIRM.postalAddress, FIRM.notifyEmail, LEGEND, 'Interested in the second close', 'Is the memorandum final?']) {
+        assert.ok(!json.includes(s), `the store holds ${s}`);
+      }
+      assert.ok(t.store.blobs.size >= 2);
+      for (const [key, buf] of t.store.blobs) {
+        assert.equal(buf.subarray(0, 4).toString('latin1'), 'CVV1', `${key} is sealed`);
+        assert.ok(!buf.equals(original) && !buf.equals(copy.bytes), `${key} differs from its file`);
+        assert.ok(!buf.includes(Buffer.from('%PDF-')), `${key} holds no PDF in the clear`);
+      }
+    },
+    { env: { TRUST_PROXY: '1' } }
+  );
+});
+
+/* ---------- 14. nodelete and limits ---------- */
+test('nodelete and limits: no route removes or rewrites; verify names a changed event and a changed record; 429, 413 and 405 everywhere; nothing on the console', async () => {
+  const src = readFileSync(MODULE_FILE, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((l) => !/^\s*\/\//.test(l))
+    .join('\n');
+  assert.ok(!/\.remove\s*\(/.test(src) && !/removeBlob/.test(src), 'the module never calls a store removal');
+  await withRoom(async (t) => {
+    const roomId = await t.open({ offering: offering('Rule 506(c)', 'off-c') });
+    const d = await t.addDoc(roomId, await memo(2));
+    const a = await t.invited(roomId, ONE);
+    await t.agree(a.token);
+    const got = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`);
+    const pid = a.prospectId;
+    const SP = ['/v1/rooms', `/v1/rooms/${roomId}/nda`, `/v1/rooms/${roomId}/documents`, `/v1/rooms/${roomId}/documents/${d.body.id}/hide`, `/v1/rooms/${roomId}/prospects`, `/v1/rooms/${roomId}/prospects/${pid}/link`, `/v1/rooms/${roomId}/prospects/${pid}/end`, `/v1/rooms/${roomId}/open-link`, `/v1/rooms/${roomId}/activity`, `/v1/rooms/${roomId}/record`];
+    const PP = ['/v1/room', '/v1/room/nda', '/v1/room/nda.pdf', `/v1/room/documents/${d.body.id}`, '/v1/room/views', '/v1/room/interest', '/v1/room/messages', '/v1/room/join'];
+    for (const m of ['DELETE', 'PUT', 'PATCH']) {
+      for (const p of SP) assert.equal((await t.call(m, p, { ctx: SPONSOR, body: {} })).status, 405, `${m} ${p}`);
+      for (const p of PP) assert.equal((await t.call(m, p, { token: a.token, body: {} })).status, 405, `${m} ${p}`);
+    }
+    t.limit.on = true;
+    for (const p of SP.filter((x) => !/activity|record/.test(x))) assert.equal((await t.call('POST', p, { ctx: SPONSOR, body: {} })).status, 429, `POST ${p}`);
+    for (const p of ['/v1/room/nda', '/v1/room/views', '/v1/room/interest', '/v1/room/messages', '/v1/room/join']) assert.equal((await t.call('POST', p, { token: a.token, body: {} })).status, 429, `POST ${p}`);
+    t.limit.on = false;
+    const pad = 'x'.repeat(17 * 1024);
+    for (const [p, body] of [
+      [`/v1/rooms/${roomId}/prospects`, { name: pad, email: TWO.email, portalUrl: PORTAL }],
+      [`/v1/rooms/${roomId}/documents/${d.body.id}/hide`, { why: pad }],
+      [`/v1/rooms/${roomId}/open-link`, { on: true, portalUrl: PORTAL, pad }]
+    ])
+      assert.equal((await t.sponsor('POST', p, body)).status, 413, `small call ${p}`);
+    for (const [p, body] of [
+      ['/v1/room/nda', { name: pad, ticked: true, version: 'x' }],
+      ['/v1/room/views', { docId: d.body.id, viewId: got.headers.get('x-view-id'), seconds: 1, pages: 1, pad }],
+      ['/v1/room/interest', { kind: 'indicated', note: pad }],
+      ['/v1/room/messages', { body: pad }]
+    ])
+      assert.equal((await t.as(a.token, 'POST', p, body)).status, 413, `small call ${p}`);
+
+    const before = t.room.verify(roomId);
+    assert.equal(before.ok, true, JSON.stringify(before));
+    const data = t.store.data().rooms;
+    const ev = Object.values(data).find((r) => r.type === 'event' && r.kind === 'assent');
+    const saved = ev.sealed;
+    ev.sealed = t.vault.seal({ data: Object.assign({}, t.vault.open(saved, `rooms:${ev.id}:sealed`).data, { name: 'Somebody Else' }) }, `rooms:${ev.id}:sealed`);
+    assert.deepEqual(t.room.verify(roomId), { ok: false, brokenAt: ev.seq, reason: `Entry ${ev.seq} of the room's record does not match its hash.` });
+    ev.sealed = saved;
+    const doc = data[d.body.id];
+    doc.size += 1;
+    const field = t.room.verify(roomId);
+    assert.equal(field.ok, false);
+    assert.equal(field.brokenAt, 0);
+    assert.ok(field.reason.includes(d.body.id), field.reason);
+    doc.size -= 1;
+    const pro = data[pid];
+    const was = pro.expiresAt;
+    pro.expiresAt = new Date(T0 + 400 * DAY).toISOString();
+    const p2 = t.room.verify(roomId);
+    assert.deepEqual([p2.ok, p2.brokenAt], [false, 0]);
+    assert.ok(p2.reason.includes(pid), p2.reason);
+    pro.expiresAt = was;
+    assert.equal(t.room.verify(roomId).ok, true, 'verify ok again once restored');
+  });
+  assert.deepEqual(consoleCalls, [], 'nothing was written to the console');
+});
+
+/* ---------- 15. measure ---------- */
+test('measure: a PDF of about 25 MB is uploaded and served stamped on every page; the time is printed', async (tc) => {
+  await withRoom(async (t) => {
+    const input = await big(25600000);
+    assert.ok(input.length >= 25000000 && input.length <= 26214400, `input ${input.length} bytes`);
+    tc.diagnostic(`room stamp input: ${input.length} bytes`);
+    const roomId = await t.open();
+    const d = await t.addDoc(roomId, input, 'Large sample', 'large.pdf');
+    assert.equal(d.status, 201, JSON.stringify(d.body));
+    const a = await t.invited(roomId, ONE);
+    await t.agree(a.token);
+    const started = process.hrtime.bigint();
+    const got = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`);
+    const ms = Number((process.hrtime.bigint() - started) / 1000000n);
+    assert.equal(got.status, 200);
+    tc.diagnostic(`room stamp 25 MB: ${ms} ms`);
+    const pages = await pageTexts(got.bytes);
+    assert.equal(pages.length, d.body.pages);
+    assert.equal(pages.length, 41);
+    assert.ok(pages.every((p) => p.includes(hexOf(ONE.name)) && p.includes(hexOf(ONE.email))), 'every page is stamped');
+    const startedCached = process.hrtime.bigint();
+    assert.equal((await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`)).status, 200);
+    tc.diagnostic(`room stamp 25 MB from the cache: ${Number((process.hrtime.bigint() - startedCached) / 1000000n)} ms`);
+  });
+});
