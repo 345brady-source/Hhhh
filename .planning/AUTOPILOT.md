@@ -90,3 +90,4 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 ## Open (2026-11-26, from the 11-18 plan check)
 - gate-lib/runParts kept results are keyed per tree but not by the base tree a check compares against (P11_ROOT etc.): a kept AUDIT SAME result could be reused against a different base on the same checkout. Until fixed, any rerun against a different base uses GATE_FRESH=1. Fix in a small tools task after the current builds (key the parts by the base tree hash too).
 - 11-18 plan-checked (no blockers, 3 warnings in 11-CONTEXT); executor building (wip/11-18).
+- 2026-11-26: 10-10 merged (15cbb29; server 403); WALK3 and TAX1099 FLOW rerunning on the merged tree; next 10-11 plan check.

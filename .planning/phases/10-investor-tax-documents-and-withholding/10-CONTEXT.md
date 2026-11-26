@@ -151,3 +151,10 @@ Waves: 1 = 10-01 (distribution record, gate10.sh), 10-02 (K-1 split core) · 2 =
 - The consent screen shows eight disclosures (NS.taxdocs.CONSENT.lines).
 - When 10-10 merges, PARTS in taxdocs-ui.js reads [..., 'tax1099.js', 'tax1099-ui.js', 'taxlink.js']; rebuild help-guide.mjs and regenerate .planning/tools/preview/help-data.js after the guide merge. walk3-fixes.js accepts tax1099-ui.js once its file exists.
 - Sponsor guide 46,698 of 48,000 bytes.
+
+## After 10-10 (merged 2026-11-26)
+- Form 1099 on screen merged. Its gate on 7edc3ba ended GATE_EXIT=0 (every reference step ok; TAX1099 FLOW 8 parts). Merge resolved the PARTS line to [..., 'tax1099.js', 'tax1099-ui.js', 'taxlink.js'] and took 10-10's stricter WALK3 assertion; server tests 403 on the merged tree; WALK3 and TAX1099 FLOW rerun on the merged tree (scratchpad merge-10-10/).
+- Not proven: no IRS upload tried; header row and cents not compared with a real IRS template (headerPinned and centsConfirmed stay false until 10-13); no CPA has read the stop sentences or the Notes case; not run on an iPhone.
+- Not built: the help guide has no Form 1099 entry (to 10-11 or the guide pass, within the byte cap); amended 1099.
+- taxdocs-ui.js parts keys now accept digits ([a-z0-9]+) and an optional shown(ws).
+- Next: plan-check 10-11.
