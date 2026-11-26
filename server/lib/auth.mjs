@@ -6,6 +6,7 @@
 // Collections (through store.data()): people, sessions, workspaces. A console person's session stops at stage 'setup'
 // (no two-step yet) or 'code' (two-step to enter, plan 15-04) and reaches the sponsor's routes only at stage 'full'.
 import { scrypt, randomBytes, createHmac, hkdfSync, timingSafeEqual } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { readRaw, parseJson, send, header } from './http.mjs';
 import { id, sha256 } from './crypto.mjs';
 import { createAccounts } from './accounts.mjs';
@@ -41,6 +42,53 @@ const nfkc = (s) => String(s).normalize('NFKC');
 const lengthOf = (s) => Array.from(nfkc(s)).length;
 const iso = (ms) => new Date(ms).toISOString();
 const ms = (t) => (t ? Date.parse(t) : 0);
+
+/** The common-password list the pages share (assets/vendor/pwlist, see its SOURCE.txt), loaded once. */
+let common = null;
+function commonList() {
+  if (common) return common;
+  try {
+    const list = createRequire(import.meta.url)('../../assets/vendor/pwlist/list.js');
+    if (!Array.isArray(list) || list.length < 1000) throw new Error('short');
+    common = new Set(list);
+  } catch {
+    throw fail(500, 'The common-password list (assets/vendor/pwlist/list.js) is not beside this server');
+  }
+  return common;
+}
+
+/** A counter that keeps at most max keys: the oldest key is evicted first, and the whole counter is never cleared. */
+function evicting(max) {
+  const m = new Map();
+  return {
+    get: (k) => m.get(k),
+    set(k, v) {
+      m.delete(k);
+      m.set(k, v);
+      while (m.size > max) m.delete(m.keys().next().value);
+    },
+    delete: (k) => m.delete(k),
+    keys: () => Array.from(m.keys())
+  };
+}
+
+/** The failure counts on a person's record (or, for an email nobody has, in the evicting counter, so both answer alike). */
+const NO_FAILS = () => ({ count: 0, first: 0, waitUntil: 0, lockedUntil: 0, hour: [] });
+const LOCK_MS = 15 * 60 * 1000;
+function failed(prev, t) {
+  const f = Object.assign(NO_FAILS(), prev || {});
+  f.count += 1;
+  if (!f.first) f.first = t;
+  f.hour = (f.hour || []).filter((x) => x > t - 60 * 60 * 1000).concat(t);
+  let locked = false;
+  if (f.hour.length >= 10) {
+    f.lockedUntil = t + LOCK_MS; // 10 wrong within an hour: locked for 15 minutes
+    f.hour = [];
+    locked = true;
+  }
+  if (f.count >= 5) f.waitUntil = t + Math.min(900, 2 ** (f.count - 5)) * 1000; // after 5 wrong: 1, 2, 4 ... 900 seconds
+  return { fails: f, locked };
+}
 
 /** scrypt over the NFKC form of the password (a compatibility character and its plain letters are the same password). */
 const derive = (pw, salt, o) => new Promise((ok, no) => scrypt(nfkc(pw), salt, 32, { N: o.N, r: o.r, p: o.p, maxmem: SCRYPT.maxmem }, (e, k) => (e ? no(e) : ok(k))));
@@ -87,6 +135,27 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     keyOf();
   };
 
+  /* --- limits: per address, keyed by an HMAC of the address (no address is kept) --- */
+  const COUNTER_MAX = clamp(env.AUTH_COUNTER_MAX, 1, 1e6, 10000);
+  const counter = evicting(COUNTER_MAX);
+  const ghosts = evicting(COUNTER_MAX); // failure counts for emails nobody has
+  const limits = {
+    /** Counts one try against key; true when this try is over max within the window. */
+    hit(k, max, windowMs) {
+      const t = now();
+      const h = counter.get(k);
+      if (!h || t >= h.reset) {
+        counter.set(k, { count: 1, reset: t + windowMs });
+        return max < 1;
+      }
+      h.count += 1;
+      return h.count > max;
+    },
+    keys: () => counter.keys()
+  };
+  const addressKey = (req, label) => `${label}:${mac('address', clientOf(req))}`;
+  const SIGNIN_MAX = clamp(env.AUTH_SIGNIN_PER_15MIN, 1, 10000, 20);
+
   /* --- passwords --- */
   let standIn = null; // a real hash of a random password: an unknown email costs the same scrypt run as a wrong password
   const password = {
@@ -106,6 +175,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
       const min = kind === 'investor' ? 15 : 10;
       if (n < min) return `Use at least ${min} characters.`;
       if (n > 128) return 'Use at most 128 characters.';
+      if (commonList().has(nfkc(pw).toLowerCase())) return 'That password is too common. Choose another.';
       return '';
     }
   };
@@ -273,6 +343,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     if (!firm || !name || !email || !EMAIL.test(email) || typeof b.password !== 'string') return send(res, 400, { error: SAY.fields });
     const problem = password.problem(b.password, 'team');
     if (problem) return send(res, 400, { error: problem });
+    if (limits.hit(addressKey(req, 'signup'), 5, HOUR)) return send(res, 429, { error: SAY.busy }); // 5 sign-ups per hour per address
     const pw = await password.hash(b.password);
     const wid = freeWorkspaceId(firm);
     const account = accts.create({ workspace: wid, name: firm }); // its token is not kept: the operator can replace it for automation (C-09)
@@ -283,6 +354,94 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     return send(res, 201, { workspace: wsView(wid), person: personView(person), stage: rec.stage }, { 'Set-Cookie': sessions.cookie(sid) });
   }
 
+  /** The stage a new session starts at: console people always pass two-step (15-04); investors when they or the firm chose it. */
+  function stageOf(p) {
+    if (p.twoStep) return 'code';
+    if (p.kind === 'team') return 'setup';
+    const w = workspaceOf(p.workspace);
+    return w && w.investorTwoStep ? 'setup' : 'full';
+  }
+  const lockOf = (f, t) => (f && f.lockedUntil > t ? f.lockedUntil : 0);
+  const waitOf = (f, t) => (f && f.waitUntil > t ? f.waitUntil : 0);
+
+  async function signinRoute(req, res) {
+    requireVault();
+    if (limits.hit(addressKey(req, 'signin'), SIGNIN_MAX, 15 * MIN)) return send(res, 429, { error: SAY.busy }); // 20 tries per 15 minutes per address
+    const b = await body(req);
+    if (typeof b.email !== 'string' || typeof b.password !== 'string' || !b.email.trim() || !b.password || b.email.length > 254 || b.password.length > 1024) return send(res, 400, { error: SAY.fields });
+    const ws = typeof b.workspace === 'string' && b.workspace ? b.workspace : undefined;
+    const ix = emailIndex(b.email);
+    const found = people.byEmail(b.email, ws).filter((p) => p.status !== 'disabled' && p.pw);
+    const t = now();
+    // Waits and locks first, before any password is checked; an email nobody has keeps its counts in the counter.
+    const states = found.length ? found.map((p) => p.fails) : [ghosts.get(ix)];
+    const lockedTill = Math.max(0, ...states.map((f) => lockOf(f, t)));
+    if (lockedTill) return send(res, 423, { error: SAY.locked }, { 'Retry-After': String(Math.ceil((lockedTill - t) / 1000)) });
+    const waitTill = Math.max(0, ...states.map((f) => waitOf(f, t)));
+    if (waitTill) {
+      const n = Math.max(1, Math.ceil((waitTill - t) / 1000));
+      return send(res, 429, { error: wait(n) }, { 'Retry-After': String(n) });
+    }
+    let matched = [];
+    if (!found.length) await password.check(b.password, await standInHash()); // the same scrypt run as a wrong password
+    else for (const p of found) if (await password.check(b.password, p.pw)) matched.push(p);
+    if (!matched.length) {
+      let locked = false;
+      if (!found.length) {
+        const r = failed(ghosts.get(ix), t);
+        ghosts.set(ix, r.fails);
+        locked = r.locked;
+      }
+      for (const p of found) {
+        const r = failed(store.get('people', p.id).fails, t);
+        people.update(p.id, { fails: r.fails });
+        if (r.locked) {
+          locked = true;
+          log({ workspace: p.workspace, person: p, action: 'locked' });
+        }
+      }
+      return locked ? send(res, 423, { error: SAY.locked }, { 'Retry-After': String(LOCK_MS / 1000) }) : send(res, 401, { error: SAY.wrong });
+    }
+    for (const p of matched) people.update(p.id, { fails: NO_FAILS(), status: p.status === 'invited' ? 'active' : p.status });
+    if (matched.length > 1) return send(res, 200, { stage: 'choose', firms: matched.map((p) => wsView(p.workspace)) });
+    const person = store.get('people', matched[0].id);
+    const old = cookieOf(req);
+    if (old) sessions.end(sha256(old)); // a new id at every sign-in
+    const { sid, rec } = sessions.issue(person, stageOf(person), req);
+    log({ workspace: person.workspace, person, action: 'signin' });
+    return send(res, 200, { stage: rec.stage }, { 'Set-Cookie': sessions.cookie(sid) });
+  }
+
+  function signout(req, res) {
+    const sid = cookieOf(req);
+    const s = sid ? store.get('sessions', sha256(sid)) : null;
+    if (s && !s.endedAt) {
+      sessions.end(s.id);
+      log({ workspace: s.workspace, action: 'signout' });
+    }
+    return send(res, 200, { ok: true }, { 'Set-Cookie': sessions.clear() });
+  }
+
+  /** Ended or expired sessions go a day after; failure counts go after 30 days (a wait or lock still running stays). */
+  function purge(nowMs = now()) {
+    for (const s of store.list('sessions')) {
+      const endedAt = s.endedAt ? ms(s.endedAt) : !live(s, nowMs) ? expiryOf(s) : 0;
+      if (endedAt && nowMs - endedAt >= DAY) store.remove('sessions', s.id);
+    }
+    for (const p of store.list('people')) {
+      const f = p.fails;
+      if (f && f.first && nowMs - f.first >= 30 * DAY && !lockOf(f, nowMs) && !waitOf(f, nowMs)) people.update(p.id, { fails: NO_FAILS() });
+    }
+  }
+  const expiryOf = (s) => (s.stage !== 'full' ? ms(s.createdAt) + HALF_DONE_MS : Math.min(ms(s.seenAt) + IDLE_MS, ms(s.createdAt) + MAX_MS));
+  let purgedAt = 0;
+  const maybePurge = () => {
+    const t = now();
+    if (t - purgedAt < HOUR) return;
+    purgedAt = t;
+    purge(t);
+  };
+
   function me(req, res) {
     const s = sessionOf(req);
     if (!s) return send(res, 401, { error: SAY.unauthorized });
@@ -292,6 +451,8 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
   const ROUTES = {
     '/v1/auth/status': ['GET', (req, res) => send(res, 200, { signIn: required() })],
     '/v1/auth/signup': ['POST', signup],
+    '/v1/auth/signin': ['POST', signinRoute],
+    '/v1/auth/signout': ['POST', signout],
     '/v1/auth/me': ['GET', me]
   };
   /** The /v1/auth/ routes and POST /v1/invite/login; false for any other path. */
@@ -302,6 +463,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     }
     if (!path.startsWith('/v1/auth/')) return false;
     try {
+      maybePurge();
       // Every write here must come from the portal's own page as JSON, cookie or not: no sign-in or sign-up from another site.
       if (WRITE.includes(req.method) && !sameSiteWrite(req)) throw fail(403, SAY.refused);
       const r = Object.prototype.hasOwnProperty.call(ROUTES, path) ? ROUTES[path] : null;
@@ -319,5 +481,5 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     return send(res, 404, { error: SAY.notFound });
   }
 
-  return { handle, admin, sessionOf, sponsor, investor, required, people, sessions, password, fresh, log, workspaceOf, confirmed, cookieName: COOKIE };
+  return { handle, admin, sessionOf, sponsor, investor, required, people, sessions, password, fresh, log, workspaceOf, confirmed, limits, purge, cookieName: COOKIE };
 }
