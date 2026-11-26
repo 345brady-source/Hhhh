@@ -63,29 +63,50 @@ async function engine(S, name) {
   }
 }
 
-/** A phone context whose page holds frame.html in the sandboxed iframe; resolves to { A, fr, requests }. */
+/*
+ * The frame's own small server on a free loopback port: the host page, frame.html (with the policy) and
+ * assets/js/totp.js, nothing else. A page Playwright fulfils itself has no network address, so Chromium treats a frame
+ * with no same origin there as outside the machine and refuses its script from 127.0.0.1 (local network access); pages
+ * served for real keep the frame, its script and the host on the same loopback server, as the host's own files are.
+ */
+function frameServer() {
+  const http = require('http');
+  const server = http.createServer((req, res) => {
+    const u = req.url.split('?')[0];
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    if (u === '/__frame-host.html') {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+      return res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>host</title></head><body style="margin:0"><iframe id="art" sandbox="${SANDBOX}" src="${origin}/__totp-frame.html" style="border:0;width:100vw;height:100vh;display:block"></iframe></body></html>`);
+    }
+    if (u === '/__totp-frame.html') {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': cspFor(origin) });
+      return res.end(fs.readFileSync(path.join(OUT, 'frame.html')));
+    }
+    if (u === '/assets/js/totp.js' && fs.existsSync(path.join(Lib.ROOT, 'assets/js/totp.js'))) {
+      res.writeHead(200, { 'content-type': 'application/javascript', 'cache-control': 'no-store' });
+      return res.end(fs.readFileSync(path.join(Lib.ROOT, 'assets/js/totp.js')));
+    }
+    res.writeHead(404);
+    res.end();
+  });
+  return new Promise((r) => server.listen(0, '127.0.0.1', () => r({ server, origin: `http://127.0.0.1:${server.address().port}` })));
+}
+
+/** A phone context whose page holds frame.html in the sandboxed iframe; resolves to { A, fr, requests, stop }. */
 async function framed(S, browser) {
-  const A = await Lib.open(Object.assign({}, S, { browser }), { context: PHONE });
+  const F = await frameServer();
+  // the check's network rules (lib.js open: the frame's server is the check server here; anything else refused)
+  const A = await Lib.open(Object.assign({}, S, { browser, origin: F.origin }), { context: PHONE });
   await A.context.addInitScript(() => {
     window.__cspv = [];
     document.addEventListener('securitypolicyviolation', (e) => window.__cspv.push(`${e.violatedDirective} ${e.blockedURI}`));
   });
-  await A.context.route(`${S.origin}/__totp-frame.html`, (route) =>
-    route.fulfill({ status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': cspFor(S.origin) }, body: fs.readFileSync(path.join(OUT, 'frame.html')) })
-  );
-  await A.context.route(`${S.origin}/__frame-host.html`, (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'text/html; charset=utf-8',
-      body: `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>host</title></head><body style="margin:0"><iframe id="art" sandbox="${SANDBOX}" src="${S.origin}/__totp-frame.html" style="border:0;width:100vw;height:100vh;display:block"></iframe></body></html>`
-    })
-  );
   const requests = [];
   A.page.on('request', (r) => requests.push(r.url()));
-  await A.page.goto(`${S.origin}/__frame-host.html`);
+  await A.page.goto(`${F.origin}/__frame-host.html`);
   const fr = await (await A.page.waitForSelector('#art')).contentFrame();
   await fr.waitForSelector('#ready');
-  return { A, fr, requests };
+  return { A, fr, requests, stop: () => F.server.close() };
 }
 
 /** One engine, with WebCrypto as the frame offers it (removed: false) or removed inside the frame first (removed: true). */
@@ -94,7 +115,7 @@ function part(engineName, removed) {
     const E = await engine(S, engineName);
     check(`${engineName} starts`, !!E.browser, E.why);
     if (!E.browser) return;
-    const { A, fr, requests } = await framed(S, E.browser);
+    const { A, fr, requests, stop } = await framed(S, E.browser);
     const where = await fr.evaluate(() => ({ origin: self.origin, w: innerWidth, h: innerHeight, touch: navigator.maxTouchPoints > 0 || 'ontouchstart' in window }));
     check('the page runs in a sandboxed frame with no same origin, on a 390x844 touch screen', where.origin === 'null' && where.w === 390 && where.h === 844 && where.touch, where);
     const atLoad = await fr.evaluate(() => window.__cspv.slice());
@@ -149,6 +170,7 @@ function part(engineName, removed) {
     check('no request left the check server', A.net.external.length === 0, A.net.external);
     await A.page.screenshot({ path: path.join(OUT, `${engineName}-${removed ? 'fallback' : 'subtle'}.png`) });
     await A.context.close();
+    stop();
     await E.close();
   };
 }
