@@ -183,20 +183,26 @@ export function createServer(opts = {}) {
   const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
   const pkg = invites.usePackages({ billing, providers: PROVIDERS, identity: env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', accreditation: env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit' }); // the package on invitations (08-05); 08-15 adds its route helpers
   /**
-   * Who is calling a sponsor route: null (refuse), { shared: true } (the shared API_TOKEN, or an open server: no API_TOKEN
-   * and no account), or { account } (a sponsor's own token; the call then acts on that account's workspace only).
+   * Who is calling a sponsor route: null (refuse), { shared: true } (the shared API_TOKEN, or an open server: no API_TOKEN,
+   * no account, nobody signed up and AUTH_REQUIRED unset), { account } (a sponsor's own token; the call then acts on that
+   * account's workspace only), or a signed-in console person's session ({ account, session, person, role, via: 'session' },
+   * pinned to its workspace the same way). A half-done sign-in throws 401 code 'stage'; a cookie write that is not JSON from
+   * the server's own origin throws 403 (lib/auth.mjs).
    */
   function sponsorAuth(req) {
     if (env.API_TOKEN && authorize(req, env)) return { shared: true };
     const account = accounts.find(String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, ''));
     if (account) return { account };
-    return !env.API_TOKEN && !store.list('accounts').length ? { shared: true } : null;
+    const session = signin.sponsor(req);
+    if (session) return session;
+    return !env.API_TOKEN && !store.list('accounts').length && !signin.required() ? { shared: true } : null;
   }
   /** The operator's routes for sponsor accounts. Off unless ADMIN_TOKEN is set; then they need that token, compared in constant time. */
   async function admin(req, res, path) {
     if (!env.ADMIN_TOKEN) return send(res, 404, { error: 'Not found' });
     if (limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (!safeEqual(String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, ''), String(env.ADMIN_TOKEN))) return send(res, 401, { error: 'Not authorized' });
+    if (/^\/v1\/admin\/people(\/|$)/.test(path)) return signin.admin(req, res, path); // people and their locks (lib/auth.mjs)
     if (path === '/v1/admin/accounts') {
       if (req.method === 'GET') return send(res, 200, { accounts: accounts.list() });
       if (req.method !== 'POST') return send(res, 405, { error: 'Use GET or POST' });

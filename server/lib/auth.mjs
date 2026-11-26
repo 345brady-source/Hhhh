@@ -115,21 +115,24 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
   const ownOrigins = new Set([originOf(publicUrl), ...String(env.PORTAL_ORIGIN || '').split(',').map((s) => originOf(s.trim()))].filter((o) => o && o !== 'null'));
 
   /* --- keys: the email index and the address counters use a key derived from DATA_KEY (a fixed label only in tests) --- */
-  let indexKey = null;
-  function keyOf() {
-    if (indexKey) return indexKey;
-    const raw = String(env.DATA_KEY || '').trim();
-    if (raw) {
-      const k = Buffer.from(raw.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
-      if (k.length !== 32) throw fail(500, 'DATA_KEY must be 32 random bytes, base64-encoded');
-      indexKey = Buffer.from(hkdfSync('sha256', k, 'cv-email-index', 'v1', 32));
-    } else if (env.NODE_ENV === 'test') indexKey = Buffer.from(hkdfSync('sha256', Buffer.from('cv-test-only-index-key'), 'cv-email-index', 'v1', 32));
+  const derived = (raw) => {
+    const k = Buffer.from(String(raw).trim().replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+    if (k.length !== 32) throw fail(500, 'DATA_KEY must be 32 random bytes, base64-encoded');
+    return Buffer.from(hkdfSync('sha256', k, 'cv-email-index', 'v1', 32));
+  };
+  let indexKeys = null; // [current, previous]: after DATA_KEY is replaced, people indexed under DATA_KEY_PREVIOUS still sign in
+  function keysOf() {
+    if (indexKeys) return indexKeys;
+    if (String(env.DATA_KEY || '').trim()) indexKeys = [derived(env.DATA_KEY)].concat(String(env.DATA_KEY_PREVIOUS || '').trim() ? [derived(env.DATA_KEY_PREVIOUS)] : []);
+    else if (env.NODE_ENV === 'test') indexKeys = [Buffer.from(hkdfSync('sha256', Buffer.from('cv-test-only-index-key'), 'cv-email-index', 'v1', 32))];
     else throw fail(500, 'Set DATA_KEY on the integration server so sign-in details are encrypted at rest');
-    return indexKey;
+    return indexKeys;
   }
-  const mac = (label, value) => createHmac('sha256', keyOf()).update(`${label}:${value}`).digest('hex');
+  const keyOf = () => keysOf()[0];
+  const mac = (label, value, k = keyOf()) => createHmac('sha256', k).update(`${label}:${value}`).digest('hex');
   const emailKey = (email) => nfkc(email).trim().toLowerCase();
   const emailIndex = (email) => mac('email', emailKey(email));
+  const emailIndexes = (email) => keysOf().map((k) => mac('email', emailKey(email), k));
   const requireVault = () => {
     if (!vault || !vault.allowed) throw fail(500, (vault && vault.problem) || 'Set DATA_KEY on the integration server so sign-in details are encrypted at rest');
     keyOf();
@@ -196,7 +199,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
         investorId: String(rec.investorId || ''),
         co: !!rec.co,
         emailIndex: emailIndex(rec.email),
-        email: seal(pid, 'email', emailKey(rec.email)),
+        email: seal(pid, 'email', nfkc(rec.email).trim()), // as typed; the index is of the lower-cased form
         name: seal(pid, 'name', String(rec.name || '').trim().slice(0, 120)),
         pw: rec.pw || (typeof rec.password === 'string' ? await password.hash(rec.password) : null),
         twoStep: rec.twoStep || null,
@@ -211,8 +214,8 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     get: (pid) => (PERSON_ID.test(String(pid)) ? store.get('people', pid) : null),
     byEmail(email, workspace) {
       if (typeof email !== 'string' || !email) return [];
-      const ix = emailIndex(email);
-      return store.list('people').filter((p) => p.emailIndex === ix && (workspace === undefined || p.workspace === workspace));
+      const ix = emailIndexes(email);
+      return store.list('people').filter((p) => ix.includes(p.emailIndex) && (workspace === undefined || p.workspace === workspace));
     },
     list: (workspace) => store.list('people').filter((p) => p.workspace === workspace),
     update: (pid, patch) => store.put('people', Object.assign({}, patch, { id: pid })),
@@ -361,6 +364,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     const w = workspaceOf(p.workspace);
     return w && w.investorTwoStep ? 'setup' : 'full';
   }
+  const checking = new Set(); // email indexes whose password check is running
   const lockOf = (f, t) => (f && f.lockedUntil > t ? f.lockedUntil : 0);
   const waitOf = (f, t) => (f && f.waitUntil > t ? f.waitUntil : 0);
 
@@ -382,9 +386,16 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
       const n = Math.max(1, Math.ceil((waitTill - t) / 1000));
       return send(res, 429, { error: wait(n) }, { 'Retry-After': String(n) });
     }
-    let matched = [];
-    if (!found.length) await password.check(b.password, await standInHash()); // the same scrypt run as a wrong password
-    else for (const p of found) if (await password.check(b.password, p.pw)) matched.push(p);
+    // One check at a time per email, so tries sent all at once cannot get past the waits and the lock.
+    if (checking.has(ix)) return send(res, 429, { error: wait(1) }, { 'Retry-After': '1' });
+    checking.add(ix);
+    const matched = [];
+    try {
+      if (!found.length) await password.check(b.password, await standInHash()); // the same scrypt run as a wrong password
+      else for (const p of found) if (await password.check(b.password, p.pw)) matched.push(p);
+    } finally {
+      checking.delete(ix);
+    }
     if (!matched.length) {
       let locked = false;
       if (!found.length) {
@@ -402,7 +413,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
       }
       return locked ? send(res, 423, { error: SAY.locked }, { 'Retry-After': String(LOCK_MS / 1000) }) : send(res, 401, { error: SAY.wrong });
     }
-    for (const p of matched) people.update(p.id, { fails: NO_FAILS(), status: p.status === 'invited' ? 'active' : p.status });
+    for (const p of matched) people.update(p.id, { fails: NO_FAILS(), status: p.status === 'invited' ? 'active' : p.status, emailIndex: ix }); // re-indexed under the current key
     if (matched.length > 1) return send(res, 200, { stage: 'choose', firms: matched.map((p) => wsView(p.workspace)) });
     const person = store.get('people', matched[0].id);
     const old = cookieOf(req);
@@ -464,6 +475,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     if (!path.startsWith('/v1/auth/')) return false;
     try {
       maybePurge();
+      if (vault && vault.allowed) standInHash().catch(() => (standIn = null)); // made before the first sign-in, so its first check costs one run too
       // Every write here must come from the portal's own page as JSON, cookie or not: no sign-in or sign-up from another site.
       if (WRITE.includes(req.method) && !sameSiteWrite(req)) throw fail(403, SAY.refused);
       const r = Object.prototype.hasOwnProperty.call(ROUTES, path) ? ROUTES[path] : null;
@@ -477,8 +489,27 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     return true;
   }
 
-  async function admin(req, res) {
-    return send(res, 404, { error: SAY.notFound });
+  /** The operator's people routes (index.mjs admin() has checked ADMIN_TOKEN): who is in a workspace, and lifting a lock. */
+  async function admin(req, res, path) {
+    if (path === '/v1/admin/people') {
+      if (req.method !== 'GET') return send(res, 405, { error: 'Use GET' });
+      requireVault();
+      const ws = new URL(req.url, 'http://localhost').searchParams.get('workspace') || '';
+      const t = now();
+      const rows = people.list(ws).map((p) => {
+        const o = people.open(p);
+        return { id: p.id, name: o.name, email: o.email, kind: p.kind, role: p.role, status: p.status, locked: !!lockOf(p.fails, t), twoStep: !!p.twoStep };
+      });
+      return send(res, 200, rows);
+    }
+    const m = path.match(/^\/v1\/admin\/people\/([^/]+)\/unlock$/);
+    if (!m) return send(res, 404, { error: SAY.notFound });
+    if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+    const p = people.get(m[1]);
+    if (!p) return send(res, 404, { error: SAY.notFound });
+    people.update(p.id, { fails: NO_FAILS() });
+    log({ workspace: p.workspace, action: 'unlocked' });
+    return send(res, 200, { ok: true });
   }
 
   return { handle, admin, sessionOf, sponsor, investor, required, people, sessions, password, fresh, log, workspaceOf, confirmed, limits, purge, cookieName: COOKIE };

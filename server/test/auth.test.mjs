@@ -190,6 +190,10 @@ test('choose firm', async () => {
     const me = await call(base, 'GET', '/v1/auth/me', { cookie: two.cookie });
     assert.equal(me.body.workspace.id, ub.body.workspace.id);
     assert.equal(me.body.person.id, ub.body.person.id);
+    // Tries sent at once for one email are checked one at a time; the other waits.
+    const both = await Promise.all([signin(base, { email: a.email, password: letters(16) }), signin(base, { email: a.email, password: letters(16) })]);
+    assert.deepEqual(both.map((x) => x.status).sort(), [401, 429]);
+    assert.equal(both.find((x) => x.status === 429).body.error, 'Too many tries. Wait 1 second and try again.');
   });
 });
 
@@ -326,8 +330,9 @@ test('sealed and minimal', async () => {
   for (const k of Object.keys(keep)) console[k] = (...a) => seen.push(a.map(String).join(' '));
   const ip = '198.51.100.23';
   const o = owner();
+  const first = key();
   try {
-    await withServer({ env: { DATA_KEY: key(), PUBLIC_URL: ORIGIN, TRUST_PROXY: '1' }, store }, async (base, server) => {
+    await withServer({ env: { DATA_KEY: first, PUBLIC_URL: ORIGIN, TRUST_PROXY: '1' }, store }, async (base, server) => {
       const h = { headers: { 'X-Forwarded-For': ip } };
       const up = await call(base, 'POST', '/v1/auth/signup', Object.assign({ body: o }, h));
       assert.equal(up.status, 201);
@@ -349,4 +354,14 @@ test('sealed and minimal', async () => {
   const events = JSON.parse(readFileSync(file, 'utf8')).events.filter((e) => e.type === 'auth');
   assert.ok(events.length >= 3);
   for (const e of events) assert.deepEqual(Object.keys(e).sort(), ['action', 'at', 'type', 'workspace']);
+
+  // After DATA_KEY is replaced (the old one kept as DATA_KEY_PREVIOUS), the Owner still signs in and is re-indexed.
+  const before = Object.values(JSON.parse(readFileSync(file, 'utf8')).people)[0].emailIndex;
+  await withServer({ env: { DATA_KEY: key(), DATA_KEY_PREVIOUS: first, PUBLIC_URL: ORIGIN }, store: openStore(file) }, async (base, server) => {
+    const r = await signin(base, { email: o.email, password: o.password });
+    assert.equal(r.status, 200, r.text);
+    const me = await call(base, 'GET', '/v1/auth/me', { cookie: r.cookie });
+    assert.equal(me.body.person.email, o.email);
+    assert.notEqual(server.store.list('people')[0].emailIndex, before);
+  });
 });
