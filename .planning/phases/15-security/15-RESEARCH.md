@@ -120,3 +120,93 @@ Size used for the comparison: 40 free sponsors, about 3 console people each and 
 **Recommendation:** no paid test before revenue; the disclosure page and security.txt go live now (email inbox, $0); the security page says plainly that an independent test has not been done yet (or says nothing about one). Buy a one-off test with a letter when a sponsor asks for it or revenue allows (C-13: the owner decides; the default is "not now").
 
 <!-- section 1 done -->
+
+## 2. What the code has today, every weakness found, and the smallest design
+
+### 2.1 Who can call what (server)
+
+| Caller | How it proves itself | Source |
+|--------|---------------------|--------|
+| Operator | `ADMIN_TOKEN` bearer, constant-time compare; makes sponsor accounts, replaces their tokens, refunds | index.mjs:193-197, accounts.mjs:24-49 |
+| Sponsor (whole workspace) | `API_TOKEN` (shared) or one account token per workspace: "each sponsor has its own token for this server" (accounts.mjs:1-3); the token is 32 random bytes, only its SHA-256 stored | accounts.mjs:12, 30, 43-47 |
+| Nobody | With no `API_TOKEN` and no account, every caller counts as the sponsor: `return !env.API_TOKEN && !store.list('accounts').length ? { shared: true } : null;` [VERIFIED: server/index.mjs:187-191] | index.mjs:191 |
+| Investor during onboarding | `X-Invite-Token` (link token, hashed, scoped to one investor) | index.mjs:857-867, invitations.mjs:7 |
+| Investor opening a tax document | `X-Doc-Token` plus the last four digits of the taxpayer number on record | index.mjs:846-854, README.md:354 |
+| Filing staff | `FILINGS_STAFF_TOKEN` (at least 24 characters, must differ from every other token) | filings.mjs:21, 87-93 |
+| Provider automation | `RESULTS_TOKEN` | index.mjs:85-89 |
+
+There are no people, passwords, sessions, cookies, roles or two-step codes on the server [VERIFIED: grep of server/ for "session", "cookie", "password" found only provider sessions, connector auth and mail credentials; accounts.mjs read in full].
+
+### 2.2 Who can do what (browser)
+
+- Roles: `roles: diy ? ['admin', 'team', 'investor'] : ['staff', 'sponsor', 'investor'],` and `owner: diy ? 'admin' : 'staff',` [VERIFIED: assets/js/edition.js:43, 46].
+- The rule is one function: `if (what === 'configure') return role === E.owner;` and `return what === 'portal' || what === 'console' || what === 'operate';`, with `const OWNER_ONLY = ['console-brand', 'console-intake', 'console-integrations', 'console-team'];` [VERIFIED: assets/js/app.js:429-437]. The role is whatever the demo bar's "Signed in as" select says (app.js:485), saved in browser storage (app.js:416-421).
+- Team page roles: `admin: ['Admin', 'Everything: offerings, brand, integrations, team, plus all operations.']`, `team: ['Team member', 'Operations: investors, e-sign, capital calls, distributions, requests, documents, notices, reports, audit and AML/KYC review. Offerings, brand and integrations are read-only.']` [VERIFIED: assets/js/diy.js:280-283]. The page keeps at least one admin, marks the owner, and logs invites, role changes and removals (diy.js:302-385).
+- Change log: browser only, "append-only, each entry hashed with the one before" with `const GENESIS = '0'.repeat(64);` [VERIFIED: assets/js/audit.js:1000-1001]; the actor is the demo role's person (app.js:793-808).
+
+### 2.3 What is stored where
+
+| Data | No-server preview | Server mode today |
+|------|-------------------|-------------------|
+| The sponsor's workspace (offerings, investors with their bank accounts, runs, notices, team, change log) | Browser storage, key prefix `storagePrefix: diy ? 'sdesk1:' : 'cvp2:'` [VERIFIED: assets/js/edition.js:42] plus `ws:<id>` (workspace.js:125-129) | **The same browser storage.** The server never receives the workspace; it holds only invitations (30 days), tax documents, filings, billing, checks |
+| Full bank routing and account number of an investor | `bank: { holder: bankHolder(d), routing: digitsOf(d.routing), account: digitsOf(d.account), type: d.acctType }` [VERIFIED: assets/js/onboarding.js:2926] on the record, copied into the console's workspace on import (invitations.js:1226-1228); plain text | Inside the sealed submission for up to 30 days, then only in the sponsor's browser |
+| The sponsor's own ACH origination numbers | `ws.tenant.ach` in browser storage (console.js:3212-3220) | Same |
+| Full taxpayer number | Never in saved answers: `const SECRET = ['password', 'password2', 'tin', 'ftin', 'w8UsTin', 'ownerTin', 'e8UsTin', 'routing', 'account', 'account2']` [VERIFIED: assets/js/onboarding.js:774, grep]; in memory during the flow (onboarding.js:1715); inside the signed W-9 PDF, which the 1099 builder reads back (tax1099.js:288-311); `tinLast4` on the record | Inside the sealed W-9 blob of the invitation for up to 30 days; tax documents open with the last four digits |
+| Signed documents (W-9 with full number, agreements) | IndexedDB `cvp-documents`, store `files` (operations.js:434-435) | Sealed blobs while the invitation lives |
+| The server token | `ws.integrations.server.token`, sent as `headers.Authorization = \`Bearer ${s.token}\`` [VERIFIED: assets/js/integrations.js:298] | Same |
+| Server store | — | JSON file with sealed fields; blobs sealed; events plain (ids and types) |
+| Secrets | — | Environment: `DATA_KEY`, `DATA_KEY_PREVIOUS`, `API_TOKEN`, `ADMIN_TOKEN`, `RESULTS_TOKEN`, `FILINGS_STAFF_TOKEN`, mail and reading keys (README.md:39-41, 497-513) |
+
+### 2.4 Weaknesses (each with where it is)
+
+| # | Weakness | Where | Severity |
+|---|----------|-------|----------|
+| W-01 | No sign-in for people at all; a sponsor is one static bearer token that never expires, shared by the whole team | accounts.mjs:1-3, index.mjs:187-191 | High |
+| W-02 | Open server: with no `API_TOKEN` and no account every caller is the sponsor, including `GET /v1/outbox`, whose messages "carry live links" | index.mjs:191; mail.mjs:396 | High (a set-up mistake away) |
+| W-03 | The sponsor token sits in browser storage, readable by any script on the page and by anyone at that browser | integrations.js:102, 298, 1089 | High |
+| W-04 | CORS answers `Access-Control-Allow-Origin: *` when `PORTAL_ORIGIN` is unset: `const ok = !list.length \|\| list.includes('*') \|\| list.includes(origin);` [VERIFIED: server/lib/http.mjs:57-59] | http.mjs:53-65 | Medium now; High once cookies exist |
+| W-05 | The rate limiter trusts the first `X-Forwarded-For` entry: `String(header(req.headers, 'x-forwarded-for') \|\| '').split(',')[0].trim()` [VERIFIED: server/index.mjs:134]; a proxy appends the real address at the end, so the first entry is whatever the client typed | index.mjs:133-134 | Medium |
+| W-06 | All counters are dropped when more than 10,000 addresses are seen (`if (hits.size > 10000) hits.clear();` [VERIFIED: server/index.mjs:147]); only writes are limited; no per-account failure count or lockout | index.mjs:137-152 | Medium |
+| W-07 | No security headers on API answers (`send()` sets only `Content-Type` and `Cache-Control`, http.mjs:46-50); server pages have only nosniff and no-referrer (index.mjs:160); the portal pages have no content security policy and load outside fonts and libraries without integrity hashes (diy.html:8-10, esign.js:25-27, intake.js:20-21) | as listed | Medium |
+| W-08 | Investor sign-in accepts any password and is prefilled with `value="sample-password"`; "Forgot your password?" answers `'A password reset link would be emailed to the address on file.'` [VERIFIED: assets/js/portal.js:1257-1266; 1237 by grep] | portal.js:1237, 1257-1266 | High in server mode (there is no investor sign-in on the server); demo-only today |
+| W-09 | The sign-up password is checked for 10 characters and dropped; no account exists anywhere | diy.js:114, 136-142 | High in server mode |
+| W-10 | Screens claim what does not happen: "At least 10 characters. You will add a second sign-in step after this." [VERIFIED: assets/js/diy.js:66]; "They get an email to set a password and turn on two-step sign-in." [VERIFIED: assets/js/diy.js:324]; `row('Two-step verification', 'On')` [VERIFIED: assets/js/portal.js:1177]; "Each time you sign in from a new device you will also enter a 6-digit code from an authenticator app or a text message." [VERIFIED: assets/js/onboarding.js:331]; the change log writes "Investor login created" when no login exists (onboarding.js:2838) | as listed | High (owner rule: nothing claimed that is not true) |
+| W-11 | Two console roles, enforced only by hiding pages in the browser; nothing on the server knows a role | app.js:429-446, console.js:30-33 | High |
+| W-12 | The change log names whoever the demo role is, and the chain can be recomputed by anyone holding the storage: it shows accidental edits, not a deliberate rewrite | app.js:793-808; audit.js:1000-1167 | Medium |
+| W-13 | Server events are a plain list capped at 5,000 (`if (data.events.length > 5000) data.events.splice(0, data.events.length - 5000);` [VERIFIED: server/lib/store.mjs:72]), not chained, with no person | store.mjs:70-74 | Medium |
+| W-14 | Full bank numbers (investors' and the sponsor's own) and signed W-9 files with full taxpayer numbers sit unencrypted in the sponsor's browser | onboarding.js:2926; invitations.js:1226-1228; console.js:3212-3220; operations.js:434 | High (the main data-at-rest gap) |
+| W-15 | Key rotation: one previous key only (`const old = parseKey(env.DATA_KEY_PREVIOUS); if (old) previous.push(old);` [VERIFIED: server/lib/vault.mjs:36-37]) and no tool that re-seals records, so an old key can never be retired | vault.mjs:30-43 | Medium |
+| W-16 | No backup or restore: the store file and its blob folder are the only copy | store.mjs:1-3 ("Replace with your database in production") | High for a launch |
+| W-17 | `ADMIN_TOKEN`, `API_TOKEN` and account tokens never expire and carry everything | index.mjs:80-89, 193-197 | Medium |
+| W-18 | A co-investor sees the main investor's signed W-9, which shows the full taxpayer number, on Documents (AUTOPILOT.md open item for the owner) | AUTOPILOT.md "State now" | Medium (privacy) |
+| W-19 | Store writes are debounced 50 ms in one process; a crash loses the last write | store.mjs:29-32 | Low |
+| W-20 | No security page, disclosure page or `/.well-known/security.txt` | repo root (`ls`: no `.well-known`) | Medium (D-01) |
+
+### 2.5 The smallest design that delivers D-01 in server mode
+
+Everything below is server code with Node's own `crypto` (no new server package) plus browser screens. Each part names the weakness it closes.
+
+1. **People and sessions** (`server/lib/auth.mjs`, new; W-01, W-08, W-09, W-17). A `people` collection per workspace: kind (`team` or `investor`), role, `investorId` for an investor, the email sealed with an HMAC lookup index (so the store holds no plain email), scrypt password hash, sealed two-step secret, hashed recovery codes, status (`invited`, `active`, `disabled`), failure count and lock time. A `sessions` collection keyed by the SHA-256 of a 32-byte random id carried in one cookie (section 5.4). Routes under `/v1/auth/`: sign-up (creates the workspace account and its Owner), sign-in, code, two-step set-up start and confirm, recovery codes, sign-out, me, password change, reset request and confirm, team invite, accept, role change, remove, reset another person's two-step; plus `POST /v1/invite/login` so the onboarding's login step creates the investor's account with the invitation token. When any person exists (or `AUTH_REQUIRED=1`), the open-server fallback (W-02) is off and account tokens remain only for server-to-server automation (C-09).
+2. **Roles on every route** (`server/lib/roles.mjs`, new; W-11). One permission table (section 4) and one guard before each sponsor route in index.mjs, invitations.mjs `sponsor()`, taxdocs.mjs, filings.mjs, billing.mjs and phase 13's `/v1/messages`.
+3. **The workspace held on the server, sealed** (`server/lib/workspace.mjs`, new; W-03, W-12, W-14). In server mode the console loads and saves its workspace through `GET/PUT /v1/workspace` instead of browser storage; the server seals it with the existing vault (record-bound additional data), keeps a version for conflict refusal, refuses a write that changes a section the person's role cannot change, refuses a change to any investor's bank account unless the role may release payments, masks bank and taxpayer fields for roles that do not need them, and refuses a change-log rewrite (the new log must start with the stored one). Signed documents go to sealed blobs the same way. The browser keeps nothing in storage in server mode (C-04).
+4. **A server change log** (`server/lib/auditlog.mjs`, new; W-12, W-13). Append-only, hash-chained, the person from the session (never from the request), details sealed; read and export by the Audit permission.
+5. **Hardening** (`server/lib/http.mjs`, index.mjs; W-04 to W-07). Security headers on every answer, CORS credentials only for listed origins (never `*` with sessions), the rightmost proxy address, counters that are not wiped wholesale, per-account and per-address failure limits.
+6. **Keys and backups** (`server/tools/reseal.mjs`, `server/tools/backup.mjs`, vault.mjs; W-15, W-16). Several previous keys, a re-seal tool, an encrypted backup archive with a verify and restore command.
+7. **Password reset** (section 7) through phase 13's `password_reset` template and mail path.
+8. **Public pages** (W-20): a security page, a disclosure page, `/.well-known/security.txt` (section 6).
+9. **Truthful screens** (W-10): every claim in W-10 is rewritten by the plan that rebuilds that screen.
+
+### 2.6 What the no-server preview can honestly show
+
+| Shown working in the preview | How it stays honest |
+|------------------------------|---------------------|
+| Console sign-in, two-step set-up with a real authenticator app on the owner's iPhone, sign-in with a code, a recovery code, sign-out | The secret and the check live in this browser; the set-up screen carries one sentence such as "Demo: two-step sign-in is checked on this device only." [ASSUMED wording; the planner fixes it once]. The owner adds the key by typing it (a QR code on the same phone cannot be scanned; tapping an `otpauth:` link is likely blocked in the sandboxed frame [ASSUMED]); a QR code is shown for desktop |
+| Five roles through the demo bar: menus, read-only pages, refused actions, masked bank numbers | The Team page says the server enforces these in a live portal; the preview cannot prove refusal on a server |
+| "Forgot your password?" | Phase 13's sentence: "Password reset email (simulated in this demo). If you cannot sign in, contact <team>." (13-08-PLAN.md must_haves); the new-password page opens from the Emails page preview link |
+| The investor Account page's two-step row | Shows "Off" with "Turn on" (or "On" only after the demo set-up), never a fixed "On" |
+| Security page and disclosure page | Static pages; true in every mode |
+| Change log | As today |
+
+Not shown in the preview, and never implied there: encryption at rest, backups, server refusals, lockout across devices, real emails. The owner sees those in the proof plan as a local server run with its output pasted (section 8, plan 15-10).
+
+<!-- section 2 done -->
