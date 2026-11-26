@@ -270,7 +270,10 @@ async function partsLoad({ check, S }) {
   check('opening Tax documents asks for no file that is not there (no 404)', missing.length === 0, missing);
   const parts = await F.fr.evaluate(() => (window.CVPortal.taxUI ? Array.from(window.CVPortal.taxUI.PARTS) : null));
   const absent = (parts || []).filter((f) => !fs.existsSync(path.join(Lib.ROOT, 'assets', 'js', f)));
-  check('every file in NS.taxUI.PARTS is in assets/js (tax1099-ui.js and taxlink.js are not listed until plans 10-10 and 10-12 add them)', Array.isArray(parts) && parts.length > 0 && absent.length === 0 && parts.indexOf('tax1099-ui.js') < 0 && parts.indexOf('taxlink.js') < 0, { parts, absent });
+  // tax1099-ui.js and taxlink.js are listed once plans 10-10 and 10-12 ship them, in the same commit as the file (the
+  // assertion first written here required them absent, which plan 10-10's own B1 change made out of date)
+  const shipped = (f) => fs.existsSync(path.join(Lib.ROOT, 'assets', 'js', f));
+  check('every file in NS.taxUI.PARTS is in assets/js (tax1099-ui.js and taxlink.js are listed only once plans 10-10 and 10-12 ship them)', Array.isArray(parts) && parts.length > 0 && absent.length === 0 && ['tax1099-ui.js', 'taxlink.js'].every((f) => (parts.indexOf(f) >= 0) === shipped(f)), { parts, absent });
   const src = fs.readFileSync(path.join(Lib.ROOT, 'assets/js/taxdocs-ui.js'), 'utf8');
   check('the parts list names the plans that add the two files back (10-10, 10-12)', /10-10/.test(src) && /10-12/.test(src) && /tax1099-ui\.js/.test(src) && /taxlink\.js/.test(src), 'comment not found');
   await L9.leak(check, F, 'Tax documents');

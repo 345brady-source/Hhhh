@@ -1445,7 +1445,7 @@
       const kl = k ? NS.ops.kycLabel(k, P.to) : null;
       const acc = i.accreditation && i.accreditation.basis ? `Verified accredited investor, ${dateShort(i.accreditation.date)}` : 'Not verified';
       const first = i.positions.filter((p) => p.offeringId === o.id).map((p) => p.date).sort()[0];
-      return [i.id, i.title, ...xVals(a), i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, !i.taxForm ? 'Missing' : NS.inviteFlow.taxOnFile(i) ? `${i.taxForm} on file` : `${i.taxForm} not signed`, i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', i.onboarding.status === 'complete' ? 'Active' : i.onboarding.status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
+      return [i.id, i.title, ...xVals(a), i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, !i.taxForm ? 'Missing' : NS.inviteFlow.taxOnFile(i) ? `${i.taxForm} on file` : `${i.taxForm} not signed`, i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', (i.onboarding || {}).status === 'complete' ? 'Active' : (i.onboarding || {}).status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
     });
     out.push(
       sched(

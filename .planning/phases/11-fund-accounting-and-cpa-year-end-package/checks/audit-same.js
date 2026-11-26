@@ -13,6 +13,14 @@
 //     except entries for schedules the base does not have, the "Generated:" line of 00_README.txt, the README and
 //     MANIFEST lines for those entries, and the rows and README lines a readiness check the base does not have adds
 //     (11-CONTEXT W4).
+// The one expected difference (plan 11-18, the businessDays fix): before it, every seeded sample call was noticed on
+// its due date. For each base firm, every base call with status complete whose notice date equals its due date is
+// expected in this tree noticed ten Monday-to-Friday days earlier (this check's own count), with nothing else in the
+// calls changed; its 'Capital call issued' change-log row carries the new date, and the log's Seq, Previous hash and
+// Hash are recomputed here from the base's own entries with the chain rule (proven on the base's hashes), since the
+// log is a hash chain sorted by time. Every byte of the tree's log, its 15_Change_log.csv entries and their MANIFEST
+// lines is compared with that exact expectation. With no such base call the rule is off and everything is compared
+// as above; a moved row entering or leaving a period is reported, not allowed.
 // Without P11_ROOT (or with this checkout as P11_ROOT) it prints FAIL and exits 1: it never compares a tree with itself.
 // Cases: same (the above; then the first edition again in fresh contexts must give the same hashes, I1), mutate (one
 // cent on kb-fund-ii's newest paid distribution must be reported, W7), noroot (the refusal above, as child processes),
@@ -120,13 +128,122 @@ function firstCell(rec) {
   return v;
 }
 
+/* ---------- 11-18: the moved notices, the one expected difference, built from the base ---------- */
+const GENESIS = '0'.repeat(64);
+const LOG_FIELDS = ['seq', 'at', 'actor', 'action', 'fund', 'record', 'detail', 'hash'];
+/** n Monday-to-Friday days before iso, one UTC calendar day at a time (this check's own count, never NS.ops). */
+function weekdaysBack(iso, n) {
+  let t = Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)));
+  for (let k = 0; k < n; ) {
+    t -= 864e5;
+    const wd = new Date(t).getUTCDay();
+    if (wd !== 0 && wd !== 6) k++;
+  }
+  return new Date(t).toISOString().slice(0, 10);
+}
+const tenBack = (iso) => weekdaysBack(iso, 10);
+/** The change log's chain rule (audit.js entryText): seq = place + 1, hash = SHA-256 of the previous hash and the entry. */
+function chainOf(list) {
+  let prev = GENESIS;
+  list.forEach((e, i) => {
+    e.seq = i + 1;
+    e.hash = sha([prev, e.seq, e.at, e.actor, e.action, e.fund || '', e.record || '', e.detail || ''].join('|'));
+    prev = e.hash;
+  });
+  return list;
+}
+/**
+ * The expected difference for one base firm: every base call with status complete whose notice equals its due date
+ * moves to ten business days before it is due. null when there is none (the rule is off). Otherwise { moves, calls (the
+ * base's calls as JSON with the moved notices), E (the base's log with the moved rows' dates, sorted and rechained),
+ * bySeq (base seq -> E entry), problems }.
+ */
+function firmExpect(NSa, wa) {
+  const all = wa.calls || [];
+  const moves = all.filter((c) => c.status === 'complete' && c.noticeDate === c.due).map((c) => ({ id: c.id, offeringId: c.offeringId, due: c.due, from: c.noticeDate, to: tenBack(c.due) }));
+  if (!moves.length) return null;
+  const by = new Map(moves.map((m) => [m.id, m]));
+  const calls = JSON.stringify(all.map((c) => (by.has(c.id) ? Object.assign({}, c, { noticeDate: by.get(c.id).to }) : c)));
+  const log = NSa.audit.ensureLog(wa);
+  const problems = [];
+  const re = chainOf(log.map((e) => Object.assign({}, e)));
+  const broken = re.findIndex((e, i) => e.seq !== log[i].seq || e.hash !== log[i].hash);
+  if (broken >= 0) problems.push(`the chain rule does not reproduce the base's hash at seq ${broken + 1}`);
+  moves.forEach((m) => {
+    const rows = log.filter((e) => e.action === 'Capital call issued' && e.record === m.id);
+    if (rows.length !== 1 || rows[0].at.slice(0, 10) !== m.from) problems.push(`${m.id}: ${rows.length} base entries with action 'Capital call issued' (${rows.map((e) => e.at).join(', ')}); one dated ${m.from} expected`);
+  });
+  const E = log.map((e) => {
+    const c = Object.assign({}, e, { baseSeq: e.seq });
+    const m = e.action === 'Capital call issued' && by.get(e.record);
+    if (m) {
+      c.at = m.to + e.at.slice(10);
+      c.moved = m.id;
+    }
+    return c;
+  });
+  E.filter((e) => e.moved).forEach((e) => {
+    if (E.some((x) => x !== e && x.at === e.at)) problems.push(`${e.moved}: its moved time ${e.at} equals another entry's; the order would depend on how the log was generated`);
+  });
+  E.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0)); // seedLog's comparator; Array sort is stable
+  chainOf(E);
+  const bySeq = new Map(E.map((e) => [e.baseSeq, e]));
+  return { moves, calls, E, bySeq, problems };
+}
+/** This tree's firm against the expected difference: mismatch strings (empty when it is exactly that). */
+function firmCheck(X, NSt, wt) {
+  const out = X.problems.slice();
+  const tc = wt.calls || [];
+  X.moves.forEach((m) => {
+    const c = tc.find((x) => x.id === m.id);
+    const n = c ? c.noticeDate : '(no such call)';
+    if (n !== m.to) out.push(`calls: ${m.id} notice ${n}, expected ${m.to}`);
+  });
+  const by = new Map(X.moves.map((m) => [m.id, m]));
+  const norm = tc.map((c) => (by.has(c.id) ? Object.assign({}, c, { noticeDate: by.get(c.id).to }) : c));
+  if (JSON.stringify(norm) !== X.calls) {
+    const xa = JSON.parse(X.calls);
+    let k = 0;
+    while (k < Math.max(xa.length, norm.length) && JSON.stringify(xa[k]) === JSON.stringify(norm[k])) k++;
+    out.push(`calls: ${(norm[k] || xa[k] || {}).id || `entry ${k + 1}`} differs beyond the moved notices`);
+  }
+  const lt = NSt.audit.ensureLog(wt);
+  if (lt.length !== X.E.length) out.push(`change log: ${lt.length} entries, expected ${X.E.length}`);
+  for (let i = 0; i < Math.min(lt.length, X.E.length); i++) {
+    const f = LOG_FIELDS.find((k) => lt[i][k] !== X.E[i][k]);
+    if (f) {
+      out.push(`change log: seq ${i + 1} ${f} differs from the expected`);
+      break;
+    }
+  }
+  return out;
+}
+/**
+ * The base's 'log' schedule s (fund o, period P) as the expected difference makes it: the same entries (by base seq)
+ * with their new Seq, Timestamp, Previous hash and Hash, written by the base's own toCsv. { csv } or { bad } when a
+ * moved row would enter or leave the period (not in the expected list).
+ */
+function expectedLog(NSa, s, X, P, o) {
+  const inP = (d) => d >= P.from && d <= P.to;
+  const cross = X.moves.filter((m) => m.offeringId === o.id && inP(m.from) !== inP(m.to));
+  if (cross.length) return { bad: cross.map((m) => `${m.id} (${m.from} -> ${m.to}) crosses ${P.from} to ${P.to}`).join('; ') + '; a row entering or leaving a period is not in the expected list' };
+  const lost = s.rows.filter((r) => !X.bySeq.has(r[0]));
+  if (lost.length) return { bad: `base rows ${lost.map((r) => r[0]).join(', ')} are not in the base's log` };
+  const rows = s.rows
+    .map((r) => X.bySeq.get(r[0]))
+    .sort((a, b) => a.seq - b.seq)
+    .map((e) => [e.seq, e.at, e.actor, e.action, e.record, e.detail, e.seq > 1 ? X.E[e.seq - 2].hash : GENESIS, e.hash]);
+  return { csv: NSa.audit.toCsv(Object.assign({}, s, { rows })) };
+}
+
 /**
  * W4: the two exported zips. base/tree = { bytes, files: [{ name, data }] from unzip, B: build }. Returns mismatch
- * strings (empty when the packages agree under the rules above).
+ * strings (empty when the packages agree under the rules above). expect (11-18, optional): Map(entry name -> the bytes
+ * the expected difference gives); such an entry must be exactly those bytes, and its MANIFEST line its true SHA-256.
  */
-function compareZip(base, tree) {
+function compareZip(base, tree, expect) {
   const bad = [];
-  if (Buffer.compare(Buffer.from(base.bytes), Buffer.from(tree.bytes)) === 0) return bad;
+  if (!expect && Buffer.compare(Buffer.from(base.bytes), Buffer.from(tree.bytes)) === 0) return bad;
   const bf = new Map(base.files.map((f) => [f.name, f.data]));
   const tf = new Map(tree.files.map((f) => [f.name, f.data]));
   const baseSchedFiles = new Set(base.B.list.map((s) => s.file));
@@ -152,6 +269,12 @@ function compareZip(base, tree) {
       continue;
     }
     if (f.name === 'MANIFEST.sha256') continue;
+    if (expect && expect.has(f.name)) {
+      const x = expect.get(f.name);
+      if (Buffer.compare(Buffer.from(x), t) === 0) normalized.add(f.name);
+      else bad.push(`${f.name}: not the bytes the expected difference gives (base ${sha(f.data).slice(0, 12)}, expected ${sha(x).slice(0, 12)}, tree ${sha(t).slice(0, 12)})`);
+      continue;
+    }
     if (Buffer.compare(f.data, t) === 0) continue;
     if (f.name === '00_README.txt') {
       const why = compareReadme(f.data.toString('utf8'), t.toString('utf8'), { newFiles, newChecks, checksFile, extraRows: newCheckRows(base.B, tree.B) });
@@ -285,12 +408,18 @@ function compare(base, edition, mutate) {
     });
     if (T.NS.clearCaches) T.NS.clearCaches();
   }
-  const r ={ funds: 0, schedules: 0, zips: 0, zipsWhole: 0, mismatches: [], found: [], hashes: [], mutated: [] };
+  const r ={ funds: 0, schedules: 0, zips: 0, zipsWhole: 0, mismatches: [], found: [], hashes: [], mutated: [], moves: [] };
   r.mutated = changed;
   if (A.wss.length !== T.wss.length || !A.wss.length) r.mismatches.push(`sample firms: base ${A.wss.length}, tree ${T.wss.length}`);
   A.wss.forEach((wa) => {
     const wt = T.wss.find((w) => w.tenant.id === wa.tenant.id);
     if (!wt) return r.mismatches.push(`${wa.tenant.id}: not a sample firm in this tree`);
+    // 11-18: the moved notices of this firm, built from the base side only (null: everything compared exactly).
+    const X = firmExpect(A.NS, wa);
+    if (X) {
+      firmCheck(X, T.NS, wt).forEach((l) => r.mismatches.push(`${edition} ${wa.tenant.id}: ${l}`));
+      r.moves.push({ firm: wa.tenant.id, moves: X.moves });
+    }
     wa.offerings.forEach((oa) => {
       const ot = wt.offerings.find((o) => o.id === oa.id);
       if (!ot) return r.mismatches.push(`${oa.id}: missing in this tree`);
@@ -305,6 +434,7 @@ function compare(base, edition, mutate) {
         const ma = measure(A.NS, wa, oa, a);
         const mt = measure(T.NS, wt, ot, t);
         const diff = [];
+        let expect = null;
         if (ma.fund !== mt.fund) diff.push('period fund');
         ma.sched.forEach((v, sid) => {
           const w = mt.sched.get(sid);
@@ -315,9 +445,20 @@ function compare(base, edition, mutate) {
             const keep = new Set(v.s.rows.map((row) => String(row[0])));
             tcsv = T.NS.audit.toCsv(Object.assign({}, w.s, { rows: w.s.rows.filter((row) => keep.has(String(row[0]))) }));
           }
-          const hb = sha(v.csv);
+          let hb = sha(v.csv);
           const ht = sha(tcsv);
           r.hashes.push(`${where} ${sid} ${ht}`);
+          if (sid === 'log' && X) {
+            // 11-18: the tree's change log must be exactly the one the expected difference gives.
+            const exp = expectedLog(A.NS, v.s, X, a, oa);
+            if (exp.bad) {
+              diff.push(`${v.s.file}: ${exp.bad}`);
+              hb = '';
+            } else {
+              hb = sha(exp.csv);
+              expect = new Map([[v.s.file, Buffer.from(exp.csv, 'utf8')]]);
+            }
+          }
           if (hb !== ht) diff.push(sid);
         });
         const za = exportOf(A.NS, wa, oa, a);
@@ -326,7 +467,7 @@ function compare(base, edition, mutate) {
         r.hashes.push(`${where} zip ${sha(zt.bytes)}`);
         if (sha(za.bytes) === sha(zt.bytes)) r.zipsWhole++;
         if (za.name !== zt.name) diff.push(`zip name (base ${za.name}, tree ${zt.name})`);
-        compareZip(za, zt).forEach((m) => diff.push(`zip ${m}`));
+        (expect ? compareZip(za, zt, expect) : compareZip(za, zt)).forEach((m) => diff.push(`zip ${m}`));
         if (diff.length) {
           r.mismatches.push(`${where}: ${diff.join('; ')}`);
           r.found.push({ edition, fund: oa.id, period: id, schedules: diff.filter((d) => ma.sched.has(d)), diff, logFile: ma.sched.has('log') ? ma.sched.get('log').s.file : '' });
@@ -372,7 +513,12 @@ const parts = {
       schedules += r.schedules;
       zips += r.zips;
       whole += r.zipsWhole;
-      check(`${ed}: every schedule, period figure and package entry the base builds is the same in this tree (${r.schedules} schedules, ${r.zips} packages of ${r.funds} funds)`, r.funds > 0 && r.schedules > 0 && !r.mismatches.length, r.mismatches.slice(0, 20));
+      console.log(
+        `expected differences built from the base (${ed}): ${
+          r.moves.length ? r.moves.map((f) => `${f.firm} ${f.moves.length} (${f.moves.map((m) => `${m.id} ${m.from} -> ${m.to}`).join(', ')})`).join('; ') : 'none (no base call has a notice date equal to its due date)'
+        }`
+      );
+      check(`${ed}: every schedule, period figure and package entry the base builds is the same in this tree, or exactly the expected difference above (${r.schedules} schedules, ${r.zips} packages of ${r.funds} funds)`, r.funds > 0 && r.schedules > 0 && !r.mismatches.length, r.mismatches.slice(0, 20));
     });
     // I1: the same comparison run again in fresh contexts gives the same hashes (the comparison is stable).
     const again = compare(base, EDITIONS[0]);
@@ -413,6 +559,7 @@ const parts = {
     const n = child(['--case', '']);
     check(`an empty --case list: a FAIL line and exit 1 (exit ${n.status})`, n.status === 1 && /^FAIL no cases to run/m.test(n.out), n.out.slice(-400));
     zipRules(check);
+    noticeRules(check);
   }
 };
 
@@ -486,6 +633,150 @@ function zipRules(check) {
     const m = compareZip(X, tree);
     check(`${allowed ? 'allowed' : 'reported'}: ${what}`, allowed ? m.length === 0 : m.length > 0, m.slice(0, 4));
   });
+}
+
+/** files (MANIFEST left out) → a package through NS.audit.zip; man(lines) may change the MANIFEST lines first. */
+function repack(NS, files, B, man) {
+  const body = files.filter((f) => f.name !== 'MANIFEST.sha256');
+  let lines = body.map((f) => `${sha(f.data)}  ${f.name}`);
+  if (man) lines = man(lines);
+  const all = body.concat([{ name: 'MANIFEST.sha256', data: Buffer.from(lines.join('\n') + '\n', 'utf8') }]);
+  const bytes = NS.audit.zip(all.map((f) => ({ name: f.name, data: new Uint8Array(f.data) })));
+  return { bytes, files: unzip(bytes), B };
+}
+
+/**
+ * 11-18: the moved-notice rule proven on this tree alone, so it holds once the fix is in the base too. The base is
+ * rebuilt here: Kestrel Bay with every complete call noticed on its due date (the data before the fix) and its change
+ * log seeded again from that data. It must be allowed against this tree's Kestrel Bay, and each other change reported.
+ */
+function noticeRules(check) {
+  const KB = 'kestrel-bay';
+  const load = () => {
+    const NS = LD().loadPortal(ROOT, { today: TODAY, edition: 'diy' });
+    return { NS, wss: LD().sampleWorkspaces(NS) };
+  };
+  const A = load();
+  const wa = A.wss.find((w) => w.tenant.id === KB);
+  wa.calls.forEach((c) => {
+    if (c.status === 'complete') c.noticeDate = c.due;
+  });
+  delete wa.audit;
+  A.NS.clearCaches();
+  A.NS.audit.ensureLog(wa);
+  const T = load();
+  const wt = T.wss.find((w) => w.tenant.id === KB);
+  const wp = T.wss.find((w) => w.tenant.id === 'pellbrook');
+  T.NS.audit.ensureLog(wt);
+
+  // Base: the rebuilt base gives the five moves, its chain verifies and chainOf reproduces it; a fixed base gives none.
+  const X = firmExpect(A.NS, wa);
+  check(`notice rule base: the rebuilt base gives five moves for Kestrel Bay (${X ? X.moves.map((m) => `${m.id} ${m.from} -> ${m.to}`).join(', ') : 'none'})`, !!X && X.moves.length === 5 && X.moves.every((m) => m.from === m.due && m.to < m.from), X && X.moves);
+  const v = A.NS.audit.verify(wa);
+  check(`notice rule base: NS.audit.verify of the rebuilt base's change log is ok (${v.count} entries)`, v.ok === true, v);
+  const base = A.NS.audit.ensureLog(wa);
+  const re = chainOf(base.map((e) => Object.assign({}, e)));
+  check(`notice rule base: chainOf reproduces every seq and hash of the rebuilt base's log (${base.length} entries)`, !!X && !X.problems.length && re.every((e, i) => e.seq === base[i].seq && e.hash === base[i].hash), X && X.problems);
+  const fixedKb = firmExpect(T.NS, wt);
+  const fixedPb = firmExpect(T.NS, wp);
+  const done = (w) => w.calls.filter((c) => c.status === 'complete').length;
+  check(`notice rule base: firmExpect of this tree's own Kestrel Bay (${done(wt)} complete calls) and Pellbrook (${done(wp)}) is null: with a base that has the fix, nothing is allowed`, fixedKb === null && fixedPb === null && done(wt) === 5 && done(wp) === 4, [fixedKb && fixedKb.moves, fixedPb && fixedPb.moves]);
+  if (!X) return;
+
+  // Allowed: this tree's Kestrel Bay against the rebuilt base.
+  const fc = firmCheck(X, T.NS, wt);
+  check('notice rule allowed: firmCheck of this tree\'s Kestrel Bay against the rebuilt base gives nothing (calls and the whole change log as expected)', fc.length === 0, fc.slice(0, 4));
+  const oa = wa.offerings.find((o) => o.id === 'kb-fund-ii');
+  const ot = wt.offerings.find((o) => o.id === 'kb-fund-ii');
+  const pkg = {};
+  PRESETS.forEach((pid) => {
+    const p = A.NS.audit.presets(wa, oa).find((x) => x.id === pid);
+    const s = A.NS.audit.build(wa, oa, p.from, p.to).list.find((x) => x.id === 'log');
+    const st = T.NS.audit.build(wt, ot, p.from, p.to).list.find((x) => x.id === 'log');
+    const exp = expectedLog(A.NS, s, X, p, oa);
+    const tcsv = T.NS.audit.toCsv(st);
+    check(`notice rule allowed: kb-fund-ii ${pid}: the tree's ${s.file} equals the one expectedLog builds from the rebuilt base (${s.rows.length} rows, base bytes differ: ${sha(A.NS.audit.toCsv(s)) !== sha(tcsv)})`, !exp.bad && exp.csv === tcsv, exp.bad || `expected ${exp.csv && sha(exp.csv).slice(0, 12)}, tree ${sha(tcsv).slice(0, 12)}`);
+    const za = exportOf(A.NS, wa, oa, p);
+    const zt = exportOf(T.NS, wt, ot, p);
+    const expect = exp.csv ? new Map([[s.file, Buffer.from(exp.csv, 'utf8')]]) : null;
+    const m = expect ? compareZip(za, zt, expect) : ['no expected bytes'];
+    const without = compareZip(za, zt);
+    check(`notice rule allowed: kb-fund-ii ${pid}: compareZip of the two packages with the expected bytes gives nothing (without them it reports ${without.length})`, m.length === 0 && without.length > 0, m.slice(0, 4));
+    pkg[pid] = { p, s, exp, za, zt, expect };
+  });
+
+  // Reported: each change other than the declared one.
+  const cloneT = () => {
+    const w = clone(T.NS, wt);
+    T.NS.audit.ensureLog(w);
+    return w;
+  };
+  const rebuild = (NS, w) => {
+    delete w.audit;
+    NS.clearCaches();
+    NS.audit.ensureLog(w);
+  };
+  const report = (what, lines, extra) => check(`notice rule reported: ${what}`, lines.length > 0 && extra !== false, lines.length ? lines.slice(0, 3) : 'nothing reported');
+  // (a) the tree is the rebuilt base itself (the code without the fix).
+  const ra = firmCheck(X, A.NS, wa);
+  report(`(a) a tree without the fix (the rebuilt base itself): ${ra.filter((l) => /^calls: \S+ notice /.test(l)).length} "calls:" lines`, ra, ra.filter((l) => /^calls: kb-fund-ii-call-\d notice \S+, expected \S+$/.test(l)).length === 5);
+  // (b) one moved call noticed nine business days back, its log seeded again.
+  const wb = cloneT();
+  const cb = wb.calls.find((c) => c.id === X.moves[0].id);
+  cb.noticeDate = weekdaysBack(X.moves[0].due, 9);
+  rebuild(T.NS, wb);
+  const rb = firmCheck(X, T.NS, wb);
+  report(`(b) ${cb.id} noticed nine business days before it is due (${cb.noticeDate}), its log seeded again`, rb, rb.some((l) => l === `calls: ${cb.id} notice ${cb.noticeDate}, expected ${X.moves[0].to}`));
+  T.NS.clearCaches();
+  // (c) one moved row one second later, the chain rehashed so it verifies (a consistent forged chain).
+  const wc = cloneT();
+  const ec = wc.audit.find((e) => e.action === 'Capital call issued' && e.record === X.moves[1].id);
+  ec.at = new Date(Date.parse(ec.at) + 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  chainOf(wc.audit);
+  const vc = T.NS.audit.verify(wc);
+  const rc = firmCheck(X, T.NS, wc);
+  report(`(c) the 'Capital call issued' row of ${X.moves[1].id} one second later (${ec.at}), the chain rehashed (verify ok: ${vc.ok})`, rc, vc.ok === true);
+  // (d) one character of another row's detail, the chain rehashed.
+  const wd = cloneT();
+  const ed = wd.audit.find((e) => e.action !== 'Capital call issued' && e.detail && e.detail.length > 1);
+  ed.detail = ed.detail.slice(0, -1) + (ed.detail.slice(-1) === 'x' ? 'y' : 'x');
+  chainOf(wd.audit);
+  const rd = firmCheck(X, T.NS, wd);
+  report(`(d) one character of the detail of seq ${ed.seq} (${ed.action}), the chain rehashed (verify ok: ${T.NS.audit.verify(wd).ok})`, rd);
+  // (e) one cent more on one item of a moved call, nothing else.
+  const we = cloneT();
+  const ce = we.calls.find((c) => c.id === X.moves[2].id);
+  ce.items[0].cents += 1;
+  const rE = firmCheck(X, T.NS, we);
+  report(`(e) one cent more on the first item of ${ce.id}, nothing else`, rE, rE.some((l) => l === `calls: ${ce.id} differs beyond the moved notices`));
+  // (f) kb-fund-ii fy's tree package: a digit of a row that did not move (MANIFEST rewritten to match); a wrong MANIFEST line.
+  const F = pkg.fy;
+  if (F && F.expect) {
+    const name = F.s.file;
+    const recs = csvRecords(F.zt.files.find((f) => f.name === name).data.toString('utf8'));
+    const k = recs.findIndex((r, i) => i > 0 && r.indexOf('Capital call issued') < 0 && /\d/.test(r));
+    const edited = recs.map((r, i) => (i === k ? r.replace(/\d/, (d) => String((Number(d) + 1) % 10)) : r)).join('\r\n') + '\r\n';
+    const files = F.zt.files.map((f) => (f.name === name ? { name, data: Buffer.from(edited, 'utf8') } : f));
+    const r1 = compareZip(F.za, repack(T.NS, files, F.zt.B), F.expect);
+    report(`(f) kb-fund-ii fy: one digit of row ${k} of ${name} (a row that did not move), the MANIFEST rewritten to match`, r1, k > 0);
+    const r2 = compareZip(F.za, repack(T.NS, F.zt.files, F.zt.B, (ls) => ls.map((l) => (l.slice(66) === name ? '0'.repeat(64) + l.slice(64) : l))), F.expect);
+    const r0 = compareZip(F.za, repack(T.NS, F.zt.files, F.zt.B), F.expect);
+    report(`(f) kb-fund-ii fy: the expected ${name} bytes with a wrong MANIFEST line for it (the same package rebuilt faithfully gives ${r0.length})`, r2, r0.length === 0);
+  } else check('notice rule reported: (f) kb-fund-ii fy has expected log bytes to test with', false, F && F.exp);
+  // (g) a base that has the fix (the rule off): one call noticed one business day earlier in the tree is reported.
+  const T2 = load();
+  const wg = T2.wss.find((w) => w.tenant.id === KB);
+  const cg = wg.calls.find((c) => c.id === X.moves[3].id);
+  cg.noticeDate = weekdaysBack(cg.noticeDate, 1);
+  rebuild(T2.NS, wg);
+  const og = wg.offerings.find((o) => o.id === cg.offeringId);
+  const ob = wt.offerings.find((o) => o.id === cg.offeringId);
+  const pg = T.NS.audit.presets(wt, ob).find((x) => x.id === 'itd');
+  const sb = T.NS.audit.toCsv(T.NS.audit.build(wt, ob, pg.from, pg.to).list.find((x) => x.id === 'log'));
+  const sg = T2.NS.audit.toCsv(T2.NS.audit.build(wg, og, pg.from, pg.to).list.find((x) => x.id === 'log'));
+  const rg = compareZip(exportOf(T.NS, wt, ob, pg), exportOf(T2.NS, wg, og, pg));
+  const off = firmExpect(T.NS, wt);
+  report(`(g) this tree's Kestrel Bay as the base (rule off: ${off === null}), ${cg.id} noticed one business day earlier (${cg.noticeDate}) in the tree: the itd log schedule differs (${sha(sb) !== sha(sg)}) and the package is reported`, rg, off === null && sha(sb) !== sha(sg));
 }
 
 L6.runParts(parts, { name: 'AUDIT SAME', unit: 'cases', flag: '--case' });

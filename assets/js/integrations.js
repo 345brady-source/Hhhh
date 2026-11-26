@@ -431,6 +431,9 @@
       }
       try {
         const res = await api(ws, 'POST', '/v1/screenings', { provider: r.how === 'ofac' ? 'ofac' : x.connector, settings: {}, investor: investorPayload(ws, inv), names });
+        // How many names the server screened (plan 08-19): a package screening covers the names the server holds, not
+        // the ones sent, so the count shown is the server's.
+        if (Number.isInteger(res.screened) && res.screened >= 0) r.screened = res.screened;
         return done(normScreen(res.status, res.hits), tagHits(res.hits, x.name), res.id);
       } catch (e) {
         r.error = e.message;
@@ -451,16 +454,48 @@
     const owners = ((inv.kyc && inv.kyc.owners) || []).map((o) => o && o.name);
     return Array.from(new Set([inv.contact, inv.title].concat(holderNames(inv), owners).map((n) => String(n || '').trim()).filter(Boolean)));
   }
+  /**
+   * R12 (plan 08-19): the role names a package screening covers beyond the invitation's own: a joint account's other
+   * holders and an entity's beneficial owners, without the investor's and the account's names, each once. None unless the
+   * screening runs through a package connection. The server keeps at most 5 of them.
+   */
+  function roleNames(ws, inv) {
+    if (!inv || !activeFor(ws, 'aml').some((x) => x && x.package)) return [];
+    const seen = [inv.contact, inv.title].map((n) => String(n || '').trim().toLowerCase());
+    return screenNames(inv).filter((n) => {
+      const k = n.toLowerCase();
+      if (seen.indexOf(k) >= 0) return false;
+      seen.push(k);
+      return true;
+    });
+  }
+  const nScreened = (n) => `${n} name${n === 1 ? '' : 's'} screened`;
+  /** The count the change log gives: the server's when the screenings that report one agree, each one's when they differ. */
+  function screenedText(names, results) {
+    const told = results.filter((r) => Number.isInteger(r.screened));
+    if (!told.length) return nScreened(names.length);
+    if (told.every((r) => r.screened === told[0].screened)) return nScreened(told[0].screened);
+    return told.map((r) => `${r.via}: ${nScreened(r.screened)}`).join('; ');
+  }
   /** Sanctions, PEP and adverse media screening of the investor, every joint owner and every beneficial owner, through every screening connection on. */
   async function screen(ws, inv, pre) {
     const v = vOf(inv);
     const names = screenNames(inv);
     const results = [];
+    // On an invitation's device, before a package screening: the role names go to the server first, which screens them with
+    // the invitation's own names (never names sent with the screening). A failure here does not stop the screening.
+    if (ws.invite && ws.invite.mode === 'server' && serverUrl(ws) && activeFor(ws, 'aml').some((x) => x && x.package)) {
+      try {
+        await api(ws, 'PUT', '/v1/invite/progress', { roles: roleNames(ws, inv) });
+      } catch (e) {
+        /* the server then screens the invitation's own names */
+      }
+    }
     for (const x of activeFor(ws, 'aml')) results.push(await screenWith(ws, inv, x, names, pre));
     const pep = (inv.kyc && inv.kyc.pep) || false;
     v.aml = { status: 'pending', results, names, screenedAt: today(), nextScreen: addDays(today(), ruleDays(ensure(ws).rules, 'rescreenDays')) };
     refreshAml(v);
-    log(ws, inv, 'Sanctions and PEP screening run', `${names.length} name${names.length === 1 ? '' : 's'} screened. ${results.map((r) => `${r.via}: ${resultText(r)}`).join('. ')}${pep ? '. Self-declared politically exposed person' : ''}`);
+    log(ws, inv, 'Sanctions and PEP screening run', `${screenedText(names, results)}. ${results.map((r) => `${r.via}: ${resultText(r)}`).join('. ')}${pep ? '. Self-declared politically exposed person' : ''}`);
     syncKyc(ws, inv);
     watch(ws, inv); // a screening the server answers later is polled until it does
     return v.aml;
@@ -1370,4 +1405,5 @@
   });
 
   NS.integrations = { NOTE_506C_NEVER, CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
+  NS.integrations.roleNames = roleNames;
 })(window.CVPortal);

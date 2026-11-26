@@ -784,6 +784,15 @@ The heading is "Update your bank account".
 2. Enter the "Routing number", choose the "Account type" and enter the "Account number" twice.
 3. Tick the authorization and choose "Save bank account".
 
+## taxdoc
+audience: investor
+kind: page
+title: Your tax document
+anchor: Last four digits of the tax number you gave
+anchor: Open document
+
+The page the link in a tax document email opens, on any device. Enter the last four digits of the tax number you gave the firm and choose "Open document". If asked, read how electronic delivery works and tick the box to consent first. The pages then show; "Save" keeps a copy, and the saved file can be printed. After five wrong tries the link locks: ask the firm for a new one.
+
 ## skip
 co: the co-investor's sign-in link; it signs the co-investor in and opens their agreement on its signing page, with no screen of its own beyond two plain messages for a link that does not work
 console-new-client: the managed edition's page for adding a client; the self-serve edition does not have it

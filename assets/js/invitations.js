@@ -428,6 +428,7 @@
       const msg = data && typeof data.error === 'string' ? data.error : data && typeof data.message === 'string' ? data.message : res.status === 401 ? 'The integration server did not accept the access token.' : `The integration server answered ${res.status}.`;
       const err = new Error(msg);
       err.status = res.status;
+      err.code = data && typeof data.code === 'string' ? data.code : '';
       throw err;
     }
     return data;
@@ -603,11 +604,35 @@
         NS.app.save(true);
         return { emailStatus: 'manual', error: it.emailError };
       }
+      // 08-CONTEXT R7: this invitation's package was used (its check started, its invitation ended): a new invitation.
+      if (e.code === 'package_used') return replaceUsed(ws, it, e.message);
       it.emailStatus = 'failed';
       it.emailError = e.message || 'The invitation could not be sent.';
       NS.app.save(true);
       return { emailStatus: 'failed', error: it.emailError };
     }
+  }
+  /**
+   * 08-CONTEXT R7: the server refused this invitation's package as used (its check started and its invitation ended). The
+   * invitation was never sent, so it is closed here with the server's sentence, and a new one for the same investor, made
+   * from its own options as reinvite() makes them (with the package choice and the tax form choice), waits with a new id
+   * (so a new client id) until the sponsor sends it. Nothing is sent and nothing is charged here.
+   */
+  function replaceUsed(ws, it, said) {
+    const inv = invOf(ws, it.investorId);
+    Object.assign(it, { status: 'cancelled', cancelledAt: new Date().toISOString(), emailStatus: 'failed', emailError: said });
+    let made = null;
+    if (inv) {
+      const off = offOf(ws, it.offeringId);
+      const o = { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note, includeTax: it.includeTax === true };
+      if (it.package) o.package = true;
+      const e = validate(ws, o);
+      if (e.amount || e.cls) Object.assign(o, { cents: 0, cls: '' });
+      if (!Object.keys(validate(ws, o)).length) made = create(ws, o).invitation;
+    }
+    if (made) audit(ws, 'Invitation replaced', `${inv.title}: ${said}`, it.offeringId, it.investorId);
+    NS.app.save(true);
+    return { emailStatus: 'failed', error: said, replaced: made ? made.id : '' };
   }
   /** A new email for an open invitation (and 30 more days). */
   async function resend(ws, it) {
@@ -617,8 +642,11 @@
       try {
         const r = await api(ws, 'POST', `/v1/invitations/${encodeURIComponent(it.serverId)}/resend`, { sendEmail: true, portalUrl: portalPage() });
         Object.assign(it, { link: String(r.link || it.link), emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent' });
+        delete it.resendError;
       } catch (e) {
         it.emailError = e.message;
+        // The server refused (a returned package, a closed invitation): its sentence stays on the row until a resend goes.
+        if (e.status) it.resendError = e.message;
         NS.app.save(true);
         return { emailStatus: 'failed', error: e.message };
       }
@@ -2538,7 +2566,7 @@
     const r = await resend(w, it);
     NS.app.render();
     if (r.emailStatus === 'manual') return showEmail(it.id);
-    U.toast(r.error ? `Could not resend: ${r.error}` : r.emailStatus === 'outbox' ? `New link for ${inv.title} saved in the server outbox.` : `New invitation emailed to ${inv.contact}.`);
+    U.toast(r.error ? r.error : r.emailStatus === 'outbox' ? `New link for ${inv.title} saved in the server outbox.` : `New invitation emailed to ${inv.contact}.`);
   };
   NS.actions['inv8-cancel'] = (el) => {
     const it = itById(el);
@@ -2659,7 +2687,7 @@
           <td data-label="Offering">${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
           <td data-label="Progress">${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
           <td class="inv8-activity" data-label="Activity">${activity}</td>
-          <td data-label="Email">${em}</td>
+          <td data-label="Email">${em}${it.resendError && OPEN.concat(['expired']).indexOf(it.status) >= 0 ? `<span class="sub cs-error-text inv8-refused">${h(it.resendError)}</span>` : ''}</td>
           <td class="cs-row-actions">${acts.join('')}</td>
         </tr>`;
       })

@@ -144,3 +144,27 @@ Waves: 1 = 10-01 (distribution record, gate10.sh), 10-02 (K-1 split core) · 2 =
 - W1 (10-12 Task 2): the access-period purge runs inside server/lib/taxdocs.mjs, throttled (`if (now() - lastPurge >= 60000) purge()` at the top of `investor()` and `sponsor()`). invitations.mjs stays unchanged; test "period" calls `purge()` directly.
 - W2 (10-12 interfaces): the invitation-token block in server/index.mjs is now at lines 838-848, and module setup is at line 170. Find them by name (`inviteToken`), not by line.
 - Parallel: after these, the two plans share only taxdocs-ui.js line 158.
+
+## After 10-12 (merged 2026-11-20; server tests 403 on the merged tree)
+- Returned tax notices bounce to the server's MAIL_FROM, not the sponsor's mailbox (the firm's contact is the reply-to). Phase 13's per-sponsor sender (13-03) is where bounces reach the sponsor; until then the sponsor records a returned notice with "Notice came back".
+- Replaced documents keep opening on the server until their own available-until date (C-09). Withdrawn documents stop at once and their file is removed.
+- The consent screen shows eight disclosures (NS.taxdocs.CONSENT.lines).
+- When 10-10 merges, PARTS in taxdocs-ui.js reads [..., 'tax1099.js', 'tax1099-ui.js', 'taxlink.js']; rebuild help-guide.mjs and regenerate .planning/tools/preview/help-data.js after the guide merge. walk3-fixes.js accepts tax1099-ui.js once its file exists.
+- Sponsor guide 46,698 of 48,000 bytes.
+
+## After 10-10 (merged 2026-11-26)
+- Form 1099 on screen merged. Its gate on 7edc3ba ended GATE_EXIT=0 (every reference step ok; TAX1099 FLOW 8 parts). Merge resolved the PARTS line to [..., 'tax1099.js', 'tax1099-ui.js', 'taxlink.js'] and took 10-10's stricter WALK3 assertion; server tests 403 on the merged tree; WALK3 and TAX1099 FLOW rerun on the merged tree (scratchpad merge-10-10/).
+- Not proven: no IRS upload tried; header row and cents not compared with a real IRS template (headerPinned and centsConfirmed stay false until 10-13); no CPA has read the stop sentences or the Notes case; not run on an iPhone.
+- Not built: the help guide has no Form 1099 entry (to 10-11 or the guide pass, within the byte cap); amended 1099.
+- taxdocs-ui.js parts keys now accept digits ([a-z0-9]+) and an optional shown(ws).
+- Next: plan-check 10-11.
+
+## Plan-check additions, 10-11 (checked 2026-11-26 against 875d3f8; 4 blockers fixed here, 4 warnings). Executors apply these with their plan. Findings: scratchpad checks-10-11.md.
+- E1 (blocker): gate markers. Task 1 sets tax-forms.js line 2 to `// last "TAX FORMS: PASS (forms run: 2)"`; Task 2 sets tax-1099.js line 2 to `// last "TAX 1099: PASS (cases run: 14)"`; Task 3 sets tax1099-flow.js line 2 to `// last "TAX1099 FLOW: PASS (parts run: 11)"`.
+- E2 (blocker): guide cap 400 bytes added to GUIDE.sponsor (46,698 now; 11-13, 12-06 and 08-18 take up to 822 of the 1,302 left). Measure before and after with `node -e "import('./server/lib/help-guide.mjs').then(m=>console.log(Buffer.byteLength(m.GUIDE.sponsor)))"`; Task 3's verify fails if the rise is over 400. Edit only console-taxdocs: one paragraph for "Tax withheld" (10-08's section) and one for "Form 1099" (confirm each form, numbers, recipient copies, IRS file and receipt; for a corporation or REIT the CPA's split per distribution, never proposed). This carries the missing Form 1099 entry. Drop the console-offering and console-distributions edits (10-07 wrote them: guide.md lines 83, 205, 207) and the truth that names them. Insert after line 288 ("Pages with no package" ...) and before "To deliver:", away from 11-13's insertion after line 297.
+- E3 (blocker): Task 3's `grep 'Tax reporting'` / `grep 'Form 1099'` already pass at HEAD (2 and 1). Replace with greps of `"Form 1099"` and `"Tax withheld"` inside the console-taxdocs section only (`awk '/^## console-taxdocs/{f=1;next} /^## /{f=0} f'`; 0 at HEAD).
+- E4 (blocker, D6): the unchanged-file and guide-changed tests read this plan's own commits (`git log --format=%H $BASE..HEAD --no-merges`), not `git diff $BASE HEAD`, since the pre-gate merge brings 11-13's and 12-06's console.js, diy.html and portal.html.
+- E5: tax1099.js and tax1099-ui.js are hard-wired to 1099-INT (row AN/AQ, copyBAnswers box1/box4, confirmTotals/confirmed via figuresInt, UI FORM, notesFunds, figures, box list, audit text, kind '1099-int'): each takes the form type. DIV columns from the IRS template: 1a AM, 1b AN, 2a AO, 2b AP, 2c AQ, 2d AR, 2e AS, 2f AT, 3 AU, 4 AV, 5 AW, last BQ (69). Case div-split asserts S-2001's row by these letters, other box columns empty. INT's 10 cases and 8 parts unchanged.
+- E6: div-stops tests stop 'other-withholding' (a confirmed 30% line on a corp fund's run; box 4 is backup only), or the stop leaves the interface.
+- E7: the summary and 10-13's CPA list name every DIV rule no CPA has read: $10 on cash paid, the whole-payment rule and wording, the Form 5452 line, liquidations sent to the CPA, 2e/2f limits, 4-decimal percent and odd cent (tie-break: box order 1a, 2a, 3). The DIV file shows the existing template-not-confirmed line (headerPinned false).
+- E8: help-guide.mjs is rebuilt with `node server/help/build.mjs` after each merge, never merged by hand; regenerate .planning/tools/preview/help-data.js.

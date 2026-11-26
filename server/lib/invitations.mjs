@@ -136,6 +136,25 @@ function cleanInvestor(x) {
   }
   return out;
 }
+/**
+ * R12 (plan 08-19): the role names the investor's own onboarding holds (an entity's beneficial owners and control person,
+ * a joint account's second holder), as the investor's device reports them before a package screening. Each a string,
+ * trimmed and clipped; empty ones, the invitation's own names (own) and repeats dropped without letter case; at most 5, so
+ * one package screening costs at most the invitation's names plus 5.
+ */
+const ROLE_LIMIT = 5;
+function cleanRoles(x, own) {
+  if (!Array.isArray(x)) throw fail(400, 'roles must be a list');
+  const seen = new Set((own || []).map((n) => String(n || '').trim().toLowerCase()));
+  const out = [];
+  for (const v of Array.isArray(x) ? x : []) {
+    const n = typeof v === 'string' ? clip(v, 120).trim() : '';
+    if (!n || seen.has(n.toLowerCase())) continue;
+    seen.add(n.toLowerCase());
+    out.push(n);
+  }
+  return out.slice(0, ROLE_LIMIT);
+}
 /** Plan 06-26: the official form a tax-form request is for, by the investor type the sponsor chose (D-09). */
 export const taxFormOf = (investor) => ({ 'foreign-individual': 'W-8BEN', 'foreign-entity': 'W-8BEN-E' })[investor && investor.taxType] || 'W-9';
 /** D-01, D-08 (1): benefit plan answers as known fields only (assets/js/onboarding.js erisaFrom): plan, planPct (0 to 100 or null). */
@@ -652,8 +671,10 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   const packageSettings = (scope, provider, settings) => (packageCheck(scope, provider) ? { firm: clip(firmName(scope), 120) } : settings);
   /**
    * A package check's start: billing holds the package while the provider is called (a cancel meanwhile credits nothing
-   * if the check then runs); the first start accepted marks it started. A refusal by the provider for its own billing or
-   * key reasons (402, 403) leaves the package valid and unstarted, tells the investor plainly and alerts the operator.
+   * if the check then runs); the first start accepted marks it started. Any provider failure (a refusal, a 5xx, a
+   * timeout, a network error, a malformed answer) leaves the package valid and unstarted, is put on the invitation's
+   * record and tells the investor one plain sentence, never the provider's status or words. A refusal for the provider's
+   * own billing or key reasons (402, 403) also alerts the operator.
    */
   async function packageStart(scope, provider, fn, kind) {
     if (!packageCheck(scope, provider) || !scope.package) return fn();
@@ -665,14 +686,15 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       out = await fn();
     } catch (e) {
       finish(false);
-      const refused = e && (e.providerStatus === 402 || e.providerStatus === 403);
-      if (refused) {
-        const cur = store.get('invitations', scope.id);
-        if (cur) addEvent(cur, 'package_check_failed');
-        store.event({ type: 'package_check_failed', id: scope.id });
-        alertOperator(e.providerStatus);
-      }
-      throw refused ? fail(502, 'This check could not start. Please try again later.') : e;
+      const providerStatus = e && Number.isInteger(e.providerStatus) ? e.providerStatus : 0;
+      const cur = store.get('invitations', scope.id);
+      if (cur) addEvent(cur, 'package_check_failed');
+      // The operator's log keeps the provider's status (0: no answer or no usable answer), never its words.
+      store.event({ type: 'package_check_failed', id: scope.id, providerStatus });
+      if (providerStatus === 402 || providerStatus === 403) alertOperator(providerStatus);
+      // A fault in the server's own code (an error with no status) is still printed for the operator, as index.mjs does.
+      if (!(e && e.status) && env.NODE_ENV !== 'test') console.error(e);
+      throw fail(502, 'This check could not start. Please try again later.');
     } finally {
       const left = (starting.get(key) || 1) - 1;
       if (left > 0) starting.set(key, left);
@@ -904,6 +926,16 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const names = snap && snap.investor ? [snap.investor.contact, snap.investor.title].map((n) => String(n || '').trim()).filter(Boolean) : [];
     return { providers, names: [...new Set(names)] };
   }
+  /** R12: the role names the investor's device stored on this invitation (sealed), or none when there are none or they cannot be read. */
+  function roleNames(rec) {
+    let list = null;
+    try {
+      list = rec ? unseal(store.get('invitations', rec.id) || rec, 'roleNames') : null;
+    } catch {
+      list = null;
+    }
+    return Array.isArray(list) ? list.filter((n) => typeof n === 'string' && n).slice(0, ROLE_LIMIT) : [];
+  }
   function confirmChecks(investor, rec) {
     // This server keeps every check it ran, so an old one (a verification from last year, say) must not stand behind a new
     // result: only checks created once this invitation existed count. A record without a valid time counts for nothing.
@@ -1076,6 +1108,12 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       const body = parseObject(await readRaw(req, INVITE_LIMITS.small));
       rec = current(rec);
       if (rec.status === 'completed') throw fail(409, 'This onboarding is already complete');
+      // R12: a roles-only report (sent right before a package screening) stores the role names, sealed, and nothing else.
+      if (body.roles !== undefined && body.stepKey === undefined) {
+        if (!obj(rec.package)) return send(res, 200, { ok: true }); // stored only on an invitation that holds a package
+        store.put('invitations', { id: rec.id, roleNames: seal(rec, 'roleNames', cleanRoles(body.roles, scopeRules(rec).names)) });
+        return send(res, 200, { ok: true });
+      }
       const stepKey = String(body.stepKey || '');
       if (!/^[\w-]{1,40}$/.test(stepKey)) throw fail(400, 'stepKey is required (letters, digits, dashes)');
       const stepCount = Math.round(numIn(body.stepCount, NaN, 1, 50));
@@ -1407,6 +1445,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     investorPath,
     authenticate,
     scopeRules,
+    roleNames,
     investor,
     sponsor,
     purge,

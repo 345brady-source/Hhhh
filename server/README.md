@@ -349,6 +349,38 @@ Everything in a submission comes from the investor's browser, so before it is st
 - **The commitment and offering** the sponsor set on the invitation are enforced (see `POST /v1/invite/complete`); an investor with no offering on the invitation cannot submit a subscription. When the sponsor set no commitment, the investor's amount must be a positive whole number of cents and at least the offering's minimum (400 otherwise); the console checks the share class minimum again when it imports.
 - **The sponsor's email** uses the investor's name and email from the invitation; other values from the browser (account name, investing as) are kept to one short line.
 
+## Tax documents
+
+When the portal is connected to this server, delivering a tax document (a Schedule K-1, Form 1099 or 1042-S, a tax letter) on the console's Tax documents page also sends that one document here (`lib/taxdocs.mjs`). This server keeps it sealed, emails the investor a link, and the investor opens it on any device with the last four digits of the tax number on record. No new setting: it uses `DATA_KEY`, `API_TOKEN` or the sponsor accounts, `PUBLIC_URL`, `PORTAL_ORIGIN` and the mail settings, as invitations do. With no mail server set the message waits in the outbox (`GET /v1/outbox`).
+
+1. The console posts the document. This server stores it, makes a token (32 random bytes, returned once inside the link; only its SHA-256 is kept), builds the link `<portalUrl>?server=<PUBLIC_URL>#taxdoc-<token>` and emails it from the firm. With the investor's consent to electronic delivery in effect, the subject is `IMPORTANT TAX RETURN DOCUMENT AVAILABLE` (Rev. Proc. 2012-17 section 7.01) and the text says how to open, save and print the document. Without it, the first message asks for consent and is not the notice.
+2. The investor's page calls `GET /v1/taxdoc` with `X-Doc-Token: <token>`, then `POST /v1/taxdoc/open` with the four digits. Where consent is needed, the page shows the consent's disclosure first and the document opens only with the consent; this server then records the consent with its time and the text's version and sends the section 7.01 notice.
+3. When the Tax documents page is opened, the console reads `GET /v1/taxdocs`: opens on the investor's device, a consent given at the link and a locked link are written into the workspace.
+
+An investor with no tax number on record is not sent a link: the console makes no call and the document stays on the send-on-paper list.
+
+**Sponsor calls** (`API_TOKEN` or a sponsor account's token; with an account's token every call acts on that account's workspace, whatever the body says, and another workspace's document answers 404):
+
+| Call | What it does |
+| --- | --- |
+| `POST /v1/taxdocs` | `{ workspace, docId, kind, year, title, fileName, pdf (base64), sha256, availableUntil, investor: { id, name, email, last4 }, firm: { name, contact: { name, address, phone, email } }, consent: { inEffect, version, lines }, portalUrl, sendEmail }` → `{ id, link, emailStatus, emailError? }`. 400 for a bad email, a `last4` that is not four digits, a file that is not a PDF or whose SHA-256 differs; 413 for a file over 10 MB. A message the mail server refuses answers `emailStatus: "failed"` with the reason (addresses removed); the document is still stored. |
+| `GET /v1/taxdocs?workspace=` | `{ documents: [{ id, docId, investorId, status, opens: { first, last, count }, consent, emailStatus, availableUntil }] }`; `status` is `sent`, `opened`, `locked`, `withdrawn` or `expired`. Never the file, the digits, the token, the name or the email. |
+| `POST /v1/taxdocs/:id/withdraw` | `{ id, status: "withdrawn" }`. The file is removed at once; the link then answers 410. |
+| `POST /v1/taxdocs/:id/resend` | `{ portalUrl, sendEmail }` → `{ id, link, status, emailStatus }`: a new token (the old link stops), the tries back to 0, the same message as the first time. |
+
+**Investor calls** (`X-Doc-Token` only; the token opens these two calls and nothing else, and an invitation's token opens neither; rate limited):
+
+| Call | What it does |
+| --- | --- |
+| `GET /v1/taxdoc` | `{ firm: { name, contact }, doc: { title, kind, year, availableUntil }, needs: { check: true, consent }, consent: { version, lines } }`. 404 for an unknown token, 410 once withdrawn or past `availableUntil`, 423 once locked. |
+| `POST /v1/taxdoc/open` | `{ last4, consent }` → `{ fileName, pdf (base64) }`. Wrong digits answer 403 `{ triesLeft }` and no file; the fifth wrong answer locks the link (423) until the sponsor resends it. 409 when consent is needed and not given. |
+
+**What is stored and for how long.** One record per document in the `taxdocs` collection: ids, kind, year, title, file name, SHA-256, `availableUntil`, the token's hash, status, tries, opens, consent `{ at, version }` and the email status. The file, the investor's name and email, the four digits, the firm's contact and the consent's text are sealed with `DATA_KEY`. The record and the file last until the document's available-until date (Rev. Proc. 2012-17 section 9: for a Schedule K-1, twelve months after the end of the tax year or six months after it was posted, whichever is later), not the 30 days of an invitation; the purge then removes both. Events carry ids and types only.
+
+**What this server never holds.** A full taxpayer number (the portal sends the last four digits only), and no name, email, digits or token in any event or log line.
+
+**Publishing.** The investor's link opens the firm's portal page with `?server=<this server>`; the page trusts the same servers as for invitations (`window.CVPortalConfig.integrationServers`, or the page's own origin), and refuses any other without fetching anything.
+
 ## Email
 
 Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` and `MAIL_FROM` to send through your own mail service (any provider that offers SMTP submission). The client is built in (no dependencies): implicit TLS on 465, STARTTLS required on other ports (a server that does not offer it is refused unless `SMTP_ALLOW_PLAIN=1`), certificate checks on, credentials only over TLS, AUTH PLAIN or LOGIN, timeouts at every step, and replies sent before a STARTTLS upgrade are discarded.
