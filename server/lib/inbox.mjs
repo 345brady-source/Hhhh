@@ -172,6 +172,14 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
     rec.sealed = seal(rec, { name: clip(name, 200), email: clip(email, 254), offerings: (offerings || []).map((o) => ({ id: clip(o.id, 80), name: clip(o.name, 200) })) });
     store.put('inbox', rec);
   }
+  /** The investor's own notice choice; the sponsor's later snapshots keep it. */
+  function writePrefs(workspace, party, prefs) {
+    const was = partyRec(workspace, party);
+    const rec = { id: partyRecId(workspace, party), type: 'party', workspace, party: { kind: party.kind, id: party.id }, prefs: Object.assign({ notices: true }, (was && was.prefs) || {}, prefs) };
+    if (!was) rec.sealed = seal(rec, { name: '', email: '', offerings: [] });
+    store.put('inbox', rec);
+    return rec.prefs;
+  }
   function writeFirm(workspace, firm) {
     const rec = { id: firmRecId(workspace), type: 'firm', workspace };
     rec.sealed = seal(rec, { name: clip(firm.name, 200), notifyEmail: clip(firm.notifyEmail, 254), supportEmail: clip(firm.supportEmail, 254) });
@@ -204,6 +212,7 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
   function checkContent({ side, author, body, files, anyway = false }) {
     const text = typeof body === 'string' ? body : body === undefined || body === null ? '' : null;
     if (text === null) throw fail(400, 'The message must be text.', { field: 'body' });
+    if (text.length > LIMITS.body) throw fail(422, 'A message can be at most 4,000 characters.', { field: 'body' });
     if (side === 'firm' && !clip(author, 120).trim()) throw fail(422, 'Name the person sending.', { field: 'author' });
     const list = (files || []).map((f) => {
       const bytes = Buffer.from(f.bytes || []);
@@ -345,8 +354,9 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
     requireVault();
     const p = cleanParty(party);
     const c = checkContent({ side: from, author, body, files: attachments, anyway });
+    const fix = checkCorrection(workspace, correctionOf, from, p, clip(offeringId, 80), clip(roomId, 80));
     const thread = threadOf(workspace, p, offeringId, roomId);
-    const rec = writeMessage(workspace, thread, { from, author: from === 'party' && !c.author ? partyInfo(workspace, p).name : c.author, body: c.body, files: c.files, broadcastId: clip(broadcastId, 80), correctionOf: clip(correctionOf, 80), actor });
+    const rec = writeMessage(workspace, thread, { from, author: from === 'party' && !c.author ? partyInfo(workspace, p).name : c.author, body: c.body, files: c.files, broadcastId: clip(broadcastId, 80), correctionOf: fix, actor });
     const notice = await noticeFor(workspace, rec, thread);
     return Object.assign(view(workspace, rec, thread), { notice });
   }
@@ -389,20 +399,66 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
     });
   }
 
+  /* ---------- a repeated clientId answers the first result (also while the first is still being written) ---------- */
+  const CLIENT_ID = /^[\w-]{1,80}$/;
+  const pending = new Map();
+  async function once(workspace, scope, clientId, run) {
+    if (clientId === undefined || clientId === null || clientId === '') return run();
+    if (!CLIENT_ID.test(String(clientId))) throw fail(400, 'clientId must be letters, digits, - or _ (at most 80).', { field: 'clientId' });
+    const rid = `ixc_${hashId(workspace, scope, clientId)}`;
+    const done = store.get('inbox', rid);
+    if (done && done.type === 'client' && done.workspace === workspace) return done.result;
+    if (pending.has(rid)) return pending.get(rid);
+    const p = (async () => {
+      const result = await run();
+      store.put('inbox', { id: rid, type: 'client', workspace, result });
+      return result;
+    })();
+    pending.set(rid, p);
+    try {
+      return await p;
+    } finally {
+      pending.delete(rid);
+    }
+  }
+  /** A correction names an earlier message of the same side in the thread it goes to. */
+  function checkCorrection(workspace, correctionOf, from, party, offeringId, roomId) {
+    const ref = clip(correctionOf, 80);
+    if (!ref) return '';
+    const m = store.get('inbox', ref);
+    const t = m && m.type === 'message' && m.workspace === workspace ? store.get('inbox', m.threadId) : null;
+    if (!t || m.from !== from || !sameParty(t.party, party) || t.offeringId !== offeringId || t.roomId !== roomId) throw fail(400, 'A correction goes to the thread of the message it corrects.', { field: 'correctionOf' });
+    return ref;
+  }
+
   async function sponsorSend(req, res, c) {
     const body = await readBody(req, LIMITS.request);
     requireVault();
+    const result = await once(c.workspace, 'firm', body.clientId, () => sponsorWrite(c, body));
+    return reply(res, 201, result);
+  }
+  async function sponsorWrite(c, body) {
     const recipients = Array.isArray(body.recipients) ? body.recipients : [];
     if (!recipients.length) throw fail(400, 'Choose at least one recipient.', { field: 'recipients' });
     if (recipients.length > MAX_RECIPIENTS) throw fail(400, `A message can go to at most ${MAX_RECIPIENTS} investors.`, { field: 'recipients' });
-    const list = recipients.map((r) => {
+    const seen = new Set();
+    const list = [];
+    for (const r of recipients) {
       const o = obj(r) || {};
       const party = obj(o.party);
       if (!party || party.kind !== 'investor') throw fail(400, 'A recipient must be an investor with an id.', { field: 'recipients' });
+      const p = cleanParty(party);
+      if (seen.has(p.id)) continue;
+      seen.add(p.id);
       const offerings = Array.isArray(o.offerings) ? o.offerings.map(obj).filter(Boolean) : [];
-      return { party: cleanParty(party), name: o.name, email: o.email, offeringId: clip(o.offeringId, 80), offerings };
-    });
+      list.push({ party: p, name: o.name, email: o.email, offeringId: clip(o.offeringId, 80), offerings });
+    }
     const c2 = checkContent({ side: 'firm', author: body.author || c.actor.name, body: body.body, files: decodeFiles(body.attachments) });
+    let correctionOf = '';
+    if (body.correctionOf) {
+      if (list.length !== 1) throw fail(400, 'A correction goes to the thread of the message it corrects.', { field: 'correctionOf' });
+      correctionOf = checkCorrection(c.workspace, body.correctionOf, 'firm', list[0].party, list[0].offeringId, '');
+    }
     const firm = obj(body.firm);
     if (firm) writeFirm(c.workspace, firm);
     const broadcastId = list.length > 1 ? newId('bc') : '';
@@ -410,14 +466,14 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
     for (const r of list) {
       writeParty(c.workspace, r.party, r);
       const thread = threadOf(c.workspace, r.party, r.offeringId, '');
-      written.push({ thread, rec: writeMessage(c.workspace, thread, { from: 'firm', author: c2.author, body: c2.body, files: c2.files, broadcastId, correctionOf: clip(body.correctionOf, 80), actor: c.actor.id }) });
+      written.push({ thread, rec: writeMessage(c.workspace, thread, { from: 'firm', author: c2.author, body: c2.body, files: c2.files, broadcastId, correctionOf, actor: c.actor.id }) });
     }
     const messages = [];
     for (const { thread, rec } of written) {
       const notice = await noticeFor(c.workspace, rec, thread);
       messages.push({ id: rec.id, seq: rec.seq, threadId: rec.threadId, party: thread.party, at: rec.at, attachments: rec.attachments.map((a) => ({ id: a.id, size: a.size, sha256: a.sha256, kind: a.kind })), notice });
     }
-    return reply(res, 201, { broadcastId, messages });
+    return { broadcastId, messages };
   }
 
   function updates(res, c, url) {
@@ -439,12 +495,18 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
       }
     }
     picked.sort((a, b) => a.order - b.order);
+    // At most PAGE items per answer; when cut, order is the last item's, so the next call starts right after it.
+    const more = picked.length > PAGE;
+    if (more) {
+      picked.length = PAGE;
+      max = picked[PAGE - 1].order;
+    }
     const items = picked.map((r) => {
       if (r.type === 'message') return Object.assign({ type: 'message' }, view(c.workspace, r, byId.get(r.threadId)));
       if (r.type === 'read') return { type: 'read', order: r.order, messageId: r.messageId, at: r.at };
       return { type: 'notice', order: r.order, messageId: r.messageId, status: r.status, at: r.at };
     });
-    return reply(res, 200, { order: max, items, more: false });
+    return reply(res, 200, { order: max, items, more });
   }
 
   function attachment(res, workspace, attId, allowedThread) {
@@ -485,8 +547,9 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
     const path = url.pathname;
     if (!sponsorPath(req.method, path)) return false;
     try {
-      const c = sponsorCtx(ctx);
       const m = req.method;
+      if (m === 'POST' && limited(req)) throw fail(429, 'Too many requests. Wait a minute and try again.');
+      const c = sponsorCtx(ctx);
       if (path === '/v1/inbox/messages' && m === 'POST') return await sponsorSend(req, res, c);
       if (path === '/v1/inbox/updates' && m === 'GET') return updates(res, c, url);
       if (path === '/v1/inbox/read' && m === 'POST') {
@@ -516,18 +579,24 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
     const offeringId = thread ? thread.offeringId : clip(body.offeringId, 80);
     if (!thread && offeringId && !info.offerings.some((o) => o.id === offeringId)) throw fail(422, 'Choose one of your offerings.', { field: 'offeringId' });
     const content = checkContent({ side: 'party', author: '', body: body.body, files: decodeFiles(body.attachments), anyway: body.anyway === true });
-    if (!thread) thread = threadOf(c.workspace, c.party, offeringId, '');
-    const rec = writeMessage(c.workspace, thread, { from: 'party', author: info.name, body: content.body, files: content.files });
-    const notice = await noticeFor(c.workspace, rec, thread);
-    return reply(res, 201, { message: Object.assign(view(c.workspace, rec, thread), { notice }) });
+    // The client record keeps only ids and the notice status (never the body); the reply is opened from the message.
+    const result = await once(c.workspace, `party:${c.party.id}`, body.clientId, async () => {
+      if (!thread) thread = threadOf(c.workspace, c.party, offeringId, '');
+      const rec = writeMessage(c.workspace, thread, { from: 'party', author: info.name, body: content.body, files: content.files });
+      const notice = await noticeFor(c.workspace, rec, thread);
+      return { messageId: rec.id, notice };
+    });
+    const rec = store.get('inbox', result.messageId);
+    return reply(res, 201, { message: Object.assign(view(c.workspace, rec), { notice: result.notice }) });
   }
 
   async function party(req, res, path, ctx) {
     const p = String(path || '');
     if (!partyPath(req.method, p)) return false;
     try {
-      const c = partyCtx(ctx);
       const m = req.method;
+      if (m === 'POST' && limited(req)) throw fail(429, 'Too many requests. Wait a minute and try again.');
+      const c = partyCtx(ctx);
       const own = (threadId) => {
         const t = store.get('inbox', threadId);
         return !!t && t.workspace === c.workspace && sameParty(t.party, c.party);
@@ -543,6 +612,12 @@ export function createInbox({ env = {}, store, vault, now = () => Date.now(), li
         const t = threadIn(c.workspace, body.threadId);
         if (!t || !sameParty(t.party, c.party)) throw fail(404, 'Not found');
         return reply(res, 200, { marked: markRead(c.workspace, t, 'party') });
+      }
+      if (p === '/v1/my-inbox/prefs' && m === 'POST') {
+        const body = await readBody(req, LIMITS.small);
+        if (typeof body.notices !== 'boolean') throw fail(400, 'notices must be true or false.', { field: 'notices' });
+        requireVault();
+        return reply(res, 200, { prefs: writePrefs(c.workspace, c.party, { notices: body.notices }) });
       }
       if (p.startsWith('/v1/my-inbox/attachments/') && m === 'GET') return attachment(res, c.workspace, safeDecode(p.slice('/v1/my-inbox/attachments/'.length)), own);
       return reply(res, 405, { error: 'Method not allowed' }, { Allow: p === '/v1/my-inbox' || p.startsWith('/v1/my-inbox/attachments/') ? 'GET' : 'POST' });
