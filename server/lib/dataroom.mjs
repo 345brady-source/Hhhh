@@ -576,7 +576,7 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     const documents = st.docs.map((d) => {
       const o = unseal(d) || {};
       const h = st.hidden.get(d.id);
-      return { id: d.id, title: o.title || '', fileName: o.fileName || '', size: d.size, sha256: d.sha256, pages: d.pages, addedAt: d.addedAt, hiddenAt: h ? h.at : '', hiddenWhy: h ? (dataOf(h) || {}).why || '' : '', stored: !!store.getBlob(docBlob(d.id)) };
+      return { id: d.id, title: o.title || '', fileName: o.fileName || '', size: d.size, sha256: d.sha256, pages: d.pages, addedAt: d.addedAt, hiddenAt: h ? h.at : '', hiddenWhy: h ? (dataOf(h) || {}).why || '' : '' };
     });
     const prospects = st.prospects.map((p) => {
       const o = unseal(p) || {};
@@ -791,7 +791,7 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
         throw fail(422, 'This PDF could not be stamped.');
       }
       const bytes = Buffer.from(out.bytes);
-      if (!store.getBlob(key)) sealBlob(key, bytes);
+      sealBlob(key, bytes); // once: a second request for this copy waits on this job (stamping) or reads the blob
       return bytes;
     })();
     stamping.set(key, job);

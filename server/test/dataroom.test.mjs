@@ -599,7 +599,6 @@ test('docs: PDF only, 25 MB, 30 shown; a hidden document is gone for prospects a
     const kept = rec.documents.find((x) => x.id === ids[0]);
     assert.ok(kept && kept.hiddenAt, 'the hidden document stays in the record with hiddenAt');
     assert.equal(kept.hiddenWhy, 'Replaced by a newer version');
-    assert.equal(kept.stored, true);
     assert.ok(t.store.blobs.has(`rmd-${ids[0].slice(3)}`), 'its file is still stored');
     assert.equal(rec.documents.length, 31);
     assert.equal(t.room.verify(roomId).ok, true);
@@ -655,6 +654,11 @@ test('stamp: each prospect gets a copy with only their own name, stamped once an
       const d = await t.addDoc(roomId, await memo(2));
       const a = await t.invited(roomId, ONE);
       await t.agree(a.token);
+      const before = stamps;
+      const [x, y] = await Promise.all([t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`), t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`)]);
+      assert.deepEqual([x.status, y.status], [200, 200]);
+      assert.ok(x.bytes.equals(y.bytes), 'two first serves at once share one stamp');
+      assert.equal(stamps - before, 1);
       const dl = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}?download=1`);
       assert.equal(dl.status, 200);
       assert.match(dl.headers.get('content-disposition'), /^attachment/);
