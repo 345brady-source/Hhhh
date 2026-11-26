@@ -1171,11 +1171,19 @@
    */
   async function pullChanged(ws) {
     const s = ensure(ws).server;
-    const since = s.pulledAt || BEGINNING;
-    const r = await api(ws, 'GET', `/v1/checks/changed?since=${encodeURIComponent(since)}&workspace=${encodeURIComponent(ws.tenant.id)}`);
-    if (!r || !Array.isArray(r.checks)) return false;
+    // From the server's own time of the last pull, when it was this server; the beginning of time otherwise.
+    let since = s.pulledAt && s.pulledFor === serverUrl(ws) ? s.pulledAt : BEGINNING;
+    const checks = [];
+    // The server lists at most 500 at a time, oldest first: the rest are asked for at once (a first pull of a large book).
+    for (let page = 0; page < 20; page++) {
+      const r = await api(ws, 'GET', `/v1/checks/changed?since=${encodeURIComponent(since)}&workspace=${encodeURIComponent(ws.tenant.id)}`);
+      if (!r || !Array.isArray(r.checks)) break;
+      checks.push(...r.checks);
+      if (typeof r.now === 'string' && ms(r.now)) since = r.now;
+      if (r.checks.length < 500) break;
+    }
     const touched = [];
-    r.checks.forEach((c) => {
+    checks.forEach((c) => {
       if (!c || typeof c.id !== 'string' || !c.id) return;
       const inv = ws.investors.find((i) => {
         if (!recorded(i)) return false;
@@ -1189,11 +1197,12 @@
       if (c.table === 'screenings') {
         const x = (v.aml.results || []).find((y) => y.ref === c.id);
         if (c.monitoring) x.monitoring = true;
-        if (c.status !== 'potential_match' || x.status === 'potential_match') return;
+        // Only a result that had come back clear is held again (one still waiting is poll's to finish).
+        if (c.status !== 'potential_match' || x.status !== 'clear') return;
         Object.assign(x, { status: 'potential_match', hits: pulledHits(v, c.hits, x.via), screenedAt: today(), error: '' });
         news = `${x.via}: ${x.hits.length} new potential match${x.hits.length === 1 ? '' : 'es'}${x.hits.length ? ` (${x.hits.map((y) => `${y.listed || y.name} on ${y.list}`).join('; ')})` : ''}`;
       } else if (c.table === 'verifications' && c.kind === 'identity') {
-        if (c.status !== 'review' || v.identity.status === 'review') return;
+        if (c.status !== 'review' || v.identity.status !== 'passed') return;
         const sc = c.screening && typeof c.screening === 'object' ? { status: normScreen(c.screening.status, c.screening.hits), hits: pulledHits(v, c.screening.hits, v.identity.via || 'Identity check') } : null;
         Object.assign(v.identity, { status: 'review', completedAt: nowIso() }, sc ? { screening: sc } : {});
         news = `${v.identity.via || 'Identity check'}: identity check needs review${sc && sc.hits.length ? ` (${sc.hits.map((y) => `${y.listed || y.name} on ${y.list}`).join('; ')})` : ''}`;
@@ -1202,7 +1211,8 @@
       if (t) t.news.push(news);
       else touched.push({ inv, news: [news] });
     });
-    if (typeof r.now === 'string' && ms(r.now)) s.pulledAt = r.now;
+    s.pulledAt = since;
+    s.pulledFor = serverUrl(ws);
     touched.forEach(({ inv, news }) => {
       refreshAml(vOf(inv));
       log(ws, inv, 'Monitoring alert', news.join('. '));
