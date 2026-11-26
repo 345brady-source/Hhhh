@@ -86,3 +86,7 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 
 ## Owner instruction (2026-11-26, verbatim: "ok keep going stop at step 12, finish everything else prior that you can without me, if you need to ask a question ask and use the default if no answer after 15 min")
 - Scope: launch steps 3 to 11 (phases 08 to 16). Stop before step 12 (reorganize). Steps 9, 10, 11 are phases 14, 15, 16 (ROADMAP and CONTEXT added 2026-11-26). Questions go to the owner with a push notification; after 15 minutes the default is taken and recorded here.
+
+## Open (2026-11-26, from the 11-18 plan check)
+- gate-lib/runParts kept results are keyed per tree but not by the base tree a check compares against (P11_ROOT etc.): a kept AUDIT SAME result could be reused against a different base on the same checkout. Until fixed, any rerun against a different base uses GATE_FRESH=1. Fix in a small tools task after the current builds (key the parts by the base tree hash too).
+- 11-18 plan-checked (no blockers, 3 warnings in 11-CONTEXT); executor building (wip/11-18).
