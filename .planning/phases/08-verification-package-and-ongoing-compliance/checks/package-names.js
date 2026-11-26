@@ -49,7 +49,7 @@ const SHOTS = path.join(Lib.OUT, 'package-names-shots');
 fs.mkdirSync(SHOTS, { recursive: true });
 Lib.describeShots([
   ['owners-profile-desktop.png', 'The entity investor\'s profile step at 1280x800 with two beneficial owners other than the controlling person.'],
-  ['owners-audit-line.png', 'The console after the import: the investor\'s screening line reads "4 names screened".'],
+  ['owners-audit-line.png', 'The console\'s Integrations page after the import: under "Recent verification activity", the investor\'s screening line reads "4 names screened".'],
   ['individual-profile-phone.png', 'An individual investor\'s profile step through the package at 390x844 with touch.'],
   ['preview-desktop-profile.png', 'The owner\'s preview at 1280x800: an entity investor\'s profile step, the same fields as before.'],
   ['preview-phone-profile.png', 'The owner\'s preview at 390x844 with touch: an entity investor\'s profile step, the same fields as before.']
@@ -336,7 +336,15 @@ async function owners({ check, S }) {
     const last = lines[lines.length - 1] || '';
     check('the console imports and the investor\'s last screening line reads "4 names screened"', countOf(last) === 4 && last.indexOf(`${it.title}: 4 names screened.`) === 0, lines);
     check('that count is the server\'s: the number of calls in the last round', countOf(last) === n2 - n1, { line: countOf(last), server: n2 - n1 });
-    await Lib.consoleRoute(C.cp, 'console-kyc', '[data-action=kyc-tab]').catch(() => {});
+    // On screen: the Integrations page's "Recent verification activity" lists the line (the owner's screenshot shows it).
+    await Lib.consoleRoute(C.cp, 'console-integrations', '.cs-list li').catch(() => {});
+    await C.cp.waitForFunction(() => !document.querySelector('#toasts .toast'), null, { timeout: 8000 }).catch(() => {});
+    const shown = await C.cp.evaluate((want) => {
+      const li = Array.from(document.querySelectorAll('.cs-list li')).find((x) => x.innerText.indexOf(want) >= 0);
+      if (li) li.scrollIntoView({ block: 'center' });
+      return li ? li.innerText.replace(/\s+/g, ' ').trim() : '';
+    }, `${it.title}: 4 names screened.`);
+    check('the console shows the line under "Recent verification activity"', shown.indexOf(`${it.title}: 4 names screened.`) >= 0, shown);
     await C.cp.screenshot({ path: path.join(SHOTS, 'owners-audit-line.png') });
     check('the console screened nothing again on import (eight calls in all)', C.w.count('screening') === 8, C.w.count('screening'));
     worldClean(check, C);
