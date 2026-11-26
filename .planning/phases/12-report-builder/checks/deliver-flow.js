@@ -344,6 +344,278 @@ const parts = {
     await T.leak(check, fr);
     await T.wayOut(check, fr);
     await A.context.close();
+  },
+
+  /** One letter for everyone in kb-fund-ii, delivered; 'Tell investors' fills in the Notices page and sends nothing. */
+  async notice({ check, S }) {
+    const { A, fr } = await F.open(S, 'phone', check);
+    await newReport(fr, 'Q4 letter to all', 'letter');
+    const hs = await holders(fr);
+    const N = hs.length;
+    const label = await fr.locator('[data-action=rd-gen]').innerText();
+    check(`the button reads 'Generate one letter for ${N} investors'`, label.trim() === `Generate one letter for ${N} investors`, label);
+    const g = await generate(fr);
+    check("the letter ends 'Made 1 of 1'", g.text === 'Made 1 of 1', g);
+    const run = await fr.evaluate(() => {
+      const r = window.CVPortal.reportRecord.runsOf(window.CVPortal.state.ws)[0];
+      return { id: r.id, type: r.type, files: r.files.map((f) => ({ id: f.id, inv: f.investorIds.slice() })) };
+    });
+    check(`one file, for every holder (${N})`, run.files.length === 1 && run.files[0].inv.length === N && hs.every((h) => run.files[0].inv.indexOf(h.id) >= 0), run);
+    const before = await fr.evaluate(() => ({ sent: (window.CVPortal.state.ws.audit || []).filter((e) => e.action === 'Notice sent').length, notices: (window.CVPortal.state.ws.notices || []).length }));
+    await deliver(fr, run.id, 'Pat Admin');
+    const lists = await fr.evaluate(({ id, ids }) => {
+      const NS = window.CVPortal;
+      const w = NS.state.ws;
+      return ids.filter((inv) => NS.ops.docsFor(w, w.investors.find((i) => i.id === inv)).some((d) => d.id === id));
+    }, { id: run.files[0].id, ids: hs.map((x) => x.id) });
+    check("every holder's Documents list the letter", lists.length === N, lists.length);
+    const rows = await documentsAs(fr, hs[N - 1].id);
+    check("on screen, the last holder's Documents list it under Reports", rows.some((r) => r.id === run.files[0].id && r.cat === 'Reports'), rows.slice(0, 4));
+    await T.sample(fr, { role: 'admin' });
+    const tid = await fr.evaluate((id) => window.CVPortal.reportRecord.runOf(window.CVPortal.state.ws, id).templateId, run.id);
+    await openTpl(fr, tid);
+    await openRun(fr, run.id);
+    await T.press(fr, `.rd-run[data-id="${run.id}"] [data-action=rd-paper]`);
+    await fr.waitForSelector(`.rd-run[data-id="${run.id}"] .rd-paper`, { timeout: 10000 });
+    const paper = await fr.evaluate((id) => Array.from(document.querySelectorAll(`.rd-run[data-id="${id}"] .rd-pinv`)).map((li) => li.getAttribute('data-id')), run.id);
+    check(`the paper list holds each holder once (${N})`, paper.length === N && hs.every((h) => paper.filter((x) => x === h.id).length === 1), paper);
+    await T.press(fr, `.rd-run[data-id="${run.id}"] [data-action=rd-tell]`);
+    await fr.waitForSelector('#nt-subject', { timeout: 10000 });
+    const nt = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const n = NS.state.ui.notice;
+      return { route: NS.state.route, kind: document.querySelector('#nt-kind').value, subject: document.querySelector('#nt-subject').value, want: NS.NOTICE_TEMPLATES.quarterly.subject, investors: n.investors.slice().sort(), send: (document.querySelector('[data-action=notice-send]') || { innerText: '' }).innerText.trim() };
+    });
+    check("'Tell investors' opens the Notices page with the 'quarterly' template's subject", nt.route === 'console-notices' && nt.kind === 'quarterly' && nt.subject === nt.want && !!nt.want, nt);
+    check(`the delivered investors are chosen (${N}) and nothing is sent: the button still reads 'Send to ${N} investors'`, JSON.stringify(nt.investors) === JSON.stringify(hs.map((h) => h.id).sort()) && nt.send === `Send to ${N} investors`, { investors: nt.investors.length, send: nt.send });
+    const after = await fr.evaluate(() => ({ sent: (window.CVPortal.state.ws.audit || []).filter((e) => e.action === 'Notice sent').length, notices: (window.CVPortal.state.ws.notices || []).length }));
+    check("the change log gains no 'Notice sent' and no notice is recorded", after.sent === before.sent && after.notices === before.notices, { before, after });
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await T.wayOut(check, fr);
+    await A.context.close();
+  },
+
+  /** 1280x800: a team member cannot withdraw; an admin withdraws with a reason; a corrected report replaces the earlier one; consent keeps an investor off paper. */
+  async 'withdraw-replace'({ check, S }) {
+    const { A, fr } = await F.open(S, 'desktop', check);
+    const hs = await holders(fr);
+    const N = hs.length;
+    // one holder consents to electronic delivery, set through the page (W3)
+    const consent = hs[2].id;
+    await T.ws(fr, (w, id) => {
+      const inv = w.investors.find((i) => i.id === id);
+      inv.esignConsent = Object.assign({}, inv.esignConsent || {}, { at: '2027-01-02T10:00:00Z', scope: 'Electronic signature and electronic delivery of documents' });
+    }, consent);
+    const sd = await seed(fr, { name: 'Q4 corrections' });
+    const fileOf = (s, inv) => s.files.find((f) => f.inv.indexOf(inv) >= 0);
+    await T.sample(fr, { role: 'team' });
+    await openTpl(fr, sd.tid);
+    await openRun(fr, sd.runId);
+    const team = await fr.evaluate((id) => ({ wd: document.querySelectorAll(`.rd-run[data-id="${id}"] [data-action=rd-wd]`).length, dl: document.querySelectorAll(`.rd-run[data-id="${id}"] [data-action=rd-dl]`).length }), sd.runId);
+    check("a team member sees the files and no 'Withdraw' (C-04)", team.wd === 0 && team.dl === N, team);
+    await T.sample(fr, { role: 'admin' });
+    await openTpl(fr, sd.tid);
+    await openRun(fr, sd.runId);
+    await T.press(fr, `.rd-run[data-id="${sd.runId}"] [data-action=rd-paper]`);
+    await fr.waitForSelector(`.rd-run[data-id="${sd.runId}"] .rd-paper`, { timeout: 10000 });
+    const paper = await fr.evaluate((id) => Array.from(document.querySelectorAll(`.rd-run[data-id="${id}"] .rd-pinv`)).map((li) => li.getAttribute('data-id')), sd.runId);
+    check(`the holder with consent to electronic delivery on record is not under 'Send on paper'; the other ${N - 1} are`, paper.indexOf(consent) < 0 && paper.length === N - 1, paper);
+    const target = fileOf(sd, hs[0].id);
+    const wsel = `.rd-file[data-id="${target.id}"]`;
+    const wdCount = await fr.locator(`${wsel} [data-action=rd-wd]`).count();
+    check("an admin sees 'Withdraw' on each delivered file", wdCount === 1, wdCount);
+    await T.press(fr, `${wsel} [data-action=rd-wd]`);
+    await fr.waitForSelector('#rd-why', { timeout: 10000 });
+    await T.press(fr, `${wsel} [data-action=rd-wd-yes]`);
+    await fr.waitForTimeout(300);
+    const blank = await fr.evaluate(({ sel, id }) => ({ msg: (document.querySelector(`${sel} [data-rd=wd-msg]`) || { innerText: '' }).innerText.trim(), state: window.CVPortal.state.ws.docs.find((d) => d.id === id).report.state }), { sel: wsel, id: target.id });
+    check("a reason left blank is refused on screen ('Say why it is withdrawn.')", blank.msg === 'Say why it is withdrawn.' && blank.state === 'delivered', blank);
+    await fr.fill('#rd-why', 'Wrong period');
+    await T.press(fr, `${wsel} [data-action=rd-wd-yes]`);
+    await fr.waitForTimeout(300);
+    const wd = await fr.evaluate(({ sel, id }) => {
+      const d = window.CVPortal.state.ws.docs.find((x) => x.id === id);
+      return { state: d.report.state, why: d.report.withdrawn && d.report.withdrawn.why, hidden: d.hidden, row: (document.querySelector(sel) || { innerText: '' }).innerText };
+    }, { sel: wsel, id: target.id });
+    check("withdrawn with 'Wrong period', and the file reads so", wd.state === 'withdrawn' && wd.why === 'Wrong period' && wd.hidden === true && /Withdrawn by .*: Wrong period/.test(wd.row), wd);
+    check("the change log's last entry is 'Report withdrawn'", (await lastLog(fr)) === 'Report withdrawn', await lastLog(fr));
+    // the corrected report: the same template generated again on screen and delivered as a correction
+    await forWho(fr, 'fund');
+    const g = await generate(fr);
+    check(`the second run ends 'Made ${N} of ${N}'`, g.text === `Made ${N} of ${N}`, g.text);
+    const run2 = await fr.evaluate(() => window.CVPortal.reportRecord.runsOf(window.CVPortal.state.ws)[0].id);
+    check('the second run is a new run', run2 !== sd.runId, run2);
+    await fr.fill(`.rd-run[data-id="${run2}"] #rd-by`, 'Pat Admin');
+    await T.press(fr, `.rd-run[data-id="${run2}"] label.rb-opt:has(#rd-corr)`);
+    await fr.waitForSelector('#rd-corr-run', { timeout: 10000 });
+    await fr.selectOption('#rd-corr-run', sd.runId);
+    await fr.waitForTimeout(200);
+    await fr.fill(`.rd-run[data-id="${run2}"] #rd-by`, 'Pat Admin');
+    await T.press(fr, `.rd-run[data-id="${run2}"] [data-action=rd-deliver]`);
+    await fr.waitForTimeout(300);
+    const rep = await fr.evaluate(({ old, run2 }) => {
+      const NS = window.CVPortal;
+      const w = NS.state.ws;
+      const r2 = NS.reportRecord.runOf(w, run2);
+      return {
+        delivered: !!r2.delivered,
+        msg: (document.querySelector(`.rd-run[data-id="${run2}"] [data-rd=msg]`) || { innerText: '' }).innerText,
+        old: old.map((f) => {
+          const d = w.docs.find((x) => x.id === f.id);
+          return { id: f.id, inv: f.inv[0], state: d.report.state, by: d.report.replacedBy };
+        }),
+        news: r2.files.map((f) => ({ id: f.id, inv: f.investorIds[0], replaces: (w.docs.find((x) => x.id === f.id) || { report: {} }).report.replaces }))
+      };
+    }, { old: sd.files, run2 });
+    const live = rep.old.filter((x) => x.inv !== hs[0].id);
+    check(`'This corrects an earlier report' marks each earlier report the investors had replaced (${live.length})`, rep.delivered && live.every((x) => x.state === 'replaced' && rep.news.some((n) => n.id === x.by && n.replaces === x.id)), rep);
+    check('the withdrawn one stays withdrawn', rep.old.find((x) => x.inv === hs[0].id).state === 'withdrawn', rep.old.find((x) => x.inv === hs[0].id));
+    let rows = await documentsAs(fr, hs[0].id);
+    check("the withdrawn investor's Documents no longer list the withdrawn report", !rows.some((r) => r.id === target.id) && rows.some((r) => r.id === rep.news.find((n) => n.inv === hs[0].id).id), rows.map((r) => r.id));
+    const h1 = hs[1].id;
+    const oldDoc = fileOf(sd, h1).id;
+    const newDoc = rep.news.find((n) => n.inv === h1).id;
+    rows = await documentsAs(fr, h1);
+    check('the investor sees both, the earlier marked (replaced)', rows.some((r) => r.id === oldDoc && /\(replaced\)$/.test(r.title)) && rows.some((r) => r.id === newDoc), rows.filter((r) => r.id === oldDoc || r.id === newDoc));
+    await T.press(fr, `[data-action=open-doc][data-id="${oldDoc}"]`);
+    await fr.waitForSelector('#dlg .dlg-head', { timeout: 10000 });
+    await fr.waitForTimeout(300);
+    const said = await fr.evaluate(() => document.querySelector('#dlg .dlg-head').innerText);
+    check("opening the earlier one shows 'Replaced by a corrected report.'", said.indexOf('Replaced by a corrected report.') >= 0, said);
+    await T.press(fr, '#dlg [data-action=close-dialog]');
+    const crows = await documentsAs(fr, consent);
+    check('the investor with consent still has the report in Documents', crows.some((r) => r.id === fileOf(sd, consent).id), crows.map((r) => r.id));
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await T.wayOut(check, fr);
+    await A.context.close();
+  },
+
+  /** 1280x800: an archived file downloads byte-identical, kept or remade; when it cannot be given the screen says why (RB-16). */
+  async 'archive-desktop'({ check, S }) {
+    const { A, fr } = await F.open(S, 'desktop', check);
+    const sd = await seed(fr, { name: 'Q4 archive' });
+    const f = sd.files[0];
+    await openTpl(fr, sd.tid);
+    await openRun(fr, sd.runId);
+    const sel = `.rd-file[data-id="${f.id}"] [data-action=rd-dl]`;
+    const get = async (name) => {
+      const [dl] = await Promise.all([A.page.waitForEvent('download', { timeout: 60000 }), T.press(fr, sel)]).catch(() => [null]);
+      if (!dl) return null;
+      const p = path.join(OUT(), name);
+      await dl.saveAs(p);
+      return { buf: require('fs').readFileSync(p), name: dl.suggestedFilename() };
+    };
+    const a = await get('kept.pdf');
+    check("'Download' gives the kept file, its SHA-256 equal to the record, under the file's own name", !!a && sha(a.buf) === f.sha256 && a.name === f.name, a && { sha: sha(a.buf), want: f.sha256, name: a.name });
+    await fr.evaluate((id) => window.CVPortal.ops.files.del(id), f.id);
+    const gone = await stored(fr, [f.id]);
+    check('the file is deleted from the store in the page', gone.length === 1 && !gone[0].there, gone);
+    const b = await get('remade.pdf');
+    check("after that, 'Download' gives the same SHA-256 again (remade)", !!b && sha(b.buf) === f.sha256, b && { sha: sha(b.buf), want: f.sha256 });
+    const still = await stored(fr, [f.id]);
+    check('remaking keeps nothing new in the store', still.length === 1 && !still[0].there, still);
+    await T.ws(fr, (w) => {
+      w.tenant.legalName = 'Kestrel Bay Capital Partners, LLC';
+    });
+    await openRun(fr, sd.runId);
+    const [dl] = await Promise.all([A.page.waitForEvent('download', { timeout: 8000 }), T.press(fr, sel)]).catch(() => [null]);
+    await fr.waitForSelector(`.rd-file[data-id="${f.id}"] [data-rd=dl-msg]`, { timeout: 30000 }).catch(() => {});
+    const msg = await fr.evaluate((id) => (document.querySelector(`.rd-file[data-id="${id}"] [data-rd=dl-msg]`) || { innerText: '' }).innerText.trim(), f.id);
+    check("after the firm's legal name changed, 'Download' gives no file", !dl, !!dl);
+    check('and says the original is not kept and the details changed', msg === 'The original file is not kept on this device, and the figures or the firm’s details have changed since it was made.', msg);
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await T.wayOut(check, fr);
+    await A.context.close();
+  },
+
+  /** RB-01: every report type offers its starters; a distribution notice from its starter previews the payment's figures. */
+  async 'starters-phone'({ check, S }) {
+    const { A, fr } = await F.open(S, 'phone', check);
+    await toList(fr);
+    const types = ['statement', 'distribution', 'quarterly', 'annual', 'performance', 'tax'];
+    for (const ty of types) {
+      await fr.selectOption('#rb-type', ty);
+      await fr.waitForTimeout(150);
+      const opts = await fr.evaluate(() => Array.from(document.querySelectorAll('#rb-start option')).map((o) => o.textContent.trim()));
+      const list = opts.filter((x) => x !== 'Blank');
+      check(`${ty}: 'Start from' lists at least two starters and 'Blank' (${list.length})`, list.length >= 2 && opts.indexOf('Blank') >= 0, opts);
+    }
+    await fr.selectOption('#rb-type', 'distribution');
+    await fr.waitForTimeout(150);
+    await fr.selectOption('#rb-start', { label: 'Distribution notice' });
+    await fr.fill('#rb-name', 'Fund II notice');
+    await T.press(fr, '[data-action=rb-create]');
+    await fr.waitForSelector('.rb-edit', { timeout: 10000 });
+    await fr.selectOption('#rb-fund', FUND);
+    await fr.waitForTimeout(200);
+    const pick = await fr.evaluate((fund) => {
+      const NS = window.CVPortal;
+      const w = NS.state.ws;
+      const newest = NS.reportsData.runs(w, fund)[0];
+      return { newest: newest && newest.id, chosen: (document.querySelector('#rb-run') || { value: '' }).value };
+    }, FUND);
+    check("'Payment' starts on kb-fund-ii's newest paid run", !!pick.newest && pick.chosen === pick.newest, pick);
+    await fr.waitForFunction(() => {
+      const p = document.querySelector('#rb-preview');
+      return p && !p.querySelector('.rb-wait') && document.querySelector('#rb-as');
+    }, null, { timeout: 20000 });
+    const fig = await fr.evaluate((runId) => {
+      const NS = window.CVPortal;
+      const w = NS.state.ws;
+      const id = document.querySelector('#rb-as').value;
+      const run = w.runs.find((r) => r.id === runId);
+      const line = NS.data.runRows(w, run).find((x) => x.investor.id === id);
+      return { id, gross: line.cents, withheld: line.withheldCents, net: line.netCents, text: (document.querySelector('#rb-preview .rb-doc') || { innerText: '' }).innerText };
+    }, pick.newest);
+    const usd = (c) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const want = [usd(fig.gross), usd(fig.withheld), usd(fig.net)];
+    check(`the notice previews ${fig.id}'s gross, tax withheld and net from the payment (${want.join(', ')})`, fig.gross > 0 && want.every((s) => fig.text.indexOf(s) >= 0), { want, text: fig.text.slice(0, 600) });
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await T.wayOut(check, fr);
+    await A.context.close();
+  },
+
+  /** RB-14: the whole firm on the phone frame, each file timed in the page; a second batch stopped after the second file. */
+  async 'speed-phone'({ check, S }) {
+    const { A, fr } = await F.open(S, 'phone', check);
+    await newReport(fr, 'Q4 firm letter', 'all');
+    const N = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const t = NS.state.ui.rb.draft;
+      const w = NS.state.ws;
+      const o = w.offerings.find((x) => x.id === 'kb-fund-ii');
+      const q = NS.audit.presets(w, o).find((p) => p.id === 'q');
+      return NS.reports.recipients(w, t, { from: q.from, to: q.to, audience: { kind: 'all' } }).length;
+    });
+    const label = await fr.locator('[data-action=rd-gen]').innerText();
+    check(`'Every investor, all their funds' reads 'Generate for ${N} investors'`, N > 2 && label.trim() === `Generate for ${N} investors`, label);
+    const g = await generate(fr);
+    check(`the batch ends 'Made ${N} of ${N}'`, g.text === `Made ${N} of ${N}`, g.text);
+    const tm = await fr.evaluate(() => window.CVPortal.reportsDeliver.timings());
+    const total = Math.round(tm.total);
+    const per = tm.files ? Math.round(tm.total / tm.files) : 0;
+    const line = `speed: ${tm.files} reports, ${total} ms, ${per} ms per report`;
+    console.log(line);
+    check(`each of the ${N} files was timed in the page with performance.now (${line})`, tm.files === N && tm.each.length === N && tm.each.every((x) => x > 0), tm);
+    const s = await generate(fr, 2);
+    const m = /^Stopped after (\d+) of (\d+)$/.exec(s.text);
+    const k = m ? Number(m[1]) : -1;
+    check(`'Stop' after the second file ends 'Stopped after k of ${N}' with 2 <= k < ${N}`, !!m && Number(m[2]) === N && k >= 2 && k < N, s.text);
+    const ar = await archive(fr);
+    const run = await fr.evaluate(() => {
+      const r = window.CVPortal.reportRecord.runsOf(window.CVPortal.state.ws)[0];
+      return { id: r.id, state: r.state, files: r.files.length };
+    });
+    check(`the stopped run is in the archive with k files (${k}), stopped`, run.state === 'stopped' && run.files === k && ar[0] && ar[0].id === run.id && ar[0].files.length === k && /Stopped/.test(ar[0].text), { run, ar0: ar[0] && { id: ar[0].id, files: ar[0].files.length } });
+    check("a stopped run offers no 'Deliver'", (await fr.locator(`.rd-run[data-id="${run.id}"] [data-action=rd-deliver]`).count()) === 0, run.id);
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await T.wayOut(check, fr);
+    await A.context.close();
   }
 };
 
