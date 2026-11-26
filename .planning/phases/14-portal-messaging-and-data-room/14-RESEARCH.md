@@ -301,3 +301,75 @@ The notice is built from fixed wording only, so no sponsor or investor text can 
 No attachment ever goes in an email (13-CONTEXT C-12).
 
 <!-- section: privacy done -->
+
+## 6. Validation Architecture
+
+`workflow.nyquist_validation` is `true` in .planning/config.json, so this section is required.
+
+### 6.1 Test framework
+
+| Property | Value |
+|----------|-------|
+| Server framework | `node --test` (built-in runner); `"test": "node --test"` [VERIFIED: server/package.json] |
+| Server tests today | **403**, all passing, measured this session on 5b85eee (`# tests 403 / # pass 403 / # fail 0`) |
+| Model checks (browser files, no browser) | Node scripts that load `assets/js/*.js` into a `vm` context with a stub `window.CVPortal`, as phase 10 and 12 model checks do (e.g. `.planning/phases/12-report-builder/checks/reports-model.js`, `.planning/phases/10-*/checks/tax-math.js`) |
+| Browser checks | Playwright scripts reusing `.planning/phases/06-*/checks/lib.js`, `no-network.js` (connect-src blocked), `safari-finish.js`, `ways-out.js`, `email-dialog.js`; run through the shared queue SCRATCH/exec-011/heavy.sh; 390x844 touch and 1280x800 inside the sandboxed iframe |
+| Phase checks folder | `.planning/phases/14-portal-messaging-and-data-room/checks/` (new) |
+| Quick run | `cd server && node --test test/inbox.test.mjs test/dataroom.test.mjs` and `node .planning/phases/14-portal-messaging-and-data-room/checks/inbox-model.js` |
+| Full suite | `cd server && node --test`, then `.planning/checks/gate-reference.sh` with the exact `GATE_SERVER_TESTS` |
+
+### 6.2 Proof per behaviour (what each check asserts; RED before, GREEN after)
+
+1. **Append-only record** (model, `checks/inbox-model.js`): no exported function edits or deletes a message; after 50 random sends, replies, broadcasts and corrections, `verify()` is ok; changing one body, one attachment SHA-256 or one time breaks the chain at exactly that `seq`; a correction leaves the original byte-identical. Same for the data room's assents, views and indications (`checks/dataroom-model.js`). RED: the functions do not exist.
+2. **Threads per investor and per offering**: sending to (investor A, offering X) twice uses one thread; (A, X) and (A, general) are two; an investor never sees another investor's thread (portal render for B contains none of A's text); a broadcast to "Investors in X" creates exactly one message per holder of X, one `broadcastId`, and B's reply lands only in B's thread.
+3. **Read status**: opening a thread sets `readAt` only on the other side's messages, once; unread counts in both menus and the Notifications page drop accordingly; read times are not part of the hash.
+4. **Attachments** (model + browser): 10 MB accepted, 10 MB + 1 byte refused with the sentence; 6th file refused; a file named `.pdf` whose first bytes are not `%PDF-` refused; investor XLSX refused, sponsor XLSX accepted; bytes stored as `{ type, bytes }` (never a Blob) and read back byte-identical (SHA-256 equal); with IndexedDB refused (sandbox), the 50 MB in-memory cap message appears.
+5. **Email notices** (server unit + golden): kinds `message_notice`, `message_received`, `room_invite`, `room_activity` rendered by `emails.js` against goldens; a body made of an SSN, an EIN, a valid ABA routing number, a 12-digit account number, `password: hunter2` and an attachment named `Smith SSN 123-45-6789.pdf` produces a notice in which **none** of those strings appear (subject, text, HTML); the phase 13 banned-word list passes (no vendor or platform name, no "basic"); coalescing: three messages in ten minutes to one unread thread send one notice; preview path: toast/dialog has "(simulated in this demo)" and a `simulated` sent-log entry, zero requests.
+6. **Screening**: sponsor message with a routing and account number refused (console sentence and server 422, nothing stored or sent); investor message with an SSN shows the warning, "Send anyway" stores it sealed.
+7. **Server inbox** (`server/test/inbox.test.mjs`): token returned once, only SHA-256 stored, constant-time lookup; `X-Inbox-Token` opens only `/v1/my-inbox*` for that investor (another investor's attachment id answers 404); the token is refused on sponsor routes even with `API_TOKEN`; bodies and attachments sealed (the store file contains no body text); no `DELETE` route answers anything but 404/405; `updates?since=` returns each investor message exactly once in order; a rotated link stops the old one (401); body caps answer 413; rate limit 429.
+8. **Server data room** (`server/test/dataroom.test.mjs`): a 506(b) room refuses a prospect without the basis (422) and never issues a shareable link; a 506(c) room may; `GET /v1/room/documents/:doc` refuses before the NDA (403) and after it returns a PDF whose every page carries the prospect's name and email (extract text with the shipped writer or by searching the content stream) and whose bytes differ from the original; hidden documents answer 404 to the prospect and stay in the sponsor's record; views and indications recorded and returned by `activity?since=`; an indication with bank-like fields is refused; nothing is deleted.
+9. **506(b) gate in the console** (browser): a 506(b) offering's room shows no shareable link; inviting a prospect without the basis keeps the button disabled with the reason; the sign-up link dialog for a 506(b) offering has no "website" wording (RED today: diy.js:165 says "on your website").
+10. **NDA** (browser + model): the box is not pre-ticked; documents are not listed before assent; assent records version, typed name, time; changing the NDA text changes the version and asks again; the e-signed path produces a completed envelope with the certificate, and the room opens after it.
+11. **View tracking and watermark** (browser): opening a document draws pages in the page (no browser PDF viewer), records an open with pages and seconds; download is absent when the room says off; when on, the downloaded file carries the watermark text.
+12. **Indication of interest**: the form carries the legend; amount optional; change and withdraw recorded, never deleted; the offering's pipeline total changes and "raised" and the 506(b) count do not; "Invite to subscribe" opens the normal invitation with name and email prefilled.
+13. **Export**: the zip opens; `messages.csv` row count equals messages; each attachment's SHA-256 matches the manifest; `README.txt` says "Chain verified"; a tampered workspace gives "Chain broken at entry N"; the export is in the change log.
+14. **White label and words**: a sweep of every new screen's rendered text and both new guide entries for vendor names, library names, the product name and "basic" (help-guide test patterns plus the phase 13 banned list).
+15. **Phone and honesty**: every new page at 390x844 and 1280x800 in the sandboxed frame with connect-src blocked: zero requests, no horizontal overflow, a way out on screen (ways-out.js), dialogs scroll (email-dialog.js), the "kept in this browser only" line present with no server and absent with one.
+16. **Managed edition unchanged**: the managed console and portal render byte-identical menus and pages (the views carry `edition: 'diy'`); status-math C-03 slice guard passes.
+17. **Owner checkpoint (not automatable)**: on his iPhone in the preview, the owner sends a message as the firm, reads and replies as the investor, sees "Read", opens a data room as a prospect, agrees to the NDA, views a watermarked document, indicates interest, and downloads both records. Live email waits for phase 13's live checkpoint.
+
+### 6.3 Phase requirements -> test map
+
+| Req | Behaviour | Type | Command | Exists? |
+|-----|-----------|------|---------|---------|
+| MS-01 | threads, append-only, chain, corrections | model | `node .planning/phases/14-*/checks/inbox-model.js` | Wave 0 |
+| MS-02 | attachments limits, types, bytes | model + browser | `inbox-model.js`, `checks/messages-flow.js` | Wave 0 |
+| MS-03 | read status, unread counts | model + browser | same | Wave 0 |
+| MS-04 | broadcast, private replies | model | `inbox-model.js` | Wave 0 |
+| MS-05 | Messages pages, phone | browser | `node .planning/phases/14-*/checks/messages-flow.js` | Wave 0 |
+| MS-06 | email notices, no content, coalescing, simulated | unit + golden | `cd server && node --test test/inbox-notice.test.mjs` | Wave 0 |
+| MS-07 | server inbox routes and tokens | unit | `cd server && node --test test/inbox.test.mjs` | Wave 0 |
+| MS-08 | record export | model + browser | `checks/record-export.js` | Wave 0 |
+| MS-09 | screening | model + unit | `inbox-model.js`, `inbox.test.mjs` | Wave 0 |
+| MS-10 | data room model and console page | model + browser | `checks/dataroom-model.js`, `checks/dataroom-flow.js` | Wave 0 |
+| MS-11 | 506(b) gate, 506(c) link, sign-up link wording | model + unit + browser | `dataroom-model.js`, `dataroom.test.mjs`, `dataroom-flow.js` | Wave 0 |
+| MS-12 | NDA click-through and e-signed | model + browser | `dataroom-model.js`, `checks/nda-esign.js` | Wave 0 |
+| MS-13 | views, watermark, download control | unit + browser | `dataroom.test.mjs`, `checks/watermark.js`, `dataroom-flow.js` | Wave 0 |
+| MS-14 | indications of interest, invite to subscribe | model + browser | `dataroom-model.js`, `dataroom-flow.js` | Wave 0 |
+| MS-15 | server data room routes | unit | `cd server && node --test test/dataroom.test.mjs` | Wave 0 |
+| MS-16 | white label, honesty, no network, phone, managed unchanged, guide, gate, owner check | browser + gate | `checks/phase14-honest.js`, reference gate | Wave 0 |
+
+### 6.4 Sampling
+
+- Per task commit: the plan's own model check or server test file.
+- Per wave merge: `cd server && node --test` plus the phase 14 checks of the merged plans.
+- Phase gate: the full reference gate on the merged tree with the phase 14 lines added, the preview built, the owner-path walkthrough on the phone frame, then the owner's check. Server count: 403 plus each plan's declared delta (each plan states its exact count in its header and SUMMARY, as phase 13 plans do).
+
+### 6.5 Wave 0 gaps
+
+- `.planning/phases/14-portal-messaging-and-data-room/checks/` with `inbox-model.js`, `dataroom-model.js`, `watermark.js` (node), `messages-flow.js`, `dataroom-flow.js`, `nda-esign.js`, `record-export.js`, `phase14-honest.js` (browser, reusing 06's `lib.js`)
+- `server/test/inbox.test.mjs`, `server/test/inbox-notice.test.mjs`, `server/test/dataroom.test.mjs`; goldens under the phase 13 fixtures folder for the four new kinds
+- A small fixture PDF (two pages, standard fonts, no personal data) committed for watermark tests; a 25 MB synthetic PDF generated at test time (never committed) for the timing measurement
+- No framework install needed.
+
+<!-- section: validation done -->
