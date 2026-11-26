@@ -495,6 +495,17 @@ const parts = {
     const bcRow = rows.find((r) => col(r, 'seq') === String(bc.messages[1].seq));
     const corRow = rows[rows.length - 1];
     check('broadcast and correction columns are filled', col(bcRow, 'broadcast') === bc.broadcastId && col(corRow, 'correction_of') === m3.id);
+    // The README's recipe, followed from messages.csv alone with node's own SHA-256 (not the portal's).
+    const unq = (s) => (/^'[=+\-@\t\r']/.test(s) ? s.slice(1) : s);
+    let prevH = '0'.repeat(64);
+    const redo = rows.slice(1).map((r) => {
+      const v = (c) => unq(col(r, c));
+      const text = [v('previous_hash'), v('seq'), v('time_utc'), v('thread'), v('from'), v('author'), v('body'), v('attachment_sha256').split(' | ').filter(Boolean).join(','), v('broadcast'), v('correction_of')].join('|');
+      const ok = v('previous_hash') === prevH && hex(Buffer.from(text, 'utf8')) === v('hash');
+      prevH = v('hash');
+      return ok;
+    });
+    check("the README's recipe recomputes every hash from messages.csv alone", redo.length === total && redo.every(Boolean), redo.map((x, i) => (x ? '' : i + 1)).filter(Boolean));
     const manifest = Z.text['MANIFEST.sha256'].trim().split('\n');
     const listed = manifest.map((l) => l.match(/^([0-9a-f]{64}) {2}(.+)$/));
     check("each MANIFEST line's hash equals the SHA-256 of that entry", listed.every((x) => x && Z.sha[x[2]] === x[1]) && listed.length === Z.names.length - 1 && !listed.some((x) => x[2] === 'MANIFEST.sha256'), manifest);
