@@ -167,7 +167,18 @@ async function boot(S, check, opts) {
     window.__clicks = 0;
     document.addEventListener('click', (e) => e.isTrusted && window.__clicks++, true);
   });
-  const C = { S, w, srv, A, cp: A.page, investors: [], closers: [() => A.context.close()] };
+  const C = { S, w, srv, A, cp: A.page, investors: [], posts: [], closers: [() => A.context.close()] };
+  // Every screening the console asks the server for, by the connector it names (nothing else from the body is kept).
+  A.page.on('request', (req) => {
+    if (req.method() !== 'POST' || !/\/v1\/screenings$/.test(req.url().replace(/[?#].*$/, ''))) return;
+    let provider = '';
+    try {
+      provider = String(JSON.parse(req.postData() || '{}').provider || '');
+    } catch (e) {
+      provider = '?';
+    }
+    C.posts.push(provider);
+  });
   C.close = async () => {
     for (const c of C.closers.reverse()) await c().catch(() => {});
     await srv.close().catch(() => {});
@@ -332,6 +343,84 @@ function worldClean(check, C) {
   check('the stand-in world was asked for nothing but the providers\' own calls', C.w.count('other') === 0, C.w.calls.filter((c) => c.kind === 'other'));
 }
 
+/* ---------- investors on file, as an import leaves them ---------- */
+const OWN = 'ownscreen'; // the sponsor's own (paid) screening connector on the server: never called by these parts
+const OWN_CONN = { id: 'own-screen', name: 'Own screening service', type: 'server', connector: OWN, checks: ['aml'] };
+const daysFrom = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+/**
+ * Writes the firm's screening connections (use: the ids on for screening; own: the sponsor's own connector added) and
+ * investors on file into the console (sample investors by index), each approved and screened earlier through the given
+ * connections: spec.investors = [{ index, results: [{ connection, via, how, ref, monitoring }], next, rawNext }] (next: the
+ * re-screen date; rawNext: written after the console's own bookkeeping, as an import may leave it). Resolves to
+ * [{ id, title, contact }].
+ */
+const seed = (p, spec) =>
+  p.evaluate(
+    ({ spec, own }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const I = NS.integrations;
+      const c = I.ensure(ws);
+      if (spec.own && !c.connections.some((x) => x.id === own.id)) c.connections.push(Object.assign({}, own));
+      if (spec.use) c.use.aml = spec.use.slice();
+      const on = new Date(Date.now() - 40 * 864e5).toISOString().slice(0, 10);
+      const out = (spec.investors || []).map((s) => {
+        const inv = ws.investors[s.index];
+        const names = Array.from(new Set([inv.contact, inv.title].map((n) => String(n || '').trim()).filter(Boolean)));
+        const pkg = s.results.some((r) => /^package-/.test(r.connection));
+        inv.verify = {
+          identity: pkg ? { status: 'passed', connection: 'package-id', via: 'Identity check', how: 'server', remote: true, ref: `ver_seed${s.index}`, completedAt: `${on}T10:00:00Z` } : { status: 'passed', connection: 'sandbox', via: 'Sandbox', how: 'sandbox', ref: `sbx_seed${s.index}`, completedAt: `${on}T10:00:00Z` },
+          aml: { status: 'clear', results: s.results.map((r) => Object.assign({ status: 'clear', hits: [], screenedAt: on }, r)), names, screenedAt: on, nextScreen: s.next || '' },
+          accreditation: { status: 'not_started' },
+          decision: { status: 'approved', at: `${on}T10:00:01Z`, by: 'automatic', reason: 'all checks passed' }
+        };
+        I.syncKyc(ws, inv);
+        if (s.rawNext !== undefined) {
+          inv.verify.aml.nextScreen = s.rawNext;
+          inv.kyc.nextReview = s.rawNext;
+        }
+        return { id: inv.id, title: inv.title, contact: inv.contact };
+      });
+      NS.app.save(true);
+      return out;
+    },
+    { spec, own: OWN_CONN }
+  );
+/** The firm's screening connections on, by id. */
+const useAml = (p, ids) =>
+  p.evaluate((ids) => {
+    const NS = window.CVPortal;
+    NS.integrations.ensure(NS.state.ws).use.aml = ids.slice();
+    NS.app.save(true);
+  }, ids);
+/** Until the console's own GET /v1/checks/changed answered (started by `go`); resolves to its JSON, or null. */
+async function pulled(C, go) {
+  const res = C.cp.waitForResponse((r) => /\/v1\/checks\/changed\?/.test(r.url()) && r.request().method() === 'GET', { timeout: 30000 }).catch(() => null);
+  await go();
+  const r = await res;
+  const body = r ? await r.json().catch(() => null) : null;
+  await C.cp.waitForTimeout(800); // what the console does with the answer
+  return body;
+}
+/** The attention list's re-screening line ('' when there is none). */
+const rescreenLine = (items) => items.find((x) => /due for re-screening/.test(x)) || '';
+/** "Run now" on the Overview pressed (tapped on a phone); resolves to the toast's text. */
+async function runNow(p, tap) {
+  const link = p.locator('[data-action=iv-rescreen]').first();
+  if (tap) await link.tap();
+  else await link.click();
+  await p.waitForSelector('#toasts .toast', { timeout: 30000 });
+  return (await p.locator('#toasts .toast').last().innerText()).trim();
+}
+/** Lines that read as an error, on the console's Overview attention list and the AML/KYC page. */
+const ERROR_RE = /error|could not|failed|not set up|answered \d|integration server/i;
+async function errorLines(p) {
+  const items = await attention(p);
+  await Lib.consoleRoute(p, 'console-kyc', '[data-action=kyc-tab]');
+  const kyc = await Lib.screenText(p);
+  return items.concat(kyc.split('\n')).filter((l) => ERROR_RE.test(l) || F.RAW_WORDS.some((w) => l.indexOf(w) >= 0)).map((l) => l.trim().slice(0, 160));
+}
+
 /* ---------- the parts ---------- */
 const PARTS = {
   /** D-04: an alert reaches a person. */
@@ -373,6 +462,153 @@ const PARTS = {
       tinChecks(check, C, printed, [file]);
     } finally {
       cap.stop();
+      await C.close();
+    }
+  },
+
+  /** T-08-24: a pull from the server only holds; a person's approval with a note still clears. */
+  async 'hold-only'({ check, S }) {
+    const C = await boot(S, check);
+    try {
+      const inv0 = await C.cp.evaluate(() => {
+        const i = window.CVPortal.state.ws.investors[0];
+        return { id: i.id, contact: i.contact };
+      });
+      // A screening record of the package on the server for this investor (the operator's shared token, as an investor's
+      // link would start it), enrolled in monitoring; the console's record holds it clear.
+      const made = await C.srv.call('POST', '/v1/screenings', { provider: 'idcheck', investor: { id: inv0.id, workspace: 'kestrel-bay' }, names: [inv0.contact] }, C.srv.shared);
+      check('the package screening record exists on the server, clear and monitored', made.status === 200 && made.body.status === 'clear' && C.srv.server.store.get('screenings', made.body.id).monitoring === true, made.body);
+      const scr = made.body.id;
+      const [who] = await seed(C.cp, { investors: [{ index: 0, results: [{ connection: 'package-id', via: 'Identity check', how: 'server', ref: scr, monitoring: true }] }] });
+      check('the seeded investor is approved', (await record(C.cp, who.id)).decision === 'approved');
+      check('the signed new-hit alert is accepted', (await alert(C.srv.base, scr, 'HOLDFAST, Emre')) === 200);
+      await reopen(C);
+      check('the console holds the investor for review on its own', await waitDecision(C.cp, who.id, 'review', 30000), await record(C.cp, who.id));
+      // The server's record later reads clear (as a re-read could leave it): the console must not clear the investor.
+      C.srv.server.store.put('screenings', { id: scr, status: 'clear', hits: [], changedAt: new Date().toISOString() });
+      const body = await pulled(C, () => reopen(C));
+      const listed = body && Array.isArray(body.checks) ? body.checks.find((c) => c.id === scr) : null;
+      check('the console\'s next pull lists the record as clear', !!listed && listed.status === 'clear', body);
+      let now = await record(C.cp, who.id);
+      check('a server record that reads clear does not clear the held investor', now.decision === 'review' && now.aml === 'potential_match' && now.results[0].status === 'potential_match', now);
+      // A person approves with a note on the AML/KYC page.
+      await Lib.consoleRoute(C.cp, 'console-kyc', '[data-action=kyc-tab]');
+      await C.cp.click(`button[data-action=kyc-open][data-id="${who.id}"]`);
+      await C.cp.waitForSelector('#kyc-note', { timeout: 10000 });
+      await C.cp.fill('#kyc-note', 'Compared date of birth and nationality: not the listed person.');
+      await C.cp.locator('#kyc-note').dispatchEvent('change');
+      await C.cp.click(`[data-action=kyc-iv-approve][data-id="${who.id}"]`);
+      await C.cp.waitForTimeout(500);
+      now = await record(C.cp, who.id);
+      check('a person\'s approval with a note on the AML/KYC page clears the investor', now.decision === 'approved' && now.aml === 'clear', now);
+      await pulled(C, () => reopen(C));
+      now = await record(C.cp, who.id);
+      check('opened again, the person\'s approval stands', now.decision === 'approved' && now.aml === 'clear', now);
+      check('one "Monitoring alert" and one approval after review in the change log', (await auditOf(C.cp, 'Monitoring alert')).length === 1 && (await auditOf(C.cp, 'Investor approved after review')).length === 1);
+      worldClean(check, C);
+      check('no script error in the console', C.A.errors.length === 0, C.A.errors);
+    } finally {
+      await C.close();
+    }
+  },
+
+  /** A package investor whose screening is monitored has no calendar re-screen: not due, never offered "Run now". */
+  async 'monitored-not-due'({ check, S }) {
+    const C = await boot(S, check);
+    try {
+      // Investor 0: screened through the package and monitored, with the date an import's cap leaves (40 days ago, so long
+      // past); investor 1: screened by the firm's sandbox connection, due yesterday.
+      const [mon, other] = await seed(C.cp, {
+        investors: [
+          { index: 0, results: [{ connection: 'package-id', via: 'Identity check', how: 'server', ref: 'scr_seedmonitored', monitoring: true }], rawNext: daysFrom(-10) },
+          { index: 1, results: [{ connection: 'sandbox', via: 'Sandbox', how: 'sandbox', ref: 'sbx_seedother' }], next: daysFrom(-1) }
+        ]
+      });
+      await pulled(C, () => reopen(C));
+      let r0 = await record(C.cp, mon.id);
+      const kyc0 = await C.cp.evaluate((id) => (window.CVPortal.state.ws.investors.find((x) => x.id === id).kyc || {}).nextReview || '', mon.id);
+      check('the monitored investor has no next re-screen date (nor a next review on the AML/KYC record)', r0.nextScreen === '' && kyc0 === '', { nextScreen: r0.nextScreen, nextReview: kyc0 });
+      const dueIds = () => C.cp.evaluate(() => window.CVPortal.integrations.due(window.CVPortal.state.ws).rescreen.map((i) => i.id));
+      check('only the other investor counts as due for re-screening', JSON.stringify(await dueIds()) === JSON.stringify([other.id]), await dueIds());
+      let items = await attention(C.cp);
+      check('the Overview offers "Run now" for one investor', rescreenLine(items) === '1 investor is due for re-screening. Run now', items);
+      const before = JSON.stringify(r0.results);
+      const toast = await runNow(C.cp);
+      r0 = await record(C.cp, mon.id);
+      const r1 = await record(C.cp, other.id);
+      check('"Run now" re-screens the other investor only', /^1 investor re-screened/.test(toast) && r1.nextScreen > daysFrom(0) && JSON.stringify(r0.results) === before, { toast, other: r1.nextScreen, same: JSON.stringify(r0.results) === before });
+      // Whatever the date: an old date left on the record still makes nobody due.
+      await C.cp.evaluate((id) => {
+        const NS = window.CVPortal;
+        NS.state.ws.investors.find((x) => x.id === id).verify.aml.nextScreen = '2020-01-01';
+      }, mon.id);
+      items = await attention(C.cp);
+      check('with any date on the record, the monitored investor is not due and "Run now" is not offered', JSON.stringify(await dueIds()) === '[]' && rescreenLine(items) === '', { due: await dueIds(), line: rescreenLine(items) });
+      // The screening itself sets no next date when every result is monitored (and one when it is not).
+      const stub = await F.stubServer(C.A.context, C.srv.base, { 'POST /v1/screenings': () => ({ status: 200, body: { id: 'scr_stubmon', status: 'clear', hits: [], screened: 1, monitoring: true } }) });
+      await seed(C.cp, { use: ['own-screen'], own: true, investors: [] });
+      const third = await C.cp.evaluate(async () => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const inv = ws.investors[2];
+        await NS.integrations.screen(ws, inv);
+        return { id: inv.id, next: inv.verify.aml.nextScreen, monitoring: inv.verify.aml.results.map((r) => !!r.monitoring), review: inv.kyc.nextReview || '' };
+      });
+      check('a screening whose every result is monitored sets no next re-screen date', third.next === '' && third.review === '' && third.monitoring.join() === 'true', third);
+      stub.set('POST /v1/screenings', () => ({ status: 200, body: { id: 'scr_stubplain', status: 'clear', hits: [], screened: 1, monitoring: false } }));
+      const fourth = await C.cp.evaluate(async () => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const inv = ws.investors[3];
+        await NS.integrations.screen(ws, inv);
+        return { next: inv.verify.aml.nextScreen, monitoring: inv.verify.aml.results.map((r) => !!r.monitoring) };
+      });
+      check('a screening that is not monitored keeps the firm\'s interval', fourth.next === daysFrom(30) && fourth.monitoring.join() === 'false', fourth);
+      check('the stand-in answered the two screenings and nothing else', stub.calls.length === 2, stub.calls.length);
+      worldClean(check, C);
+      check('no script error in the console', C.A.errors.length === 0, C.A.errors);
+    } finally {
+      await C.close();
+    }
+  },
+
+  /** G4, T-08-56: "Run now" for a package investor never reaches the package provider. */
+  async 'package-not-run'({ check, S }) {
+    const C = await boot(S, check);
+    try {
+      await pulled(C, () => reopen(C)); // the console's own pass at load has run; what follows is the person's click
+      // A: the firm's screening uses the free Treasury connection and its own connector.
+      const [pk] = await seed(C.cp, { use: ['ofac', 'own-screen'], own: true, investors: [{ index: 0, results: [{ connection: 'package-id', via: 'Identity check', how: 'server', ref: 'scr_seedpackage', monitoring: false }], next: daysFrom(-1) }] });
+      const errorsBefore = await errorLines(C.cp);
+      let items = await attention(C.cp);
+      check('with the Treasury connection on, the package investor is offered "Run now"', rescreenLine(items) === '1 investor is due for re-screening. Run now', items);
+      const toast = await runNow(C.cp);
+      const r = await record(C.cp, pk.id);
+      check('"Run now" re-screened them', /^1 investor re-screened/.test(toast), toast);
+      check('through the Treasury connection only: one list read, one screening asked of the server, for the Treasury lists', C.w.listReads() === 1 && JSON.stringify(C.posts) === JSON.stringify(['ofac']), { reads: C.w.listReads(), posts: C.posts });
+      check('the package provider was never called (the world records no session, decision or screening)', C.w.packageCalls() === 0, C.w.calls.map((c) => c.kind));
+      check('the package result is kept as it was, the Treasury result is added, the next date moved', r.results.length === 2 && r.results[0].connection === 'package-id' && r.results[0].ref === 'scr_seedpackage' && r.results[1].connection === 'ofac' && r.results[1].status === 'clear' && r.aml === 'clear' && r.nextScreen === daysFrom(30), r);
+      let errorsAfter = await errorLines(C.cp);
+      check('no error text appears on the Overview or the AML/KYC page', errorsAfter.filter((l) => errorsBefore.indexOf(l) < 0).length === 0, errorsAfter.filter((l) => errorsBefore.indexOf(l) < 0));
+      // B: no Treasury connection (the firm's sandbox only): the package investor is left out of "Run now".
+      await useAml(C.cp, ['sandbox']);
+      const [pk2] = await seed(C.cp, { investors: [{ index: 1, results: [{ connection: 'package-id', via: 'Identity check', how: 'server', ref: 'scr_seedpackage2', monitoring: false }], next: daysFrom(-1) }] });
+      items = await attention(C.cp);
+      check('with no Treasury connection, the package investor is left out of "Run now" (no line at all)', rescreenLine(items) === '', items);
+      const [plain] = await seed(C.cp, { investors: [{ index: 2, results: [{ connection: 'sandbox', via: 'Sandbox', how: 'sandbox', ref: 'sbx_seedplain' }], next: daysFrom(-1) }] });
+      items = await attention(C.cp);
+      check('with another investor due, "Run now" counts that one only', rescreenLine(items) === '1 investor is due for re-screening. Run now', items);
+      const before2 = JSON.stringify((await record(C.cp, pk2.id)).results);
+      await runNow(C.cp);
+      const r2 = await record(C.cp, pk2.id);
+      const r3 = await record(C.cp, plain.id);
+      check('"Run now" re-screens the other investor and leaves the package investor as it was', JSON.stringify(r2.results) === before2 && r3.nextScreen === daysFrom(30), { same: JSON.stringify(r2.results) === before2, other: r3.nextScreen });
+      check('nothing was called for the package investor: no list read, no screening asked of the server, no package provider call', C.w.listReads() === 1 && C.posts.length === 1 && C.w.packageCalls() === 0, { reads: C.w.listReads(), posts: C.posts, calls: C.w.packageCalls() });
+      errorsAfter = await errorLines(C.cp);
+      check('still no error text on the Overview or the AML/KYC page', errorsAfter.filter((l) => errorsBefore.indexOf(l) < 0).length === 0, errorsAfter.filter((l) => errorsBefore.indexOf(l) < 0));
+      worldClean(check, C);
+      check('no script error in the console', C.A.errors.length === 0, C.A.errors);
+    } finally {
       await C.close();
     }
   }

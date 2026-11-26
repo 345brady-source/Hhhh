@@ -1096,9 +1096,9 @@
     pulling.at = Date.now();
     clearTimeout(pulling.timer);
     pulling.busy = (async () => {
-      let changed = false;
+      let changed = settleMonitored(ws);
       try {
-        changed = await pullChanged(ws);
+        changed = (await pullChanged(ws)) || changed;
       } catch (e) {
         changed = false;
       }
@@ -1108,6 +1108,22 @@
       pulling.timer = setTimeout(() => W() === ws && ongoing(ws), PULL_MS);
     });
     return pulling.busy;
+  }
+  /**
+   * An investor whose screening is watched by its provider keeps no calendar date (an import caps the date it was given, so
+   * one may arrive with one): cleared at console load. Resolves to whether anything was written.
+   */
+  function settleMonitored(ws) {
+    let n = 0;
+    ws.investors.forEach((inv) => {
+      if (!recorded(inv) || !monitored(inv.verify) || (!inv.verify.aml.nextScreen && !(inv.kyc && inv.kyc.nextReview))) return;
+      inv.verify.aml.nextScreen = '';
+      syncKyc(ws, inv);
+      inv.kyc.nextReview = '';
+      n++;
+    });
+    if (n) NS.app.save(true);
+    return n > 0;
   }
   /** The hits a changed check carries, named for the reviewer: the server never sends the name screened, so the one screened when there was one. */
   function pulledHits(v, hits, viaName) {
