@@ -32,8 +32,9 @@
 //                   #console-books falls back to the default page with no error; index.html names none of this plan's
 //                   files and is unchanged against the base tree (P11_ROOT) when the gate gives one
 //   published       portal.html at 390x844: the entry and the page; a part registered from the check (key probe) draws its
-//                   title, line and body above Entries; the bank files were asked for, answered 404, and nothing of them
-//                   and no error is on screen
+//                   title, line and body above Entries; no bank section and no error is on screen
+// Every part also proves the page asks only for the files its parts list (NS.booksUI.PARTS) names, each one shipped (the
+// bank section is listed once plan 11-15 ships its screen), and that no request fails or is answered with an error.
 // Every part: the frame refuses a fetch; quiet, leak and a way out on screen.
 //   NODE_PATH=$(npm root -g) node books-flow.js [--only part1,part2]
 // The last line is "BOOKS FLOW: PASS (parts run: N)" or "BOOKS FLOW: FAIL (parts run: N) - <parts>".
@@ -78,7 +79,15 @@ async function open(S, size, opts) {
   opts = opts || {};
   const { A } = await T.framed(S, size, { policy: 'self', clock: CLOCK, page: opts.page || 'diy.html' });
   A.asked = [];
+  A.failed = [];
   A.context.on('request', (r) => BANK.test(new URL(r.url()).pathname) && A.asked.push(new URL(r.url()).pathname));
+  // Every request that failed or was answered with an error, other than the bank files this check answers 404 itself.
+  const mine = (u) => {
+    const x = new URL(u);
+    return x.origin === S.origin && !BANK.test(x.pathname);
+  };
+  A.context.on('response', (r) => r.status() >= 400 && mine(r.url()) && A.failed.push(`${r.status()} ${new URL(r.url()).pathname}`));
+  A.context.on('requestfailed', (r) => mine(r.url()) && A.failed.push(`failed ${new URL(r.url()).pathname}`));
   await A.context.route((u) => u.origin === S.origin && BANK.test(u.pathname), (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'not here' }));
   const fr = await reframe(A);
   await T.proveRefused(opts.check, A, fr);
@@ -260,6 +269,19 @@ async function endChecks(check, A, fr) {
   await T.leak(check, fr);
   await T.quiet(check, A, fr);
   check('the bank files were answered 404 and nothing of them is on screen', !p.sections.some((s) => /bank/.test(s)), p.sections);
+  await asked(check, A, fr);
+}
+/** The page asks only for the files its parts list names, each one shipped, and no request fails or is answered with an error. */
+async function asked(check, A, fr) {
+  const listed = await fr.evaluate(() => {
+    const P = (window.CVPortal.booksUI && window.CVPortal.booksUI.PARTS) || {};
+    return Object.keys(P).reduce((a, k) => a.concat(P[k]), []);
+  });
+  const missing = listed.filter((n) => !/^[a-z0-9-]+\.js$/.test(n) || !fs.existsSync(path.join(Lib.ROOT, 'assets', 'js', n)));
+  check('every file the parts list names ships beside books-ui.js', missing.length === 0, { listed, missing });
+  const want = listed.map((n) => `/assets/js/${n}`).filter((u) => BANK.test(u));
+  check('the bank files were asked for only as the parts list names them, in order', A.asked.join(',') === want.join(','), { asked: A.asked, want });
+  check('no request failed or was answered with an error', A.failed.length === 0, A.failed);
 }
 
 /* ---------- parts ---------- */
@@ -562,6 +584,7 @@ const parts = {
     const files = await fr.evaluate(() => Array.from(document.scripts).map((s) => s.src).concat(Array.from(document.querySelectorAll('link[rel=stylesheet]')).map((l) => l.href)).filter((u) => /books-ui|books\.css|books-hold/.test(u)));
     check("none of this plan's files is on the page", files.length === 0, files);
     check('no bank file was asked for', A.asked.length === 0, A.asked);
+    check('no request failed or was answered with an error', A.failed.length === 0, A.failed);
     await T.quiet(check, A, fr);
     await A.context.close();
   },
@@ -574,8 +597,7 @@ const parts = {
     await fr.waitForTimeout(800);
     let p = await page(fr);
     check('portal.html: fund A\'s 23 entries', p.entries.length === 23, p.entries.length);
-    check('the bank files were asked for beside books-ui.js, in order', A.asked.join(',') === '/assets/js/bankfiles.js,/assets/js/books-bank.js,/assets/js/books-bank-ui.js', A.asked);
-    check('with them answered 404: no bank section and no error on screen', !p.sections.some((s) => /bank/.test(s)) && !p.errs.length && !p.sync, { sections: p.sections, errs: p.errs, sync: p.sync });
+    check('no bank section and no error on screen', !p.sections.some((s) => /bank/.test(s)) && !p.errs.length && !p.sync, { sections: p.sections, errs: p.errs, sync: p.sync });
     const ok = await fr.evaluate(() =>
       window.CVPortal.booksUI.part('probe', { order: 1, title: 'Probe section', line: 'The check plugs this section in.', render: (ws, o) => `<p class="bk-probe">Probe body for ${o.id}</p>` })
     );

@@ -15,8 +15,8 @@
  *
  * Sections later plans add are their own scripts beside this one, registered with NS.booksUI.part(key, { order, title,
  * line, render(ws, offering) -> html }) and drawn above Entries in their order, each with its title and its one line.
- * The scripts are a fixed list (PARTS), loaded in that order on the page's first drawing; one that does not load is left
- * out for the visit and nothing is shown for it. No file name comes from data or from the address.
+ * The scripts are a fixed list (PARTS), each section listed only once its files ship, loaded in that order on the page's
+ * first drawing; one that does not load is left out for the visit and nothing is shown for it. No file name comes from data or from the address.
  */
 (function (NS) {
   'use strict';
@@ -122,8 +122,9 @@
 
   /* ---------- sections other files add (NS.booksUI) ---------- */
   const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
-  // The bank section (plan 11-15): the statement reader, the bank decisions, and its screen, in that order.
-  const PARTS = Object.freeze({ bank: Object.freeze(['bankfiles.js', 'books-bank.js', 'books-bank-ui.js']) });
+  // A section is listed here only when its files ship, so no visit asks for a file that is not there. Plan 11-15 adds
+  // bank: ['bankfiles.js', 'books-bank.js', 'books-bank-ui.js'] (the statement reader, the bank decisions, its screen).
+  const PARTS = Object.freeze({});
   const parts = {};
   const load = { started: false, settled: false, waiting: false };
   function part(key, spec) {
