@@ -2,7 +2,8 @@
 // last "INDEPENDENT READER: PASS (cases run: 6)"
 // The independent NACHA reader's own proof (plan 16-01, no browser): checks/achcli.sh gives the pinned moov-io/ach
 // achcli v1.69.1 and nothing else; it accepts files the portal's builder makes (PPD+CCD, balanced, same-day), refuses a
-// file with a wrong field or a short record, masks what it prints, and cannot be skipped into a pass. Fixture files use
+// file with a wrong field, a record cut short of a field or a record too long (a record cut by one character is padded
+// and read; see case refused), masks what it prints, and cannot be skipped into a pass. Fixture files use
 // only never-issued routing numbers (lib16 NEVER) and account numbers starting 99; a file's text is never printed.
 //   node reader.js [--case name1,name2]
 // One PASS or FAIL line per check; the last line is "INDEPENDENT READER: PASS (cases run: N)" or
@@ -74,12 +75,24 @@ const parts = {
     lower[0] = lower[0].slice(0, 33) + 'a' + lower[0].slice(34);
     const v1 = L.validate(lower.join('\r\n'));
     check('the file ID modifier (position 34) set to a lower-case letter is refused, and the message names FileIDModifier', !v1.ok && /FileIDModifier/i.test(v1.out), v1.out);
-    const short = lines.slice();
-    const at = short.findIndex((l) => l[0] === '6');
-    short[at] = short[at].slice(0, 93);
-    const v2 = L.validate(short.join('\r\n'));
-    check('an entry record cut to 93 characters is refused', at > 0 && !v2.ok, v2.out);
-    check("the reader's messages hold no full routing or account number", L.leaks(v1.out + v2.out).length === 0 && !/99\d{6,}/.test(v1.out + v2.out), `${L.leaks(v1.out + v2.out).length} found`);
+    const at = lines.findIndex((l) => l[0] === '6');
+    const edit = (fn) => {
+      const x = lines.slice();
+      x[at] = fn(x[at]);
+      return L.validate(x.join('\r\n'));
+    };
+    // Measured (16-01): this reader right-pads a short record with spaces before parsing it (moov-io/ach v1.69.1
+    // reader.go readLine), so a record cut to 93 characters, which loses only the last trace digit, is read as valid.
+    // A record's length is therefore the builder's own check ('Every record is 94 characters'); the reader refuses a
+    // record that loses a field it checks, and one that is too long.
+    const v93 = edit((l) => l.slice(0, 93));
+    console.log(`NOTE an entry record cut to 93 characters is ${v93.ok ? 'read as valid (the reader pads short records)' : 'refused'}`);
+    const v2 = edit((l) => l.slice(0, 79));
+    check('an entry record cut to 79 characters (its trace number gone) is refused', at > 0 && !v2.ok && /TraceNumber/.test(v2.out), v2.out);
+    const v3 = edit((l) => l + '7');
+    check('an entry record of 95 characters is refused, and the message names the record length', at > 0 && !v3.ok && /must be 94 characters/.test(v3.out), v3.out);
+    const all = v1.out + v2.out + v3.out + v93.out;
+    check("the reader's messages hold no full routing or account number", L.leaks(all).length === 0 && !/99\d{6,}/.test(all), `${L.leaks(all).length} found`);
   },
 
   // The only file summary a check prints is the reader's masked one: no fixture account number in full.

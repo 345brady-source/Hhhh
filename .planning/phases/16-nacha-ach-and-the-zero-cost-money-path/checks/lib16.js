@@ -6,7 +6,8 @@
 //   fresh vm context with a fixed today.
 // - NEVER: routing numbers no bank can hold (prefix 19 is not an assigned routing prefix; each passes the ABA check
 //   digit): receiving banks NEVER.rdfi, the originating bank NEVER.odfi. account(n) gives the account number '99' and n
-//   as 8 digits, used only with NEVER numbers, so no real account can be addressed.
+//   as 8 digits, used only with NEVER numbers, so no real account can be addressed. achFile(NS, opts) builds the fixture
+//   file of three credits (two PPD, one CCD) with the portal's own builder, balanced when asked.
 // - reader(): { path } of the verified independent reader, or { skip: '<its SKIP or FAIL line>' } (achcli.sh --path,
 //   once per process). validate(text) and masked(text) throw that line when the reader cannot be had, so a case fails
 //   with it: no phase 16 check passes without the reader.
@@ -38,6 +39,30 @@ const { loadPortal, sampleWorkspaces } = require(path.join(P11, 'checks/load11.j
 
 const NEVER = Object.freeze({ rdfi: Object.freeze(['190000017', '190000020', '190000033']), odfi: '190000091' });
 const account = (n) => '99' + String(n).padStart(8, '0');
+
+/**
+ * A fixture file built by the portal's own builder (NS.nacha.build): two PPD credits and one CCD credit to the three
+ * never-issued receiving banks, accounts account(1..3); opts.balanced adds the offsetting debit to the originating bank
+ * (account(9)). opts: { effectiveDate, now (a Date), balanced, modifier }.
+ */
+function achFile(NS, opts) {
+  const o = opts || {};
+  return NS.nacha.build({
+    origin: { destinationRouting: NEVER.odfi, destinationName: 'CHECK ORIGIN BANK', immediateOrigin: '1990000001', originName: 'CHECK FUND LLC', odfiRouting: NEVER.odfi },
+    company: { name: 'CHECK FUND LLC', id: '1990000001' },
+    entries: [
+      { name: 'Ada Check', id: 'INV-1', routing: NEVER.rdfi[0], account: account(1), accountType: 'checking', cents: 125000, sec: 'PPD' },
+      { name: 'Ben Check', id: 'INV-2', routing: NEVER.rdfi[1], account: account(2), accountType: 'savings', cents: 98000, sec: 'PPD' },
+      { name: 'Check Holdings LLC', id: 'INV-3', routing: NEVER.rdfi[2], account: account(3), accountType: 'checking', cents: 410055, sec: 'CCD' }
+    ],
+    effectiveDate: o.effectiveDate,
+    description: 'DISTRIB',
+    modifier: o.modifier,
+    balanced: !!o.balanced,
+    offset: o.balanced ? { routing: NEVER.odfi, account: account(9), type: 'checking' } : undefined,
+    now: o.now
+  });
+}
 
 let READER = null;
 function reader() {
@@ -125,6 +150,7 @@ module.exports = Object.assign({}, L6, {
   sampleWorkspaces,
   NEVER,
   account,
+  achFile,
   reader,
   validate,
   masked,

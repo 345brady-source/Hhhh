@@ -69,3 +69,17 @@ FAIL mobile the rest of mobile/src/core/nacha.js equals assets/js/nacha.js
 HOLIDAYS: FAIL (cases run: 7) - old, independent, sunday, extra, years, mobile
 exit 1
 ```
+
+Failure found while going GREEN (the plan's assumption was wrong): the plan's case refused says "with one entry record cut to 93 characters it fails". Measured: the independent reader accepts it. moov-io/ach v1.69.1 reader.go readLine right-pads any short record with spaces before parsing it; a 93-character record loses only the last trace digit and is read as valid (also 92 and 90, with CRLF or LF). Probed: a record cut to 35 or 60 or 79 characters, a 95-character record and a letter in the amount field are each refused. Case refused now proves: FileIDModifier lower-case refused (message names FileIDModifier); a record cut to 79 characters (trace number gone) refused (message names TraceNumber); a 95-character record refused (message "must be 94 characters"); and it prints a NOTE line that a 93-character record is read as valid. Record length is the builder's own check ("Every record is 94 characters"); later plans must not rely on the reader for it.
+
+Task 2 verify (verbatim block from a script file):
+```
+==> .../exec-16-01/hol.txt <==
+PASS mobile the rest of mobile/src/core/nacha.js equals assets/js/nacha.js
+HOLIDAYS: PASS (cases run: 10)
+
+==> .../exec-16-01/reader.txt <==
+PASS selfcheck an empty --case list exits 1 with a FAIL line
+INDEPENDENT READER: PASS (cases run: 6)
+VERIFY2_EXIT=0
+```
