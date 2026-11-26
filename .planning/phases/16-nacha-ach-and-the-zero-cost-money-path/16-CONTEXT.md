@@ -13,3 +13,12 @@
 - Debits for capital calls: authorization requirements (WEB/PPD), what the investor must agree to, and whether the portal should build debit files at launch.
 - Return and NOC file formats banks give back (NACHA return entries, CSV exports) and matching them to the investor and the distribution.
 - Outside services with real prices for later (bank file transfer, Dwolla, Stripe, Modern Treasury, Moov) vs the $0 path.
+
+## Owner decisions (2026-11-26, after 16-RESEARCH.md)
+- D-04 (C-04): foreign investors are paid by international wire from the sponsor's own bank, listed in the portal ("Wire list"); no IAT at launch.
+- D-05 (C-06): no ACH debit files for capital calls at launch; calls stay on wire.
+- D-06 (C-13): redemption payment files are built in this phase, on the same builder as distributions.
+
+## Orchestrator choices (2026-11-26, research defaults adopted; the owner may override)
+- C-01 holidays by rule plus an empty one-off list; C-02 modifier used only on download/copy, counted per origin, destination and day, 37th file refused; C-03 pre-notes on by default for new or changed accounts with a 3-banking-day wait, accounts already paid exempt, sponsor can turn off; C-05 per entry trace, amount and last four stored, never the file text; C-07 returned distributions in account 2000; C-08 no routing first-digit check (fixtures still use never-issuable numbers); C-09 every real bank number in fixtures and sample data replaced in one plan with its gate run, phase 11's two BAI2 samples (outside project test data) kept and the owner told; C-10 uploaded return file keeps only name, size and SHA-256; C-11 no return-rate figure; C-12 builder fixes in both editions, pre-notes, returns and wires self-serve only; C-14 other business-day helpers left; C-15 pre-notes in their own file; C-16 investor notice in the portal now, email through phase 13 later.
+- Owner inputs worked around ("To be confirmed"): his bank's ACH implementation guide; a masked return/NOC report export from his bank.

@@ -13,3 +13,11 @@
 - Encryption at rest for taxpayer numbers and bank numbers on the server, key handling, backups, retention and data minimization.
 - Security page and responsible-disclosure page content (security.txt, RFC 9116); what can honestly be claimed without SOC 2.
 - Outside services (auth providers, pen-test firms) with real prices vs in-house.
+
+## Owner decisions (2026-11-26, after 15-RESEARCH.md)
+- D-02 (C-01): sign-in built in-house at $0 (passwords, authenticator-app two-step codes, sessions, roles on our server); no outside sign-in service.
+- D-03 (C-14): the main investor's signed W-9 is hidden from the co-investor (the co-investor sees that one is on file, never the file or the number).
+
+## Orchestrator choices (2026-11-26, research defaults adopted; the owner may override)
+- C-02 passkeys later; C-03 investor two-step offered, off by default, an Owner may require it; C-04 workspace held sealed on the server in server mode (last 10 versions), no browser copy there; C-05 no key service now (DATA_KEY in the host's secrets plus a re-seal tool); C-06 backup tool with its own BACKUP_KEY, daily, pruned 7 daily / 4 weekly / 12 monthly, off-site copy, free storage tier offered; C-07 the server serves the portal pages (one origin, __Host- SameSite=Strict cookie); C-08 sessions 60 minutes idle / 12 hours absolute, passwords 10+ for console people and 15+ for investors plus a common-password list; C-09 account tokens for automation only; C-10 Owner and Admin release payments; C-11 accountant access ends after 90 days; C-12 a small firm-branded security page; C-13 security contact address and domain "To be confirmed", no paid penetration test now, SOC 2 not mentioned; C-15 phase 15's server sign-in merges before phase 14's investor-facing server routes; C-16 open sign-up with email confirmation.
+- Every false claim on screen the research lists (W-01..W-20: "two-step On", the 6-digit code promise, "Investor login created", the prefilled sample password) is corrected in this phase.
