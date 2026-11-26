@@ -277,3 +277,223 @@ test('tracer: the firm sends, the investor reads and replies with a PDF, the con
     }
   });
 });
+
+/* ---------- helpers for the later tests ---------- */
+const recordCount = (t) => Object.keys(t.store.data().inbox).length + t.store.blobs.size;
+const BANK = 'Bank and taxpayer numbers are not sent in messages. Payment instructions are on the capital call.';
+const PASSWORD = 'Passwords are never sent in messages.';
+const PARTY_WARN = 'Do not send taxpayer or bank numbers in a message; your Account page is the place for them.';
+
+/* ---------- 2. scope ---------- */
+test('scope: an investor sees only their own threads, messages and files; a prospect is kept apart from investors', async () => {
+  await withInbox(async (t) => {
+    const a = await t.send([ONE], { body: 'Only for Investor One.', attachments: [att('One only.pdf', pdf('ONEONLY'))] });
+    assert.equal(a.status, 201);
+    const b = await t.send([TWO], { body: 'Only for Investor Two.' });
+    assert.equal(b.status, 201);
+    const oneThread = a.body.messages[0].threadId;
+    const oneFile = a.body.messages[0].attachments[0].id;
+
+    const two = await t.call('GET', '/v1/my-inbox', inv('KB-1002'));
+    assert.equal(two.status, 200);
+    assert.deepEqual(two.body.threads.map((x) => x.id), [b.body.messages[0].threadId]);
+    assert.deepEqual(two.body.messages.map((x) => x.body), ['Only for Investor Two.']);
+    assert.ok(!JSON.stringify(two.body).includes(oneThread));
+    assert.ok(!JSON.stringify(two.body).includes('Only for Investor One.'));
+
+    assert.equal((await t.call('GET', `/v1/my-inbox/attachments/${oneFile}`, inv('KB-1002'))).status, 404);
+    assert.equal((await t.call('GET', `/v1/my-inbox/attachments/${oneFile}`, inv('KB-1001'))).status, 200);
+    const into = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1002'), { threadId: oneThread, body: 'Writing into another thread.' });
+    assert.equal(into.status, 404);
+    assert.equal((await t.call('POST', '/v1/my-inbox/read', inv('KB-1002'), { threadId: oneThread })).status, 404);
+    const off = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1002'), { offeringId: 'off-9', body: 'About an offering I am not in.' });
+    assert.equal(off.status, 422);
+    assert.equal(off.body.field, 'offeringId');
+
+    // A prospect's question through post() (plan 14-05): stored on its own thread, seen by the sponsor, never by an investor,
+    // not even an investor whose id is the same as the prospect's.
+    const q = await t.inbox.post('ws-kb', { party: { kind: 'prospect', id: 'pr-1' }, roomId: 'rm-1', from: 'party', author: 'Prospect One', body: 'Is the room still open for questions?' });
+    assert.equal(q.from, 'party');
+    assert.deepEqual(q.party, { kind: 'prospect', id: 'pr-1' });
+    assert.equal(q.roomId, 'rm-1');
+    const twin = await t.inbox.post('ws-kb', { party: { kind: 'prospect', id: 'KB-1001' }, roomId: 'rm-1', from: 'party', author: 'Prospect Twin', body: 'A prospect sharing an id with an investor.' });
+    assert.notEqual(twin.threadId, oneThread);
+    const up = await t.call('GET', '/v1/inbox/updates?since=0', SPONSOR);
+    const msgs = up.body.items.filter((i) => i.type === 'message');
+    assert.deepEqual(msgs.map((m) => m.id), [q.id, twin.id]);
+    assert.equal(msgs[0].body, 'Is the room still open for questions?');
+    for (const id of ['KB-1001', 'KB-1002']) {
+      const mine = await t.call('GET', '/v1/my-inbox', inv(id));
+      const j = JSON.stringify(mine.body);
+      for (const x of [q.id, twin.id, q.threadId, twin.threadId, 'Is the room still open', 'sharing an id']) assert.ok(!j.includes(x), `${id} saw ${x}`);
+    }
+    assert.equal(t.inbox.list('ws-kb', { kind: 'investor', id: 'KB-1001' }).messages.length, 1);
+    assert.equal(t.inbox.list('ws-kb', { kind: 'prospect', id: 'pr-1' }).messages.length, 1);
+  });
+});
+
+/* ---------- 3. workspaces ---------- */
+test('workspaces: every query is pinned to the context workspace; a workspace or party in a query or body changes nothing', async () => {
+  await withInbox(async (t) => {
+    const a = await t.send([ONE], { body: 'Kestrel Bay only.', attachments: [att('Kestrel.pdf', pdf('KESTRELONLY'))] });
+    assert.equal(a.status, 201);
+    const fileId = a.body.messages[0].attachments[0].id;
+    const threadId = a.body.messages[0].threadId;
+    const r = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: 'A reply inside Kestrel Bay.' });
+    assert.equal(r.status, 201);
+    const other = { workspace: 'ws-other', actor: { id: 'u-9', name: 'Other Admin' } };
+
+    const up = await t.call('GET', '/v1/inbox/updates?since=0&workspace=ws-kb', other);
+    assert.equal(up.status, 200);
+    assert.deepEqual(up.body.items, []);
+    assert.equal((await t.call('GET', `/v1/inbox/attachments/${fileId}`, other)).status, 404);
+    assert.equal((await t.call('POST', '/v1/inbox/read', other, { threadId })).status, 404);
+
+    // The same investor id in another workspace sees nothing of ws-kb.
+    const elsewhere = await t.call('GET', '/v1/my-inbox', inv('KB-1001', 'ws-other'));
+    assert.equal(elsewhere.status, 200);
+    assert.deepEqual(elsewhere.body.threads, []);
+    assert.deepEqual(elsewhere.body.messages, []);
+    assert.equal((await t.call('GET', `/v1/my-inbox/attachments/${fileId}`, inv('KB-1001', 'ws-other'))).status, 404);
+    assert.equal((await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001', 'ws-other'), { threadId, body: 'Across workspaces.' })).status, 404);
+
+    // A workspace named in the body is ignored: the message lands in the context's workspace.
+    const s = await t.send([ONE], { workspace: 'ws-kb', body: 'Sent from the other firm.' }, other);
+    assert.equal(s.status, 201);
+    assert.equal(s.body.messages[0].seq, 1);
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 2 });
+    assert.deepEqual(t.inbox.verify('ws-other'), { ok: true, count: 1 });
+    const one = await t.call('GET', '/v1/my-inbox', inv('KB-1001'));
+    assert.ok(!JSON.stringify(one.body).includes('Sent from the other firm.'));
+
+    // A party named in the investor's body is ignored: KB-1002's message lands in KB-1002's thread.
+    const p = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1002'), { party: { kind: 'investor', id: 'KB-1001' }, workspace: 'ws-other', body: 'Pretending to be someone else.' });
+    assert.equal(p.status, 201);
+    assert.deepEqual(p.body.message.party, { kind: 'investor', id: 'KB-1002' });
+    const mineOne = await t.call('GET', '/v1/my-inbox', inv('KB-1001'));
+    assert.ok(!JSON.stringify(mineOne.body).includes('Pretending'));
+    const two = await t.call('GET', '/v1/my-inbox', inv('KB-1002'));
+    assert.deepEqual(two.body.messages.map((m) => m.body), ['Pretending to be someone else.']);
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 3 });
+  });
+});
+
+/* ---------- 4. sealed ---------- */
+test('sealed: the store and its blobs hold no body, author, file name, name, email or firm address', async () => {
+  await withInbox(async (t) => {
+    const BODY1 = 'The first distribution is scheduled for March.';
+    const BODY2 = 'Please confirm my mailing address change.';
+    const f1 = pdf('SEALEDPDFMARK', 4000);
+    const f2 = png('SEALEDPNGMARK');
+    const a = await t.send([ONE], { body: BODY1, attachments: [att('Distribution schedule March.pdf', f1)] });
+    assert.equal(a.status, 201);
+    assert.equal((await t.send([TWO], { body: BODY1 })).status, 201);
+    const r = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId: a.body.messages[0].threadId, body: BODY2, attachments: [att('Address proof photo.png', f2)] });
+    assert.equal(r.status, 201);
+    const json = JSON.stringify(t.store.data());
+    for (const s of [BODY1, BODY2, 'Dana Admin', 'Distribution schedule March', 'Address proof photo', 'Investor One', 'Investor Two', 'one@example.invalid', 'two@example.invalid', FIRM.name, FIRM.notifyEmail, FIRM.supportEmail, 'Harbor Fund I']) {
+      assert.ok(!json.includes(s), `the store holds ${s}`);
+    }
+    assert.equal(t.store.blobs.size, 2);
+    for (const [key, blob] of t.store.blobs) {
+      assert.match(key, /^ixa-[\w-]+$/);
+      assert.ok(!blob.equals(f1) && !blob.equals(f2));
+      const text = blob.toString('latin1');
+      for (const s of ['SEALEDPDFMARK', 'SEALEDPNGMARK', '%PDF-']) assert.ok(!text.includes(s), `a blob holds ${s}`);
+    }
+    // Sealed values are bound to their record: a sealed body moved to another record does not open.
+    const msgs = Object.values(t.store.data().inbox).filter((x) => x.type === 'message');
+    assert.throws(() => t.vault.open(msgs[0].sealed, `inbox:${msgs[1].id}:sealed`));
+  });
+});
+
+/* ---------- 5. attachments ---------- */
+test('attachments: 10 MB each, 5 files, 25 MB together, strict base64; a refusal stores nothing', async () => {
+  await withInbox(async (t) => {
+    const ok = await t.send([ONE], { attachments: [att('Exactly ten.pdf', pdf('TEN', 10485760))] });
+    assert.equal(ok.status, 201, JSON.stringify(ok.body));
+    assert.equal(ok.body.messages[0].attachments[0].size, 10485760);
+    const before = recordCount(t);
+    const big = await t.send([ONE], { attachments: [att('One byte over.pdf', pdf('OVER', 10485761))] });
+    assert.equal(big.status, 413);
+    assert.equal(big.body.error, 'One byte over.pdf is larger than 10 MB.');
+    const six = await t.send([ONE], { attachments: [1, 2, 3, 4, 5, 6].map((i) => att(`File ${i}.pdf`, pdf(`SIX${i}`))) });
+    assert.equal(six.status, 422);
+    assert.equal(six.body.error, 'A message can carry at most 5 files.');
+    const three = await t.send([ONE], { attachments: [1, 2, 3].map((i) => att(`Part ${i}.pdf`, pdf(`PART${i}`, 8750000))) });
+    assert.equal(three.status, 422);
+    assert.equal(three.body.error, 'The files together are larger than 25 MB.');
+    await assert.rejects(t.inbox.post('ws-kb', { party: ONE.party, from: 'firm', author: 'Dana Admin', body: 'Three files of 9 MB.', attachments: [1, 2, 3].map((i) => ({ name: `Nine ${i}.pdf`, bytes: pdf(`NINE${i}`, 9 * MB) })) }), (e) => e.status === 422 && e.message === 'The files together are larger than 25 MB.');
+    const bad = await t.send([ONE], { attachments: [{ name: 'Broken.pdf', base64: 'not*base64!' }] });
+    assert.equal(bad.status, 400);
+    const noBytes = await t.send([ONE], { attachments: [{ name: 'Missing.pdf' }] });
+    assert.equal(noBytes.status, 400);
+    assert.equal(recordCount(t), before);
+  });
+});
+
+/* ---------- 6. types ---------- */
+test('types: the kind is read from the first bytes; investors send PDF, PNG or JPEG, the firm also XLSX, CSV or DOCX', async () => {
+  await withInbox(async (t) => {
+    const first = await t.send([ONE], { body: 'Workbook attached.', attachments: [att('Capital accounts.xlsx', xlsx()), att('Side letter.docx', docx()), att('Holdings.csv', Buffer.from('id,units\nKB-1001,10\n'))] });
+    assert.equal(first.status, 201, JSON.stringify(first.body));
+    assert.deepEqual(first.body.messages[0].attachments.map((a) => a.kind), ['xlsx', 'docx', 'csv']);
+    const threadId = first.body.messages[0].threadId;
+    const before = recordCount(t);
+    const invXlsx = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: 'My workbook.', attachments: [att('Mine.xlsx', xlsx())] });
+    assert.equal(invXlsx.status, 422);
+    assert.equal(invXlsx.body.error, 'Mine.xlsx is not a file type messages accept: PDF, PNG or JPEG.');
+    const fake = await t.send([ONE], { attachments: [att('Not really.pdf', Buffer.from('plain text pretending'))] });
+    assert.equal(fake.status, 422);
+    assert.equal(fake.body.error, 'Not really.pdf is not a file type messages accept: PDF, PNG, JPEG, XLSX, CSV or DOCX.');
+    const renamed = await t.send([ONE], { attachments: [att('Renamed.xlsx', zip([['readme.txt', 'hello']]))] });
+    assert.equal(renamed.status, 422);
+    assert.equal(renamed.body.error, 'Renamed.xlsx is not a file type messages accept: PDF, PNG, JPEG, XLSX, CSV or DOCX.');
+    const nul = await t.send([ONE], { attachments: [att('Nul.csv', Buffer.from('a,b\n\u0000,1\n'))] });
+    assert.equal(nul.status, 422);
+    assert.equal(recordCount(t), before);
+    const pics = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: 'Photos of the signed page.', attachments: [att('Page one.png', png('PAGEONE')), att('Page two.jpg', jpeg('PAGETWO')), att('Scan.pdf', png('SCANNEDPNG'))] });
+    assert.equal(pics.status, 201, JSON.stringify(pics.body));
+    assert.deepEqual(pics.body.message.attachments.map((a) => a.kind), ['png', 'jpeg', 'png']);
+    const got = await t.call('GET', `/v1/inbox/attachments/${pics.body.message.attachments[2].id}`, SPONSOR);
+    assert.equal(got.status, 200);
+    assert.equal(got.headers.get('content-type'), 'image/png');
+    assert.ok(got.bytes.equals(png('SCANNEDPNG')));
+  });
+});
+
+/* ---------- 7. screen ---------- */
+test('screen: the firm is refused bank, taxpayer and password shapes; an investor is warned and may send anyway', async () => {
+  await withInbox(async (t) => {
+    assert.equal((await t.send([ONE], { body: 'Call us at 212-555-0100 with questions.' })).status, 201);
+    const threadId = (await t.call('GET', '/v1/my-inbox', inv('KB-1001'))).body.threads[0].id;
+    const before = recordCount(t);
+    const calls = t.calls.length;
+    const bank = await t.send([ONE], { body: 'Wire to routing 190000017 account 99001234567 by Friday.', attachments: [att('Wire.pdf', pdf('WIRE'))] });
+    assert.equal(bank.status, 422);
+    assert.deepEqual(bank.body, { error: BANK, field: 'body' });
+    const pw = await t.send([ONE], { body: 'Your portal password: example' });
+    assert.equal(pw.status, 422);
+    assert.deepEqual(pw.body, { error: PASSWORD, field: 'body' });
+    const named = await t.send([ONE], { body: 'Your statement.', attachments: [att('Statement 000-12-3456.pdf', pdf('STATEMENT'))] });
+    assert.equal(named.status, 422);
+    assert.deepEqual(named.body, { error: BANK, field: 'attachments' });
+    const ein = await t.send([ONE], { body: 'Our employer number is 00-1234567.' });
+    assert.equal(ein.status, 422);
+    assert.equal(recordCount(t), before);
+    assert.equal(t.calls.length, calls);
+
+    const warned = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: 'My taxpayer number is 000-12-3456.' });
+    assert.equal(warned.status, 422);
+    assert.deepEqual(warned.body, { error: PARTY_WARN, field: 'body', warn: true });
+    const warnedName = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: 'Attached.', attachments: [att('W-9 000-12-3456.pdf', pdf('W9'))] });
+    assert.equal(warnedName.status, 422);
+    assert.equal(warnedName.body.warn, true);
+    assert.equal(recordCount(t), before);
+    const sent = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: 'My taxpayer number is 000-12-3456.', anyway: true });
+    assert.equal(sent.status, 201);
+    assert.equal(sent.body.message.body, 'My taxpayer number is 000-12-3456.');
+    assert.ok(!JSON.stringify(t.store.data()).includes('000-12-3456'));
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 2 });
+  });
+});
