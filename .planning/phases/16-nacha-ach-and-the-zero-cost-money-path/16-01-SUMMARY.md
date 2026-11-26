@@ -40,3 +40,32 @@ PASS file nothing this case prints holds a full routing or account number
 HOLIDAYS: PASS (cases run: 3)
 VERIFY1_EXIT=0
 ```
+
+## Task 2 evidence
+
+Fixture: `GOFLAGS=-mod=mod go run .` in fixtures/ach/make-holidays (go switched to go1.26.0 for the module's go line) wrote 112 dates; header lines name make-holidays, moov-io/base v0.68.3 (Apache-2.0) and `# Go version: go1.26.0`. Commit ace4810.
+
+RED (O/red-2.txt; FAIL and last lines, each cut to 240 characters). The third run puts the base commit's nacha.js (the old table) into the working tree for the run and restores it after:
+```
+=== reader.js on this tree (lib16.achFile not written yet)
+FAIL valid ran to the end :: TypeError: L.achFile is not a function
+FAIL refused ran to the end :: TypeError: L.achFile is not a function
+FAIL mask ran to the end :: TypeError: L.achFile is not a function
+FAIL noreader it names the SKIP sentence ("SKIP independent reader: ...") :: FAIL valid ran to the end :: TypeError: L.achFile is not a function |     at files (...)
+INDEPENDENT READER: FAIL (cases run: 6) - valid, refused, mask, noreader
+exit 1
+=== holidays.js on this tree (lib16.achFile not written yet)
+FAIL file ran to the end :: TypeError: L.achFile is not a function
+HOLIDAYS: FAIL (cases run: 10) - file
+exit 1
+=== holidays.js with the base commit's assets/js/nacha.js (the old 2025-2028 table) in the working tree
+FAIL old ran to the end :: TypeError: NS.nacha.fedHolidays is not a function
+FAIL independent every weekday the independent calendar closes is closed by isBankingDay :: ["2029-01-01","2029-01-15","2029-02-19","2029-05-28","2029-06-19","2029-07-04","2029-09-03","2029-10-08","2029-11-12","2029-11-22","2029-12-25","203
+FAIL sunday 2029-11-12 is closed with 'is a Federal Reserve holiday' (Veterans Day 2029 falls on a Sunday) :: 
+FAIL extra NS.nacha.EXTRA_CLOSED is an empty frozen list
+FAIL extra nacha.js has the line const EXTRA_CLOSED = Object.freeze([
+FAIL years ran to the end :: TypeError: NS.nacha.fedHolidays is not a function
+FAIL mobile the rest of mobile/src/core/nacha.js equals assets/js/nacha.js
+HOLIDAYS: FAIL (cases run: 7) - old, independent, sunday, extra, years, mobile
+exit 1
+```
