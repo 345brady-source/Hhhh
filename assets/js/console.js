@@ -172,6 +172,15 @@
    */
   const taxAskButton = (i) =>
     E.diy && NS.invitations && NS.invitations.requestTax && NS.inviteFlow && NS.app.can('operate') && i.onboarding.status === 'complete' && !NS.inviteFlow.taxOnFile(i) ? `<button class="cs-btn cs-btn-small" type="button" data-action="tax-request" data-id="${h(i.id)}">Request tax form</button>` : '';
+  // Plan 08-09 (D-04, C-06): "Ask to re-verify" for an active investor whose verification by a third party is missing or
+  // has lapsed (self-serve edition, staff who may invite).
+  const reverifyDue = (i) => {
+    const I = NS.integrations;
+    const a = I ? I.peek(i).accreditation : {};
+    return !(a.status === 'verified' && !I.selfCertified(a) && (!a.expiresAt || a.expiresAt >= NS.dates.today()));
+  };
+  const reverifyButton = (i) =>
+    E.diy && NS.invitations && NS.invitations.requestReverify && NS.app.can('operate') && i.onboarding.status === 'complete' && reverifyDue(i) ? `<button class="cs-btn cs-btn-small" type="button" data-action="reverify-request" data-id="${h(i.id)}">Ask to re-verify</button>` : '';
   function taxState(w, inv) {
     const tc = inv.taxCert;
     // plan 06-21 (D-01, T-06-45): a form completed elsewhere and uploaded by the investor, with a download of that file when
@@ -855,7 +864,7 @@
             <td data-label="Paid by">${payLabel(i)}</td>
             <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done
-                ? `${taxAskButton(i)}<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
+                ? `${taxAskButton(i)}${reverifyButton(i)}<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
                 : `<button class="cs-btn cs-btn-small" type="button" data-action="invite-preview" data-id="${h(i.id)}">Invitation</button><button class="cs-btn cs-btn-small" type="button" data-action="remind" data-id="${h(i.id)}">Send reminder</button>`
             }</td>
           </tr>`;
