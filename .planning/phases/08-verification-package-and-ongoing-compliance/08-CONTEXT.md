@@ -203,3 +203,9 @@
 - Gate GATE_EXIT=0 on 0a72858 (resumed after the 2026-11-20 stop); the owner-screenshot check fix (86991b3) passed alone (PACKAGE NAMES 4 parts). Server tests 408 on the merged tree (403 + 5), all pass; GATE_SERVER_TESTS=408 from here.
 - 08-18 merges second: it merges claude/refract-reskin and re-runs step0 before its merge.
 - Owner's iPhone check: an entity investor's link, profile step to identity step, same fields as before, "Second beneficial owner" still Optional, no error text.
+
+## After 08-18 (merged 2026-11-26)
+- A 506(c) invitation with the package: the investor does accreditation on the reviewer's page and finishes onboarding without waiting; the sponsor's AML/KYC details read "waiting for the result" with "A reviewer's letter usually arrives within two business days; this page updates when it does." ("two business days" is an assumption, "To be confirmed" with the provider); the result turns the details to verified on its own; "Download letter" saves the reviewer's letter. Stand-ins only. Gate GATE_EXIT=0 (first run failed HELP PREVIEW: help-data.js out of date, regenerated); merged-tree steps all ok (server tests 456, HELP CHAT, HELP PREVIEW, AML RECORD, PACKAGE CONSOLE/FLOW/INVITE/NAMES/PANEL). Sponsor guide 46,452 bytes after +166.
+- Found, not fixed (queued for the small-fixes task): server/lib/invitations.mjs confirmChecks does not copy `evidence` onto the imported record, so a result arriving before import has no letter; server/lib/http.mjs cors needs Access-Control-Expose-Headers: Content-Disposition (the console names the file verification-letter-<investor>.pdf for now).
+- Owner's iPhone check: Console, AML/KYC, an investor's details look as before, no "Download letter" and no error text in the preview.
+- Disk ran at 99-100% during this gate; old finished output folders and merged worktrees were removed (4.6 GB free after).
