@@ -50,4 +50,67 @@ VERIFY1_EXIT=0
 ```
 Product commit (Task 3's gate base): a072fb3630a00e2698ee02a15781b45b5f4891d6.
 
+## Task 2
+
+First RED run (O/red-2-first-draft.txt) showed two faults of the check itself, fixed before the RED below:
+- the plan's scan rule flagged phase 11's fund-a.ofx:28 and fund-a.qfx:37 (`<BANKID>`, ending 0000): the all-zero
+  number, which passes the arithmetic with prefix 00 but is issued to no one (a blank bank id). Those two files are not
+  in files_modified and 00 has no PREFIX_SWAP image, so the rule now leaves the all-zero number out; selfcheck plants
+  one and proves it is not found. (Deviation 1.)
+- the finding list was cut at the reporter's 1,500 characters; every finding is now printed on its own `found:` line.
+
+RED (O/red-2.txt, the base's ten files):
+```
+  found: .planning/phases/01-accurate-field-placement/checks/fixtures.js:207 ending 0021
+  found: .planning/phases/04-signing-inside-onboarding/checks/lib.js:303 ending 0021
+  found: .planning/phases/05-signed-record/checks/flow.js:227 ending 0021
+  found: .planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/bank-step-typing.js:30 ending 0021
+  found: .planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js:333 ending 0021
+  found: .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-a.js:30 ending 3186
+  found: .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-a.js:54 ending 3186
+  found: .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-b.js:42 ending 3186
+  found: .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-b.js:52 ending 3186
+  found: .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-c.js:15 ending 3186
+  found: .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-c.js:38 ending 3186
+  found: .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/posting.js:70 ending 3186
+  found: .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/posting.js:93 ending 3186
+  found: server/test/invitations.test.mjs:46 ending 0021
+  found: server/test/invitations.test.mjs:220 ending 0021
+FAIL checks the scan over server/test/, server/lib/ and every phase's checks folder finds no routing number a bank can have :: 15 found (listed above)
+  found: server/test/invitations.test.mjs:371 ending 0021
+FAIL checks no copy of such a number left on a line without a routing word (a number found in the same file, or one whose swap image is in it) :: 1 found (listed above)
+ACH LEAK: FAIL (cases run: 1) - checks
+```
+
+GREEN: the same swap script (O/swap-2.txt):
+```
+server/test/invitations.test.mjs: ending 0021: prefix 02 -> 13 at 3 places
+.planning/phases/01-accurate-field-placement/checks/fixtures.js: ending 0021: prefix 02 -> 13 at 1 place
+.planning/phases/04-signing-inside-onboarding/checks/lib.js: ending 0021: prefix 02 -> 13 at 1 place
+.planning/phases/05-signed-record/checks/flow.js: ending 0021: prefix 02 -> 13 at 1 place
+.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js: ending 0021: prefix 02 -> 13 at 1 place
+.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/bank-step-typing.js: ending 0021: prefix 02 -> 13 at 1 place
+.planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-a.js: ending 3186: prefix 04 -> 15 at 2 places
+.planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-b.js: ending 3186: prefix 04 -> 15 at 2 places
+.planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/fixtures/fund-c.js: ending 3186: prefix 04 -> 15 at 2 places
+.planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/posting.js: ending 3186: prefix 04 -> 15 at 2 places
+```
+(invitations.test.mjs: lines 46, 220 and 371, B3.) Each diff read with `git diff --word-diff` (masked): 16 lines, with the
+first two digits of every 9-digit run masked the removed and added lines are identical (md5 6106d7a2... both sides).
+Repo-wide after the swap, the five old numbers remain only in planning documents (outside AC-13; see Open items).
+
+Verify (Task 2, verbatim block plus B3 and the server count, O/v2.sh):
+```
+ACH LEAK: PASS (cases run: 3)
+BANK STEP TYPING: PASS (parts run: 2)
+VERIFY2_EXIT=0
+POSTING: PASS (cases run: 13)
+B3_LINE371_EXIT=0
+SERVER_TEST_EXIT=0
+# tests 422
+# pass 422
+# fail 0
+```
+Task 2 GREEN commit: 03d2bb8 (made as the save commit before the reruns; nothing changed after it).
+
 <!-- gsd:write-continue -->
