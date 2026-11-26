@@ -465,3 +465,292 @@ Per CLAUDE.md, each question goes to the owner with a push notification; after 1
 | **C-18** | Data room download | **Off by default; per room, the sponsor may allow watermarked download** | Viewing in the page with a watermark deters copying; the console states that nothing stops a screenshot |
 
 <!-- section: choices done -->
+
+## Standard Stack
+
+### Core (all already in the tree; nothing to install)
+
+| Part | Version | Purpose | Why |
+|------|---------|---------|-----|
+| Browser workspace + file store | in-repo (`workspace.js`, `operations.js` `files`) | Metadata in localStorage, bytes in IndexedDB as bytes | Already survives the iPhone frame's quirks (held-in-memory fallback, no Blob) |
+| `NS.audit.sha256`, `NS.audit.zip` | in-repo (audit.js) | Hash chain and export zip with manifest | Same recipe auditors already get in the audit package |
+| Shipped PDF writer | pdf-lib 1.17.1 (`assets/vendor/pdfwrite/write.js`, MIT, SOURCE.txt) | Watermark stamping in the browser and, via `require`, on the server | Probe this session: loads in Node 22 and stamps (2.4) |
+| Shipped PDF viewer | `assets/vendor/pdfview/` | Pages drawn in the page | No browser PDF viewer (AUTOPILOT rule) |
+| E-signature | in-repo (`esign.js`) | Optional e-signed NDA | Consent, certificate and signed copy already proven |
+| Phase 13 renderer and sent log | `assets/js/emails.js` (after 13-01) | Notice emails | One template system; white label; banned-word tests |
+| Server: `node:crypto`, `store.mjs`, `vault.mjs`, `http.mjs` | Node >= 18 (`engines`), Node 22.23.4 here | Tokens, sealing, routes | Zero new dependencies |
+
+### Alternatives Considered
+
+| Instead of | Could use | Tradeoff |
+|-----------|-----------|----------|
+| In-house inbox | Chat API (Stream, TalkJS, Sendbird) | Monthly fee, vendor SDK from a CDN, third-party processor, no record export (section 1) |
+| In-house room | Hosted data room (Peony, DocSend, Digify) | Monthly fee, vendor's pages in front of prospects, no 506(b) gate or subscription hand-off |
+| Polling | WebSockets / server-sent events | Real-time, but a new long-lived connection type on a server built for request/response, and nothing to gain at a few messages a week |
+| Server stamping with pdf-lib | Hand-written PDF incremental update | Fragile with object and cross-reference streams; the shipped library already works |
+
+**Installation:** none.
+
+## Package Legitimacy Audit
+
+This phase installs no external package. The only third-party code it uses is already shipped in the tree: pdf-lib 1.17.1 as `assets/vendor/pdfwrite/write.js` (SOURCE.txt records the npm tarball integrity `sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo…` and MIT licence; SHA256SUMS beside it). Loading it on the server with `require` adds no `package.json` dependency.
+
+| Package | Registry | Age | Downloads | Source Repo | Verdict | Disposition |
+|---------|----------|-----|-----------|-------------|---------|-------------|
+| (none installed) | - | - | - | - | - | - |
+
+**Packages removed due to [SLOP] verdict:** none. **Packages flagged [SUS]:** none.
+
+## Architecture Patterns
+
+### System architecture
+
+```
+ PREVIEW (one browser, no server)
+ Console (sponsor) ──write──► NS.inbox / NS.dataroom ──► workspace JSON (localStorage)  +  file store (IndexedDB bytes)
+        ▲                          │  hash chain, append-only          │
+        └── unread counts ◄────────┘                                   ▼
+ Portal (investor) / Room page (prospect) ◄── same workspace ──── notices: phase 13 preview "(simulated in this demo)" + sent log
+
+ SERVER MODE
+ Console ──POST /v1/inbox/messages, /v1/rooms…──► Integration server ──seal──► store (inbox, rooms) + sealed blobs
+    ▲                                              │        │
+    │ 60 s: GET /v1/inbox/updates, /v1/rooms/:id/activity    └─► phase 13 mailer ──► notice email (fixed text, link)
+    │                                              │                                          │
+    └── merge into workspace (append-only) ◄───────┤                                          ▼
+                                                   │◄── X-Inbox-Token ── Investor's device (#inbox-<token>): read, reply, attach
+                                                   │◄── X-Room-Token ─── Prospect's device (#room-<token>): NDA ► list ►
+                                                   │                       GET document ► server stamps watermark ► pages drawn
+                                                   │                       views, indication of interest, questions
+ 506(b) room: no shareable link; prospect link refused (422) until the relationship basis is recorded
+```
+
+### Recommended structure
+
+```
+assets/js/inbox.js        # NS.inbox model + part loader (14-01)
+assets/js/inbox-ui.js     # console and portal Messages pages, export button, server path (14-04, 14-09, 14-10)
+assets/js/dataroom.js     # NS.dataroom model (14-02)
+assets/js/dataroom-ui.js  # console Data room page, prospect room page (14-06, 14-09, 14-10)
+assets/js/watermark.js    # UMD stamp, browser + server (14-02)
+server/lib/inbox.mjs      # inbox routes (14-03), mounted by 14-08
+server/lib/dataroom.mjs   # room routes (14-05), mounted by 14-08
+.planning/phases/14-portal-messaging-and-data-room/checks/   # model, browser and phone checks
+```
+
+### Pattern 1: append-only hash chain (the change log's recipe)
+
+```js
+// Source: assets/js/audit.js:1002, 1121-1127, 1158-1167 (recipe copied, own chain)
+const GENESIS = '0'.repeat(64);
+const text = (prev, m) => [prev, m.seq, m.at, m.threadId, m.from, m.author, m.body,
+  (m.attachments || []).map((a) => a.sha256).join(','), m.broadcastId || '', m.correctionOf || ''].join('|');
+function append(w, m) {
+  const list = (w.messages = w.messages || []);
+  m.seq = list.length + 1;
+  m.prev = list.length ? list[list.length - 1].hash : GENESIS;
+  m.hash = NS.audit.sha256(text(m.prev, m));
+  list.push(m);              // never splice, never assign into an existing message's chained fields
+  return m;
+}
+function verify(w) {
+  let prev = GENESIS;
+  for (const [n, m] of (w.messages || []).entries()) {
+    if (m.seq !== n + 1 || m.prev !== prev || NS.audit.sha256(text(prev, m)) !== m.hash) return { ok: false, brokenAt: n + 1 };
+    prev = m.hash;
+  }
+  return { ok: true, count: (w.messages || []).length };
+}
+```
+(`GENESIS` value here is illustrative; the planner reuses audit.js's own constant if exported, else defines one. [ASSUMED: audit.js's GENESIS value was not read])
+
+### Pattern 2: link token scoped to one party (tax-document pattern)
+
+```js
+// Source: server/lib/taxdocs.mjs:27-29, 68-78 (read this session)
+const token = randomBytes(32).toString('base64url');          // returned once, inside the emailed link only
+rec.tokenHash = createHash('sha256').update(token).digest('hex'); // only the hash is stored
+// lookup: compare every stored hash with timingSafeEqual, never exit early (findByToken)
+// index.mjs: header('x-inbox-token') set -> only inbox.investorPath(method, path) routes; everything else 401
+```
+
+### Pattern 3: watermark with the shipped writer (probe-proven)
+
+```js
+// Source: probe run this session against assets/vendor/pdfwrite/write.js (pdf-lib 1.17.1)
+const doc = await PDFLib.PDFDocument.load(bytes);
+const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+for (const page of doc.getPages()) {
+  page.drawText(`Confidential · ${name} · ${email} · ${day}`,
+    { x: 40, y: page.getHeight() / 2, size: 18, font, opacity: 0.25, rotate: PDFLib.degrees(35), color: PDFLib.rgb(0.5, 0.5, 0.5) });
+}
+const stamped = await doc.save();
+```
+Names outside the standard fonts' characters (Łukasz) need the Unicode font path esign.js already has (`fontsFor`, `drawText` in `NS.esignKit`); on the server, fall back to a transliterated name and say so in the README [ASSUMED: server font handling to be decided by 14-05].
+
+### Anti-patterns to avoid
+
+- **Reusing Documents' "Remove"** for room documents or attachments: it deletes bytes (console.js:2427).
+- **Message text in the change log**: the change log goes into audit packages; ids and counts only.
+- **One shared room link for a 506(b) offering**, or a room page reachable by guessing an id.
+- **Storing a Blob** in IndexedDB, or bodies of attachments in localStorage.
+- **A new `/v1/messages` route**: phase 13's 13-04 owns that path.
+- **Editing invitations.js** for the server merge: run phase 14's own timer.
+- **Counting indications** in raised capital, the investor register or the 506(b) count.
+
+## Don't Hand-Roll
+
+| Problem | Don't build | Use instead | Why |
+|---------|-------------|-------------|-----|
+| Hashing and the chain | A new hash | `NS.audit.sha256` and the change-log recipe | Proven, already in auditors' hands |
+| Zip export | A new zip writer | `NS.audit.zip` + the manifest pattern (audit.js:1744-1756) | CRC and manifest already correct |
+| PDF stamping | Raw PDF edits | Shipped pdf-lib (`watermark.js` wraps it) | Object streams, fonts, rotation |
+| PDF viewing | `<iframe>`/`<embed>` or a browser viewer | `NS.esign.viewPdf` and the shipped viewer | iPhone frame rule |
+| Tokens and sealing | New crypto | `randomBytes`, SHA-256, `timingSafeEqual`, `vault.seal` as taxdocs.mjs | Same reviewed pattern |
+| Email wording, guards, sent log | A notice builder in inbox code | Phase 13 `emails.js` kinds + `NS.emails.log` | One template system, banned-word and pattern tests |
+| Audience picking for broadcast | A new picker | The Notices picker (console.js `pickerHTML`) | Same behaviour sponsors know |
+| Subscription from an indication | A new subscription path | The existing invitation (invitations.js) | Status questions, agreement, e-sign, 506(b) count all there |
+
+**Key insight:** every hard part (hashing, zipping, PDF writing and drawing, consent and signing, sealing, tokens, email) is already built and proven in this tree; phase 14 is records and screens on top.
+
+## Common Pitfalls
+
+### Pitfall 1: the preview mistaken for a record
+**What goes wrong:** a sponsor trusts browser storage as the archive. **Why:** the preview has no server. **Avoid:** the one-line notice, the export, and the server as the record (3.2 item 7). **Warning sign:** any screen text that says messages are "archived" with no server.
+
+### Pitfall 2: a 506(b) room that is effectively public
+**What goes wrong:** a link shared beyond known people. **Why:** a shareable link or a guessable id. **Avoid:** personal tokens only, server refusal without the basis, the sign-up link fix (C-03, C-09). **Warning sign:** any room URL without a token, or a "Copy link" button on a 506(b) room.
+
+### Pitfall 3: notice emails that leak
+**What goes wrong:** an attachment name or subject line with an investor's tax number reaches an inbox. **Avoid:** fixed notice text only; the leak test in 6.2 item 5 with an attachment name holding an SSN. **Warning sign:** a notice kind that takes any free-text field.
+
+### Pitfall 4: watermarking large memoranda
+**What goes wrong:** a 25 MB PDF takes too long or exhausts memory on the phone or the server. **Why:** pdf-lib loads the whole file. **Avoid:** server stamping in server mode, measure on a 25 MB file before fixing limits (14-05), cache the stamped copy per prospect per document version (sealed), and in the preview stamp only when a document is opened. **Warning sign:** a phone-frame check over 10 s to first page [ASSUMED: threshold].
+
+### Pitfall 5: read receipts in the hash chain
+**What goes wrong:** marking read changes a chained field and breaks the chain. **Avoid:** `readAt` outside the hashed text; server read events as their own records.
+
+### Pitfall 6: the sponsor guide overflows
+**What goes wrong:** help-guide test fails at 48,000 bytes and blocks the gate. **Avoid:** budgets in 7.3, 14-10 waits for the trim (C-13).
+
+### Pitfall 7: phase 13 not merged
+**What goes wrong:** a phase 14 plan edits `emails.js` or `index.mjs` while phase 13 plans own them. **Avoid:** 14-08 waits for 13-01, 13-03, 13-04, 13-11; waves 1-3 touch no phase 13 file except 14-07 (waits for 13-08).
+
+### Pitfall 8: managed edition changed
+**Avoid:** `edition: 'diy'` on every new view; no line in `index.html`; managed menus compared byte-for-byte (6.2 item 16).
+
+### Pitfall 9: a prospect counted as an investor
+**Avoid:** prospects live on the room (C-16) until a real invitation; check that Overview totals, the register and the 506(b) count are unchanged after adding prospects.
+
+## Code Examples
+
+See Patterns 1-3 above (hash chain from audit.js, link token from taxdocs.mjs, watermark from the probe). The notice kinds follow 13-01's `KINDS[kind] = { audience, label, variants, sample }` contract (13-01-PLAN.md line 93) once that plan merges.
+
+## State of the Art
+
+| Old approach | Current approach | When changed | Impact |
+|--------------|------------------|--------------|--------|
+| Accredited verification in 506(c) only by documents or third-party letters | High minimum investment plus written representations may be reasonable steps | SEC staff no-action letter, 2025-03-12; C&DIs 256.35-256.36 | 506(c) rooms can stay open; verification stays at subscription |
+| Regulation S-P for registered advisers' own clients only | 2024 amendments: incident response and notice; smaller entities comply by 2026-06-03 | Adopted 2024 | Registered sponsors need incident handling for message data (phase 15) |
+| Business communications on personal apps | SEC off-channel enforcement against registered firms | 2021-2024 sweep [ASSUMED] | In-portal messages that are kept are the remedy |
+
+## Assumptions Log
+
+| # | Claim | Section | Risk if wrong |
+|---|-------|---------|---------------|
+| A1 | No ERA-specific communications-retention rule exists; Rule 204-2 reaches registered advisers only | 3.1 | Low: the design already meets 204-2 for everyone |
+| A2 | Rule 17a-4 does not apply to this audience | 3.1 | Low: same design |
+| A3 | ESIGN 7001(d) retention wording | 3.1 | Low |
+| A4 | Off-channel enforcement facts | 3.1, State of the Art | Marketing only |
+| A5 | Substantive relationship definition wording; Jan 2026 C&DI text | 4.1 | Medium: on-screen wording marked "To be confirmed" |
+| A6 | Warn, not block, for a basis dated after the room opened | 4.1, C-03 | Medium: counsel may prefer a block |
+| A7 | Rule 241 conditions applied by analogy to indications inside a 506 offering | 4.3 | Medium: legend wording to be confirmed |
+| A8 | Indications do not start the Form D 15-day clock (first sale = irrevocable commitment) | 4.3 | Medium: Filings tab behaviour |
+| A9 | ESIGN/UETA equivalence; clickwrap enforceability for an NDA | 4.4 | Medium: offer the e-signed option (C-04) |
+| A10 | All notice kinds transactional except `room_invite` | 5.1 | Medium: CAN-SPAM footer and unsubscribe |
+| A11 | Memory thresholds (50 MB held, 200 MB note, 10 s first page) | 5.3, Pitfall 4 | Low: measured by plans before fixing |
+| A12 | Usage volume (a handful of messages a week per firm) makes polling enough | 1.1, C-06 | Low |
+| A13 | Investors never see one another (no group threads) | 2.5 | Low |
+| A14 | localStorage size of a few MB per origin | 2.1 | Medium: long message histories in the preview; plans measure |
+| A15 | The preview's way to open the investor/prospect view (`state.viewer`) | 2.3 | Low: planner traces |
+| A16 | All outside prices (search excerpts only; vendor pages not readable from this session) | 1 | Medium: re-read before the owner relies on them |
+| A17 | Server-side Unicode names in watermarks | Pattern 3 | Low |
+| A18 | audit.js's GENESIS value | Pattern 1 | Low |
+
+## Open Questions (each with the default to use if not answered)
+
+1. **Does the owner want server-mode messaging before phase 15's sign-in?** Known: link tokens work today for invitations and tax documents. Unclear: whether he would rather wait. Default: build it with links (C-02).
+2. **Counsel review of the legends and the 506(b) basis wording.** Default: drafted text marked "To be confirmed" (C-08).
+3. **Guide-trim timing.** Known: 640 sponsor bytes needed. Default: 14-10 waits for the trim (C-13).
+4. **Phase 13 merge order.** Known: only 13-02 merged. Default: waves 1-3 now; 14-07 after 13-08; 14-08/14-09 after 13-01, 13-03, 13-04, 13-11.
+
+## Environment Availability
+
+| Dependency | Required by | Available | Version | Fallback |
+|------------|------------|-----------|---------|----------|
+| Node | server modules, model checks | ✓ | v22.23.4 (engines `>=18`) | - |
+| server/node_modules (only for the reading client; phase 14 needs none of it) | full server test run | ✓ in the main checkout | - | link into worktrees (save rule 7) |
+| Browser check queue | phone-frame checks | ✓ | SCRATCH/exec-011/heavy.sh present | - |
+| Disk | builds and checks | ✓ | 3.1 GB free | keep outputs small (AUTOPILOT) |
+| Live email | real notices | ✗ until phase 13's owner checkpoint | - | simulated notices + sent log; "To be confirmed" |
+| Vendor pricing pages | re-reading prices | ✗ from this session (hosts not resolvable) | - | the owner or orchestrator re-reads them before any purchase |
+
+**Missing with no fallback:** none for building. **Missing with fallback:** live email (phase 13 checkpoint).
+
+## Security Domain
+
+### Applicable ASVS categories
+
+| ASVS category | Applies | Standard control |
+|---------------|---------|-----------------|
+| V2 Authentication | yes (links) | 32-byte tokens, hash only stored, constant-time lookup, expiry, rotation; real sign-in in phase 15 |
+| V3 Session management | partly | No sessions yet; tokens scoped per party; phase 15 |
+| V4 Access control | yes | Workspace pinned on sponsor routes; party-scoped tokens; 404 for other parties' records; NDA before documents (403) |
+| V5 Input validation | yes | Body length caps, attachment size and first-byte type checks, base64 strict decode (taxdocs.mjs `decode64`), pattern screening |
+| V6 Cryptography | yes | `vault.mjs` AES-256-GCM with record-bound additional data; no hand-rolled crypto |
+| V7 Errors and logging | yes | No bodies, subjects or file names in logs or events; ids and types only |
+| V8 Data protection | yes | Sealed at rest; minimum prospect data; no content in emails |
+| V12 Files | yes | Size caps, type by first bytes, no executable types, served with download headers only when allowed, PDFs drawn in-page |
+
+### Known threat patterns
+
+| Pattern | STRIDE | Mitigation |
+|---------|--------|-----------|
+| Forwarded notice email opens the inbox | Spoofing | Scoped token, expiry, revocation, the warning line; phase 15 sign-in |
+| Payment diversion through a message ("our bank changed") | Tampering | Sponsor messages with bank numbers refused; wire details only on the capital call |
+| Investor reads another investor's thread or attachment | Information disclosure | Party-scoped queries; 404; tests in 6.2 item 7 |
+| Record altered after the fact | Repudiation / tampering | Hash chain, export verification, no delete or edit routes |
+| Malicious attachment | Elevation / tampering | Type allow-list by first bytes; no HTML/SVG/ZIP; never rendered as HTML |
+| Data room document leaked by a prospect | Information disclosure | Server-side per-prospect watermark, view records, download off by default |
+| 506(b) room reached by the public | Compliance | Personal tokens only; basis recorded; server refusal |
+| Flood of messages or notices | Denial of service | Existing rate limit on writes; notice coalescing |
+
+## Sources
+
+### Primary (in-repo, read this session)
+- assets/js: console.js (37-69, 108, 1630-1700, 2318-2431), portal.js (40-160, 630-700, 985-1052), operations.js (389-520), workspace.js (1-80), audit.js (1002, 1085-1167, 1744-1784), esign.js (1-40, 166, 296-330, 626-660, 696-770, 853-905, 2568-2641, 2837-2875, 4371-4379), diy.js (150-251), eligibility.js (1-60), integrations.js (290-310), invitations.js (38, 2813-2840), app.js (438-446), edition.js (42), taxdocs-ui.js (150-200), taxlink.js (12, 353), documents.js
+- server: index.mjs (687-880), lib/store.mjs, lib/vault.mjs (1-60), lib/taxdocs.mjs (1-80), README.md (1-18, 271-352, 568-600), package.json, test/help-guide.test.mjs (115-135), help/guide.md and build.mjs
+- .planning: 14-CONTEXT.md, ROADMAP.md (phases 6-16), AUTOPILOT.md, 13-RESEARCH.md, 13-CONTEXT.md, 13-01/13-04/13-11 plans
+- Probes: server test run (403 pass); pdf-lib in Node watermark probe; guide byte measurements
+
+### Secondary (web search excerpts, 2026-11-26)
+- SEC Latham & Watkins 506(c) no-action letter, 2025-03-12 (sec.gov page title) and summaries: Alston, Dechert, Nixon Peabody, Morgan Lewis
+- 506(b) relationship: Akin Gump, McGuireWoods, Mondaq on C&DIs 256.29-256.33 and Citizen VC (2015); thecorporatecounsel.net (2026-01-26)
+- Rule 241: O'Melveny, Troutman; Rule 204-2: law.cornell.edu / ecfr.gov titles, Smarsh, SIFMA (2025-10-15 proposal); IA-3222, IA-3297
+- Regulation S-P 2024 amendments: Cleary Gottlieb, Foley Hoag, Davis Wright Tremaine (smaller entities 2026-06-03)
+- Clickwrap: Wilson Sonsini, Ironclad
+- Prices: docsend.com/pricing excerpt and reviews (peony.ink, signeasy, orangedox); papermark.com/pricing.md excerpt, ellty.com; Digify listings (Capterra, Software Advice, SaaSworthy); peony.ink plans docs (2026-11-05); getstream.io pricing excerpt, apis.io; sendbird.com/pricing/chat excerpt, featurebase, pricingsaas; talkjs.com/pricing excerpt, toolradar, cometchat; G2/TrustRadius for Paubox and Virtru; Capterra/G2 for investor-portal suites
+
+### Tertiary (LOW)
+- Competitor-written price comparisons (Peony, Papermark, Ellty) used only where nothing better was found; marked in section 1
+
+## Metadata
+
+**Confidence breakdown:**
+- In-repo inventory and design: HIGH (files opened, values quoted, one probe run)
+- Record keeping and data room law: MEDIUM (consistent law-firm summaries; primary texts not openable here; on-screen wording "To be confirmed")
+- Outside prices: LOW to MEDIUM (search excerpts; vendor pages blocked from this session)
+- Plan breakdown: MEDIUM (depends on phase 13 merge order and the guide trim)
+
+**Research date:** 2026-11-26
+**Valid until:** 2026-12-26 for the code picture (fast-moving tree: re-check phase 13 merges before planning waves 3-4); prices should be re-read before any purchase decision.
