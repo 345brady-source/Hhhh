@@ -24,3 +24,13 @@
 - Orchestrator choice: Documents' "Remove" (console.js:2427) becomes hide-only in a later small fix so nothing is deleted anywhere in the portal (records rule, C-05); not part of phase 14's plans.
 - Watermark time on a 25 MB file is measured in 14-02 and 14-05; over 30 seconds, the orchestrator lowers C-17's limit.
 - Phase 15's planner was given the four facts 14-08 needs (section and route tables extendable by added lines; investor-session and room-token routes; prospects keep link tokens; access for investors added before phase 15).
+
+## Plan-check additions, wave 1 (14-01, 14-02, 14-03, 14-13; checked 2026-11-26 against 1ea96e3; 1 blockers fixed here, 6 warnings). Executors apply these with their plan. Findings: scratchpad checks-14-wave1.md.
+- B1 (14-02): stamp() loads with { updateMetadata: false } and sets Producer and Creator to the folded firm name (as record.js does); case every-page asserts the stamped bytes hold neither 'pdf-lib' nor 'Hopding'.
+- W1 (14-01): gate14.sh sets GATE_FRESH=1 with a note when GATE_OUT/gate/base-commit.txt differs from GATE_OUT/base-commit.txt (kept steps are not keyed by the base); self-test stays 8.
+- W2 (14-02): case big asserts 25,000,000 <= input bytes <= 26,214,400 and prints 'stamp input: <n> bytes'.
+- W3 (14-03): inbox.mjs chainText returns the joined text, identical to NS.inbox.chainText; the hash is sha256 of it.
+- W4 (14-03): the test store copies store.mjs signatures and blob-key rule, and its put throws on a second write of a thread, message, read, notice or client id.
+- W5 (14-03): one test calls post() for a prospect party (kept apart from investors); count stays 14.
+- W6 (14-13): Task 1 runs 13-01's render and guard tests without a name pattern. 14-13 cannot start until 13-01 and 13-11 merge (no assets/js/emails.js yet).
+- C-02's inbox link is replaced by phase 15 sign-in (15-CONTEXT C-15); 14-03 builds no token.
