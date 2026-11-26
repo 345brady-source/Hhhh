@@ -35,3 +35,8 @@
 - W1 (15-01): the JSON + Origin rule applies to every POST under /v1/auth/, cookie or not; csrf test adds a foreign text/plain sign-in refused with no Set-Cookie. W2: password.check uses timingSafeEqual (verify greps it). W3: 'Wait 1 second and try again.' for 1. W4: the setup-session-on-invitations assertion lives in auth-gate only (or Task 2 wires the stage refusal).
 - W5 (15-12): roles.js exports DEFAULT_PAGES (read by the check) and has rows for the books (11-13) and report-builder (12-06) view keys with the Accountant 'read'.
 - W6 (15-06): its gate run adds a browser check of the served portal (Chromium, WebKit; e-sign preview and a document read) with 0 securitypolicyviolation events. W7: 15-05 also waits for 15-02 (it runs gate15.sh).
+
+## After 15-13 (merged 2026-11-26)
+- server/lib/pages.mjs merged (fixed file list, O_NOFOLLOW, security headers incl. CORP same-site and HSTS on https, CSP with 'wasm-unsafe-eval' and never 'unsafe-eval', security.txt builder, /health warnings); 7 tests; not mounted until 15-06. Server tests 444 on the merged tree, all pass; GATE_SERVER_TESTS=444 from here.
+- Chromium loaded the served portal.html under the policy with 0 violations at load; not yet run: e-sign preview, a document read, WebKit. 15-06's gate must run them (W6).
+- Open: the policy is built at server start (a page edited on disk needs a restart); esign.js's jsdelivr font fallback is refused by connect-src 'self' (only used if the shipped font fails); `CVPortalConfig.signInServer` is injected but read by no page yet (a later sign-in plan reads it).
