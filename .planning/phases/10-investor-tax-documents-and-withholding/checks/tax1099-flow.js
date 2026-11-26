@@ -51,7 +51,7 @@
 //                  refused with the rule in one line; 70 / 10 / 20 and 50 / 0 / 50 with box 5 opened under "More boxes from
 //                  your CPA" and set to the whole of 1a show the three forms with example E's dollar amounts; box 3 above
 //                  zero shows the one line naming Form 5452 and the CPA; each form is confirmed singly with every box stored.
-//                  Desktop also: the box "Use this split for every distribution of the year"; a third distribution stops the
+//                  Each open split has the box "Use this split for every distribution of the year". Desktop also: a third distribution stops the
 //                  forms until "Report the whole payment as a dividend" is pressed, recorded as the IRS rule chosen by the
 //                  signed-in person; the change log holds the splits, the confirmations and the choice
 //   div-file       1280x800: with the numbers typed as in plan 10-10 (S-2002's read from its signed W-9), the downloaded file
@@ -913,6 +913,8 @@ const formsDiv = (fr) =>
       return { id: r.getAttribute('data-id'), boxes, text: r.innerText.replace(/\s+/g, ' ').trim(), confirm: !!r.querySelector('[data-action=t99-confirm]') };
     })
   );
+/** Example E's fund's year record. */
+const yearRecE = (fr, y) => fr.evaluate(({ id, y }) => JSON.parse(JSON.stringify((((window.CVPortal.state.ws.offerings.find((o) => o.id === id) || {}).tax || {}).years || {})[y] || null)), { id: FUND_E, y });
 /** A distribution's split as stored. */
 const splitStored = (fr, runId) => fr.evaluate((id) => JSON.parse(JSON.stringify(((window.CVPortal.state.ws.runs.find((r) => r.id === id) || {}).tax || {}).div || null)), runId);
 /** Type a split into a distribution's row and save it: main { 1a, 2a, 3 } in percents, more { 5: ... } under More boxes. */
@@ -962,6 +964,10 @@ async function divSplit(check, S, size) {
     const d = document.querySelectorAll('[data-list="splits"] details[data-more]');
     return d.length === 2 && Array.from(d).every((x) => !x.open && /More boxes from your CPA/.test(x.querySelector('summary').innerText));
   }));
+  check('each open split has one box "Use this split for every distribution of the year", unticked', await fr.evaluate(() => {
+    const boxes = Array.from(document.querySelectorAll('[data-list="splits"] input[type="checkbox"]'));
+    return boxes.length === 2 && boxes.every((x) => !x.checked && /Use this split for every distribution of the year/.test(x.closest('label').innerText));
+  }));
   // a split that does not add up
   await enterSplit(fr, 'exe-apr', { '1a': 70, '2a': 10, '3': 10 });
   const said = await alerts(fr);
@@ -984,14 +990,13 @@ async function divSplit(check, S, size) {
   await fr.waitForTimeout(400);
   f = await formsDiv(fr);
   check('Confirm on S-2002 confirms that form only', /Confirmed by/.test((f.find((x) => x.id === 'S-2002') || {}).text || '') && f.filter((x) => x.confirm).map((x) => x.id).join() === 'S-2001,S-2003', f.map((x) => [x.id, x.confirm]));
-  const conf = await yearRec(fr, '2026');
+  const conf = await yearRecE(fr, '2026');
   const cfE = ((conf || {}).confirmed || {})['S-2002'] || {};
   check("S-2002's confirmation stores every box with who and when", cfE.form === '1099-DIV' && !!cfE.boxes && cfE.boxes['1a'] === 60000 && cfE.boxes['3'] === 60000 && cfE.boxes['5'] === 60000 && !!cfE.by && !!cfE.at, cfE);
   check('no copy and no file while two forms are unconfirmed', !(await has(fr, '[data-action=t99-copies]')) && !(await has(fr, '[data-action=t99-file]')));
   await confirmAll(fr);
   check('with all three confirmed, the numbers step and the file are offered', (await has(fr, '[data-panel="numbers"]')) && (await has(fr, '[data-action=t99-file]')));
   if (size === 'desktop') {
-    check('one box offers "Use this split for every distribution of the year"', await fr.evaluate(() => /Use this split for every distribution of the year/.test(document.body.innerText)));
     // a third distribution: its row asks for the split and the forms stop; the IRS's rule is applied only when pressed
     await T.ws(fr, (w, by, NS) => NS.data.recordRun(w, { offeringId: 'exe-corp', date: '2026-12-15', type: 'Distribution', total: 100000 }, { by, today: '2026-12-15', id: 'exe-dec' }) && true, BY);
     await openE(fr);
@@ -1057,7 +1062,7 @@ const partsDiv = {
     const v = (r) => ['AM', 'AO', 'AU', 'AW', 'AV'].map((c) => r[col(c)]).join(' ');
     check("three rows with example E's amounts in their columns (AM 1a, AO 2a, AU 3, AW 5, AV 4)", rows.length === 3 && rows.every((r) => r.length === 69) && v(by('4000.00')) === '4000.00 400.00 2000.00 4000.00 ' && v(by('600.00')) === '600.00  600.00 600.00 ' && v(by('5400.00')) === '5400.00 600.00 2400.00 5400.00 ', rows.map(v));
     check('every row is form type 1099-DIV for 2026 and holds no asterisk', rows.every((r) => r[0] === '1099-DIV' && r[1] === '2026' && r.every((c) => c.indexOf('*') < 0)));
-    const yr = (await yearRec(fr, '2026')) || {};
+    const yr = (await yearRecE(fr, '2026')) || {};
     const file = (yr.files || [])[0];
     const sha = got ? crypto.createHash('sha256').update(Buffer.from(got.text, 'utf8')).digest('hex') : '';
     check("the file's SHA-256 and row count 3 are on the fund's year record", !!file && file.sha256 === sha && file.rows === 3, file ? { rows: file.rows, same: file.sha256 === sha } : yr);
