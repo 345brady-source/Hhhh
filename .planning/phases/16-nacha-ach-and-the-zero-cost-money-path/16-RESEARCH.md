@@ -269,3 +269,207 @@ A return or NOC file holds full account numbers. The reader keeps them in memory
 - The phase 11 bank fixtures under `.planning/phases/11-*/checks/fixtures/bank/` are BAI2/OFX/CSV statements; the two real BAI2 samples from moov-io/bai2 are copied byte for byte (their SOURCE.txt), and `sample2.txt` carries two nine-digit identifiers in its 01/02 headers that pass the routing check digit with assigned prefixes (`071207890`, `122099999`); whether a bank holds them was not looked up [no observation; VERIFIED that they pass the check digit, scan this session]. Phase 16 copies nothing from them and adds its own `checks/fixtures/ach/`; C-09 lists them for the owner's decision (they are an outside project's published test data, not the portal's).
 
 <!-- sections 4-7 done -->
+
+## Standard Stack
+
+### Core (all in the repository already; nothing is installed into the product)
+
+| Module | Version | Purpose | Why |
+|--------|---------|---------|-----|
+| `assets/js/nacha.js` | in repo | The builder (credits, offset, now pre-notes), holiday rule, field checks, `LAYOUT` | Already produces files an independent reader accepts; fix in place |
+| `assets/js/bankfiles.js` (phase 11) | in repo | `csvRows`, the column-map approach, `LIMITS`, plain-sentence refusals | Same no-network reading rules; return CSV reports are the same problem |
+| `assets/js/books-post.js` (phase 11) | in repo | Journal entries derived from records (`desired`/`sync`) | Returns post through it, never by hand |
+| `assets/js/data.js` (phase 10 record) | in repo | `run.lines` with `grossCents`, `withheld`, `netCents`; `runRows`, `runPaid` | The line a return marks; net amount is what the bank returns |
+| `NS.audit.sha256`, `NS.audit.log` | in repo | Fingerprint of an uploaded file; change log | Existing helpers (`bankfiles.js:652` requires `NS.audit.sha256`) |
+
+### Supporting (checks only, never shipped)
+
+| Tool | Version | Purpose | When to use |
+|------|---------|---------|-------------|
+| moov-io/ach `achcli` | v1.69.1 (Go module, Apache-2.0) | Independent NACHA reader and validator: `-validate-file`, `-validate-totals`, `-mask` | Every generated file and every fixture in every check |
+| moov-io/base | v0.68.3 (Go module, Apache-2.0) | Independent U.S. banking-day calendar (`IsBankingDay`) | Once, to generate the committed holiday fixture for 2025-2035 (and again to extend it) |
+| Playwright + phase 06 `checks/lib.js` | in repo | Browser checks in the sandboxed frame, 390x844 and 1280x800, connect-src blocked | Every screen plan |
+
+### Alternatives Considered
+
+| Instead of | Could use | Tradeoff |
+|------------|-----------|----------|
+| Our builder | moov-io/ach in a server | The product must work with no server; the builder is already correct in structure |
+| Wire list | IAT files | Few small banks accept IAT; seven addenda and OFAC data (section 4) |
+| Pre-notes | Instant account verification through a paid provider | Instant, but needs the server, an API key and a per-check fee (section 1) |
+
+**Installation:** none for the product. Checks: `GOFLAGS=-mod=mod GOBIN=$HOME/go/bin go install github.com/moov-io/ach/cmd/achcli@v1.69.1` (first run downloads the Go 1.26 toolchain through the proxy).
+
+## Package Legitimacy Audit
+
+No npm, PyPI or crates package is installed by this phase. The only outside code is a Go module run by the checks (never shipped to a sponsor or investor), so the npm/PyPI/crates legitimacy seam does not apply.
+
+| Package | Registry | Age | Downloads | Source Repo | Verdict | Disposition |
+|---------|----------|-----|-----------|-------------|---------|-------------|
+| github.com/moov-io/ach (cmd/achcli) v1.69.1 | proxy.golang.org (checksum database verified on download) | Project since 2018 (NOTICE: "Copyright 2018-2020 The Moov Authors") [VERIFIED: module NOTICE read] | not measured | github.com/moov-io/ach | n/a (not an npm/PyPI/crates package) | Approved for checks only; the plan adds a `checkpoint:human-verify` only if the owner wants one before a Go tool runs in the gate |
+| github.com/moov-io/base v0.68.3 | proxy.golang.org | same project family | not measured | github.com/moov-io/base | n/a | Used once to generate a committed fixture |
+
+**Packages removed due to [SLOP] verdict:** none. **Packages flagged [SUS]:** none.
+
+## Architecture Patterns
+
+### System architecture
+
+```
+ Sponsor: Distributions page                      Investor: onboarding bank step / Account page
+   | amount, date, offering                          | U.S. account (routing, account, type) or international wire details
+   v                                                 v
+ data.js record (phase 10: gross, withheld, net) <-- investor.payment.bank { ..., check: new|prenote-sent|ready|returned, pending }
+   |
+   v
+ achrecord.js: which entries may go in a file?  -- held: pre-note waiting (date), returned account, wire payee, no SEC
+   |                                    \-- wire payees --> "Wires" list (net amount, beneficiary, BIC, IBAN) --> sponsor's bank (wire)
+   v
+ nacha.js build(): batches by SEC, holiday rule, same-day limit, field checks (red blocks download, amber warns)
+   |  result: lines + per-entry trace
+   v
+ Download / Copy --> achrecord: file record on the run (modifier, created, entries with trace + last4) --> ws.achLog counter
+   |
+   v
+ Sponsor uploads the file at its own bank (outside the portal) ... bank settles ... bank sends returns and NOCs
+   |
+   v
+ Upload return/NOC: NACHA file | CSV report (column map) | by hand
+   |
+   v
+ achreturns.js parse() (pure, limits, no network)  --> [{ kind: return|noc, code, originalTrace, individualId, cents, corrected }]
+   |
+   v
+ achrecord.js match(): original trace -> run file record; else ID + amount + date (one candidate only, sponsor confirms)
+   |
+   +--> return: line.ach = returned; account.check = returned (or blocked); amount owed again
+   |        \--> books-post.js desired(): cash back in, payable; paid again: payable off, cash out
+   |                 \--> phase 11 reconciliation matches the statement's return credit to the posted cash line
+   +--> NOC: account.pending (sponsor confirms, admin) --> account updated, pre-note, investor notice
+   |
+   v
+ Investor portal: "Returned by your bank", Account asks for new details -> new details -> pre-note -> paid again
+```
+
+### Recommended structure
+
+```
+assets/js/
+  nacha.js          builder + holiday rule + checks (pure; synced to mobile/src/core/nacha.js)
+  achreturns.js     NEW: reads return/NOC files (NACHA, CSV) to plain records (pure)
+  achrecord.js      NEW: file record on runs, modifier counter, account check states, pre-notes, apply/confirm returns and NOCs,
+                    paid again, wires (pure over the workspace; no DOM)
+  ach-ui.js         NEW: Returns and Wires blocks drawn into the console's Distributions page (self-serve edition), like withholding-ui.js
+  console.js        Distributions and ACH origination pages (file gating, history record, pre-notes panel, held entries)
+  books-post.js     returns and paid-again entries
+  onboarding.js     bank step: international wire; new details after a return
+  portal.js         returned payment, paid by wire, Account prompt
+.planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/
+  lib16.js, achcli.sh, gate16.sh, nacha-build.js, holidays.js, achreturns.js, achrecord.js, posting-returns.js, ach-flow.js, ach-leak.js
+  fixtures/ach/     holidays-2025-2035.txt (+ make-holidays.go), synthesized .ach and .csv fixtures (+ make-fixtures.js)
+```
+
+### Pattern 1: pure modules over the workspace, screens separate
+**What:** every rule is a pure function (`nacha.js`, `achreturns.js`, `achrecord.js`) loaded into a fresh `vm` context by Node checks, as phase 11 does (`.planning/phases/11-*/checks/bank-files.js:1-20`: "Every case loads the modules into a fresh context of its own"). Screens call them and save.
+**When:** all of phase 16 except the three screen plans.
+
+### Pattern 2: a part file that draws into a console page (withholding-ui.js precedent)
+**What:** `console.js` calls `NS.withholdingUI` only when it is loaded (`console.js:1415-1421`: "withholding-ui.js (self-serve edition only) draws the tax withheld block ... Without it (the managed edition) none of this changes the screen"). `ach-ui.js` does the same for Returns and Wires, so the managed edition is unchanged and `console.js` has one owner plan.
+
+### Pattern 3: one stored record, read everywhere
+**What:** the line's return status lives on `run.lines[].ach`, the account's state on `investor.payment.bank.check`; the investor portal, the console, the books and the next file all read those, never a copy (phase 10's "one test for is this run paid" rule).
+
+### Anti-patterns to avoid
+- Rebuilding a sent file as a new one (F-7): duplicate payments.
+- Storing the NACHA or return file text: it holds every full account number.
+- Matching on name or amount alone, or matching automatically when two lines fit.
+- Applying a NOC without an admin's confirmation: an uploaded fake NOC would redirect payments.
+- Printing a fixture or generated file in a check's output without `-mask`.
+- A holiday table that ends.
+
+## Don't Hand-Roll
+
+| Problem | Don't build | Use instead | Why |
+|---------|-------------|-------------|-----|
+| Proving a file is valid NACHA | Self-checks only (the builder grading itself) | `achcli -validate-file` / `-validate-totals` in every check | An outside reader catches what the builder's own checks share as blind spots (it caught F-4 and F-5 this session) |
+| A banking-day calendar to test against | A second hand-written list | The list generated once from moov-io/base's calendar | Independent source; already agrees for 2025-2035 |
+| CSV splitting and column guessing | A new CSV parser | `NS.bankFiles.csvRows` and the `csvGuess` approach | Quotes, BOM, separators already handled and tested in phase 11 |
+| SHA-256 of an upload | A new hash | `NS.audit.sha256` | Existing, tested |
+| Journal entries for returns | Writing journal lines from the screen | `books-post.js` desired-entries engine | Closed periods, reversals and ties already enforced |
+
+**Key insight:** NACHA's structure is easy; the expensive mistakes are around it (a duplicate file, a wrong date, a redirected account). Every safeguard is a record or a refusal, not more format code.
+
+## Common Pitfalls
+
+### Pitfall 1: a preview consumes a file ID modifier
+**What goes wrong:** the 37th preview of a day wraps to `A`; the real file then collides with an earlier one. **How to avoid:** step only on download or copy (C-02). **Warning sign:** `ws.achLog` grows on every "Generate" press.
+
+### Pitfall 2: a rebuilt history file paid twice
+**What goes wrong:** "ACH file" on a paid distribution gives a fresh file. **How to avoid:** the file record (C-05); the rebuilt copy is marked and needs "Build again" with a reason. **Warning sign:** two file names for one run.
+
+### Pitfall 3: the holiday rule drops a Saturday holiday onto Friday
+**What goes wrong:** treating Friday 2026-07-03 as closed (the Board of Governors closes, the Reserve Banks and FedACH do not) [CITED: search excerpt of federalreserve.gov K.8]. **How to avoid:** Sunday to Monday only; the fixture from the independent calendar has no 2026-07-03.
+
+### Pitfall 4: full account numbers leak through a return
+**What goes wrong:** a change-log line, a toast or a check's output prints the corrected number from a NOC. **How to avoid:** last four only outside `investor.payment.bank`; `ach-leak.js` scans the change log, toasts, `achLog`, run records and check output. **Warning sign:** any run of 5+ digits next to "account".
+
+### Pitfall 5: a return changes the gross
+**What goes wrong:** marking the distribution unpaid moves the investor's capital account and the 1099 figures. **How to avoid:** `grossCents`, `withheld`, `netCents` never change; the return is cash and a payable only (C-07).
+
+### Pitfall 6: the sample funds' year-end packages change
+**What goes wrong:** a new chart account or a changed sample routing number changes the bytes of the 15 sample funds' packages (phase 11's `audit-same.js` byte-identical check). **How to avoid:** C-07 default (existing account 2000); C-09 plan runs `audit-same.js` and records any intended difference.
+
+### Pitfall 7: the mobile copy drifts
+**What goes wrong:** `mobile/src/core/nacha.js` keeps the old table. **How to avoid:** `npm run sync-core` in `mobile/` in every plan that edits `nacha.js`, `data.js` or `tenants.js`; a check compares the two files minus the generated header line.
+
+### Pitfall 8: same-day warning on the wrong day
+**What goes wrong:** the $1M warning shown for a next-day file, or the limit hard-coded at $1M after 2027-09-17. **How to avoid:** the warning keys on effective date == creation date and reads a dated limit table.
+
+## Code Examples
+
+### Holiday rule (verified by the probe this session against the old table and moov-io/base)
+```javascript
+// Federal Reserve holidays of a year as 'YYYY-MM-DD': Sunday -> Monday, Saturday -> no closure (Reserve Banks open Friday).
+function fedHolidays(y) {
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const nth = (m, wd, n) => { const d = new Date(Date.UTC(y, m, 1)); while (d.getUTCDay() !== wd) d.setUTCDate(d.getUTCDate() + 1); d.setUTCDate(d.getUTCDate() + 7 * (n - 1)); return d; };
+  const lastMon = (m) => { const d = new Date(Date.UTC(y, m + 1, 0)); while (d.getUTCDay() !== 1) d.setUTCDate(d.getUTCDate() - 1); return d; };
+  const fixed = (m, day) => { const d = new Date(Date.UTC(y, m, day)); const w = d.getUTCDay(); if (w === 6) return null; if (w === 0) d.setUTCDate(d.getUTCDate() + 1); return d; };
+  return [fixed(0, 1), nth(0, 1, 3), nth(1, 1, 3), lastMon(4), fixed(5, 19), fixed(6, 4), nth(8, 1, 1), nth(9, 1, 2), fixed(10, 11), nth(10, 4, 4), fixed(11, 25)]
+    .filter(Boolean).map(iso);
+}
+```
+Juneteenth is a Federal Reserve holiday from 2021 [ASSUMED]; the rule is only used for 2025 onward (the console refuses past dates), so no year switch is needed.
+
+### Pre-note entry (accepted by the independent reader this session)
+```javascript
+// Same record as a credit, transaction code 23 (checking) or 33 (savings), amount 0, addenda indicator 0.
+lines.push('6' + (acctType === 'savings' ? '33' : '23') + r.slice(0, 8) + r.slice(8, 9) + alpha(account, 17) + num(0, 10) +
+  alpha(investorId, 15) + alpha(name, 22) + '  ' + '0' + odfi8 + num(trace, 7));
+```
+
+### Reading an addenda 99 / 98 record (positions from moov-io/ach addenda99.go:97-149 and addenda98.go:118-143)
+```javascript
+function addenda(rec) {
+  if (rec.length !== 94 || rec[0] !== '7') return null;
+  const type = rec.slice(1, 3);
+  if (type === '99') return { kind: 'return', code: rec.slice(3, 6), originalTrace: rec.slice(6, 21).trim(), deathDate: rec.slice(21, 27).trim(), originalRdfi: rec.slice(27, 35).trim(), info: rec.slice(35, 79).trim(), trace: rec.slice(79, 94).trim() };
+  if (type === '98') return { kind: 'noc', code: rec.slice(3, 6), originalTrace: rec.slice(6, 21).trim(), originalRdfi: rec.slice(27, 35).trim(), corrected: rec.slice(35, 64).trim().split(/\s+/), trace: rec.slice(79, 94).trim() };
+  return null;
+}
+```
+
+## State of the Art
+
+| Old approach | Current approach | When changed | Impact |
+|--------------|------------------|--------------|--------|
+| Same-day limit $100,000 per payment | $1,000,000 | 2022-03-18 [CITED] | The warning threshold |
+| $1,000,000 | $10,000,000 | 2027-09-17 [CITED] | Dated limit table |
+| Pre-note wait six banking days | Three banking days | 2014 [CITED] | Held-entry date |
+| Pre-notes only before the first entry | Any time (re-validation) | 2024-06-21 [CITED] | A pre-note after every bank change is allowed |
+| Free entry descriptions | "PAYROLL" (wages) and "PURCHASE" (consumer e-commerce debits) required | 2026-03-20 [CITED] | Refuse those words for distributions |
+| No originator fraud-monitoring duty | Risk-based fraud monitoring for non-consumer Originators | by 2026-06-22 [CITED, dates differ across sources] | The portal's bank-change controls support the sponsor |
+
+**Deprecated/outdated:** a hand-written holiday table (replaced by the rule); one modifier per build.
+
+<!-- patterns, stack, pitfalls done -->
