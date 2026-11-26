@@ -355,3 +355,369 @@ test('tracer: a 506(b) room, one prospect invited with their basis, the NDA agre
     assert.equal(v.ok, true, JSON.stringify(v));
   });
 });
+
+/* ---------- 2. basis ---------- */
+test('basis: a 506(b) room refuses a prospect without the full relationship basis and stores nothing; a basis dated on the opening day warns', async () => {
+  await withRoom(async (t) => {
+    const roomId = await t.open();
+    const S506B = 'Record how you know this person before inviting them (Rule 506(b)).';
+    const before = t.store.list('rooms').length;
+    const bad = [
+      { basis: null },
+      { basis: Object.assign({}, BASIS, { enough: false }) },
+      { basis: { kind: 'introduced', since: '2025-03-01', introducedBy: '', note: '', enough: true } },
+      { basis: { kind: 'other', since: '2025-03-01', introducedBy: '', note: '', enough: true } },
+      { basis: Object.assign({}, BASIS, { since: 'last spring' }) },
+      { basis: Object.assign({}, BASIS, { kind: 'friend' }) }
+    ];
+    for (const over of bad) {
+      const r = await t.invite(roomId, ONE, over);
+      assert.equal(r.status, 422, JSON.stringify(over));
+      assert.equal(r.body.error, S506B);
+    }
+    assert.equal(t.store.list('rooms').length, before, 'nothing was stored');
+    assert.equal(t.calls.filter((c) => c.kind === 'room_invite').length, 0, 'notify was not called');
+    const late = await t.invite(roomId, ONE, { basis: Object.assign({}, BASIS, { since: '2027-01-20' }) });
+    assert.equal(late.status, 201, JSON.stringify(late.body));
+    assert.equal(late.body.warning, 'A relationship that began with this offering is not pre-existing.');
+    const introduced = await t.invite(roomId, TWO, { basis: { kind: 'introduced', since: '2024-06-01', introducedBy: 'A partner of the firm', note: '', enough: true } });
+    assert.equal(introduced.status, 201);
+    assert.equal(introduced.body.warning, '');
+    const rec = (await t.sponsor('GET', `/v1/rooms/${roomId}/record`)).body;
+    assert.deepEqual(rec.prospects.map((p) => p.basis.kind), ['investor', 'introduced']);
+    assert.equal(rec.prospects[0].basis.recordedBy, SPONSOR.actor.name);
+  });
+});
+
+/* ---------- 3. exempt ---------- */
+test('exempt: Regulation A and an empty exemption are refused, a second room on the offering is 409, a 506(c) room needs no basis', async () => {
+  await withRoom(async (t) => {
+    const regA = await t.sponsor('POST', '/v1/rooms', { offering: offering('Regulation A Tier 2', 'off-a'), firm: FIRM, nda: { text: NDA_TEXT } });
+    assert.equal(regA.status, 422);
+    assert.equal(regA.body.error, 'Data rooms are not offered for Regulation A offerings.');
+    const none = await t.sponsor('POST', '/v1/rooms', { offering: offering('', 'off-b'), firm: FIRM, nda: { text: NDA_TEXT } });
+    assert.equal(none.status, 422);
+    assert.equal(none.body.error, "Choose the offering's exemption first.");
+    assert.equal(t.store.list('rooms').length, 0);
+    const first = await t.open();
+    const again = await t.sponsor('POST', '/v1/rooms', { offering: offering('Rule 506(b)'), firm: FIRM, nda: { text: NDA_TEXT } });
+    assert.equal(again.status, 409);
+    assert.equal(again.body.error, 'This offering already has a data room.');
+    assert.equal(again.body.id, first);
+    const other = await t.sponsor('POST', '/v1/rooms', { offering: offering('Rule 506(b)'), firm: FIRM, nda: { text: NDA_TEXT } }, OTHER_WS);
+    assert.equal(other.status, 201, 'another workspace may open a room on its own offering of the same id');
+    const c = await t.open({ offering: offering('Rule 506(c)', 'off-c') });
+    const open = await t.invite(c, ONE, { basis: undefined });
+    assert.equal(open.status, 201, JSON.stringify(open.body));
+    const foreign = await t.sponsor('POST', `/v1/rooms/${c}/prospects`, { name: TWO.name, email: TWO.email, portalUrl: PORTAL }, OTHER_WS);
+    assert.equal(foreign.status, 404, "another workspace's room is not found");
+  });
+});
+
+/* ---------- 4. openlink ---------- */
+test('openlink: refused in a 506(b) room; in a 506(c) room a shared link lets a prospect join and get a personal link; it opens nothing else and stops when turned off', async () => {
+  await withRoom(async (t) => {
+    const b = await t.open();
+    const refused = await t.sponsor('POST', `/v1/rooms/${b}/open-link`, { on: true, portalUrl: PORTAL });
+    assert.equal(refused.status, 422);
+    assert.equal(refused.body.error, 'A 506(b) room has personal links only.');
+    const c = await t.open({ offering: offering('Rule 506(c)', 'off-c') });
+    const on = await t.sponsor('POST', `/v1/rooms/${c}/open-link`, { on: true, portalUrl: PORTAL });
+    assert.equal(on.status, 200, JSON.stringify(on.body));
+    const openToken = on.body.link.split('#room-')[1];
+    assert.match(openToken, /^[A-Za-z0-9_-]{43}$/);
+    assert.equal((await t.as(openToken, 'GET', '/v1/room')).status, 401, 'the shared link opens nothing but join');
+    const joined = await t.as(openToken, 'POST', '/v1/room/join', { name: ONE.name, email: ONE.email });
+    assert.equal(joined.status, 201, JSON.stringify(joined.body));
+    const personal = joined.body.link.split('#room-')[1];
+    assert.notEqual(personal, openToken);
+    assert.equal(joined.body.expiresAt, new Date(T0 + 90 * DAY).toISOString());
+    assert.equal((await t.as(personal, 'GET', '/v1/room')).status, 200);
+    const n = t.calls.find((x) => x.kind === 'room_invite' && x.variant === 'open');
+    assert.ok(n, 'the personal link is also sent');
+    assert.equal(n.to.email, ONE.email);
+    const rec = (await t.sponsor('GET', `/v1/rooms/${c}/record`)).body;
+    assert.equal(rec.prospects.length, 1);
+    assert.equal(rec.prospects[0].basis.kind, 'open');
+    const off = await t.sponsor('POST', `/v1/rooms/${c}/open-link`, { on: false });
+    assert.equal(off.status, 200);
+    assert.deepEqual(off.body, {});
+    const late = await t.as(openToken, 'POST', '/v1/room/join', { name: TWO.name, email: TWO.email });
+    assert.equal(late.status, 401);
+    assert.equal(late.body.error, 'This link is no longer active.');
+    assert.equal((await t.as(personal, 'GET', '/v1/room')).status, 200, 'a joined prospect keeps their personal link');
+    const kinds = (await t.activity(c)).items.filter((i) => i.kind === 'link').map((i) => i.data.on);
+    assert.deepEqual(kinds, [true, false]);
+    assert.equal(t.room.verify(c).ok, true);
+  });
+});
+
+/* ---------- 5. tokens ---------- */
+test('tokens: only hashes are stored; a new link stops the old one; ending and expiry stop it; one prospect never reaches another', async () => {
+  await withRoom(async (t) => {
+    const roomId = await t.open();
+    const d = await t.addDoc(roomId, await memo(2));
+    const a = await t.invited(roomId, ONE);
+    const b = await t.invited(roomId, TWO);
+    assert.equal(a.expiresAt, new Date(T0 + 90 * DAY).toISOString(), '90 days by default');
+    const long = await t.invite(roomId, { name: 'Prospect Three', email: 'prospect.three@example.invalid' }, { days: 91 });
+    assert.equal(long.status, 422, 'more than 90 days is refused');
+    const renewed = await t.sponsor('POST', `/v1/rooms/${roomId}/prospects/${a.prospectId}/link`, { portalUrl: PORTAL });
+    assert.equal(renewed.status, 201, JSON.stringify(renewed.body));
+    const a2 = renewed.body.link.split('#room-')[1];
+    assert.equal(renewed.body.expiresAt, a.expiresAt);
+    const old = await t.as(a.token, 'GET', '/v1/room');
+    assert.equal(old.status, 401);
+    assert.equal(old.body.error, 'This link is no longer active.');
+    assert.equal((await t.as(a2, 'GET', '/v1/room')).status, 200);
+    const json = JSON.stringify(t.store.data());
+    for (const tok of [a.token, a2, b.token]) {
+      assert.ok(!json.includes(tok), 'no token is stored');
+      assert.ok(json.includes(createHash('sha256').update(tok).digest('hex')), 'its hash is');
+    }
+    assert.equal((await t.agree(a2, ONE.name)).status, 200);
+    assert.equal((await t.agree(b.token, TWO.name)).status, 200);
+    const bCopy = await t.as(b.token, 'GET', `/v1/room/documents/${d.body.id}`);
+    assert.equal(bCopy.status, 200);
+    const aCopy = await t.as(a2, 'GET', `/v1/room/documents/${d.body.id}`);
+    assert.equal(aCopy.status, 200);
+    const aText = (await pageTexts(aCopy.bytes)).join('\n');
+    assert.ok(aText.includes(hexOf(ONE.email)) && !aText.includes(hexOf(TWO.email)), "A's copy is A's");
+    assert.notEqual(aCopy.headers.get('x-view-id'), bCopy.headers.get('x-view-id'));
+    const view = await t.as(a2, 'POST', '/v1/room/views', { docId: d.body.id, viewId: bCopy.headers.get('x-view-id'), seconds: 5, pages: 1 });
+    assert.notEqual(view.status, 200, "A cannot report B's view");
+    const aRoom = JSON.stringify((await t.as(a2, 'GET', '/v1/room')).body);
+    assert.ok(!aRoom.includes(TWO.email) && !aRoom.includes(TWO.name), "A's room answer holds nothing of B");
+    const end = await t.sponsor('POST', `/v1/rooms/${roomId}/prospects/${a.prospectId}/end`, {});
+    assert.equal(end.status, 200, JSON.stringify(end.body));
+    assert.equal((await t.as(a2, 'GET', '/v1/room')).status, 401, 'end stops the link');
+    assert.equal((await t.sponsor('POST', `/v1/rooms/${roomId}/prospects/${a.prospectId}/end`, {})).status, 409);
+    assert.equal((await t.sponsor('POST', `/v1/rooms/${roomId}/prospects/${a.prospectId}/link`, { portalUrl: PORTAL })).status, 409, 'an ended access gets no new link');
+    const short = await t.invited(roomId, { name: 'Prospect Four', email: 'prospect.four@example.invalid' }, { days: 1 });
+    assert.equal((await t.as(short.token, 'GET', '/v1/room')).status, 200);
+    t.clock.t = T0 + DAY;
+    assert.equal((await t.as(short.token, 'GET', '/v1/room')).status, 401, 'expiry stops the link');
+    assert.equal((await t.as(b.token, 'GET', '/v1/room')).status, 200, 'B still opens the room');
+    assert.equal((await t.as('x'.repeat(43), 'GET', '/v1/room')).status, 401);
+    assert.equal((await t.as('', 'GET', '/v1/room')).status, 401);
+    const rec = (await t.sponsor('GET', `/v1/rooms/${roomId}/record`)).body;
+    assert.ok(rec.prospects.find((p) => p.id === a.prospectId).endedAt, 'the end is in the record');
+    assert.equal(t.room.verify(roomId).ok, true);
+  });
+});
+
+/* ---------- 6. nda ---------- */
+test('nda: the box and a typed name are required, an old version is 409, a new NDA text asks again; the address is the socket unless a proxy is trusted', async () => {
+  await withRoom(async (t) => {
+    const roomId = await t.open();
+    const d = await t.addDoc(roomId, await memo(2));
+    const a = await t.invited(roomId, ONE);
+    const v1 = (await t.as(a.token, 'GET', '/v1/room')).body.nda.version;
+    assert.equal(v1, sha(NDA_TEXT));
+    const unticked = await t.as(a.token, 'POST', '/v1/room/nda', { name: ONE.name, ticked: false, version: v1 });
+    assert.equal(unticked.status, 422);
+    assert.equal(unticked.body.error, 'Tick the box to agree.');
+    const noName = await t.as(a.token, 'POST', '/v1/room/nda', { name: '  ', ticked: true, version: v1 });
+    assert.equal(noName.status, 422);
+    assert.equal(noName.body.error, 'Type your full name.');
+    const spoofed = await t.as(a.token, 'POST', '/v1/room/nda', { name: ONE.name, ticked: true, version: v1 }, { 'X-Forwarded-For': '203.0.113.9' });
+    assert.equal(spoofed.status, 200);
+    let assents = (await t.activity(roomId)).items.filter((i) => i.kind === 'assent');
+    assert.equal(assents[0].data.ip, '127.0.0.1', 'a spoofed X-Forwarded-For is not recorded without TRUST_PROXY');
+    const nda = t.calls.filter((c) => c.kind === 'room_activity' && c.variant === 'nda');
+    assert.equal(nda.length, 1);
+    assert.ok(!JSON.stringify(nda[0]).includes(NDA_TEXT));
+    const changed = await t.sponsor('POST', `/v1/rooms/${roomId}/nda`, { title: 'Confidentiality agreement (2)', text: NDA_TEXT_2 });
+    assert.equal(changed.status, 200, JSON.stringify(changed.body));
+    assert.equal(changed.body.version, sha(NDA_TEXT_2));
+    assert.equal((await t.sponsor('POST', `/v1/rooms/${roomId}/nda`, { text: NDA_TEXT_2 })).status, 409, 'the same text again is refused');
+    const g = (await t.as(a.token, 'GET', '/v1/room')).body;
+    assert.equal(g.agreed, false);
+    assert.deepEqual(g.documents, []);
+    assert.equal(g.nda.text, NDA_TEXT_2);
+    assert.equal((await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`)).status, 403);
+    const old = await t.as(a.token, 'POST', '/v1/room/nda', { name: ONE.name, ticked: true, version: v1 });
+    assert.equal(old.status, 409);
+    assert.equal((await t.as(a.token, 'POST', '/v1/room/nda', { name: ONE.name, ticked: true, version: changed.body.version })).status, 200);
+    assert.equal((await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`)).status, 200);
+    const rec = (await t.sponsor('GET', `/v1/rooms/${roomId}/record`)).body;
+    assert.deepEqual(rec.ndaVersions.map((n) => n.text), [NDA_TEXT, NDA_TEXT_2]);
+    assents = (await t.activity(roomId)).items.filter((i) => i.kind === 'assent');
+    assert.deepEqual(assents.map((x) => x.data.version), [v1, changed.body.version]);
+    assert.equal(t.room.verify(roomId).ok, true);
+  });
+  await withRoom(
+    async (t) => {
+      const roomId = await t.open();
+      const a = await t.invited(roomId, ONE);
+      const v = (await t.as(a.token, 'GET', '/v1/room')).body.nda.version;
+      assert.equal((await t.as(a.token, 'POST', '/v1/room/nda', { name: ONE.name, ticked: true, version: v }, { 'X-Forwarded-For': '203.0.113.9, 198.51.100.7' })).status, 200);
+      const assent = (await t.activity(roomId)).items.find((i) => i.kind === 'assent');
+      assert.equal(assent.data.ip, '198.51.100.7', 'behind a trusted proxy the rightmost entry is the address');
+    },
+    { env: { TRUST_PROXY: '1' } }
+  );
+});
+
+/* ---------- 7. docs ---------- */
+test('docs: PDF only, 25 MB, 30 shown; a hidden document is gone for prospects and kept in the record with its file', async () => {
+  await withRoom(async (t) => {
+    const roomId = await t.open();
+    const notPdf = await t.addDoc(roomId, Buffer.from('PK\u0003\u0004 not a pdf'), 'Spreadsheet', 'model.xlsx');
+    assert.equal(notPdf.status, 422);
+    assert.equal(notPdf.body.error, 'Data room documents are PDF files.');
+    const huge = Buffer.alloc(25 * MB + 1, 32);
+    huge.write('%PDF-1.7\n', 0, 'latin1');
+    const tooBig = await t.addDoc(roomId, huge, 'Huge', 'huge.pdf');
+    assert.equal(tooBig.status, 413);
+    assert.equal(tooBig.body.error, 'huge.pdf is larger than 25 MB.');
+    const one = await memo(1, 'Short note');
+    const ids = [];
+    for (let i = 0; i < 30; i++) {
+      const r = await t.addDoc(roomId, one, `Note ${i + 1}`, `note-${i + 1}.pdf`);
+      assert.equal(r.status, 201, JSON.stringify(r.body));
+      ids.push(r.body.id);
+    }
+    const over = await t.addDoc(roomId, one, 'Note 31', 'note-31.pdf');
+    assert.equal(over.status, 422);
+    assert.equal(over.body.error, 'A data room shows at most 30 documents.');
+    const hide = await t.sponsor('POST', `/v1/rooms/${roomId}/documents/${ids[0]}/hide`, { why: 'Replaced by a newer version' });
+    assert.equal(hide.status, 200, JSON.stringify(hide.body));
+    assert.equal((await t.sponsor('POST', `/v1/rooms/${roomId}/documents/${ids[0]}/hide`, { why: 'again' })).status, 409);
+    const now31 = await t.addDoc(roomId, one, 'Note 31', 'note-31.pdf');
+    assert.equal(now31.status, 201, 'after a hide the 31st is accepted');
+    const a = await t.invited(roomId, ONE);
+    assert.equal((await t.agree(a.token)).status, 200);
+    const g = (await t.as(a.token, 'GET', '/v1/room')).body;
+    assert.equal(g.documents.length, 30);
+    assert.ok(!g.documents.some((x) => x.id === ids[0]), 'the hidden document is not listed');
+    assert.equal((await t.as(a.token, 'GET', `/v1/room/documents/${ids[0]}`)).status, 404);
+    const otherRoom = await t.open({ offering: offering('Rule 506(c)', 'off-c') });
+    const elsewhere = await t.addDoc(otherRoom, one, 'Elsewhere', 'elsewhere.pdf');
+    assert.equal((await t.as(a.token, 'GET', `/v1/room/documents/${elsewhere.body.id}`)).status, 404, "another room's document is 404");
+    const rec = (await t.sponsor('GET', `/v1/rooms/${roomId}/record`)).body;
+    const kept = rec.documents.find((x) => x.id === ids[0]);
+    assert.ok(kept && kept.hiddenAt, 'the hidden document stays in the record with hiddenAt');
+    assert.equal(kept.hiddenWhy, 'Replaced by a newer version');
+    assert.equal(kept.stored, true);
+    assert.ok(t.store.blobs.has(`rmd-${ids[0].slice(3)}`), 'its file is still stored');
+    assert.equal(rec.documents.length, 31);
+    assert.equal(t.room.verify(roomId).ok, true);
+  });
+});
+
+/* ---------- 8. stamp ---------- */
+test('stamp: each prospect gets a copy with only their own name, stamped once and then served from the sealed cache; the firm is the Producer; download only when allowed', async () => {
+  const orig = WM.stamp;
+  let stamps = 0;
+  WM.stamp = async (...args) => {
+    stamps++;
+    return orig(...args);
+  };
+  try {
+    await withRoom(async (t) => {
+      const roomId = await t.open();
+      const original = await memo(2);
+      const d = await t.addDoc(roomId, original);
+      const a = await t.invited(roomId, ONE);
+      const b = await t.invited(roomId, TWO);
+      await t.agree(a.token, ONE.name);
+      await t.agree(b.token, TWO.name);
+      const one = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}?download=1`);
+      const two = await t.as(b.token, 'GET', `/v1/room/documents/${d.body.id}`);
+      assert.equal(one.status, 200);
+      assert.equal(two.status, 200);
+      assert.match(one.headers.get('content-disposition'), /^inline/, "with download 'off', ?download=1 still answers inline");
+      assert.ok(!one.bytes.equals(two.bytes), 'the two copies differ');
+      const t1 = (await pageTexts(one.bytes)).join('\n');
+      const t2 = (await pageTexts(two.bytes)).join('\n');
+      assert.ok(t1.includes(hexOf(ONE.name)) && t1.includes(hexOf(ONE.email)) && !t1.includes(hexOf(TWO.name)) && !t1.includes(hexOf(TWO.email)));
+      assert.ok(t2.includes(hexOf(TWO.name)) && t2.includes(hexOf(TWO.email)) && !t2.includes(hexOf(ONE.name)) && !t2.includes(hexOf(ONE.email)));
+      assert.equal(stamps, 2);
+      const again = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`);
+      assert.equal(again.status, 200);
+      assert.equal(stamps, 2, 'the second serve comes from the sealed cache');
+      assert.ok(again.bytes.equals(one.bytes));
+      assert.notEqual(again.headers.get('x-view-id'), one.headers.get('x-view-id'), 'each serve has its own view id');
+      const cached = t.store.getBlob(`rms-${a.prospectId.slice(3)}-${d.body.id.slice(3)}`);
+      assert.ok(cached && !cached.equals(one.bytes), 'the cached copy is sealed');
+      const back = await L.PDFDocument.load(one.bytes, { updateMetadata: false });
+      assert.equal(back.getProducer(), FIRM.name);
+      assert.equal(back.getCreator(), FIRM.name);
+      assert.deepEqual(libraryNames(one.bytes), []);
+      assert.ok(libraryNames(original).length > 0, 'the fixture carried the library name before the stamp');
+      const served = (await t.activity(roomId)).items.filter((i) => i.kind === 'view' && i.data.how === 'served');
+      assert.equal(served.length, 3, 'each serve counts as a view');
+      assert.equal(served[2].data.copy, served[0].data.viewId, "a cached copy keeps the first serve's view id");
+    });
+    await withRoom(async (t) => {
+      const roomId = await t.open({ download: 'watermarked' });
+      const d = await t.addDoc(roomId, await memo(2));
+      const a = await t.invited(roomId, ONE);
+      await t.agree(a.token);
+      const dl = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}?download=1`);
+      assert.equal(dl.status, 200);
+      assert.match(dl.headers.get('content-disposition'), /^attachment/);
+      const inline = await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`);
+      assert.match(inline.headers.get('content-disposition'), /^inline/);
+    });
+  } finally {
+    WM.stamp = orig;
+  }
+});
+
+/* ---------- 9. esign ---------- */
+test('esign: an e-signed NDA room serves the form and its template, keeps the signed copy and certificate sealed as the assent, and refuses what is not a PDF', async () => {
+  await withRoom(async (t) => {
+    const form = await memo(1, 'NDA form');
+    const template = { title: 'Confidentiality agreement', roles: [{ id: 'prospect', label: 'Prospect' }], fields: [{ id: 'f1', role: 'prospect', type: 'signature', page: 1, x: 56, y: 100, w: 200, h: 40 }], pages: 1, pageSizes: [{ w: 612, h: 792 }], sha256: sha(form) };
+    const mismatch = await t.sponsor('POST', '/v1/rooms', { offering: offering('Rule 506(c)', 'off-e'), firm: FIRM, nda: { mode: 'esign', title: 'NDA', template: Object.assign({}, template, { sha256: 'f'.repeat(64) }), pdf: form.toString('base64') } });
+    assert.equal(mismatch.status, 422, 'the form must match its template');
+    const roomId = await t.open({ offering: offering('Rule 506(c)', 'off-e'), nda: { mode: 'esign', title: 'Confidentiality agreement', template, pdf: form.toString('base64') } });
+    const d = await t.addDoc(roomId, await memo(2));
+    const a = await t.invited(roomId, ONE);
+    const g = (await t.as(a.token, 'GET', '/v1/room')).body;
+    assert.equal(g.nda.mode, 'esign');
+    assert.equal(g.nda.text, undefined);
+    assert.equal(g.nda.template.title, template.title);
+    assert.equal(g.nda.template.sha256, g.nda.version);
+    const pdf = await t.as(a.token, 'GET', '/v1/room/nda.pdf');
+    assert.equal(pdf.status, 200);
+    assert.equal(pdf.headers.get('content-type'), 'application/pdf');
+    assert.equal(sha(pdf.bytes), g.nda.version, "the form served is the template's file");
+    assert.deepEqual(libraryNames(pdf.bytes), [], 'the form names the firm, not the writer');
+    assert.equal((await L.PDFDocument.load(pdf.bytes, { updateMetadata: false })).getProducer(), FIRM.name);
+    const signed = await memo(1, 'NDA signed by Prospect One');
+    const cert = await memo(1, 'Signing certificate');
+    const notPdf = await t.as(a.token, 'POST', '/v1/room/nda', { mode: 'esign', name: ONE.name, version: g.nda.version, signed: Buffer.from('not a pdf').toString('base64'), certificate: cert.toString('base64') });
+    assert.equal(notPdf.status, 422);
+    const big10 = Buffer.alloc(10 * MB + 1, 32);
+    big10.write('%PDF-1.7\n', 0, 'latin1');
+    const tooBig = await t.as(a.token, 'POST', '/v1/room/nda', { mode: 'esign', name: ONE.name, version: g.nda.version, signed: big10.toString('base64'), certificate: cert.toString('base64') });
+    assert.equal(tooBig.status, 413);
+    const click = await t.as(a.token, 'POST', '/v1/room/nda', { name: ONE.name, ticked: true, version: g.nda.version });
+    assert.equal(click.status, 422, 'an e-sign room is not agreed with a tick');
+    assert.equal((await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`)).status, 403);
+    const ok = await t.as(a.token, 'POST', '/v1/room/nda', { mode: 'esign', name: ONE.name, version: g.nda.version, signed: signed.toString('base64'), certificate: cert.toString('base64') });
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    const assent = (await t.activity(roomId)).items.find((i) => i.kind === 'assent');
+    assert.equal(assent.data.mode, 'esign');
+    assert.equal(assent.data.signed.sha256, sha(signed));
+    assert.equal(assent.data.certificate.sha256, sha(cert));
+    const keys = [...t.store.blobs.keys()].filter((k) => k.startsWith('rma-'));
+    assert.equal(keys.length, 2);
+    for (const k of keys) {
+      const raw = t.store.getBlob(k);
+      assert.ok(!raw.equals(signed) && !raw.equals(cert), 'both blobs are sealed');
+    }
+    const sKey = keys.find((k) => k.endsWith('-s'));
+    assert.ok(t.vault.openBytes(t.store.getBlob(sKey), sKey).equals(signed));
+    assert.equal((await t.as(a.token, 'GET', '/v1/room')).body.agreed, true);
+    assert.equal((await t.as(a.token, 'GET', `/v1/room/documents/${d.body.id}`)).status, 200, 'the documents open');
+    const v = t.room.verify(roomId);
+    assert.equal(v.ok, true, JSON.stringify(v));
+    const clickRoom = await t.open();
+    const p = await t.invited(clickRoom, TWO);
+    assert.equal((await t.as(p.token, 'GET', '/v1/room/nda.pdf')).status, 404, 'a click room has no form');
+  });
+});
