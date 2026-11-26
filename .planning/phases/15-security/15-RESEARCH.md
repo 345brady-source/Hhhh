@@ -303,3 +303,160 @@ When a person has lost both the phone and the codes:
 - The browser copy of the same tables (edition.js, app.js `can()`, `allowed()`) only hides and disables; a check proves the server refuses even when the browser is bypassed.
 
 <!-- section 4 done -->
+
+## 5. Encryption, keys, backups, retention, data minimization, sessions
+
+### 5.1 Encryption at rest (server mode)
+
+Reuse the vault as it is: AES-256-GCM, a fresh 12-byte IV per value, the record id and field bound in as additional data, a key id in each sealed value (vault.mjs header comment and lines 50-99). New things sealed with it:
+
+| What | How | Bound to |
+|------|-----|----------|
+| The sponsor's workspace (investors with bank accounts, offerings, runs, notices, the change log) | One sealed blob per version, kept as a blob file so store.json stays small; the last 10 versions kept (C-04) | `workspace:<id>:<version>` |
+| Signed documents (W-9 with the full taxpayer number, agreements) the console keeps today in IndexedDB | Sealed blobs, as invitations already do (`putBlob` in invitations.mjs:606) | the blob key |
+| People: email, name, two-step secret | Sealed fields; the email is also kept as an HMAC-SHA-256 lookup value under a key derived from `DATA_KEY` with HKDF (`crypto.hkdfSync`), so sign-in can find a person without a plain email in the file | `person:<id>:<field>` |
+| Server change log details | Sealed per entry; the chain hashes the sealed value, so the log can be checked without the key | `audit:<seq>` |
+| Sessions, reset tokens, recovery codes | Only SHA-256 hashes are stored (as invitation tokens are) | — |
+
+The taxpayer and bank numbers are therefore encrypted twice over in server mode: inside the sealed workspace or document, and never kept by the browser (section 5.4). Without `DATA_KEY` the new routes refuse, exactly as invitations do today (vault.mjs:41-42: `if (!key && !problem && !plainOk) problem = 'Set DATA_KEY on the integration server ...'`).
+
+### 5.2 Keys and rotation
+
+- `DATA_KEY`: 32 random bytes from the host's secret settings (`openssl rand -base64 32`, README.md:39). The operator keeps an offline copy (password manager and a paper copy in a safe); it is never in the repo, a backup, a log or an email.
+- Rotation (W-15): `DATA_KEY_PREVIOUS` accepts a comma-separated list; `node server/tools/reseal.mjs` re-seals every sealed field and blob with the current key, recomputes the email lookup values, prints counts per collection and refuses to run while the server is running (it checks a lock file). After a clean run the operator removes the old key. Rotate yearly, and at once when someone with server access leaves or a leak is suspected.
+- `BACKUP_KEY`: a second 32-byte key, kept apart from `DATA_KEY`, seals backup archives, so one leaked key does not open a stolen backup (C-06).
+- A key service (envelope encryption) is the later upgrade (section 1.2, C-05).
+
+### 5.3 Backups
+
+- `node server/tools/backup.mjs create --out <dir>`: flushes the store, writes one archive holding store.json and every blob with a manifest of SHA-256 hashes, sealed with `BACKUP_KEY` in 1 MiB pieces (each piece's number bound in as additional data, so pieces cannot be reordered or dropped unseen) [ASSUMED: piece size; the planner may pick another].
+- `verify <file>`: opens every piece, checks every hash, prints counts; exits non-zero on any mismatch.
+- `restore <file> --to <empty dir>`: never over a live store.
+- `prune --keep 7d,4w,12m`: keeps 7 daily, 4 weekly and 12 monthly archives.
+- Schedule: the operator's timer (cron or systemd) daily; or `BACKUP_DIR` set and the server makes one daily itself (C-06). Off-site copy: the operator's own computer or the free object-storage tier (section 1.3).
+- Restore drill: the proof plan creates an archive, wipes a test store, restores it, starts the server and opens a sealed invitation and a sealed workspace from it; the output goes in the summary for the owner.
+
+### 5.4 Retention and data minimization
+
+Kept as today (README.md:574): submissions deleted on import or after 30 days (`SUBMISSION_DAYS`), invitations 30 days after they end, outbox 30 days (`OUTBOX_DAYS`), tax documents until their available-until date.
+
+New:
+
+| Record | Kept | Then |
+|--------|------|------|
+| Sessions | Until sign-out, 60 minutes idle or 12 hours (section 5.5) | Deleted a day later |
+| Reset and team-invitation tokens | 30 minutes (reset), 7 days (team invitation) | Deleted on use or a day after expiry |
+| Failed sign-in counts | 30 days | Deleted |
+| Workspace versions | Last 10 | Older versions deleted |
+| Server change log | As long as the portal exists; exported by the Owner when closing | Deleted with the portal |
+| A closed portal | 30 days to change one's mind, with an export | Deleted; backups age out within 12 months (the security page says so) |
+| A removed team member | Disabled at once (sessions ended); name kept for the change log | Email and two-step secret deleted |
+| Addresses (IP) | Never stored raw: a keyed hash for failure counting; the "Sessions" list shows device type and time only | — |
+
+Minimization rules the checks enforce:
+- The full taxpayer number stays only inside the signed tax-form file (already true: onboarding.js:774, tax1099.js:288-311). A check scans the stored workspace (opened with the test key) and fails on any 9-digit taxpayer-shaped value.
+- Full bank numbers reach only roles with pay; the investor's device keeps the last four (onboarding.js:3271-3273, already); in server mode the console keeps no workspace copy in browser storage (it lives in memory while signed in).
+- No taxpayer, bank or password value in any email (phase 13's guard), any log line, any event, any error.
+- W-18: the co-investor's Documents show "Tax form on file" for the main investor's signed W-9, not the file (C-14).
+
+### 5.5 Session protection
+
+| Control | Setting | Source |
+|---------|---------|--------|
+| Cookie | `__Host-session=<43 characters>; Path=/; Secure; HttpOnly; SameSite=Strict` when the pages and the server share one origin; one cookie, no session data in it | `__Host-` rules [ASSUMED: RFC 6265bis cookie prefixes] |
+| One origin | The server serves the portal's own pages (`SERVE_PORTAL=1`: a fixed list of files read at start-up, so no path from a request can reach another file) so the cookie never crosses sites (C-07) | Safari blocks cookies sent to another site [ASSUMED: Safari's tracking prevention] |
+| Idle timeout | 60 minutes, with a "Stay signed in" prompt 2 minutes before | NIST SP 800-63B-4 at AAL2: inactivity "SHOULD be no more than 1 hour" [CITED: search excerpt of pages.nist.gov/800-63-4/sp800-63b/aal] |
+| Absolute timeout | 12 hours (console and investors) | Same source: overall "SHOULD be no more than 24 hours" [CITED: same] (C-08) |
+| Fresh sign-in for sensitive actions | Password and code within the last 10 minutes to: change a bank account, release a payment file, change roles, change one's own email, password or two-step, export a backup, transfer ownership | [ASSUMED: common practice] |
+| Session id | New id at sign-in and after the code; all of a person's sessions end on password change or reset, two-step reset, removal; "Sign out everywhere else" on the Sign-in and security page | |
+| CSRF | SameSite cookie; every state-changing call must be `Content-Type: application/json` (a plain HTML form cannot send it to another site without the browser asking first); `Origin` must be the server's own or one listed in `PORTAL_ORIGIN`; no GET changes anything | [ASSUMED: OWASP guidance] |
+| CORS | With sessions on, never `*`: credentials only for listed origins (W-04) | http.mjs:53-65 |
+| Rate limits | Sign-in: 20 tries per 15 minutes per address (the rightmost address a trusted proxy added, W-05); counters evicted oldest-first, never wiped (W-06) | |
+| Lockout | After 5 wrong passwords each try waits longer (1, 2, 4 ... up to 15 minutes); after 10 in an hour the account is locked for 15 minutes and the person is emailed; 5 wrong codes end the half-done sign-in; counts kept on the person record so a restart does not clear them | NIST caps consecutive failures at 100 [ASSUMED: 800-63B rate-limiting text, page not opened] |
+| Passwords | scrypt (N=2^15, r=8, p=3: 224 ms measured, section 1.1); no composition rules; up to 128 characters; paste allowed; refused when on a bundled list of common passwords; minimum 10 characters for console people (two-step always on) and 15 for investors, who may sign in with the password alone | NIST: "SHALL require passwords that are used as a single-factor authentication mechanism to be a minimum of 15 characters in length" [CITED: search excerpt of pages.nist.gov/800-63-4/sp800-63b/authenticators] (C-08) |
+| Headers (W-07) | Every answer: `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Strict-Transport-Security: max-age=31536000` when `PUBLIC_URL` is https, `Cross-Origin-Resource-Policy: same-site`; server-served pages also `Content-Security-Policy` with `frame-ancestors 'none'` for sign-in pages (the preview's own frame is a different build) | [ASSUMED: OWASP secure headers] |
+
+<!-- section 5 done -->
+
+## 6. The public security page and the disclosure page
+
+### 6.1 What can honestly be claimed without SOC 2
+
+Each claim may appear only when its evidence exists; a check scans both pages for the banned words below.
+
+| Claim (plain wording) | Evidence that must exist | Shown when |
+|-----------------------|--------------------------|------------|
+| Everyone who uses the console signs in with a password and a code from an authenticator app. | Server test: sign-in without a code is refused for every console role | Always (server mode is the product) |
+| Investors can turn on two-step sign-in. | Server and browser tests | Always |
+| Each person has their own sign-in and a role, and the server checks the role on every request. | The route walk in 4.4 | Always |
+| Investors' bank account and taxpayer numbers are encrypted at rest (AES-256-GCM), and the key is kept apart from the data. | Vault and sealed-workspace tests; the server refuses to store them without a key | Always |
+| Every change is written to a change log that shows any later alteration. | Chain tests on the server log | Always |
+| Backups are encrypted and restored in a test before they are relied on. | The restore drill output | After the first drill on the real deployment |
+| Connections use HTTPS only. | A deployment check that `PUBLIC_URL` is https and HSTS is sent | Only on a deployment that passes it |
+| How long each kind of record is kept (the table in 5.4, with the numbers from the server's settings) | Purge tests | Always |
+| We never send taxpayer numbers, bank numbers or passwords by email. | Phase 13's guard tests | Always |
+| How to report a security problem, and what we promise in return | The disclosure page and security.txt | Always |
+
+Never on either page (banned-claims check): SOC 2, ISO 27001, "certified", "audited", "bank-level", "bank-grade", "military-grade", "unhackable", "100% secure", "fully compliant", "compliant with" any law, "approved by" any regulator, "penetration tested" (until a letter exists, C-13), insurance, any vendor or library name, and the word "basic". SOC 2 is not mentioned at all; if a sponsor asks, the honest answer is "not yet" [recommendation; C-13].
+
+### 6.2 Pages and audiences
+
+- `security.html` and `disclosure.html` at the site root, in the platform's own brand: they are read by sponsors and their counsel before signing up (the sign-up page already shows the platform's name to sponsors, diy.js:46). Linked from the sign-up page and the console footer.
+- Investors: the firm's portal footer gets "Security", a firm-branded page built from the same facts with no platform name (white label) (C-12 covers whether this ships now).
+- In the no-server preview both pages open as they are; the facts describe a live portal, and the preview bar already says it is a demo.
+
+### 6.3 Disclosure page (content outline)
+
+1. What to report: problems in the portal's pages, the server and anything listed in security.txt.
+2. How: the security email address (`Contact:`), what to include (steps, what was reached, how to reach the reporter).
+3. Our promise: an answer within 3 business days, updates until it is fixed, credit on request [ASSUMED: common practice; the owner may change the numbers].
+4. Rules for researchers: test only with accounts you own; stop and report as soon as you reach someone else's data; do not keep, share or change it; no denial of service, social engineering, spam or physical tests; give us 90 days before publishing [ASSUMED: common coordinated-disclosure practice].
+5. Good-faith promise not to pursue legal action for research within these rules: "To be confirmed with counsel".
+6. Not in scope: missing headers with no shown effect, self-inflicted script injection, reports from automated scanners with no proof, third-party services.
+7. No reward money (a thank-you is offered).
+
+### 6.4 security.txt (RFC 9116)
+
+Served by the server at `/.well-known/security.txt` and as a static file at the site root's `.well-known/security.txt`, over HTTPS:
+
+```
+Contact: mailto:<security address, To be confirmed>
+Expires: <a date less than one year after the file was last reviewed, ISO 8601 with time zone>
+Policy: https://<portal host>/disclosure.html
+Preferred-Languages: en
+Canonical: https://<portal host>/.well-known/security.txt
+```
+
+`Contact` and `Expires` are required [CITED: search excerpt of specification.website/spec/security/security-txt]; the file belongs at `/.well-known/security.txt` over HTTPS and may be signed with an inline OpenPGP signature [CITED: same and search excerpt of datatracker.ietf.org/doc/rfc9116]; "less than a year" for `Expires` is from memory of RFC 9116 section 2.5.5 [ASSUMED: the RFC page could not be opened]. The server builds the file from `SECURITY_CONTACT` and `SECURITY_TXT_EXPIRES`; `/health` warns 30 days before the date and the route answers 404 after it, so a stale file is never served [recommendation]. The security address and domain are owner inputs ("To be confirmed" until he gives them, C-13).
+
+<!-- section 6 done -->
+
+## 7. The password reset: what phase 13 delivers and what this phase adds
+
+### 7.1 Answer: phase 13 does not deliver the flow
+
+- 13-11 adds only the template: `password_reset (investor or team); data { firm, person: { name }, link, expiresAt }; subject \`${firm}: reset your password\`; button 'Choose a new password'` [VERIFIED: .planning/phases/13-email-overhaul/13-11-PLAN.md:86], and states "EM-12 and C-03: password reset and team invitation templates exist for the previews; nothing sends them in this phase" [VERIFIED: 13-11-PLAN.md:35].
+- 13-08 makes the toast honest: "'Forgot your password?' answers 'Password reset email (simulated in this demo). If you cannot sign in, contact <team>.'" [VERIFIED: 13-08-PLAN.md:33].
+- 13-CONTEXT.md: "C-03 Password reset and team invitation: templates, previews and honest toasts now; real sending comes with the security step's sign-in accounts." [VERIFIED: 13-CONTEXT.md:10].
+- On this tree only 13-02 is merged (git log: "e1953d9 Merge plan 13-02"); `assets/js/emails.js` does not exist yet (`ls`: "No such file or directory").
+
+So phase 15 builds the flow, and waits for 13-01 and 13-11 (the renderer and the template), 13-03 (the server sends as the sponsor from its own domain, the sent log) and 13-08 (the same toasts in diy.js and portal.js).
+
+### 7.2 The flow
+
+1. "Forgot your password?" opens a page with "Email" → `POST /v1/auth/reset/request { email }` → always the same answer, whether or not the address has an account: "If an account uses that address, we emailed a link to choose a new password. It works for 30 minutes." Limits: 3 per hour per address of email, 10 per hour per network address.
+2. The server, when an active person has that email: a 32-byte token, only its SHA-256 stored with the person and a 30-minute expiry; any earlier unused reset token for that person is cancelled; the email is rendered with `password_reset` and sent by phase 13's mail path. The link carries the token after `#` so it never reaches a server log or another site's Referer.
+3. The new-password page: "New password" and "Confirm password"; when the person has two-step on, also "Code from your authenticator app" (or a recovery code): a reset never skips two-step. `POST /v1/auth/reset/confirm { token, password, code }`.
+4. On success: new scrypt hash, token marked used, every session of the person ended, a "Your password was changed" notice emailed, a change-log entry (the person and the time, never the password), then the sign-in page.
+5. Lost app and recovery codes as well: the page says to contact the firm's team (or Carrow & Vale support for an Owner) and the reset of two-step follows section 3.3.
+6. Team invitations use the same token mechanism with 13-11's `team_invitation` template: accept page → name and password → two-step set-up → console.
+7. No-server preview: 13-08's simulated sentence; the new-password page opens from the Emails page's preview link, labelled demo.
+
+### 7.3 What the server must add (beyond phase 13)
+
+- The people store, the reset and team-invitation token stores, the two routes, the limits (section 5.5).
+- One more template kind with variants, `security_notice`: passwordChanged, twoStepChanged, recoveryCodeUsed, newDevice, locked (one kind keeps emails.js small; same layout and guard as phase 13).
+- **The outbox must never hold a readable reset or team-invitation link.** Today, with no mail server set, messages wait in `GET /v1/outbox` (README.md:354), which Staff can read; a reset link there would let Staff take over the Owner's account. With no mail server, a reset request is refused with "Email is not set up on this server; contact <team>", and team invitation links are shown once to the Admin who made them instead of being kept (pitfall 2).
+- Real sending is proven only at 13-10's owner checkpoint (his sending account, a test domain, real inboxes); until then the proofs use the local mail stand-ins of 13-02 (smtp-fake.mjs, ses-fake.mjs).
+
+<!-- section 7 done -->
