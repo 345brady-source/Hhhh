@@ -450,3 +450,25 @@ Plans:
 - [ ] 13-10-PLAN.md — Proof and the owner's check: EMAILS HONEST over every no-server path, both email checks in the reference gate, the guide brought up to the screens, the full gate, the preview built, the live run script; checkpoint: the owner's AWS account, a test domain, live sends to Gmail, Outlook.com and iCloud, his iPhone (EM-05, EM-13, EM-14) (wave 5, not autonomous)
 - [ ] 13-11-PLAN.md — Every other message in the renderer: notices, calls, tax notice and consent, e-sign, confirmation, password reset and team templates, the staff filing order, the possibly commercial footer, and dispatch, the console's one hand-off (EM-01 to EM-04, EM-09 to EM-12, EM-14) (wave 2)
 - [ ] 13-12-PLAN.md — Integrations "Email sending": from address, the DNS records, Check, an honest status and "Live sending: To be confirmed"; the api export the consoles use (EM-06, EM-07, EM-13, EM-14) (wave 3)
+
+### Phase 14: Portal messaging and the data room
+
+**Goal:** Secure investor and sponsor messaging inside the portal (threads per investor and offering, attachments, read status, sponsor broadcast, an email notice of new messages, everything kept for the record) and a data room for prospects (NDA-gated documents, view tracking, soft commitments), white label, working in the no-server preview. Nothing is called ready before the owner has checked it.
+**Requirements**: to be defined in 14-RESEARCH.md
+**Depends on:** Phase 13 (email notices), Phase 6 (e-signature for the NDA)
+**Plans:** to be planned
+
+### Phase 15: Security
+
+**Goal:** Two-factor sign-in, roles and permissions, an audit log, session protection, encryption of taxpayer and bank numbers at rest with backups, data minimization, a working password reset, a public security page and a responsible-disclosure page; honest claims only (no SOC 2 yet). Nothing is called ready before the owner has checked it.
+**Requirements**: to be defined in 15-RESEARCH.md
+**Depends on:** Phase 13 (password reset email)
+**Plans:** to be planned
+
+### Phase 16: NACHA/ACH upgrades and the $0 money path
+
+**Goal:** The NACHA file builder fixed (holidays for any year, file ID modifier, SEC types, same-day limit warning), pre-notes, international payments (IAT or wire), and bank return and notification-of-change files read back and matched to investors; the sponsor uploads files to its own bank, no paid provider, Carrow & Vale never holds funds. Nothing is called ready before the owner has checked it.
+**Requirements**: to be defined in 16-RESEARCH.md
+**Depends on:** Phase 10 (net payments after withholding), Phase 11 (bank reconciliation)
+**Plans:** to be planned
+

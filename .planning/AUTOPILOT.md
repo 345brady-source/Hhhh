@@ -83,3 +83,6 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 
 ## RESUMED (2026-11-26, owner: "ok resume only use opus and work until youve completed everything you possibly can without me")
 - Resumed 08-18, 08-19, 10-10, 12-06, 11-12, 11-13 executors and the 11-18 planner from where they stopped (11-12's uncommitted audit.js saved as 63f61ff on wip/11-12). All agents run on Opus. Work-around rule stays: owner inputs shown as "To be confirmed", choices recorded here.
+
+## Owner instruction (2026-11-26, verbatim: "ok keep going stop at step 12, finish everything else prior that you can without me, if you need to ask a question ask and use the default if no answer after 15 min")
+- Scope: launch steps 3 to 11 (phases 08 to 16). Stop before step 12 (reorganize). Steps 9, 10, 11 are phases 14, 15, 16 (ROADMAP and CONTEXT added 2026-11-26). Questions go to the owner with a push notification; after 15 minutes the default is taken and recorded here.
