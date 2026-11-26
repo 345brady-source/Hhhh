@@ -10,25 +10,28 @@
 # 2. The server test count: the tests on this tree must equal the tests measured on the base tree in this run plus the
 #    tests the changed server test files declare (a first line "// gate: tests N"; the markers at HEAD minus the markers
 #    at the base, for the files git lists as changed under server/test).
-# 3. Other phases' checks, for each phase GATE14_PHASES names (space-separated, from 08 09 10 11 12; unset or empty
-#    means every one of them whose checks folder exists; the word none means no other phase). A phase without a checks
-#    folder prints "GATE ok   phase NN checks: none in this tree".
+# 3. Other phases' checks, for each phase GATE14_PHASES names (space-separated, from 08 09 10 11 12 13; unset or
+#    empty
+#    means every one of them whose checks folder exists; the word none means no other phase). A phase without a
+#    checks folder prints "GATE ok   phase NN checks: none in this tree".
 #    Phase 08: each .js directly in its checks folder carrying "// GATE CHECK: <NAME>" in its first five lines is run
 #    through heavy.sh and passes when its last line is "<NAME>: PASS (parts run: N)" with N at least 1 (as phase 8's
 #    gate.sh judges them), output in GATE_OUT/gate/p08-<name>.txt; a folder with no such file fails.
-#    Phases 09 to 12: every .js directly in that phase's checks folder, by the marker rules of step 4, output in
+#    Phases 09 to 13: every .js directly in that phase's checks folder, by the marker rules of step 4, output in
 #    GATE_OUT/gate/p<NN>-<name>.txt.
 # 4. Phase 14's checks: every .js file in this folder: "// gate: none" is skipped; any other carries "// gate: node" or
 #    "// gate: browser" and, on a later line, // last "<the exact last line of a full run>". It is run, its output kept
 #    in GATE_OUT/gate/<name>.txt, and its last line must equal the quoted line. A file with no marker fails the gate.
 #    A tree with no phase 14 check yet prints "GATE ok   phase 14 checks: none in this tree".
-#    Steps 3 and 4 run each check with P14_BASE, P11_ROOT and P10_BASE set to GATE_OUT/gate/base-tree (P10_ROOT unset:
-#    gate10's rule), P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots; browser checks go through heavy.sh.
+#    Steps 3 and 4 run each check with P14_BASE, P13_BASE, P11_ROOT and P10_BASE set to GATE_OUT/gate/base-tree
+#    (P10_ROOT unset: gate10's rule), P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots; browser checks go through heavy.sh.
 # The last line is GATE_EXIT=0 or GATE_EXIT=1. Once it is known, the base tree, the screenshots, the checks' page
 # captures and PDFs (checks-out, the owner's folder), the reference copy and a server/node_modules link the gate made
 # are removed.
 # --self-test proves the gate can fail, on stand-ins and with none of the long steps: each of the eight faults (gate11's
-# six plus the phase 08 and GATE14_PHASES stand-ins) ends GATE FAIL and GATE_EXIT=1; the controls are not counted.
+# six plus the phase 08 and GATE14_PHASES stand-ins; the GATE14_PHASES one names phase 13, whose stand-in check's last
+# line differs from its marker) ends GATE FAIL and GATE_EXIT=1; the controls are not counted. One control reruns the
+# good stand-ins into the same folder: with the same base the steps are kept, with another base every step runs again.
 # Its last line is "GATE14 SELF-TEST: PASS (8)".
 #
 # GATE14_PHASES is a real setting. The other GATE14_* variables below are for the self-test's stand-ins only. They are
@@ -40,10 +43,13 @@ ROOT="$PWD"
 # exactly the same key (HEAD, the uncommitted changes, the base commit, the command line) and prints its line as
 # "GATE ok   <name> (kept from <time>)"; a step killed part-way, a failed step or a changed tree runs again.
 # GATE_FRESH=1 runs every step. The reference gate keeps its own steps the same way, in the same folder.
+# A rerun with a different base commit (GATE_OUT/base-commit.txt differs from the copy an earlier run left in
+# GATE_OUT/gate/base-commit.txt) sets GATE_FRESH=1 for the whole run and says so in one note line: several kept
+# steps (the reference gate's server step, say) carry no base in their key, so they would be kept from the old base.
 . "$ROOT/.planning/checks/gate-lib.sh" || { echo "GATE FAIL $ROOT/.planning/checks/gate-lib.sh could not be loaded"; echo "GATE_EXIT=1"; exit 1; }
 S=/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad
 P=.planning/phases/14-portal-messaging-and-data-room
-OTHER_PHASES="08 09 10 11 12"
+OTHER_PHASES="08 09 10 11 12 13"
 STANDIN=0
 REF=.planning/checks/gate-reference.sh
 CHECKS=$P/checks
@@ -96,7 +102,7 @@ self_test() {
   # Stand-in checks. The good phase 14 one passes only when the base tree is passed as P14_BASE; the good phase 10 one
   # only with P10_ROOT unset (the caller sets it) and P10_BASE the base tree, as gate10 and gate11 run them.
   mkdir -p "$T/good" "$T/lastline" "$T/nomarker" "$T/p10good" "$T/p10lastline" "$T/p08good" "$T/p08nopass" "$T/p13lastline" "$T/empty"
-  printf '%s\n' '// gate: node' '// last "STAND IN: PASS (parts run: 1)"' 'if (!/\/gate\/base-tree$/.test(process.env.P14_BASE || "")) { console.log("FAIL P14_BASE is not the base tree"); process.exit(1); }' 'console.log("PASS one");' 'console.log("STAND IN: PASS (parts run: 1)");' > "$T/good/stand-in.js"
+  printf '%s\n' '// gate: node' '// last "STAND IN: PASS (parts run: 1)"' 'if (!/\/gate\/base-tree$/.test(process.env.P14_BASE || "")) { console.log("FAIL P14_BASE is not the base tree"); process.exit(1); }' 'if (!/\/gate\/base-tree$/.test(process.env.P13_BASE || "")) { console.log("FAIL P13_BASE is not the base tree"); process.exit(1); }' 'console.log("PASS one");' 'console.log("STAND IN: PASS (parts run: 1)");' > "$T/good/stand-in.js"
   printf '%s\n' '// gate: none' 'throw new Error("a file marked none must not be run");' > "$T/good/helper.js"
   printf '%s\n' '// gate: node' '// last "STAND IN: PASS (parts run: 2)"' 'console.log("STAND IN: PASS (parts run: 1)");' > "$T/lastline/stand-in.js"
   cp "$T/good/stand-in.js" "$T/nomarker/stand-in.js"
@@ -113,8 +119,8 @@ self_test() {
   printf '%s\n' '// gate: node' '// last "THIRTEEN STAND IN: PASS (cases run: 2)"' 'console.log("THIRTEEN STAND IN: PASS (cases run: 1)");' > "$T/p13lastline/thirteen.js"
   run() { # name, reference, phase 14 checks folder, counts, phase 10 checks folder, phase 08 checks folder, GATE14_PHASES
     mkdir -p "$T/out-$1"
-    echo stand-in > "$T/out-$1/base-commit.txt"
-    env -u GATE14_P09 -u GATE14_P11 P10_ROOT=/nonexistent/caller-root GATE14_STANDIN=1 GATE14_REF="$2" GATE14_CHECKS="$3" GATE14_COUNTS="$4" GATE14_P10="${5:-$T/p10good}" GATE14_P08="${6:-$T/p08good}" GATE14_P13="$T/p13lastline" GATE14_HEAVY="$T/heavy.sh" GATE14_PHASES="${7:-08 10}" GATE_OUT="$T/out-$1" bash "$SELF" > "$T/$1.txt" 2>&1
+    echo "${BASEV:-stand-in}" > "$T/out-$1/base-commit.txt"
+    env -u GATE14_P09 -u GATE14_P11 -u GATE14_P12 P10_ROOT=/nonexistent/caller-root GATE14_STANDIN=1 GATE14_REF="$2" GATE14_CHECKS="$3" GATE14_COUNTS="$4" GATE14_P10="${5:-$T/p10good}" GATE14_P08="${6:-$T/p08good}" GATE14_P13="$T/p13lastline" GATE14_HEAVY="$T/heavy.sh" GATE14_PHASES="${7:-08 10}" GATE_OUT="$T/out-$1" bash "$SELF" > "$T/$1.txt" 2>&1
   }
   BADS=
   N=0
@@ -128,7 +134,12 @@ self_test() {
   # files and unmarked phase 8 files are skipped, the base tree reaches the checks, phase 8 runs through the heavy queue
   # and a phase GATE14_PHASES does not name (12, whose check would fail) is not run.
   run control "$T/ref-good.sh" "$T/good" "197 197 0"
-  if [ "$(tail -n 1 "$T/control.txt")" = 'GATE_EXIT=0 (stand-in)' ] && ! grep -q '^GATE FAIL' "$T/control.txt" && grep -q '^GATE ok   stand-in step$' "$T/control.txt" && grep -q '^GATE ok   STAND IN$' "$T/control.txt" && grep -q '^GATE ok   TEN STAND IN$' "$T/control.txt" && grep -q '^GATE ok   EIGHT STAND IN (1)$' "$T/control.txt" && ! grep -q 'THIRTEEN' "$T/control.txt" && grep -q '^GATE ok   server tests 197 = base 197 + 0 declared$' "$T/control.txt" && ! grep -qE '^GATE (ok|FAIL) +server tests [0-9]+$' "$T/control.txt"; then note 'control: the stand-ins pass when nothing is wrong (base tree passed as P14_BASE and P10_BASE, P10_ROOT unset, phase 8 through the heavy queue, phase 13 not named and not run; never the line of a real gate)' 1 control; else note 'control: the stand-ins pass when nothing is wrong' 0 control; fi
+  if [ "$(tail -n 1 "$T/control.txt")" = 'GATE_EXIT=0 (stand-in)' ] && ! grep -q '^GATE FAIL' "$T/control.txt" && grep -q '^GATE ok   stand-in step$' "$T/control.txt" && grep -q '^GATE ok   STAND IN$' "$T/control.txt" && grep -q '^GATE ok   TEN STAND IN$' "$T/control.txt" && grep -q '^GATE ok   EIGHT STAND IN (1)$' "$T/control.txt" && ! grep -q 'THIRTEEN' "$T/control.txt" && grep -q '^GATE ok   server tests 197 = base 197 + 0 declared$' "$T/control.txt" && ! grep -qE '^GATE (ok|FAIL) +server tests [0-9]+$' "$T/control.txt"; then note 'control: the stand-ins pass when nothing is wrong (base tree passed as P14_BASE, P13_BASE and P10_BASE, P10_ROOT unset, phase 8 through the heavy queue, phase 13 not named and not run; never the line of a real gate)' 1 control; else note 'control: the stand-ins pass when nothing is wrong' 0 control; fi
+  # The resume rule (plan-check W1): the same base keeps the passed steps; another base runs every step again.
+  run control "$T/ref-good.sh" "$T/good" "197 197 0"
+  cp "$T/control.txt" "$T/control-kept.txt"
+  BASEV=another-base run control "$T/ref-good.sh" "$T/good" "197 197 0"
+  if grep -q '(kept from ' "$T/control-kept.txt" && ! grep -q '^GATE note: base commit changed' "$T/control-kept.txt" && grep -qx 'GATE note: base commit changed; every step runs again' "$T/control.txt" && ! grep -q '(kept from ' "$T/control.txt" && [ "$(tail -n 1 "$T/control.txt")" = 'GATE_EXIT=0 (stand-in)' ]; then note 'control: a rerun with the same base keeps the passed steps; with another base every step runs again, with a note' 1 control; else echo '--- same-base rerun:'; sed 's/^/    /' "$T/control-kept.txt"; note 'control: a changed base commit runs every step again' 0 control; fi
   run none "$T/ref-good.sh" "$T/empty" "197 197 0" "" "" none
   if [ "$(tail -n 1 "$T/none.txt")" = 'GATE_EXIT=0 (stand-in)' ] && ! grep -q '^GATE FAIL' "$T/none.txt" && grep -q '^GATE ok   phase 14 checks: none in this tree$' "$T/none.txt" && ! grep -qE 'EIGHT|TEN|THIRTEEN' "$T/none.txt"; then note 'control: GATE14_PHASES=none runs no other phase, and a tree with no phase 14 check says so and passes' 1 none; else note 'control: GATE14_PHASES=none and no phase 14 check' 0 none; fi
   run lastline "$T/ref-good.sh" "$T/lastline" "197 197 0"
@@ -210,7 +221,7 @@ count() {
 
 # ---------- 3 and 4. other phases' checks and phase 14's checks ----------
 check_env() { # the environment every check runs with
-  echo env -u P10_ROOT P14_BASE="$G/base-tree" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots"
+  echo env -u P10_ROOT P14_BASE="$G/base-tree" P13_BASE="$G/base-tree" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots"
 }
 run_checks() { # folder, prefix of the output files; sets RAN (checks run) and SEEN (files not marked none)
   GN=$(npm root -g 2>/dev/null)
@@ -300,6 +311,11 @@ mkdir -p "$GATE_OUT/gate" || { bad "GATE_OUT/gate cannot be created"; finish; }
 GATE_OUT=$(cd "$GATE_OUT" && pwd)
 G="$GATE_OUT/gate"
 [ -s "$GATE_OUT/base-commit.txt" ] || { bad "no base commit: $GATE_OUT/base-commit.txt is missing or empty; nothing was run"; finish; }
+# Kept steps are not all keyed by the base commit: a different base runs every step again (plan-check W1).
+if [ -f "$G/base-commit.txt" ] && ! cmp -s "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"; then
+  export GATE_FRESH=1
+  echo "GATE note: base commit changed; every step runs again"
+fi
 cp "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"
 # A base tree left by an earlier run is reused only while its stamp names this base commit (gate_base_tree).
 gate_init "$G" || { bad "GATE_OUT/gate/.gate-steps cannot be created"; finish; }
