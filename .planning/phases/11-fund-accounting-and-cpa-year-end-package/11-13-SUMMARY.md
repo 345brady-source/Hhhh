@@ -31,7 +31,19 @@ calls the ledger's functions. Not ready until the phase gate passes and the owne
    FAIL published every file the parts list names ships beside books-ui.js :: {"listed":["bankfiles.js","books-bank.js","books-bank-ui.js"],"missing":["books-bank-ui.js"]}
    BOOKS FLOW: FAIL (parts run: 1) - published
    ```
-3. The owner's screenshots of the first full run showed the Entries list where the caption named Investments (the
+3. The first phase gate run (GATE_FRESH=1, HEAD f0ba476) failed its server tests, 2 of 403, both in the guide test:
+   ```
+   GATE FAIL server tests # fail 0
+   not ok 129 - no stale entry: every entry and every skip line names a route or step the code still has
+     entries or skip lines for routes or steps that no longer exist: console-books
+   not ok 130 - names on the screens: every anchor and every quoted name in the guide is text the portal source holds
+     console-books: anchor "Add entry" is not in any file
+     console-books: anchor "Enter value" is not in any file
+   ```
+   Cause: books-ui.js registered the page as NS.views[ROUTE]; the test finds pages by NS.views['<route>'] written out
+   (the form the plan gives). Fixed in 379bc6a; server tests then 403 of 403 (`# pass 403`, `# fail 0`). That gate run
+   was stopped once the step had failed (its later steps would have been judged on the old tree) and run again.
+4. The owner's screenshots of the first full run showed the Entries list where the caption named Investments (the
    section is below 23 entries on a phone). The check now scrolls each named section to the top before its screenshot.
 
 ## Evidence as produced (O = SCRATCH/exec-11-13; base-commit.txt = 0dd6b3f)
