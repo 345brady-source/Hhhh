@@ -12,8 +12,18 @@
  *   run:<runId>                  a paid distribution: [3100 + investor] gross per investor; [2400 - investor] tax
  *                                withheld, owed until paid over; [1000 -] the total paid by ACH; [1000 - investor] each
  *                                payment made otherwise; [3300 +][1000 -] the general partner's share (run.gp)
+ *   ret:<runId>:<investorId>     a paid run's line the bank returned (line.ach, status 'returned' or 'repaid'), dated
+ *                                the return day: cash back in, owed to that investor until paid again (C-07)
+ *                                [1000 + investor][2000 - investor]; the run's own entry is not changed
+ *   repaid:<runId>:<investorId>  that line paid again (ach.repaid: a new file, a check or a wire), on the day paid
+ *                                [2000 + investor][1000 - investor]
  *   req:<requestId>              a redemption at its dealing date                  [3100 + investor][2200 -]
  *   reqpaid:<requestId>          its payment, on the day paid                       [2200 +][1000 - investor]
+ *   reqret:<requestId>           a paid redemption's payment the bank returned (request.ach), dated the return day
+ *                                [1000 + investor][2200 -]
+ *   reqrepaid:<requestId>        that payment made again, on the day paid           [2200 +][1000 - investor]
+ *                                The four return kinds post ach.cents, which must be the line's netCents (the request's
+ *                                paidCents), and sit on top of a sample fund's generated figures (sample()).
  *   fee:<offeringId>:<YYYY-MM>   the month's management fee, at the month-end      [5000 +][2100 -]
  *   gp:<offeringId>:<YYYY-MM>    the general partner's share crystallized that month, less what was paid with a
  *                                distribution that month (already in its run: entry), owed until paid [3300 +][2600 -]
@@ -29,7 +39,9 @@
  * It also lists, once each: { src, kind: 'stray', investorId, cents } (a distribution line for an investor who does not
  * hold the fund, posted to 3100), { src, kind: 'overpaid', investorId, cents } (a redemption paid above the engine's
  * amount, which is what is posted), { src, kind: 'amount', account, value } and { src, kind: 'mismatch', investorId,
- * cents, recorded } (a record that cannot be posted as it stands; its live entry, if any, is left as it is).
+ * cents, recorded } (a record that cannot be posted as it stands; its live entry, if any, is left as it is). A return
+ * whose ach.cents is not the amount paid is { src, kind: 'amount', account: '1000', value }; one whose date (ach.date or
+ * ach.repaid.on) is not a real date is { src, kind: 'date', value }; neither is posted.
  *
  * Amounts are whole cents throughout. The books are written only through NS.books.post and NS.books.reverse (so a src
  * with a live entry is never posted twice, and a closed period is refused by the journal itself as well). Lines carry
@@ -60,6 +72,8 @@
   }
   /** Record prefixes this module owns; entries with any other prefix (mark:, bank:, open:, man:, rev:) are never touched. */
   const MANAGED = /^(call|pos|run|ret|repaid|req|reqpaid|reqret|reqrepaid|fee|gp|sim):/;
+  /** The returned payments and their second payments (C-07). */
+  const RETURNS = /^(ret|repaid|reqret|reqrepaid):/;
   /** [code, cents, partner, holding] with trailing empty ids left out (the stored form, as books.js compacts a line). */
   function compact(l) {
     const out = l.slice();
@@ -201,6 +215,10 @@
           const src = `ret:${run.id}:${id}`;
           if (!returnable(a, line.netCents, src, a.date, run.date)) return;
           add(src, a.date, `Returned distribution ${run.id}: ${id}`, [ln('1000', a.cents, id), ln('2000', -a.cents, id)]);
+          // Paid again (a new file, a check or a wire): the amount owed is paid off and the cash leaves on the day paid.
+          if (!a.repaid || typeof a.repaid !== 'object') return;
+          const src2 = `repaid:${run.id}:${id}`;
+          if (returnable(a, line.netCents, src2, a.repaid.on, a.date)) add(src2, a.repaid.on, `Distribution paid again ${run.id}: ${id}`, [ln('2000', a.cents, id), ln('1000', -a.cents, id)]);
         });
       });
 
@@ -213,6 +231,16 @@
       if (q.status === 'paid' && q.paid) {
         add(`reqpaid:${q.id}`, q.paid, `Redemption paid ${q.id}: ${id}`, [ln('2200', x.cents), ln('1000', -x.cents, id)]);
         if (q.paidCents != null && q.paidCents > x.cents) flag(q.paid, { src: `reqpaid:${q.id}`, kind: 'overpaid', investorId: id, cents: q.paidCents - x.cents });
+        // Its payment sent back by the bank: cash back in and the redemption owed again (2200, the account it was paid
+        // from), until it is paid again.
+        const a = q.ach;
+        if (!a || (a.status !== 'returned' && a.status !== 'repaid')) return;
+        const src = `reqret:${q.id}`;
+        if (!returnable(a, q.paidCents, src, a.date, q.paid)) return;
+        add(src, a.date, `Returned redemption payment ${q.id}: ${id}`, [ln('1000', a.cents, id), ln('2200', -a.cents)]);
+        if (!a.repaid || typeof a.repaid !== 'object') return;
+        const src2 = `reqrepaid:${q.id}`;
+        if (returnable(a, q.paidCents, src2, a.repaid.on, a.date)) add(src2, a.repaid.on, `Redemption paid again ${q.id}: ${id}`, [ln('2200', a.cents), ln('1000', -a.cents, id)]);
       }
     });
 
@@ -275,7 +303,8 @@
    * sim:<offeringId>:<k>. It credits the generator's income (4090) and gain (6100) and moves each balance-sheet account to
    * the balance the Audit page shows at that month-end (the holdings of NS.audit.period for the month): the line is the
    * target less the account's balance at endOf(k) over every live entry of the fund other than sample entries for month k
-   * and later (11-CONTEXT W1: what sync leaves in the journal, so entries a person made count too). Zero lines are left
+   * and later (11-CONTEXT W1: what sync leaves in the journal, so entries a person made count too), returned payments
+   * and their second payments excepted (16-CONTEXT W2: they stay on top of the generator's figures). Zero lines are left
    * out. An entry whose lines do not sum to zero is not added: it is returned as { src, sum } and listed for a person to
    * look at. No line is ever added to make it balance. A month on or before the last closed month-end keeps its live
    * sample entry, which later months count. Adds to list (the fund's other entries); returns the unbalanced items.
@@ -295,7 +324,10 @@
     let at = 0;
     L.keys.forEach((k) => {
       const end = endOf(k);
-      for (; at < base.length && base[at].date <= end; at++) move(base[at].lines);
+      // A returned payment and its second payment sit on top of the generator's figures (the engine pays every payment
+      // once and knows no return), so they are left out of the balances the month is moved from: the sample entry is
+      // what it would be without them, and the cash that came back and the amount owed again stay in the books.
+      for (; at < base.length && base[at].date <= end; at++) if (!RETURNS.test(String(base[at].src || ''))) move(base[at].lines);
       const src = `sim:${o.id}:${k}`;
       const cur = liveSim.get(src);
       // A closed month: the journal keeps its live sample entry (sync lists any difference); later months count it.

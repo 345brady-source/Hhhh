@@ -231,6 +231,14 @@ const cases = {
     check('a posted return whose record then holds a wrong amount: its entry is left as it is and the record is listed', !!posted && !!now && now.id === posted.id && r.posted === 0 && r.reversed === 0 && r.exceptions === 1, r);
     const r2 = NS.books.sync(ws, { today: TODAY });
     check('syncing again lists nothing new', r2.posted === 0 && r2.reversed === 0 && r2.exceptions === 0, r2);
+    const NSd = load();
+    const D = fundA(NSd, (w) => (lineOf(w, RUN, WHO).ach = returned('2026-12-32', NET)));
+    check("a return dated 2026-12-32 (no such day): nothing posted, sync does not stop, listed as { src, kind: 'date', value }", !live(NSd, D.ws, D.oid, src) && J(exceptionsOf(D.ws, D.oid)) === J([{ src, kind: 'date', value: '2026-12-32' }]), exceptionsOf(D.ws, D.oid));
+    const NSe = load();
+    const E = fundA(NSe, (w) => (lineOf(w, RUN, WHO).ach = returned(RET_DATE, NET, { status: 'repaid', repaid: repaidBy('check', '2026-12-23') })));
+    lineOf(E.ws, RUN, WHO).ach.repaid.on = '23/12/2026';
+    const rE = NSe.books.sync(E.ws, { today: TODAY });
+    check("a second payment whose day is not a real date: the return stays posted, the second payment's entry is left and the record listed", !!live(NSe, E.ws, E.oid, src) && !!live(NSe, E.ws, E.oid, `repaid:${RUN}:${WHO}`) && rE.posted === 0 && rE.reversed === 0 && J(exceptionsOf(E.ws, E.oid)) === J([{ src: `repaid:${RUN}:${WHO}`, kind: 'date', value: '23/12/2026' }]), { rE, ex: exceptionsOf(E.ws, E.oid) });
     const wb = fundB();
     wb.requests[0].ach = returned('2027-01-06', 199999);
     NS.books.sync(wb, { today: TODAY });
