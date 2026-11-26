@@ -460,3 +460,82 @@ So phase 15 builds the flow, and waits for 13-01 and 13-11 (the renderer and the
 - Real sending is proven only at 13-10's owner checkpoint (his sending account, a test domain, real inboxes); until then the proofs use the local mail stand-ins of 13-02 (smtp-fake.mjs, ses-fake.mjs).
 
 <!-- section 7 done -->
+
+## 8. Requirements and recommended plan breakdown
+
+<phase_requirements>
+### 8.1 Phase Requirements (SE-01 ... SE-15)
+
+| ID | Description | Research Support |
+|----|-------------|------------------|
+| SE-01 | Console people sign in on the server with their own email and password (scrypt), a session cookie and sign-out; self-serve sign-up creates the workspace and its Owner; once any person exists the open-server fallback is off | D-01 "two-factor sign-in", "session protection"; W-01, W-02, W-09; 2.5(1), 5.5 |
+| SE-02 | Two-step sign-in with an authenticator app (TOTP, RFC 6238 test values), required for every console person, set up with a typed key or a QR code, replayed codes refused; ten one-time recovery codes; resets of two-step by an Admin/Owner, by the operator for an Owner | D-01; 3.1-3.4 |
+| SE-03 | Investors: the onboarding's login step creates their server account with the invitation token; portal sign-in goes through the server; two-step offered, off by default, never required, and an Owner may require it | D-01, D-30; W-08, W-10; 3.4 |
+| SE-04 | Password reset and team-invitation acceptance by email: same answer whether or not an account exists, 30-minute single-use token, two-step not skipped, all sessions ended, a notice email, no readable link in the outbox | Known gap (15-CONTEXT); 7.1-7.3 |
+| SE-05 | Five console roles (Owner, Admin, Staff, Read-only, Accountant) and the permission table, enforced on every server route (a test walks every route); the Team page invites, changes and removes people through the server; Accountant access ends on a date | D-01 "roles and permissions"; W-11; 4.1-4.4 |
+| SE-06 | The console by role: pages hidden or read-only, actions disabled with one plain sentence, bank numbers masked for roles without pay; managed edition unchanged | 4.3; AUTOPILOT C-03 slice guard |
+| SE-07 | In server mode the workspace and its documents are held on the server, sealed, versioned; writes checked by section; bank-account changes need pay; masked reads; the change log may only grow; the browser keeps no copy in storage | D-01 "encryption", "data minimization"; W-03, W-12, W-14; 2.5(3), 4.4, 5.1 |
+| SE-08 | A server change log: append-only, hash-chained, the person from the session, details sealed, read and export with the audit permission, a verify call | D-01 "audit log"; W-12, W-13; 2.5(4) |
+| SE-09 | Session protection: cookie flags, idle and absolute timeouts, fresh sign-in for sensitive actions, CSRF rules, CORS with credentials only for listed origins, rightmost proxy address, counters evicted not wiped, per-account lockout, security headers | D-01 "session protection"; W-04 to W-07; 5.5 |
+| SE-10 | Keys and backups: several previous keys, the re-seal tool, `BACKUP_KEY`, backup create, verify, restore and prune, and a restore drill | D-01 "encryption and backups"; W-15, W-16; 5.2, 5.3 |
+| SE-11 | Retention and data minimization as in 5.4, enforced by purge tests; no taxpayer-shaped value in the stored workspace; no secret in logs, events, errors or emails; the co-investor sees "Tax form on file", not the main investor's W-9 | D-01 "data minimization"; W-18; 5.4 |
+| SE-12 | Public security page, disclosure page and `/.well-known/security.txt` (Contact, Expires, Policy, Preferred-Languages, Canonical), each claim backed by a check, banned claims refused; a firm-branded investor version | D-01; W-20; 6.1-6.4 |
+| SE-13 | Truthful screens: every claim in W-10 rewritten; the preview shows two-step set-up working on the device with one demo sentence, never a fixed "On", and makes no request | Owner rule; W-10; 2.6 |
+| SE-14 | White label and wording: no platform, vendor, model or library name on any investor-facing screen, email or page; the firm's name as the two-step issuer; never the word "basic" | AUTOPILOT; 3.2, 6.2 |
+| SE-15 | Proof and the owner's check: gate lines for every new check, the full reference gate, the preview built and walked under phone conditions, a local server run with its output pasted; the owner sets up two-step with his own iPhone app, walks the roles and reads the security page; the live reset email waits for 13-10's sending account | CLAUDE.md "never call something done before the owner has checked it" |
+</phase_requirements>
+
+### 8.2 Plans, waves and files
+
+Each plan is sized for about 100k tokens. Plans in one wave share no file.
+
+| Wave | Plan | What | Files (new unless marked edit) | Depends on |
+|------|------|------|-------------------------------|------------|
+| 1 | **15-01** Server sign-in core | People store, scrypt passwords, sessions and the cookie, sign-up (Owner), sign-in, sign-out, me, password change, lockout and limits, CSRF and Origin rule, CORS credentials, headers, rightmost proxy address, evicting counters, open server off once people exist, `SERVE_PORTAL` fixed file list, the security.txt route (SE-01, SE-09) | server/lib/auth.mjs, server/lib/http.mjs (edit), server/index.mjs (edit), server/test/auth.test.mjs, server/test/headers.test.mjs | — (waits while any plan editing index.mjs or http.mjs runs: 13-03, 13-04, phase 14 server plans) |
+| 1 | **15-02** Two-step code module | One UMD file used by browser and server: base32, TOTP given an HMAC function (WebCrypto in the browser, `node:crypto` on the server), recovery-code format; RFC 6238 test values; the vendored QR encoder (SOURCE.txt, SHA256SUMS, licence) (SE-02) | assets/js/totp.js, assets/vendor/qr/, server/test/totp.test.mjs | — |
+| 1 | **15-03** Keys and backups | Several previous keys in vault.mjs, `tools/reseal.mjs`, `tools/backup.mjs` (create, verify, restore, prune), a store snapshot hook, README "Keys and backups" (SE-10) | server/lib/vault.mjs (edit), server/lib/store.mjs (edit), server/tools/reseal.mjs, server/tools/backup.mjs, server/test/backup.test.mjs, server/README.md (edit: its own section) | — |
+| 2 | **15-04** Two-step, recovery, reset | Server two-step set-up and check, recovery codes, two-step reset routes, password reset request and confirm, `POST /v1/invite/login`, the `security_notice` email kind, no reset link in the outbox (SE-02, SE-03, SE-04) | server/lib/auth.mjs (edit), server/lib/invitations.mjs (edit: the login route only), assets/js/emails.js (edit: one kind), server/test/auth-twostep.test.mjs, server/test/auth-reset.test.mjs | 15-01, 15-02; 13-01, 13-11, 13-03 merged |
+| 2 | **15-05** Roles, team and the server change log | roles.mjs tables, the guard on every sponsor route and the route-walk test, team.mjs (invite with `team_invitation`, accept, role change, remove, Accountant end date), auditlog.mjs (SE-05, SE-08) | server/lib/roles.mjs, server/lib/team.mjs, server/lib/auditlog.mjs, server/index.mjs (edit), server/lib/taxdocs.mjs, filings.mjs, billing.mjs (edits: guard calls), server/test/roles.test.mjs, server/test/auditlog.test.mjs | 15-01; 13-11 merged |
+| 3 | **15-06** Workspace on the server | workspace.mjs (GET/PUT, versions, section rules, bank rule, masking, append-only log, sealed documents), the console's server persistence in workspace.js, signed documents to the server in operations.js (SE-07, SE-11) | server/lib/workspace.mjs, server/index.mjs (edit), assets/js/workspace.js (edit), assets/js/operations.js (edit: file store only), server/test/workspace.test.mjs, phase check workspace-server.js | 15-05 |
+| 3 | **15-07** Console sign-in screens | signin.js (sign-in, code, two-step set-up with key and QR, recovery codes download, Sign-in and security page, idle prompt, reset and accept pages), the boot gate in app.js, sign-up through the server, the Team page with five roles, truthful hints (W-10 for diy.js), edition.js roles, script tags; preview demo on the device (SE-01, SE-02, SE-05, SE-13) | assets/js/signin.js, assets/css/signin.css, assets/js/app.js (edit), assets/js/diy.js (edit), assets/js/edition.js (edit), diy.html, portal.html, index.html (edit: script tags), phase check signin-flow.js | 15-02, 15-04, 15-05 (contracts); 13-08 merged (diy.js) |
+| 4 | **15-08** The console by role | `can()` and `allowed()` for five roles, read-only pages, disabled actions with the reason, masked bank numbers, payments released by pay only; managed edition byte-identical (SE-06) | assets/js/app.js (edit), assets/js/console.js (edit), assets/js/filings-ui.js, taxdocs-ui.js, integrations.js, esign.js (edits: action guards only), phase check roles-flow.js | 15-07 |
+| 4 | **15-09** Investor sign-in | Portal sign-in through the server, "Forgot your password?" page, the new-password page, Account "Two-step sign-in" with Turn on, the onboarding login step posting to `/v1/invite/login` and its sentence fixed (W-08, W-10), the co-investor's "Tax form on file" (C-14) (SE-03, SE-04, SE-11, SE-13) | assets/js/portal.js (edit), assets/js/onboarding.js (edit), phase check investor-signin.js | 15-04, 15-07; 13-08 merged (portal.js) |
+| 5 | **15-10** Public pages and guide | security.html, disclosure.html, .well-known/security.txt, the firm-branded investor page and footer link, the banned-claims check, guide entries (SE-12, SE-14) | security.html, disclosure.html, .well-known/security.txt, assets/js/portal.js (edit: footer link), server/help/guide.md (edit), server/lib/help-guide.mjs (regenerated), phase check pages.js | 15-08, 15-09 |
+| 6 | **15-11** Proof and the owner's check (not autonomous) | Gate lines for every check above, the full reference gate, the preview build and walk at 390x844 in the sandboxed frame, a local server run (sign-up, two-step, roles refused, sealed workspace, reset through the mail stand-in, backup and restore) with output pasted; checkpoint: the owner (SE-15) | .planning/checks/gate-reference.sh (edit), phase 15 checks, 15-11-SUMMARY.md | all |
+
+Shared files to watch at plan time (other phases' plans that list them): server/index.mjs (13-03, 13-04, phase 14), server/lib/invitations.mjs (phase 8 and 13 plans), assets/js/emails.js (every phase 13 plan; phase 14's new-message notice), assets/js/diy.js and portal.js (13-08; 08-20; phase 14), assets/js/app.js (13-08, 10-12, phase 14), assets/js/console.js (phases 8 to 14), server/help/guide.md (13-09, 13-10, 10-11, 11-15, 11-16, 12-08 and the guide-trim quick task). Each plan's header names its waits.
+
+### 8.3 The help guide (at its limit)
+
+- Measured this session on this tree: sponsor guide 46,698 of 48,000 bytes, investor guide 15,436 of 20,000 (`GUIDE.sponsor`/`GUIDE.investor` from server/lib/help-guide.mjs; limits at server/test/help-guide.test.mjs:130-131) [VERIFIED: measured with node]. AUTOPILOT.md expects about 480 bytes to remain after the pending guide plans, and a guide-trim quick task runs before later guide plans.
+- Phase 15 sponsor guide budget: **net +360 bytes or less** (source bytes measured this session on draft text):
+  - console-team: step 2 shortened to `2. Choose the "Role".` (47 → 21 bytes, −26) and the roles paragraph rewritten for five roles (279 → 285 bytes, +6): `Roles: "Owner" has everything, including billing. "Admin" has everything but billing. "Staff" runs day-to-day work; an Admin or the Owner releases payments. "Read-only" sees everything and changes nothing. "Accountant" sees reports, the audit file and tax documents until the date set.`
+  - New `console-security` entry, 380 source bytes: title "Sign-in and security", anchor "Two-step sign-in", two sentences on the password, two-step, recovery codes and devices, and who resets a lost phone.
+  - If the trim has not freed the room when 15-10 runs, `console-security` goes to the guide's `## skip` list with a reason and only the Team edit ships (net −20 bytes).
+- Investor guide (4,564 bytes free): the `sign-in` entry gains the reset steps and the `account` entry's "two-step verification" line says how to turn it on; budget +500 bytes.
+- The guide is rebuilt with `node server/help/build.mjs` and checked with `--verify`; the paid help measurement is not rerun (AUTOPILOT: no paid calls by agents).
+
+<!-- section 8 done -->
+
+## 9. Choices for the orchestrator (each with a recommended default)
+
+| # | Choice | Recommended default | Why |
+|---|--------|--------------------|-----|
+| C-01 | Sign-in built in-house or with an outside provider | **In-house** on the server with Node's own crypto | $0; firm-branded screens; works in the no-server preview; the WorkOS free tier is the outside option to revisit for passkeys or single sign-on (section 1.1) |
+| C-02 | Passkeys in this phase | **Later** | Server verification must not be hand-written; the usual package adds about ten packages and is flagged; it cannot be shown in the owner's sandboxed frame (3.1) |
+| C-03 | Two-step for investors | **Offered, off by default, never required; an Owner may require it for the firm's investors** | D-30 nothing mandatory for investors; some sponsors' compliance will want the switch |
+| C-04 | Where the workspace lives in server mode | **On the server, sealed, last 10 versions kept; the browser keeps no copy in storage** | The only way to encrypt bank numbers at rest and enforce roles on writes (W-14, W-11); the preview keeps browser storage |
+| C-05 | Key service (envelope encryption) | **Not now**: `DATA_KEY` in the host's secrets, the re-seal tool, yearly rotation | About $1 a month plus an AWS account; revisit when the first sponsor pays |
+| C-06 | Backups | **The backup tool with its own `BACKUP_KEY`, daily on the operator's timer, 7 daily, 4 weekly, 12 monthly; off-site copy to the operator's computer, with the free object-storage tier offered** | $0; restore proven by a drill |
+| C-07 | Deployment shape for cookies | **The server serves the portal's pages (`SERVE_PORTAL=1`), one origin, `__Host-` cookie with SameSite=Strict** | Cookies across sites fail in Safari; one origin also removes most CSRF risk |
+| C-08 | Timeouts and passwords | **60 minutes idle, 12 hours absolute; minimum 10 characters for console people (two-step always on), 15 for investors; a bundled common-password list; scrypt N=2^15, r=8, p=3** | NIST 800-63B-4 figures (5.5); 224 ms measured per check |
+| C-09 | Sponsor account tokens once people exist | **Kept for server-to-server automation only: they cannot reach people, roles, the workspace, billing or backups; the console no longer stores one** | Removes W-03 without breaking existing automation |
+| C-10 | Who releases payments | **Owner and Admin (pay); Staff prepares** | A real control against a changed bank account; one switch could later let Staff release |
+| C-11 | Accountant access | **Ends on a date, 90 days by default, renewable by an Admin; two-step required; every export logged** | Outside people should not keep access by default |
+| C-12 | Investor-facing security page in this phase | **Yes, small, firm-branded, from the same facts** | Investors are asked for bank and tax numbers; one footer link answers "is this safe" without the platform's name |
+| C-13 | Owner inputs | **The security email address and domain: "To be confirmed" placeholders until he gives them; paid penetration test: not now; SOC 2: not mentioned** | Owner has no budget for fees; claims stay honest (6.1) |
+| C-14 | The co-investor and the main investor's signed W-9 | **Hide the file from the co-investor; show "Tax form on file"** | The file shows the full taxpayer number of another person (W-18); an open privacy decision for the owner: ask him, and take this default if he has not answered in 15 minutes |
+| C-15 | Order with phase 14 | **15-01, 15-04 and 15-05 (server sign-in, two-step, roles) merge before phase 14's investor-facing server routes, which then use sessions** | Messages and the data room need a signed-in investor; building them on link tokens first would be redone |
+| C-16 | Who may sign up on the server | **Anyone, with the email confirmed by link before investors can be invited (a `security_notice` variant with a button), and per-address limits** | Self-serve is the funnel; confirmation stops sign-ups with someone else's address |
+
+<!-- section 9 done -->
