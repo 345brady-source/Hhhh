@@ -80,3 +80,6 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 ## STOPPED (2026-11-20, owner: "stop working completely, turn off everything")
 - Weekly usage limit hit (resets Nov 26, 5am UTC); 11-12, 11-13 and the 11-18 planner died on it. The owner then ordered a full stop: 12-06, 08-18, 08-19 and 10-10 executors stopped; every gate, heavy.sh and browser process killed.
 - Work saved on wip branches: wip/12-06, wip/08-18, wip/08-19, wip/10-10, wip/11-12 (11-13 and 11-18 had only started). Their worktrees are left in place under .claude/worktrees. Nothing runs. Resume only on the owner's word.
+
+## RESUMED (2026-11-26, owner: "ok resume only use opus and work until youve completed everything you possibly can without me")
+- Resumed 08-18, 08-19, 10-10, 12-06, 11-12, 11-13 executors and the 11-18 planner from where they stopped (11-12's uncommitted audit.js saved as 63f61ff on wip/11-12). All agents run on Opus. Work-around rule stays: owner inputs shown as "To be confirmed", choices recorded here.
