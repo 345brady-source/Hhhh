@@ -46,3 +46,15 @@
 - Executor deviations accepted: notice grouping counts only notices actually sent; firm notices follow the one-per-hour rule per side; optional clientId (ids and notice status only, never the body); correctionOf checked; duplicate recipients collapsed; fileKind, checkFiles, screen, TYPES, GENESIS exported for 14-08.
 - Orchestrator choice (disk): a broadcast stores one sealed copy of each attachment, not one per recipient (a 25 MB file to 500 investors would be about 12.5 GB). 14-08 or 14-09 changes the storage to one blob per attachment per send, keyed by its SHA-256, with each recipient's message referencing it; access is still checked per recipient, and nothing is deleted. The executor of whichever plan first mounts broadcasts applies this.
 - 14-08 must map party.prefs.notices to inv.emailPrefs.messages, add the 'inbox' collection line to store.mjs, build the context only from the phase 15 session, and compare both the chain text and the hash with the browser.
+
+## Plan-check additions, 14-05 (checked 2026-11-26 against 9b05658; 1 blockers fixed here, 8 warnings). Executors apply these with their plan. Findings: scratchpad checks-14-05.md.
+- B1: nothing is rewritten. Room, doc, prospect, event, assent and link records are written once; a new NDA, a new or revoked link, an end, a hide and the open link are new events (14-02's kinds) or new write-once records (e.g. rl_<id> { prospectId or open, tokenHash, expiresAt }); current state is read from them. The test store copies 14-03's (W4): store.mjs signatures and blob-key rule, put throws on any second write of an id, putBlob on a second write of a key, remove/removeBlob throw, afterEach asserts nothing refused and counts only grew. findByToken scans link records in constant time.
+- W1: verify(roomId) as NS.dataroom.verify: { ok: true, events } | { ok: false, brokenAt: seq, reason } | { ok: false, brokenAt: 0, reason naming the field }; event text exactly 14-02's eventText with its kind names; nodelete tests both forms.
+- W2: base-count.txt holds the number N only; Task 3's target is base + 15 (its action's "+ 14" is wrong).
+- W3: stamp's firm option is sealed.firm.name; test stamp asserts Producer and Creator are the firm name and no 'pdf-lib' or 'Hopding' in the served bytes.
+- W4: regime is read with eligibility.js's rule on the posted exemption string (regime({ structure: { exemption } })).
+- W5: the test server also routes /v1/inbox* to a real inbox.sponsor on the same store for test questions.
+- W6: address = rightmost X-Forwarded-For entry only when env.TRUST_PROXY === '1', else the socket's; test nda shows a spoofed header without TRUST_PROXY is not recorded.
+- W7: the interest fixture uses 'routing 190000018' (fails the ABA checksum) instead of 190000017 (passes it).
+- W8: LIMITS.nda = Math.ceil(20 MB * 4 / 3) + 256 KB for the e-sign assent; test esign: a 10 MB + 1 byte PDF → 413.
+- I1: days over 90 refused (422) or clamped, stated in the summary. I2: a cached copy keeps the first serve's view id in its footer; the summary says so.
