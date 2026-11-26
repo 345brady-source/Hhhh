@@ -8,6 +8,7 @@
 // routing number can have (00-12, 21-32, 61-72, 80). Not scanned (named in the NOTE lines): assets/vendor/ and
 // assets/forms/ (third-party files pinned by hash) and phase 11's checks/fixtures/bank/real/ (an outside project's two
 // published BAI2 samples, copied byte for byte with their SOURCE.txt, kept on purpose: C-09).
+// The all-zero number is not a bank's (issued to no one; statement fixtures use it as a blank bank id).
 // A copy (16-CONTEXT B3): in a scanned file, the same kind of number on a line with no routing word, when that number is
 // a hit elsewhere in the file or its PREFIX_SWAP image is in the file (a swap that missed one copy of the number).
 // Everything found is printed as 'file:line ending NNNN', never the whole number.
@@ -57,8 +58,11 @@ function abaValid(s) {
   const d = String(s).split('').map(Number);
   return (3 * (d[0] + d[3] + d[6]) + 7 * (d[1] + d[4] + d[7]) + (d[2] + d[5] + d[8])) % 10 === 0;
 }
-/** A 9-digit string a bank can have as its routing number. */
-const bankLike = (s) => abaValid(s) && ASSIGNED.has(String(s).slice(0, 2));
+/**
+ * A 9-digit string a bank can have as its routing number. The all-zero number is left out: it passes the arithmetic
+ * with prefix 00 but is issued to no one (statement fixtures use it as a blank bank id, phase 11's fund-a.ofx/.qfx).
+ */
+const bankLike = (s) => abaValid(s) && ASSIGNED.has(String(s).slice(0, 2)) && !/^0+$/.test(String(s));
 
 /** The PREFIX_SWAP image of a number (9 digits, or the 8-digit originating-bank prefix of a trace). */
 function swapOf(n) {
@@ -134,6 +138,11 @@ function scan(root, area, list) {
   return { files: rels.length, hits, copies };
 }
 const where = (x) => `${x.file}:${x.line} ${ending(x.n)}`;
+/** Prints every finding on its own line (a check's detail is cut at 1,500 characters), then the check. */
+function report(check, name, list) {
+  list.forEach((x) => console.log(`  found: ${where(x)}`));
+  check(name, !list.length, list.length ? `${list.length} found (listed above)` : undefined);
+}
 
 /** brand.js, tenants.js and data.js of a tree's assets/js in a fresh context (the files the mobile app loads too). */
 function loadCore(root) {
@@ -165,8 +174,9 @@ const parts = {
   async product({ check }) {
     console.log('NOTE not scanned: assets/vendor/ and assets/forms/ (third-party files pinned by hash)');
     const s = scan(ROOT, 'product');
-    check(`the scan over assets/ and mobile/src/ (${s.files} files) finds no routing number a bank can have`, s.files > 0 && !s.hits.length, s.hits.map(where));
-    check('no copy of such a number on a line without a routing word', !s.copies.length, s.copies.map(where));
+    check(`the scan covers assets/ and mobile/src/ (${s.files} files)`, s.files > 0);
+    report(check, 'the scan over assets/ and mobile/src/ finds no routing number a bank can have', s.hits);
+    report(check, 'no copy of such a number on a line without a routing word', s.copies);
     const NS = loadCore(ROOT);
     const fr = NS.data && NS.data.fakeRouting;
     const R = NS.data && NS.data.rng ? NS.data.rng(16003) : null;
@@ -180,6 +190,14 @@ const parts = {
     }
     check(`NS.data.fakeRouting drawn 2,000 times: every number passes the ABA check digit and has a prefix no bank has (${prefixes.size} prefixes drawn)`, !bad.length, bad.slice(0, 10));
   }
+};
+
+parts.checks = async function ({ check }) {
+  console.log(NOTE_KEPT);
+  const s = scan(ROOT, 'checks');
+  check(`the scan covers server/test/, server/lib/ and every phase's checks folder (${s.files} files)`, s.files > 0);
+  report(check, 'the scan over server/test/, server/lib/ and every phase\'s checks folder finds no routing number a bank can have', s.hits);
+  report(check, 'no copy of such a number left on a line without a routing word (a number found in the same file, or one whose swap image is in it)', s.copies);
 };
 
 /* ---------- selfcheck ---------- */
@@ -216,6 +234,7 @@ parts.selfcheck = async function ({ check }) {
     };
     put('assets/js/planted.js', `const x = 1;\nconst bank = { routing: "${real}" };\n`);
     put('assets/js/swapped.js', `const bank = { routing: "${img}" };\n`);
+    put('assets/js/zero.js', `const bank = { routing: "${'0'.repeat(9)}" };\n`);
     put('assets/vendor/lib/planted.js', `routing: "${real}"\n`);
     put('assets/forms/x/planted.js', `routing: "${real}"\n`);
     put('mobile/src/core/planted.js', `odfiRouting: '${real}',\n`);
@@ -229,7 +248,7 @@ parts.selfcheck = async function ({ check }) {
     const p = scan(T, 'product', list);
     const c = scan(T, 'checks', list);
     const names = (xs) => xs.map((x) => `${x.file}:${x.line}`).sort().join(', ');
-    check('product scan of the planted tree: assets/js/planted.js:2 and mobile/src/core/planted.js:1 found, nothing in assets/vendor/ or assets/forms/, the swap image not found', names(p.hits) === 'assets/js/planted.js:2, mobile/src/core/planted.js:1' && !p.copies.length, names(p.hits));
+    check('product scan of the planted tree: assets/js/planted.js:2 and mobile/src/core/planted.js:1 found, nothing in assets/vendor/ or assets/forms/, neither the swap image nor the all-zero blank found', names(p.hits) === 'assets/js/planted.js:2, mobile/src/core/planted.js:1' && !p.copies.length, names(p.hits));
     check('checks scan of the planted tree: the hit and its copy in hit.test.mjs, the leftover copy beside a swapped number, the phase checks file; nothing in the kept BAI2 folder or outside a checks folder', names(c.hits) === '.planning/phases/99-x/checks/planted.js:1, server/test/hit.test.mjs:1' && names(c.copies) === 'server/test/hit.test.mjs:2, server/test/leftover.test.mjs:2', `${names(c.hits)} | ${names(c.copies)}`);
     const printed = c.hits.concat(c.copies).map(where).join('\n');
     check('a finding is printed with the last four digits only', printed.indexOf(real) < 0 && printed.indexOf(ending(real)) >= 0);
