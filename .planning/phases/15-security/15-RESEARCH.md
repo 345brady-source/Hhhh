@@ -81,7 +81,7 @@ Size used for the comparison: 40 free sponsors, about 3 console people each and 
 | Supabase Auth | Free 50,000 monthly active users; Pro $25/month; text-message two-step $75/month [CITED: search excerpt of supabase.com/pricing] | App codes free [CITED: same] | Not confirmed | Brings a hosted database we do not use | Free projects can be paused when idle [ASSUMED] |
 | Text-message codes (e.g. a verify API) | $0.05 per successful check plus about $0.0083 per text in the U.S. [CITED: search excerpt of twilio.com/verify/pricing] | Text codes only | — | Sender name is a short code, not the firm | A per-use cost on every sign-in; SIM-swap risk; not recommended (section 3) |
 
-**Speed:** an outside provider adds a redirect and a network round trip to each sign-in; in-house adds one local scrypt check (tens of milliseconds) [ASSUMED: typical scrypt cost; measure in 15-01]. **Accuracy:** not applicable (no reading involved).
+**Speed:** an outside provider adds a redirect and a network round trip to each sign-in; in-house adds one local scrypt check: measured this session on the build machine at 224 ms for N=2^15, r=8, p=3 and 333 ms for N=2^17, r=8, p=1 (`crypto.scryptSync`, one run each; the server must use the asynchronous `crypto.scrypt` so the wait does not block other requests) [VERIFIED: measured with node v22.23.4 this session]. **Accuracy:** not applicable (no reading involved).
 
 **Recommendation:** in-house. It is the only $0 path that keeps every screen in the firm's brand and works the same in the no-server preview. If the owner later wants passkeys or single sign-on for a large sponsor without building them, the WorkOS free tier is the outside option to revisit (C-01).
 
@@ -210,3 +210,96 @@ Everything below is server code with Node's own `crypto` (no new server package)
 Not shown in the preview, and never implied there: encryption at rest, backups, server refusals, lockout across devices, real emails. The owner sees those in the proof plan as a local server run with its output pasted (section 8, plan 15-10).
 
 <!-- section 2 done -->
+
+## 3. Two-step sign-in
+
+### 3.1 The four ways compared
+
+| Way | Cost | Stops a stolen password | Stops a fake sign-in page | Works in the no-server preview | Build | Verdict |
+|-----|------|-------------------------|---------------------------|-------------------------------|-------|---------|
+| **Authenticator-app code (TOTP, RFC 6238)** | $0 | Yes | No: a fake page can pass the code on within 30 seconds [ASSUMED: well-known limit of one-time codes] | Yes: the code can be checked in the browser | In-house: about 80 lines on `crypto.createHmac('sha1')`, proved with the RFC's own test values | **Build now** |
+| Passkeys (WebAuthn) | $0 | Yes | Yes (bound to the site) [CITED: search excerpt of NIST SP 800-63B-4 commentary: "AAL2 verifiers ... offer at least one phishing-resistant authentication option"; the NIST page itself could not be opened] | No: the browser's passkey prompt is not expected to open inside the owner's sandboxed frame [ASSUMED: it needs the frame's permission policy to allow it] | Server checks need CBOR, COSE keys and signature checks: not to be written by hand; the usual package `@simplewebauthn/server` 14.1.0 brings about ten further packages and is flagged by the legitimacy check (see audit) | **Later** (C-02) |
+| Email code | $0 | Partly | No | Simulated only | Small | **No**: email is also the reset path, so code plus reset by email is one factor (the mailbox) |
+| Text-message code | About $0.058 per check [CITED: section 1.1] | Partly (SIM swap) | No | Simulated only | Outside service | **No**: a cost on every sign-in, against the $0 rule |
+
+### 3.2 The authenticator-app code, exactly
+
+- Algorithm HMAC-SHA-1, 6 digits, 30-second steps (the settings every common authenticator app reads from the set-up code) [ASSUMED: default parameters of the `otpauth://` key format]; the server accepts the current step and one step either side, and refuses a step it already accepted for that person (no replay).
+- Secret: 20 random bytes, shown base32 in groups of four, sealed with the vault, never shown again after set-up.
+- Set-up code: `otpauth://totp/<label>?secret=<base32>&issuer=<issuer>&algorithm=SHA1&digits=6&period=30`, with issuer and label the firm's short name and the person's email (white label: never the platform's or a vendor's name; the self-serve edition is "fully white-labeled", edition.js:39).
+- The code is proved against RFC 6238's SHA-1 test values. Computed this session with `node:crypto` (secret `12345678901234567890`, 8 digits): T=59 → 94287082, T=1111111109 → 07081804, T=1111111111 → 14050471, T=1234567890 → 89005924, T=2000000000 → 69279037, T=20000000000 → 65353130 [VERIFIED: computed this session; these match the RFC's Appendix B SHA-1 column as remembered, and the test file must quote the RFC's table, not this list].
+- QR code for desktop set-up: drawn in the page by a small vendored encoder under `assets/vendor/` (the repo already vendors libraries this way, with SOURCE.txt, SHA256SUMS and a licence file: assets/vendor/pdfwrite/, pdfview/). The phone path is the key typed into the app; both are offered.
+
+### 3.3 Recovery codes
+
+Ten codes, each 10 characters from an alphabet without look-alike characters, shown once at set-up with "Download" and "Copy", stored only as SHA-256 hashes (they are long random values, so a fast hash is enough), each usable once in place of an app code. Using one tells the person how many are left and offers new ones; making new ones needs a current code and replaces all ten.
+
+When a person has lost both the phone and the codes:
+- Staff, Read-only, Accountant, Admin: an Owner or Admin chooses "Reset two-step sign-in" on the Team page; the person sets it up again at next sign-in; logged and emailed to the person.
+- Owner: Carrow & Vale support resets it through an operator route behind `ADMIN_TOKEN` after confirming the person by phone (written procedure in the server README).
+- Investor: the firm's team resets it from the investor's record; logged and emailed.
+
+### 3.4 Defaults
+
+| Who | Two-step | Why |
+|-----|----------|-----|
+| Every console person (Owner, Admin, Staff, Read-only, Accountant) | **Required**: set up at first sign-in; the console does not open until it is done | The console holds every investor's bank and tax data. The FTC Safeguards Rule requires "multi-factor authentication for any individual accessing any information system" at the financial institutions it covers [CITED: search excerpt of 16 CFR 314.4(c)(5), law.cornell.edu]; SEC Regulation S-P's 2024 amendments reach registered advisers (smaller ones from June 3, 2026) [CITED: search excerpts of sec.gov small entity guide, Sidley, Holland & Knight]. Whether a given sponsor is covered is for its counsel ("To be confirmed with counsel" wherever a screen relies on it) |
+| Investors | **Offered, off by default, never required** (D-30), one line on the Account page ("Two-step sign-in: Off" with "Turn on") and once after first sign-in | Owner rule D-30: nothing mandatory for investors |
+| Sponsor setting | An Owner may require it for the firm's investors (default off) | Some sponsors' compliance will ask for it (C-03) |
+| Emails | A notice to the person when a password, two-step sign-in or recovery codes change, and when a console sign-in comes from a new device | These are the moments an account takeover shows; they need three small templates beside phase 13's `password_reset` (section 7) |
+
+<!-- section 3 done -->
+
+## 4. Roles a small sponsor needs, enforced on the server
+
+### 4.1 Five console roles (self-serve edition; the managed edition keeps `staff`, `sponsor`, `investor` unchanged)
+
+| Role | For | In one line on the Team page |
+|------|-----|------------------------------|
+| Owner | The person who created the portal (one; can hand it to an Admin) | Everything, including billing, sign-in rules and closing the portal |
+| Admin | Partners, the CFO | Everything except billing and ownership |
+| Staff | Investor relations, operations (today's "Team member") | Day-to-day work; payments are released by an Admin or the Owner |
+| Read-only | A partner who only looks, compliance review | Sees everything, changes nothing; bank numbers show the last four digits |
+| Accountant | The firm's CPA or fund auditor | Reports, the audit file, capital accounts and tax documents only; access ends on a date |
+
+### 4.2 Permissions
+
+| Permission | What it covers | Owner | Admin | Staff | Read-only | Accountant |
+|------------|----------------|:-----:|:-----:|:-----:|:---------:|:----------:|
+| view | Open the console and its pages | yes | yes | yes | yes | Report pages only |
+| operate | Investors, invitations, e-sign, notices, documents, requests, capital calls and distributions (prepare), tax documents, AML/KYC results, messages | yes | yes | yes | no | no |
+| pay | See full bank numbers, change an investor's bank account, build and download a payment file, record a payment | yes | yes | no (C-10) | no | no |
+| spend | Anything that charges the firm's card: verification packages on invitations, filing orders | yes | yes | no | no | no |
+| configure | Offerings, offering intake, portal and brand, integrations, ACH origination, email sending | yes | yes | no | no | no |
+| team | Invite, remove, change roles (an Admin cannot change or remove the Owner) | yes | yes | no | no | no |
+| account | Billing, the firm's sign-in rules, transfer ownership, full backup export, close the portal | yes | no | no | no | no |
+| personal | Investor contact details, identity and verification documents | yes | yes | yes | yes | no (names, amounts and tax-form status only) |
+| audit | Read and export the change logs | yes | yes | yes | yes | yes |
+| reports | Read and download reports and the year-end package | yes | yes | yes | yes | yes |
+
+### 4.3 Console pages by role (keys from console.js:36-57)
+
+| Page | Owner, Admin | Staff | Read-only | Accountant |
+|------|--------------|-------|-----------|------------|
+| Overview, Notifications | open | open | open, no actions | Overview only |
+| Offerings | change | read | read | read |
+| Offering intake, Portal and brand, Integrations, ACH origination, Team | open | hidden | hidden | hidden |
+| Investors | change; bank changes | change except bank | read, bank masked | names, commitments, capital accounts; contact masked |
+| E-sign, Notices, Requests, AML/KYC | act | act | read | hidden |
+| Capital calls, Distributions | act; release payment files | prepare | read | read |
+| Documents, Tax documents | act | act | read | read and download |
+| Reports, Audit (and phase 11-12 pages for the books and the report builder) | open | open | open | open |
+| AML program | change | read | read | hidden |
+| Filings | order (spend) | prepare, read | read | read |
+| Sign-in and security (new: one's own password, two-step, recovery codes, sessions; the Owner also sees the firm's rule) | open | open | open | open |
+
+### 4.4 How the server enforces it
+
+- `server/lib/roles.mjs` holds the two tables above as data and one function `allows(role, permission)`. The session gives the person and role; the request never does.
+- Every sponsor route names its permission next to it (one table in roles.mjs, checked by a test that walks every route in index.mjs and fails on a route with none): invitations create, resend, cancel and submission delete → operate (with a paid package → spend); `GET /v1/outbox` → operate (live links); tax documents send and withdraw → operate; filings orders → spend; billing → account (card) or spend (packages); verifications and screenings → operate; intake and read → configure; help → any signed-in person; phase 13's messages → operate; workspace read → view, write → by section (below); people and roles → team; server change log → audit; backup export → account with a sign-in in the last 10 minutes.
+- Workspace writes are checked by section: `tenant`, `offerings`, `integrations`, `invitationRules`, `amlProgram`, `esignTemplates` → configure; `investors` → operate, except any investor's `payment` → pay; `runs`, `calls`, `requests`, `notices`, `docs`, `envelopes`, `taxdocs`, `taxDeposits`, `books`, `reports`, `notifications`, `invitations`, `filings` → operate; `achLog` → pay; `team` is read from the server's people, never written by the browser; `audit` may only grow; any key not in the table → configure (refuse by default). [ASSUMED: section names collected this session by a scan of `ws.<key> =` writes in assets/js; the planner re-scans on the tree it builds from.]
+- Masking on read: for a role without pay, `payment.bank.routing` and `.account` come back as `****` plus the last four, and a write that sends the masked value back keeps the stored value; for the Accountant, contact fields and verification documents are removed.
+- Refusals answer 403 with one plain sentence ("Only an Admin or the Owner can change bank accounts.") and are written to the server change log.
+- The browser copy of the same tables (edition.js, app.js `can()`, `allowed()`) only hides and disables; a check proves the server refuses even when the browser is bypassed.
+
+<!-- section 4 done -->
