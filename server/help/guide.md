@@ -16,7 +16,7 @@ menu: Overview, at the top
 anchor: Needs attention
 anchor: Recent distributions
 
-The first page of the console. The menu on every console page has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents, Accounting), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
+The first page of the console. The menu on every console page has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
 
 Overview shows:
 - "Setup": a checklist for a new portal. Choose "Start" or "Review" beside an item to open its page, or "Remove" to take the item off the list.
@@ -295,21 +295,6 @@ To deliver:
 "Send on paper" lists documents owed on paper: enter the date and choose "Mark sent on paper". "Notice came back" on a row adds one there.
 
 To withdraw a document, an admin chooses "Withdraw", enters a "Reason" and chooses "Withdraw document". For an amended document, tick "This replaces the document delivered on" before delivering.
-
-## console-books
-audience: sponsor
-kind: console
-title: Accounting
-menu: Operate, then Accounting
-anchor: Add entry
-anchor: Enter value
-
-The fund's manual inputs: entries the bank does not show, investment values, opening balances and closing a month.
-
-1. Choose the "Fund".
-2. "Add entry": a date, a memo and lines; it saves only when debits equal credits.
-3. "Enter value" records an investment's fair value at a date.
-4. An owner closes a month with "Close through".
 
 ## console-reports
 audience: sponsor
