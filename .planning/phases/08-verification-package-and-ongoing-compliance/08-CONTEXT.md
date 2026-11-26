@@ -223,3 +223,8 @@
 - W6 (08-09): the three guide lines name controls exactly as on screen, no vendor name, no price.
 - Queued small fixes are not covered by either plan: contact line (integrations.js:954-955 + package-flow.js `refused`; after 08-08), "Created <time>" (invitations.js:2684 + package-console.js; after 08-09), confirmChecks `evidence` (server/lib/invitations.mjs; after 08-09), Expose-Headers (server/lib/http.mjs cors; free now). The small-fixes task starts after both merge, or takes only the cors item now.
 - Start: 08-08 and 08-09 can start now with these applied; they share no file. 08-09 writes its guide lines only once B4's budget is settled.
+
+## Orchestrator decisions on wave 7 (2026-11-26)
+- Guide budget (blocker 4): 08-09 builds WITHOUT its guide lines. Its three guide lines (at most 240 bytes, each naming its control exactly as on screen) move to the guide pass that runs right after the guide-trim task; the 08-09 executor writes the exact proposed lines into its SUMMARY under "Guide lines for the guide pass" and adds no bytes to guide.md, help-guide.mjs or help-data.js. Its verify drops the guide steps and asserts guide.md is unchanged. Why: the sponsor guide (46,864) plus the reservations of 11-13, 12-06 and 10-11 already reach about 47,936; 08-09 must not wait, because 13-01 waits for it.
+- 08-08 and 15-01 both edit server/index.mjs in separate hunks: both run; whichever merges second re-runs its gate on the merged tree.
+- Queued small fixes run as one task after 08-08 and 08-09 merge (all four items, including the cors Expose-Headers line), unless 15-18 has taken CORS by then.
