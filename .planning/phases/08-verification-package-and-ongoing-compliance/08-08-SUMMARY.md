@@ -59,4 +59,26 @@ MUTATION verifications (identity checks lose their screening): not ok 1 - change
 MUTATION apply (index.mjs apply sets changedAt on every result written): not ok 1 - changed rules: # fail 1
 ```
 
+RED check ($O/red2.txt, parts hold-only, monitored-not-due, package-not-run run from an archive of Task 1's commit 307c99d with the new check file):
+
+```
+FAIL monitored-not-due the monitored investor has no next re-screen date (nor a next review on the AML/KYC record) :: {"nextScreen":"2026-11-16","nextReview":"2026-11-16"}
+FAIL monitored-not-due only the other investor counts as due for re-screening :: ["KBC-1001","KBC-1002"]
+FAIL monitored-not-due "Run now" re-screens the other investor only :: {"toast":"2 investors re-screened","other":"2026-12-26","same":false}
+FAIL monitored-not-due a screening whose every result is monitored sets no next re-screen date :: {"id":"KBC-1003","next":"2026-12-26","monitoring":[false],"review":"2026-12-26"}
+FAIL package-not-run through the Treasury connection only: one list read, one screening asked of the server, for the Treasury lists :: {"reads":1,"posts":["ofac","ownscreen"]}
+FAIL package-not-run the package result is kept as it was, the Treasury result is added, the next date moved :: {... "aml":"pending" ...}
+FAIL package-not-run with no Treasury connection, the package investor is left out of "Run now" (no line at all) :: [...]
+FAIL package-not-run nothing was called for the package investor: no list read, no screening asked of the server, no package provider call :: {"reads":1,"posts":["ofac","ownscreen"],"calls":0}
+MONITORING: FAIL (parts run: 3) - monitored-not-due, package-not-run
+```
+
+Before the fix, "Run now" on a package investor ran every screening connection the firm had on, the sponsor's own paid connector included (`posts: ["ofac","ownscreen"]`), and replaced the package result.
+
+hold-only passed on Task 1's code (the pull already only held): a guard, shown failing under a mutation ($O/mutations.txt, $O/mut-browser.txt):
+
+```
+MUTATION pull (pullChanged writes whatever status a pulled record says, so a clear record clears): FAIL hold-only a server record that reads clear does not clear the held investor
+```
+
 <!-- gsd:write-continue -->
