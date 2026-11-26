@@ -91,3 +91,4 @@ Every user-facing plan must prove its screens there, not only in desktop Chromiu
 - gate-lib/runParts kept results are keyed per tree but not by the base tree a check compares against (P11_ROOT etc.): a kept AUDIT SAME result could be reused against a different base on the same checkout. Until fixed, any rerun against a different base uses GATE_FRESH=1. Fix in a small tools task after the current builds (key the parts by the base tree hash too).
 - 11-18 plan-checked (no blockers, 3 warnings in 11-CONTEXT); executor building (wip/11-18).
 - 2026-11-26: 10-10 merged (15cbb29; server 403); WALK3 and TAX1099 FLOW rerunning on the merged tree; next 10-11 plan check.
+- 2026-11-26: 10-11 plan-checked (4 blockers fixed in 10-CONTEXT E1-E8), executor building (wip/10-11). Guide room after 11-13 (450), 12-06 (222), 08-18 (150), 10-11 (400): about 80 bytes. The guide-trim task runs as soon as those four merge, before 11-15, 11-16, 12-08 and phase 13 guide plans.
