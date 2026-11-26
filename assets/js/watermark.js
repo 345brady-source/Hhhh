@@ -98,12 +98,14 @@
     const email = String(o.email == null ? '' : o.email).trim();
     const firm = fold(String(o.firm == null ? '' : o.firm).trim()).text;
     doc.setSubject(`Confidential copy for ${name} ${email}`);
-    doc.setKeywords([`view ${fold(String(o.viewId == null ? '' : o.viewId).trim()).text}`]);
     doc.setProducer(firm);
     doc.setCreator(firm);
+    // Keywords and dates are written into the document's information directly: the writer's own setters test for an
+    // Array or a Date of its realm, which a caller in another realm (the portal loaded in a Node vm) does not pass.
+    const info = doc.getInfoDict();
+    info.set(L.PDFName.of('Keywords'), L.PDFHexString.fromText(`view ${fold(String(o.viewId == null ? '' : o.viewId).trim()).text}`));
     const when = DATE(o.day);
     if (when) {
-      const info = doc.getInfoDict();
       info.set(L.PDFName.of('CreationDate'), L.PDFString.of(when));
       info.set(L.PDFName.of('ModDate'), L.PDFString.of(when));
     }
