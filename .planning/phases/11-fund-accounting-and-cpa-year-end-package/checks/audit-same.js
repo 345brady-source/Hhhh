@@ -21,10 +21,15 @@
 // log is a hash chain sorted by time. Every byte of the tree's log, its 15_Change_log.csv entries and their MANIFEST
 // lines is compared with that exact expectation. With no such base call the rule is off and everything is compared
 // as above; a moved row entering or leaving a period is reported, not allowed.
+// Each side runs what its own page runs: load11 with books on, so the scripts that side's diy.html lists after
+// operations.js that build NS.books (books.js, books-post.js) load on that side, from that side's files, in its page's
+// order. build() then syncs every fund's journal (11-12 B1) and the schedules built from the journal (20 to 24) are
+// compared like every other; on a base that predates them they are schedules the base does not have.
 // Without P11_ROOT (or with this checkout as P11_ROOT) it prints FAIL and exits 1: it never compares a tree with itself.
 // Cases: same (the above; then the first edition again in fresh contexts must give the same hashes, I1), mutate (one
 // cent on kb-fund-ii's newest paid distribution must be reported, W7), noroot (the refusal above, as child processes),
-// selfcheck (the --case flag's rules, and the package rules proven on packages rebuilt from one real export).
+// selfcheck (the --case flag's rules, the package rules proven on packages rebuilt from one real export, the moved-notice
+// rule, and one cent in kb-fund-ii's journal reported when this tree is compared with itself).
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -374,8 +379,10 @@ function compareReadme(bt, tt, x) {
 }
 
 /* ---------- one side: the portal, its sample workspaces ---------- */
+/** A portal of root with its page's books scripts (load11 books: true), the way every part of this check loads one. */
+const portal = (root, edition, extra) => LD().loadPortal(root, { today: TODAY, edition, extra, books: true });
 function side(root, edition, extra, firm) {
-  const NS = LD().loadPortal(root, { today: TODAY, edition, extra });
+  const NS = portal(root, edition, extra);
   const only = firm || FIRM;
   const wss = LD().sampleWorkspaces(NS).filter((ws) => !only || ws.tenant.id === only);
   return { NS, wss };
@@ -409,7 +416,7 @@ function compare(base, edition, mutate, firm) {
     });
     if (T.NS.clearCaches) T.NS.clearCaches();
   }
-  const r ={ funds: 0, schedules: 0, zips: 0, zipsWhole: 0, mismatches: [], found: [], hashes: [], mutated: [], moves: [] };
+  const r = { funds: 0, schedules: 0, zips: 0, zipsWhole: 0, mismatches: [], found: [], hashes: [], mutated: [], moves: [], treeOnly: new Set(), sides: { base: A.NS.__load11.files, tree: T.NS.__load11.files, baseBooks: !!(A.NS.books && A.NS.books.sync), treeBooks: !!(T.NS.books && T.NS.books.sync) } };
   r.mutated = changed;
   if (A.wss.length !== T.wss.length || !A.wss.length) r.mismatches.push(`sample firms: base ${A.wss.length}, tree ${T.wss.length}`);
   A.wss.forEach((wa) => {
@@ -437,6 +444,7 @@ function compare(base, edition, mutate, firm) {
         const diff = [];
         let expect = null;
         if (ma.fund !== mt.fund) diff.push('period fund');
+        mt.sched.forEach((v, sid) => ma.sched.has(sid) || r.treeOnly.add(sid));
         ma.sched.forEach((v, sid) => {
           const w = mt.sched.get(sid);
           r.schedules++;
@@ -502,6 +510,15 @@ const parts = {
     const base = baseRoot();
     const extra = treeExtras(base);
     check(`tree side loads the scripts this tree's page adds after operations.js: ${extra.length ? extra.join(', ') : 'none'}`, true);
+    // The books: each side loads the books scripts its own page lists, and builds NS.books exactly when it lists some.
+    [['base', base], ['tree', ROOT]].forEach(([who, root]) => {
+      const bk = LD().booksScripts(root);
+      const NS = portal(root, 'diy', who === 'tree' ? extra : []);
+      const files = NS.__load11.files;
+      const k = files.indexOf('operations.js');
+      const has = !!(NS.books && NS.books.sync && NS.books.trialBalance);
+      check(`${who} side loads the books scripts its page lists, from its own files, directly after operations.js in the page's order: ${bk.join(', ') || 'none'} (NS.books.sync and trialBalance: ${has})`, NS.__load11.root === path.resolve(root) && bk.every((f, i) => files[k + 1 + i] === f) && has === bk.length > 0, files.join(', '));
+    });
     let funds = 0;
     let schedules = 0;
     let zips = 0;
@@ -519,6 +536,7 @@ const parts = {
           r.moves.length ? r.moves.map((f) => `${f.firm} ${f.moves.length} (${f.moves.map((m) => `${m.id} ${m.from} -> ${m.to}`).join(', ')})`).join('; ') : 'none (no base call has a notice date equal to its due date)'
         }`
       );
+      console.log(`schedules only this tree builds (${ed}; not compared, the base does not have them): ${r.treeOnly.size ? Array.from(r.treeOnly).join(', ') : 'none'}`);
       check(`${ed}: every schedule, period figure and package entry the base builds is the same in this tree, or exactly the expected difference above (${r.schedules} schedules, ${r.zips} packages of ${r.funds} funds)`, r.funds > 0 && r.schedules > 0 && !r.mismatches.length, r.mismatches.slice(0, 20));
     });
     // I1: the same comparison run again in fresh contexts gives the same hashes (the comparison is stable).
@@ -577,7 +595,7 @@ function child(args, env) {
  * passes, and each change it does not allow is reported.
  */
 function zipRules(check) {
-  const NS = LD().loadPortal(ROOT, { today: TODAY, edition: 'diy' });
+  const NS = portal(ROOT, 'diy');
   const ws = LD().sampleWorkspaces(NS).find((w) => w.tenant.id === 'kestrel-bay');
   const o = ws.offerings.find((x) => x.id === 'kb-fund-ii');
   const p = NS.audit.presets(ws, o).find((x) => x.id === 'fy');
@@ -655,7 +673,7 @@ function repack(NS, files, B, man) {
 function noticeRules(check) {
   const KB = 'kestrel-bay';
   const load = () => {
-    const NS = LD().loadPortal(ROOT, { today: TODAY, edition: 'diy' });
+    const NS = portal(ROOT, 'diy');
     return { NS, wss: LD().sampleWorkspaces(NS) };
   };
   const A = load();
@@ -803,10 +821,9 @@ function addBookCent(offeringId) {
  */
 function booksRules(check) {
   const KB = 'kestrel-bay';
-  const listed = LD().listedScripts(ROOT);
-  const NS = LD().loadPortal(ROOT, { today: TODAY, edition: 'diy' });
+  const NS = portal(ROOT, 'diy');
   const files = NS.__load11.files;
-  const books = listed.filter((f) => files.indexOf(f) >= 0 && /\bNS\.books\b/.test(fs.readFileSync(path.join(ROOT, 'assets/js', f), 'utf8')) && f !== 'audit.js' && f !== 'operations.js');
+  const books = LD().booksScripts(ROOT).filter((f) => files.indexOf(f) >= 0);
   check(`books loaded: this tree's side loads the scripts its page lists that build NS.books (${books.join(', ') || 'none'}), and NS.books.sync and NS.books.trialBalance exist`, books.length > 0 && !!(NS.books && NS.books.sync && NS.books.trialBalance), files.join(', '));
   const r0 = compare(ROOT, 'diy', null, KB);
   const ids = new Set();
