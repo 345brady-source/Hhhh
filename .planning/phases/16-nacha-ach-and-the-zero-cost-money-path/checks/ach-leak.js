@@ -200,6 +200,231 @@ parts.checks = async function ({ check }) {
   report(check, 'no copy of such a number left on a line without a routing word (a number found in the same file, or one whose swap image is in it)', s.copies);
 };
 
+/* ---------- packages ---------- */
+// The sample firms' originating bank numbers feed the trace numbers of their audit packages (audit.js: the first eight
+// digits of ach.odfiRouting), so a base tree from before the swap builds packages that differ in those digits. This case
+// proves the packages differ from the base ONLY by the swap (16-CONTEXT W1; the expected-difference approach of 11-18):
+// with P16_BASE (a base tree), for each sample firm, each offering, editions diy and managed and the presets fy and itd
+// at 2026-11-19, every entry of NS.audit.exportPackage, unzipped as audit-same.js unzips, is compared:
+//   - substitution on the base side only, digit-bounded: a 9-digit run equal to one of the base's bank-like routing
+//     numbers (its sample firms' ach numbers and every sample investor's bank) becomes its PREFIX_SWAP image; the first
+//     8 digits of a 15-digit run equal to a base originating-bank prefix become that prefix's image;
+//   - an entry equal byte for byte, or equal after substitution, passes; 00_README.txt may differ only in its
+//     'Generated:' line (as AUDIT SAME); any other difference is reported;
+//   - MANIFEST.sha256: the base's lines in the base's order; a line for an entry judged equal under a rule (substituted,
+//     or the README) must be that entry's true SHA-256 in this tree's package (the audit-same.js rule), any other line
+//     equal to the base's.
+// While the base holds a number PREFIX_SWAP moves, at least one entry must have needed a substitution (the sample
+// traces), so the proof is not empty; a base holding none (after this plan merges) is compared as it is.
+// Without P16_BASE, or with this checkout as P16_BASE, the case FAILs: it never compares a tree with itself.
+const TODAY = '2026-11-19';
+const PRESETS = ['fy', 'itd'];
+const EDITIONS = ['diy', 'managed'];
+const LD = () => require(path.join(ROOT, P11_DIR, 'checks/load11.js'));
+const sha = (b) => crypto.createHash('sha256').update(Buffer.from(b)).digest('hex');
+const UNSWAP = Object.keys(PREFIX_SWAP).reduce((m, k) => ((m[PREFIX_SWAP[k]] = k), m), {});
+
+/** Stored or deflated entries, read through the central directory (as audit-same.js). */
+function unzip(bytes) {
+  const zlib = require('zlib');
+  const b = Buffer.from(bytes);
+  let e = b.length - 22;
+  while (e >= 0 && b.readUInt32LE(e) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('no end of central directory record');
+  const n = b.readUInt16LE(e + 10);
+  let p = b.readUInt32LE(e + 16);
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    if (b.readUInt32LE(p) !== 0x02014b50) throw new Error(`central directory entry ${k} is malformed`);
+    const method = b.readUInt16LE(p + 10);
+    const csize = b.readUInt32LE(p + 20);
+    const nlen = b.readUInt16LE(p + 28);
+    const xlen = b.readUInt16LE(p + 30);
+    const clen = b.readUInt16LE(p + 32);
+    const off = b.readUInt32LE(p + 42);
+    const name = b.slice(p + 46, p + 46 + nlen).toString('utf8');
+    const lnl = b.readUInt16LE(off + 26);
+    const lxl = b.readUInt16LE(off + 28);
+    const raw = b.slice(off + 30 + lnl + lxl, off + 30 + lnl + lxl + csize);
+    out.push({ name, data: method === 0 ? raw : method === 8 ? zlib.inflateRawSync(raw) : null, method });
+    p += 46 + nlen + xlen + clen;
+  }
+  return out;
+}
+
+/** The base's bank-like numbers: { nine: Set of 9-digit routing numbers, eight: Set of originating-bank prefixes }. */
+function baseNumbers(wss) {
+  const nine = new Set();
+  const eight = new Set();
+  wss.forEach((ws) => {
+    const a = (ws.tenant && ws.tenant.ach) || {};
+    [a.odfiRouting, a.destinationRouting, a.offset && a.offset.routing].forEach((n) => bankLike(String(n || '')) && nine.add(String(n)));
+    if (bankLike(String(a.odfiRouting || ''))) eight.add(String(a.odfiRouting).slice(0, 8));
+    (ws.investors || []).forEach((i) => {
+      const r = i.payment && i.payment.bank && i.payment.bank.routing;
+      if (bankLike(String(r || ''))) nine.add(String(r));
+    });
+  });
+  return { nine, eight };
+}
+
+/** The base-side substitution: (bytes) -> { data, places }. Byte-preserving (latin1). */
+function substituter(nums) {
+  return (bytes) => {
+    let places = 0;
+    let t = Buffer.from(bytes).toString('latin1');
+    if (nums.eight.size)
+      t = t.replace(/(?<!\d)\d{15}(?!\d)/g, (m) => {
+        if (!nums.eight.has(m.slice(0, 8))) return m;
+        places++;
+        return swapOf(m.slice(0, 8)) + m.slice(8);
+      });
+    if (nums.nine.size)
+      t = t.replace(/(?<!\d)\d{9}(?!\d)/g, (m) => {
+        if (!nums.nine.has(m)) return m;
+        places++;
+        return swapOf(m);
+      });
+    return { data: Buffer.from(t, 'latin1'), places };
+  };
+}
+
+/**
+ * One package pair. A, T = { name, files: [{ name, data }] }. Returns { bad: [reasons], substituted: entries equal
+ * only after substitution, places: digit runs substituted in them }.
+ */
+function comparePackage(A, T, sub) {
+  const bad = [];
+  let substituted = 0;
+  let places = 0;
+  if (A.name !== T.name) bad.push(`package name differs (base ${A.name}, tree ${T.name})`);
+  const tf = new Map(T.files.map((f) => [f.name, f.data]));
+  if (A.files.map((f) => f.name).join('|') !== T.files.map((f) => f.name).join('|')) bad.push(`entries differ: base ${A.files.map((f) => f.name).join(', ')}; tree ${T.files.map((f) => f.name).join(', ')}`);
+  const normalized = new Set();
+  A.files.forEach((f) => {
+    const t = tf.get(f.name);
+    if (f.data === null || t === null) return bad.push(`${f.name}: compression method ${f.method} cannot be read`);
+    if (t === undefined || f.name === 'MANIFEST.sha256') return;
+    if (Buffer.compare(f.data, t) === 0) return;
+    if (f.name === '00_README.txt') {
+      const strip = (b) => b.toString('utf8').split('\r\n').filter((l) => !/^Generated:/.test(l)).join('\r\n');
+      if (strip(f.data) === strip(t)) normalized.add(f.name);
+      else bad.push('00_README.txt: a line other than "Generated:" differs');
+      return;
+    }
+    const s = sub(f.data);
+    if (s.places && Buffer.compare(s.data, t) === 0) {
+      normalized.add(f.name);
+      substituted++;
+      places += s.places;
+      return;
+    }
+    bad.push(`${f.name}: bytes differ${s.places ? ` after ${s.places} substitution${s.places === 1 ? '' : 's'}` : ''} (base ${sha(f.data).slice(0, 12)}, tree ${sha(t).slice(0, 12)})`);
+  });
+  const lines = (d) => (d ? d.toString('utf8').split('\n').filter(Boolean) : []);
+  const bm = lines(A.files.filter((f) => f.name === 'MANIFEST.sha256').map((f) => f.data)[0]);
+  const tm = lines(tf.get('MANIFEST.sha256'));
+  if (bm.map((l) => l.slice(66)).join('|') !== tm.map((l) => l.slice(66)).join('|')) bad.push('MANIFEST.sha256: its entries are not the base\'s, in the base\'s order');
+  bm.forEach((l, i) => {
+    const name = l.slice(66);
+    const tl = tm[i];
+    if (tl === undefined) return;
+    if (normalized.has(name)) {
+      if (!tf.has(name) || tl !== `${sha(tf.get(name))}  ${name}`) bad.push(`MANIFEST.sha256: the line for ${name} is not that entry's SHA-256`);
+    } else if (tl !== l) bad.push(`MANIFEST.sha256: the line for ${name} differs`);
+  });
+  return { bad, substituted, places };
+}
+
+/** Scripts this tree's diy.html lists after operations.js that the base's diy.html does not list (as AUDIT SAME). */
+function treeExtras(base) {
+  const t = LD().listedScripts(ROOT);
+  const b = LD().listedScripts(base);
+  return t.slice(t.indexOf('operations.js') + 1).filter((f) => b.indexOf(f) < 0);
+}
+const clone = (NS, ws) => (NS.util && NS.util.clone ? NS.util.clone(ws) : JSON.parse(JSON.stringify(ws)));
+function exportOf(NS, ws, o, p) {
+  const X = NS.audit.exportPackage(clone(NS, ws), o, p.from, p.to);
+  return { name: X.name, files: unzip(X.bytes) };
+}
+
+/**
+ * Every sample package of one edition, base against tree. opts: { firm, unswapBase (the base side's sample firms'
+ * ach numbers moved back to bank prefixes in memory, for the self-check), mutateTree(NS, ws) -> description,
+ * editTree(where, files) -> files }. Returns { packages, substituted, places, nums, mismatches, mutated }.
+ */
+function compareTrees(base, edition, opts) {
+  opts = opts || {};
+  const A = LD().loadPortal(base, { today: TODAY, edition });
+  if (opts.unswapBase)
+    A.TENANTS.filter((t) => t.sample).forEach((t) => {
+      const a = t.ach;
+      ['odfiRouting', 'destinationRouting'].forEach((k) => (a[k] = UNSWAP[String(a[k]).slice(0, 2)] + String(a[k]).slice(2)));
+      a.offset.routing = UNSWAP[String(a.offset.routing).slice(0, 2)] + String(a.offset.routing).slice(2);
+    });
+  const T = LD().loadPortal(ROOT, { today: TODAY, edition, extra: treeExtras(base) });
+  const pick = (wss) => wss.filter((w) => !opts.firm || w.tenant.id === opts.firm);
+  const wa = pick(LD().sampleWorkspaces(A));
+  const wt = pick(LD().sampleWorkspaces(T));
+  const r = { packages: 0, substituted: 0, places: 0, nums: baseNumbers(wa), mismatches: [], mutated: [] };
+  if (opts.mutateTree) {
+    wt.forEach((ws) => {
+      const c = opts.mutateTree(T, ws);
+      if (c) r.mutated.push(c);
+    });
+    if (T.clearCaches) T.clearCaches();
+  }
+  const sub = substituter(r.nums);
+  if (!wa.length || wa.length !== wt.length) r.mismatches.push(`sample firms: base ${wa.length}, tree ${wt.length}`);
+  wa.forEach((a) => {
+    const t = wt.find((w) => w.tenant.id === a.tenant.id);
+    if (!t) return r.mismatches.push(`${a.tenant.id}: not a sample firm in this tree`);
+    if (a.offerings.map((o) => o.id).join() !== t.offerings.map((o) => o.id).join()) r.mismatches.push(`${a.tenant.id}: offerings differ`);
+    a.offerings.forEach((oa) => {
+      const ot = t.offerings.find((o) => o.id === oa.id);
+      if (!ot) return;
+      PRESETS.forEach((id) => {
+        const pa = A.audit.presets(a, oa).find((p) => p.id === id);
+        const pt = T.audit.presets(t, ot).find((p) => p.id === id);
+        const at = `${edition} ${oa.id} ${id}`;
+        if (JSON.stringify(pa) !== JSON.stringify(pt)) return r.mismatches.push(`${at}: preset differs`);
+        const xa = exportOf(A, a, oa, pa);
+        const xt = exportOf(T, t, ot, pt);
+        if (opts.editTree) xt.files = opts.editTree(at, xt.files);
+        r.packages++;
+        const c = comparePackage(xa, xt, sub);
+        r.substituted += c.substituted;
+        r.places += c.places;
+        if (c.bad.length) r.mismatches.push(`${at}: ${c.bad.join('; ')}`);
+      });
+    });
+  });
+  return r;
+}
+
+function baseTree() {
+  const b = process.env.P16_BASE;
+  if (!b) return { why: 'P16_BASE is not set' };
+  if (!fs.existsSync(path.join(b, 'assets/js/audit.js')) || !fs.existsSync(path.join(b, 'diy.html'))) return { why: `P16_BASE (${b}) holds no assets/js/audit.js or diy.html` };
+  if (fs.realpathSync(b) === fs.realpathSync(ROOT)) return { why: `P16_BASE (${b}) is this checkout` };
+  return { root: path.resolve(b) };
+}
+
+parts.packages = async function ({ check }) {
+  const B = baseTree();
+  if (!B.root) return check(`a base tree to compare with: ${B.why}; this case never compares a tree with itself`, false);
+  check(`base tree ${B.root}; this tree's page adds after operations.js: ${treeExtras(B.root).join(', ') || 'nothing'}`, true);
+  let moved = 0;
+  EDITIONS.forEach((ed) => {
+    const r = compareTrees(B.root, ed);
+    moved = Math.max(moved, r.nums.nine.size + r.nums.eight.size);
+    r.mismatches.forEach((m) => console.log(`  differs: ${m.slice(0, 600)}`));
+    check(`${ed}: every entry of the ${r.packages} sample packages equals the base's, the swapped prefixes aside (${r.substituted} entries needed the swap, ${r.places} digit runs)`, r.packages > 0 && !r.mismatches.length, r.mismatches.length ? `${r.mismatches.length} packages differ (listed above)` : undefined);
+    if (r.nums.nine.size + r.nums.eight.size) check(`${ed}: the base holds ${r.nums.nine.size} bank-like routing numbers and ${r.nums.eight.size} originating prefixes; at least one entry needed the swap, so the proof is not empty`, r.substituted > 0);
+  });
+  if (!moved) console.log('NOTE the base holds no number PREFIX_SWAP moves: its packages are compared as they are');
+};
+
 /* ---------- selfcheck ---------- */
 parts.selfcheck = async function ({ check }) {
   const u = child(['--case', 'nosuchcase']);
@@ -255,10 +480,95 @@ parts.selfcheck = async function ({ check }) {
   } finally {
     fs.rmSync(T, { recursive: true, force: true });
   }
+  packageRules(check);
   const own = fs.readFileSync(__filename, 'utf8');
   check('this check\'s own text holds no 9-digit number', !/(?<!\d)\d{9}(?!\d)/.test(own));
 };
 
+/** The newest paid distribution of an offering, one cent larger (as audit-same.js addCent). */
+function addCent(offeringId) {
+  return (NS, ws) => {
+    const run = (ws.runs || [])
+      .filter((x) => x.offeringId === offeringId && x.date <= TODAY && x.status === 'paid' && !x.cancelled)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))[0];
+    if (!run) return null;
+    const lines = Array.isArray(run.lines) && run.lines.length;
+    if (lines) {
+      run.lines[0].grossCents += 1;
+      run.lines[0].netCents += 1;
+    }
+    run.total += 1;
+    return `${run.id} (${lines ? 'first stored line and total' : 'total'} one cent larger)`;
+  };
+}
+
+/**
+ * W1: the package rules proven on a copy of this tree (diy.html and assets/js copied to a temporary folder) whose
+ * sample firms' ach numbers are moved back to bank prefixes in memory, as the base before this plan held them (nothing
+ * holding a bank's number is written to disk). Kestrel Bay, edition diy, both presets.
+ */
+function packageRules(check) {
+  const C = fs.mkdtempSync(path.join(os.tmpdir(), 'ach-leak-tree-'));
+  try {
+    fs.copyFileSync(path.join(ROOT, 'diy.html'), path.join(C, 'diy.html'));
+    fs.cpSync(path.join(ROOT, 'assets/js'), path.join(C, 'assets/js'), { recursive: true });
+    const firm = 'kestrel-bay';
+    const base = { firm, unswapBase: true };
+    const r0 = compareTrees(C, 'diy', base);
+    check(`allowed: the copy with its moved prefixes put back: ${r0.packages} packages equal after the swap (${r0.substituted} entries, ${r0.places} digit runs substituted)`, r0.packages > 0 && r0.substituted > 0 && !r0.mismatches.length, r0.mismatches.slice(0, 3));
+    const r1 = compareTrees(C, 'diy', Object.assign({ mutateTree: addCent('kb-fund-ii') }, base));
+    check(`reported: one cent on a sample fund (${r1.mutated.join(', ') || 'nothing changed'})`, r1.mutated.length === 1 && r1.mismatches.some((m) => /^diy kb-fund-ii /.test(m)), r1.mismatches.slice(0, 3));
+    // Edits of the tree's kb-fund-ii itd package: an entry holding traces, its MANIFEST line kept true unless the edit
+    // is the MANIFEST line itself, so only the rule under test can report it.
+    const edit = (fn, manifest) => {
+      let done = '';
+      const editTree = (at, files) => {
+        if (done || at !== 'diy kb-fund-ii itd') return files;
+        const k = files.findIndex((f) => f.name !== 'MANIFEST.sha256' && /(?<!\d)\d{15}(?!\d)/.test(f.data.toString('latin1')));
+        if (k < 0) return files;
+        const name = files[k].name;
+        const data = manifest ? files[k].data : Buffer.from(fn(files[k].data.toString('latin1')), 'latin1');
+        done = name;
+        return files.map((f, i) => {
+          if (i === k) return { name, data, method: f.method };
+          if (f.name !== 'MANIFEST.sha256') return f;
+          const ls = f.data.toString('utf8').split('\n').map((l) => (l.slice(66) === name ? (manifest ? '0'.repeat(64) : sha(data)) + '  ' + name : l));
+          return { name: f.name, data: Buffer.from(ls.join('\n'), 'utf8'), method: f.method };
+        });
+      };
+      return { editTree, done: () => done };
+    };
+    const lastDigit = edit((t) => t.replace(/(?<!\d)(\d{14})(\d)(?!\d)/, (m, a, d) => a + String((Number(d) + 1) % 10)));
+    const r2 = compareTrees(C, 'diy', Object.assign({ editTree: lastDigit.editTree }, base));
+    check(`reported: one non-prefix trace digit changed (the last digit of the first trace in ${lastDigit.done() || 'no entry'})`, !!lastDigit.done() && r2.mismatches.some((m) => /^diy kb-fund-ii itd: /.test(m) && m.indexOf(lastDigit.done()) >= 0), r2.mismatches.slice(0, 3));
+    const otherPrefix = edit((t) => t.replace(/(?<!\d)(\d{2})(\d{13})(?!\d)/g, (m, p, rest) => (p === '55' ? '56' : '55') + rest));
+    const r3 = compareTrees(C, 'diy', Object.assign({ editTree: otherPrefix.editTree }, base));
+    check(`reported: the traces' prefix moved to a prefix that is not the swap image (in ${otherPrefix.done() || 'no entry'})`, !!otherPrefix.done() && r3.mismatches.some((m) => /^diy kb-fund-ii itd: /.test(m) && m.indexOf(otherPrefix.done()) >= 0), r3.mismatches.slice(0, 3));
+    const staleLine = edit(null, true);
+    const r4 = compareTrees(C, 'diy', Object.assign({ editTree: staleLine.editTree }, base));
+    check(`reported: a substituted entry whose MANIFEST line is not its SHA-256 (${staleLine.done() || 'no entry'})`, !!staleLine.done() && r4.mismatches.some((m) => /^diy kb-fund-ii itd: /.test(m) && m.indexOf(`MANIFEST.sha256: the line for ${staleLine.done()} is not`) >= 0), r4.mismatches.slice(0, 3));
+  } finally {
+    fs.rmSync(C, { recursive: true, force: true });
+  }
+}
+
+/** The hash of a base tree's diy.html and assets/js, for the kept-part key. */
+function baseHash(root) {
+  const h = crypto.createHash('sha256');
+  const files = ['diy.html'].concat(fs.readdirSync(path.join(root, 'assets/js')).sort().map((f) => `assets/js/${f}`));
+  files.forEach((f) => {
+    const p = path.join(root, f);
+    if (fs.statSync(p).isFile()) h.update(f + '\0').update(fs.readFileSync(p));
+  });
+  return h.digest('hex');
+}
+
 module.exports = { PREFIX_SWAP, ASSIGNED, ROUTING_WORD, abaValid, bankLike, swapOf, scan, filesOf, inArea, ending };
 
-if (require.main === module) L6.runParts(parts, { name: 'ACH LEAK', unit: 'cases', flag: '--case' });
+if (require.main === module) {
+  // The packages case depends on P16_BASE, which runParts' kept-part key does not hold: the base's path and the hash of
+  // its diy.html and assets/js go on the command line the key is made from, so a result is kept only for that base.
+  const B = baseTree();
+  if (B.root) process.argv.push('--p16-base', `${fs.realpathSync(B.root)}:${baseHash(B.root)}`);
+  L6.runParts(parts, { name: 'ACH LEAK', unit: 'cases', flag: '--case' });
+}
