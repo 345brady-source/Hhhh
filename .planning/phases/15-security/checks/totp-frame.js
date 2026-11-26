@@ -23,9 +23,11 @@ const OUT = path.join(Lib.OUT, 'totp-frame');
 fs.mkdirSync(OUT, { recursive: true });
 
 // The frame of no-network.js and safari-finish.js (a host page holding the page in a sandboxed iframe; the framed
-// page served with connect-src 'none'), with the sandbox plan 15-02 names: scripts only, no same origin.
+// page served with connect-src 'none'), with the sandbox plan 15-02 names: scripts only, no same origin. A frame with no
+// same origin has an opaque origin, which 'self' does not match, so the page's own server is named in script-src (the
+// host's policy lets its own scripts load the same way); connections stay refused.
 const SANDBOX = 'allow-scripts';
-const CSP = "connect-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob:";
+const cspFor = (origin) => `connect-src 'none'; script-src 'self' ${origin} 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob:`;
 const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 
 // RFC 6238 Appendix B, SHA1 rows (secret '12345678901234567890', 8 digits): T in seconds -> TOTP.
@@ -69,7 +71,7 @@ async function framed(S, browser) {
     document.addEventListener('securitypolicyviolation', (e) => window.__cspv.push(`${e.violatedDirective} ${e.blockedURI}`));
   });
   await A.context.route(`${S.origin}/__totp-frame.html`, (route) =>
-    route.fulfill({ status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': CSP }, body: fs.readFileSync(path.join(OUT, 'frame.html')) })
+    route.fulfill({ status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': cspFor(S.origin) }, body: fs.readFileSync(path.join(OUT, 'frame.html')) })
   );
   await A.context.route(`${S.origin}/__frame-host.html`, (route) =>
     route.fulfill({
@@ -95,6 +97,8 @@ function part(engineName, removed) {
     const { A, fr, requests } = await framed(S, E.browser);
     const where = await fr.evaluate(() => ({ origin: self.origin, w: innerWidth, h: innerHeight, touch: navigator.maxTouchPoints > 0 || 'ontouchstart' in window }));
     check('the page runs in a sandboxed frame with no same origin, on a 390x844 touch screen', where.origin === 'null' && where.w === 390 && where.h === 844 && where.touch, where);
+    const atLoad = await fr.evaluate(() => window.__cspv.slice());
+    check('the page loaded with nothing refused (assets/js/totp.js allowed by the policy) and no script error', atLoad.length === 0 && A.errors.length === 0, { refused: atLoad, errors: A.errors });
     const refused = await fr.evaluate(() =>
       fetch('assets/js/totp.js', { cache: 'no-store' }).then(
         (x) => 'fetched ' + x.status,
