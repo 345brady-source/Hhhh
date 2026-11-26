@@ -9,25 +9,84 @@
  * joint accounts and trusts go in a PPD batch; entities and IRA custodians in a CCD
  * batch. An optional offsetting debit (27/37) balances each batch against the
  * paying entity's settlement account for banks that require balanced files.
+ * Banking days (effective dates, the distribution schedule) follow the Federal Reserve's holidays, worked out by rule
+ * for any year, plus a dated list of one-off closures.
  *
  * Always confirm field values against the originating bank's ACH implementation guide.
  */
 (function (NS) {
   'use strict';
 
-  /* Federal Reserve holidays on which ACH does not settle (2025–2028). */
-  const FED_HOLIDAYS = new Set([
-    '2025-01-01', '2025-01-20', '2025-02-17', '2025-05-26', '2025-06-19', '2025-07-04', '2025-09-01', '2025-10-13', '2025-11-11', '2025-11-27', '2025-12-25',
-    '2026-01-01', '2026-01-19', '2026-02-16', '2026-05-25', '2026-06-19', '2026-09-07', '2026-10-12', '2026-11-11', '2026-11-26', '2026-12-25',
-    '2027-01-01', '2027-01-18', '2027-02-15', '2027-05-31', '2027-07-05', '2027-09-06', '2027-10-11', '2027-11-11', '2027-11-25',
-    '2028-01-17', '2028-02-21', '2028-05-29', '2028-06-19', '2028-07-04', '2028-09-04', '2028-10-09', '2028-11-23', '2028-12-25'
-  ]);
   const D = () => NS.dates;
 
+  /*
+   * Federal Reserve holidays on which ACH does not settle, worked out by rule for any year: the eleven holidays the
+   * Federal Reserve Banks observe. A fixed-date holiday that falls on a Sunday closes the Monday after it; one that falls
+   * on a Saturday closes nothing (the Reserve Banks are open the Friday before). Kept per year after the first call.
+   */
+  const HOLIDAYS_BY_YEAR = new Map();
+  function holidaysOf(year) {
+    const y = Number(year);
+    if (!Number.isInteger(y) || y < 1 || y > 9999) return { list: [], set: new Set() };
+    if (HOLIDAYS_BY_YEAR.has(y)) return HOLIDAYS_BY_YEAR.get(y);
+    const at = (m, day) => new Date(Date.UTC(y, m, day));
+    // The n-th weekday wd (0 Sunday .. 6 Saturday) of month m (0 January).
+    const nth = (m, wd, n) => {
+      const d = at(m, 1);
+      while (d.getUTCDay() !== wd) d.setUTCDate(d.getUTCDate() + 1);
+      d.setUTCDate(d.getUTCDate() + 7 * (n - 1));
+      return d;
+    };
+    const lastMonday = (m) => {
+      const d = at(m + 1, 0);
+      while (d.getUTCDay() !== 1) d.setUTCDate(d.getUTCDate() - 1);
+      return d;
+    };
+    const fixed = (m, day) => {
+      const d = at(m, day);
+      const wd = d.getUTCDay();
+      if (wd === 6) return null;
+      if (wd === 0) d.setUTCDate(d.getUTCDate() + 1);
+      return d;
+    };
+    const list = [
+      fixed(0, 1), // New Year's Day
+      nth(0, 1, 3), // Birthday of Martin Luther King, Jr.: third Monday of January
+      nth(1, 1, 3), // Washington's Birthday: third Monday of February
+      lastMonday(4), // Memorial Day: last Monday of May
+      fixed(5, 19), // Juneteenth National Independence Day
+      fixed(6, 4), // Independence Day
+      nth(8, 1, 1), // Labor Day: first Monday of September
+      nth(9, 1, 2), // Columbus Day: second Monday of October
+      fixed(10, 11), // Veterans Day
+      nth(10, 4, 4), // Thanksgiving Day: fourth Thursday of November
+      fixed(11, 25) // Christmas Day
+    ]
+      .filter(Boolean)
+      .map((d) => D().isoOf(d))
+      .sort();
+    const entry = { list: Object.freeze(list), set: new Set(list) };
+    HOLIDAYS_BY_YEAR.set(y, entry);
+    return entry;
+  }
+  /** The year's Federal Reserve holidays that close a weekday, as 'YYYY-MM-DD', sorted. */
+  function fedHolidays(year) {
+    return holidaysOf(year).list.slice();
+  }
+  /*
+   * One-off closures the Federal Reserve announces case by case (a national day of mourning, say): one dated line each,
+   * { date: 'YYYY-MM-DD', why: '...' }. Empty at launch.
+   */
+  const EXTRA_CLOSED = Object.freeze([
+  ].map((x) => Object.freeze(Object.assign({}, x))));
+
+  function isFedHoliday(iso) {
+    return holidaysOf(String(iso).slice(0, 4)).set.has(iso) || EXTRA_CLOSED.some((x) => x.date === iso);
+  }
   function isBankingDay(iso) {
     const d = D().parse(iso);
     const wd = d.getUTCDay();
-    return wd !== 0 && wd !== 6 && !FED_HOLIDAYS.has(iso);
+    return wd !== 0 && wd !== 6 && !isFedHoliday(iso);
   }
   function nextBankingDay(iso, n) {
     const d = D().parse(iso);
@@ -41,7 +100,7 @@
   function bankingDayReason(iso) {
     const wd = D().parse(iso).getUTCDay();
     if (wd === 0 || wd === 6) return 'falls on a weekend';
-    if (FED_HOLIDAYS.has(iso)) return 'is a Federal Reserve holiday';
+    if (isFedHoliday(iso)) return 'is a Federal Reserve holiday';
     return '';
   }
 
@@ -188,5 +247,5 @@
     9: [[1, 1, 'Record type'], [2, 7, 'Batch count'], [8, 13, 'Block count'], [14, 21, 'Entry count'], [22, 31, 'Entry hash'], [32, 43, 'Total debits'], [44, 55, 'Total credits'], [56, 94, 'Reserved']]
   };
 
-  NS.nacha = { build, abaValid, isBankingDay, nextBankingDay, bankingDayReason, clean, LAYOUT };
+  NS.nacha = { build, abaValid, isBankingDay, nextBankingDay, bankingDayReason, clean, LAYOUT, fedHolidays, EXTRA_CLOSED };
 })(window.CVPortal);
