@@ -25,6 +25,7 @@ for (const k of ['log', 'error', 'warn', 'info', 'debug']) {
 const KEY = randomBytes(32).toString('base64');
 const T0 = Date.parse('2027-01-20T15:00:00Z');
 const MIN = 60e3;
+const HOUR_MS = 60 * MIN;
 const MB = 1048576;
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 const FIRM = { name: 'Kestrel Bay Capital', notifyEmail: 'ir@kestrel.example.invalid', supportEmail: 'help@kestrel.example.invalid' };
@@ -496,4 +497,294 @@ test('screen: the firm is refused bank, taxpayer and password shapes; an investo
     assert.ok(!JSON.stringify(t.store.data()).includes('000-12-3456'));
     assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 2 });
   });
+});
+
+/* ---------- 8. broadcast ---------- */
+test('broadcast: one send to three investors, one copy each with its own files; a repeated clientId stores nothing new', async () => {
+  await withInbox(async (t) => {
+    const earlier = await t.send([ONE], { body: 'Before the quarterly letter.' });
+    assert.equal(earlier.status, 201);
+    const file = pdf('QUARTERLYMARK', 3000);
+    const blobsBefore = t.store.blobs.size;
+    const bc = await t.send([ONE, TWO, THREE], { clientId: 'c-bc-1', body: 'The quarterly letter is attached.', attachments: [att('Quarterly letter.pdf', file)] });
+    assert.equal(bc.status, 201, JSON.stringify(bc.body));
+    assert.match(bc.body.broadcastId, /^bc_[\w-]+$/);
+    assert.equal(bc.body.messages.length, 3);
+    assert.deepEqual(bc.body.messages.map((m) => m.party.id), ['KB-1001', 'KB-1002', 'KB-1003']);
+    assert.equal(bc.body.messages[0].threadId, earlier.body.messages[0].threadId);
+    assert.equal(new Set(bc.body.messages.map((m) => m.threadId)).size, 3);
+    const fileIds = bc.body.messages.map((m) => m.attachments[0].id);
+    assert.equal(new Set(fileIds).size, 3);
+    assert.equal(t.store.blobs.size, blobsBefore + 3);
+    for (const m of bc.body.messages) assert.equal(m.attachments[0].sha256, sha(file));
+    const recs = Object.values(t.store.data().inbox).filter((r) => r.type === 'message' && r.broadcastId === bc.body.broadcastId);
+    assert.equal(recs.length, 3);
+
+    for (const [i, id] of ['KB-1001', 'KB-1002', 'KB-1003'].entries()) {
+      const mine = await t.call('GET', '/v1/my-inbox', inv(id));
+      const copies = mine.body.messages.filter((m) => m.broadcastId === bc.body.broadcastId);
+      assert.deepEqual(copies.map((m) => m.id), [bc.body.messages[i].id]);
+      assert.equal(copies[0].attachments[0].name, 'Quarterly letter.pdf');
+      for (const [j, fid] of fileIds.entries()) {
+        const got = await t.call('GET', `/v1/my-inbox/attachments/${fid}`, inv(id));
+        assert.equal(got.status, i === j ? 200 : 404);
+        if (i === j) assert.ok(got.bytes.equals(file));
+      }
+    }
+    const r = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1002'), { threadId: bc.body.messages[1].threadId, body: 'Investor Two answers the letter.' });
+    assert.equal(r.status, 201);
+    assert.equal(r.body.message.threadId, bc.body.messages[1].threadId);
+    for (const id of ['KB-1001', 'KB-1003']) assert.ok(!JSON.stringify((await t.call('GET', '/v1/my-inbox', inv(id))).body).includes('Investor Two answers'));
+
+    const count = recordCount(t);
+    const calls = t.calls.length;
+    const again = await t.send([ONE, TWO, THREE], { clientId: 'c-bc-1', body: 'The quarterly letter is attached.', attachments: [att('Quarterly letter.pdf', file)] });
+    assert.equal(again.status, 201);
+    assert.deepEqual(again.body, bc.body);
+    const twice = await Promise.all([t.send([ONE], { clientId: 'c-bc-2', body: 'Sent twice at once.' }), t.send([ONE], { clientId: 'c-bc-2', body: 'Sent twice at once.' })]);
+    assert.deepEqual(twice[0].body, twice[1].body);
+    assert.equal(Object.values(t.store.data().inbox).filter((x) => x.type === 'message').length, 6);
+    assert.equal(recordCount(t), count + 3); // one message, its notice event and its client record
+    assert.equal(t.calls.length, calls); // the investor already has an unread noticed message less than an hour old
+
+    assert.equal((await t.send([])).status, 400);
+    assert.equal((await t.send([{ party: { kind: 'prospect', id: 'pr-1' }, name: 'A prospect', email: 'p@example.invalid' }])).status, 400);
+    const many = Array.from({ length: 501 }, (_, i) => ({ party: { kind: 'investor', id: `KB-${2000 + i}` }, name: `Investor ${i}`, email: `i${i}@example.invalid`, offeringId: '' }));
+    assert.equal((await t.send(many)).status, 400);
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 6 });
+  });
+});
+
+/* ---------- 9. updates ---------- */
+test('updates: every investor message, read and notice comes back once, in order, across since values; more when cut at 500', async () => {
+  await withInbox(async (t) => {
+    const seen = [];
+    let since = 0;
+    const pull = async () => {
+      const up = await t.call('GET', `/v1/inbox/updates?since=${since}`, SPONSOR);
+      assert.equal(up.status, 200);
+      seen.push(...up.body.items);
+      since = up.body.order;
+    };
+    let threadId = '';
+    for (let i = 0; i < 10; i++) {
+      t.clock.t += 2 * HOUR_MS;
+      const s = await t.send([ONE], { body: `Firm message ${i}.` });
+      threadId = s.body.messages[0].threadId;
+      if (i % 3 === 0) await pull();
+      t.clock.t += MIN;
+      assert.equal((await t.call('POST', '/v1/my-inbox/read', inv('KB-1001'), { threadId })).body.marked, 1);
+      if (i % 4 === 1) await pull();
+      t.clock.t += MIN;
+      assert.equal((await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: `Investor reply ${i}.` })).status, 201);
+      assert.equal((await t.call('POST', '/v1/inbox/read', SPONSOR, { threadId })).body.marked, 1);
+    }
+    await pull();
+    await pull();
+    const full = await t.call('GET', '/v1/inbox/updates?since=0', SPONSOR);
+    assert.deepEqual(seen, full.body.items);
+    assert.equal(full.body.items.length, 30);
+    assert.deepEqual(full.body.items.filter((i) => i.type === 'message').map((i) => i.body), Array.from({ length: 10 }, (_, i) => `Investor reply ${i}.`));
+    assert.equal(full.body.items.filter((i) => i.type === 'read').length, 10);
+    assert.equal(full.body.items.filter((i) => i.type === 'notice').length, 10);
+    const keys = full.body.items.map((i) => `${i.type}:${i.type === 'message' ? i.id : i.messageId}`);
+    assert.equal(new Set(keys).size, 30);
+    for (let i = 1; i < full.body.items.length; i++) assert.ok(full.body.items[i].order > full.body.items[i - 1].order);
+    const beyond = await t.call('GET', `/v1/inbox/updates?since=${full.body.order + 50}`, SPONSOR);
+    assert.deepEqual(beyond.body.items, []);
+    assert.equal(beyond.body.more, false);
+    assert.equal((await t.call('GET', '/v1/inbox/updates?since=abc', SPONSOR)).status, 400);
+    assert.equal((await t.call('GET', '/v1/inbox/updates?since=-1', SPONSOR)).status, 400);
+  });
+  await withInbox(async (t) => {
+    for (let i = 0; i < 501; i++) await t.inbox.post('ws-kb', { party: ONE.party, from: 'party', body: `Short note ${i}.` });
+    const first = await t.call('GET', '/v1/inbox/updates?since=0', SPONSOR);
+    assert.equal(first.body.items.length, 500);
+    assert.equal(first.body.more, true);
+    assert.equal(first.body.order, first.body.items[499].order);
+    const rest = await t.call('GET', `/v1/inbox/updates?since=${first.body.order}`, SPONSOR);
+    assert.deepEqual(rest.body.items.map((i) => i.body), ['Short note 500.']);
+    assert.equal(rest.body.more, false);
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 501 });
+  });
+});
+
+/* ---------- 10. chain ---------- */
+test('chain: the browser recipe; a re-sealed body or a changed time names that message', async () => {
+  await withInbox(async (t) => {
+    const a = await t.send([ONE], { body: 'First in the chain.', attachments: [att('Chain one.pdf', pdf('CHAINONE'))] });
+    t.clock.t += MIN;
+    await t.send([TWO], { body: 'Second in the chain.' });
+    t.clock.t += MIN;
+    await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId: a.body.messages[0].threadId, body: 'Third, from the investor.' });
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 3 });
+    const recs = Object.values(t.store.data().inbox).filter((r) => r.type === 'message').sort((x, y) => x.seq - y.seq);
+    assert.deepEqual(recs.map((r) => r.seq), [1, 2, 3]);
+    // chainText returns the joined text exactly as NS.inbox.chainText; the hash is SHA-256 hex of its UTF-8.
+    const r1 = recs[0];
+    const text = t.inbox.chainText(t.inbox.GENESIS, { seq: 1, at: r1.at, threadId: r1.threadId, from: 'firm', author: 'Dana Admin', body: 'First in the chain.', attachments: [{ sha256: sha(pdf('CHAINONE')) }], broadcastId: '', correctionOf: '' });
+    assert.equal(text, ['0'.repeat(64), 1, r1.at, r1.threadId, 'firm', 'Dana Admin', 'First in the chain.', sha(pdf('CHAINONE')), '', ''].join('|'));
+    assert.equal(r1.prev, '0'.repeat(64));
+    assert.equal(r1.hash, sha(Buffer.from(text, 'utf8')));
+    assert.equal(recs[1].prev, r1.hash);
+
+    const original = recs[1].sealed;
+    recs[1].sealed = t.vault.seal({ author: 'Dana Admin', body: 'Another text.', names: [] }, `inbox:${recs[1].id}:sealed`);
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: false, brokenAt: 2 });
+    recs[1].sealed = original;
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 3 });
+    const at = r1.at;
+    r1.at = new Date(Date.parse(at) + 1000).toISOString();
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: false, brokenAt: 1 });
+    r1.at = at;
+    recs[2].sealed = recs[1].sealed;
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: false, brokenAt: 3 });
+  });
+});
+
+/* ---------- 11. notices ---------- */
+test('notices: one per unread thread per hour; again after a read or after an hour; a failing notify still stores', async () => {
+  await withInbox(async (t) => {
+    const statuses = [];
+    const firm = async (who = ONE) => {
+      const r = await t.send([who], { body: 'A new message is waiting.' });
+      assert.equal(r.status, 201);
+      statuses.push(r.body.messages[0].notice.status);
+      return r.body.messages[0];
+    };
+    const m1 = await firm();
+    t.clock.t += 10 * MIN;
+    await firm();
+    t.clock.t += 10 * MIN;
+    await firm();
+    assert.deepEqual(statuses, ['sent', 'coalesced', 'coalesced']);
+    assert.equal(t.calls.filter((c) => c.kind === 'message_notice').length, 1);
+    await t.call('POST', '/v1/my-inbox/read', inv('KB-1001'), { threadId: m1.threadId });
+    t.clock.t += 10 * MIN;
+    await firm();
+    t.clock.t += 30 * MIN;
+    await firm();
+    t.clock.t += 31 * MIN; // one hour and one minute after the last noticed message, which is still unread
+    await firm();
+    assert.deepEqual(statuses, ['sent', 'coalesced', 'coalesced', 'sent', 'coalesced', 'sent']);
+    assert.equal(t.calls.filter((c) => c.kind === 'message_notice').length, 3);
+    for (const c of t.calls) {
+      assert.deepEqual(Object.keys(c).sort(), ['kind', 'messageId', 'party', 'threadId', 'to', 'workspace']);
+      assert.ok(!JSON.stringify(c).includes('A new message is waiting.'));
+    }
+    const up = await t.call('GET', '/v1/inbox/updates?since=0', SPONSOR);
+    assert.deepEqual(up.body.items.filter((i) => i.type === 'notice').map((i) => i.status), statuses);
+
+    t.notifyMode.throws = true;
+    const failed = await firm(TWO);
+    assert.equal(statuses[6], 'failed');
+    const two = await t.call('GET', '/v1/my-inbox', inv('KB-1002'));
+    assert.deepEqual(two.body.messages.map((m) => m.id), [failed.id]);
+    t.notifyMode.throws = false;
+    await firm(TWO); // a failed notice does not hold back the next one
+    assert.equal(statuses[7], 'sent');
+
+    // An investor's message asks for the firm's notice, to the firm's notify address, without its text.
+    const before = t.calls.length;
+    await t.call('POST', '/v1/my-inbox/messages', inv('KB-1002'), { threadId: failed.threadId, body: 'A question about the letter.' });
+    assert.equal(t.calls.length, before + 1);
+    assert.equal(t.calls[before].kind, 'message_received');
+    assert.deepEqual(t.calls[before].to, { name: FIRM.name, email: FIRM.notifyEmail });
+    assert.deepEqual(t.calls[before].from, { name: 'Investor Two', kind: 'investor' });
+    assert.ok(!JSON.stringify(t.calls[before]).includes('A question about the letter.'));
+    assert.deepEqual(t.inbox.verify('ws-kb'), { ok: true, count: 9 });
+  });
+  await withInbox(async (t) => {
+    const r = await t.send([ONE]);
+    assert.equal(r.body.messages[0].notice.status, 'none');
+  }, { noNotify: true });
+});
+
+/* ---------- 12. prefs ---------- */
+test('prefs: an investor turns notices off and on; the sponsor sending again keeps the choice', async () => {
+  await withInbox(async (t) => {
+    await t.send([ONE]);
+    const calls = t.calls.length;
+    const off = await t.call('POST', '/v1/my-inbox/prefs', inv('KB-1001'), { notices: false });
+    assert.equal(off.status, 200);
+    assert.deepEqual(off.body, { prefs: { notices: false } });
+    assert.equal((await t.call('GET', '/v1/my-inbox', inv('KB-1001'))).body.prefs.notices, false);
+    t.clock.t += 2 * HOUR_MS;
+    const quiet = await t.send([ONE]);
+    assert.equal(quiet.body.messages[0].notice.status, 'off');
+    assert.equal(t.calls.length, calls);
+    assert.equal((await t.call('POST', '/v1/my-inbox/prefs', inv('KB-1001'), { notices: 'no' })).status, 400);
+    const on = await t.call('POST', '/v1/my-inbox/prefs', inv('KB-1001'), { notices: true });
+    assert.deepEqual(on.body, { prefs: { notices: true } });
+    const loud = await t.send([ONE]);
+    assert.equal(loud.body.messages[0].notice.status, 'sent');
+    assert.equal(t.calls.length, calls + 1);
+    // An investor the sponsor has not written to yet can set the choice first; the sponsor's send keeps it.
+    assert.deepEqual((await t.call('POST', '/v1/my-inbox/prefs', inv('KB-1002'), { notices: false })).body, { prefs: { notices: false } });
+    assert.equal((await t.send([TWO])).body.messages[0].notice.status, 'off');
+    assert.equal((await t.call('GET', '/v1/my-inbox', inv('KB-1002'))).body.messages.length, 1);
+  });
+});
+
+/* ---------- 13. nodelete ---------- */
+test('nodelete: no route removes or changes a record; the module never calls a store removal', async () => {
+  await withInbox(async (t) => {
+    const s = await t.send([ONE], { attachments: [att('Kept.pdf', pdf('KEPT'))] });
+    const fid = s.body.messages[0].attachments[0].id;
+    const before = recordCount(t);
+    const sponsorPaths = ['/v1/inbox/messages', '/v1/inbox/updates', '/v1/inbox/read', `/v1/inbox/attachments/${fid}`];
+    const partyPaths = ['/v1/my-inbox', '/v1/my-inbox/messages', '/v1/my-inbox/read', '/v1/my-inbox/prefs', `/v1/my-inbox/attachments/${fid}`];
+    for (const method of ['DELETE', 'PUT', 'PATCH']) {
+      for (const p of sponsorPaths) assert.equal((await t.call(method, p, SPONSOR, {})).status, 405, `${method} ${p}`);
+      for (const p of partyPaths) assert.equal((await t.call(method, p, inv('KB-1001'), {})).status, 405, `${method} ${p}`);
+    }
+    assert.equal((await t.call('GET', '/v1/inbox/messages', SPONSOR)).status, 405);
+    assert.equal((await t.call('POST', '/v1/inbox/updates', SPONSOR, {})).status, 405);
+    assert.equal(recordCount(t), before);
+    for (const p of [...sponsorPaths]) assert.equal(t.inbox.sponsorPath('DELETE', p), true);
+    for (const p of [...partyPaths]) assert.equal(t.inbox.partyPath('DELETE', p), true);
+    assert.equal(t.inbox.sponsorPath('GET', '/v1/inbox/other'), false);
+  });
+  const src = readFileSync(fileURLToPath(new URL('../lib/inbox.mjs', import.meta.url)), 'utf8');
+  const code = src.split('\n').filter((l) => !/^\s*(\/\/|\/\*|\*)/.test(l)).join('\n');
+  assert.equal((code.match(/\.remove\s*\(|\.removeBlob\s*\(|\bremoveBlob\b|\bremove\s*:/g) || []).length, 0);
+  assert.ok(allStores.length >= 1);
+  for (const st of allStores) {
+    assert.deepEqual(st.violations, []);
+    for (let i = 1; i < st.counts.length; i++) assert.ok(st.counts[i] >= st.counts[i - 1]);
+  }
+});
+
+/* ---------- 14. limits ---------- */
+test('limits: 4,000 characters, request and small-call caps, the rate limit on every POST; nothing written to the console', async () => {
+  await withInbox(async (t) => {
+    const s = await t.send([ONE], { body: 'x'.repeat(4000) });
+    assert.equal(s.status, 201);
+    const threadId = s.body.messages[0].threadId;
+    const long = await t.send([ONE], { body: 'x'.repeat(4001) });
+    assert.equal(long.status, 422);
+    assert.deepEqual(long.body, { error: 'A message can be at most 4,000 characters.', field: 'body' });
+    const longParty = await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: 'y'.repeat(4001) });
+    assert.equal(longParty.status, 422);
+    assert.equal(longParty.body.error, 'A message can be at most 4,000 characters.');
+
+    const huge = `{"body":"${'z'.repeat(t.inbox.LIMITS.request + 10)}"}`;
+    assert.equal((await t.call('POST', '/v1/inbox/messages', SPONSOR, undefined, huge)).status, 413);
+    assert.equal((await t.call('POST', '/v1/my-inbox/messages', inv('KB-1001'), undefined, huge)).status, 413);
+    const small = JSON.stringify({ threadId, pad: 'p'.repeat(16 * 1024) });
+    assert.equal((await t.call('POST', '/v1/inbox/read', SPONSOR, undefined, small)).status, 413);
+    assert.equal((await t.call('POST', '/v1/my-inbox/read', inv('KB-1001'), undefined, small)).status, 413);
+    assert.equal((await t.call('POST', '/v1/my-inbox/prefs', inv('KB-1001'), undefined, JSON.stringify({ notices: true, pad: 'p'.repeat(16 * 1024) }))).status, 413);
+
+    const before = recordCount(t);
+    t.limit.on = true;
+    for (const [p, ctx, body] of [['/v1/inbox/messages', SPONSOR, { firm: FIRM, author: 'Dana Admin', body: 'Limited.', recipients: [ONE] }], ['/v1/inbox/read', SPONSOR, { threadId }], ['/v1/my-inbox/messages', inv('KB-1001'), { threadId, body: 'Limited.' }], ['/v1/my-inbox/read', inv('KB-1001'), { threadId }], ['/v1/my-inbox/prefs', inv('KB-1001'), { notices: false }]]) {
+      assert.equal((await t.call('POST', p, ctx, body)).status, 429, p);
+    }
+    assert.equal((await t.call('GET', '/v1/my-inbox', inv('KB-1001'))).status, 200);
+    assert.equal((await t.call('GET', '/v1/inbox/updates?since=0', SPONSOR)).status, 200);
+    t.limit.on = false;
+    assert.equal(recordCount(t), before);
+  });
+  assert.deepEqual(consoleCalls, []);
 });
