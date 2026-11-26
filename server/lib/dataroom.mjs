@@ -247,7 +247,10 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     const room = store.get(C, found.roomId);
     if (!room || room.type !== 'room' || room.workspace !== found.workspace) return null;
     const st = stateOf(room);
-    if (found.open) return null;
+    if (found.open) {
+      const current = room.regime !== '506b' ? openLinkOf(st) : null;
+      return current && current.id === found.id ? { room, prospect: null, open: true, link: found, state: st } : null;
+    }
     const prospect = st.prospects.find((p) => p.id === found.prospectId);
     if (!prospect) return null;
     const newest = newestLink(st, prospect.id);
@@ -310,19 +313,73 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     return { workspace: c.workspace, actor: { id: clip(actor.id, 80), name: str(actor.name, 120) } };
   }
 
-  /** An NDA as posted: { title, text } (click-through). */
-  async function ndaInput(n) {
+  /** True when the writer library's name is in the bytes (plain, hex of Latin-1, or hex of UTF-16 as metadata is stored). */
+  function namesWriter(bytes) {
+    const t = Buffer.from(bytes).toString('latin1').toLowerCase();
+    const hex = (s, w) => Array.from(s, (ch) => ch.charCodeAt(0).toString(16).padStart(w, '0')).join('');
+    return ['pdf-lib', 'hopding'].some((w) => t.includes(w) || t.includes(hex(w, 2)) || t.includes(hex(w, 4)) || t.includes(hex(w.replace(/./, (ch) => ch.toUpperCase()), 4)));
+  }
+  /** The e-sign NDA form as a prospect will see it: when it names the writer library, its Producer and Creator become the firm. */
+  async function whiteLabel(bytes, firmName) {
+    if (!namesWriter(bytes)) return bytes;
+    const { L } = tools();
+    try {
+      const doc = await L.PDFDocument.load(bytes, { updateMetadata: false });
+      doc.setProducer(firmName);
+      doc.setCreator(firmName);
+      return Buffer.from(await doc.save({ useObjectStreams: false }));
+    } catch {
+      throw fail(422, 'The NDA form could not be read as a PDF.', { field: 'nda' });
+    }
+  }
+  /**
+   * An NDA as posted: { title, text } (click-through, version = SHA-256 of the text) or { mode: 'esign', title,
+   * template: { title, roles, fields, pages, pageSizes, sha256 }, pdf } (the shape an invitation's esign snapshot carries;
+   * version = the template's SHA-256, which must be the form's).
+   */
+  async function ndaInput(n, firmName) {
     const o = obj(n) || {};
+    if (o.mode === 'esign') {
+      const tpl = obj(o.template);
+      const okTpl = tpl && Array.isArray(tpl.roles) && Array.isArray(tpl.fields) && Array.isArray(tpl.pageSizes) && Number.isInteger(tpl.pages) && tpl.pages > 0 && /^[0-9a-f]{64}$/.test(String(tpl.sha256 || ''));
+      if (!okTpl || JSON.stringify(tpl).length > 256 * KB) throw fail(422, 'Choose the NDA template to be signed.', { field: 'nda' });
+      const pdf = decode64(o.pdf, LIMITS.ndaFile, 'The NDA form is larger than 10 MB.', 'nda');
+      if (!isPdf(pdf)) throw fail(422, 'The NDA form must be a PDF.', { field: 'nda' });
+      if (sha256(pdf) !== tpl.sha256) throw fail(422, 'The NDA form does not match its template.', { field: 'nda' });
+      const form = await whiteLabel(pdf, firmName);
+      const version = sha256(form);
+      const title = str(o.title) || str(tpl.title) || 'Confidentiality agreement';
+      return { mode: 'esign', title, template: Object.assign({}, tpl, { sha256: version }), pdf: form, version };
+    }
+    if (o.mode !== undefined && o.mode !== 'click') throw fail(422, 'Choose how the NDA is agreed: click-through or e-signed.', { field: 'nda' });
     const text = typeof o.text === 'string' ? o.text : '';
     if (!text.trim()) throw fail(422, 'Add the NDA text.', { field: 'nda' });
     if (text.length > 100000) throw fail(422, 'The NDA text is longer than 100,000 characters.', { field: 'nda' });
     return { mode: 'click', title: str(o.title) || 'Confidentiality agreement', text, version: sha256(text) };
   }
+  const ndaBlob = (ndaId) => `rmn-${short(ndaId)}`;
   function writeNda(room, nda, seq) {
     const rec = { id: newId('rv'), type: 'nda', workspace: room.workspace, roomId: room.id, seq, version: nda.version, mode: nda.mode, at: iso() };
-    rec.sealed = seal(rec.id, { title: nda.title, text: nda.text });
+    if (nda.mode === 'esign') {
+      sealBlob(ndaBlob(rec.id), nda.pdf);
+      rec.sealed = seal(rec.id, { title: nda.title, template: nda.template });
+    } else rec.sealed = seal(rec.id, { title: nda.title, text: nda.text });
     putOnce(rec);
     return rec;
+  }
+  /** POST /v1/rooms/:id/nda: a new version; earlier assents no longer open the documents. */
+  async function newNda(req, res, c, room) {
+    const body = await readBody(req, LIMITS.create);
+    requireVault();
+    const firm = firmOf(room);
+    const nda = await ndaInput(room.ndaMode === 'esign' && body.mode === undefined ? Object.assign({ mode: 'esign' }, body) : body, firm.name);
+    if (nda.mode !== room.ndaMode) throw fail(422, room.ndaMode === 'esign' ? "This room's NDA is e-signed: send the template and its form." : "This room's NDA is click-through: send its text.", { field: 'mode' });
+    const st = stateOf(room);
+    if (st.nda && st.nda.version === nda.version) throw fail(409, 'This is the NDA already in use.', { field: 'text' });
+    const data = { version: nda.version, title: nda.title, mode: nda.mode, by: c.actor.name };
+    const ev = addEvent(room, 'nda_text', { data });
+    writeNda(room, nda, ev.seq);
+    return reply(res, 200, { version: nda.version });
   }
 
   async function createRoom(req, res, c) {
@@ -338,7 +395,10 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     if (!str(firm.name)) throw fail(422, "Add the firm's name.", { field: 'firm' });
     const download = body.download === undefined || body.download === null || body.download === '' ? 'off' : body.download;
     if (download !== 'off' && download !== 'watermarked') throw fail(422, 'Choose whether documents can be downloaded: off or watermarked.', { field: 'download' });
-    const nda = await ndaInput(body.nda);
+    const nda = await ndaInput(body.nda, str(firm.name));
+    // Checked after the last await, so no other request can open a room on this offering in between.
+    const existing = store.list(C).find((x) => x && x.type === 'room' && x.workspace === c.workspace && x.offeringId === offeringId);
+    if (existing) throw fail(409, 'This offering already has a data room.', { id: existing.id });
     const room = { id: newId('rm'), type: 'room', workspace: c.workspace, offeringId, regime: r, openedAt: iso(), download, ndaMode: nda.mode, seq: 1 };
     room.sealed = seal(room.id, {
       offeringName: str(off.name),
@@ -358,7 +418,10 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     if (!fileName) throw fail(422, 'Choose the document file.', { field: 'fileName' });
     const bytes = decode64(body.pdf, LIMITS.pdf, `${fileName} is larger than 25 MB.`, 'pdf');
     if (!isPdf(bytes)) throw fail(422, 'Data room documents are PDF files.', { field: 'pdf' });
+    const full = () => shownDocs(stateOf(room)).length >= LIMITS.docs;
+    if (full()) throw fail(422, 'A data room shows at most 30 documents.', { field: 'pdf' });
     const pages = await pageCount(bytes);
+    if (full()) throw fail(422, 'A data room shows at most 30 documents.', { field: 'pdf' });
     const digest = sha256(bytes);
     const title = str(body.title) || fileName;
     const id = newId('rd');
@@ -416,6 +479,69 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     const link = linkFor(body.portalUrl, token);
     const notice = await ask({ kind: 'room_invite', variant: 'personal', workspace: room.workspace, roomId: room.id, prospectId: p.id, to: { name, email }, link, expiresAt: p.expiresAt, firm: firmOf(room) });
     return reply(res, 201, { prospectId: p.id, link, expiresAt: p.expiresAt, warning, notice });
+  }
+
+  /** POST /v1/rooms/:id/documents/:doc/hide: hidden once, never removed (the file and its record stay). */
+  async function hideDoc(req, res, c, room, docId) {
+    const body = await readBody(req, LIMITS.small);
+    requireVault();
+    const st = stateOf(room);
+    const doc = st.docs.find((d) => d.id === docId);
+    if (!doc) throw fail(404, 'Not found');
+    if (st.hidden.has(doc.id)) throw fail(409, 'This document is already hidden.');
+    const ev = addEvent(room, 'doc_hidden', { docId: doc.id, data: { by: c.actor.name, why: str(body.why, LIMITS.note) } });
+    return reply(res, 200, { hiddenAt: ev.at });
+  }
+  const prospectIn = (st, prospectId) => st.prospects.find((p) => p.id === prospectId) || null;
+  /** POST /v1/rooms/:id/prospects/:p/link: a new personal link; the earlier one stops. The access keeps its end date. */
+  async function relink(req, res, c, room, prospectId) {
+    const body = await readBody(req, LIMITS.small);
+    requireVault();
+    const st = stateOf(room);
+    const p = prospectIn(st, prospectId);
+    if (!p) throw fail(404, 'Not found');
+    if (st.ended.has(p.id)) throw fail(409, "This prospect's access has ended. Invite them again to give access.");
+    if (now() >= Date.parse(p.expiresAt)) throw fail(409, "This prospect's access has expired. Invite them again to give access.");
+    portalAddress(body.portalUrl);
+    const token = issueLink(room, p, c.actor.id);
+    const link = linkFor(body.portalUrl, token);
+    const o = unseal(p) || {};
+    const notice = body.send === false ? 'not_sent' : await ask({ kind: 'room_invite', variant: 'personal', workspace: room.workspace, roomId: room.id, prospectId: p.id, to: { name: o.name || '', email: o.email || '' }, link, expiresAt: p.expiresAt, firm: firmOf(room) });
+    return reply(res, 201, { link, expiresAt: p.expiresAt, notice });
+  }
+  /** POST /v1/rooms/:id/prospects/:p/end: the access ends; every link of this prospect stops. */
+  async function endAccess(req, res, c, room, prospectId) {
+    await readBody(req, LIMITS.small);
+    requireVault();
+    const st = stateOf(room);
+    const p = prospectIn(st, prospectId);
+    if (!p) throw fail(404, 'Not found');
+    if (st.ended.has(p.id)) throw fail(409, "This prospect's access has already ended.");
+    const ev = addEvent(room, 'prospect_ended', { prospectId: p.id, data: { by: c.actor.name } });
+    return reply(res, 200, { endedAt: ev.at });
+  }
+  /** The room's current open link record (506(c) and other rooms only), or null. */
+  function openLinkOf(st) {
+    let id = '';
+    for (const e of st.events) if (e.kind === 'link' && !e.prospectId) id = (dataOf(e) || {}).on ? (dataOf(e) || {}).linkId || '' : '';
+    return id ? st.links.find((l) => l.open && l.id === id) || null : null;
+  }
+  /** POST /v1/rooms/:id/open-link { on, portalUrl }: a shared link through which a prospect joins with name and email. */
+  async function openLink(req, res, c, room) {
+    const body = await readBody(req, LIMITS.small);
+    requireVault();
+    if (room.regime === '506b') throw fail(422, 'A 506(b) room has personal links only.');
+    const st = stateOf(room);
+    if (body.on !== true) {
+      if (openLinkOf(st)) addEvent(room, 'link', { data: { on: false, by: c.actor.name } });
+      return reply(res, 200, {});
+    }
+    const portal = portalAddress(body.portalUrl);
+    const token = randomBytes(32).toString('base64url');
+    const linkId = newId('rl');
+    putOnce({ id: linkId, type: 'link', workspace: room.workspace, roomId: room.id, prospectId: '', open: true, n: 0, at: iso(), expiresAt: '', by: c.actor.id, portalUrl: portal, tokenHash: hashToken(token).toString('hex') });
+    addEvent(room, 'link', { data: { on: true, by: c.actor.name, linkId } });
+    return reply(res, 200, { link: linkFor(body.portalUrl, token) });
   }
 
   /** Every event of the room strictly after since, in order, opened; at most PAGE per answer. */
@@ -477,8 +603,13 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
       const isGet = what === 'activity' || what === 'record';
       if (isGet ? m !== 'GET' : m !== 'POST') return reply(res, 405, { error: 'Method not allowed' }, { Allow: isGet ? 'GET' : 'POST' });
       if (!room) throw fail(404, 'Not found');
+      if (what === 'nda') return await newNda(req, res, c, room);
       if (what === 'documents') return await addDocument(req, res, c, room);
       if (what === 'prospects') return await invite(req, res, c, room);
+      if (what === 'open-link') return await openLink(req, res, c, room);
+      if (parts[4] === 'documents' && parts[6] === 'hide') return await hideDoc(req, res, c, room, parts[5]);
+      if (parts[4] === 'prospects' && parts[6] === 'link') return await relink(req, res, c, room, parts[5]);
+      if (parts[4] === 'prospects' && parts[6] === 'end') return await endAccess(req, res, c, room, parts[5]);
       if (what === 'activity') return activity(res, room, url);
       if (what === 'record') return record(res, room);
       throw fail(404, 'Not found');
@@ -493,11 +624,12 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     const firm = s.firm || {};
     const n = unseal(st.nda) || {};
     const agreed = agreedNow(st, p.id);
+    const nda = st.nda.mode === 'esign' ? { mode: 'esign', title: n.title || '', template: n.template || null, version: st.nda.version } : { mode: 'click', title: n.title || '', text: n.text || '', version: st.nda.version };
     return {
       firm: { name: firm.name || '' },
       offering: { name: s.offeringName || '' },
       legend: s.legend || '',
-      nda: { mode: st.nda.mode, title: n.title || '', text: n.text || '', version: st.nda.version },
+      nda,
       agreed,
       documents: agreed ? shownDocs(st).map((d) => ({ id: d.id, title: (unseal(d) || {}).title || '', pages: d.pages, size: d.size })) : [],
       download: st.room.download,
@@ -505,19 +637,68 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
       privacy: `Your views of these documents are recorded for ${firm.name || 'the firm'}.`
     };
   }
+  /**
+   * POST /v1/room/nda: click-through { name, ticked, version } (a small call) or e-signed { mode: 'esign', name, version,
+   * signed, certificate } (two base64 PDFs of at most 10 MB, kept as sealed blobs on the assent). Either way the server's
+   * own time, the request's address and its browser are recorded, sealed.
+   */
   async function agree(req, res, a) {
-    const body = await readBody(req, LIMITS.nda);
+    const raw = await readRaw(req, LIMITS.nda);
+    const body = parseObject(raw);
     requireVault();
     const st = a.state;
-    if (body.ticked !== true) throw fail(422, 'Tick the box to agree.', { field: 'ticked' });
+    const esign = st.nda.mode === 'esign';
+    if (!esign && raw.length > LIMITS.small) throw fail(413, 'Request body too large');
+    if (esign && body.mode !== 'esign') throw fail(422, "This room's NDA is signed, not ticked.", { field: 'mode' });
+    if (!esign && body.mode === 'esign') throw fail(422, "This room's NDA is agreed with a tick, not signed.", { field: 'mode' });
+    if (!esign && body.ticked !== true) throw fail(422, 'Tick the box to agree.', { field: 'ticked' });
     const name = str(body.name);
     if (!name) throw fail(422, 'Type your full name.', { field: 'name' });
     if (body.version !== st.nda.version) throw fail(409, 'The NDA has changed. Read the current version and agree again.', { field: 'version' });
+    let files = null;
+    if (esign) {
+      const signed = decode64(body.signed, LIMITS.ndaFile, 'The signed copy is larger than 10 MB.', 'signed');
+      const certificate = decode64(body.certificate, LIMITS.ndaFile, 'The certificate is larger than 10 MB.', 'certificate');
+      if (!isPdf(signed) || !isPdf(certificate)) throw fail(422, 'The signed copy and its certificate must be PDF files.', { field: 'signed' });
+      files = { signed, certificate };
+    }
     const email = (unseal(a.prospect) || {}).email || '';
-    const ev = addEvent(a.room, 'assent', { prospectId: a.prospect.id, data: { version: st.nda.version, mode: 'click', name, email, ip: addressOf(req), agent: clip(req.headers['user-agent'], 300), envelopeId: '' } });
+    const data = { version: st.nda.version, mode: esign ? 'esign' : 'click', name, email, ip: addressOf(req), agent: clip(req.headers['user-agent'], 300), envelopeId: '' };
+    const id = newId('re');
+    if (files) {
+      sealBlob(`rma-${short(id)}-s`, files.signed);
+      sealBlob(`rma-${short(id)}-c`, files.certificate);
+      data.signed = { sha256: sha256(files.signed), size: files.signed.length };
+      data.certificate = { sha256: sha256(files.certificate), size: files.certificate.length };
+    }
+    const ev = addEvent(a.room, 'assent', { id, prospectId: a.prospect.id, data });
     const firm = firmOf(a.room);
     const notice = await ask({ kind: 'room_activity', variant: 'nda', workspace: a.room.workspace, roomId: a.room.id, prospectId: a.prospect.id, from: { name }, to: { name: firm.name, email: firm.notifyEmail } });
     return reply(res, 200, { agreed: true, version: st.nda.version, at: ev.at, notice });
+  }
+
+  /** GET /v1/room/nda.pdf: the e-signed NDA's form (404 in a click-through room). */
+  function ndaForm(res, st) {
+    if (st.nda.mode !== 'esign') throw fail(404, 'Not found');
+    const bytes = openBlob(ndaBlob(st.nda.id));
+    if (!bytes) throw fail(404, 'Not found');
+    res.writeHead(200, { 'Content-Type': 'application/pdf', 'Content-Length': bytes.length, 'Content-Disposition': 'inline; filename="NDA.pdf"', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+    res.end(bytes);
+    return true;
+  }
+  /** POST /v1/room/join { name, email } with the shared link: a prospect with basis 'open' and their own personal link. */
+  async function joinOpen(req, res, a) {
+    const body = await readBody(req, LIMITS.small);
+    requireVault();
+    const st = stateOf(a.room);
+    const name = str(body.name);
+    const email = str(body.email, 254);
+    checkPerson(st, name, email);
+    const p = writeProspect(a.room, { name, email, basis: { kind: 'open' }, days: LIMITS.days, by: '' });
+    const token = issueLink(a.room, p, '');
+    const link = linkFor(a.link.portalUrl, token);
+    const notice = await ask({ kind: 'room_invite', variant: 'open', workspace: a.room.workspace, roomId: a.room.id, prospectId: p.id, to: { name, email }, link, expiresAt: p.expiresAt, firm: firmOf(a.room) });
+    return reply(res, 201, { prospectId: p.id, link, expiresAt: p.expiresAt, notice });
   }
 
   /** The stamped copy for this prospect: from the sealed cache, or stamped once (concurrent first serves share one stamp). */
@@ -588,7 +769,14 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
       if (!(both ? m === 'GET' || m === 'POST' : gets ? m === 'GET' : m === 'POST')) return reply(res, 405, { error: 'Method not allowed' }, { Allow: both ? 'GET, POST' : gets ? 'GET' : 'POST' });
       const a = findByToken(token);
       if (!a) throw fail(401, GONE);
+      // The shared link of a 506(c) room opens only the join call; a personal link never joins.
+      if (a.open) {
+        if (p !== '/v1/room/join') throw fail(401, GONE);
+        return await joinOpen(req, res, a);
+      }
+      if (p === '/v1/room/join') throw fail(404, 'Not found');
       if (p === '/v1/room') return reply(res, 200, roomView(a.state, a.prospect));
+      if (p === '/v1/room/nda.pdf') return ndaForm(res, a.state);
       if (p === '/v1/room/nda') return await agree(req, res, a);
       if (p.startsWith('/v1/room/documents/')) return await serveDoc(req, res, a, safeDecode(p.slice('/v1/room/documents/'.length)));
       throw fail(404, 'Not found');
