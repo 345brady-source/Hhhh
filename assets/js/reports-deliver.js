@@ -22,6 +22,8 @@
   const UI = () => NS.reportsUI;
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`;
   const lastSpec = {};
+  // fields here are tap targets of at least 44 px on the phone, as the builder's buttons are
+  const TALL = ' style="min-height:44px"';
   const COUNSEL = 'Investors with no consent to electronic delivery on record. Their reports are in their Documents too. To be confirmed with counsel.';
 
   function st() {
@@ -215,7 +217,7 @@
     if (admin && live && s.wd !== f.id) acts.push(`<button type="button" class="cs-btn" data-action="rd-wd" data-id="${h(f.id)}">Withdraw</button>`);
     let wd = '';
     if (admin && live && s.wd === f.id)
-      wd = `<div class="rb-form rd-wdform"><label class="cs-field" for="rd-why"><span>Why it is withdrawn</span><input id="rd-why" type="text" maxlength="200" autocomplete="off" data-input="rd-why" value="${h(s.why)}"></label>
+      wd = `<div class="rb-form rd-wdform"><label class="cs-field" for="rd-why"><span>Why it is withdrawn</span><input id="rd-why" type="text" maxlength="200" autocomplete="off" data-input="rd-why" value="${h(s.why)}"${TALL}></label>
         ${s.wdMsg ? `<p class="rb-msg" role="alert" data-rd="wd-msg">${h(s.wdMsg)}</p>` : ''}
         <div class="rb-acts"><button type="button" class="cs-btn cs-btn-primary" data-action="rd-wd-yes" data-id="${h(f.id)}">Withdraw report</button><button type="button" class="cs-btn" data-action="rd-wd-no">Keep</button></div></div>`;
     const msg = s.dl[f.id] ? `<p class="rb-msg" role="alert" data-rd="dl-msg">${h(s.dl[f.id])}</p>` : '';
@@ -235,9 +237,9 @@
           .map((p) => {
             const sent = p.sentOn
               ? `<span class="sub">Sent on paper ${h(day(p.sentOn))} by ${h(p.sentBy)}</span>`
-              : `<label class="cs-field" for="rd-sent-${h(p.investorId)}"><span>Sent on</span><input id="rd-sent-${h(p.investorId)}" type="date" data-input="rd-sent" data-id="${h(p.investorId)}" value="${h(s.sent[p.investorId] || today())}"></label>`;
+              : `<label class="cs-field" for="rd-sent-${h(p.investorId)}"><span>Sent on</span><input id="rd-sent-${h(p.investorId)}" type="date" data-input="rd-sent" data-id="${h(p.investorId)}" value="${h(s.sent[p.investorId] || today())}"${TALL}></label>`;
             return `<li class="rb-item rd-pinv" data-id="${h(p.investorId)}"><div class="rb-item-main"><span class="strong">${h(p.name)}</span><span class="sub">${h(p.address || 'No mailing address on record')}</span>${sent}</div>
-              <div class="rb-item-acts"><button type="button" class="cs-btn" data-action="rd-dl" data-run="${h(run.id)}" data-id="${h(p.fileId)}">Download PDF</button>${p.sentOn ? '' : `<button type="button" class="cs-btn" data-action="rd-mark" data-run="${h(run.id)}" data-id="${h(p.investorId)}">Mark sent on paper</button>`}</div></li>`;
+              <div class="rb-item-acts"><button type="button" class="cs-btn" data-action="rd-dl" data-run="${h(run.id)}" data-id="${h(p.fileId)}">Download PDF</button>${p.sentOn ? '' : `<button type="button" class="cs-btn" data-action="rd-mark" data-run="${h(run.id)}" data-id="${h(p.investorId)}">Mark sent on paper</button>`}</div>${s.dl[p.fileId] ? `<p class="rb-msg" role="alert">${h(s.dl[p.fileId])}</p>` : ''}</li>`;
           })
           .join('')}</ul>`
       : '<p class="rb-line">Every investor of this report has consented to electronic delivery.</p>';
@@ -252,13 +254,13 @@
       const list = earlier(ws, run);
       const pick = s.corr
         ? list.length
-          ? `<label class="cs-field" for="rd-corr-run"><span>The report it corrects</span><select id="rd-corr-run" data-change="rd-corr-run"><option value="">Choose</option>${list
+          ? `<label class="cs-field" for="rd-corr-run"><span>The report it corrects</span><select id="rd-corr-run" data-change="rd-corr-run"${TALL}><option value="">Choose</option>${list
               .map((r) => `<option value="${h(r.id)}"${s.corrRun === r.id ? ' selected' : ''}>${h(`${r.title}, ${r.period.label || r.period.to}, delivered ${day(r.delivered.at)}`)}</option>`)
               .join('')}</select></label>`
           : '<p class="rb-line">No earlier delivered report of this type for these funds.</p>'
         : '';
       parts.push(`<div class="rb-form rd-deliver">
-        <label class="cs-field" for="rd-by"><span>Delivered by</span><input id="rd-by" type="text" maxlength="80" autocomplete="name" data-input="rd-by" value="${h(s.by)}"></label>
+        <label class="cs-field" for="rd-by"><span>Delivered by</span><input id="rd-by" type="text" maxlength="80" autocomplete="name" data-input="rd-by" value="${h(s.by)}"${TALL}></label>
         <label class="rb-opt"><input type="checkbox" id="rd-corr" data-change="rd-corr"${s.corr ? ' checked' : ''}><span>This corrects an earlier report</span></label>
         ${pick}
         ${s.msg ? `<p class="rb-msg" role="alert" data-rd="msg">${h(s.msg)}</p>` : ''}
