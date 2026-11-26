@@ -113,3 +113,27 @@ SELF-TEST FAIL a phase-16-only run
     GATE_EXIT=1
 GATE16 SELF-TEST: FAIL - control reader only
 ```
+
+GREEN self-test (O/self.txt):
+```
+SELF-TEST ok   control: the stand-ins pass when nothing is wrong (reader step ok; base tree passed as P16_BASE, P11_ROOT and P10_BASE, P10_ROOT unset; never the line of a real gate)
+SELF-TEST ok   a tree without the independent reader (its SKIP line fails the gate; every other step still runs)
+SELF-TEST ok   a phase 16 check whose last line differs from its marker
+SELF-TEST ok   a check file with no marker
+SELF-TEST ok   a reference whose folder line is missing (and nothing after the reader step was run)
+SELF-TEST ok   a reference that prints one GATE FAIL line
+SELF-TEST ok   a tree whose test count differs from the base plus the markers
+SELF-TEST ok   a phase 10 check whose last line differs from its marker
+SELF-TEST ok   a phase 11 check whose last line differs from its marker
+SELF-TEST ok   a phase-16-only run ends 'GATE_EXIT=0 (phase 16 checks only)' with the reader step, no reference step and no server test line, and 'GATE_EXIT=1' when a phase 16 check fails or the reader cannot be had
+GATE16 SELF-TEST: PASS (9)
+```
+
+B1 (base commit changed) proved on stand-ins (scratchpad b1.sh, --only-phase16, a check printing GATE_FRESH): base aaa, then aaa again (the step is "kept from ..."), then bbb:
+```
+NOTE base commit changed (aaa -> bbb): every step runs again
+GATE ok   independent reader achcli v1.69.1
+GATE ok   B1
+GATE_EXIT=0 (phase 16 checks only)
+-- FRESH=1
+```

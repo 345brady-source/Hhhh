@@ -1,35 +1,48 @@
 #!/usr/bin/env bash
-# The phase 12 gate. Run from the root of the checkout to be judged:
-#   GATE_OUT=<folder> bash .planning/phases/12-report-builder/checks/gate12.sh [--self-test | --only-phase12]
-# GATE_OUT/base-commit.txt holds the commit the plan started from; everything is written under GATE_OUT/gate/.
+# The phase 16 gate (a copy of phase 12's gate12.sh with the independent reader step, phase 16's names and stand-ins).
+# Run from the root of the checkout to be judged:
+#   GATE_OUT=<folder> bash .planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/gate16.sh [--self-test | --only-phase16]
+# GATE_OUT/base-commit.txt holds the commit the plan started from; everything is written under GATE_OUT/gate/. When
+# GATE_OUT/gate/base-commit.txt from an earlier run names another commit, the gate prints "NOTE base commit changed
+# (<old> -> <new>): every step runs again" and runs with GATE_FRESH=1, so no step judged against the old base is kept.
 #
+# 0. The independent reader: `bash .planning/phases/16-*/checks/achcli.sh --path` must exit 0 ("GATE ok   independent
+#    reader achcli v1.69.1"); otherwise "GATE FAIL independent reader: <its SKIP or FAIL line>", and the gate goes on:
+#    every step still runs and the gate ends GATE_EXIT=1. No tree passes this gate without the reader.
 # 1. The reference gate itself (.planning/checks/gate-reference.sh, whatever it holds on the day): a copy in which only
 #    the line that changes into a fixed folder and the line that sets the output folder are rewritten (to this checkout
 #    and GATE_OUT/gate) is run. Each "GATE ok" and "GATE FAIL" line of it is passed through, except its own server test
-#    count, which step 2 replaces. If either line is not there exactly once, the gate fails and runs nothing.
+#    count, which step 2 replaces. If either line is not there exactly once, the gate fails and runs nothing more.
+#    GATE_SERVER_TESTS, when set, reaches it (its exact server test count).
 # 2. The server test count: the tests on this tree must equal the tests measured on the base tree in this run plus the
 #    tests the changed server test files declare (a first line "// gate: tests N"; the markers at HEAD minus the markers
 #    at the base, for the files git lists as changed under server/test).
 # 3. Phase 10's checks: every .js file directly in phase 10's checks folder, by the rules of step 5, output in
 #    GATE_OUT/gate/p10-<name>.txt. A tree without that folder prints "GATE ok   phase 10 checks: none in this tree".
 # 4. Phase 11's checks: the same for phase 11's checks folder, output in GATE_OUT/gate/p11-<name>.txt.
-# 5. Phase 12's checks: every .js file in this folder: "// gate: none" is skipped; any other carries "// gate: node" or
+#    GATE16_PHASES (space-separated, from 12 13 14 15; unset or empty means none): those phases' checks folders also
+#    run, by the same rules, output in GATE_OUT/gate/p<NN>-<name>.txt, for a plan whose header names them. A phase
+#    without a checks folder prints "GATE ok   phase NN checks: none in this tree"; any other value fails the gate.
+# 5. Phase 16's checks: every .js file in this folder: "// gate: none" is skipped; any other carries "// gate: node" or
 #    "// gate: browser" and, on a later line, // last "<the exact last line of a full run>". It is run, its output kept
 #    in GATE_OUT/gate/<name>.txt, and its last line must equal the quoted line. A file with no marker fails the gate, and
-#    so does a run in which no phase 12 check ran.
-#    Steps 3 to 5 run each check with P11_ROOT, P10_BASE and P12_BASE set to GATE_OUT/gate/base-tree (the base tree,
-#    extracted from the base commit), P10_ROOT unset, P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots;
-#    browser checks go through heavy.sh.
-# --only-phase12 runs step 5 alone (the base tree is still extracted, for P12_BASE). It is for a plan whose tree does not
-#    load phase 12 on a page yet; it is never the full gate: a passing run ends exactly "GATE_EXIT=0 (phase 12 checks
-#    only)", never "GATE_EXIT=0", and prints no reference step and no server test line; a failing one ends "GATE_EXIT=1".
-# The last line is GATE_EXIT=0 or GATE_EXIT=1 (or the phase-12-only form). Once it is known, the base tree, the
+#    so does a run in which no phase 16 check ran.
+#    Steps 3 to 5 run each check with P11_ROOT, P10_BASE, P16_BASE (and P12_BASE to P15_BASE) set to
+#    GATE_OUT/gate/base-tree (the base tree, extracted from the base commit), P10_ROOT unset,
+#    P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots; browser checks go through heavy.sh.
+# --only-phase16 runs steps 0 and 5 alone (the base tree is still extracted, for P16_BASE). It is never the full gate: a
+#    passing run ends exactly "GATE_EXIT=0 (phase 16 checks only)", never "GATE_EXIT=0", and prints no reference step
+#    and no server test line; a failing one ends "GATE_EXIT=1".
+# The last line is GATE_EXIT=0 or GATE_EXIT=1 (or the phase-16-only form). Once it is known, the base tree, the
 # screenshots, the checks' page captures and PDFs (checks-out, the owner's folder), the reference copy and a
 # server/node_modules link the gate made are removed.
-# --self-test proves the gate can fail, on stand-ins and with none of the long steps: "GATE12 SELF-TEST: PASS (8)".
+# --self-test proves the gate can fail, on stand-ins and with none of the long steps: the control passes and is not
+# counted; each of the nine faults (reader, lastline, nomarker, nofolder, reffail, count, p10, p11, only) ends GATE FAIL
+# and GATE_EXIT=1. Its last line is "GATE16 SELF-TEST: PASS (9)".
 #
-# The GATE12_* variables below are for the self-test's stand-ins only. They are read only together with
-# GATE16_STANDIN=1, and a stand-in run that passes ends "GATE_EXIT=0 (stand-in)", never the passing line of a real gate.
+# GATE16_PHASES is a real setting. The other GATE16_* variables below are for the self-test's stand-ins only. They are
+# read only together with GATE16_STANDIN=1, and a stand-in run that passes ends "GATE_EXIT=0 (stand-in)", never the
+# passing line of a real gate.
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 ROOT="$PWD"
 # Resumable steps (.planning/checks/gate-lib.sh): a rerun into the same GATE_OUT keeps every step that passed under
@@ -38,7 +51,7 @@ ROOT="$PWD"
 # GATE_FRESH=1 runs every step. The reference gate keeps its own steps the same way, in the same folder.
 . "$ROOT/.planning/checks/gate-lib.sh" || { echo "GATE FAIL $ROOT/.planning/checks/gate-lib.sh could not be loaded"; echo "GATE_EXIT=1"; exit 1; }
 S=/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad
-P=.planning/phases/12-report-builder
+P=.planning/phases/16-nacha-ach-and-the-zero-cost-money-path
 P11=.planning/phases/11-fund-accounting-and-cpa-year-end-package
 P10=.planning/phases/10-investor-tax-documents-and-withholding
 STANDIN=0
@@ -46,6 +59,7 @@ REF=.planning/checks/gate-reference.sh
 CHECKS=$P/checks
 CHECKS11=$P11/checks
 CHECKS10=$P10/checks
+READER="$P/checks/achcli.sh"
 COUNTS=
 if [ "$GATE16_STANDIN" = 1 ]; then
   STANDIN=1
@@ -54,6 +68,7 @@ if [ "$GATE16_STANDIN" = 1 ]; then
   CHECKS10="$GATE16_P10"
   CHECKS11="$GATE16_P11"
   COUNTS="$GATE16_COUNTS"
+  READER="$GATE16_READER"
 fi
 ONLY=0
 FAIL=0
@@ -67,11 +82,20 @@ finish() {
   # Disk is short: the base tree, the screenshots and the checks' page captures and PDFs (checks-out; the owner's
   # folder) go as soon as the result is known. The text output of every step stays in GATE_OUT/gate.
   [ -n "$G" ] && rm -rf "$G/base-tree" "$G/shots" "$G/reference-run.sh" "$G/checks-out" "$G/owner"
-  # The phase-12-only form is never the line of a full gate, stand-in or not.
-  if [ "$ONLY" = 1 ] && [ "$FAIL" = 0 ]; then echo "GATE_EXIT=0 (phase 12 checks only)"
+  # The phase-16-only form is never the line of a full gate, stand-in or not.
+  if [ "$ONLY" = 1 ] && [ "$FAIL" = 0 ]; then echo "GATE_EXIT=0 (phase 16 checks only)"
   elif [ "$STANDIN" = 1 ] && [ "$FAIL" = 0 ]; then echo "GATE_EXIT=0 (stand-in)"
   else echo "GATE_EXIT=$FAIL"; fi
   exit $FAIL
+}
+
+# ---------- 0. the independent reader ----------
+reader_step() {
+  local out line rc
+  out=$(bash "$READER" --path 2>&1)
+  rc=$?
+  line=$(printf '%s\n' "$out" | tail -n 1)
+  if [ "$rc" = 0 ] && [ -n "$line" ]; then ok "independent reader achcli v1.69.1"; else bad "independent reader: ${line:-achcli.sh printed nothing (exit $rc)}"; fi
 }
 
 # ---------- --self-test ----------
@@ -217,7 +241,7 @@ base_tree() {
   gate_base_tree "$G/base-tree" "$(cat "$GATE_OUT/base-commit.txt")" > /dev/null || bad "the base tree of $(cat "$GATE_OUT/base-commit.txt") could not be extracted"
 }
 
-# ---------- 3, 4 and 5. the phase 10, 11 and 12 checks ----------
+# ---------- 3, 4 and 5. the phase 10, 11, GATE16_PHASES and 16 checks ----------
 run_checks() { # folder, prefix of the output files; sets RAN
   GN=$(npm root -g 2>/dev/null)
   BASEC=$(cat "$GATE_OUT/base-commit.txt")
@@ -234,10 +258,11 @@ run_checks() { # folder, prefix of the output files; sets RAN
     fi
     RAN=$((RAN + 1))
     OUTF="$G/$2$NAME.txt"
+    B="$G/base-tree"
     if [ "$KIND" = browser ]; then
-      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT NODE_PATH="$GN" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P12_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" bash "$S/exec-011/heavy.sh" node "$f"
+      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT NODE_PATH="$GN" P11_ROOT="$B" P10_BASE="$B" P12_BASE="$B" P13_BASE="$B" P14_BASE="$B" P15_BASE="$B" P16_BASE="$B" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" bash "$S/exec-011/heavy.sh" node "$f"
     else
-      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P12_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" node "$f"
+      gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT P11_ROOT="$B" P10_BASE="$B" P12_BASE="$B" P13_BASE="$B" P14_BASE="$B" P15_BASE="$B" P16_BASE="$B" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" node "$f"
     fi
     GOT=$(tail -n 1 "$OUTF")
     if ! gate_ok "${LAST%%:*}" "test $(quote "$GOT") = $(quote "$LAST")"; then
@@ -255,9 +280,22 @@ checks11() {
   if [ ! -d "$CHECKS11" ]; then ok "phase 11 checks: none in this tree"; return; fi
   run_checks "$CHECKS11" p11-
 }
-checks12() {
+# The phases GATE16_PHASES names (from 12 13 14 15), each with prefix p<NN>-.
+checks_named() {
+  local nn dir
+  for nn in ${GATE16_PHASES:-}; do
+    case "$nn" in
+      12 | 13 | 14 | 15) ;;
+      *) bad "GATE16_PHASES names $nn (only 12, 13, 14 and 15 are allowed)"; continue ;;
+    esac
+    dir=$(ls -d .planning/phases/"$nn"-*/checks 2>/dev/null | head -n 1)
+    if [ -z "$dir" ] || [ ! -d "$dir" ]; then ok "phase $nn checks: none in this tree"; continue; fi
+    run_checks "$dir" "p$nn-"
+  done
+}
+checks16() {
   run_checks "$CHECKS" ""
-  [ "$RAN" -ge 1 ] || bad "no phase 12 check was run (none found in $CHECKS)"
+  [ "$RAN" -ge 1 ] || bad "no phase 16 check was run (none found in $CHECKS)"
 }
 
 # ---------- run ----------
@@ -266,20 +304,28 @@ case "$GATE_OUT" in *[[:space:]]*) bad "GATE_OUT must be a path without spaces";
 [ "$1" = --self-test ] && self_test
 case "$1" in
   '') ;;
-  --only-phase12) ONLY=1 ;;
-  *) bad "unknown argument $1 (none, --self-test or --only-phase12)"; finish ;;
+  --only-phase16) ONLY=1 ;;
+  *) bad "unknown argument $1 (none, --self-test or --only-phase16)"; finish ;;
 esac
 mkdir -p "$GATE_OUT/gate" || { bad "GATE_OUT/gate cannot be created"; finish; }
 GATE_OUT=$(cd "$GATE_OUT" && pwd)
 G="$GATE_OUT/gate"
 [ -s "$GATE_OUT/base-commit.txt" ] || { bad "no base commit: $GATE_OUT/base-commit.txt is missing or empty; nothing was run"; finish; }
+# A rerun into the same GATE_OUT with another base commit keeps no step judged against the old one (gate-lib.sh keys
+# only the steps given --base; the reference gate's are not).
+if [ -s "$G/base-commit.txt" ] && ! cmp -s "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"; then
+  echo "NOTE base commit changed ($(cat "$G/base-commit.txt") -> $(cat "$GATE_OUT/base-commit.txt")): every step runs again"
+  export GATE_FRESH=1
+fi
 cp "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"
 # A base tree left by an earlier run is reused only while its stamp names this base commit (gate_base_tree).
 gate_init "$G" || { bad "GATE_OUT/gate/.gate-steps cannot be created"; finish; }
+reader_step
 if [ "$ONLY" = 1 ]; then
-  # Step 5 alone: the base tree for P12_BASE, then phase 12's checks. No reference step, no server test count.
+  # Steps 0 and 5 alone: the reader, the base tree for P16_BASE, then phase 16's checks. No reference step, no server
+  # test count.
   base_tree
-  checks12
+  checks16
   finish
 fi
 if [ "$STANDIN" = 0 ] && [ ! -e server/node_modules ]; then
@@ -290,5 +336,6 @@ reference
 count
 checks10
 checks11
-checks12
+checks_named
+checks16
 finish
