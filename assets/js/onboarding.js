@@ -1181,6 +1181,8 @@
    */
   function accVerifiedFor(c) {
     if (!IV()) return false;
+    // Plan 08-09: a re-verification request is for a verification by a third party, whatever the offering.
+    if (c.it.reverify) return true;
     const forOffering = !!c.off && NS.integrations.needsAccreditation(c.ws, c.inv, c.off);
     if (isRemote(c.ws)) return forOffering || c.ws.invite.accRequired === true;
     return forOffering || NS.integrations.needsAccreditation(c.ws, c.inv);
@@ -1211,6 +1213,9 @@
       if (c.fl.taxConsent === undefined) c.fl.taxConsent = !!(c.inv.esignConsent && c.inv.esignConsent.at);
       return c.fl.taxConsent ? ['tax', 'done'] : ['welcome', 'tax', 'done'];
     }
+    // Plan 08-09 (D-04, C-06): the sponsor asked an investor on file to verify their accreditation again: that step and the
+    // done screen. No consent is asked: the step signs nothing.
+    if (c.it.reverify) return ['accreditation', 'done'];
     if (c.it.existing) {
       // An active investor invited to a new offering: their account is on file, so the link covers the subscription.
       const s = ['welcome'];
@@ -2573,6 +2578,7 @@
     }
     if (c.it.coSign) return coDone(c);
     if (c.it.taxRequest) return taxDone(c);
+    if (c.it.reverify) return reverifyDone(c);
     // D-06 (plan 06-15): no summary of what the investor just did; the lede says whether the firm is still reviewing and
     // "What happens next" says what is still open.
     const dec = IV() ? IV().status(c.ws, i).key : 'approved';
@@ -2668,6 +2674,37 @@
     </div>`;
   }
 
+  /** Plan 08-09: the accreditation result made on this request (a verification from before it was sent is not one). */
+  function reverifyFresh(c) {
+    const a = IV() && IV().peek ? IV().peek(c.inv).accreditation : null;
+    if (!a || IV().selfCertified(a) || ['verified', 'pending', 'review'].indexOf(a.status) < 0) return false;
+    return Date.parse(a.completedAt || a.startedAt || '') >= Date.parse(c.it.sentAt || '') - 60000;
+  }
+  /** Plan 08-09: a re-verification request says once what it is, under the step's heading. */
+  function reverifyNote(c) {
+    if (!c.it.reverify) return '';
+    const a = IV() && IV().peek ? IV().peek(c.inv).accreditation : {};
+    const current = !reverifyFresh(c) && IV() && IV().accreditationValid(c.ws, c.inv) && a.expiresAt;
+    return `<p class="meta ivf-reverify">${h(c.ws.tenant.name)} asked you to verify your accredited investor status again; this link covers that step only.</p>${current ? `<p class="meta ivf-why">Your current verification is valid until ${h(NS.ui.date(a.expiresAt))}. Choose Start again to renew it.</p>` : ''}`;
+  }
+  /** Plan 08-09: the done screen of a re-verification request: what the check gave, and that the firm sees it. */
+  function reverifyDone(c) {
+    const t = c.ws.tenant;
+    const sup = t.support || {};
+    const team = h(sup.team || 'Investor relations');
+    const a = IV() && IV().peek ? IV().peek(c.inv).accreditation : {};
+    const fresh = c.fl.reverifyFresh !== undefined ? c.fl.reverifyFresh : reverifyFresh(c);
+    const st = fresh ? c.fl.reverifyStatus || a.status : '';
+    const lede = st === 'verified' ? `Your accredited investor status is verified. ${h(t.name)} will see the result.` : st === 'pending' || st === 'review' ? `Your verification is submitted. ${h(t.name)} will see the result once it is ready.` : `No new verification was completed, so ${team} may ask you again.`;
+    return `<div class="ivf-done">
+      ${ivfH1(st === 'verified' ? 'Thank you. Your accreditation is verified' : st ? 'Thank you. Your verification is submitted' : 'Your re-verification request is finished')}
+      <p class="lede">${lede}</p>
+      <h2 class="ivf-h2">What happens next</h2>
+      <ul class="ivf-need"><li>Questions? ${team}${sup.email ? ` at ${h(sup.email)}` : ''}${sup.phone ? ` or ${h(sup.phone)}` : ''}.</li></ul>
+      <a class="btn btn-primary" href="#overview">Go to your portal</a>
+    </div>`;
+  }
+
   /* ---------- Validation ---------- */
   function validateFlow(c, key) {
     const d = ob().d;
@@ -2714,7 +2751,7 @@
     if (key === 'identity' && IV() && !IV().canContinue(c.ws, c.inv, 'identity')) e.ivIdentity = 'Complete the identity check to continue.';
     if (key === 'accreditation') {
       if (accVerifiedFor(c)) {
-        if (!IV().canContinue(c.ws, c.inv, 'accreditation')) e.ivAccreditation = 'Complete the accreditation check to continue.';
+        if (!IV().canContinue(c.ws, c.inv, 'accreditation') || (c.it.reverify && !reverifyFresh(c))) e.ivAccreditation = 'Complete the accreditation check to continue.';
       } else if (!d.accBasis) e.accBasis = 'Select the basis that applies.';
       if (!d.accAttest) e.accAttest = 'Confirm the statement to continue.';
     }
@@ -3320,9 +3357,12 @@
         // Plan 06-26: what a tax-form request brought, kept on the flow (the done screen reads it after a send in server mode
         // has deleted the device's copy of the record).
         if (c.it.taxRequest || c.it.includeTax) c.fl.taxOutcome = taxOutcome(c);
+        // Plan 08-09: what a re-verification request brought, kept on the flow (server mode deletes the device's record).
+        if (c.it.reverify) Object.assign(c.fl, { reverifyFresh: reverifyFresh(c), reverifyStatus: IV() ? IV().peek(i).accreditation.status : '' });
         const st = IV() ? IV().status(ws, i) : { key: 'approved', label: 'Verified' };
         const tx = c.fl.taxOutcome;
         if (NS.audit && c.it.taxRequest) NS.audit.log(ws, { action: 'Tax form request finished', record: i.id, fund: '', detail: `${i.title}: ${tx.how === 'none' ? 'no tax form completed' : `Form ${tx.form} ${tx.how === 'unsigned' ? 'not signed' : tx.how}`}`, actor: `${i.title} (investor)` });
+        else if (NS.audit && c.it.reverify) NS.audit.log(ws, { action: 'Accreditation re-verification finished', record: i.id, fund: '', detail: `${i.title}: ${c.fl.reverifyFresh ? `accreditation ${c.fl.reverifyStatus === 'verified' ? 'verified' : 'submitted'}` : 'no new verification'}`, actor: `${i.title} (investor)` });
         else if (NS.audit && c.it.existing) NS.audit.log(ws, { action: 'Invitation to subscribe finished', record: i.id, fund: c.off ? c.off.id : c.it.offeringId, detail: `${i.title}: ${c.req && c.off ? `subscription of ${money(c.off, c.req.cents / 100)} submitted from the invitation link` : 'no subscription: the offering is no longer raising'}${c.it.includeTax && tx ? `; ${tx.how === 'none' ? 'no tax form completed' : `Form ${tx.form} ${tx.how === 'unsigned' ? 'not signed' : tx.how}`}` : ''}`, actor: `${i.title} (investor)` });
         else if (NS.audit) NS.audit.log(ws, { action: 'Account activated', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: onboarding finished from the invitation link; ${i.taxForm && !taxOnFile(i) ? `${i.taxForm} not signed; distribution account confirmed` : `${i.taxForm || 'tax form'} and distribution account confirmed`}; verification ${st.label.toLowerCase()}${c.req && c.off ? `; subscription of ${money(c.off, c.req.cents / 100)} submitted` : ''}`, actor: `${i.title} (investor)` });
         if (st.key === 'review') notify(ws, 'verification_review', `${i.title} is held for verification review`, ((IV().peek ? IV().peek(i) : IV().vOf(i)).decision.reason || 'A check needs a person to look at it') + '. Their paperwork is complete.', 'console-kyc');
@@ -3345,7 +3385,7 @@
         }
       }
       if (isRemote(ws) && !c.fl.sentAt) await sendCompletion(c);
-      if (first && !isRemote(ws)) U.toast(c.it.taxRequest ? 'Tax form request finished' : c.it.existing ? 'Subscription submitted' : 'Account activated');
+      if (first && !isRemote(ws)) U.toast(c.it.taxRequest ? 'Tax form request finished' : c.it.reverify ? 'Re-verification finished' : c.it.existing ? 'Subscription submitted' : 'Account activated');
     } catch (e) {
       o.finishError = (e && e.message) || 'Something went wrong.';
       o.finishNetwork = !!(e && e.network);
@@ -3452,11 +3492,11 @@
       const n = steps.indexOf(key);
       // The step on screen: Continue and Back act on it only while it is still the current step (shownChanged).
       o.shownKey = key;
-      const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">${c.it.coSign ? 'Co-investor signature' : c.it.taxRequest ? 'Tax form' : 'Account setup'}</span></div></header>`;
+      const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">${c.it.coSign ? 'Co-investor signature' : c.it.taxRequest ? 'Tax form' : c.it.reverify ? 'Accreditation' : 'Account setup'}</span></div></header>`;
       const list = steps.map((s, i) => `<li class="${i < n || (key === 'done' && c.fl.completedAt) ? 'done' : i === n ? 'current' : ''}"${i === n ? ' aria-current="step"' : ''}><span class="ob-num">${i < n || (key === 'done' && c.fl.completedAt) ? icon('check') : i + 1}</span><span>${h(stepLabel(c, s))}</span></li>`).join('');
       const progress = `<div class="ivf-progress"><p class="ob-count">Step ${n + 1} of ${steps.length}<span class="ivf-count-label">: ${h(stepLabel(c, key))}</span></p><div class="ivf-bar" role="progressbar" aria-label="Account setup progress" aria-valuemin="1" aria-valuemax="${steps.length}" aria-valuenow="${n + 1}" aria-valuetext="Step ${n + 1} of ${steps.length}: ${h(stepLabel(c, key))}"><span style="width:${(((n + 1) / steps.length) * 100).toFixed(1)}%"></span></div></div>`;
       const taxEnv = key === 'tax' ? taxSignEnv(c) : null;
-      const body = taxEnv ? fTaxSign(c, taxEnv) : { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, status: fStatus, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>\s*<p class="lede">[\s\S]*?<\/p>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
+      const body = taxEnv ? fTaxSign(c, taxEnv) : { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, status: fStatus, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>\s*<p class="lede">[\s\S]*?<\/p>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '') + reverifyNote(c)), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
       // the upload view (plan 06-21): Back returns to the tax answers, not to the step before
       const upView = key === 'tax' && c.fl.taxView === 'upload';
       // A tax-form request (plan 06-26) is opened from the portal and starts on its tax step (or Welcome): Back on that first
@@ -3835,6 +3875,8 @@
       const href = it ? `#invite-${h(it.token || ws.invite.key)}` : '';
       // Plan 06-26: the sponsor asked for the investor's tax form again
       if (it && it.taxRequest) return `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} asked you for your tax form.</p><a class="btn btn-primary" href="${href}">Complete your tax form</a></div>`;
+      // Plan 08-09: the sponsor asked the investor to verify their accreditation again
+      if (it && it.reverify) return `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} asked you to verify your accreditation again.</p><a class="btn btn-primary" href="${href}">Verify your accreditation</a></div>`;
       const o = it && ws.offerings.find((x) => x.id === it.offeringId && x.status === 'Raising');
       return o ? `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} invited you to subscribe to ${h(o.name)}.</p><a class="btn btn-primary" href="${href}">Continue your subscription</a></div>` : '';
     });
@@ -3847,6 +3889,13 @@
     return it && it.taxRequest ? `#invite-${it.token || ws.invite.key}` : '';
   }
 
+  /** Plan 08-09: the link of the re-verification request the firm sent this active investor, while it is open ('' when none). */
+  function reverifyAsk(inv) {
+    const ws = W();
+    const it = ED.diy && inv && inv.onboarding.status === 'complete' ? openFor(ws, inv) || remoteOpen(ws, inv) : null;
+    return it && it.reverify ? `#invite-${it.token || ws.invite.key}` : '';
+  }
+
   /** The steps an invitation's flow has (for the console: "Step 6 of 10"). */
   function invitationSteps(ws, it) {
     const i = it && ws.investors.find((x) => x.id === it.investorId);
@@ -3856,4 +3905,5 @@
     return flowSteps({ ws, it, inv: i, fl, req, off: ws.offerings.find((x) => x.id === it.offeringId && (x.status === 'Raising' || req)) || null });
   }
   NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL, taxOnFile, taxAsk, retireTax };
+  NS.inviteFlow.reverifyAsk = reverifyAsk;
 })(window.CVPortal);
