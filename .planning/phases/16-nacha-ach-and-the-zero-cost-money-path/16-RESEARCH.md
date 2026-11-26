@@ -107,3 +107,86 @@ Measured this session by loading `assets/js/nacha.js` in Node with a fixed clock
 Smaller observations, not defects: the creation date and time come from the local clock (`nacha.js:72-75`), which is what banks expect; the settlement date field is left blank (correct: the ACH Operator fills it); originator status code `1` (correct for an ODFI) [ASSUMED for the last two, standard layout knowledge]; the capital-call wire instructions take the account number from the balanced-file settlement account (`assets/js/operations.js:207-216`), so a sponsor without balanced files shows "on file with investor relations": worth a separate "wire-in account" field when the planner is in that page anyway (not money out, not in D-01).
 
 <!-- section 2 done -->
+
+## 3. The rules that apply
+
+nacha.org and frbservices.org could not be opened from this session (hosts outside the allowed network); the rule statements below come from search-engine excerpts of those sites and of banks' rule summaries, tagged [CITED: search excerpt ...]. The Nacha Operating Rules book itself is sold, not public; where only a bank's or a study guide's summary was found it says so. A sponsor's bank's ACH origination agreement and implementation guide are the final word on its own cut-offs and fields; the screens keep the existing line "Confirm values against your bank's ACH implementation guide before the first upload" (`console.js:1201`).
+
+### 3.1 Federal Reserve holidays for any year
+
+- The Federal Reserve Banks observe eleven holidays: New Year's Day (January 1), Birthday of Martin Luther King Jr. (third Monday of January), Washington's Birthday (third Monday of February), Memorial Day (last Monday of May), Juneteenth (June 19), Independence Day (July 4), Labor Day (first Monday of September), Columbus Day (second Monday of October), Veterans Day (November 11), Thanksgiving Day (fourth Thursday of November), Christmas Day (December 25) [ASSUMED: list from training knowledge; it reproduces the code's own 2025-2028 table exactly, measured below].
+- Weekend rule: "For holidays falling on Saturday, Federal Reserve Banks and Branches will be open the preceding Friday"; a holiday falling on Sunday is observed the following Monday [CITED: search excerpt of the Federal Reserve holiday schedule pages, frbservices.org and federalreserve.gov K.8]. So a Saturday holiday closes nothing (Saturday is not a banking day anyway) and a Sunday holiday closes the Monday.
+- FedACH follows that schedule (for Thanksgiving 2026: processing ends Nov. 25 at 11:30 p.m. ET and resumes Nov. 26 at 5:30 p.m. ET, for the next banking day) [CITED: search excerpt of frbservices.org 2026 FedACH holiday notice].
+- Measured: the rule above (Sunday to Monday, Saturday dropped) gives exactly the 39 dates of `nacha.js:18-22` for 2025-2028; for 2029 it gives `2029-01-01 2029-01-15 2029-02-19 2029-05-28 2029-06-19 2029-07-04 2029-09-03 2029-10-08 2029-11-12 2029-11-22 2029-12-25` (Veterans Day 2029 falls on a Sunday, so Monday 2029-11-12) [VERIFIED: probe `hol.js` this session].
+- One-off closures (a national day of mourning, for example) are announced by the Federal Reserve case by case [ASSUMED]. Keep a short dated list of extra closed days next to the rule, empty at launch, so one line fixes such a day.
+
+### 3.2 File structure, SEC codes, fields
+
+- Records as the builder writes them (`assets/js/nacha.js:182-188`, quoted verbatim from `LAYOUT`): file header `[1, 1, 'Record type'], [2, 3, 'Priority'], [4, 13, 'Immediate destination'], [14, 23, 'Immediate origin'], [24, 29, 'Creation date'], [30, 33, 'Creation time'], [34, 34, 'File ID modifier'], [35, 37, 'Record size'], [38, 39, 'Blocking factor'], [40, 40, 'Format code'], [41, 63, 'Destination name'], [64, 86, 'Origin name'], [87, 94, 'Reference']`; batch header `... [51, 53, 'SEC code'], [54, 63, 'Entry description'], [64, 69, 'Descriptive date'], [70, 75, 'Effective date'], [76, 78, 'Settlement date'], [79, 79, 'Originator status'], [80, 87, 'ODFI'], [88, 94, 'Batch number']`; entry `[2, 3, 'Transaction code'], [4, 11, 'Receiving DFI'], [12, 12, 'Check digit'], [13, 29, 'Account number'], [30, 39, 'Amount'], [40, 54, 'Individual ID'], [55, 76, 'Individual name'], [77, 78, 'Discretionary'], [79, 79, 'Addenda'], [80, 94, 'Trace number']` [VERIFIED: assets/js/nacha.js:182-188]. The independent reader agreed with every field (section 2).
+- File ID modifier: upper-case A-Z or 0-9 [VERIFIED: achcli error text this session, "FileIDModifier a is not uppercase A-Z or 0-9"]; it distinguishes files created the same day for the same origin and destination [ASSUMED].
+- SEC codes this product uses: **PPD** (consumer accounts: individuals, joint, a trust's account at a bank), **CCD** (business accounts: entities, an IRA custodian), **WEB** (a debit to a consumer account authorized over the internet; only relevant if debits are ever built, section 5), **COR** (the bank's notification-of-change batches coming back, never sent by the portal), **IAT** (section 4). The mapping in `assets/js/data.js:108-113` is quoted verbatim: `individual: { label: 'Individual', sec: 'PPD' }`, `joint: { label: 'Joint account', sec: 'PPD' }`, `trust: { label: 'Trust', sec: 'PPD' }`, `entity: { label: 'LLC, partnership or corporation', sec: 'CCD' }`, `ira: { label: 'IRA (through a custodian)', sec: 'CCD' }` [VERIFIED: assets/js/data.js:108-113]. A trust's account may be a business account at some banks [ASSUMED]; keep PPD (a credit to the wrong class is not returned for that reason in practice [ASSUMED]).
+- Transaction codes used: 22/32 checking/savings credit, 23/33 checking/savings credit pre-note, 27/37 checking/savings debit (the offset), 21/31 the returns and NOCs of 22/23 and 32/33 coming back [VERIFIED: achcli printed "21 (Checking Return NOC Credit)" for a synthesized return; 22 "Checking Credit", 32 "Savings Credit" for the builder's file this session]; 28/38 debit pre-notes [ASSUMED].
+- Company entry descriptions with set meanings: "PAYROLL" for PPD credits of wages, and "PURCHASE" for consumer e-commerce debits, both from 2026-03-20 [CITED: search excerpt of nacha.org "Risk Management Topics - Company Entry Descriptions"]; "ACCTVERIFY" for micro-entries [CITED: search excerpt of nacha.org micro-entries pages]. A distribution is neither; the builder must refuse those words (F-11).
+
+### 3.3 Pre-notes
+
+- A pre-note is a zero-dollar entry (codes 23/33 for a credit account) that asks the receiving bank to confirm the account [ASSUMED for the code numbers' wording; the reader accepted code 23 with amount 0 this session, VERIFIED].
+- Waiting period: "Prenotifications include a waiting period of three Banking Days before initiating additional Entries" [CITED: search excerpt of nacha.org "Request for Information - Definition of Banking Day"]; counted from the pre-note's settlement date per a study guide [CITED: search excerpt, secondary]. Reduced from six banking days in 2014 [CITED: bank rule summary excerpt].
+- From 2024-06-21 a pre-note may be sent at any time, not only before the first entry, so it can re-check an account later [CITED: search excerpt of a bank's 2024 Nacha rules summary].
+- Pre-notes are optional for credits; when an Originator chooses to send one, it must wait the period before the first live entry to that account [CITED: same excerpts; the "must wait" reading is the rule's wording "waiting period ... before initiating additional Entries"].
+- The receiving bank answers a bad pre-note with a return (for example R03, R04) or a NOC (C01-C07), in the same file formats as section 6 [ASSUMED].
+- Portal rule (recommended, C-03): an account gets a pre-note when it is added or changed; a live entry to it is held out of a file, with the date it can be paid, until three banking days after the pre-note's effective date; an account with an earlier successful payment and no change needs none (that history is what Nacha accepts as validation for WEB debits too [CITED: search excerpt of nacha.org "Supplementing Fraud Detection Standards for WEB Debits"]).
+
+### 3.4 Return reason codes that matter and what the portal does
+
+Return codes and their Nacha titles below are quoted from moov-io/ach v1.69.1's table, which copies Nacha's list [CITED: moov-io/ach addenda99.go:344-422, read this session; Apache-2.0]. Most returns must reach the ODFI within two banking days of settlement; unauthorized consumer debit returns (R05, R07, R10, R11) within 60 days [CITED: search excerpts of nacha.org and bank summaries]. Return-rate levels Nacha watches over 60 days: unauthorized 0.5%, administrative (R02, R03, R04) 3.0%, overall 15% [CITED: search excerpt of nacha.org unauthorized-return-rate material].
+
+| Code (Nacha title) | Applies to this product's credits? | What the portal does |
+|---|---|---|
+| R02 Account Closed; R03 No Account/Unable to Locate Account; R04 Invalid Account Number; R20 Non-payment bank account | Yes | Line returned (amount owed again); the account is marked "returned, needs new details" and left out of every later file with that reason; investor asked to update; counts toward the 3% administrative rate |
+| R14 Representative payee deceased...; R15 Beneficiary or bank account holder (deceased) | Yes | Line returned; account blocked; sponsor told to contact the investor's representative (no automatic message to the investor) |
+| R16 Bank account frozen | Yes | Line returned; account blocked until the sponsor confirms it is cleared |
+| R23 Credit entry refused by receiver | Yes | Line returned; account blocked until the investor gives details again |
+| R17 File Record Edit Criteria / questionable circumstances | Yes | Line returned; account blocked; sponsor told the bank flagged it (possible fraud: check the change log for a recent bank-detail change) |
+| R06 Returned per ODFI's Request; R24 Duplicate entry | Yes | Line returned; no account change; R24 points at a file sent twice (F-7) |
+| R12 Branch Sold to Another DFI; R13 RDFI not qualified to participate; R28 Transit routing number check digit error | Yes | Line returned; account marked "needs new details" |
+| R18, R19, R25, R26, R27 (format errors) | Only if a file is wrong | Line returned; shown as "the file had a field error: contact support" (should never happen after this phase; the independent reader proves the format) |
+| R61, R62, R67-R77 (misrouted, dishonored, contested returns) | Bank-to-bank | Shown as text only; nothing changes |
+| R80-R85 (IAT) | Only if IAT is built (section 4) | Same handling as R03 for that account |
+| R01 Insufficient Funds; R05; R07 Authorization Revoked; R08 Payment Stopped; R09; R10; R11; R29 | Debits only | Only if debits are built (section 5); unauthorized ones count toward the 0.5% rate |
+
+Any code not in the table is shown with its code, the investor and the amount, the line is marked returned, and the account is left as it is (the sponsor decides).
+
+### 3.5 Notification-of-change codes
+
+Change codes quoted from moov-io/ach v1.69.1 [CITED: moov-io/ach addenda98.go:246-266]. The Originator must make the change "within six banking days of receipt of the NOC information or prior to initiating another ACH Entry to the account, whichever is later" (Subsection 2.12.1) [CITED: search excerpt of a bank's ACH rules page quoting the Nacha rule]; the ODFI gives the NOC to the Originator within two banking days of settlement [CITED: same excerpt].
+
+| Code | Meaning (moov table) | What the portal does |
+|---|---|---|
+| C01 | Incorrect bank account number | Proposes the corrected account number; the sponsor confirms; the investor's account record takes it (full number stored like any account number; logs show only "ending 1234") and the investor gets a notice that payments now go to the account ending in those digits |
+| C02 | Incorrect transit/routing number | Same, for the routing number |
+| C03 | Incorrect routing number and account number | Both |
+| C04 | Bank account name change | Proposes the holder name |
+| C05 | Incorrect transaction code (checking vs savings) | Proposes the account type |
+| C06 | Account number and transaction code | Both |
+| C07 | Routing number, account number and transaction code | All three |
+| C09 | Incorrect individual ID number | Shows it; nothing changes (the ID is the investor's portal ID, so this points at the bank's error) |
+| C13 | Addenda format error | Shows it (the portal sends no addenda at launch) |
+| C14 | Incorrect SEC code for outbound IAT payment | Shows it: the account is abroad; the investor is moved to "international wire" (section 4) after the sponsor confirms |
+| C61-C69 | Refused NOCs (ODFI to RDFI) | Never reach the sponsor; ignored |
+
+A NOC does not return money: the payment was made [ASSUMED: NOC entries carry a zero amount; a synthesized NOC with amount 0 was accepted by the independent reader this session, VERIFIED]. The corrected data is parsed by whitespace-separated parts, as the open-source reader does (`addenda98.go:326-436`), because banks pad it differently [CITED: moov-io/ach addenda98.go].
+
+### 3.6 Same-day ACH windows and limits
+
+- FedACH same-day file deadlines: 10:30 a.m. ET and 2:45 p.m. ET, and a final same-day deadline of 4:45 p.m. ET [CITED: search excerpt of frbservices.org Same Day ACH FAQ]; settlement for the 4:45 p.m. window at 6:00 p.m. ET per a processor's table [CITED: search excerpt]; the bank's own cut-off is earlier than the Fed's [CITED: same excerpts]. Extensions are not allowed [CITED: frbservices FAQ excerpt].
+- Limit: $1,000,000 per payment since 2022-03-18; entries above it are not rejected but settle next day; no limit on a batch or file total; splitting a payment to get under the limit is prohibited [CITED: search excerpts of nacha.org/million and its $1M guidance]. The limit becomes $10,000,000 on 2027-09-17 (approved, announced 2026-04-27) [CITED: search excerpt of nacha.org rule page and news release].
+- A same-day entry is one whose effective date is the day the file is sent; the builder already treats "effective date is today" as same-day (`nacha.js:164`). IAT entries are not eligible for same-day [ASSUMED].
+- Portal: warn (amber) per entry above the limit of the effective date's table, and say it will settle the next banking day; never split it.
+
+### 3.7 2026 rule changes that touch a sponsor
+
+- Fraud monitoring: non-consumer Originators (a fund sponsor is one) must have risk-based processes to identify entries initiated due to fraud (for example, payments sent to an account a fraudster changed by email); compliance by 2026-06-22 for all remaining Originators [CITED: search excerpts of bank summaries and nacha.org; dates differ between sources, 2026-03-20 for the largest Originators]. Not a portal obligation, but the portal supports it: every bank-detail change is logged with who and when (already true, `onboarding.js:553`), and C-03's pre-note after every change plus a notice to the investor's email of record give the sponsor a written control.
+- Banking day definition updated 2026-01-01 [CITED: search excerpt of nacha.org RFI page]; no effect on the builder.
+
+<!-- section 3 done -->
