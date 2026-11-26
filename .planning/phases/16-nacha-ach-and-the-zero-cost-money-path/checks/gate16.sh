@@ -174,7 +174,10 @@ self_test() {
     note "a phase-16-only run ends 'GATE_EXIT=0 (phase 16 checks only)' with the reader step, no reference step and no server test line, and 'GATE_EXIT=1' when a phase 16 check fails or the reader cannot be had" 1 only
   else
     note "a phase-16-only run" 0 only
-    sed 's/^/    /' "$T/onlyfail.txt" "$T/onlyreader.txt"
+    for x in onlyfail onlyreader; do
+      echo "    -- $x.txt ($(wc -l < "$T/$x.txt" 2>/dev/null || echo missing) lines):"
+      sed 's/^/    /' "$T/$x.txt"
+    done
   fi
   rm -rf "$T"
   if [ -z "$BADS" ]; then echo "GATE16 SELF-TEST: PASS ($N)"; exit 0; fi
