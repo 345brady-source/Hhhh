@@ -51,3 +51,16 @@ FAIL letter-none no waiting line without a server :: [...the same at 390x844...]
 PACKAGE FLOW: FAIL (parts run: 1) - letter-none
 ```
 Guide: one added line at the end of the bullets of `## console-kyc`, then `node server/help/build.mjs` ("wrote server/lib/help-guide.mjs (77997 bytes)"). help-guide.test.mjs: `# tests 9`, `# pass 9`, `# fail 0`. Sponsor guide 46,452 bytes of 48,000 (was 46,286; +166).
+
+## Final verify, first full gate (on a445ed8): FAILED on one step, HELP PREVIEW
+`npm --prefix server test` alone first: `# tests 387`, `# pass 387`, `# fail 0` (23.8 s).
+The first verify-2 run was killed when the owner stopped all work on 2026-11-20 (last line then: `GATE ok   SIGNING DOCUMENTS (8)`); it was rerun into the same folder on 2026-11-26 and kept the passed steps. Result: verify-2 exit 1, `GATE_EXIT=1`, one GATE FAIL:
+```
+FAIL preview-sponsor the request carries the rules and the sponsor's guide, and not the investor's guide :: {"len":49958}
+FAIL preview-sponsor the rules and the sponsor's guide still go with it
+FAIL files help-data.js matches the server guide (make-help-data.mjs --verify passes) :: help-data.js: STALE (server guide b3e3b59755f1); run node .planning/tools/preview/make-help-data.mjs
+HELP PREVIEW: FAIL (parts run: 6) - preview-sponsor, files
+GATE FAIL HELP PREVIEW (6)
+```
+Every other step ok, among them `GATE ok   server tests 387 (found 387)`, `GATE ok   phase-8 gate checks found (4)`, `GATE ok   PACKAGE FLOW (10)`, `GATE ok   PACKAGE INVITE (12)`, `GATE ok   PACKAGE PANEL (7)`, `GATE ok   AML RECORD (7)`, and `COUNTS server tests 387; AML RECORD 7; PACKAGE FLOW 10; PACKAGE INVITE 12; PACKAGE PANEL 7`.
+Cause: the guide line changed the server guide, and the owner's preview carries its own copy (.planning/tools/preview/help-data.js), which phase 7's check requires to match. Fix: `node .planning/tools/preview/make-help-data.mjs` ("wrote .planning/tools/preview/help-data.js (guide b3e3b59755f1, 72940 bytes)"; `--verify`: "help-data.js: current (guide b3e3b59755f1)"). The gate is rerun on the commit holding it.
