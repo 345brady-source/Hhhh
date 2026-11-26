@@ -34,3 +34,9 @@
 - W5 (14-03): one test calls post() for a prospect party (kept apart from investors); count stays 14.
 - W6 (14-13): Task 1 runs 13-01's render and guard tests without a name pattern. 14-13 cannot start until 13-01 and 13-11 merge (no assets/js/emails.js yet).
 - C-02's inbox link is replaced by phase 15 sign-in (15-CONTEXT C-15); 14-03 builds no token.
+
+## After 14-02 (merged 2026-11-26)
+- watermark.js and dataroom.js merged as new files no page loads yet (until 14-06). WATERMARK 5 cases (B1: Producer/Creator the firm, no library name in plain, hex or UTF-16), DATAROOM MODEL 13 cases; server tests 408, all pass.
+- Stamp time measured in the container (not on a phone): 25.6 MB / 41 pages 87-181 ms; a heavier 25.3 MB / 400-page file 373-427 ms, peak 307 MB. Far under 30 seconds: C-17's limit stays.
+- No full gate ran for 14-02 (gate14.sh arrives with 14-01 and no page loads the files). The reference gate runs on the merged tree when 14-01 merges.
+- API differences from the plan's interfaces are listed in 14-02-SUMMARY.md (verify brokenAt 0 with a field reason; viewsOf sums seconds; docsFor optional time; NS.dataroom undefined in the managed edition). Legal sentences are drafts: 14-06 marks them "To be confirmed".
