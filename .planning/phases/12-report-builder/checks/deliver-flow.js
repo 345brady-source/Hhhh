@@ -616,6 +616,74 @@ const parts = {
     await T.leak(check, fr);
     await T.wayOut(check, fr);
     await A.context.close();
+  },
+
+  /** Tax documents' opens are still counted by their own hook beside report opens; the managed edition is unchanged (C-08). */
+  async 'managed-taxdocs'({ check, S }) {
+    {
+      const { A, fr } = await F.open(S, 'phone', check);
+      const sd = await seed(fr, { name: 'Q4 beside tax' });
+      const rep = sd.files[0];
+      const inv = rep.inv[0];
+      // a delivered tax document for the same investor: made by the tax documents module, then shown as delivered
+      const tax = await fr.evaluate(async ({ inv, fund, from }) => {
+        const NS = window.CVPortal;
+        const w = NS.state.ws;
+        const blob = await NS.ops.files.get(from);
+        const id = 'td-deliver-flow-1';
+        const d = NS.taxdocs.addGenerated(w, { id, kind: 'letter', year: 2026, investorId: inv, offeringId: fund, confirmedBy: 'Pat Admin', title: 'Tax letter 2026', fileName: 'Tax-letter-2026.pdf', size: blob.size, sha256: '' });
+        await NS.ops.files.put(id, blob);
+        d.tax.state = 'delivered';
+        d.tax.deliveredAt = '2027-01-20T12:00:00Z';
+        d.hidden = false;
+        d.publishedAt = '2027-01-20T12:00:00Z';
+        NS.app.save(true);
+        return { id, opens: d.tax.opens.count };
+      }, { inv, fund: FUND, from: rep.id });
+      const counts = () =>
+        fr.evaluate(({ tax, rep }) => {
+          const w = window.CVPortal.state.ws;
+          const t = w.docs.find((d) => d.id === tax);
+          const r = w.docs.find((d) => d.id === rep);
+          const reports = w.docs.filter((d) => d.report).reduce((n, d) => n + Object.keys(d.report.opens || {}).reduce((m, k) => m + d.report.opens[k].count, 0), 0);
+          return { tax: t.tax.opens.count, taxReport: !!t.report, rep: (r.report.opens[Object.keys(r.report.opens)[0]] || { count: 0 }).count, reports, taxLog: (w.audit || []).filter((e) => e.action === 'Tax document opened' && e.record === tax).length, repLog: (w.audit || []).filter((e) => e.action === 'Report opened').length };
+        }, { tax: tax.id, rep: rep.id });
+      const rows = await documentsAs(fr, inv);
+      check('the investor\'s Documents list the tax document and the report', rows.some((r) => r.id === tax.id) && rows.some((r) => r.id === rep.id), rows.slice(0, 6));
+      await T.press(fr, `[data-action=open-doc][data-id="${tax.id}"]`);
+      await fr.waitForSelector('#dlg .dlg-head', { timeout: 10000 });
+      await fr.waitForTimeout(400);
+      let c = await counts();
+      check("opening the tax document counts in its tax.opens (taxdocs-investor.js's hook) and adds no report open", c.tax === 1 && c.taxLog === 1 && !c.taxReport && c.reports === 0 && c.repLog === 0, c);
+      await T.press(fr, '#dlg [data-action=close-dialog]');
+      await fr.waitForTimeout(200);
+      await T.press(fr, `[data-action=open-doc][data-id="${rep.id}"]`);
+      await fr.waitForSelector('#dlg .dlg-head', { timeout: 10000 });
+      await fr.waitForTimeout(400);
+      c = await counts();
+      check('a report opened in the same session counts in its report block only', c.rep === 1 && c.reports === 1 && c.repLog === 1 && c.tax === 1 && c.taxLog === 1, c);
+      await T.press(fr, '#dlg [data-action=close-dialog]');
+      await T.quiet(check, A, fr);
+      await A.context.close();
+    }
+    for (const role of ['staff', 'investor']) {
+      const { A, fr } = await T.framed(S, 'desktop', { page: 'index.html', clock: '2027-01-20' });
+      await T.proveRefused(check, A, fr);
+      await T.sample(fr, { role });
+      await fr.evaluate((role) => (location.hash = role === 'staff' ? '#console-reports' : '#documents'), role);
+      await fr.waitForTimeout(1500);
+      const m = await fr.evaluate(() => ({
+        tab: document.querySelectorAll('[data-action=rep-tab][data-t=investor]').length,
+        rd: document.querySelectorAll('.rd, [data-action^=rd-]').length,
+        text: /Investor reports|Generate for|Send on paper|Tell investors/.test(document.body.innerText),
+        ui: typeof window.CVPortal.reportsUI,
+        deliver: typeof window.CVPortal.reportsDeliver,
+        hooks: (window.CVPortal.hooks.documentOpened || []).length
+      }));
+      check(`index.html at 1280x800 as ${role}: no report control, the builder and delivery not loaded`, m.tab === 0 && m.rd === 0 && !m.text && m.ui === 'undefined' && m.deliver === 'undefined', m);
+      check(`index.html as ${role}: no error on the page`, A.errors.length === 0, A.errors);
+      await A.context.close();
+    }
   }
 };
 
