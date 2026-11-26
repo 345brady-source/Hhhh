@@ -130,3 +130,8 @@
 - W7 (11-13 Investments, F-1/C-08): a holding with no value shows 'At cost (no value entered)' and 'No value entered' as its date; part values-phone checks both.
 - I1 (11-12): one-line descriptions: gl '<from> to <to>. Every journal line.'; cf '<from> to <to>. Indirect method from the journal.'; bankrec 'Latest reconciliation of each bank account on or before <to>.'; ratios '<from> to <to>. Ratios to average limited partners’ capital.'. I2: an opening entry inside an 'itd' period shows as 'Opening balances' under financing; the summary says so.
 - I3 (11-13): Opening balances only for `!NS.audit.generated(o)`. I4: NS.actions/NS.binders are app.js:195-198; consoleKit console.js:124; addHolding does not log, so the page logs 'Investment added'; no page loads books-hold.js yet.
+
+## 11-18 planned (2026-11-26, 769de39)
+- The change log is a hash chain sorted by time, so moving seeded notice dates changes later rows' Seq, Previous hash and Hash (Kestrel Bay 339/340 hashes, Pellbrook 354/509). AUDIT SAME's expected difference therefore recomputes Seq, Previous hash and Hash from the base's own entries; nothing is skipped. Nine seeded calls move (kb-fund-ii 1-5, pb-ventures-i 1-4); only 15_Change_log.csv and its MANIFEST line change (34 of 60 packages).
+- Open, separate small fix: the console's suggested due date `businessDays(today, callNoticeDays || 10)` accepts a negative notice-days value typed by a sponsor; after 11-18 it would suggest a past date. Validate the field (whole number 1 or more) in the small-fixes follow-up.
+- Stored sample workspaces keep their old dates until a reset (no migration; the log is never rewritten). Real firms are never seeded.
