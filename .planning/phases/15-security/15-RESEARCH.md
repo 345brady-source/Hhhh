@@ -35,7 +35,7 @@
 - GSD agents for every step; RED-first checks; test on real material and show the owner the real result; never call anything ready, working or done before the owner has checked it.
 - Outside API or service that could do the job better: present cost, accuracy, speed and trade-offs before building in-house; the owner has no budget for monthly fees, so the $0 path comes first (section 1).
 - Work economically: build only what the law or the task needs; no extra text on screens; nothing mandatory for investors (D-30).
-- White label: no vendor, model or library name in anything a sponsor or investor sees; never the word "basic"; the managed (Carrow & Vale) edition unchanged unless a plan says so (C-03 slice guard).
+- White label: no vendor, model or library name in anything a sponsor or investor sees; never the banned word listed in AUTOPILOT.md; the managed (Carrow & Vale) edition unchanged unless a plan says so (C-03 slice guard).
 - The owner tests on an iPhone inside the Claude app (WKWebView, sandboxed iframe, no server, connect-src blocked): no fetch()/XHR on a no-server path; every view has a way out; dialogs scroll; checks at 390x844 and 1280x800.
 - No paid API calls by agents; no agent gets an API key; never print a real secret. Never open SCRATCH/blind/.
 - Save rules: commit and push each finished section; executors push wip branches after every commit.
@@ -397,7 +397,7 @@ Each claim may appear only when its evidence exists; a check scans both pages fo
 | We never send taxpayer numbers, bank numbers or passwords by email. | Phase 13's guard tests | Always |
 | How to report a security problem, and what we promise in return | The disclosure page and security.txt | Always |
 
-Never on either page (banned-claims check): SOC 2, ISO 27001, "certified", "audited", "bank-level", "bank-grade", "military-grade", "unhackable", "100% secure", "fully compliant", "compliant with" any law, "approved by" any regulator, "penetration tested" (until a letter exists, C-13), insurance, any vendor or library name, and the word "basic". SOC 2 is not mentioned at all; if a sponsor asks, the honest answer is "not yet" [recommendation; C-13].
+Never on either page (banned-claims check): SOC 2, ISO 27001, "certified", "audited", "bank-level", "bank-grade", "military-grade", "unhackable", "100% secure", "fully compliant", "compliant with" any law, "approved by" any regulator, "penetration tested" (until a letter exists, C-13), insurance, any vendor or library name, and the banned word listed in AUTOPILOT.md. SOC 2 is not mentioned at all; if a sponsor asks, the honest answer is "not yet" [recommendation; C-13].
 
 ### 6.2 Pages and audiences
 
@@ -481,7 +481,7 @@ So phase 15 builds the flow, and waits for 13-01 and 13-11 (the renderer and the
 | SE-11 | Retention and data minimization as in 5.4, enforced by purge tests; no taxpayer-shaped value in the stored workspace; no secret in logs, events, errors or emails; the co-investor sees "Tax form on file", not the main investor's W-9 | D-01 "data minimization"; W-18; 5.4 |
 | SE-12 | Public security page, disclosure page and `/.well-known/security.txt` (Contact, Expires, Policy, Preferred-Languages, Canonical), each claim backed by a check, banned claims refused; a firm-branded investor version | D-01; W-20; 6.1-6.4 |
 | SE-13 | Truthful screens: every claim in W-10 rewritten; the preview shows two-step set-up working on the device with one demo sentence, never a fixed "On", and makes no request | Owner rule; W-10; 2.6 |
-| SE-14 | White label and wording: no platform, vendor, model or library name on any investor-facing screen, email or page; the firm's name as the two-step issuer; never the word "basic" | AUTOPILOT; 3.2, 6.2 |
+| SE-14 | White label and wording: no platform, vendor, model or library name on any investor-facing screen, email or page; the firm's name as the two-step issuer; never the banned word listed in AUTOPILOT.md | AUTOPILOT; 3.2, 6.2 |
 | SE-15 | Proof and the owner's check: gate lines for every new check, the full reference gate, the preview built and walked under phone conditions, a local server run with its output pasted; the owner sets up two-step with his own iPhone app, walks the roles and reads the security page; the live reset email waits for 13-10's sending account | CLAUDE.md "never call something done before the owner has checked it" |
 </phase_requirements>
 
@@ -539,3 +539,373 @@ Shared files to watch at plan time (other phases' plans that list them): server/
 | C-16 | Who may sign up on the server | **Anyone, with the email confirmed by link before investors can be invited (a `security_notice` variant with a button), and per-address limits** | Self-serve is the funnel; confirmation stops sign-ups with someone else's address |
 
 <!-- section 9 done -->
+
+## Standard Stack
+
+### Core (no new server package)
+
+| Piece | Version | Purpose | Why |
+|-------|---------|---------|-----|
+| `node:crypto` `scrypt` (async), `randomBytes`, `createHmac`, `hkdfSync`, `timingSafeEqual`, `createHash` | Node 18+ (`"engines": { "node": ">=18" }` [VERIFIED: server/package.json]; v22.23.4 on the build machine) | Password hashes, session and reset tokens, TOTP, the email lookup value, constant-time compares | Already the server's only crypto (crypto.mjs, vault.mjs); no dependency |
+| The existing vault (AES-256-GCM) | in repo | Sealing people, the workspace, documents, change-log details, backups (with `BACKUP_KEY`) | Proven by the existing tests; record-bound additional data |
+| `node:test` | built in | Server tests | The suite's runner: 403 tests, 0 failing, measured this session on a3882b6 (`# tests 403`, `# pass 403`, `# fail 0`, 22.7 s) |
+| WebCrypto `crypto.subtle` (HMAC SHA-1) | browser | The preview's on-device two-step check | No library; whether the sandboxed frame offers it must be proved by 15-02's check (Open Question 1) |
+
+### Supporting
+
+| Piece | Version | Purpose | When |
+|-------|---------|---------|------|
+| QR encoder, vendored under `assets/vendor/qr/` (candidate: `qrcode-generator`, MIT, one file, no dependencies) | 2.0.4 on the registry [VERIFIED: `npm view qrcode-generator version` → 2.0.4] | The two-step set-up QR on desktop | 15-02; flagged by the legitimacy check (below): human check before vendoring; keep the file's name generic (no library name on screen) |
+
+### Alternatives considered
+
+| Instead of | Could use | Trade-off |
+|------------|-----------|-----------|
+| In-house sign-in | WorkOS AuthKit free tier | Free and complete, but hosted screens outside the firm's brand, another processor, no preview (C-01) |
+| TOTP | Passkeys with `@simplewebauthn/server` 14.1.0 | Phishing-resistant, but about ten more packages, a flagged package, no preview (C-02) |
+| scrypt | Argon2id | Needs a native package; scrypt is in Node and recommended by OWASP for this use [ASSUMED: OWASP password storage guidance] |
+| A JSON workspace blob | A database | The store's own note says to move to a database in production (store.mjs:3); not needed at 40 sponsors [ASSUMED] |
+
+**Installation:** none on the server. 15-02 vendors one browser file (no npm install into the repo).
+
+## Package Legitimacy Audit
+
+Run this session: `gsd-tools query package-legitimacy check --ecosystem npm qrcode-generator @simplewebauthn/server`.
+
+| Package | Registry | Age | Downloads | Source Repo | Verdict | Disposition |
+|---------|----------|-----|-----------|-------------|---------|-------------|
+| qrcode-generator | npm | created 2014-11-26, last publish 2025-08-07 [VERIFIED: npm view] | unknown (the downloads lookup returned nothing) | github.com/kazuhikoarase/qrcode-generator | [SUS] (reason: "unknown-downloads") | Flagged: planner adds a human check before vendoring; the vendored file's SHA-256 is recorded in SHA256SUMS |
+| @simplewebauthn/server | npm | last publish 2026-11-06 [VERIFIED: npm view time.modified] | unknown | github.com/MasterKale/SimpleWebAuthn | [SUS] (reasons: "too-new", "unknown-downloads") | Not used in this phase (C-02) |
+
+**Packages removed due to [SLOP] verdict:** none.
+**Packages flagged as suspicious [SUS]:** qrcode-generator (checkpoint:human-verify before vendoring), @simplewebauthn/server (not used). No postinstall script on either (`postinstall: null` in the check).
+
+## Architecture Patterns
+
+### System architecture (server mode)
+
+```
+ Browser (console or portal page, served by the server: SERVE_PORTAL=1)
+   │  1. POST /v1/auth/sign-in {email, password}         (JSON only; Origin checked)
+   ▼
+ http.mjs: headers, CORS (listed origins, credentials) ──► refuse 403 on a foreign Origin
+   ▼
+ index.mjs route()
+   ├─ /v1/auth/*  ──► auth.mjs ── people (sealed email/name/secret, scrypt hash, counters)
+   │                     │        sessions (SHA-256 of cookie id)    reset tokens (hash, 30 min)
+   │                     │        lockout + limits ──► 429 / locked notice email
+   │                     └─ two-step: totp.js (shared UMD) on node:crypto; recovery hashes
+   │                        └─ Set-Cookie __Host-session (HttpOnly, Secure, SameSite=Strict)
+   ├─ session cookie ──► { person, workspace, role }
+   │        ▼
+   │   roles.mjs allows(role, permission of this route)? ── no ──► 403 + server change log entry
+   │        ▼ yes
+   ├─ /v1/workspace ──► workspace.mjs: version check ─► section rules ─► bank rule (pay)
+   │                     ─► change log only grows ─► vault.seal ─► blob `ws-<id>-<v>`
+   │                     GET: vault.open ─► mask by role ─► browser memory (no storage)
+   ├─ invitations, taxdocs, filings, billing, messages (existing modules, now with the guard)
+   ├─ team.mjs: invite (team_invitation email) / accept / role / remove / reset two-step
+   └─ every change ──► auditlog.mjs (chained, person from the session, sealed detail)
+ Mail: emails.js render (phase 13) ──► mailer (phase 13 sender) ──► the person's inbox
+ Operator: tools/backup.mjs (BACKUP_KEY) ──► archive ──► off-site copy; tools/reseal.mjs
+```
+
+### Recommended structure
+
+```
+server/lib/auth.mjs        people, passwords, sessions, two-step, reset (15-01, 15-04)
+server/lib/roles.mjs       permission and route tables, allows() (15-05)
+server/lib/team.mjs        team invitations and role changes (15-05)
+server/lib/auditlog.mjs    the server change log (15-05)
+server/lib/workspace.mjs   the sealed workspace (15-06)
+server/tools/backup.mjs    create, verify, restore, prune (15-03)
+server/tools/reseal.mjs    key rotation (15-03)
+assets/js/totp.js          shared two-step code module, UMD (15-02)
+assets/vendor/qr/          vendored QR encoder (15-02)
+assets/js/signin.js        console sign-in, set-up, security page (15-07)
+security.html, disclosure.html, .well-known/security.txt   (15-10)
+```
+
+### Pattern 1: one UMD module for the two-step code on both sides
+
+**What:** `assets/js/totp.js` exports `base32Encode`, `base32Decode`, `totp({ secret, time, hmac })` where `hmac(keyBytes, msgBytes)` is injected (async in the browser via WebCrypto, sync or async with `node:crypto` on the server), and `verify({ secret, code, time, lastStep, window: 1 })` returning the accepted step or null. The server loads it with `createRequire`, as filings.mjs already loads browser modules (13-11-PLAN.md key_links: "createRequire as filings.mjs already does for formd.js").
+**When:** every code check, set-up confirmation and the preview's demo check.
+
+### Pattern 2: permission named beside each route, proved by a walk
+
+**What:** a table `{ method, pattern, permission }` in roles.mjs; the guard in index.mjs looks up the request; a test enumerates every `path ===`, `path.match(` and `startsWith('/v1/` branch in index.mjs and each module's sponsor handler and fails on any route without an entry.
+**When:** any route added later (phase 14, 16) must add its line or the test fails.
+
+### Pattern 3: section-checked writes on a whole-document save
+
+**What:** the browser PUTs the whole workspace with its version; the server opens the stored one, compares top-level sections (and `investors[*].payment` specially), refuses with 403 naming the first section the role cannot change, and stores the new version.
+**When:** every console save in server mode.
+
+### Anti-patterns to avoid
+
+- **A check only in the browser** (today's `can()`): anything the server holds must be refused by the server.
+- **A session token in browser storage** (today's account token): it must be an HttpOnly cookie.
+- **A reset that skips two-step:** the new-password page asks for the code when two-step is on.
+- **"Forgot password" that says whether an account exists:** one answer for every address.
+- **A long-lived readable reset link** in the outbox or a log.
+- **Claims on pages that no test backs** (6.1).
+
+## Don't Hand-Roll
+
+| Problem | Don't build | Use instead | Why |
+|---------|-------------|-------------|-----|
+| Password hashing | A salted SHA-256 or a loop | `crypto.scrypt` with a 16-byte salt, stored with its parameters | Memory-hard; tuned (224 ms measured) |
+| AES, HMAC, random numbers | Any cipher or random code | `node:crypto`, WebCrypto | Constant-time, vetted |
+| Passkey verification (CBOR, COSE, attestation) | A parser and signature checks by hand | Not this phase; later a vetted package (C-02) | Many formats and edge cases |
+| QR encoding | An encoder written here | The vendored encoder | Error-correction and masking rules are long and easy to get wrong |
+| Constant-time token compare | `===` on secrets | `safeEqual` in crypto.mjs (already) | Timing leaks |
+| Cookie parsing | A regex split | A small strict parser accepting only `__Host-session` with the 43-character format | Header injection and duplicates |
+| Static file serving | Joining request paths to a folder | A fixed list of files read at start-up | Path traversal |
+
+**Key insight:** the parts that are in-house here (TOTP, the session table, the permission tables) are short and fully specified, with public test values; the parts that are long and subtle (ciphers, password hashing, QR, passkeys) come from Node or a vendored file.
+
+## Common Pitfalls
+
+### Pitfall 1: two-step made optional by a side door
+**What goes wrong:** the password-change, reset, team-accept or `/v1/invite/login` path signs a person in without the code.
+**How to avoid:** a session gets `mfaAt` only from the code step; every console route checks it; tests try each side door.
+**Warning signs:** any route that sets the cookie outside the code step.
+
+### Pitfall 2: the outbox leaks reset links
+**What goes wrong:** with no mail server, the reset email waits in `GET /v1/outbox`, which Staff can read: Staff resets the Owner's password.
+**How to avoid:** reset and team-invitation messages are never kept readable (7.3); a test asserts the outbox never holds a reset token.
+
+### Pitfall 3: cookies that never arrive
+**What goes wrong:** the portal on one site and the server on another; Safari drops the cookie; sign-in "works" on desktop Chromium and fails on the owner's iPhone.
+**How to avoid:** one origin (C-07); the browser check runs under the WebKit engine as well (safari-finish.js pattern).
+
+### Pitfall 4: role tables drift between browser and server
+**How to avoid:** one table file served to the browser by `GET /v1/auth/me` (the person's permissions), not a second hand-kept copy; the preview uses the same table file loaded as a script.
+
+### Pitfall 5: masked values written back
+**What goes wrong:** a Staff save sends `****1234` back and overwrites the real bank account.
+**How to avoid:** the server keeps the stored value whenever the incoming value equals the mask; a test proves it.
+
+### Pitfall 6: the managed edition changes
+**How to avoid:** every change behind `E.diy`; the managed pages, roles and toasts byte-identical to the base tree (as phase 13 proves with its managed-same parts).
+
+### Pitfall 7: the preview makes a request or claims a server result
+**How to avoid:** no fetch on any no-server path (no-network.js pattern); the one demo sentence on the two-step screens; no fixed "On".
+
+### Pitfall 8: lockout used against a person
+**What goes wrong:** someone types wrong passwords to lock the Owner out.
+**How to avoid:** waits that grow, a 15-minute lock (not permanent), a notice email, and the reset path still works during a lock.
+
+### Pitfall 9: clock drift on the phone
+**How to avoid:** accept one step either side; the set-up screen's error says to check the phone's time setting.
+
+## Code Examples
+
+### TOTP check on the server (pattern; values from RFC 6238 Appendix B)
+
+```js
+// Source: RFC 6238 / RFC 4226 dynamic truncation; computed this session with node:crypto (section 3.2)
+import { createHmac } from 'node:crypto';
+export function hotp(secret, counter, digits = 6) {
+  const msg = Buffer.alloc(8);
+  msg.writeBigUInt64BE(BigInt(counter));
+  const h = createHmac('sha1', secret).update(msg).digest();
+  const o = h[h.length - 1] & 15;
+  const bin = ((h[o] & 0x7f) << 24) | (h[o + 1] << 16) | (h[o + 2] << 8) | h[o + 3];
+  return String(bin % 10 ** digits).padStart(digits, '0');
+}
+// test: hotp(Buffer.from('12345678901234567890'), Math.floor(59 / 30), 8) === '94287082'
+export function verify(secret, code, nowMs, lastStep) {
+  const step = Math.floor(nowMs / 30000);
+  for (const s of [step - 1, step, step + 1]) {
+    if (s <= lastStep) continue; // a step already accepted is refused (no replay)
+    if (safeEqual(hotp(secret, s), String(code))) return s; // safeEqual from lib/crypto.mjs
+  }
+  return null;
+}
+```
+
+### Password hash and check
+
+```js
+// Source: Node crypto.scrypt docs [ASSUMED API shape: scrypt(password, salt, keylen, options, callback)]
+import { scrypt, randomBytes, timingSafeEqual } from 'node:crypto';
+const P = { N: 2 ** 15, r: 8, p: 3, maxmem: 64 * 1024 * 1024 };
+const run = (pw, salt, o) => new Promise((ok, no) => scrypt(pw.normalize('NFKC'), salt, 32, o, (e, k) => (e ? no(e) : ok(k))));
+export async function hashPassword(pw) {
+  const salt = randomBytes(16);
+  return { v: 1, N: P.N, r: P.r, p: P.p, salt: salt.toString('base64'), hash: (await run(pw, salt, P)).toString('base64') };
+}
+export async function checkPassword(pw, rec) {
+  const k = await run(pw, Buffer.from(rec.salt, 'base64'), { N: rec.N, r: rec.r, p: rec.p, maxmem: P.maxmem });
+  return timingSafeEqual(k, Buffer.from(rec.hash, 'base64'));
+}
+```
+
+### The session cookie
+
+```js
+// One cookie; only its SHA-256 is stored (as invitation tokens are)
+const sid = randomBytes(32).toString('base64url'); // 43 characters
+res.setHeader('Set-Cookie', `__Host-session=${sid}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=43200`);
+store.put('sessions', { id: sha256(sid), personId, createdAt, seenAt: createdAt, mfaAt: null });
+```
+
+## State of the Art
+
+| Old approach | Current approach | When changed | Impact |
+|--------------|------------------|--------------|--------|
+| Password rules with symbols and forced changes | Length, a common-password list, no forced changes; 15 characters when the password is the only factor | NIST SP 800-63B-4 (final) [CITED: search excerpt of pages.nist.gov] | No composition rules on our screens |
+| AAL2 sessions: 12 hours, 30 minutes idle (800-63B rev. 3) | SHOULD be no more than 24 hours, 1 hour idle | 800-63B-4 [CITED: search excerpt] | Defaults in C-08 |
+| Text-message codes as the usual second factor | Authenticator apps and passkeys; text messages restricted | 800-63B [ASSUMED] | No text codes (3.1) |
+| Regulation S-P without incident-response duty | Written incident response and customer notice for covered advisers; smaller entities from June 3, 2026 | SEC 2024 amendments [CITED: search excerpts of sec.gov and law firm notes] | The security page's disclosure inbox and the server change log help sponsors meet it; no compliance claim |
+
+## Validation Architecture
+
+`workflow.nyquist_validation` is `true` in .planning/config.json [VERIFIED: config.json read this session], so this section is required.
+
+### Test framework
+
+| Property | Value |
+|----------|-------|
+| Framework | `node --test` (built-in) for the server; Playwright 1.63.0 browser checks (`npx playwright --version` → "Version 1.63.0" this session) run through SCRATCH/exec-011/heavy.sh, with the 06 phase's lib.js, no-network.js, safari-finish.js and ways-out.js patterns |
+| Config file | none (server/package.json `"test": "node --test"`) |
+| Quick run | `cd server && node --test test/auth*.test.mjs test/totp.test.mjs test/roles.test.mjs` |
+| Full suite | `cd server && node --test` (403 tests today), then .planning/checks/gate-reference.sh with the exact `GATE_SERVER_TESTS` |
+
+### Phase requirements → test map
+
+| Req | Behaviour | Type | Automated command | Exists? |
+|-----|-----------|------|-------------------|---------|
+| SE-01 | sign-up, sign-in, sign-out, wrong password, open server closed | unit + route | `node --test server/test/auth.test.mjs` | Wave 0 |
+| SE-02 | RFC 6238 values, replay refused, ±1 step, recovery codes one-time, console refused without code | unit + route | `node --test server/test/totp.test.mjs server/test/auth-twostep.test.mjs` | Wave 0 |
+| SE-03 | `/v1/invite/login` creates the investor account; investor two-step optional; Owner switch | route | `node --test server/test/auth-twostep.test.mjs` | Wave 0 |
+| SE-04 | same answer for unknown email, 30-minute single use, code required with two-step, sessions ended, notice email, outbox holds no reset token | route with the mail stand-in | `node --test server/test/auth-reset.test.mjs` | Wave 0 |
+| SE-05 | every route has a permission (walk); each role refused where the tables say; Accountant expiry | route | `node --test server/test/roles.test.mjs` | Wave 0 |
+| SE-06 | menus, read-only pages, disabled actions, masked numbers by role; managed same | browser 390x844 and 1280x800 | `node .planning/phases/15-security/checks/roles-flow.js` | Wave 0 |
+| SE-07 | sealed at rest (no plain bank number in the store file or blobs), version conflict 409, section refusals, bank rule, mask round-trip, log only grows; console keeps no storage copy | route + browser | `node --test server/test/workspace.test.mjs`; `checks/workspace-server.js` | Wave 0 |
+| SE-08 | chain verifies, an edited entry breaks it, the person comes from the session | unit | `node --test server/test/auditlog.test.mjs` | Wave 0 |
+| SE-09 | cookie flags, timeouts, fresh sign-in for sensitive actions, foreign Origin refused, form-encoded write refused, CORS never `*` with sessions, rightmost proxy address, eviction, lockout and its notice | route | `node --test server/test/headers.test.mjs server/test/auth.test.mjs` | Wave 0 |
+| SE-10 | re-seal with two old keys, backup round trip, a changed byte fails verify, restore refuses a non-empty folder | unit | `node --test server/test/backup.test.mjs` | Wave 0 |
+| SE-11 | purge times; no taxpayer-shaped value in the stored workspace; no secret in events, logs, errors; co-investor sees "Tax form on file" | route + browser | `node --test server/test/workspace.test.mjs`; `checks/investor-signin.js` | Wave 0 |
+| SE-12 | pages open, links work, security.txt fields and expiry, banned claims absent | browser + unit | `node .planning/phases/15-security/checks/pages.js` | Wave 0 |
+| SE-13 | W-10 sentences gone; preview two-step demo works with network blocked; no fixed "On" | browser in the sandboxed frame | `checks/signin-flow.js`, `checks/investor-signin.js` | Wave 0 |
+| SE-14 | no vendor or library name and no banned word on every new screen, email and page | unit + browser | part of each check above | Wave 0 |
+| SE-15 | full gate, preview walk, local server run | gate + manual | `.planning/checks/gate-reference.sh` | exists (gate) |
+
+### Sampling rate
+
+- Per task commit: the plan's quick tests.
+- Per wave merge: `cd server && node --test` and the phase's browser checks.
+- Phase gate: the full reference gate on the merged tree, the preview walk under phone conditions, then the owner's own check.
+
+### Wave 0 gaps
+
+- server/test/auth.test.mjs, auth-twostep.test.mjs, auth-reset.test.mjs, totp.test.mjs, roles.test.mjs, auditlog.test.mjs, workspace.test.mjs, headers.test.mjs, backup.test.mjs
+- .planning/phases/15-security/checks/ (signin-flow.js, roles-flow.js, investor-signin.js, workspace-server.js, pages.js) reusing 06's lib.js
+- No framework install.
+
+## Security Domain
+
+`security_enforcement` is true and `security_asvs_level` is 1 in .planning/config.json [VERIFIED: config.json read this session].
+
+### Applicable ASVS categories
+
+| ASVS category | Applies | Standard control |
+|---------------|---------|------------------|
+| V2 Authentication | yes | scrypt, TOTP plus recovery codes, lockout with growing waits, one answer for unknown accounts, reset tokens hashed and short-lived |
+| V3 Session management | yes | `__Host-` HttpOnly Secure SameSite=Strict cookie, new id at sign-in and after the code, idle and absolute timeouts, ended on password change |
+| V4 Access control | yes | roles.mjs on every route, section-checked workspace writes, 404 for another workspace's record (existing rule, index.mjs:875-878) |
+| V5 Input validation | yes | JSON-object bodies only (`parseObject`, index.mjs:91-95), strict formats for email, code, token, cookie |
+| V6 Cryptography | yes | `node:crypto` and the vault only; nothing hand-written |
+| V7 Errors and logging | yes | Plain refusals with no secret; the chained server change log |
+| V8 Data protection | yes | Sealed workspace and documents, masking, retention table |
+| V9 Communications | yes | HSTS when https; security headers |
+| V14 Configuration | yes | Open-server fallback off once people exist; CORS listed origins only |
+
+### Known threat patterns
+
+| Pattern | STRIDE | Mitigation |
+|---------|--------|------------|
+| Password guessing and stuffing | Spoofing | Limits, lockout, common-password list, required two-step for the console |
+| Relayed one-time code from a fake page | Spoofing | Accepted for TOTP; notice email on new-device console sign-in; passkeys later (C-02) |
+| Reset link takeover (outbox, logs, Referer) | Elevation | Token after `#`, hashed, 30 minutes, never in the outbox |
+| Staff changes an investor's bank account to their own | Tampering | pay permission, fresh sign-in, server change log, notice to the investor [ASSUMED: notice wording by the planner] |
+| Cross-site request with the cookie | Tampering | SameSite, JSON-only writes, Origin check |
+| Stolen backup | Information disclosure | `BACKUP_KEY` seal; `DATA_KEY` kept apart |
+| Rewritten change log | Repudiation | Server chain; workspace log may only grow |
+| Rate-limit bypass with a forged proxy header | Denial of service | Rightmost trusted address (W-05) |
+
+## Assumptions Log
+
+| # | Claim | Section | Risk if wrong |
+|---|-------|---------|---------------|
+| A1 | Launch size about 2,000 to 5,000 monthly active people | 1 | Outside prices compare differently; no effect on the in-house path |
+| A2 | Free-tier hosted projects can be paused when idle (Supabase) | 1.1 | Only affects an option not recommended |
+| A3 | A fake page can relay a TOTP code; text messages are restricted by NIST | 3.1, State of the Art | None for the design (TOTP still chosen) |
+| A4 | The passkey prompt does not open in the owner's sandboxed frame | 3.1 | Passkeys could be demoed; still deferred by C-02 |
+| A5 | TOTP default parameters (SHA-1, 6 digits, 30 s) are what common apps read | 3.2 | Set-up would fail in some app; the check uses a real app at the owner's checkpoint |
+| A6 | `otpauth:` links are blocked in the sandboxed frame | 2.6 | Only changes which set-up path the owner uses |
+| A7 | Workspace section names (scan of assets/js) | 4.4 | A missed section is refused by default (fail closed), found by the browser checks |
+| A8 | Cookie prefix rules, Safari cross-site cookie blocking | 5.5 | C-07 still holds; one origin is safe either way |
+| A9 | OWASP guidance on CSRF, headers and scrypt | 5.5, Stack | Minor tuning |
+| A10 | NIST caps consecutive failures at 100 | 5.5 | Our cap is far below it |
+| A11 | RFC 9116 "Expires less than a year" | 6.4 | Our 30-day warning keeps it fresh anyway |
+| A12 | Disclosure page numbers (3 business days, 90 days) and the legal promise | 6.3 | Owner and counsel may change them; marked "To be confirmed with counsel" |
+| A13 | Backup piece size 1 MiB | 5.3 | None |
+| A14 | WebCrypto HMAC is offered in the owner's sandboxed frame | Stack, Open Question 1 | If not, the preview demo needs a fallback (Open Question 1) |
+| A15 | A JSON store is enough at 40 sponsors | Stack | A database move later; the store's methods stay |
+| A16 | Wording of the preview's demo sentence | 2.6 | The planner fixes it once |
+
+## Open Questions (each with the default to use if nobody answers)
+
+1. **Does the owner's sandboxed frame offer `crypto.subtle`?**
+   - Known: the artifact is served over https; WebCrypto needs a secure context.
+   - Unclear: whether the sandboxed frame counts as one in WKWebView.
+   - Default: 15-02's first browser part checks it under the no-network conditions; if absent, the demo uses a small HMAC-SHA-1 written only for the demo file and marked as such (it protects nothing real), while the server always uses `node:crypto`.
+2. **The security contact address and domain.** Default: "To be confirmed" placeholders, built from `SECURITY_CONTACT` and `PUBLIC_URL`; the orchestrator asks the owner with a push notification (C-13).
+3. **Will phase 14 build its investor routes before 15-01, 15-04 and 15-05 merge?** Default: C-15 (phase 15's server sign-in first).
+4. **Does a given sponsor fall under the FTC Safeguards Rule or Regulation S-P?** Not ours to decide; screens that rely on it say "To be confirmed with counsel"; no compliance claim anywhere.
+
+## Environment Availability
+
+| Dependency | Required by | Available | Version | Fallback |
+|------------|-------------|-----------|---------|----------|
+| Node | server, tools | yes | v22.23.4 | — |
+| `node:crypto` scrypt, HMAC SHA-1 | auth, TOTP | yes (`typeof crypto.scrypt` → function; `getHashes()` includes sha1) | — | — |
+| Playwright | browser checks | yes | 1.63.0 | — |
+| heavy.sh queue, 06 check library | browser checks | yes (files present) | — | — |
+| openssl | key generation in docs | yes | — | `node -e` with `randomBytes` |
+| gpg | optional security.txt signature | yes | — | unsigned file (allowed) |
+| A real mail account | live reset email | no | — | local mail stand-ins until 13-10's owner checkpoint |
+| The owner's iPhone authenticator app | owner's check | owner's device | — | — |
+
+**Missing with no fallback:** none for building. **Missing with fallback:** live email (stand-ins).
+
+## Sources
+
+### Primary (in-repo, opened this session)
+- server/index.mjs (lines 1-200, 680-1004), server/lib/accounts.mjs, crypto.mjs, vault.mjs, store.mjs, http.mjs, invitations.mjs (header, 595-610, 810-865), server/README.md (Data protection, Security notes), server/package.json, server/help/guide.md (team, sign-up, account, sign-in entries), server/test/help-guide.test.mjs:120-135
+- assets/js/edition.js:38-47, app.js:415-500, 785-822, diy.js (whole), portal.js:1170-1266, onboarding.js:320-331, 425-505, 771-774, 1740-1750, 2425-2440, 2830-2842, 2920-2930, 3268-3278, integrations.js:294-310, 1089, workspace.js:1-60, 125-145, 149-174, audit.js:1000-1003, operations.js:425-445, console.js:14-66, 3210-3222, invitations.js:1170-1232, tax1099.js:278-312, diy.html:1-30
+- .planning/phases/15-security/15-CONTEXT.md, .planning/ROADMAP.md (phases 6-16), .planning/AUTOPILOT.md, 13-11-PLAN.md, 13-08-PLAN.md, 13-CONTEXT.md, 13-RESEARCH.md, .planning/config.json
+- Measured: scrypt timings, RFC 6238 values, guide sizes, the server suite (403 passing on a3882b6), npm registry data, the package legitimacy check
+
+### Secondary (search excerpts of official or vendor pages, MEDIUM)
+- workos.com/pricing, auth0.com/pricing and blog, clerk.com/pricing and changelog, aws.amazon.com/cognito/pricing, supabase.com/pricing, twilio.com/verify/pricing, aws.amazon.com/kms/pricing, developers.cloudflare.com/r2/pricing, backblaze.com/pricing, hackerone.com press release, docs.cobalt.io, getastra.com/pricing
+- pages.nist.gov/800-63-4/sp800-63b (authenticators, aal), law.cornell.edu 16 CFR 314.4, sec.gov Regulation S-P small entity guide, datatracker.ietf.org RFC 9116, specification.website security.txt, iana.org security.txt fields
+
+### Tertiary (third-party summaries, LOW)
+- Pen-test price guides (softwaresecured.com, blazeinfosec.com, soc2auditors.org), SOC 2 platform prices (getagency.com, startupik.com, underdefense.com), synack.com on Cobalt, review sites on Astra
+
+## Metadata
+
+**Confidence breakdown:**
+- What exists and the weaknesses: HIGH (every cited line opened this session)
+- Design and plan split: MEDIUM-HIGH (follows the code's own patterns; the workspace-on-server part is the largest change and its section list is assumed, A7)
+- Outside prices: MEDIUM (search excerpts; vendor pages could not be opened)
+- Law and standards: MEDIUM (search excerpts of primary texts; no legal advice)
+
+**Research date:** 2026-11-26
+**Valid until:** 2026-12-26 for prices; the code findings until the next merge that touches the files in section 2
+
+<!-- research complete -->
