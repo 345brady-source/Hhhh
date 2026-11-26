@@ -81,4 +81,27 @@ hold-only passed on Task 1's code (the pull already only held): a guard, shown f
 MUTATION pull (pullChanged writes whatever status a pulled record says, so a clear record clears): FAIL hold-only a server record that reads clear does not clear the held investor
 ```
 
+## Task 3: RED
+
+RED check ($O/red3.txt, parts auto-free, once, preview-desktop, preview-phone run from an archive of Task 2's commit 4ca1857):
+
+```
+FAIL auto-free with no click, the console re-screens the due investor when it loads :: {"moved":false,"clicks":0}
+FAIL auto-free one change-log entry "Re-screened automatically", naming the investor :: []
+FAIL auto-free the next date moved by the firm's interval (30 days) :: 2026-11-25
+FAIL auto-free through the Treasury connection alone: one list read, one screening asked of the server, for the Treasury lists :: {"reads":0,"posts":[]}
+FAIL once loads at once start one run: one Treasury screening on the server, one list read, one change-log entry :: {"screenings":0,"reads":0,"posts":[]}
+FAIL once a run that got no answer was tried once for that due date and writes nothing :: {"tried":0,"posts":0,"next":"2026-11-24"}
+MONITORING: FAIL (parts run: 4) - auto-free, once
+```
+
+preview-desktop and preview-phone passed on Task 2's code (nothing ran by itself there before either): guards, shown failing under a mutation:
+
+```
+MUTATION preview (resume and ongoing run with no server connected): FAIL preview-desktop and preview-phone: the frame recorded no refused connection (connect-src .../v1/checks/changed)
+MONITORING: FAIL (parts run: 3) - hold-only, preview-desktop, preview-phone
+```
+
+Before the gate, the whole check on the final tree ($O/full1.txt, a12b2b9's code): `MONITORING: PASS (parts run: 8)`; the whole server suite ($O/server-pre.txt): `# tests 462`, `# fail 0`.
+
 <!-- gsd:write-continue -->
