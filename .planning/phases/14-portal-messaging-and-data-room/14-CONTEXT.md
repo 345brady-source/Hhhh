@@ -40,3 +40,9 @@
 - Stamp time measured in the container (not on a phone): 25.6 MB / 41 pages 87-181 ms; a heavier 25.3 MB / 400-page file 373-427 ms, peak 307 MB. Far under 30 seconds: C-17's limit stays.
 - No full gate ran for 14-02 (gate14.sh arrives with 14-01 and no page loads the files). The reference gate runs on the merged tree when 14-01 merges.
 - API differences from the plan's interfaces are listed in 14-02-SUMMARY.md (verify brokenAt 0 with a field reason; viewsOf sums seconds; docsFor optional time; NS.dataroom undefined in the managed edition). Legal sentences are drafts: 14-06 marks them "To be confirmed".
+
+## After 14-03 (merged 2026-11-26)
+- server/lib/inbox.mjs merged, not mounted (index.mjs and store.mjs unchanged); 14 tests; server tests 422 on the merged tree, all pass; GATE_SERVER_TESTS=422 from here.
+- Executor deviations accepted: notice grouping counts only notices actually sent; firm notices follow the one-per-hour rule per side; optional clientId (ids and notice status only, never the body); correctionOf checked; duplicate recipients collapsed; fileKind, checkFiles, screen, TYPES, GENESIS exported for 14-08.
+- Orchestrator choice (disk): a broadcast stores one sealed copy of each attachment, not one per recipient (a 25 MB file to 500 investors would be about 12.5 GB). 14-08 or 14-09 changes the storage to one blob per attachment per send, keyed by its SHA-256, with each recipient's message referencing it; access is still checked per recipient, and nothing is deleted. The executor of whichever plan first mounts broadcasts applies this.
+- 14-08 must map party.prefs.notices to inv.emailPrefs.messages, add the 'inbox' collection line to store.mjs, build the context only from the phase 15 session, and compare both the chain text and the hash with the browser.
