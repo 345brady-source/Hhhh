@@ -12,7 +12,28 @@
 //             counts one investor held, and the change log holds exactly one "Monitoring alert" naming the investor; the
 //             typed taxpayer number is in no world record, no server output and no file the part writes (the scan proved
 //             first on a planted copy)
-//   NODE_PATH=$(npm root -g) node monitoring.js [--only alert]
+//   hold-only 1280x800: an investor held by an alert; the server's record then reads clear and the console's next pull
+//             lists it: the investor stays held; a person's approval with a note on the AML/KYC page clears them, and it
+//             stands when the console opens again
+//   monitored-not-due  a package investor whose screening is monitored (with the old date an import leaves): no next
+//             re-screen date once the console loads, not due, never offered "Run now" whatever the date; "Run now"
+//             re-screens the other due investor only; a screening whose every result is monitored sets no next date, one
+//             that is not keeps the firm's interval
+//   package-not-run  (G4) a package investor whose screening was not monitored and is due: with the firm's free Treasury
+//             connection on, "Run now" re-screens them through it alone (one list read, no call to the package provider
+//             or the sponsor's own connector, the package result kept); with none, they are left out of "Run now" and
+//             nothing is called; no error text on the Overview or the AML/KYC page in either
+//   auto-free (C-06) the firm screens with the free Treasury connection and its own connector: a due investor is
+//             re-screened through the Treasury connection alone when the console loads, with no click: one change-log entry
+//             "Re-screened automatically", the next date moved by the firm's interval, the own connector's result kept and
+//             the connector never called; with only the own connector and team screening on, nothing runs and the
+//             investor stays due with "Run now"
+//   once      loads at once while a run is going start one run; reloading right after screens nobody again; a run that
+//             got no answer is tried once for its due date and writes nothing (the investor stays due with "Run now")
+//   preview-desktop, preview-phone  the owner's preview (framed, connect-src none, no server) at 1280x800 and at 390x844
+//             with touch, an investor due for re-screening: the frame refuses a fetch; nothing runs by itself; no refused
+//             connection is recorded; no raw error; "Run now" re-screens with the firm's sandbox connection as before
+//   NODE_PATH=$(npm root -g) node monitoring.js [--only alert,hold-only,monitored-not-due,package-not-run,auto-free,once,preview-desktop,preview-phone]
 // The last line is "MONITORING: PASS (parts run: N)" or "MONITORING: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -41,7 +62,11 @@ fs.mkdirSync(SHOTS, { recursive: true });
 Lib.describeShots([
   ['alert-kyc-held.png', 'The console\'s AML/KYC page opened again after a monitoring alert: the investor reads "Needs review", with no button pressed.'],
   ['alert-kyc-details.png', 'The same investor\'s details: the potential match with the listed name the alert carried.'],
-  ['alert-overview.png', 'The console\'s Overview after the alert: "1 investor held for review by automated verification".']
+  ['alert-overview.png', 'The console\'s Overview after the alert: "1 investor held for review by automated verification".'],
+  ['preview-desktop-overview.png', 'The owner\'s preview (no server) at 1280x800: the Overview with an investor due for re-screening and "Run now", as before; nothing ran by itself.'],
+  ['preview-desktop-kyc.png', 'The owner\'s preview at 1280x800: the AML/KYC page after "Run now" re-screened with the sandbox connection.'],
+  ['preview-phone-overview.png', 'The owner\'s preview at 390x844 with touch: the Overview with "Run now", as before.'],
+  ['preview-phone-kyc.png', 'The owner\'s preview at 390x844 with touch: the AML/KYC page after "Run now".']
 ]);
 
 const WHO = { first: 'Odalys', last: 'Vantongeren', email: 'odalys.vantongeren@example.net' };
@@ -119,13 +144,15 @@ const LISTS = {
 function treasuryWorld() {
   const w = W.world();
   const inner = w.fetch;
-  w.hold = 0;
+  w.hold = 0; // milliseconds the lists take to answer
+  w.failLists = false; // the list service does not answer
   w.fetch = async (input, init) => {
     const u = new URL(String(input && input.url ? input.url : input));
     if (TREASURY && u.protocol === 'https:' && u.hostname === TREASURY.hostname) {
       const file = u.pathname.split('/').pop();
       w.calls.push({ at: Date.now(), kind: 'treasury', file });
       if (w.hold) await new Promise((r) => setTimeout(r, w.hold));
+      if (w.failLists) return { ok: false, status: 503, text: async () => '' };
       const body = Object.prototype.hasOwnProperty.call(LISTS, file) ? LISTS[file] : null;
       return { ok: body !== null, status: body !== null ? 200 : 404, text: async () => body || '' };
     }
@@ -611,7 +638,134 @@ const PARTS = {
     } finally {
       await C.close();
     }
-  }
+  },
+
+  /** C-06, T-08-25: the free Treasury re-screen runs by itself; a sponsor's own connector and team screening never do. */
+  async 'auto-free'({ check, S }) {
+    const C = await boot(S, check);
+    try {
+      // The firm screens with the free Treasury connection and its own connector; investor 0 was screened by both and is due.
+      const [due0] = await seed(C.cp, { use: ['ofac', 'own-screen'], own: true, investors: [{ index: 0, results: [{ connection: 'ofac', via: 'U.S. Treasury OFAC sanctions lists', how: 'ofac', ref: 'scr_seedofac' }, { connection: 'own-screen', via: 'Own screening service', how: 'server', ref: 'scr_seedown' }], next: daysFrom(-1) }] });
+      const own0 = (await record(C.cp, due0.id)).results.find((r) => r.connection === 'own-screen');
+      await reopen(C);
+      const moved = await C.cp
+        .waitForFunction((id) => {
+          const NS = window.CVPortal;
+          const inv = NS.state.ws.investors.find((x) => x.id === id);
+          return NS.integrations.peek(inv).aml.nextScreen > new Date().toISOString().slice(0, 10);
+        }, due0.id, { timeout: 30000 })
+        .then(() => true)
+        .catch(() => false);
+      await C.cp.waitForTimeout(500);
+      const r = await record(C.cp, due0.id);
+      const log = await auditOf(C.cp, 'Re-screened automatically');
+      check('with no click, the console re-screens the due investor when it loads', moved && (await C.cp.evaluate(() => window.__clicks)) === 0, { moved, clicks: await C.cp.evaluate(() => window.__clicks) });
+      check('one change-log entry "Re-screened automatically", naming the investor', log.length === 1 && log[0].record === due0.id && log[0].detail.indexOf(due0.title) === 0, log);
+      check('the next date moved by the firm\'s interval (30 days)', r.nextScreen === daysFrom(30), r.nextScreen);
+      check('through the Treasury connection alone: one list read, one screening asked of the server, for the Treasury lists', C.w.listReads() === 1 && JSON.stringify(C.posts) === JSON.stringify(['ofac']), { reads: C.w.listReads(), posts: C.posts });
+      check('the sponsor\'s own connector was not called and its result is kept as it was', C.posts.indexOf(OWN) < 0 && JSON.stringify(r.results.find((x) => x.connection === 'own-screen')) === JSON.stringify(own0), r.results);
+      check('the Treasury result is the new one, clear', r.results.length === 2 && r.results.some((x) => x.connection === 'ofac' && x.status === 'clear' && /^scr_/.test(x.ref) && x.ref !== 'scr_seedofac') && r.aml === 'clear' && r.decision === 'approved', r);
+      check('no package provider call and nothing else in the world', C.w.packageCalls() === 0 && C.w.count('other') === 0, C.w.calls.map((c) => c.kind));
+      let items = await attention(C.cp);
+      check('nobody is left due for re-screening', rescreenLine(items) === '', items);
+      // Only the sponsor's own connector and team screening on: nothing runs by itself.
+      await useAml(C.cp, ['own-screen', 'team']);
+      const [due1] = await seed(C.cp, { investors: [{ index: 1, results: [{ connection: 'own-screen', via: 'Own screening service', how: 'server', ref: 'scr_seedown1' }, { connection: 'team', via: 'Screening by your team', how: 'team', ref: '' }], next: daysFrom(-1) }] });
+      await pulled(C, () => reopen(C));
+      await C.cp.waitForTimeout(1500);
+      const r1 = await record(C.cp, due1.id);
+      check('with only the sponsor\'s own connector and team screening on, nothing is screened by itself', r1.nextScreen === daysFrom(-1) && C.posts.length === 1 && (await auditOf(C.cp, 'Re-screened automatically')).length === 1, { next: r1.nextScreen, posts: C.posts });
+      items = await attention(C.cp);
+      check('and the investor stays listed as due with "Run now"', rescreenLine(items) === '1 investor is due for re-screening. Run now', items);
+      worldClean(check, C);
+      check('no script error in the console', C.A.errors.length === 0, C.A.errors);
+    } finally {
+      await C.close();
+    }
+  },
+
+  /** Once per due date, one run at a time. */
+  async once({ check, S }) {
+    const C = await boot(S, check);
+    try {
+      const [inv] = await seed(C.cp, { use: ['ofac'], investors: [{ index: 0, results: [{ connection: 'ofac', via: 'U.S. Treasury OFAC sanctions lists', how: 'ofac', ref: 'scr_seedonce' }], next: daysFrom(-1) }] });
+      const treasury = () => C.srv.server.store.list('screenings').filter((x) => x.provider === 'ofac').length;
+      C.w.hold = 2500; // the lists answer slowly, so the run is still going while the console is loaded again
+      await reopen(C);
+      // Two loads at once while the run is going: the Overview again and the AML/KYC page, each asking to resume.
+      await C.cp.evaluate(() => {
+        const NS = window.CVPortal;
+        NS.integrations.resume(NS.state.ws);
+        NS.integrations.resume(NS.state.ws);
+      });
+      await C.cp.evaluate(() => (location.hash = 'console-kyc'));
+      await C.cp.waitForFunction((id) => {
+        const NS = window.CVPortal;
+        return NS.integrations.peek(NS.state.ws.investors.find((x) => x.id === id)).aml.nextScreen > new Date().toISOString().slice(0, 10);
+      }, inv.id, { timeout: 30000 }).catch(() => {});
+      await C.cp.waitForTimeout(3000);
+      check('loads at once start one run: one Treasury screening on the server, one list read, one change-log entry', treasury() === 1 && C.w.listReads() === 1 && (await auditOf(C.cp, 'Re-screened automatically')).length === 1, { screenings: treasury(), reads: C.w.listReads(), posts: C.posts });
+      C.w.hold = 0;
+      await pulled(C, () => reopen(C));
+      await C.cp.waitForTimeout(1500);
+      check('reloading the console right after does not screen the same investor again', treasury() === 1 && C.posts.length === 1 && (await auditOf(C.cp, 'Re-screened automatically')).length === 1, { screenings: treasury(), posts: C.posts });
+      // A run that gets no answer is not repeated for the same due date (no loop); the investor stays due with "Run now".
+      await forgetLists();
+      C.w.failLists = true;
+      const [inv2] = await seed(C.cp, { investors: [{ index: 1, results: [{ connection: 'ofac', via: 'U.S. Treasury OFAC sanctions lists', how: 'ofac', ref: 'scr_seedonce2' }], next: daysFrom(-2) }] });
+      await pulled(C, () => reopen(C));
+      await C.cp.waitForTimeout(1500);
+      const tried = C.posts.length;
+      await pulled(C, () => reopen(C));
+      await C.cp.waitForTimeout(1500);
+      const r2 = await record(C.cp, inv2.id);
+      check('a run that got no answer was tried once for that due date and writes nothing', tried === 2 && C.posts.length === 2 && r2.nextScreen === daysFrom(-2) && r2.results[0].ref === 'scr_seedonce2', { tried, posts: C.posts.length, next: r2.nextScreen });
+      const items = await attention(C.cp);
+      check('that investor stays listed as due with "Run now", with no error text', rescreenLine(items) === '1 investor is due for re-screening. Run now' && !items.some((l) => ERROR_RE.test(l)), items);
+      worldClean(check, C);
+      check('no script error in the console', C.A.errors.length === 0, C.A.errors);
+    } finally {
+      await C.close();
+    }
+  },
+
+  'preview-desktop': ({ check, S }) => preview(check, S, 'desktop'),
+  'preview-phone': ({ check, S }) => preview(check, S, 'phone')
 };
+
+/**
+ * The owner's preview (view: 'desktop' | 'phone'): the portal framed with every connection refused and no server, an
+ * investor due for re-screening. Nothing runs by itself, nothing is attempted, and "Run now" re-screens with the firm's
+ * sandbox connection as before.
+ */
+async function preview(check, S, view) {
+  const { A, fr } = await F.framed(S, view);
+  try {
+    const size = A.page.viewportSize();
+    const tap = view === 'phone';
+    check(`the window is ${F.VIEW[view].viewport.width}x${F.VIEW[view].viewport.height}${tap ? ' with touch' : ''}`, size.width === F.VIEW[view].viewport.width && size.height === F.VIEW[view].viewport.height && (await fr.evaluate(() => navigator.maxTouchPoints > 0)) === tap, size);
+    await F.proveRefused(check, A, fr);
+    await Lib.setupPortal(S, { page: fr, context: A.context });
+    check('no integration server is connected', (await fr.evaluate(() => window.CVPortal.integrations.serverUrl(window.CVPortal.state.ws))) === '');
+    const [inv] = await seed(fr, { use: ['sandbox'], investors: [{ index: 0, results: [{ connection: 'sandbox', via: 'Sandbox', how: 'sandbox', ref: 'sbx_seedpreview' }], next: daysFrom(-1) }] });
+    const items = await attention(fr);
+    await fr.waitForTimeout(1500);
+    const r = await record(fr, inv.id);
+    check('nothing runs by itself: the investor is still due, no automatic entry, no monitoring entry', r.nextScreen === daysFrom(-1) && (await auditOf(fr, 'Re-screened automatically')).length === 0 && (await auditOf(fr, 'Monitoring alert')).length === 0, r);
+    check('the Overview offers "Run now" as before', rescreenLine(items) === '1 investor is due for re-screening. Run now', items);
+    await F.noRawError(check, fr, 'the console\'s Overview');
+    await A.page.screenshot({ path: path.join(SHOTS, `preview-${view}-overview.png`) });
+    const toast = await runNow(fr, tap);
+    const r2 = await record(fr, inv.id);
+    check('"Run now" re-screens with the firm\'s sandbox connection as before', /^1 investor re-screened/.test(toast) && r2.results.length === 1 && r2.results[0].connection === 'sandbox' && r2.results[0].status === 'clear' && r2.nextScreen === daysFrom(30), { toast, r2 });
+    await Lib.consoleRoute(fr, 'console-kyc', '[data-action=kyc-tab]');
+    const text = await F.noRawError(check, fr, 'the console\'s AML/KYC page after "Run now"');
+    await A.page.screenshot({ path: path.join(SHOTS, `preview-${view}-kyc.png`) });
+    check('nothing outside the page was asked for', A.net.external.length === 0 && A.net.allowed.length === 0, A.net);
+    F.leakFree(check, 'the console screens of the preview', text);
+  } finally {
+    await A.context.close().catch(() => {});
+  }
+}
 
 Lib.runParts(PARTS, { name: 'MONITORING', unit: 'parts', flag: '--only', browser: true });
