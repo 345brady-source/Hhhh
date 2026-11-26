@@ -260,3 +260,44 @@ All law here is from law-firm summaries and SEC page titles found by search; the
 - Regulation A offerings have their own testing-the-waters rule (Rule 255) with legends and filing of materials; a room for them is not built in this phase: the "Data room" button is offered for 506(b) and 506(c) offerings only, and for "other" with no rule text (C-10). [CITED: search excerpt naming 17 CFR 230.255] / [ASSUMED: scope decision]
 
 <!-- section: data room law done -->
+
+## 5. Privacy: what may never be in an email, and attachment limits
+
+### 5.1 Email notices hold no message content (D-01)
+
+The notice is built from fixed wording only, so no sponsor or investor text can reach an inbox through it:
+
+| Notice (new phase 13 renderer kinds, added after 13-11 merges) | To | Subject | Body | Never contains |
+|------|----|---------|------|----------------|
+| `message_notice` | investor | "<Firm>: you have a new message" | "<Firm> sent you a message in your investor portal." + one button "Open your messages" (the inbox link in server mode; the portal sign-in in the preview) + the phase 13 footer | The message text, its subject, attachment names or count, the author's name, the offering's name, amounts |
+| `message_received` | the firm's notification address | "<Firm>: <investor or prospect name> sent a message" | "Open it on the Messages page." + console link | The message text, attachment names |
+| `room_invite` | prospect | "<Firm>: documents for <offering>" | One line, one button "Review the documents", the expiry sentence | Nothing beyond the firm, offering name and link |
+| `room_activity` (optional, C-07) | the firm's notification address | "<Firm>: <prospect> agreed to the NDA" or "... indicated interest" | Link to the Data room page | The amount indicated |
+
+- A broadcast sends one notice per recipient, each with the same fixed text.
+- **Coalescing (C-06):** one notice per new message, except that no second notice goes to the same investor for the same thread while an earlier notice's message is still unread and less than one hour old. Prevents a burst of emails from a conversation; the next unread message after that hour gets a notice.
+- **Every notice is transactional** (it tells an existing investor or a prospect the firm invited that something is waiting in their account), so no unsubscribe is required by CAN-SPAM; the investor's portal preference may still turn message notices off (they then see the unread count only). [ASSUMED: CAN-SPAM transactional classification; phase 13 C-02 treats only offering news and invitations to new offerings as possibly commercial] The `room_invite` to a prospect who is not yet an investor is the borderline case: treat it as possibly commercial (postal address in the footer, one-click unsubscribe), as phase 13 does for invitations to a new offering (13-CONTEXT C-02).
+- **Links:** the inbox link is a bearer link (whoever has the email can open that investor's inbox, as with invitations today). The email says "This link opens your messages. Do not forward this email." [ASSUMED: wording] Phase 15 replaces it with signed-in sessions.
+
+### 5.2 Message bodies: screening, not storage of secrets
+
+- Sponsor-to-investor messages that match the phase 13 shared patterns (`emails.js PATTERNS`: taxpayer numbers, routing and account numbers, passwords) are **refused** with one plain sentence: "Bank and taxpayer numbers are not sent in messages. Payment instructions are on the capital call." The reason is fraud, not only privacy: changed wire instructions in a message are the classic payment-diversion attack, and the capital call already carries the firm's wire box (portal.js `wireBox`). [ASSUMED: threat model]
+- Investor-to-sponsor messages that match are **warned once** ("Do not send taxpayer or bank numbers in a message; your Account page is the place for them.") with "Send anyway" (D-30: nothing mandatory for investors; the server copy is sealed). C-11.
+- The server never logs a body, a subject line or an attachment name; events carry ids and types only (taxdocs.mjs header practice). The help chatbot never reads messages (its context is the guide only).
+- Data room prospect data is the minimum: name, email, relationship basis note, NDA assent (with IP address and browser in server mode, sealed), views, indications. Nothing else is asked.
+
+### 5.3 Attachment limits
+
+| Where | Limit (proposed) | Why |
+|-------|------------------|-----|
+| Each message attachment | 10 MB | The server's tax-document limit is `pdf: 10 * MB` (taxdocs.mjs:18); a phone uploading over mobile data; base64 inflation keeps one message call under the 16 KB-to-40 MB body caps already used |
+| Per message | 5 files, 25 MB together | Same as an invitation submission's "25 MB together" (server/README.md, Investor calls) |
+| File types | Investor: PDF, PNG, JPEG (checked by first bytes, as the server does for submissions); sponsor: those plus XLSX, CSV, DOCX (checked by first bytes or text); never ZIP, HTML, SVG or executables | Files sponsors need for investor relations; nothing that runs code or hides files |
+| Data room document | 25 MB each, PDF only, up to 30 documents | The Documents upload limit is `25 * 1024 * 1024` (console.js:2366); PDF only because the watermark and the in-page viewer need PDF |
+| Preview: bytes held in memory when the browser refuses its file store | New attachments refused past 50 MB held in memory this session, with "This browser is not keeping files. Connect your server or try a smaller file." | The file store's in-memory fallback has no cap except the recent-copy cache `RECENT_MAX` (64 MB, operations.js:399); an iPhone frame can run out of memory [ASSUMED: threshold; measure on the phone frame] |
+| Preview: all attachments in this browser | A plain line on the Messages page past 200 MB in the file store: "This browser holds <n> MB of message files." | Browser quotas differ; no silent failure [ASSUMED: threshold] |
+| Server: watermarking time | Measured by the plan on a 25 MB PDF before the limit is fixed | pdf-lib loads the whole file in memory; a slow stamp on a large memorandum is a real risk (Pitfall 4) |
+
+No attachment ever goes in an email (13-CONTEXT C-12).
+
+<!-- section: privacy done -->
