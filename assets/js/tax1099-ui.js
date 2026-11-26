@@ -17,6 +17,13 @@
  * fault stands) and handed to the portal's download helper (U.download), as the ACH file is. The sponsor uploads it on
  * the IRS's own site; the portal keeps only its SHA-256 and row count on the fund's year record.
  *
+ * Form 1099-DIV (plan 10-11, D-02, C-07, TAX-09): for a fund whose tax reporting type is corporation or REIT the same
+ * section shows, before the forms, each distribution paid in the year with the split the sponsor enters from the CPA
+ * (NS.tax1099.setSplit, which refuses a split that breaks a rule and names it; the portal never proposes one), the IRS's
+ * whole-payment rule as one line applied only when its button is pressed (NS.tax1099.wholeDividend), and one line naming
+ * Form 5452 when a box 3 is above zero. The review, numbers, copies, file and receipt steps are Form 1099-INT's with the
+ * form type of the fund (NS.tax1099.formTypeOf).
+ *
  * Registered with NS.taxUI.part('1099', ...) (taxdocs-ui.js loads this file from its fixed list): address
  * console-taxdocs-1099. Making the numbers step, the copies and the file is for admins (NS.app.can('configure')); a team
  * member reviews and confirms totals. Values from the workspace are escaped before they are drawn. No network call is
@@ -38,7 +45,9 @@
   const admin = () => NS.app.can('configure');
   const KEY = '1099';
   const ROUTE = 'console-taxdocs-1099';
-  const FORM = '1099-INT';
+  /** The form of the fund on screen: '1099-DIV' for corporation or REIT, '1099-INT' for notes. */
+  const formOf = (o) => X().formTypeOf(o);
+  const isDiv = (c) => !!(c && c.o) && formOf(c.o) === '1099-DIV';
 
   /* ---------- scripts loaded from beside this file (no fetch) ---------- */
   const HERE = (document.currentScript && document.currentScript.src) || '';
@@ -77,7 +86,8 @@
   });
 
   const investorOf = (ws, id) => (ws.investors || []).find((i) => i.id === id) || null;
-  const notesFunds = (ws) => (ws.offerings || []).filter((o) => WH().reporting(o) === 'notes');
+  /** The funds this section prepares a form for: notes (Form 1099-INT) and corporation or REIT (Form 1099-DIV). */
+  const notesFunds = (ws) => (ws.offerings || []).filter((o) => ['notes', 'corp'].indexOf(WH().reporting(o)) >= 0);
   /** The years offered for a fund: the year before this one and every year it has a payment. */
   function yearsFor(ws, o) {
     const out = new Set([String(Number(today().slice(0, 4)) - 1)]);
@@ -96,7 +106,7 @@
     if (held.key !== key) held = fresh(key);
     return { o, funds, year, years };
   }
-  const figures = (ws, c) => X().figuresInt(ws, c.o, c.year, { today: today() });
+  const figures = (ws, c) => X().figuresFor(ws, c.o, c.year, { today: today() });
   const yearRecOf = (o, y) => (((o.tax || {}).years || {})[y] || {});
   const allConfirmed = (ws, c, F) => F.forms.length > 0 && F.forms.every((f) => X().confirmed(ws, c.o, c.year, f));
   const ready = (ws, c, F) => !F.stops.length && allConfirmed(ws, c, F);
@@ -106,7 +116,7 @@
     const out = [];
     notesFunds(ws).forEach((o) => {
       const year = String(Number(today().slice(0, 4)) - 1);
-      const F = X().figuresInt(ws, o, year, { today: today() });
+      const F = X().figuresFor(ws, o, year, { today: today() });
       const n = F.forms.filter((f) => X().confirmed(ws, o, year, f)).length;
       out.push(`${o.shortName || o.name} ${year}: ${F.stops.length ? 'an answer is needed' : `${F.forms.length} form${F.forms.length === 1 ? '' : 's'}, ${n} confirmed`}`);
     });
@@ -128,14 +138,18 @@
       </div>`
     );
   }
-  const stopsHTML = (F) => F.stops.map((s) => `<p class="tx-stop" data-stop="${h(s.code)}">${h(s.text)}</p>`).join('');
+  const stopsHTML = (F) =>
+    F.stops
+      .filter((s) => s.code !== 'split')
+      .map((s) => `<p class="tx-stop" data-stop="${h(s.code)}">${h(s.text)}</p>`)
+      .join('');
   /**
    * What a person answers so a stop goes: "Is this payment interest?" for a payment whose type does not say (never
    * guessed), and Confirm amounts, with the shares worked out from the positions, for an interest payment saved before
    * amounts were stored (plan 10-01).
    */
   function answersHTML(ws, c) {
-    const runs = X().interestRuns(ws, c.o, c.year, today());
+    const runs = isDiv(c) ? X().divRuns(ws, c.o, c.year, today()).map((r) => Object.assign({ counts: 'interest' }, r)) : X().interestRuns(ws, c.o, c.year, today());
     const can = NS.app.can('operate');
     const ask = runs
       .filter((r) => r.counts === 'ask')
@@ -164,16 +178,23 @@
     if (!ok && NS.app.can('operate')) btns.push(`<button type="button" class="cs-btn cs-btn-small cs-btn-primary" data-action="t99-confirm" data-id="${h(f.investorId)}">Confirm</button>`);
     if (admin()) btns.push(`<button type="button" class="cs-btn cs-btn-small" data-action="t99-exempt" data-id="${h(f.investorId)}">Exempt recipient</button>`);
     const acts = btns.length ? `<div class="tx-acts">${btns.join('')}</div>` : '';
+    const boxes = f.boxes
+      ? DIV_BOXES.filter(([b]) => ALWAYS.indexOf(b) >= 0 || f.boxes[b] > 0)
+          .map(([b, label]) => `<dt>${b} ${label}</dt><dd data-box="${b}">${f.boxes[b] ? money(f.boxes[b]) : ''}</dd>`)
+          .join('')
+      : `<dt>1 Interest income</dt><dd data-box="1">${money(f.box1Cents)}</dd>
+        <dt>4 Federal income tax withheld</dt><dd data-box="4">${f.box4Cents ? money(f.box4Cents) : ''}</dd>`;
     return `<li class="tx-row" data-id="${h(f.investorId)}"><div class="tx-what"><span class="tx-title">${h(inv.title || f.investorId)} · ${h(f.investorId)}</span>
       <dl class="tx-review">
         <dt>Recipient’s number</dt><dd>${ending(X().last4Of(inv))}</dd>
-        <dt>1 Interest income</dt><dd data-box="1">${money(f.box1Cents)}</dd>
-        <dt>4 Federal income tax withheld</dt><dd data-box="4">${f.box4Cents ? money(f.box4Cents) : ''}</dd>
+        ${boxes}
       </dl></div><div class="tx-when">${pill}</div>${acts}</li>`;
   }
   function formsHTML(ws, c, F) {
     if (!F.forms.length) return '';
-    return CK().panel(`Forms <span class="cs-count">${F.forms.length}</span>`, `${said('forms')}<ul class="tx-list" data-list="forms">${F.forms.map((f) => formRow(ws, c, f)).join('')}</ul>`);
+    // a return of capital in box 3: the corporation's own filing, one line (Instructions for Form 1099-DIV)
+    const f5452 = F.forms.some((f) => f.boxes && f.boxes['3'] > 0) ? `<p class="tx-note" data-notice="5452">${h(X().DIV_TEXT.f5452)}</p>` : '';
+    return CK().panel(`Forms <span class="cs-count">${F.forms.length}</span>`, `${said('forms')}${f5452}<ul class="tx-list" data-list="forms">${F.forms.map((f) => formRow(ws, c, f)).join('')}</ul>`);
   }
   function leftHTML(ws, F) {
     if (!F.leftOut.length) return '';
@@ -326,9 +347,11 @@
 
   /* ---------- the payer (admins enter it; a team member reads it) ---------- */
   const PAYER = [['name', 'Payer’s name'], ['name2', 'Second name line'], ['address1', 'Street address'], ['address2', 'Second address line'], ['city', 'City'], ['state', 'State'], ['zip', 'ZIP'], ['phone', 'Telephone']];
-  const BOXES = [['registeredForm', 't99-p-registered', 'These notes are in registered form or of a type offered to the public'], ['paidInMoney', 't99-p-money', 'Interest was paid in money and none was added to principal or issued at a discount']];
+  const BOXES_INT = [['registeredForm', 't99-p-registered', 'These notes are in registered form or of a type offered to the public'], ['paidInMoney', 't99-p-money', 'Interest was paid in money and none was added to principal or issued at a discount']];
   function payerHTML(c) {
     const p = X().payerOf(c.o);
+    // the two confirmations are Form 1099-INT's (notes); a corporation's form has none
+    const BOXES = isDiv(c) ? [] : BOXES_INT;
     if (!admin()) {
       const rows = PAYER.filter(([k]) => p[k]).map(([k, label]) => `<dt>${label}</dt><dd>${h(p[k])}</dd>`).join('') + BOXES.map(([k, , label]) => `<dt>${label}</dt><dd>${p[k] === true ? 'Yes' : 'Not confirmed'}</dd>`).join('');
       return CK().panel('Payer', `<div data-panel="payer"><dl class="tx-review">${rows}</dl></div>`);
@@ -426,8 +449,9 @@
       .catch(() => {});
     const F = figures(ws, c);
     const steps = admin() && ready(ws, c, F) ? `${numbersHTML(ws, c, F)}${copiesHTML(ws, c, F)}${fileHTML(ws, c)}` : '';
-    const stops = F.stops.length ? CK().panel('', `${said('answers')}${stopsHTML(F)}${answersHTML(ws, c)}`) : '';
-    return `${pickerHTML(c)}${payerHTML(c)}${stops}${formsHTML(ws, c, F)}${leftHTML(ws, F)}${steps}`;
+    const shown = stopsHTML(F) + answersHTML(ws, c);
+    const stops = shown || said('answers') ? CK().panel('', `${said('answers')}${shown}`) : '';
+    return `${pickerHTML(c)}${payerHTML(c)}${isDiv(c) ? splitsHTML(ws, c) : ''}${stops}${formsHTML(ws, c, F)}${leftHTML(ws, F)}${steps}`;
   }
 
   /* ---------- picking and acting ---------- */
@@ -575,6 +599,7 @@
       if (Object.keys(payerFix).length) X().setPayer(ws, c.o.id, payerFix, { by: actor() });
       await numbersReady(ws, c, F);
       const payer = payerObj(c);
+      const FORM = formOf(c.o);
       const rows = F.forms.map((f) => X().iris.row(FORM, c.year, f, payer, recipientObj(ws, f.investorId)));
       const faults = X().iris.validate(FORM, rows);
       const cols = NS.tax1099data.IRIS.columns[FORM];
@@ -590,7 +615,7 @@
       for (const f of files) {
         await U.download(f.name, f.text, { mime: 'text/csv' });
         yr.files.push({ name: f.name, sha256: NS.audit.sha256(f.text), rows: f.rows, ids: F.forms.map((x) => x.investorId), by: actor(), at });
-        CK().audit('Form 1099-INT file downloaded', `${c.o.shortName || c.o.name}: ${c.year}, ${f.rows} form${f.rows === 1 ? '' : 's'}`, c.o.id, c.o.id);
+        CK().audit(`Form ${FORM} file downloaded`, `${c.o.shortName || c.o.name}: ${c.year}, ${f.rows} form${f.rows === 1 ? '' : 's'}`, c.o.id, c.o.id);
       }
       if (!X().payerOf(c.o).tinLast4) X().setPayer(ws, c.o.id, { tinLast4: held.payer.tin.slice(5) }, { by: actor() });
       ui().faults = [];
@@ -627,7 +652,7 @@
     (ws, c) => {
       const patch = {};
       PAYER.forEach(([k]) => (patch[k] = typed(`t99-p-${k}`)));
-      BOXES.forEach(([k, id]) => (patch[k] = !!(document.getElementById(id) || {}).checked));
+      if (!isDiv(c)) BOXES_INT.forEach(([k, id]) => (patch[k] = !!(document.getElementById(id) || {}).checked));
       X().setPayer(ws, c.o.id, patch, { by: actor() });
     },
     'configure'
@@ -641,9 +666,10 @@
       await numbersReady(ws, c, F);
       const todo = needCopy(ws, c, F);
       if (!todo.length) return;
+      const FORM = formOf(c.o);
       const map = await (async () => {
         await irisData();
-        return NS.tax1099data.MAPS[X().COPY_B];
+        return NS.tax1099data.MAPS[X().COPY_B_OF[FORM]];
       })();
       await load('../forms/1099/forms1099-data.js', () => !!(NS.tax1099formsData && NS.tax1099formsData[map.file]));
       const L = await NS.esignKit.writer();
@@ -652,11 +678,12 @@
       const payer = payerObj(c);
       const conf = yearRecOf(c.o, c.year).confirmed || {};
       for (const f of todo) {
-        const bytes = await X().recipientCopy(L, blank.slice(), map, X().copyBAnswers(f, payer, recipientObj(ws, f.investorId), c.year), { fontkit: font.fontkit, fontBytes: font.fontBytes, sha256: NS.audit.sha256 });
+        const bytes = await X().recipientCopy(L, blank.slice(), map, X().copyBAnswers(f, payer, recipientObj(ws, f.investorId), c.year, FORM), { fontkit: font.fontkit, fontBytes: font.fontBytes, sha256: NS.audit.sha256 });
         const id = 'txd-' + Array.from({ length: 12 }, () => String.fromCharCode(97 + Math.floor(Math.random() * 26))).join('');
         await NS.ops.files.put(id, new Blob([bytes], { type: 'application/pdf' }));
         const by = conf[f.investorId];
-        NS.taxdocs.addGenerated(ws, { kind: '1099-int', year: c.year, offeringId: c.o.id, investorId: f.investorId, id, title: `Form 1099-INT ${c.year}`, fileName: `form-1099-int-${c.year}-${f.investorId}.pdf`, size: bytes.length, sha256: NS.audit.sha256(bytes), confirmedBy: by.by, confirmedAt: by.at });
+        const kind = FORM.toLowerCase();
+        NS.taxdocs.addGenerated(ws, { kind, year: c.year, offeringId: c.o.id, investorId: f.investorId, id, title: `Form ${FORM} ${c.year}`, fileName: `form-${kind}-${c.year}-${f.investorId}.pdf`, size: bytes.length, sha256: NS.audit.sha256(bytes), confirmedBy: by.by, confirmedAt: by.at });
         const yr = c.o.tax.years[c.year];
         yr.copyB = Object.assign({}, yr.copyB || {}, { [f.investorId]: id });
       }
@@ -699,6 +726,126 @@
     },
     'configure'
   );
+
+  /* ---------- Form 1099-DIV: the split from the CPA (plan 10-11; never proposed by the portal) ---------- */
+  // the boxes in the form's own order and words (Form 1099-DIV, Rev. January 2024); 1a, 2a, 3 and 4 are always drawn
+  const DIV_BOXES = [['1a', 'Total ordinary dividends'], ['1b', 'Qualified dividends'], ['2a', 'Total capital gain distributions'], ['2b', 'Unrecaptured section 1250 gain'], ['2c', 'Section 1202 gain'], ['2d', 'Collectibles (28%) gain'], ['2e', 'Section 897 ordinary dividends'], ['2f', 'Section 897 capital gain'], ['3', 'Nondividend distributions'], ['4', 'Federal income tax withheld'], ['5', 'Section 199A dividends']];
+  const ALWAYS = ['1a', '2a', '3', '4'];
+  const MAIN = ['1a', '2a', '3'];
+  const MORE = ['1b', '2b', '2c', '2d', '2e', '2f', '5'];
+  const splitUi = () => {
+    const u = ui();
+    u.splitOpen = u.splitOpen || {};
+    u.splitEdit = u.splitEdit || {};
+    return u;
+  };
+  /** What a split holds, in dollars: "1a $7,000.00 · 2a $1,000.00 · 3 $2,000.00 · 5 $7,000.00" (boxes above zero). */
+  const splitText = (sp) =>
+    MAIN.concat(MORE)
+      .filter((b) => (MAIN.indexOf(b) >= 0 ? sp.cents[b] : sp.part[b]) > 0)
+      .map((b) => `${b} ${money(MAIN.indexOf(b) >= 0 ? sp.cents[b] : sp.part[b])}`)
+      .join(' · ');
+  const whoSaid = (sp) => (sp.source === 'irs-default' ? `Whole payment as a dividend (IRS rule), chosen by ${h(sp.by)}` : sp.source === 'year' ? `From the year’s split, entered by ${h(sp.by)}` : `Entered by ${h(sp.by)}`);
+  function splitForm(id, run) {
+    const v = splitUi().splitEdit[id] || {};
+    const unit = v.unit === '$' ? '$' : '%';
+    const field = (b) => `<label class="cs-field" for="t99-s-${h(id)}-${b}"><span>${b}</span><input id="t99-s-${h(id)}-${b}" type="text" inputmode="decimal" autocomplete="off" value="${h(v[b] || '')}"></label>`;
+    const more = MORE.some((b) => v[b]);
+    return `<div class="tx-form">
+        <label class="cs-field" for="t99-s-${h(id)}-unit"><span>As</span><select id="t99-s-${h(id)}-unit"><option value="%"${unit === '%' ? ' selected' : ''}>Percent</option><option value="$"${unit === '$' ? ' selected' : ''}>Amount</option></select></label>
+        ${MAIN.map(field).join('')}
+      </div>
+      <details data-more="${h(id)}"${more ? ' open' : ''}><summary>More boxes from your CPA</summary><div class="tx-form">${MORE.map(field).join('')}</div></details>
+      <label class="tx-note" for="t99-s-${h(id)}-year"><input id="t99-s-${h(id)}-year" type="checkbox"${v.year ? ' checked' : ''}> Use this split for every distribution of the year</label>
+      ${said('split:' + id)}
+      <div class="cs-row"><button type="button" class="cs-btn cs-btn-primary" data-action="t99-split" data-run="${h(id)}">Save split</button><button type="button" class="cs-btn" data-action="t99-whole" data-run="${h(id)}">Report the whole payment as a dividend</button>${splitUi().splitOpen[id] && run.split ? `<button type="button" class="cs-btn" data-action="t99-split-cancel" data-run="${h(id)}">Cancel</button>` : ''}</div>`;
+  }
+  function splitsHTML(ws, c) {
+    const runs = X().divRuns(ws, c.o, c.year, today()).filter((r) => r.stored);
+    if (!runs.length) return '';
+    const can = NS.app.can('operate');
+    const dy = (yearRecOf(c.o, c.year) || {}).divYear;
+    const rows = runs
+      .map((r) => {
+        const id = r.run.id;
+        const sp = r.split;
+        const open = can && (!sp || splitUi().splitOpen[id]);
+        const pill = sp ? `<span class="tx-pill is-ok">${whoSaid(sp)}</span>` : '<span class="tx-pill is-wait">Split from your CPA</span>';
+        const change = sp && can && !open ? `<div class="tx-acts"><button type="button" class="cs-btn cs-btn-small" data-action="t99-split-open" data-run="${h(id)}">Change</button></div>` : '';
+        return `<li class="tx-row" data-id="${h(id)}"${sp ? '' : ' data-stop="split"'}><div class="tx-what"><span class="tx-title">${h(U.date(r.run.date, 'long'))} · ${h(r.run.type || 'Distribution')} · ${money(r.run.total)}</span>${sp ? `<span class="tx-detail" data-split>${h(splitText(sp))}</span>` : ''}</div><div class="tx-when">${pill}</div>${change}${open ? splitForm(id, r) : ''}</li>`;
+      })
+      .join('');
+    const year = dy ? `<p class="tx-note" data-year-split>For every distribution of ${h(c.year)}: ${h(MAIN.concat(MORE).filter((b) => Number(dy.pct[b] || dy.partPct[b] || 0) > 0).map((b) => `${b} ${dy.pct[b] || dy.partPct[b]}%`).join(' · '))} · ${h(dy.by)}${can ? ' <button type="button" class="cs-btn cs-btn-small" data-action="t99-year-clear">Remove</button>' : ''}</p>` : '';
+    const rule = runs.some((r) => !r.split) && can ? `<p class="tx-note" data-notice="whole">${h(X().DIV_TEXT.whole)}</p>` : '';
+    return CK().panel('Split from your CPA', `<div data-panel="splits">${said('splits')}${rule}${year}<ul class="tx-list" data-list="splits">${rows}</ul></div>`);
+  }
+  /** The split as typed in a distribution's row (kept across redraws; it holds no number of a person). */
+  function splitTyped(id) {
+    const el = (k) => document.getElementById(`t99-s-${id}-${k}`);
+    if (!el('1a')) return null;
+    const v = { unit: (el('unit') || {}).value === '$' ? '$' : '%', year: !!(el('year') || {}).checked };
+    MAIN.concat(MORE).forEach((b) => (v[b] = String((el(b) || {}).value || '').trim()));
+    return v;
+  }
+  function harvestSplits() {
+    document.querySelectorAll('[data-list="splits"] .tx-row[data-id]').forEach((row) => {
+      const id = row.getAttribute('data-id');
+      const v = splitTyped(id);
+      if (v) splitUi().splitEdit[id] = v;
+    });
+  }
+  /** Dollars typed ("1,234.56" or "$1234.56") as whole cents; a minus sign is kept so the module names the rule. */
+  function centsTyped(s) {
+    const t = String(s || '').replace(/[$,\s]/g, '');
+    if (t === '') return 0;
+    const m = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(t);
+    if (!m) throw new Error('An amount is dollars and cents, such as 1234.56.');
+    const c = Number(m[2]) * 100 + Number((m[3] || '').padEnd(2, '0') || 0);
+    return m[1] ? -c : c;
+  }
+  const pctTyped = (s) => String(s || '').replace(/[%\s]/g, '');
+  /** One split action: refused with one line in that distribution's row; on success saved (the module logs it). */
+  const splitAct = (fn) => (el) => {
+    harvestSplits();
+    const id = el.getAttribute('data-run') || '';
+    return act(id ? 'split:' + id : 'splits', (ws, c, e, u) => {
+      fn(ws, c, id, u);
+      NS.clearCaches();
+    })(el);
+  };
+  NS.actions['t99-split'] = splitAct((ws, c, id, u) => {
+    const v = splitUi().splitEdit[id] || {};
+    const by = actor();
+    const pick = (keys) => keys.reduce((a, b) => (v[b] !== '' && v[b] != null ? Object.assign(a, { [b]: v.unit === '$' ? centsTyped(v[b]) : pctTyped(v[b]) }) : a), {});
+    if (v.year) {
+      if (v.unit === '$') throw new Error('A split for every distribution of the year is given in percents.');
+      X().setYearSplit(ws, c.o.id, c.year, { pct: pick(MAIN), partPct: pick(MORE) }, { by });
+    } else if (v.unit === '$') X().setSplit(ws, id, { cents: pick(MAIN), part: pick(MORE) }, { by, offeringId: c.o.id });
+    else X().setSplit(ws, id, { pct: pick(MAIN), partPct: pick(MORE) }, { by, offeringId: c.o.id });
+    delete u.splitOpen[id];
+    delete u.splitEdit[id];
+  });
+  NS.actions['t99-whole'] = splitAct((ws, c, id, u) => {
+    X().wholeDividend(ws, id, { by: actor(), offeringId: c.o.id });
+    delete u.splitOpen[id];
+    delete u.splitEdit[id];
+  });
+  NS.actions['t99-split-open'] = (el) => {
+    harvestSplits();
+    splitUi().splitOpen[el.getAttribute('data-run')] = true;
+    redraw();
+  };
+  NS.actions['t99-split-cancel'] = (el) => {
+    const u = splitUi();
+    const id = el.getAttribute('data-run');
+    delete u.splitOpen[id];
+    delete u.splitEdit[id];
+    u.msg = null;
+    redraw();
+  };
+  NS.actions['t99-year-clear'] = splitAct((ws, c) => {
+    X().clearYearSplit(ws, c.o.id, c.year, { by: actor() });
+  });
 
   NS.taxUI.part(KEY, { order: 30, title: 'Form 1099', summary, render, shown: (ws) => notesFunds(ws).length > 0 });
   NS.taxUI.refresh();
