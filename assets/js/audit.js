@@ -1359,6 +1359,81 @@
   function sched(id, file, title, desc, cols, rows, total) {
     return { id, file, title, desc, cols, rows, total: total || null };
   }
+  /* ---------- Schedules 20 to 24: read from the fund's journal (plan 11-12) ---------- */
+  const CF_OPERATING = [
+    ['1200', 'Change in interest, dividends and rents receivable'],
+    ['1300', 'Change in prepaid expenses and other assets'],
+    [['1400', '1410', '1490'], 'Change in land and buildings'],
+    ['2000', 'Change in accounts payable and accrued expenses'],
+    ['2100', 'Change in management fees payable'],
+    ['2300', 'Change in securities sold short'],
+    ['2600', 'Change in due to general partner']
+  ];
+  const CF_FINANCING = [
+    ['3000', 'Contributions'],
+    ['3100', 'Distributions and redemptions'],
+    ['2200', 'Change in redemptions payable'],
+    ['2400', 'Change in tax withheld, payable'],
+    ['3300', 'Distributions to the general partner'],
+    ['2250', 'Subscriptions received in advance'],
+    ['2500', 'Mortgage and notes payable, net'],
+    ['3900', 'Opening balances']
+  ];
+  const isCash = (code) => String(code).slice(0, 2) === '10';
+  const isResult = (type) => type === 'income' || type === 'expense' || type === 'gain';
+  /**
+   * Statement of cash flows, indirect method: a(x) is the period's net debit of account(s) x. Every account that is not
+   * cash appears in exactly one line (6000 is taken back out of the proceeds), so the lines always sum to the change in
+   * cash. A line whose amount is 0 is left out, except the two activity totals and the three cash lines.
+   */
+  function cashFlows(tb) {
+    const act = {};
+    tb.forEach((r) => (act[r.code] = (act[r.code] || 0) + r.debits - r.credits));
+    const a = (codes) => [].concat(codes).reduce((s, c) => s + (act[c] || 0), 0);
+    const debitsOf = (code) => tb.filter((r) => r.code === code).reduce((s, r) => s + r.debits, 0);
+    const creditsOf = (code) => tb.filter((r) => r.code === code).reduce((s, r) => s + r.credits, 0);
+    const listed = new Set(['1100', '1150', '6000']);
+    CF_OPERATING.concat(CF_FINANCING).forEach((x) => [].concat(x[0]).forEach((c) => listed.add(c)));
+    const results = tb.filter((r) => isResult(r.type));
+    const op = [
+      ['Net increase (decrease) in net assets from operations', -results.reduce((s, r) => s + r.debits - r.credits, 0)],
+      ['Net realized (gain) loss on investments', a('6000')],
+      ['Net change in unrealized (appreciation) depreciation on investments', -a('1150')],
+      ['Purchases of investments', -debitsOf('1100')],
+      ['Proceeds from sales of investments', creditsOf('1100') - a('6000')],
+      ...CF_OPERATING.map((x) => [x[1], -a(x[0])]),
+      // An account added to the chart that no line above names keeps its own line.
+      ...tb.filter((r) => !isCash(r.code) && !isResult(r.type) && !listed.has(r.code)).map((r) => [`Change in ${r.name || r.code}`, -(r.debits - r.credits)])
+    ];
+    const fin = CF_FINANCING.map((x) => [x[1], -a(x[0])]);
+    const sum = (xs) => xs.reduce((s, x) => s + x[1], 0);
+    const nz = (xs) => xs.filter((x) => x[1] !== 0);
+    const begin = tb.filter((r) => isCash(r.code)).reduce((s, r) => s + r.begin, 0);
+    const change = sum(op) + sum(fin);
+    return [
+      ...nz(op),
+      ['Net cash provided by (used in) operating activities', sum(op)],
+      ...nz(fin),
+      ['Net cash provided by (used in) financing activities', sum(fin)],
+      ['Net increase (decrease) in cash', change],
+      ['Cash at beginning of period', begin],
+      ['Cash at end of period', begin + change]
+    ];
+  }
+  const capital = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+  /** Schedules 20 to 24 for any fund (a sample fund's journal holds its sample entries once build has synced it). */
+  function booksSchedules(ws, P) {
+    const o = P.o;
+    const span = `${dateLong(P.from)} to ${dateLong(P.to)}.`;
+    const tb = NS.books.trialBalance(ws, o.id, P.from, P.to);
+    const tsum = (k) => tb.reduce((s, r) => s + r[k], 0);
+    const out = [];
+    out.push(
+      sched('tb', '20_Trial_balance.csv', 'Trial balance', `${span} Book basis; the Schedule L line is a suggestion for the preparer.`, [COL('Account'), COL('Account name'), COL('Type'), COL('Schedule L line (suggested)'), COL('Beginning balance', 'money'), COL('Debits', 'money'), COL('Credits', 'money'), COL('Ending balance', 'money')], tb.map((r) => [r.code, r.name, capital(r.type), r.line, r.begin, r.debits, r.credits, r.end]), ['', 'Total', '', '', tsum('begin'), tsum('debits'), tsum('credits'), tsum('end')])
+    );
+    out.push(sched('cf', '22_Statement_of_cash_flows.csv', 'Statement of cash flows', `${span} Indirect method from the journal.`, [COL('Line item'), COL('Amount', 'money')], cashFlows(tb)));
+    return out;
+  }
   function payLabel(inv) {
     const b = inv.payment && inv.payment.method === 'ach' && inv.payment.bank;
     return b ? `ACH, ${b.type === 'savings' ? 'savings' : 'checking'} ending ${String(b.account).slice(-4)}` : 'Check';
@@ -1602,6 +1677,8 @@
     const prevOf = (e) => (e.seq > 1 ? all[e.seq - 2].hash : GENESIS);
     out.push(sched('log', '15_Change_log.csv', 'Change log', `Entries for this fund, its investors and firm-wide settings in the period (${ev.length} of ${all.length}). Each hash is SHA-256 of the previous hash and the entry, so any later edit breaks the chain. ${ver.ok ? 'Chain verified.' : `Chain broken at entry ${ver.brokenAt}.`}`, [COL('Seq', 'int'), COL('Timestamp (UTC)'), COL('User'), COL('Action'), COL('Record'), COL('Detail'), COL('Previous hash'), COL('Hash')], ev.map((e) => [e.seq, e.at, e.actor, e.action, e.record, e.detail, prevOf(e), e.hash])));
     out.push(sched('checks', '16_Readiness_checks.csv', 'Readiness checks', 'Tie-outs and documentation checks run when this package was built.', [COL('Check'), COL('Result'), COL('Detail'), COL('Exceptions')], chk.map((c) => [c.title, c.status === 'pass' ? 'Pass' : c.status === 'na' ? 'Not applicable' : `${c.items.length} exception${c.items.length === 1 ? '' : 's'}`, c.detail, c.items.join(' | ')])));
+    // 20 to 24: trial balance, general ledger, cash flows, bank reconciliation and highlights, after every existing one.
+    if (NS.books && NS.books.trialBalance) out.push(...booksSchedules(ws, P));
     out.forEach((x) => (x.currency = S.currency || 'USD'));
     return out;
   }
