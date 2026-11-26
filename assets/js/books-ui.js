@@ -657,7 +657,8 @@
 
   /* ---------- the page ---------- */
   if (E.diy) {
-    NS.views[ROUTE] = {
+    // The key is written out: the help guide's test finds each page by NS.views['<route>'] in the source.
+    NS.views['console-books'] = {
       mode: 'console',
       edition: 'diy',
       render() {
