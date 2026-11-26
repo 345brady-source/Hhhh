@@ -98,7 +98,17 @@ async function go(fr, route, sel) {
   await fr.waitForSelector(sel, { timeout: 30000 });
   await fr.waitForTimeout(300);
 }
-async function shot(A, name) {
+/** A screenshot for the owner's check, with the section it shows scrolled to the top of the screen first. */
+async function shot(A, name, fr, sel) {
+  if (fr && sel) {
+    await fr.evaluate((s) => {
+      const e = document.querySelector(s);
+      if (!e) return;
+      e.scrollIntoView({ block: 'start' });
+      window.scrollBy(0, -90);
+    }, sel);
+    await fr.waitForTimeout(300);
+  }
   await A.page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: false });
 }
 
@@ -309,7 +319,7 @@ async function entriesPart(check, S, size) {
   check(`${size}: 24 entries are listed`, p.entries.length === 24 && /\b24\b/.test(p.count), { n: p.entries.length, count: p.count, errs: p.errs });
   check(`${size}: 5100 is $9,500.00 in the books`, (await bal(fr, 'fund-a', ['5100'])) === 950000);
   check(`${size}: the change log's last entry is "Journal entry added"`, (await lastLog(fr)) === 'Journal entry added', await lastLog(fr));
-  if (size === 'phone') await shot(A, 'entries-phone');
+  if (size === 'phone') await shot(A, 'entries-phone', fr, '[data-bk="entries"]');
   const fees = await auditFees(fr);
   check(`${size}: the Audit page shows 5100 (Professional fees) at $9,500.00 for 2026`, /9,500\.00/.test(fees.row), fees);
   await backToBooks(fr, 'fund-a');
@@ -332,7 +342,7 @@ const parts = {
     await saveEntry(fr);
     p = await page(fr);
     check('Save entry is refused with one line and nothing is stored', (await journal(fr, 'fund-a')).length === before && p.errs.length === 1, { errs: p.errs });
-    await shot(A, 'entries-desktop-offby');
+    await shot(A, 'entries-desktop-offby', fr, '.bk-form[data-kind="entry"]');
     // stray characters in an amount (T-11-40)
     await fr.fill('#bk-l-cr-1', '2,000.0x');
     await saveEntry(fr);
@@ -440,7 +450,7 @@ const parts = {
     check('the property\'s name is shown as text, not markup', t.name === NAME && !t.bold, t);
     check('it reads cost $250,000.00, "At cost (no value entered)" and "No value entered"', t.cost === '$250,000.00' && t.value === 'At cost (no value entered)' && t.date === 'No value entered', t);
     check('its kind and level are shown', /Property/.test(t.kind) && /3/.test(t.level), t);
-    await shot(A, 'values-phone');
+    await shot(A, 'values-phone', fr, '[data-bk="investments"]');
     await endChecks(check, A, fr);
     await A.context.close();
   },
@@ -472,7 +482,7 @@ const parts = {
     await fr.waitForTimeout(200);
     const ob = await fr.innerText('#bk-o-offby').catch(() => '');
     check('lines that do not balance show "Off by $0.01"', ob.trim() === 'Off by $0.01', ob);
-    await shot(A, 'opening-desktop');
+    await shot(A, 'opening-desktop', fr, '[data-bk="opening"]');
     await T.press(fr, '[data-action=bk-o-save]');
     await fr.waitForTimeout(600);
     p = await page(fr);
@@ -510,7 +520,7 @@ const parts = {
     const actor = await fr.evaluate(() => window.CVPortal.app.actor());
     check('the books are closed through 2026-06-30', rec && rec.through === '2026-06-30' && !rec.reopened, rec);
     check('the section shows the date, the person and 12 hash characters', /2026-06-30|Jun 30, 2026/.test(p.closed) && p.closed.indexOf(actor) >= 0 && rec && p.hash === rec.tb.slice(0, 12), { closed: p.closed, hash: p.hash, actor });
-    await shot(A, 'close-desktop');
+    await shot(A, 'close-desktop', fr, '[data-bk="close"]');
     const before = (await journal(fr, 'fund-a')).length;
     await typeEntry(fr, { date: '2026-06-30', memo: 'Late accrual', lines: [{ acct: '5100', dr: '100.00' }, { acct: '2000', cr: '100.00' }] });
     await saveEntry(fr);
@@ -612,7 +622,7 @@ const parts = {
     check('it is above Entries', p.sections.indexOf('part-probe') >= 0 && p.sections.indexOf('part-probe') < p.sections.indexOf('entries'), p.sections);
     const bad = await fr.evaluate(() => window.CVPortal.booksUI.part('../x', { render: () => '' }));
     check('a part with a key that is not plain letters is refused', bad === false, bad);
-    await shot(A, 'published-phone');
+    await shot(A, 'published-phone', fr, '[data-bk="part-probe"]');
     await endChecks(check, A, fr);
     await A.context.close();
   }
