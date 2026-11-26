@@ -83,3 +83,33 @@ PASS selfcheck an empty --case list exits 1 with a FAIL line
 INDEPENDENT READER: PASS (cases run: 6)
 VERIFY2_EXIT=0
 ```
+
+## Task 3 evidence
+
+Failure (mine, found and stopped): the first RED self-test was gate12.sh copied with only the self-test rewritten. Its stand-in variables were GATE16_* while the body still read GATE12_*, so each stand-in run was a REAL gate run: the control started the real reference gate (server tests and a phase 6 browser check through heavy.sh) on this tree. Stopped by hand after about 5 minutes (process tree killed; the server/node_modules link and the self-test folder it left removed). No result of it was used. The RED below renames only the stand-in variables in the body (GATE12_* to GATE16_*), so every self-test run is a stand-in, and leaves every step as gate12.sh has it.
+
+RED (O/red-3.txt; gate12.sh's steps with the new self-test):
+```
+SELF-TEST FAIL control: the stand-ins pass when nothing is wrong
+    GATE ok   stand-in step
+    GATE ok   server tests 197 = base 197 + 0 declared
+    GATE ok   TEN STAND IN
+    GATE ok   ELEVEN STAND IN
+    GATE FAIL STAND IN
+      stand-in.js: the last line should be: STAND IN: PASS (cases run: 1)
+      stand-in.js: the last line was:       FAIL P16_BASE is not the base tree
+    GATE_EXIT=1
+SELF-TEST FAIL a tree without the independent reader
+    (the same lines: no reader step, P16_BASE not passed)
+SELF-TEST ok   a phase 16 check whose last line differs from its marker
+SELF-TEST ok   a check file with no marker
+SELF-TEST ok   a reference whose folder line is missing (and nothing after the reader step was run)
+SELF-TEST ok   a reference that prints one GATE FAIL line
+SELF-TEST ok   a tree whose test count differs from the base plus the markers
+SELF-TEST ok   a phase 10 check whose last line differs from its marker
+SELF-TEST ok   a phase 11 check whose last line differs from its marker
+SELF-TEST FAIL a phase-16-only run
+    GATE FAIL unknown argument --only-phase16 (none, --self-test or --only-phase12)
+    GATE_EXIT=1
+GATE16 SELF-TEST: FAIL - control reader only
+```
