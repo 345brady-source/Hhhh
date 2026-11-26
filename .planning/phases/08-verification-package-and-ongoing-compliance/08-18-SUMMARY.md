@@ -63,4 +63,26 @@ HELP PREVIEW: FAIL (parts run: 6) - preview-sponsor, files
 GATE FAIL HELP PREVIEW (6)
 ```
 Every other step ok, among them `GATE ok   server tests 387 (found 387)`, `GATE ok   phase-8 gate checks found (4)`, `GATE ok   PACKAGE FLOW (10)`, `GATE ok   PACKAGE INVITE (12)`, `GATE ok   PACKAGE PANEL (7)`, `GATE ok   AML RECORD (7)`, and `COUNTS server tests 387; AML RECORD 7; PACKAGE FLOW 10; PACKAGE INVITE 12; PACKAGE PANEL 7`.
-Cause: the guide line changed the server guide, and the owner's preview carries its own copy (.planning/tools/preview/help-data.js), which phase 7's check requires to match. Fix: `node .planning/tools/preview/make-help-data.mjs` ("wrote .planning/tools/preview/help-data.js (guide b3e3b59755f1, 72940 bytes)"; `--verify`: "help-data.js: current (guide b3e3b59755f1)"). The gate is rerun on the commit holding it.
+Cause: the guide line changed the server guide, and the owner's preview carries its own copy (.planning/tools/preview/help-data.js), which phase 7's check requires to match. Fix: `node .planning/tools/preview/make-help-data.mjs` ("wrote .planning/tools/preview/help-data.js (guide b3e3b59755f1, 72940 bytes)"; `--verify`: "help-data.js: current (guide b3e3b59755f1)"). The gate is rerun on the commit holding it. help-preview.js alone on that commit: `HELP PREVIEW: PASS (parts run: 6)`.
+
+## Final verify, second full gate (on 774e2ee, before merging 08-19): PASSED, with one note
+Run fresh on the new commit from 20:00 UTC (2026-11-26); it reached the base comparison and was stopped by the 2-hour limit; rerun into the same folder, every step was kept and the base comparison finished. 0 GATE FAIL lines, 42 GATE ok lines, `GATE_EXIT=0`. verify-2 itself exited 1 only because a resumed gate prints kept steps as "GATE ok   <step> (kept from <time>)" and the plan's verify matches those lines exactly (`grep -qx`); the same conditions with the suffix allowed ($O/verify-2-tail.sh: GATE_EXIT=0, server tests 387 (found 387), COUNTS, phase-8 gate checks found (4), PACKAGE FLOW (10), the file list) exit 0. The gate's last lines:
+```
+GATE ok   PACKAGE PANEL (7) (kept from 2026-11-26 21:35:09 UTC)
+GATE ok   base is an ancestor of HEAD and HEAD moved
+GATE ok   signing-base (kept from 2026-11-26 21:48:07 UTC)
+GATE ok   signing-plan (kept from 2026-11-26 21:53:53 UTC)
+GATE ok   record-base (kept from 2026-11-26 21:54:57 UTC)
+GATE ok   signing: base and plan each have PASS lines
+GATE ok   signing: no FAIL the base lacks
+signing: base 16 PASS / 5 FAIL; plan 75 PASS / 0 FAIL
+GATE ok   record: base and plan each have PASS lines
+GATE ok   record: no FAIL the base lacks
+record: base 40 PASS / 0 FAIL; plan 40 PASS / 0 FAIL
+# tests 387
+# pass 387
+# fail 0
+COUNTS server tests 387; AML RECORD 7; PACKAGE FLOW 10; PACKAGE INVITE 12; PACKAGE PANEL 7
+GATE_EXIT=0
+```
+Note: the phase-4 signing check on the base tree had 5 FAIL lines this time (08-07's run had 75/0 on its base); this plan's tree had 75 PASS / 0 FAIL, so the gate's rule (no FAIL the base lacks) holds. The base run's failures are not this plan's code.
