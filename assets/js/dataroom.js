@@ -61,7 +61,12 @@
     throw new Error(m);
   };
   const now = () => new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
-  const when = (at) => (at ? String(at) : now());
+  const when = (at) => {
+    if (at == null || at === '') return now();
+    const s = typeof at === 'object' && typeof at.toISOString === 'function' ? at.toISOString().replace(/\.\d{3}Z$/, 'Z') : String(at);
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?Z$/.test(s) || isNaN(Date.parse(s))) fail('The time is not valid.');
+    return s;
+  };
   const str = (v) => String(v == null ? '' : v).trim();
   const isEmail = (s) => /^[^@\s,;<>"]+@[^@\s,;<>"]+\.[^@\s,;<>"]{2,}$/.test(String(s || ''));
   const isDay = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || '')) && !isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
@@ -151,6 +156,23 @@
     logIt(ws, room, 'Data room opened', room.id, `${ok.regime}; download ${download}`, by);
     return room;
   }
+  function setNda(ws, roomId, opts) {
+    const o = opts || {};
+    const room = roomOf(ws, roomId);
+    const by = str(o.by);
+    if (!by) fail('Name the person changing the NDA.');
+    const text = String(o.text == null ? '' : o.text);
+    if (!text.trim()) fail('Add the NDA text.');
+    const version = sha(text);
+    if (version === room.nda.version) fail('This is the NDA already in use.');
+    const at = when(o.at);
+    const title = str(o.title) || room.nda.title;
+    room.ndaVersions.push({ version, title, text, at, by });
+    room.nda = { mode: room.nda.mode, title, text, version, templateId: room.nda.templateId || '' };
+    record(room, at, 'nda_text', '', '', { version, title, by });
+    logIt(ws, room, 'NDA changed', room.id, `version ${room.ndaVersions.length}`, by);
+    return room;
+  }
 
   /* ---------- Documents: added, hidden, never removed ---------- */
   const shown = (room) => room.docs.filter((d) => !d.hiddenAt);
@@ -178,6 +200,22 @@
     room.docs.push(doc);
     record(room, at, 'doc_added', '', id, { title: doc.title, fileName, size: doc.size, sha256: digest, pages: doc.pages, by });
     logIt(ws, room, 'Document added', id, `room ${room.id}; ${doc.pages} pages`, by);
+    return doc;
+  }
+  function hideDoc(ws, roomId, docId, opts) {
+    const o = opts || {};
+    const room = roomOf(ws, roomId);
+    const doc = room.docs.find((d) => d.id === docId);
+    if (!doc) fail('No such document in this data room.');
+    if (doc.hiddenAt) fail('This document is already hidden.');
+    const by = str(o.by);
+    if (!by) fail('Name the person hiding the document.');
+    const at = when(o.at);
+    doc.hiddenAt = at;
+    doc.hiddenBy = by;
+    doc.hiddenWhy = str(o.why);
+    record(room, at, 'doc_hidden', '', docId, { by, why: doc.hiddenWhy });
+    logIt(ws, room, 'Document hidden', docId, `room ${room.id}`, by);
     return doc;
   }
 
@@ -239,6 +277,47 @@
     logIt(ws, room, 'Prospect invited', p.id, `room ${room.id}; basis ${basis ? basis.kind : 'none'}${warning ? '; relationship dated on or after the room opened' : ''}`, by);
     return { prospect: p, warning };
   }
+  function setOpenLink(ws, roomId, on, opts) {
+    const o = opts || {};
+    const room = roomOf(ws, roomId);
+    if (room.regime === '506b') fail('A 506(b) room has personal links only.');
+    const by = str(o.by);
+    if (!by) fail('Name the person changing the link.');
+    const at = when(o.at);
+    room.openLink = on === true;
+    record(room, at, 'link', '', '', { on: room.openLink, by });
+    return room;
+  }
+  function joinOpen(ws, roomId, opts) {
+    const o = opts || {};
+    const room = roomOf(ws, roomId);
+    if (room.regime === '506b' || !room.openLink) fail('This room has no open link.');
+    const name = str(o.name);
+    const email = str(o.email);
+    const days = o.days == null || o.days === '' ? RULES.DAYS : Number(o.days);
+    checkPerson(room, name, email, days);
+    const at = when(o.at);
+    const basis = { kind: 'open' };
+    const p = newProspect(ws, room, name, email, basis, days, at, '');
+    room.prospects.push(p);
+    record(room, at, 'prospect_invited', p.id, '', { name, email, basis, expiresAt: p.expiresAt, by: '' });
+    logIt(ws, room, 'Prospect invited', p.id, `room ${room.id}; open link`, `Prospect ${p.id}`);
+    return p;
+  }
+  function endAccess(ws, roomId, prospectId, opts) {
+    const o = opts || {};
+    const room = roomOf(ws, roomId);
+    const p = prospectOf(room, prospectId);
+    if (p.endedAt) fail("This prospect's access has already ended.");
+    const by = str(o.by);
+    if (!by) fail('Name the person ending the access.');
+    const at = when(o.at);
+    p.endedAt = at;
+    p.endedBy = by;
+    record(room, at, 'prospect_ended', p.id, '', { by });
+    logIt(ws, room, 'Prospect access ended', p.id, `room ${room.id}`, by);
+    return p;
+  }
   function access(ws, roomId, prospectId, at) {
     const room = ensure(ws).find((r) => r.id === roomId);
     const p = room && room.prospects.find((x) => x.id === prospectId);
@@ -298,10 +377,103 @@
     record(room, at, 'view', p.id, doc.id, { seconds, pages, viewId, how });
     return v;
   }
+  function viewsOf(room) {
+    const out = [];
+    const by = new Map();
+    (room.prospects || []).forEach((p) =>
+      (p.views || []).forEach((v) => {
+        const k = `${p.id}|${v.docId}`;
+        let t = by.get(k);
+        if (!t) {
+          t = { prospectId: p.id, docId: v.docId, opens: 0, first: v.at, last: v.at, seconds: 0, pages: 0 };
+          by.set(k, t);
+          out.push(t);
+        }
+        t.opens++;
+        if (v.at < t.first) t.first = v.at;
+        if (v.at > t.last) t.last = v.at;
+        t.seconds += v.seconds;
+        t.pages = Math.max(t.pages, v.pages);
+      })
+    );
+    return out;
+  }
 
   /* ---------- Indications of interest: never a subscription ---------- */
+  function screened(note) {
+    if (NS.inbox && typeof NS.inbox.screen === 'function') return !!NS.inbox.screen(note, 'party');
+    return PATTERNS.some((re) => re.test(note));
+  }
+  function current(prospect) {
+    const list = (prospect && prospect.interest) || [];
+    const last = list[list.length - 1];
+    return last && last.kind !== 'withdrawn' ? last : null;
+  }
+  function indicate(ws, roomId, prospectId, opts) {
+    const o = opts || {};
+    if (Object.keys(o).some((k) => ['kind', 'cents', 'cls', 'note', 'at'].indexOf(k) < 0)) fail('Only an amount, a class and a note are recorded.');
+    const room = roomOf(ws, roomId);
+    const p = prospectOf(room, prospectId);
+    const at = when(o.at);
+    mustAccess(ws, roomId, prospectId, at);
+    if (!agreed(room, p)) fail('Agree to the NDA first.');
+    const had = current(p);
+    const kind = o.kind == null || o.kind === '' ? (had ? 'changed' : 'indicated') : o.kind;
+    if (['indicated', 'changed', 'withdrawn'].indexOf(kind) < 0) fail('An indication is made, changed or withdrawn.');
+    if (kind === 'withdrawn' && !had) fail('There is no indication to withdraw.');
+    const cents = o.cents == null || o.cents === '' ? null : o.cents;
+    if (cents !== null && !whole(cents)) fail('Enter the amount as a whole number of cents, or leave it blank.');
+    const note = String(o.note == null ? '' : o.note).trim();
+    if (note.length > RULES.NOTE_MAX) fail('Keep the note to 500 characters.');
+    if (note && screened(note)) fail('Bank and taxpayer numbers are not asked for here.');
+    const cls = str(o.cls).slice(0, 80);
+    const i = kind === 'withdrawn' ? { at, kind, cents: null, cls: '', note } : { at, kind, cents, cls, note };
+    p.interest.push(i);
+    record(room, at, 'interest', p.id, '', { kind: i.kind, cents: i.cents, cls: i.cls, note: i.note });
+    logIt(ws, room, 'Indication of interest recorded', p.id, `room ${room.id}; ${kind}`, `Prospect ${p.id}`);
+    return i;
+  }
+  /** The indications on an offering's rooms, kept apart from capital raised: it reads ws.rooms only. */
+  function pipeline(ws, offeringId) {
+    let prospects = 0;
+    let indicated = 0;
+    let cents = 0;
+    ensure(ws)
+      .filter((r) => r.offeringId === offeringId)
+      .forEach((r) =>
+        r.prospects.forEach((p) => {
+          prospects++;
+          const c = current(p);
+          if (c) {
+            indicated++;
+            cents += c.cents || 0;
+          }
+        })
+      );
+    return { prospects, indicated, cents };
+  }
 
   /* ---------- Invite to subscribe: the existing invitation form ---------- */
+  function inviteDraft(ws, roomId, prospectId) {
+    const room = roomOf(ws, roomId);
+    const p = prospectOf(room, prospectId);
+    const words = p.name.split(/\s+/).filter(Boolean);
+    const c = current(p);
+    const amount = c && c.cents != null ? (c.cents % 100 ? (c.cents / 100).toFixed(2) : String(c.cents / 100)) : '';
+    return { first: words[0] || '', last: words.slice(1).join(' '), name: p.name, email: p.email, type: 'individual', account: '', offeringId: room.offeringId, amount, cls: (c && c.cls) || '', note: '', errors: {}, busy: false };
+  }
+  function markSubscribeInvited(ws, roomId, prospectId, opts) {
+    const o = opts || {};
+    const room = roomOf(ws, roomId);
+    const p = prospectOf(room, prospectId);
+    const by = str(o.by);
+    if (!by) fail('Name the person sending the invitation.');
+    const at = when(o.at);
+    p.subscribeInvitedAt = at;
+    record(room, at, 'subscribe_invited', p.id, '', { by });
+    logIt(ws, room, 'Invited to subscribe', p.id, `room ${room.id}`, by);
+    return p;
+  }
 
   /* ---------- The record: the chain, and the fields beside it equal to what it records ---------- */
   function replay(room) {
@@ -394,9 +566,80 @@
   }
 
   /* ---------- The room's record as one zip (MS-08) ---------- */
+  function csv(head, rows) {
+    const cell = (v) => {
+      if (v == null) return '';
+      if (typeof v === 'number') return String(v);
+      let s = String(v);
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    return '﻿' + [head].concat(rows).map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';
+  }
   const units = (c) => (c == null ? '' : c % 100 ? (c / 100).toFixed(2) : String(c / 100));
   const slug = (s) => String(s || '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
   const safeName = (s) => String(s || 'document.pdf').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_');
+  async function roomRecord(ws, roomId, getBytes) {
+    const room = roomOf(ws, roomId);
+    const off = (ws.offerings || []).find((o) => o.id === room.offeringId) || { name: room.offeringId };
+    const chain = verify(ws, roomId);
+    const enc = (s) => new TextEncoder().encode(s);
+    const files = [];
+    const P = room.prospects;
+    files.push({
+      name: 'prospects.csv',
+      data: csv(
+        ['id', 'name', 'email', 'basis kind', 'since', 'introduced by', 'note', 'recorded by', 'recorded at', 'invited', 'expires', 'ended'],
+        P.map((p) => {
+          const b = p.basis || {};
+          return [p.id, p.name, p.email, b.kind || '', b.since || '', b.introducedBy || '', b.note || '', b.recordedBy || '', b.at || '', p.invitedAt, p.expiresAt, p.endedAt];
+        })
+      )
+    });
+    files.push({
+      name: 'nda.csv',
+      data: csv(['prospect', 'name typed', 'email', 'version', 'mode', 'at', 'address', 'browser', 'envelope'], [].concat(...P.map((p) => p.assents.map((a) => [p.id, a.name, a.email, a.version, a.mode, a.at, a.ip, a.agent, a.envelopeId]))))
+    });
+    files.push({ name: 'views.csv', data: csv(['prospect', 'document', 'at', 'seconds', 'pages', 'view id', 'how'], [].concat(...P.map((p) => p.views.map((v) => [p.id, v.docId, v.at, v.seconds, v.pages, v.viewId, v.how])))) });
+    files.push({ name: 'interest.csv', data: csv(['prospect', 'at', 'kind', 'amount', 'class', 'note'], [].concat(...P.map((p) => p.interest.map((i) => [p.id, i.at, i.kind, units(i.cents), i.cls, i.note])))) });
+    files.push({
+      name: 'documents.csv',
+      data: csv(['id', 'title', 'file', 'size', 'sha256', 'pages', 'added', 'hidden at', 'hidden by', 'why'], room.docs.map((d) => [d.id, d.title, d.fileName, d.size, d.sha256, d.pages, d.addedAt, d.hiddenAt, d.hiddenBy, d.hiddenWhy]))
+    });
+    files.push({ name: 'events.csv', data: csv(['seq', 'at', 'kind', 'prospect', 'doc', 'data', 'previous_hash', 'hash'], room.events.map((e) => [e.seq, e.at, e.kind, e.prospectId, e.docId, JSON.stringify(e.data), e.prev, e.hash])) });
+    room.ndaVersions.forEach((v) => files.push({ name: `nda/${v.version}.txt`, data: v.text }));
+    let added = 0;
+    for (const d of room.docs) {
+      const b = getBytes ? await getBytes(d.id, d) : null;
+      if (b && typeof b.length === 'number') {
+        files.push({ name: `documents/${d.id}-${safeName(d.fileName)}`, data: b });
+        added++;
+      }
+    }
+    const chainLine = chain.ok ? `Chain verified (${chain.events} events).` : chain.brokenAt ? `Chain broken at entry ${chain.brokenAt}.` : `Record check failed: ${chain.reason}`;
+    const readme = [
+      `Data room record: ${off.name}`,
+      `Firm: ${(ws.tenant && ws.tenant.name) || ''}`,
+      `Room ${room.id}, opened ${room.openedAt} by ${room.openedBy}; exemption ${room.regime}; download ${room.download}.`,
+      `Prospects: ${P.length}. NDA versions: ${room.ndaVersions.length}. Documents: ${room.docs.length} (${room.docs.filter((d) => d.hiddenAt).length} hidden; ${added} files included). Events: ${room.events.length}.`,
+      chainLine,
+      KEPT,
+      '',
+      'prospects.csv, nda.csv, views.csv, interest.csv, documents.csv: the room as recorded.',
+      "events.csv: the room's record, each entry hashed with the one before (SHA-256).",
+      'nda/<version>.txt: every NDA text, named by its SHA-256. documents/: the documents as uploaded.',
+      'MANIFEST.sha256: the SHA-256 of every other file in this zip.',
+      'Indications of interest are not subscriptions and are not counted in capital raised.'
+    ].join('\r\n') + '\r\n';
+    files.push({ name: 'README.txt', data: readme });
+    const data = files.map((f) => ({ name: f.name, data: typeof f.data === 'string' ? enc(f.data) : f.data }));
+    data.push({ name: 'MANIFEST.sha256', data: enc(data.map((f) => `${sha(f.data)}  ${f.name}`).join('\n') + '\n') });
+    const bytes = NS.audit.zip(data, new Date());
+    const hash = sha(bytes);
+    const name = `${slug(ws.tenant && ws.tenant.shortName) || 'Firm'}_${slug(off.shortName || off.name)}_data_room_record_${now().slice(0, 10)}.zip`;
+    logIt(ws, room, 'Data room record exported', room.id, `${data.length} files; ${room.events.length} events; SHA-256 ${hash}`);
+    return { name, bytes, hash, files: data.map((f) => ({ name: f.name, size: f.data.length })), chain };
+  }
 
   NS.dataroom = {
     RULES,
@@ -404,14 +647,26 @@
     ensure,
     allowed,
     open,
+    setNda,
     addDoc,
+    hideDoc,
     addProspect,
+    setOpenLink,
+    joinOpen,
+    endAccess,
     access,
     agree,
     agreed,
     docsFor,
     view,
+    viewsOf,
+    indicate,
+    current,
+    pipeline,
+    inviteDraft,
+    markSubscribeInvited,
     verify,
+    roomRecord,
     eventText
   };
 })(window.CVPortal);
