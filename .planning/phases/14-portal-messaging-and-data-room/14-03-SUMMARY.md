@@ -58,4 +58,25 @@ Verify (Task 2 command, verbatim tail):
 # duration_ms 1563.731477
 VERIFY2_EXIT=0
 ```
+## Task 3 (broadcast, updates, chain, notices, prefs, nodelete, limits)
+
+RED (red-3.txt). Four of the seven new tests failed; chain, notices and nodelete passed on first run because the tracer's
+code already had the chain, the notice coalescing and the 405 answers (the tracer needed a notice decision and a chain to
+pass its own verify; the 405 branch is the fall-through of each router). Reported as it happened:
+```
+not ok 8 - broadcast: one send to three investors, one copy each with its own files; a repeated clientId stores nothing new
+    (the repeated clientId stored a second broadcast: deep-equal failed)
+not ok 9 - updates: every investor message, read and notice comes back once, in order, across since values; more when cut at 500
+    501 !== 500
+ok 10 - chain: the browser recipe; a re-sealed body or a changed time names that message
+ok 11 - notices: one per unread thread per hour; again after a read or after an hour; a failing notify still stores
+not ok 12 - prefs: an investor turns notices off and on; the sponsor sending again keeps the choice
+    405 !== 200
+ok 13 - nodelete: no route removes or changes a record; the module never calls a store removal
+not ok 14 - limits: 4,000 characters, request and small-call caps, the rate limit on every POST; nothing written to the console
+    201 !== 422
+# tests 14
+# pass 10
+# fail 4
+```
 <!-- gsd:write-continue -->
