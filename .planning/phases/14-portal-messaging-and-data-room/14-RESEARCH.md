@@ -65,3 +65,41 @@ No outside service fits the owner's limit: chat services start around $279-$499 
 | Help guide entries | `server/help/guide.md` -> generated module | Preview help data | Size-capped (section 7.3) |
 
 <!-- section: summary done -->
+
+## 1. Outside services first (CLAUDE.md rule): options, real prices, fit
+
+**How prices were read.** The vendors' own pricing pages could not be opened from this session: `docsend.com`, `papermark.com` and `getstream.io` failed to resolve (outside the session's allowed network), so, per the tool's instruction, no further vendor sites were fetched. Every figure below comes from web-search excerpts of the vendor's page or of third-party listings, read on 2026-11-26. **Each price is MEDIUM at best and must be re-read on the vendor's page before the owner relies on it.** Where no price could be read, the table says so.
+
+### 1.1 Secure messaging services (in-app chat or encrypted email)
+
+| Option | Price found (2026-11-26) | Fit for D-01 | Speed to build | Trade-offs |
+|--------|--------------------------|--------------|----------------|-----------|
+| **In-house (recommended)** | **$0** software; server mode runs on the sponsor's existing integration server; email notices ride on the phase 13 sender (Amazon SES default, about $0.10 per 1,000 emails, already chosen in 13-CONTEXT C-01) | Full: threads per investor and per offering, attachments, read status, broadcast, notice emails with no text, append-only record, export, white label by construction | The longest path (about 10 plans, section 7) | We own correctness and security; no real-time push (60-second poll, same as invitations today); the record in server mode depends on the server's store and its backups (section 3) |
+| Stream (in-app chat API) | Free "Build" tier for development; paid tiers by monthly active users; overage about $0.09 per MAU on some plans; a third-party profile puts plans "from ~$499/mo for ~10,000 MAU" [CITED: search excerpt of getstream.io/pricing and apis.io profile] | Chat only; no record-keeping export to our format, no data room; the chat UI and SDK would need hiding to stay white label | Fast for chat (days), slower to make it look like the portal | Monthly fee after free tier; investor messages held by a third party (a new processor of investor data); a vendor SDK loaded from a CDN breaks the no-network preview rule |
+| Sendbird | Older listings: Starter about $349-$399 a month for 5,000 MAU; one change log says the MAU plans were restructured in 2024 and the 5K Starter removed; current status could not be confirmed [CITED: search excerpts of sendbird.com/pricing/chat, featurebase, pricingsaas] | As Stream | As Stream | As Stream; pricing in flux |
+| TalkJS | $279 a month (10,000 MAU, $0.04 per extra MAU); Growth $569 a month (25,000 MAU) [CITED: search excerpt of talkjs.com/pricing, toolradar, cometchat] | Chat UI with threads and attachments; no data room; white label only by styling | Fast | $3,348 a year minimum; same processor and CDN issues |
+| Encrypted email (Paubox, Virtru) | Paubox about $29-$79 a month for small teams; Virtru Starter $119 per 5 users a month [CITED: search excerpts of G2 and TrustRadius listings] | Poor: it encrypts email; it is not an inbox inside the portal, has no per-offering threads, no read status in the portal, no broadcast with private replies | Fast to buy | Investors must open a vendor's message page (a vendor name in front of investors breaks white label); monthly fee per sponsor |
+
+**Accuracy and speed of chat services:** all deliver messages in real time (seconds); our poll is up to 60 seconds in server mode and instant in the preview. For investor relations (a handful of messages a week per firm) a minute is not a product problem. [ASSUMED: usage volume for 40 sponsors]
+
+**Verdict:** no chat service fits a $0 budget past its free tier, none provides the record the law-facing design needs (section 3) or a data room, and each adds a processor of investor data and a CDN script that breaks the no-network preview. Build in-house.
+
+### 1.2 Virtual data rooms
+
+| Option | Price found (2026-11-26) | NDA gate / watermark / view tracking | Fit for D-02 | Trade-offs |
+|--------|--------------------------|--------------------------------------|--------------|-----------|
+| **In-house (recommended)** | **$0** (shipped PDF writer and viewer; server stamping proven this session with no new dependency, section 2.4) | Click-through NDA with full assent record, or the built-in e-signature; per-prospect watermark on every page; views per document per prospect (opened, pages seen, time); download off or watermarked | Full, plus what no data room does for us: the 506(b) relationship gate, indications of interest feeding the offering, conversion to an invitation and subscription in the same portal | A determined viewer can still photograph a screen (true of every data room); we own the security of the server path |
+| Peony | Free $0 (up to about 50 documents, analytics kept 30 days); Business $30 per admin a month (annual; $44 monthly); Data Room $52 ($75 monthly); Deal Team $64 ($89 monthly); viewers free [CITED: search excerpt of peony.ink docs "Plans and Pricing", dated 2026-11-05] | NDA gating and watermarks appear on paid tiers, not confirmed on Free | Separate product; prospects see the vendor's pages | Lowest paid entry found; NDA on Free not confirmed; data outside the portal; no link to subscriptions |
+| DocSend | Personal $10-$15 per user a month; Standard $45-$65 per user a month (no data rooms); Advanced about $150 a month annual or $250 monthly (3 users, light data rooms); Advanced Data Rooms about $180 annual or $300 monthly; extra users about $60-$90 a month; no free plan [CITED: search excerpts of docsend.com/pricing and third-party reviews; figures disagree by billing period] | Yes on data-room tiers | Separate product | $1,800-$3,600 a year per sponsor |
+| Papermark | Hosted Data Rooms plan about €99 / $99 a month; code is open source under AGPL; self-hosting is free in licence terms but third parties estimate $20-$50 a month of infrastructure, and the vendor ties managed self-hosting to an Enterprise quote [CITED: search excerpts of papermark.com/pricing.md and ellty.com] | Yes | Self-hosting means running a second application (database, storage) beside ours | AGPL: modifying and serving it to prospects obliges publishing our changes; its own vendor name and look; a second stack to secure |
+| Digify | Pro about $120-$150 a month; Team about $300; Business about $1,200 (listings disagree) [CITED: search excerpts of Capterra, Software Advice, SaaSworthy] | Yes | Separate product | Monthly fee |
+| Firmex, iDeals, Intralinks, Datasite | Quote only; one buyer guide cites Firmex at about $7,800 a year on average [CITED: search excerpt of peony.ink comparison; competitor source] | Yes, deal-grade | Built for M&A, not small private raises | Far above budget |
+| Investor-portal suites with data rooms (SyndicationPro, Cash Flow Portal and similar) | Mostly "pricing on request"; listings show about $99 to $650 a month [CITED: search excerpts of Capterra, G2] | Varies | They are competing portals, not components | Would replace the product, not serve it |
+
+**Verdict:** the only $0 outside option (Peony Free) does not confirm NDA gating or watermarks on its free tier, keeps analytics 30 days (short of any record period, section 3), and shows prospects another company's product. Every option with the needed features costs $30-$300 a month per sponsor and none ties a soft commitment to the sponsor's subscription flow or enforces the 506(b) relationship rule. Build in-house; if a sponsor later needs deal-grade controls (for a sale of the company, not a fund raise) the owner can recommend a quote-only data room as an outside referral, not an integration.
+
+### 1.3 What the owner is asked (or the default taken)
+
+One question with a recommended default, sent with a push notification (CLAUDE.md): "Messaging and the data room: build in-house at $0 (about 10 plans), or pay an outside service (about $279-$499 a month for chat, $30-$300 a month for a data room, per sponsor)?" Default after 15 minutes: **in-house** (C-01, section 8).
+
+<!-- section: outside services done -->
