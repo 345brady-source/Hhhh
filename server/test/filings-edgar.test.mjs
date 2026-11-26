@@ -433,7 +433,7 @@ test('ccc: a CCC is exactly eight characters, is stored only sealed, and is refu
     assert.equal((await put({ ccc: CCCS[1], name: 'x' }, '12345678901')).status, 404, 'a CIK has at most ten digits');
     const rec = server.store.data().filingIssuers['1234567'];
     assert.equal(rec.name, 'AN ISSUER, L.P.');
-    assert.deepEqual(Object.keys(rec.ccc).sort(), ['data', 'iv', 'kid', 'tag', 'v']);
+    assert.deepEqual(Object.keys(rec.ccc).sort(), ['a', 'data', 'iv', 'kid', 'tag', 'v']);
     assert.equal(holdsCode(JSON.stringify(server.store.data())), -1);
     for (const s of seen) assert.equal(holdsCode(s.text), -1);
   });
