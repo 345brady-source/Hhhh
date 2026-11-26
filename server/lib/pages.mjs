@@ -165,6 +165,34 @@ function readListed(abs) {
   }
 }
 
+const DAY = 86400000;
+/** An Expires setting as a time in ms, or NaN; a date with no time is midnight UTC. */
+const expiresAt = (s) => (typeof s === 'string' && /^\d{4}-\d{2}-\d{2}(T[\d:.]+(Z|[+-]\d{2}:\d{2}))?$/.test(s.trim()) ? Date.parse(s.trim()) : NaN);
+const isoZ = (ms) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+/** A Contact field: a mailto: or https: address on one line. */
+const contactOk = (c) => typeof c === 'string' && !/[\u0000-\u001f\u007f\s]/.test(c) && (/^mailto:[^@]+@[^@]+\.[^@]+$/i.test(c) || /^https:\/\/[^/]+\.[^/]+/i.test(c));
+/** An https PUBLIC_URL with no trailing slash, or ''. */
+function httpsBase(url) {
+  const s = String(url || '').trim().replace(/\/+$/, '');
+  try {
+    const u = new URL(s);
+    return u.protocol === 'https:' && !u.search && !u.hash && !/\s/.test(s) ? s : '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * The body of /.well-known/security.txt (RFC 9116) from the security contact, the Expires date and the server's https
+ * address; '' when a field is missing or invalid or the date is not in the future (a stale file is never produced).
+ */
+export function buildSecurityTxt({ contact, expires, publicUrl, now = Date.now() } = {}) {
+  const at = expiresAt(expires);
+  const base = httpsBase(publicUrl);
+  if (!contactOk(contact) || !base || !Number.isFinite(at) || at <= now) return '';
+  return [`Contact: ${contact}`, `Expires: ${isoZ(at)}`, `Policy: ${base}/disclosure.html`, 'Preferred-Languages: en', `Canonical: ${base}/.well-known/security.txt`].join('\n') + '\n';
+}
+
 /** The ETags an If-None-Match header names (a list, weak or strong, or *). */
 const etagsOf = (h) =>
   String(Array.isArray(h) ? h.join(',') : h || '')
@@ -263,6 +291,22 @@ export function createPages({ env = process.env, root = CHECKOUT, now = Date.now
     /** The outside origins the policy names, by use (for the summary and the tests). */
     origins() {
       return origins;
+    },
+    /** /.well-known/security.txt, built from the settings on each call (so it stops the moment its date passes). */
+    securityTxt() {
+      const body = buildSecurityTxt({ contact: env.SECURITY_CONTACT, expires: env.SECURITY_TXT_EXPIRES, publicUrl: env.PUBLIC_URL, now: now() });
+      return body ? { status: 200, type: 'text/plain; charset=utf-8', body } : { status: 404 };
+    },
+    /** Warnings for /health about serving the pages and security.txt. */
+    health() {
+      const warnings = [];
+      if (enabled && !httpsBase(env.PUBLIC_URL)) warnings.push('Sign-in needs HTTPS: set PUBLIC_URL to the https address of this server.');
+      const at = expiresAt(env.SECURITY_TXT_EXPIRES);
+      const t = now();
+      if (!contactOk(env.SECURITY_CONTACT) || !Number.isFinite(at) || at <= t) warnings.push('security.txt is not served: set SECURITY_CONTACT and SECURITY_TXT_EXPIRES.');
+      else if (at - t <= 30 * DAY) warnings.push(`security.txt expires on ${isoZ(at).slice(0, 10)}: review it and set a new SECURITY_TXT_EXPIRES.`);
+      else if (at - t > 366 * DAY) warnings.push('SECURITY_TXT_EXPIRES is more than a year away; RFC 9116 asks for less than a year.');
+      return { warnings };
     }
   };
 }

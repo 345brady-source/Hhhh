@@ -82,8 +82,9 @@ const rawGet = (base, path, headers = {}) =>
 
 test('fixed list: traversal, encoded dots, folders, files added later, symlinks, diy.html and index.html all answer 404', async () => {
   const pages = createPages({ env: { SERVE_PORTAL: '1', PUBLIC_URL: PUBLIC } });
-  const refused = ['/../server/index.mjs', '/assets/../server/index.mjs', '/assets/%2e%2e/server/index.mjs', '/assets/js/app.js%00', '/server/index.mjs', '/diy.html', '/index.html', '/.git/config', '/assets/js/', '/assets/js', '/assets', '/assets/', '/server/data/store.json', '/assets/vendor/pdfview/SHA256SUMS', '/portal.html/', '//portal.html'];
-  for (const p of refused) assert.equal(pages.has('GET', p), false, `not listed: ${p}`);
+  const refused = ['/../server/index.mjs', '/assets/../server/index.mjs', '/assets/%2e%2e/server/index.mjs', '/assets/js/app.js%00', '/server/index.mjs', '/diy.html', '/index.html', '/.git/config', '/assets/js/', '/assets/js', '/assets', '/assets/', '/server/data/store.json', '/assets/vendor/pdfview/SHA256SUMS', '/portal.html/'];
+  // '//portal.html' is not listed; over HTTP the server's URL parser reads it as a host and asks for '/', the page itself.
+  for (const p of [...refused, '//portal.html']) assert.equal(pages.has('GET', p), false, `not listed: ${p}`);
   assert.equal(pages.has('POST', '/'), false, 'GET only');
   assert.equal(pages.has('HEAD', '/portal.html'), false, 'GET only');
   await withPages(pages, async (base) => {
