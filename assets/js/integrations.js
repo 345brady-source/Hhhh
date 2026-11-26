@@ -722,6 +722,7 @@
     return out;
   }
   async function rescreenDue(ws) {
+    if (pulling.busy) await pulling.busy; // never alongside the console's own run: it may already have re-screened some
     // An investor screened through the package is re-screened through the free Treasury connection alone, or left out when
     // the firm has none: the package provider is never called from here (G4).
     const list = due(ws).rescreen.filter((inv) => rescreenable(ws, inv));
@@ -1100,7 +1101,12 @@
       try {
         changed = (await pullChanged(ws)) || changed;
       } catch (e) {
-        changed = false;
+        /* asked again from the same time next time */
+      }
+      try {
+        changed = (await autoRescreen(ws)) || changed;
+      } catch (e) {
+        /* tried once for this due date; the investor stays due with "Run now" */
       }
       if (changed && W() === ws) NS.app.render();
     })().finally(() => {
@@ -1108,6 +1114,32 @@
       pulling.timer = setTimeout(() => W() === ws && ongoing(ws), PULL_MS);
     });
     return pulling.busy;
+  }
+  /**
+   * C-06: when the firm's screening uses the free U.S. Treasury connection, investors due for re-screening are re-screened
+   * through that connection alone, by themselves, when the console loads: one at a time, once per due date (a run that gets
+   * no answer writes nothing and is not tried again for that date, so the investor stays due with "Run now"), each with one
+   * change-log entry "Re-screened automatically". A sponsor's own paid connection and team screening never run by
+   * themselves (their results stay as they were); an investor whose screening is monitored is never due. Runs inside
+   * ongoing(), so never while another run is going. Resolves to whether anything was written.
+   */
+  async function autoRescreen(ws) {
+    const x = freeConn(ws);
+    if (!x || ws.invite || !serverUrl(ws)) return false;
+    let n = 0;
+    for (const inv of due(ws).rescreen) {
+      const v = vOf(inv);
+      const day = v.aml.nextScreen;
+      if (v.aml.autoFor === day) continue;
+      v.aml.autoFor = day; // kept before the call: a reload during the run, or a run that fails, does not try this date again
+      NS.app.save(true);
+      if (await rescreenWith(ws, inv, x, true)) {
+        decide(ws, inv);
+        n++;
+      }
+      NS.app.save(true);
+    }
+    return n > 0;
   }
   /**
    * An investor whose screening is watched by its provider keeps no calendar date (an import caps the date it was given, so
