@@ -43,7 +43,7 @@ function payload(over = {}) {
 function submission(over = {}) {
   return Object.assign(
     {
-      investor: { id: 'HRC-0007', contact: 'Zelda Quixote', title: 'Zelda Quixote', email: 'zelda@investor.example', type: 'individual', payment: { method: 'ach', bank: 'First Example Bank', routing: '021000021', account: '000123456789' }, verify: { identity: { status: 'passed' }, aml: { status: 'clear' }, accreditation: { status: 'review' } }, onboarding: { status: 'complete' } },
+      investor: { id: 'HRC-0007', contact: 'Zelda Quixote', title: 'Zelda Quixote', email: 'zelda@investor.example', type: 'individual', payment: { method: 'ach', bank: 'First Example Bank', routing: '131000021', account: '000123456789' }, verify: { identity: { status: 'passed' }, aml: { status: 'clear' }, accreditation: { status: 'review' } }, onboarding: { status: 'complete' } },
       request: { id: 'req-1', type: 'subscription', offeringId: 'hr-fund-ii', investorId: 'HRC-0007', cents: 25000000, status: 'pending', envelopeId: 'env-1' },
       // What the investor's page sends: the work copy it signed (esign.js names it <envelope id>-work), never the firm's template.
       envelope: { id: 'env-1', status: 'sent', requestId: 'req-1', docId: 'tpl-doc-1', workDocId: 'env-1-work' },
@@ -217,7 +217,7 @@ test('complete with a signed PDF: the sponsor is emailed, the console fetches th
     assert.equal(note.from, '"Harbor Ridge Capital" <notices@portal-mail.example>');
     assert.equal(note.subject, 'Zelda Quixote finished onboarding for Harbor Ridge Fund II');
     for (const s of ['Commitment: $250,000', 'Identity: Verified', 'Sanctions screening: Clear', 'Accredited investor: In review', 'Subscription agreement: Signed by the investor; waiting for your countersignature', 'Next: countersign the subscription agreement in the console.', `${PORTAL}#console-investors`, 'November 10, 2026']) assert.ok(note.text.includes(s), s);
-    assert.ok(!note.text.includes('000123456789') && !note.html.includes('021000021'), 'no bank details in the email');
+    assert.ok(!note.text.includes('000123456789') && !note.html.includes('131000021'), 'no bank details in the email');
     assert.ok(!/carrow|powered by/i.test(note.text + note.html));
     // The console fetches the submission.
     const sub = await j(base, 'GET', `/v1/invitations/${r.id}/submission`);
@@ -368,7 +368,7 @@ test('encryption at rest: the store file and blobs never hold the name, email, b
     const files = [readFileSync(file)].concat(readdirSync(server.store.blobDir).map((f) => readFileSync(join(server.store.blobDir, f))));
     assert.equal(files.length, 4, 'store plus three blobs (document, agreement template, signed PDF)');
     const all = Buffer.concat(files).toString('latin1');
-    const secrets = ['Zelda Quixote', 'zelda@investor.example', '000123456789', '021000021', 'Welcome aboard', 'ops@harborridge.example', 'PPMMARKER', 'TEMPLATEMARKER', 'SIGNEDMARKER', '%PDF-', pdf('SIGNEDMARKER').toString('base64').slice(0, 40), r.token, 'Harbor Ridge Fund II'];
+    const secrets = ['Zelda Quixote', 'zelda@investor.example', '000123456789', '131000021', 'Welcome aboard', 'ops@harborridge.example', 'PPMMARKER', 'TEMPLATEMARKER', 'SIGNEDMARKER', '%PDF-', pdf('SIGNEDMARKER').toString('base64').slice(0, 40), r.token, 'Harbor Ridge Fund II'];
     for (const s of secrets) assert.ok(!all.includes(s), `${s} is not stored in plain text`);
     assert.ok(readFileSync(file, 'utf8').includes('"kid"'), 'sealed records carry a key id');
   });

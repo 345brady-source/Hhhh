@@ -39,7 +39,7 @@ const records = {
       type: 'individual',
       email: 'b-1001@example.com',
       taxForm: 'W-9',
-      payment: { method: 'ach', bank: { holder: 'Investor B One', routing: '044003186', account: '30010001', type: 'checking' } },
+      payment: { method: 'ach', bank: { holder: 'Investor B One', routing: '154003186', account: '30010001', type: 'checking' } },
       positions: [{ offeringId: OID, amount: 1000000, date: '2026-01-01' }] // 100,000,000 cents
     },
     {
@@ -49,7 +49,7 @@ const records = {
       type: 'individual',
       email: 'b-1002@example.com',
       taxForm: 'W-9',
-      payment: { method: 'ach', bank: { holder: 'Investor B Two', routing: '044003186', account: '30010002', type: 'checking' } },
+      payment: { method: 'ach', bank: { holder: 'Investor B Two', routing: '154003186', account: '30010002', type: 'checking' } },
       positions: [{ offeringId: OID, amount: 500000, date: '2026-02-01' }] // 50,000,000 cents
     }
   ],

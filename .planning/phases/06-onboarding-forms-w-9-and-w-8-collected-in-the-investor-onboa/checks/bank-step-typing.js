@@ -27,7 +27,7 @@ const IPHONE = {
   hasTouch: true,
   userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
 };
-const ROUTING = '021000021';
+const ROUTING = '131000021';
 const ACCOUNT = '123456789';
 const KEY_DELAY = 60; // between two key presses, as a person types on a phone keyboard
 

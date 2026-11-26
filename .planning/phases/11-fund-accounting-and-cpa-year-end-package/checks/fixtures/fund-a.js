@@ -27,7 +27,7 @@ const records = {
     name: 'Fund A Sponsor',
     shortName: 'Fund A Sponsor',
     legalName: 'Fund A Sponsor Management, LLC',
-    ach: { companyName: 'FUND A LP', companyId: '1000000001', odfiRouting: '044003186', odfiName: 'Sample Bank' }
+    ach: { companyName: 'FUND A LP', companyId: '1000000001', odfiRouting: '154003186', odfiName: 'Sample Bank' }
   },
   offerings: [
     {
@@ -51,7 +51,7 @@ const records = {
       type: 'individual',
       email: 'fa-1001@example.com',
       taxForm: 'W-9',
-      payment: { method: 'ach', bank: { holder: 'Investor One', routing: '044003186', account: '10010001', type: 'checking' } },
+      payment: { method: 'ach', bank: { holder: 'Investor One', routing: '154003186', account: '10010001', type: 'checking' } },
       positions: [
         { offeringId: OID, amount: 0, commitment: 600000, date: '2026-01-10' },
         // written by NS.ops.receive when the call payment is recorded (operations.js addContribution)

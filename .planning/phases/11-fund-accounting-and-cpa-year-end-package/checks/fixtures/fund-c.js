@@ -12,7 +12,7 @@ const OID = 'fund-c';
 
 const records = {
   v: 2,
-  tenant: { id: 'fund-c-sponsor', sample: false, name: 'Fund C Sponsor', shortName: 'Fund C Sponsor', legalName: 'Fund C Sponsor Management, LLC', ach: { companyName: 'FUND C LP', companyId: '1000000003', odfiRouting: '044003186', odfiName: 'Sample Bank' } },
+  tenant: { id: 'fund-c-sponsor', sample: false, name: 'Fund C Sponsor', shortName: 'Fund C Sponsor', legalName: 'Fund C Sponsor Management, LLC', ach: { companyName: 'FUND C LP', companyId: '1000000003', odfiRouting: '154003186', odfiName: 'Sample Bank' } },
   offerings: [
     {
       id: OID,
@@ -35,7 +35,7 @@ const records = {
       type: 'individual',
       email: 'c-1001@example.com',
       taxForm: 'W-9',
-      payment: { method: 'ach', bank: { holder: 'Investor C One', routing: '044003186', account: '40010001', type: 'checking' } },
+      payment: { method: 'ach', bank: { holder: 'Investor C One', routing: '154003186', account: '40010001', type: 'checking' } },
       positions: [{ offeringId: OID, amount: 100000, date: '2026-01-15' }] // 10,000,000 cents
     }
   ],

@@ -330,7 +330,7 @@ async function walk(page, answers) {
       }
     } else if (/Distribution payments/.test(hd)) {
       if (await page.locator('#ob-routing').count()) {
-        await page.fill('#ob-routing', '021000021');
+        await page.fill('#ob-routing', '131000021');
         await page.fill('#ob-account', '123456789');
         await page.fill('#ob-account2', '123456789');
         await page.check('#ob-achAuth');
