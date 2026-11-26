@@ -331,8 +331,8 @@ test('tracer: a 506(b) room, one prospect invited with their basis, the NDA agre
     const pages = await pageTexts(got.bytes);
     assert.equal(pages.length, 2);
     for (const p of pages) {
-      assert.ok(p.includes(hexOf(ONE.name.toLowerCase())), 'the name is on every page');
-      assert.ok(p.includes(hexOf(ONE.email.toLowerCase())), 'the email is on every page');
+      assert.ok(p.includes(hexOf(ONE.name)), 'the name is on every page');
+      assert.ok(p.includes(hexOf(ONE.email)), 'the email is on every page');
     }
 
     const act = await t.activity(roomId);
