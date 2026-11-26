@@ -233,6 +233,13 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     return !!(last && st.nda && (dataOf(last) || {}).version === st.nda.version);
   }
   const newestLink = (st, prospectId) => st.links.filter((l) => !l.open && l.prospectId === prospectId).reduce((m, l) => (!m || l.n > m.n ? l : m), null);
+  /** The room's state read again after a request body arrived; 401 when the link was renewed, ended or expired meanwhile. */
+  function liveState(a) {
+    const st = stateOf(a.room);
+    const newest = newestLink(st, a.prospect.id);
+    if (!newest || newest.id !== a.link.id || st.ended.has(a.prospect.id) || now() >= Date.parse(a.prospect.expiresAt)) throw fail(401, GONE);
+    return st;
+  }
 
   /** The room and prospect a link token opens, or null. Every link record is compared in constant time; the loop never exits early. */
   function findByToken(token) {
@@ -256,7 +263,7 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     const newest = newestLink(st, prospect.id);
     if (!newest || newest.id !== found.id) return null;
     if (st.ended.has(prospect.id) || now() >= Date.parse(prospect.expiresAt)) return null;
-    return { room, prospect, state: st };
+    return { room, prospect, link: found, state: st };
   }
   /** A new personal link record for a prospect (the newest one is the only one that opens the room). */
   function issueLink(room, prospect, by) {
@@ -633,9 +640,70 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
       agreed,
       documents: agreed ? shownDocs(st).map((d) => ({ id: d.id, title: (unseal(d) || {}).title || '', pages: d.pages, size: d.size })) : [],
       download: st.room.download,
+      interest: currentInterest(st, p.id),
       expiresAt: p.expiresAt,
       privacy: `Your views of these documents are recorded for ${firm.name || 'the firm'}.`
     };
+  }
+  /** The prospect's current indication ({ at, kind, cents, cls, note }), or null when none or withdrawn. */
+  function currentInterest(st, prospectId) {
+    const list = st.interest.get(prospectId) || [];
+    const last = list[list.length - 1];
+    const d = last ? dataOf(last) || {} : null;
+    return d && d.kind !== 'withdrawn' ? { at: last.at, kind: d.kind, cents: d.cents, cls: d.cls, note: d.note } : null;
+  }
+  /** POST /v1/room/views { docId, viewId, seconds, pages }: what the room page saw, against a view id served to this prospect. */
+  async function pageView(req, res, a) {
+    const body = await readBody(req, LIMITS.small);
+    requireVault();
+    const st = liveState(a);
+    const docId = typeof body.docId === 'string' ? body.docId : '';
+    const viewId = typeof body.viewId === 'string' ? body.viewId : '';
+    const served = (st.served.get(a.prospect.id) || []).find((e) => e.docId === docId && (dataOf(e) || {}).viewId === viewId);
+    if (!docId || !viewId || !served) throw fail(422, 'This view was not issued for this link.', { field: 'viewId' });
+    const doc = st.docs.find((d) => d.id === docId);
+    if (!whole(body.seconds) || !whole(body.pages) || body.seconds > 7 * 86400) throw fail(422, 'Seconds and pages are whole numbers.', { field: 'seconds' });
+    if (doc && body.pages > doc.pages) throw fail(422, 'The document has fewer pages than that.', { field: 'pages' });
+    addEvent(a.room, 'view', { prospectId: a.prospect.id, docId, data: { seconds: body.seconds, pages: body.pages, viewId, how: 'page' } });
+    return reply(res, 200, { ok: true });
+  }
+  /** The four shapes of inbox.mjs PATTERNS (taxpayer, social security, eight digits or more, password). */
+  const NUMBERS = [/\b\d{2}-\d{7}\b/, /\b\d{3}[- ]?\d{2}[- ]?\d{4}\b/, /\d{8,}/, /\bpass(word|code)?\s*[:=]/i];
+  /** POST /v1/room/interest { kind, cents, cls, note }: a new entry each time (made, changed or withdrawn), never an edit. */
+  async function indicate(req, res, a) {
+    const body = await readBody(req, LIMITS.small);
+    requireVault();
+    if (Object.keys(body).some((k) => !['kind', 'cents', 'cls', 'note'].includes(k))) throw fail(422, 'Only an amount, a class and a note are recorded.');
+    const st = liveState(a);
+    if (!agreedNow(st, a.prospect.id)) throw fail(403, 'Agree to the NDA first.');
+    const had = currentInterest(st, a.prospect.id);
+    const kind = body.kind === undefined || body.kind === null || body.kind === '' ? (had ? 'changed' : 'indicated') : body.kind;
+    if (!['indicated', 'changed', 'withdrawn'].includes(kind)) throw fail(422, 'An indication is made, changed or withdrawn.', { field: 'kind' });
+    if (kind === 'withdrawn' && !had) throw fail(422, 'There is no indication to withdraw.', { field: 'kind' });
+    const cents = body.cents === undefined || body.cents === null || body.cents === '' ? null : body.cents;
+    if (cents !== null && !(whole(cents) && cents <= 1e15)) throw fail(422, 'Enter the amount as a whole number of cents, or leave it blank.', { field: 'cents' });
+    const note = String(body.note == null ? '' : body.note).trim();
+    if (note.length > LIMITS.note) throw fail(422, 'Keep the note to 500 characters.', { field: 'note' });
+    const cls = str(body.cls, 80);
+    if ([note, cls].some((s) => s && NUMBERS.some((re) => re.test(s)))) throw fail(422, 'Bank and taxpayer numbers are not asked for here.', { field: 'note' });
+    const data = kind === 'withdrawn' ? { kind, cents: null, cls: '', note } : { kind, cents, cls, note };
+    addEvent(a.room, 'interest', { prospectId: a.prospect.id, data });
+    const firm = firmOf(a.room);
+    const name = (unseal(a.prospect) || {}).name || '';
+    const notice = await ask({ kind: 'room_activity', variant: 'interest', workspace: a.room.workspace, roomId: a.room.id, prospectId: a.prospect.id, interest: kind, from: { name }, to: { name: firm.name, email: firm.notifyEmail } });
+    return reply(res, 200, { interest: currentInterest(stateOf(a.room), a.prospect.id), notice });
+  }
+  /** POST and GET /v1/room/messages: the prospect's questions, kept by inbox.mjs as the prospect's own thread in this room. */
+  async function questions(req, res, a) {
+    if (!inbox) throw fail(503, 'Questions are not available on this server.');
+    const party = { kind: 'prospect', id: a.prospect.id };
+    if (req.method === 'GET') return reply(res, 200, inbox.list(a.room.workspace, party));
+    const body = await readBody(req, LIMITS.small);
+    requireVault();
+    liveState(a);
+    const name = (unseal(a.prospect) || {}).name || '';
+    const message = await inbox.post(a.room.workspace, { party, roomId: a.room.id, from: 'party', author: name, body: body.body, anyway: body.anyway === true });
+    return reply(res, 201, { message });
   }
   /**
    * POST /v1/room/nda: click-through { name, ticked, version } (a small call) or e-signed { mode: 'esign', name, version,
@@ -646,7 +714,7 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     const raw = await readRaw(req, LIMITS.nda);
     const body = parseObject(raw);
     requireVault();
-    const st = a.state;
+    const st = liveState(a); // read again after the upload: the NDA or the access may have changed meanwhile
     const esign = st.nda.mode === 'esign';
     if (!esign && raw.length > LIMITS.small) throw fail(413, 'Request body too large');
     if (esign && body.mode !== 'esign') throw fail(422, "This room's NDA is signed, not ticked.", { field: 'mode' });
@@ -691,6 +759,8 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
     const body = await readBody(req, LIMITS.small);
     requireVault();
     const st = stateOf(a.room);
+    const current = openLinkOf(st);
+    if (!current || current.id !== a.link.id) throw fail(401, GONE); // turned off while the request was read
     const name = str(body.name);
     const email = str(body.email, 254);
     checkPerson(st, name, email);
@@ -779,6 +849,9 @@ export function createDataRoom({ env = {}, store, vault, now = () => Date.now(),
       if (p === '/v1/room/nda.pdf') return ndaForm(res, a.state);
       if (p === '/v1/room/nda') return await agree(req, res, a);
       if (p.startsWith('/v1/room/documents/')) return await serveDoc(req, res, a, safeDecode(p.slice('/v1/room/documents/'.length)));
+      if (p === '/v1/room/views') return await pageView(req, res, a);
+      if (p === '/v1/room/interest') return await indicate(req, res, a);
+      if (p === '/v1/room/messages') return await questions(req, res, a);
       throw fail(404, 'Not found');
     } catch (e) {
       return failReply(res, e);
