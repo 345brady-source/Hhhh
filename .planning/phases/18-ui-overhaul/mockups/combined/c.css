@@ -255,11 +255,11 @@ table.ledger { width: 100%; border-collapse: collapse; }
   .rail a { min-height: 48px; padding: 0 var(--space-3); border-left: 0; border-bottom: 3px solid transparent; white-space: nowrap; }
   .rail a[aria-current="page"] { border-bottom-color: var(--color-sky); }
   .main { padding: var(--space-8) var(--space-4) var(--space-14); }
-  .panel { padding: var(--space-4); border-radius: 16px; }
+  .panel { padding: var(--space-4); }
   .hl.panel > div { padding: var(--space-4); }
   .hl.panel > div + div { padding-left: var(--space-4); }
   .hl.panel > div:nth-child(3) { padding-left: var(--space-4); }
-  .notice { padding: var(--space-4); border-radius: 16px; }
+  .notice { padding: var(--space-4); }
   .head { flex-direction: column; align-items: stretch; margin-bottom: var(--space-8); }
   .agenda li { grid-template-columns: 32px minmax(0, 1fr); }
   .agenda .act { grid-column: 2; }
