@@ -33,8 +33,10 @@
 //                  is refused
 //   undo-roles     Undo on the 5100 decision puts the line back to decide and 5100 at $0.00 in the Audit page's trial
 //                  balance; a distribution changed after its match offers "Move match" to the new entry (W1); a team
-//                  member uploads, accepts, posts a sale and reconciles; an investor opening #console-books gets the
-//                  investor's own default page
+//                  member uploads, accepts, posts the purchase and a sale of part of it, and reconciles; an investor
+//                  opening #console-books gets the investor's own default page
+//   published      portal.html at 390x844: Accounting shows Bank (its three files loaded in order) and an OFX upload
+//                  adds its lines
 // Every part: the frame refuses a fetch; no full account number anywhere but the stored file (only its last four);
 // quiet, leak, white label and a way out on screen; the page asks only for files that ship and none fails.
 //   NODE_PATH=$(npm root -g) node bank-flow.js [--only part1,part2]
@@ -181,7 +183,7 @@ function bank(fr) {
       accts: all('.bb-acct').map((a) => ({ id: a.getAttribute('data-id'), text: t(a) })),
       result: t(q('.bb-result')),
       errs: all('.bk-err').map(t).filter(Boolean),
-      layout: !!q('.bb-form[data-kind="layout"]'),
+      layout: !!q('.bk-form[data-kind="layout"]'),
       overlap: t(q('.bb-overlap')),
       acceptAll: t(q('[data-action=bb-accept-all]')),
       sug: all('.bb-sug').map((s) => ({ id: s.getAttribute('data-id'), k: s.getAttribute('data-k'), text: t(s), accept: !!s.querySelector('[data-action=bb-accept]'), picks: s.querySelectorAll('[data-action=bb-pick]').length })),
@@ -467,7 +469,7 @@ const parts = {
       m.rows.length === 5 && m.head.join('|') === 'Date|Description|Money in|Money out' && /WIRE IN FA-1001/.test(m.rows[0][1]) && m.rows[0][2] === '$300,000.00' && m.rows[0][3] === '' && /WIRE OUT PORTFOLIO CO X/.test(m.rows[2][1]) && m.rows[2][2] === '' && m.rows[2][3] === '$400,000.00' && /=SUM\(A1\)/.test(m.rows[3][1]),
       m.rows
     );
-    await shot(A, 'csv-desktop-layout', fr, '.bb-form[data-kind="layout"]');
+    await shot(A, 'csv-desktop-layout', fr, '.bk-form[data-kind="layout"]');
     b = await useLayout(fr);
     check('"Use this layout" gives "9 new lines, 0 already imported."', b.result === '9 new lines, 0 already imported.', { result: b.result, errs: b.errs });
     let st = await store(fr);
@@ -675,6 +677,9 @@ const parts = {
       await T.press(fr, `[data-action=bb-accept][data-k="${chk.k}"]`);
       await fr.waitForTimeout(500);
     }
+    // the purchase first (its cost is what the sale gives up part of), then the sale
+    const kp = await decide(fr, 'WIRE OUT PORTFOLIO CO X', { acct: 'purchase', hold: 'fa-x' });
+    await post(fr, kp);
     const j0 = (await journal(fr)).length;
     const ks = await decide(fr, 'WIRE IN SALE PORTFOLIO CO X PART', { acct: 'sale', hold: 'fa-x', cost: '200,000.00' });
     await post(fr, ks);
@@ -683,7 +688,7 @@ const parts = {
     check(
       'the team member posts the sale: cost $200,000.00 given up, gain $40,000.00, $45,000.00 of unrealized gain realized',
       !!sale && JSON.stringify(sale.lines) === JSON.stringify([['1000', 24000000], ['1100', -20000000, '', 'fa-x'], ['6000', -4000000, '', 'fa-x'], ['6100', 4500000, '', 'fa-x'], ['1150', -4500000, '', 'fa-x']]),
-      sale
+      { sale, errs: (await bank(fr)).errs }
     );
     await setRecDate(fr, '2027-01-31');
     b = await bank(fr);
@@ -701,6 +706,20 @@ const parts = {
     const at = await fr.evaluate(() => ({ route: window.CVPortal.state.route, bk: !!document.querySelector('.bk'), bank: !!document.querySelector('[data-bk="part-bank"]'), console: !!document.querySelector('.cs-nav') }));
     check("an investor opening #console-books gets the investor's own default page", at.route === 'overview' && !at.bk && !at.bank && !at.console, at);
     await T.quiet(check, A, fr);
+    await A.context.close();
+  },
+  async published({ check, S }) {
+    const { A, fr } = await start(check, S, 'phone', { page: 'portal.html' });
+    let b = await bank(fr);
+    check('portal.html: Accounting shows Bank with its one line', !!b && b.title === 'Bank' && b.line === LINE, b && { title: b.title, line: b.line });
+    const files = await fr.evaluate(() => Array.from(document.scripts).map((s) => new URL(s.src || location.href).pathname).filter((p) => /\/assets\/js\/(bankfiles|books-bank|books-bank-ui)\.js$/.test(p)));
+    check('portal.html loaded the three bank files beside books-ui.js, in order', JSON.stringify(files) === JSON.stringify(['/assets/js/bankfiles.js', '/assets/js/books-bank.js', '/assets/js/books-bank-ui.js']), files);
+    await addAccount(fr, 'Operating', '6789');
+    b = await upload(fr, 'fund-a.ofx');
+    check('portal.html: an OFX upload adds its lines', b.result === '9 new lines, 0 already imported.' && (await store(fr)).lines.length === 9, { result: b.result, errs: b.errs });
+    check('portal.html: the suggestions and the lines to decide are drawn', b.acceptAll === 'Accept all suggestions (3)' && b.lines.length === 6, { all: b.acceptAll, lines: b.lines.length });
+    await shot(A, 'published-phone', fr, '[data-bk="part-bank"]');
+    await endChecks(check, A, fr, 'published');
     await A.context.close();
   }
 };
