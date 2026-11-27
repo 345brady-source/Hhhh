@@ -455,6 +455,66 @@ A token (32 random bytes) is shown once, in the answer that makes it; only its S
 
 On a server with accounts, the shared `API_TOKEN` is the operator's own: it still reaches every workspace, so give it to no sponsor. With no `API_TOKEN` and no account, `/v1/` calls need no token (development); once one account exists, every sponsor call needs a token. An account made for a workspace that already has records reaches those records. Make one account for each workspace in the portal, even for one firm: investor ids repeat from one workspace to the next, and a check is matched to an investor by id within a workspace.
 
+## Sign-in, two-step and roles
+
+People sign in to the console with their own email and password (`/v1/auth/*`, `lib/auth.mjs`). No outside sign-in service is used.
+
+**What sign-up creates.** `POST /v1/auth/signup { firm, name, email, password }` creates the firm's workspace, its sponsor account (its token is not shown; replace it with `POST /v1/admin/accounts/:id/token` when the firm wants automation) and the Owner. Every console person sets up two-step sign-in (an authenticator app) before reaching the console. Once anyone has signed up, the open server described above is closed: every `/v1/` call needs a session or a token.
+
+**Settings.**
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `AUTH_REQUIRED` | unset | `1` closes the open server at once, before anyone has signed up. |
+| `SESSION_IDLE_MIN` | 60 | Minutes without a request before a session ends (5 to 60). |
+| `SESSION_MAX_HOURS` | 12 | Hours after sign-in before a session ends, whatever happens (1 to 24). |
+| `AUTH_SIGNIN_PER_15MIN` | 20 | Sign-in tries per address in 15 minutes. |
+| `AUTH_COUNTER_MAX` | 10000 | Addresses and unknown emails the try counters remember (the oldest is dropped first). |
+
+**The cookie.** A session is one cookie: `__Host-session` (Secure, HttpOnly, SameSite=Strict) when `PUBLIC_URL` is `https://`, `session` otherwise; the server keeps only its SHA-256. A browser sends a SameSite=Strict cookie only to the site that set it, so the portal's pages must come from this server: `SERVE_PORTAL=1` serves them (it arrives with the served portal, plan 15-06; until then the setting does nothing). Every write made with the cookie must be JSON from the server's own origin (or one listed in `PORTAL_ORIGIN`); anything else is refused with no change.
+
+**Tokens once a firm has people.** A sponsor account's token is for the firm's automation. Once its workspace has an active team person, the token reaches only these routes, and every other one answers 403 `This needs a person signed in.`: `GET`/`POST /v1/invitations` and `/v1/invitations/:id` (submission, resend, cancel), `GET /v1/checks/changed`, `GET /v1/connectors`, `POST /v1/intake`, `POST /v1/read`, `POST /v1/help`, `POST /v1/verifications`, `GET /v1/verifications/:id` and its evidence, `POST /v1/screenings`, `GET /v1/screenings/:id`, `GET`/`POST /v1/taxdocs` and `POST /v1/taxdocs/:id/withdraw|resend`. The outbox, billing, filings, the team, the change log, messages and the data room need a person signed in. The shared `API_TOKEN` follows the same rule once anyone on the server has signed up (or `AUTH_REQUIRED=1`). A firm with no people keeps its token on every route, as before.
+
+**Roles.** Every sponsor route names its permission in one table, `ROUTES` in `lib/roles.mjs`, read with the browser's own `assets/js/roles.js`; a test walks every route in `index.mjs` and `lib/` and fails on one without a line, and a path the table does not name answers 404. A refusal answers 403 with one sentence and `code: 'role'`, and is written to the change log with the person.
+
+- Owner: everything, including billing, sign-in rules and closing the portal (one per firm; handed over with a transfer).
+- Admin: everything except billing and ownership.
+- Staff: day-to-day work; payments are released and anything charged to the firm is ordered by an Admin or the Owner.
+- Read-only: sees everything, changes nothing.
+- Accountant: reports, the change log, capital accounts and tax documents only; access ends on a date (90 days unless the firm chooses another, at most 365), and after it the next request answers 401 `Your access ended on <date>. Ask the firm to renew it.` and ends the session.
+
+**The team** (a person signed in; `lib/team.mjs`).
+
+| Route | Who | What it does |
+| --- | --- | --- |
+| `GET /v1/team?kind=team\|investor` | Owner, Admin (team); anyone who sees personal details (investors) | The people: `{ id, name, email, kind, role, investorId, status, owner, endsOn, twoStep, invitedAt }`. |
+| `POST /v1/team/invite` | Owner, Admin (team); Owner, Admin, Staff (an investor) | `{ kind, name, email, role, investorId, endsOn }` → `{ person, link }`. A team role is admin, team, readonly or accountant, never owner. An investor's invitation is bound to the investor's record by `investorId` and gives an investor added before sign-in existed their own sign-in. |
+| `POST /v1/team/:id/resend` | as the invitation | A new link; the old one stops working. |
+| `POST /v1/team/:id/role` | Owner, Admin | `{ role, endsOn }`; the Owner's role is never changed this way. |
+| `POST /v1/team/:id/remove` | Owner, Admin | Never the Owner, never oneself. Sessions end at once; email, password and two-step are deleted; the name stays for the change log. |
+| `POST /v1/team/:id/renew` | Owner, Admin | `{ endsOn }` for an Accountant. |
+| `POST /v1/team/transfer` | Owner, signed in within 10 minutes | `{ to }`: an active Admin with two-step becomes the Owner; the Owner becomes an Admin. |
+| `GET /v1/team/accept?token=` | the link's holder | The firm, name, email and role of the invitation. |
+| `POST /v1/team/accept` | the link's holder | `{ token, password }`: the person's own password; a team person sets up two-step next. JSON from the portal's own page only. |
+
+An invitation link is `<PUBLIC_URL>/#accept-<token>`: 32 random bytes after the `#` (so it never reaches a server log), valid 7 days and once, and only its SHA-256 is kept. Until the server sends these emails (plan 15-14), the link is shown once, to the person who sent the invitation, to pass on.
+
+**The change log** (`lib/auditlog.mjs`): append-only and chained, its details sealed with `DATA_KEY`. Sign-ins, refusals and every team change are written with the person from the session.
+
+| Route | What it does |
+| --- | --- |
+| `GET /v1/audit?before=&limit=` | `{ entries }`, newest first (100 by default, at most 1000). |
+| `GET /v1/audit/verify` | `{ ok, count, brokenAt }`: the chain checked without opening any entry. |
+| `GET /v1/audit/export` | The whole log as a JSON file; the export is itself logged. |
+
+**The operator's routes** (`ADMIN_TOKEN`): `GET /v1/admin/people?workspace=` lists a workspace's people (no password or two-step data), `POST /v1/admin/people/:id/unlock` lifts a lock after too many tries, and `POST /v1/admin/people/:id/two-step/reset` clears a person's two-step (plan 15-04; it answers 404 until that is installed).
+
+**An Owner who lost both phone and recovery codes.** The firm cannot reset its own Owner, so the operator does, by this procedure only:
+
+1. Confirm the person by phone, calling a number you already held for the firm before the request (from its sign-up or contract records), never one given in the request, and never by email alone: whoever holds the Owner's mailbox may be the attacker.
+2. Only after that call, reset the Owner's two-step with `POST /v1/admin/people/:id/two-step/reset`. The Owner signs in with their password and sets up two-step again.
+3. The reset is on the firm's change log; tell the Owner to check it and their sessions.
+
 ## Portal help
 
 The portal's Help answers questions about using the portal: where a page is, what a button does, how to finish a step. When the workspace has this server's address under Integrations, the portal sends each question here and this server has it answered with `CARROWVALE_API_KEY`, from a guide to the portal's own screens. It answers portal questions only: it gives no investment, legal or tax advice, and it cannot see anyone's account, documents or data. Help is available exactly when reading is (`reader` in `GET /health`): without a key, `POST /v1/help` answers 503 and the portal says help is not available.
