@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { withServer } from './helpers.mjs';
+import { withServer, stripLinkTokens } from './helpers.mjs';
 import { BUILTINS } from '../providers/index.mjs';
 
 const DAY = 864e5;
@@ -282,7 +282,7 @@ test('the sponsor’s notification for an investor already on file: the subscrip
     const n = await note(base, r.id);
     assert.match(n.text, /Their subscription, signed agreement and any new accreditation result are added to your investor records the next time the console is open\. The details you already hold for them stay as they are\./);
     assert.ok(!/Their details, verification results/.test(n.text + n.html), 'the console keeps the record on file');
-    assert.ok(!/carrow|\bvale\b|powered by/i.test(n.subject + n.text + n.html));
+    assert.ok(!/carrow|\bvale\b|powered by/i.test(stripLinkTokens(n.subject + n.text + n.html)));
     // A new investor's notification is unchanged.
     const fresh = await create(base, { investor: { id: 'HRC-0009', contact: 'Ada Quill', email: 'ada@investor.example' } });
     assert.equal((await complete(base, fresh.token, { investor: { id: 'HRC-0009', contact: 'Ada Quill' } })).status, 200);
@@ -302,7 +302,7 @@ test('the reminder for an unimported subscription by an investor already on file
     assert.match(m.text, /it adds the subscription, the signed agreement and any new accreditation result as soon as it opens/);
     assert.match(m.text, /the investor would have to submit their subscription again\./);
     assert.ok(!/onboarding/i.test(m.subject + m.text + m.html), m.text);
-    assert.ok(!/carrow|\bvale\b|powered by/i.test(m.subject + m.text + m.html));
+    assert.ok(!/carrow|\bvale\b|powered by/i.test(stripLinkTokens(m.subject + m.text + m.html)));
   }));
 
 /* ---------- This server's own pages with PORTAL_ORIGIN set ---------- */

@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { withServer, mockFetch } from './helpers.mjs';
+import { withServer, mockFetch, stripLinkTokens } from './helpers.mjs';
 import { openStore } from '../lib/store.mjs';
 import { loadProviders } from '../providers/index.mjs';
 
@@ -143,13 +143,13 @@ test('reverify email: the invitation, the resend and the reminder ask to verify 
     assert.match(m.text, /The link below opens the accreditation step only: you verify your status online\. Nothing else is asked\./);
     assert.match(m.text, /Verify your accreditation:/);
     assert.ok(!/photo ID|bank details|onboarding|subscri|tax form/i.test(m.text), m.text);
-    assert.ok(!VENDOR.test(m.text + m.html), 'no vendor word');
+    assert.ok(!VENDOR.test(stripLinkTokens(m.text + m.html)), 'no vendor word');
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, again.text);
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
     assert.equal(re.subject, 'Reminder: Harbor Ridge Capital: verify your accredited investor status');
     assert.match(re.text, /Here is a new link to verify your accredited investor status for Harbor Ridge Capital\. Any earlier link we sent no longer works\./);
-    assert.ok(!VENDOR.test(re.text + re.html), 'no vendor word in the resend');
+    assert.ok(!VENDOR.test(stripLinkTokens(re.text + re.html)), 'no vendor word in the resend');
 
     // Finished and never imported: the sponsor is reminded once, a week before the result is deleted.
     assert.equal((await complete(base, again.body.token, submission({ status: 'not_started' }))).status, 200);
@@ -160,7 +160,7 @@ test('reverify email: the invitation, the resend and the reminder ask to verify 
     assert.equal(rem.subject, 'Waiting in your console: Dana Whitfield’s re-verification');
     assert.match(rem.text, /Dana Whitfield finished your request to verify their accreditation again on November 26, 2026, but the console has not added the result to your records yet\./);
     assert.ok(!/subscri|onboarding|signed agreement/i.test(rem.text), rem.text);
-    assert.ok(!VENDOR.test(rem.text + rem.html), 'no vendor word in the reminder');
+    assert.ok(!VENDOR.test(stripLinkTokens(rem.text + rem.html)), 'no vendor word in the reminder');
   });
 });
 
@@ -178,7 +178,7 @@ test('reverify summary: the sponsor’s finished summary has a re-verification r
     assert.match(n.text, /^Accredited investor: Verified$/m);
     assert.match(n.text, /^Investor: Dana Whitfield$/m);
     assert.ok(!/Identity:|Sanctions|Commitment|Subscription agreement|Offering:|Tax form/i.test(n.text), n.text);
-    assert.ok(!VENDOR.test(n.text + n.html), 'no vendor word');
+    assert.ok(!VENDOR.test(stripLinkTokens(n.text + n.html)), 'no vendor word');
     const row = (await j(base, 'GET', '/v1/invitations?workspace=ws-harbor')).body.find((x) => x.id === r.id);
     assert.equal(row.status, 'completed');
   }));

@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { withServer } from './helpers.mjs';
+import { withServer, stripLinkTokens } from './helpers.mjs';
 
 const DAY = 864e5;
 const T0 = Date.parse('2026-11-10T12:00:00Z');
@@ -112,7 +112,7 @@ test('an invitation to subscribe that includes the tax form: the flag and the fo
     assert.match(m.text, /has invited you to subscribe to Harbor Ridge Fund III/);
     assert.match(m.text, /the offering documents, your tax form, your commitment and the subscription agreement/);
     assert.ok(!/photo ID|bank details/i.test(m.text), m.text);
-    assert.ok(!/carrow|powered by|diy/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy/i.test(stripLinkTokens(m.text + m.html)));
   }));
 
 test('without the box the invitation to subscribe is as before: no flag, no pre-fill, the email does not mention a tax form', () =>

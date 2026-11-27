@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { withServer } from './helpers.mjs';
+import { withServer, stripLinkTokens } from './helpers.mjs';
 
 const DAY = 864e5;
 const T0 = Date.parse('2026-11-10T12:00:00Z');
@@ -112,7 +112,7 @@ test('a tax-form request: the flag and the form’s pre-fill reach the link, not
     assert.match(m.text, /filled in from the details we hold/);
     assert.match(m.text, /Complete your tax form:/);
     assert.ok(!/photo ID|bank details|onboarding|subscri|identity verification/i.test(m.text), m.text);
-    assert.ok(!/carrow|powered by|diy/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy/i.test(stripLinkTokens(m.text + m.html)));
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');

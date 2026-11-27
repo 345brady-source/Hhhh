@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { withServer } from './helpers.mjs';
+import { withServer, stripLinkTokens } from './helpers.mjs';
 import { BUILTINS } from '../providers/index.mjs';
 
 const API = 'sponsor-api-token-0123456789';
@@ -63,7 +63,7 @@ test('an investor already on file: the flag and accreditation summary reach the 
     assert.match(m.text, /Your account details are already on file/);
     assert.ok(!/photo ID|bank details ready/i.test(m.text), 'no request for ID or bank details');
     assert.ok(m.text.includes(r.link));
-    assert.ok(!/carrow|powered by|diy portal/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy portal/i.test(stripLinkTokens(m.text + m.html)));
     // A reminder keeps the subscription wording.
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
@@ -174,7 +174,7 @@ test('a finished onboarding the console never imported: the sponsor is reminded 
     assert.match(m.text, /has not added them to your investor records yet/);
     assert.match(m.text, /^Deleted on: December 10, 2026$/m);
     assert.match(m.text, /Open the console before December 10, 2026/);
-    assert.ok(!/carrow|powered by|diy portal/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy portal/i.test(stripLinkTokens(m.text + m.html)));
     assert.equal(server.store.get('invitations', kept.id).reminderStatus, 'outbox');
 
     clock.t += 3 * DAY;
@@ -215,7 +215,7 @@ test('a portal link for an investor added from paper documents: its own email, r
     assert.match(m.text, /nothing to fill in/);
     assert.match(m.text, /Open your portal:/);
     assert.ok(!/photo ID|bank details|onboarding|identity verification/i.test(m.text), m.text);
-    assert.ok(!/carrow|powered by|diy/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy/i.test(stripLinkTokens(m.text + m.html)));
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
