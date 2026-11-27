@@ -1208,6 +1208,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         notifyStatus = r.emailStatus;
       }
       store.put('invitations', { id: rec.id, notifyStatus });
+      await confirm(rec, snap, summarize(sub, snap, checks), completedAt);
       return send(res, 200, { ok: true });
     }
     throw fail(404, 'Not found');
@@ -1257,6 +1258,34 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       package: packageRow(rec),
       events: rec.events || []
     };
+  }
+
+  /**
+   * EM-10, C-09 (13-04): the investor's confirmation, after the sponsor's notification: what the firm received, the portal,
+   * nothing sensitive (emails.js confirmation has no field for a number). Sent only for what was received: a co-investor's
+   * signature only when they signed, a tax form only when one came back, a re-verification only when a result came; a
+   * portal link sends none. To the co-investor for their signature. Logged; a mail failure never fails the completion.
+   */
+  async function confirm(rec, snap, summary, completedAt) {
+    try {
+      const inv = snap.invitation || {};
+      const s = summary || {};
+      let variant = '';
+      if (s.coSign) variant = s.coSigned ? 'coSign' : '';
+      else if (s.access) variant = '';
+      else if (s.taxRequest) variant = s.taxState === 'signed' || s.taxState === 'uploaded' ? 'taxForm' : '';
+      else if (s.reverify) variant = s.accreditation && s.accreditation !== 'Not verified again' ? 'reverify' : '';
+      else variant = snap.offering && s.requested ? 'subscription' : 'onboarding';
+      if (!variant || !validAddress(snap.investor.email)) return;
+      const form = { 'W-8BEN': 'foreign-individual', 'W-8BEN-E': 'foreign-entity', 'W-9': snap.investor.taxType === 'us-entity' ? 'us-entity' : 'us-individual' }[s.taxForm];
+      const investor = { id: snap.investor.id, contact: snap.investor.contact, title: snap.investor.title, taxType: form || snap.investor.taxType };
+      // A co-investor has no portal sign-in of their own: no portal button (13-11).
+      const portalUrl = inv.coSign ? '' : String(snap.portalUrl || '').split('#')[0];
+      const m = render('confirmation', { variant, firm: snap.firm, investor, offering: snap.offering, invitation: {}, portalUrl, completedAt });
+      await mailer.send({ kind: 'confirmation', refId: rec.id, investorId: snap.investor.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.investor.email, toName: snap.investor.contact, subject: m.subject, text: m.text, html: m.html, inline: m.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })), headers: { 'Auto-Submitted': 'auto-generated' } });
+    } catch (e) {
+      store.event({ type: 'email_failed', kind: 'confirmation', invitationId: rec.id, error: String((e && e.message) || e).slice(0, 200) });
+    }
   }
 
   async function sendInvite(rec, snap, token, kind) {

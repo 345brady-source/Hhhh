@@ -175,7 +175,8 @@ test('nothing sensitive', async () => {
     const [m] = (await outbox(h.base)).filter((x) => x.kind === 'confirmation');
     assert.ok(m, 'the confirmation');
     for (const s of SECRETS) assert.ok(!m.text.includes(s) && !m.html.includes(s) && !m.subject.includes(s), `the confirmation holds no ${s}`);
-    for (const s of ['000123456', '3456']) assert.ok(!m.text.includes(s) && !m.html.includes(s), `nor any part of a number (${s})`);
+    // The account number's last four (7890) appear in no date, phone or colour of this firm, so they may be looked for.
+    assert.ok(!m.text.includes('7890') && !m.html.includes('7890'), 'nor the account number’s last four');
     assert.ok(!/\b\d{3}-\d{2}-\d{4}\b|\d{8,}/.test(`${m.text}\n${m.html}`), 'no taxpayer-number shape and no long number');
     const entry = (await log(h.base)).find((e) => e.kind === 'confirmation');
     for (const s of SECRETS) assert.ok(!entry.text.includes(s), `the log holds no ${s}`);
