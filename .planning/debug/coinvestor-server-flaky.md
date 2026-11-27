@@ -1,8 +1,8 @@
 ---
-status: verifying
+status: awaiting_human_verify
 trigger: "CO-INVESTOR SERVER (5) (06-39's check) fails part cosign-forged about 1 run in 5 when several gates share the browser slots, and passes when rerun unchanged. Seen in 08-17's gate and 11-13's gate run 3 (one cosign-forged assertion failed after a fixed 2500 ms wait)."
 created: 2026-11-27T00:00:00Z
-updated: 2026-11-27T01:20:00Z
+updated: 2026-11-27T01:58:00Z
 start_commit: 63d6bdf
 bug_class: Bohrbug once the ordering is fixed (deterministic with the DELETE held); Heisenbug as seen (ordering decided by process scheduling under load)
 ---
@@ -10,9 +10,9 @@ bug_class: Bohrbug once the ordering is fixed (deterministic with the DELETE hel
 ## Current Focus
 
 hypothesis: CONFIRMED (H2). In the check, not the product: cosign-forged stores its replayed submission while the previous Check now (the forged import) is still running; that check's DELETE of the forged submission lands after the store and removes the replay, so replay #1 has nothing to process.
-test: fixed check under the same fault injection (DELETE held 400 ms), then 20 runs under shared-slot load, then the whole check, then server tests.
-expecting: PASS every time; the fault-injected run that failed before passes.
-next_action: run coflaky/batch.sh e2-fixed (2 runs, DELAY_DELETE_MS=400) and record; then the 20-run load batch.
+test: done (see Evidence 01:02Z-01:57Z).
+expecting: confirmed: unfixed 4/4 FAIL under the injected fault, fixed 23/23 PASS under it, 20/20 under plain load.
+next_action: owner or orchestrator confirms in a real gate run (CO-INVESTOR SERVER (5) with the browser slots shared); then archive to resolved/ and write the knowledge-base entry.
 
 reasoning_checkpoint:
   hypothesis: "replay #1 fails because consoleChecks() resolves when the co-investor's signer reads signed, which is inside coMerge, before that same check's DELETE /v1/invitations/:id/submission; replay() then writes the submission into the server store; when the DELETE reaches the server after the write, it removes the replay, so replay #1's Check now finds no submission (said1 = []) and replay #2's is the only one processed (said2 = [voided line])"
@@ -123,3 +123,17 @@ started: since 06-39; seen in 08-17's gate, 11-13's gate run 3, exec-15-02 run 1
   checked: UNFIXED check under the injected fault (DELAY_DELETE_MS=400), part cosign-forged 3 times in one slot, 01:28:25-01:31:11 UTC (scratchpad coflaky/e2-unfixed/)
   found: COUNTS e2-unfixed: pass=0 fail=3 of 3; each run fails the same two assertions with the same details as the real failure (said [] with same:true; said holding only the voided line). With the first E2 run: 4 of 4 unfixed runs fail under this fault.
   implication: the RED is deterministic.
+
+- timestamp: 2026-11-27T01:57Z
+  checked: FIXED check under the injected fault (DELAY_DELETE_MS=400), part cosign-forged 20 times in a row in one slot, run ~01:51-01:57 UTC, load average 4.5-6.0 on 4 cores (scratchpad coflaky/e2-fixed20/)
+  found: COUNTS e2-fixed20: pass=20 fail=0 of 20; "CO-INVESTOR SERVER: PASS (parts run: 20)".
+  implication: GREEN: under the fault that fails the old check every time (4 of 4), the fixed check passes 20 of 20.
+
+## Resolution
+
+root_cause: In the check, not the product. cosign-forged's consoleChecks() resolved as soon as the co-investor's signer read "signed", which happens inside the console's Check now before that check's DELETE of the forged submission. replay() then wrote the submission straight into the server store while that DELETE was still on its way; when the DELETE reached the server after the write (a few ms either way: in 6 of 10 unfixed runs under load the write fell inside the DELETE's flight), it removed the replayed submission, so replay #1's Check now found nothing (said1 = []) and only replay #2's was processed (said2 = the voided line alone). The fixed 2500 ms read after each replay was a second guess of the same kind. No product race: the server refuses a second completion of a finished invitation (200 already, nothing stored), importSignature judges every submission by the console's current state, and no failing output ever showed a forged value taken.
+fix: checks/co-investor-server.js only. checkNow() presses the console's own Check now and waits (30 s bound, message "the console's Check now had not ended after 30 s") for the toast that inv8-check shows once its check has ended; consoleChecks and replay use it; the two replay assertions also require the check to have ended and carry its outcome in their details. Fixed waits that stood in for an async result replaced by the condition: saveCo (form gave way), removeCo + 1500 ms (the console logged the server's answer to its cancel), co-investor device after done (invite.sentAt), countersign (signing view open). No assertion loosened; the same 128 checks by name.
+verification: RED under the injected fault (console DELETE held 400 ms): unfixed 4 of 4 FAIL with the exact signature of the real failure. GREEN: fixed 3 of 3 and then 20 of 20 under the same fault and load; fixed 20 of 20 under plain shared-slot load; whole check PASS (parts run: 5), 128 checks, same names as 11-13's gate run; server tests 456/456. Plain load did not reproduce the original failure in 10 unfixed runs (0 of 10), so the fault-injected pair is the proof, not the plain-load counts.
+oracle_type: specified (the check's own assertions, unchanged)
+files_changed: [.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/co-investor-server.js]
+side_finding: product, not fixed (outside this task): invitations.js coMerge sets si.signedAt from a signer object captured before importSignature, which applySignature replaces (Object.assign(env, next)), so si.signedAt stays empty after a co-investor signs; coSweep then cancels the finished sign-in (POST .../cancel right after every co-investor import in every trace, answered 409) and logs "Co-investor sign-in cancelled: ... had already ended on the server", and coinvestor.js signInText would show "Sign-in emailed/in the server outbox <date>" instead of "Signed <date>" (code reading; the row text was not captured in a run).
