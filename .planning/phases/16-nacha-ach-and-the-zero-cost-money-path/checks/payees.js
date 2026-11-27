@@ -478,19 +478,31 @@ const parts = {
     sendFile(NS, ws, [{ name: f.title, id: f.id, routing: f.payment.bank.routing, account: f.payment.bank.account, accountType: 'checking', cents: 1000, sec: 'PPD' }], { effective: '2026-11-06', now: new Date(2026, 10, 5, 10, 0), at: '2026-11-05T15:00:00.000Z' });
     ws.investors.forEach((i) => keep(R.checkOf(ws, i, TODAY)));
     const fe = R.fileEntries(ws, ws.investors.map((investor) => ({ investor, cents: 1000 })), { today: TODAY, effective: '2026-11-20' });
-    fe.held.forEach((h) => keep(h.reason) || keep({ kind: h.kind, until: h.until }));
+    fe.held.forEach((h) => {
+      keep(h.reason);
+      keep({ kind: h.kind, until: h.until });
+    });
     check('the scenario holds every state: new, returned, blocked, prenote-sent, unconfirmed, pending (held), wire, ready, none', ['new', 'returned', 'blocked', 'prenote-sent', 'unconfirmed', 'pending', 'wire'].every((k) => fe.held.some((h) => h.kind === k)) && fe.entries.some((x) => x.id === g.id) && R.checkOf(ws, checkPayee(ws), TODAY).state === 'none', fe.held.map((h) => h.kind));
     const run = NS.data.recordRun(ws, { offeringId: 'kb-fund-ii', date: '2026-11-20', type: 'Distribution', total: 2000000 }, { by: ADMIN, today: TODAY, id: 'kb-fund-ii-2026-11-20-p' });
     R.wiresDue(ws, { today: TODAY }).forEach((x) => keep({ reference: x.reference, name: x.name, cents: x.cents, date: x.date }));
-    run.lines.forEach((l) => keep(R.lineStatus(ws, run, l.investorId, TODAY)));
+    run.lines.forEach((l) => {
+      keep(R.lineStatus(ws, run, l.investorId, TODAY));
+      keep(R.lineStatus(ws, run, l.investorId, '2026-11-21'));
+    });
     run.lines.filter((l) => [w.id, wa.id].includes(l.investorId)).forEach((l) => R.markWireSent(ws, run.id, l.investorId, { sentOn: '2026-11-20', by: ADMIN, at: '2026-11-20T16:00:00.000Z' }));
-    run.lines.forEach((l) => keep(R.lineStatus(ws, run, l.investorId, TODAY)));
+    const ra = run.lines.find((l) => l.investorId === g.id);
+    ra.ach = { status: 'returned', code: 'R03', date: '2026-11-24', cents: ra.netCents, trace: '190000010000001', by: ADMIN, at: '2026-11-24T15:00:00.000Z', source: 'nacha', repaid: null };
+    run.lines.forEach((l) => keep(R.lineStatus(ws, run, l.investorId, '2026-11-25')));
+    ra.ach.status = 'repaid';
+    ra.ach.repaid = { how: 'ach', on: '2026-11-30', by: ADMIN, at: '2026-11-30T15:00:00.000Z', fileId: '' };
+    keep(R.lineStatus(ws, run, g.id, '2026-12-01'));
+    keep(R.wireCsv([]));
     keep(R.wireMasked(w));
     keep(R.wireMasked(wa));
     keep(thrown(() => R.markWireSent(ws, run.id, w.id, { sentOn: '2026-11-21', by: ADMIN })));
     ws.investors.forEach((i) => keep(i.payment && i.payment.bank && i.payment.bank.check));
     const all = texts.join('\n');
-    check('statuses and reasons were collected', texts.length > 40 && /Paid by wire/.test(all) && /Returned by the bank/.test(all), texts.length);
+    check('statuses and reasons were collected', texts.length > 40 && ['Paid by wire to', 'To be paid by wire', 'Paid by ACH to', 'Paid by check', 'Returned by your bank', 'Paid again on', 'Returned by the bank', 'waits for an admin', 'ending'].every((x) => all.indexOf(x) >= 0), ['Paid by wire to', 'To be paid by wire', 'Paid by ACH to', 'Paid by check', 'Returned by your bank', 'Paid again on', 'Returned by the bank', 'waits for an admin', 'ending'].filter((x) => all.indexOf(x) < 0));
     check('lib16.leaks finds nothing in them', L.leaks(all).length === 0, L.leaks(all).map((x) => x.slice(-4)));
     const windows = (s) => {
       const out = [];

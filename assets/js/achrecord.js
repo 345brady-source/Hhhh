@@ -448,6 +448,182 @@
     return { entries, held };
   }
 
+  /* ---------- Redemption payment files (D-06, AC-16) ---------- */
+  /**
+   * The payees of a redemption payment file: approved redemptions whose dealing month is final (r.dealing on or before
+   * NS.audit.lastMonthEnd(today), the console's rule) and whose NS.ops.redemptionAmount is a number. Returns
+   * { entries, held, wires, checks }: entries and held as fileEntries gives them (each entry's ref the request id, each
+   * held item's request); wires [ { request, investor, cents, details } ]; checks [ { request, investor, cents } ].
+   */
+  function redemptionPayees(ws, requests, opts) {
+    const o = opts || {};
+    const today = todayOf(o.today);
+    const lastEnd = NS.audit && NS.audit.lastMonthEnd ? NS.audit.lastMonthEnd(today) : '';
+    const rows = [];
+    const wires = [];
+    const checks = [];
+    (requests || []).forEach((r) => {
+      if (!r || r.type !== 'redemption' || r.status !== 'approved' || !r.dealing || !lastEnd || r.dealing > lastEnd) return;
+      const cents = NS.ops && NS.ops.redemptionAmount ? NS.ops.redemptionAmount(ws, r) : null;
+      if (typeof cents !== 'number' || !(cents > 0)) return;
+      const investor = (ws.investors || []).find((x) => x.id === r.investorId);
+      if (!investor) return;
+      if (isWire(investor)) wires.push({ request: r, investor, cents, details: wireDetails(investor) });
+      else if (!achBank(investor)) checks.push({ request: r, investor, cents });
+      else rows.push({ investor, cents, ref: r.id, request: r });
+    });
+    const out = fileEntries(ws, rows, { today, effective: o.effective });
+    return { entries: out.entries, held: out.held, wires, checks };
+  }
+
+  /* ---------- International wires (D-04, AC-12; no IAT file) ---------- */
+  /*
+   * investor.payment = { method: 'wire', bank: null, wire: { beneficiary, address, bankName, country, bic, iban, account,
+   * intermediary: null | { name, bic }, at } } (iban or account). The shapes are checked, not the banks [ASSUMED,
+   * 16-RESEARCH A10]: a BIC is 4 letters (bank), 2 letters (country), 2 letters or digits (place), optionally 3 more
+   * (branch); an IBAN is 2 letters, 2 check digits and 11 to 30 letters or digits whose ISO 13616 mod 97 is 1.
+   */
+  const compact = (s) => String(s == null ? '' : s).replace(/\s/g, '').toUpperCase();
+  function bicValid(s) {
+    return /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(compact(s));
+  }
+  function ibanValid(s) {
+    const v = compact(s);
+    if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(v)) return false;
+    const moved = (v.slice(4) + v.slice(0, 4)).replace(/[A-Z]/g, (c) => String(c.charCodeAt(0) - 55));
+    let mod = 0;
+    for (let k = 0; k < moved.length; k++) mod = (mod * 10 + Number(moved[k])) % 97;
+    return mod === 1;
+  }
+  /** The stored wire block of a wire payee, or null. */
+  function wireDetails(inv) {
+    const p = paymentOf(inv);
+    return p.method === 'wire' && p.wire && typeof p.wire === 'object' ? p.wire : null;
+  }
+  /** What a screen may show of the wire details: { bankName, country, ending } (the last four of the IBAN or account). */
+  function wireMasked(inv) {
+    const w = wireDetails(inv) || {};
+    return { bankName: w.bankName || '', country: w.country || '', ending: last4(w.iban || w.account) };
+  }
+  const runLinesOf = (ws, run) => (NS.data && NS.data.runLines ? NS.data.runLines(ws, run) : { stored: Array.isArray(run.lines), lines: run.lines || [] });
+  /**
+   * A wire payee's line is a wire to send when its run has stored lines and was recorded, or is dated, on or after the day
+   * the wire details were saved: a payment made before the investor had wire details was not a wire.
+   */
+  function wireLine(run, inv) {
+    const w = wireDetails(inv);
+    if (!w || !Array.isArray(run.lines)) return false;
+    if (!w.at) return true;
+    return String(run.linesAt || '') >= String(w.at) || run.date >= dayOf(w.at, String(w.at).slice(0, 10));
+  }
+  /**
+   * The Wires list: every line of a recorded, not cancelled distribution paid to a wire payee and not marked sent, oldest
+   * first: [ { runId, offeringId, date, investorId, name, cents (net), reference, details } ].
+   */
+  function wiresDue(ws) {
+    const out = [];
+    (ws.runs || [])
+      .filter((run) => run && !run.cancelled && Array.isArray(run.lines))
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      .forEach((run) => {
+        const o = (ws.offerings || []).find((x) => x.id === run.offeringId) || {};
+        run.lines.forEach((line) => {
+          const inv = (ws.investors || []).find((x) => x.id === line.investorId);
+          if (!inv || line.wire || !wireLine(run, inv)) return;
+          out.push({ runId: run.id, offeringId: run.offeringId, date: run.date, investorId: inv.id, name: inv.title, cents: line.netCents, reference: `${o.shortName || o.name || run.offeringId} ${run.date} ${inv.id}`, details: wireDetails(inv) });
+        });
+      });
+    return out;
+  }
+  const realDay = (s) => {
+    if (!ISO_DAY.test(String(s || ''))) return false;
+    const [y, m, d] = s.split('-').map(Number);
+    const t = new Date(Date.UTC(y, m - 1, d));
+    return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+  };
+  /** Mark sent: line.wire = { sentOn, by, at }. Refused: no person, a date not YYYY-MM-DD, not a wire payee's line, already marked. */
+  function markWireSent(ws, runId, investorId, opts) {
+    const o = opts || {};
+    const by = person(o.by, 'Marking a wire sent');
+    if (!realDay(o.sentOn)) throw new Error('The day the wire was sent must be a date written YYYY-MM-DD.');
+    const run = runOf(ws, runId);
+    if (!run) throw new Error('No distribution with this id is recorded.');
+    if (run.cancelled) throw new Error('This distribution is cancelled.');
+    const line = Array.isArray(run.lines) ? run.lines.find((l) => l.investorId === investorId) : null;
+    const inv = (ws.investors || []).find((x) => x.id === investorId);
+    if (!line || !inv || !wireLine(run, inv)) throw new Error('This investor is not paid by international wire.');
+    if (line.wire) throw new Error(`This wire was already marked sent on ${longDay(line.wire.sentOn)} by ${line.wire.by}.`);
+    line.wire = { sentOn: o.sentOn, by, at: o.at || new Date().toISOString() };
+    return line.wire;
+  }
+  /** A spreadsheet cell: a value starting =, +, - or @ (or a tab or return) is prefixed with ' so it is never a formula. */
+  function csvCell(v) {
+    let s = String(v == null ? '' : v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  /** The Wires list as CSV text (what the sponsor copies into its bank's wire screen). */
+  function wireCsv(rows) {
+    const head = ['Investor', 'Investor ID', 'Amount', 'Beneficiary', 'Address', 'Bank', 'Country', 'BIC', 'IBAN or account', 'Intermediary', 'Reference'];
+    const body = (rows || []).map((r) => {
+      const d = r.details || {};
+      const mid = d.intermediary ? [d.intermediary.name, d.intermediary.bic].filter(Boolean).join(' ') : '';
+      return [r.name, r.investorId, (Number(r.cents || 0) / 100).toFixed(2), d.beneficiary, d.address, d.bankName, d.country, compact(d.bic), compact(d.iban) || strip(d.account), mid, r.reference];
+    });
+    return [head].concat(body).map((row) => row.map(csvCell).join(',')).join('\r\n');
+  }
+
+  /* ---------- What a payment line reads (AC-11) ---------- */
+  /**
+   * The one reading of a distribution line's payment state, for the console and the investor portal:
+   * { status: 'scheduled' | 'paid' | 'returned' | 'repaid' | 'cancelled', method: 'ach' | 'wire' | 'check', ending, code,
+   * date, words, wireSent }. run: the run or its id; null when the investor has no line on it. An ACH line names the
+   * account the sent file paid (its last four), or the account on file for a run with no file record.
+   */
+  function lineStatus(ws, run, investorId, today) {
+    const r = typeof run === 'string' ? runOf(ws, run) : run;
+    if (!r) return null;
+    const line = runLinesOf(ws, r).lines.find((l) => l.investorId === investorId);
+    if (!line) return null;
+    const t = todayOf(today);
+    const inv = (ws.investors || []).find((x) => x.id === investorId) || { id: investorId };
+    const entry = r.id
+      ? files(ws)
+          .filter((x) => x.runId === r.id)
+          .reverse()
+          .map((x) => (x.entries || []).find((e) => e.investorId === investorId && e.kind === 'credit'))
+          .find(Boolean)
+      : null;
+    let method = 'check';
+    let ending = '';
+    let savings = false;
+    if (entry) {
+      method = 'ach';
+      ending = entry.last4 || '';
+      savings = entry.code === '32';
+    } else if (line.wire || wireLine(r, inv)) {
+      method = 'wire';
+      ending = wireMasked(inv).ending;
+    } else if (achBank(inv)) {
+      method = 'ach';
+      ending = last4(achBank(inv).account);
+      savings = achBank(inv).type === 'savings';
+    }
+    const out = { status: 'paid', method, ending, code: '', date: r.date, words: '', wireSent: line.wire || null };
+    const a = line.ach && typeof line.ach === 'object' ? line.ach : null;
+    if (r.cancelled) return Object.assign(out, { status: 'cancelled', words: 'Cancelled' });
+    if (r.date > t) return Object.assign(out, { status: 'scheduled', words: `Scheduled for ${longDay(r.date)}` });
+    if (a && a.status === 'repaid' && a.repaid && a.repaid.on) return Object.assign(out, { status: 'repaid', code: a.code || '', date: a.repaid.on, words: `Paid again on ${longDay(a.repaid.on)}` });
+    if (a && (a.status === 'returned' || a.status === 'repaid')) return Object.assign(out, { status: 'returned', code: a.code || '', date: a.date || '', words: `Returned by your bank on ${longDay(a.date)}` });
+    if (method === 'wire') {
+      if (!line.wire) return Object.assign(out, { status: 'scheduled', words: `To be paid by wire to the account ending ${ending}` });
+      return Object.assign(out, { date: line.wire.sentOn, words: `Paid by wire to the account ending ${ending}` });
+    }
+    if (method === 'ach') return Object.assign(out, { words: `Paid by ACH to the ${savings ? 'savings' : 'checking'} account ending ${ending}` });
+    return Object.assign(out, { words: 'Paid by check' });
+  }
+
   NS.achRecord = {
     ensure,
     keyOf,
@@ -470,6 +646,15 @@
     prenotesDue,
     prenoteEntries,
     prenotesSent,
-    fileEntries
+    fileEntries,
+    redemptionPayees,
+    bicValid,
+    ibanValid,
+    wireDetails,
+    wireMasked,
+    wiresDue,
+    markWireSent,
+    wireCsv,
+    lineStatus
   };
 })(window.CVPortal);
