@@ -54,6 +54,8 @@ const W = { A: null, fr: null, S: null, off: [], offAt: 0, err0: 0, shots: [], s
 
 /** One screenshot of the phone screen as it is, with its description (copied to the owner's folder by lib.js). */
 async function shot(name, what, scrollTo) {
+  // a message that has just been shown fades by itself; the screen is taken once it is gone
+  await W.fr.waitForFunction(() => !document.querySelector('#toasts > *'), null, { timeout: 12000 }).catch(() => {});
   if (scrollTo)
     await W.fr
       .evaluate((sel) => {
