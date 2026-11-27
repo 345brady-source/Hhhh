@@ -66,6 +66,7 @@
   ];
   NAV_SECTIONS.find((g) => g[0] === 'Report')[1].push('console-filings'); // Filings (filings-ui.js) closes the Report section; kept on its own line
   NAV.splice(NAV.findIndex((n) => n[0] === 'console-docs') + 1, 0, ['console-taxdocs', 'Tax documents']); NAV_SECTIONS.find((g) => g[0] === 'Operate')[1].push('console-taxdocs'); // Tax documents (taxdocs-ui.js) after Documents; kept on its own line
+  NAV.splice(NAV.findIndex((n) => n[0] === 'console-taxdocs') + 1, 0, ['console-books', 'Accounting']); NAV_SECTIONS.find((g) => g[0] === 'Operate')[1].push('console-books'); // Accounting (books-ui.js) after Tax documents; kept on its own line
   const NAV_GROUPS = NAV_SECTIONS.map(([label, keys], i) => [label, i < NAV_SECTIONS.length - 1 ? keys : keys.concat(NAV.map(([k]) => k).filter((k) => !NAV_SECTIONS.some((g) => g[1].indexOf(k) >= 0)))]);
   /** Counts other modules show beside their menu entry: NS.navCounts[key] = (ws) => n. */
   NS.navCounts = NS.navCounts || {};
