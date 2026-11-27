@@ -165,3 +165,78 @@ test('tracer', async () => {
     await h.close();
   }
 });
+
+test('consent', async () => {
+  const h = await harness();
+  try {
+    const p = payload({ consent: { inEffect: false, version: '2026-11-19', lines: CONSENT_LINES } });
+    const made = await call(h.base, 'POST', '/v1/taxdocs', { body: p });
+    assert.equal(made.status, 200, made.text);
+    const first = relayed(h, 0);
+    assert.ok(first, 'the consent request reached the relay');
+    const ask = emails.render('tax_consent', taxData(made.body.link, p));
+    assert.equal(first.subject, ask.subject);
+    assert.ok(!first.subject.includes(SUBJECT) && !first.text.includes(SUBJECT), 'the consent request does not carry the notice words');
+    assert.equal(first.text, ask.text, 'the consent request is emails.js tax_consent for the same data');
+    // The investor consents at the link: the document opens and the notice follows, with the same link.
+    const open = await call(h.base, 'POST', '/v1/taxdoc/open', { bearer: null, doc: tokenOf(made.body.link), body: { last4: LAST4, consent: true } });
+    assert.equal(open.status, 200, open.text);
+    const notice = relayed(h, 1);
+    assert.ok(notice, 'the notice reached the relay');
+    assert.equal(notice.subject, SUBJECT);
+    assert.equal(notice.text, emails.render('tax_notice', taxData(made.body.link, p)).text, 'the notice after consent is emails.js tax_notice (link variant)');
+    assert.equal(h.relay.messages.length, 2);
+  } finally {
+    await h.close();
+  }
+});
+
+test('transient', async () => {
+  const h = await harness();
+  try {
+    const made = await call(h.base, 'POST', '/v1/taxdocs', { body: payload() });
+    assert.equal(made.body.emailStatus, 'sent', made.text);
+    const ev = await call(h.base, 'POST', '/v1/mail/events', { bearer: null, raw: bounce(relayed(h, 0).mid, 'Transient') });
+    assert.equal(ev.status, 200, ev.text);
+    assert.deepEqual(ev.body, { received: 1 });
+    const d = (await documents(h))[0];
+    assert.equal(d.emailStatus, 'sent', JSON.stringify(d));
+    assert.ok(!('bouncedAt' in d), 'no bouncedAt for a transient bounce');
+    // the event is recorded on the entry and changes nothing else
+    const entry = h.store.list('maillog').find((x) => x.refId === made.body.id);
+    assert.equal(entry.status, 'sent');
+    assert.deepEqual(entry.events.map((x) => [x.type, x.permanent]), [['bounced', false]]);
+  } finally {
+    await h.close();
+  }
+});
+
+test('log', async () => {
+  const h = await harness();
+  try {
+    const made = await call(h.base, 'POST', '/v1/taxdocs', { body: payload() });
+    assert.equal(made.status, 200, made.text);
+    const again = await call(h.base, 'POST', `/v1/taxdocs/${made.body.id}/resend`, { body: { sendEmail: true } });
+    assert.equal(again.status, 200, again.text);
+    assert.notEqual(again.body.link, made.body.link);
+    const log = await call(h.base, 'GET', '/v1/messages/log?workspace=ws-harbor');
+    assert.equal(log.status, 200, log.text);
+    const entries = log.body.entries.filter((e) => e.kind === 'taxdoc');
+    assert.equal(entries.length, 2, 'one sent-log entry for each notice');
+    // newest first: the resent notice, then the first
+    [again.body.link, made.body.link].forEach((link, n) => {
+      const e = entries[n];
+      assert.equal(e.refId, made.body.id);
+      assert.equal(e.investorId, 'HRC-0007');
+      assert.equal(e.status, 'sent');
+      assert.equal(e.to, EMAIL);
+      assert.equal(e.subject, SUBJECT);
+      assert.equal(e.text, emails.render('tax_notice', taxData(link)).text.split(link).join('[personal link]'), 'the logged text is the notice with its link replaced');
+      for (const l of [made.body.link, again.body.link]) assert.ok(!e.text.includes(tokenOf(l)), 'no token in the logged text');
+      assert.ok(!e.text.includes('#taxdoc-'), 'no personal link in the logged text');
+      assert.ok(!e.text.includes(LAST4) && !e.subject.includes(LAST4), 'no digits of the tax number in the entry');
+    });
+  } finally {
+    await h.close();
+  }
+});
