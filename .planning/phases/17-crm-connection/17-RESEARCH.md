@@ -177,4 +177,239 @@ Prices are [CITED] from extracts, not read on HubSpot's page; they are context f
 - A deal pipeline in HubSpot whose stages the sponsor maps to ours (every account has the default one).
 - No paid HubSpot plan, no add-on, no app install. Nothing from Carrow & Vale is installed in the sponsor's HubSpot.
 
+## 3. The sync design
+
+### 3.0 What the code already holds (read this session)
+
+| Fact | Where (verbatim) |
+|------|------------------|
+| The connector framework serves verification checks only. | `server/providers/index.mjs:14`: `kind / kinds        'identity' \| 'aml' \| 'accreditation' (kinds when it serves more than one)` |
+| Investor onboarding states in the workspace. | `assets/js/data.js:221`: `onboarding = { status: 'invited', step: 0, invited: '2026-10-28', completed: '' }`; `:229`: `onboarding = { status: 'in_progress', step, invited: '2026-10-21', completed: '' }`; `:212`: `onboarding: { status: 'complete', step: 5, invited: '2022-01-10', completed: '2022-01-12' }` |
+| Invitation states. | `assets/js/invitations.js:41-42`: `const ENDED = ['completed', 'cancelled', 'expired'];` / `const OPEN = ['sent', 'opened', 'in_progress'];` |
+| Subscription request states. | `assets/js/console.js:2412`: `{ pending: badge('warn', 'Pending review'), approved: badge('adj', 'Approved'), rejected: badge('mute', 'Declined'), paid: badge('ok', \`Paid ${date(r.paid)}\`), funded: badge('ok', 'Funded'), accepted: badge('ok', 'Accepted') }` |
+| Accreditation result values. | `assets/js/integrations.js:61`: `accreditation: [['verified', 'Verified'], ['review', 'Needs review'], ['rejected', 'Not verified']]` |
+| A commitment is a position on the investor. | `assets/js/data.js:241`: `{ offeringId: o.id, amount: Math.round(amt * called), commitment: amt, date } : { offeringId: o.id, amount: amt, date }` |
+| The server can read the stored workspace with no request. | `server/lib/workspace.mjs:8`: `get(id)                        → { ws, version } \| null   (the stored workspace, opened, nothing masked; for 15-15)`; `:476`: `return { handle, get, put };` |
+| Email matching key already used for the bounce list. | `server/lib/maillog.mjs:26`: `` export const emailHash = (address) => createHash('sha256').update(`mail:${str(address).trim().toLowerCase()}`).digest('hex'); `` |
+| A per-firm credential sealed in the store (the precedent). | `server/lib/filings.mjs:497-498`: `// A filer code is a credential: it is stored only sealed, on every server and in every mode.` / `` if (!vault.enabled) throw fail(400, 'Set DATA_KEY on this server (32 random bytes, base64): a CCC is stored only sealed'); ``; `:506`: `` ccc: vault.seal(b.ccc, `issuer:${cik}:ccc`) `` |
+
+The exact "signed" marker (the envelope state that means the investor signed) and "funded" marker are read by the planner from `assets/js/invitations.js` (envelope `status === 'completed'`, around lines 473 and 1226) and `assets/js/operations.js` (`markFunded`, line 313; positions pushed at line 102). They are not quoted here as values to copy: the planner opens those lines and quotes them in the plan.
+
+### 3.1 Shape: level-triggered reconciliation, portal to CRM
+
+Not an event queue. For each workspace with a connection, the server repeatedly answers one question: "what should the CRM show for each investor and commitment, given what the portal holds now, and how does that differ from what we last sent?" It sends only the difference and records what it sent. Every retry, restart, missed event or "Sync now" is just the next run of the same question, so the design is idempotent by construction and there is no queue to lose.
+
+```
+ triggers                          reconcile(workspace)                                   HubSpot (sponsor's)
+ ─────────                         ────────────────────                                   ───────────────────
+ PUT /v1/workspace saved  ──┐      1 load: workspaces.get(ws) + server invitations
+ invitation status changed ─┼──►   2 desired = crmMap.records(ws, invitations, settings)   (pure; allow-list)
+ hourly timer ──────────────┤      3 last    = sent snapshot per record (sealed)
+ "Sync now" (configure) ────┘      4 diff    = fields where desired != last
+                                   5 for each record with a diff, one at a time:
+                                       contact: link? PATCH : read by email ─► found? PATCH : POST (409 ► found) ──►  contacts
+                                       deal:    upsert by portal_ref (stage, amount, name) + associate default ───►  deals
+                                   6 outcome  ─► sync log (sealed) ; snapshot updated only on success
+                                   7 429/5xx/timeout ─► back off (Retry-After) ; 401/403 ─► connection "needs attention", stop
+```
+
+- The desired state comes from **one pure function** in a shared UMD file (`assets/js/crm-map.js`, loaded by the server with `createRequire` as `server/lib/roles.mjs:25` loads `assets/js/roles.js`): `records(ws, invitations, settings) → [{ key, kind: 'contact' | 'deal', fields }]`. It builds each record from an allow-list of fields (3.3) and nothing else, so a field cannot leak by being forgotten in a deny-list. Node checks and server tests call the same function.
+- Triggers: after a successful `PUT /v1/workspace` (one line in `workspace.mjs`'s success path calling `crm.touch(id)`), after each change of a server invitation's status or step (`lib/invitations.mjs`), on an hourly timer (the pattern of `lib/invitations.mjs:912-919`, `unref`'d), and on `POST /v1/crm/sync`. A touch only schedules a run a few seconds later and coalesces repeats, so a burst of saves makes one run.
+- One run at a time per workspace, one HubSpot request at a time: far below 100 per 10 s, and no two runs race on the same contact.
+- Before 15-17 merges, the console still saves to the browser and the server's stored workspace is empty or stale; reconcile then has nothing to send for investors. That is why the build waits for 15-17 (section 8).
+
+### 3.2 Investor to contact (match by email)
+
+1. Linked already (investor id → contact id stored)? PATCH that id with the changed fields.
+2. Not linked: read by email. Found: link it, then PATCH only fields that are empty in HubSpot or that the portal owns and changed (3.4). Not found: POST a new contact. POST answers 409 (it appeared meanwhile): read the id from the reply or read by email again, link, continue.
+3. The investor's email changed in the portal: PATCH the linked contact's email. If HubSpot refuses because another contact has that address (409), log "Another contact in your CRM already has this address" and change nothing; never merge contacts.
+4. One contact per investor, the main investor only (co-investors are not sent in this phase: their own consent and records are a separate question, OQ-6).
+5. Names: `firstname` / `lastname` from the invitation's first and last name when the portal has them, else the contact name split at its last space; the account title (for example a trust's name) goes into the deal name, not the contact.
+
+### 3.3 Commitment to deal, and the stage map
+
+One deal per investor and offering (an invitation or subscription to that offering). Fields: `dealname` = "<offering name> · <account title>", `amount` (the commitment, in the offering's currency as a decimal), `pipeline` and `dealstage` from the sponsor's map, `portal_ref` (opaque), associated with the contact.
+
+The portal's stages, computed by `crm-map.js` from the server's data in this order (the deal shows the furthest one reached):
+
+| Portal stage | Reached when | Suggested HubSpot stage (default pipeline) |
+|------|------|------|
+| Invited | invitation `sent` (or `opened`) | first open stage [ASSUMED: `appointmentscheduled` is the default pipeline's first stage id; read from `GET /crm/pipelines/.../deals`, never hard-coded] |
+| Started | invitation `in_progress`, or onboarding `in_progress` | second open stage |
+| Signed | the subscription agreement signed by the investor | a middle stage |
+| Accredited | signed, and accreditation `verified` (or not required for the offering) | a later stage |
+| Funded | the subscription's money recorded (a funded request or a position with an amount) | a won stage |
+| Cancelled | invitation `cancelled` or `expired` with nothing signed, or the request `rejected` | a lost stage |
+
+- The sponsor picks a pipeline and maps each portal stage to one of its stages on the Integrations panel; the server suggests a map by stage order and won/lost flags (pipeline stages carry metadata such as a probability or closed flag [ASSUMED]). A portal stage left unmapped moves nothing. Nothing is sent until the sponsor has saved a map ("Start syncing").
+- Free accounts have only the default pipeline (1.6), so the design never creates a pipeline or stages.
+- The stage is written when the portal stage changes, not on every run: if the sponsor drags a deal in HubSpot, it stays there until the portal's next stage change. Stages never move backwards except to the Cancelled mapping.
+- Write validation from 2026-09 (1.1): if the sponsor's HubSpot makes a property required on deal creation, the POST is refused; the log shows the sponsor's own rule as the reason ("Your CRM requires a field this connection does not send: <property label>") and the deal waits.
+
+### 3.4 Which fields go, which never go, direction of truth
+
+| Field | Goes | Direction of truth | Rule |
+|------|------|------|------|
+| Email | yes | portal | match key; changed on the linked contact when the investor's email changes (3.2) |
+| First name, last name | yes | portal | written on create; afterwards only when the portal's value changes |
+| Phone | only if the portal has one | portal | never blanks a phone HubSpot has |
+| Offering (in the deal name) | yes | portal | deal name written on create and when the offering's name or account title changes |
+| Commitment amount | yes | portal | written when it changes |
+| Onboarding stage | yes | portal (stage map) | written when the portal stage changes (3.3) |
+| Portal reference | yes (deal property) | portal | opaque, written once |
+| Offering-email choice | default yes (OQ-3) | **portal, always** | see 3.6 |
+| Taxpayer numbers (any of `tin`, `ssn`, `ein`, `ftin`, `usTin`, `w8UsTin`, `ownerTin`, `e8UsTin`, `e8Owner<n>Tin`, `tinLast4`), bank or account numbers, routing numbers, ID documents or their images, accreditation evidence (letters, statements, basis, method, verifier), date of birth, address, tax form type, payment method, KYC/AML results and hits, notes, documents, messages | **never** | — | not in the allow-list; a test sends an investor holding every one of them and asserts that no request body reaching the stand-in contains any of their values (CRM-07). Address is excluded because the carried rule does not list it. |
+| Anything from HubSpot into an investor record | **never** | — | the portal never writes CRM data into `ws.investors`; the only read is the lead picker, which prefills a dialog the sponsor confirms |
+
+HubSpot-only fields (owner, notes, lifecycle stage, lead status, tasks, emails) are never read or written. "Write only on change" means a sponsor's edit in HubSpot to one of our fields survives until the portal's own value changes; the portal does not fight the CRM on every run.
+
+### 3.5 Conflicts and deletes
+
+- **Conflict on a portal-owned field**: the portal's value wins, but only at the moment the portal's value changes (3.4). There is no periodic overwrite.
+- **Record deleted in HubSpot** (PATCH answers 404): the link is marked "Removed in your CRM" and the record is **not** re-created on its own (the sponsor may have deleted it on purpose, for example on an erasure request). The log row offers "Link again", which clears the link so the next run matches by email or creates.
+- **Contacts merged in HubSpot**: reading a merged-away id returns the surviving record [ASSUMED]; the link is updated to the id HubSpot returns.
+- **Investor removed in the portal or invitation cancelled**: the deal moves to the Cancelled mapping (if mapped); the portal never deletes a HubSpot record.
+- **Disconnect**: the key is deleted at once; links, snapshots and the log stay until the sponsor chooses "Forget this CRM's records" or the portal is closed (15-20 purge). Reconnecting the same HubSpot account (same account id) reuses the links; a different account starts fresh.
+- **Duplicate emails inside the portal** (two investor records, one address): both link to the same contact; each keeps its own deal. Logged once as a note.
+
+### 3.6 Unsubscribes: the investor's choice is never overridden by the CRM
+
+- The choice lives where phase 13 put it: the server's `mailprefs` per workspace and address hash (`server/lib/messages.mjs` header lines 26-36, `POST /unsubscribe/<token>`). The CRM module **never writes** `mailprefs` and never reads anything from HubSpot that could change it. A contact re-subscribed in HubSpot changes nothing in the portal. Test: CRM-09.
+- Pushing the choice the other way protects the sponsor: if it emails investors from HubSpot about new offerings, an investor who turned offering emails off in the portal should not get them (CAN-SPAM opt-outs are the sender's duty; counsel to confirm, OQ-3). HubSpot's own opt-out call (`/communication-preferences/2026-03/statuses/{email}/unsubscribe-all`) unsubscribes the contact from **all** email, has no undo, and may need a marketing plan [CITED: developers.hubspot.com/docs/api-reference/2026-03/communication-preferences/guide and the v1 page's "NO UNDO" warning (search extracts)]. That is broader than the investor's choice (offering news from one firm), so the connector does not call it.
+- Default (OQ-3): the connector creates one contact checkbox property, "Offering emails turned off in the portal", and sets it when the investor turns offering emails off. The Integrations panel says in one line that the sponsor should exclude those contacts from its HubSpot offering emails. Nothing is ever set back to "on" by the CRM.
+
+### 3.7 Retries and the sync log
+
+- Retry: network errors, timeouts, 429 (wait `Retry-After`, else 10 s), 500-504: the record stays unsent and the next run tries again, with backoff per workspace (30 s, 2 min, 10 min, then hourly). The snapshot is updated only after HubSpot accepted the write, so nothing is marked sent that was not.
+- Stop: 401 (key revoked or expired) or 403 missing scope: the connection becomes "Needs attention: <sentence>", runs stop, and the Owner and Admins see it on the panel. The key is not deleted (the sponsor may fix the scope in HubSpot). Other 4xx: that record is marked failed with a plain sentence and the run continues with the next record.
+- Error text from HubSpot is never shown or stored as is (it can quote record data): the adapter maps status and category to a fixed sentence; the log keeps the HTTP status and HubSpot's category code only.
+- **Sync log**, a collection like the sent log (`lib/maillog.mjs`): one entry per record write attempt: `{ id, at, workspace, investorId, offeringId?, kind: contact | deal, action: create | update | link | stage, fields: ['amount', 'dealstage'] (names only), status: sent | failed | waiting | removed, httpStatus? }`; anything that names a person (the email, the contact's name) is sealed with `DATA_KEY` under `crmlog:<id>`; entries kept `CRM_LOG_DAYS` (default 365; deleted by the same hourly run). `GET /v1/crm/log` needs 'personal'.
+- The sent log (email) is not touched: the CRM sends no email.
+
+### 3.8 A lead in HubSpot invited from the console
+
+1. On the Investors page's invite dialog (where invitations start today, `assets/js/invitations.js` around line 1940), a person with 'personal' sees "Choose from your CRM" when a connection is live. It opens a list from `GET /v1/crm/leads?q=` (server-side HubSpot search: lifecycle stage Lead, text query on name or email, 50 per page, contacts already linked to an investor left out).
+2. Choosing one fills the dialog's name and email (and phone where the dialog has a field); the person still chooses the offering and commitment and presses the existing Send. Inviting needs 'operate' as today (`POST /v1/invitations` is `'operate'`, `server/lib/roles.mjs:72`).
+3. The invitation carries `crmContactId`; on the next run the contact is linked by that id (not re-matched), and the deal is created at the Invited stage.
+4. Search lag: a lead created in HubSpot seconds ago may not be listed yet [ASSUMED]; the list says "Not listed? Leads added in the last minute can take a moment to appear." Nothing polls.
+5. In the preview (no server) the button does not appear.
+
+### 3.9 Routes (every one needs a ROUTES line; an unnamed path answers 404)
+
+ROUTES' rule, verbatim (`server/lib/roles.mjs:5-6`): `ROUTES   one line per route and caller kind, a flat array: a later plan (phase 14's 14-08, phase 16) extends it by` / `adding lines only, never by editing one.` Permissions available (`assets/js/roles.js:37`): `const PERMISSIONS = Object.freeze(['view', 'operate', 'pay', 'spend', 'configure', 'team', 'account', 'personal', 'audit', 'reports']);`. Grants (`assets/js/roles.js:42-46`): `owner: Object.freeze(PERMISSIONS.slice()),` / `admin: Object.freeze(PERMISSIONS.filter((p) => p !== 'account')),` / `team: Object.freeze(['view', 'operate', 'personal', 'audit', 'reports']),` / `readonly: Object.freeze(['view', 'personal', 'audit', 'reports']),` / `accountant: Object.freeze(['view', 'audit', 'reports'])`.
+
+Lines to add (all `team(...)`, `tokens: false`: people only, like the workspace routes, so a leaked account token cannot connect a CRM or read leads):
+
+| Method and path | Permission | What it does |
+|------|------|------|
+| `GET /v1/crm` | view | `{ connected, provider: 'hubspot', account: { id, domain }, status: ok \| needs_attention \| not_connected, detail, settings: { pipelineId, stages }, counts, lastRunAt, live }`; never the key |
+| `PUT /v1/crm/connection` | configure, plus a sign-in in the last 10 minutes | `{ key }` → checks the key (account, scopes), creates the two properties if missing, seals and stores it; change log "CRM connected" (account id only) |
+| `DELETE /v1/crm/connection` | configure | deletes the key; change log "CRM disconnected" |
+| `GET /v1/crm/pipelines` | configure | the account's deal pipelines and stages, for the map |
+| `PUT /v1/crm/settings` | configure | `{ pipelineId, stages: { invited, started, signed, accredited, funded, cancelled }, on }` |
+| `POST /v1/crm/sync` | configure | run now; also clears "Removed in your CRM" for one record with `{ relink: <recordKey> }` |
+| `POST /v1/crm/forget` | configure | deletes links, snapshots and log for this workspace (after disconnect) |
+| `GET /v1/crm/log` | personal | sync log entries, newest first |
+| `GET /v1/crm/leads` | personal | the lead picker |
+
+`configure` is Owner and Admin only, so Staff can see the leads and invite (personal + operate) but not connect; Read-only sees leads and the log but cannot invite; the Accountant sees the panel's status only (and the Integrations page is hidden to roles other than Owner and Admin anyway: `assets/js/roles.js:70` `'console-integrations': row('act', 'hidden', 'hidden', 'hidden'),`). No line is needed in `server/lib/workspace.mjs` SECTIONS because nothing of the CRM is stored in the workspace; if the planner keeps any non-secret CRM setting in the workspace instead, it goes under the existing line (`server/lib/workspace.mjs:82`: `integrations: Object.freeze({ write: 'configure' }),`), never under a new top-level key (a key with no line is refused for everyone).
+
+### 3.10 Where things are stored (server collections, all per workspace)
+
+| Collection | Holds | Sealed |
+|------|------|------|
+| `crm` (one record per workspace) | provider, account id and domain, status, settings, `key` | `key` sealed with `vault.seal(key, 'crm:<workspace>:key')` (a sealed value's additional data is its own record and field, `server/lib/vault.mjs:5-8`); refused when `vault.enabled` is false, as the filer code is |
+| `crmlinks` | `{ id, workspace, recordKey, kind, remoteId, removed, sent: <sealed snapshot of the last fields sent> }` | the snapshot (it holds names and emails) |
+| `crmlog` | 3.7 | the person-naming part |
+
+`server/tools/reseal.mjs` and `backup.mjs` cover these without change (a sealed value names its own additional data). 15-20's purge must delete all three for a closed portal (section 8).
+
+## Architecture Patterns
+
+### Recommended structure
+```
+server/
+├── lib/crm.mjs            # provider-neutral: routes, key sealing, settings, reconcile loop, log, triggers
+├── crm/hubspot.mjs        # the adapter: ASSUMED table, paths, scopes, error mapping (the only file naming the CRM's API)
+├── crm/index.mjs          # adapter registry (one entry now; another CRM later is another file)
+└── test/
+    ├── hubspot-fake.mjs   # local HTTPS stand-in of the API (like ses-fake.mjs)
+    ├── crm-connect.test.mjs, crm-sync.test.mjs, crm-fields.test.mjs, crm-roles.test.mjs, crm-leads.test.mjs
+assets/js/
+├── crm-map.js             # pure UMD: records(ws, invitations, settings) and stageOf(); the allow-list
+└── integrations.js        # the CRM panel (crmPanel(ws), like mailPanel), only when the server is connected
+```
+
+A separate `server/crm/` folder rather than `providers/` keeps the verification registry's validation (ids, kinds, `env` lists) unchanged; the README gets a "CRM" section in the "Plugging in a provider" style.
+
+### Pattern 1: the CRM adapter interface
+```js
+// server/crm/index.mjs - Source: modelled on server/providers/index.mjs's adapter interface (read this session)
+// Each adapter exports:
+//   id, label            'hubspot', 'HubSpot' (label shown on the sponsor's Integrations page only, D-02)
+//   scopes               the scopes it needs, for the connect check's sentence
+//   check(ctx)           → { account: { id, domain }, missing: [scope...] }      (ctx: { key, fetch, base })
+//   ensureProperties(ctx) → creates portal_ref (deal, unique) and the email-choice property if absent
+//   pipelines(ctx)       → [{ id, label, stages: [{ id, label, order, closed?, won? }] }]
+//   findContact(ctx, email) → { id, fields } | null
+//   createContact(ctx, fields) → { id }        (a duplicate → { id, existed: true })
+//   updateContact(ctx, id, fields) → {}        (gone → throws { gone: true })
+//   upsertDeal(ctx, ref, fields, contactId) → { id }
+//   leads(ctx, { q, after }) → { items: [{ id, name, email, phone }], after }
+//   errorOf(e)           → { retry: bool, stop: bool, sentence }   (never HubSpot's own text)
+```
+
+### Pattern 2: the panel only with a server (copy mailPanel)
+`assets/js/integrations.js:1352-1354` (verbatim): `function mailPanel(ws) {` / `const url = serverUrl(ws);` / `// Without a server: one line, and no request is made.`; line 1355 then returns a one-paragraph section whose hint reads `Sending from your own domain needs your integration server.` The CRM panel does the same with "Connecting your CRM needs your integration server." and loads `GET /v1/crm` through `NS.integrations.api` (`assets/js/integrations.js:1796`).
+
+### Anti-patterns to avoid
+- **Edge-triggered sync from the browser** (the console calling the CRM route on each click): misses changes made on the server (an investor finishing at night), double-sends on retries, and needs a console open. Use the server loop.
+- **A deny-list of sensitive fields**: a new field added next month leaks. Build records from an allow-list only.
+- **Writing every field on every run**: overwrites the sponsor's edits in HubSpot and burns rate limit. Write on change.
+- **Email upsert for contacts**: unreliable in some accounts (1.8). Read, then create or update.
+- **Putting the key in `ws.integrations`**: the workspace is read by the console; the carried rule forbids it.
+- **Showing HubSpot's error text**: it can carry record data and vendor wording into the console and logs.
+
+## Don't Hand-Roll
+
+| Problem | Don't Build | Use Instead | Why |
+|---------|-------------|-------------|-----|
+| HTTP calls with timeouts and provider-named errors | a new fetch wrapper | `server/lib/request.mjs` `requestJson(ctx, url, { method, headers, body, timeoutMs, label, redirect: 'manual' })` | already strips secrets from errors and handles timeouts |
+| Encrypting the key and log | new crypto | `server/lib/vault.mjs` `seal(value, aad)` / `open(box, aad)` | key rotation and re-seal already work |
+| Role checks | checks inside the module | ROUTES lines + `createGuards` | one table, tested by `roles-table` walk |
+| Change log | ad hoc events | `server/lib/auditlog.mjs` via the existing `changeLog` | chained, sealed |
+| Email normalisation | a new lower-case/trim | `emailHash` (`server/lib/maillog.mjs:26`) for stored keys | same rule as the bounce list |
+| The HubSpot client | `@hubspot/api-client` | the adapter on `requestJson` | the repo has one dependency by policy; the SDK's Node date-version support lagged ("by the end of Q2 2026" [CITED: developers.hubspot.com/blog/a-developers-guide-to-hubspots-date-based-api-versioning (search extract)]); we need about ten calls |
+| Scheduling | a job library | `setInterval(...).unref()` plus a coalescing touch | same as `lib/invitations.mjs:912-919` |
+
+## Code Examples
+
+### Sealing and never returning the key (pattern from `filings.mjs:497-506`, read this session)
+```js
+// lib/crm.mjs - connect
+if (!vault.enabled) throw fail(400, 'Set DATA_KEY on this server (32 random bytes, base64): a CRM key is stored only sealed');
+const key = String(body.key || '').trim();
+if (!/^[\x21-\x7e]{20,512}$/.test(key)) throw fail(400, 'Paste the access key exactly as your CRM shows it.');
+const found = await adapter.check({ key, fetch, base });            // never logs or echoes the key
+if (found.missing.length) throw fail(400, missingSentence(found.missing));
+await adapter.ensureProperties({ key, fetch, base });
+store.put('crm', { id: workspace, workspace, provider: adapter.id, account: found.account, status: 'ok', at: iso(), key: vault.seal(key, `crm:${workspace}:key`) });
+audit(person, 'CRM connected', `account ${found.account.id}`);      // the account id, never the key
+return send(res, 200, view(store.get('crm', workspace)));          // view() drops `key`
+```
+
+### The allow-list (shape for `assets/js/crm-map.js`)
+```js
+// Only these leave the portal. Everything else on the investor is never read here.
+function contactFields(inv, it) {
+  const [first, last] = splitName(it && it.first ? `${it.first} ${it.last || ''}` : inv.contact);
+  const out = { email: String(inv.email || '').trim().toLowerCase(), firstname: first, lastname: last };
+  if (String(inv.phone || '').trim()) out.phone = String(inv.phone).trim();
+  return out;
+}
+function dealFields(off, inv, cents, stageId, pipelineId, ref) {
+  return { dealname: `${off.name} · ${inv.title}`, amount: (cents / 100).toFixed(2), pipeline: pipelineId, dealstage: stageId, portal_ref: ref };
+}
+```
+
 <!-- gsd:write-continue -->
