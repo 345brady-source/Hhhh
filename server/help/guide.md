@@ -16,7 +16,7 @@ menu: Overview, at the top
 anchor: Needs attention
 anchor: Recent distributions
 
-The first page of the console. The menu on every console page has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
+The first page of the console. The menu on every console page has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents, Accounting), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
 
 Overview shows:
 - "Setup": a checklist for a new portal. Choose "Start" or "Review" beside an item to open its page, or "Remove" to take the item off the list.
@@ -296,6 +296,21 @@ To deliver:
 
 To withdraw a document, an admin chooses "Withdraw", enters a "Reason" and chooses "Withdraw document". For an amended document, tick "This replaces the document delivered on" before delivering.
 
+## console-books
+audience: sponsor
+kind: console
+title: Accounting
+menu: Operate, then Accounting
+anchor: Add entry
+anchor: Enter value
+
+The fund's manual inputs: entries the bank does not show, investment values, opening balances and closing a month.
+
+1. Choose the "Fund".
+2. "Add entry": a date, a memo and lines; it saves only when debits equal credits.
+3. "Enter value" records an investment's fair value at a date.
+4. An owner closes a month with "Close through".
+
 ## console-reports
 audience: sponsor
 kind: console
@@ -306,9 +321,10 @@ anchor: Download CSV
 
 Distribution reports for any period, and investor contact lists. Downloads are CSV files.
 
-1. Choose "Distributions" or "Contacts" at the top.
+1. Choose "Distributions", "Contacts" or "Investor reports" at the top.
 2. For distributions, choose the "Period" (for example "This quarter", "Year to date" or "Custom dates"), the "Offering" and the "View": "By investor", "By payment" or "By offering". Tick "Include scheduled payments" to add payments not yet made.
 3. Choose "Download CSV".
+4. In "Investor reports", choose the "Report type" and "Start from", then "Create". Turn sections on or off, use "Move up", and check the preview. "See the PDF" shows the file; "Download PDF" saves it.
 
 ## console-audit
 audience: sponsor
@@ -340,6 +356,7 @@ Identity verification, sanctions and PEP screening and accredited investor check
 - Filter the table with "Needs attention" or "All investors".
 - "Review match" beside an investor opens a potential screening match for the team to decide.
 - "Re-screen" beside an investor runs the screening again; the button at the top of the page re-screens every investor whose re-screening is due.
+- "Download letter" in an investor's details saves the accreditation letter the reviewer sent; it shows only while the portal is connected to its integration server.
 
 How often investors are re-screened is set on the Integrations page.
 

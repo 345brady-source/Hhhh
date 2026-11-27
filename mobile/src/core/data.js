@@ -94,8 +94,11 @@
     const t = 3 * (d[0] + d[3] + d[6]) + 7 * (d[1] + d[4] + d[7]) + (d[2] + d[5]);
     return String((10 - (t % 10)) % 10);
   }
+  // Sample investors' routing numbers: a valid ABA check digit behind a prefix no routing number can have, so no
+  // sample number is a bank's. The list is the 24 Federal Reserve district prefixes' images (plan 16-03, same order
+  // and length), so every seeded draw, and every other sample value, is what it was.
   function fakeRouting(R) {
-    const district = pick(R, ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32']);
+    const district = pick(R, ['89', '13', '14', '15', '16', '17', '18', '19', '87', '98', '88', '90', '43', '99', '34', '91', '81', '82', '83', '84', '85', '96', '20', '54']);
     const first8 = district + digits(R, 6);
     return first8 + abaCheckDigit(first8);
   }
@@ -112,6 +115,41 @@
     trust: { label: 'Trust', sec: 'PPD' },
     entity: { label: 'LLC, partnership or corporation', sec: 'CCD' },
     ira: { label: 'IRA (through a custodian)', sec: 'CCD' }
+  };
+  /**
+   * D-09 (owner): the investor type the sponsor picks when inviting or adding an investor. It decides the tax form the
+   * onboarding shows (W-9 for a U.S. person, W-8BEN for a foreign individual, W-8BEN-E for a foreign entity) and the kind
+   * of account pre-selected on Investor information. The investor can correct it on the tax step.
+   */
+  NS.INVESTOR_TYPES = {
+    'us-individual': { label: 'U.S. individual', form: 'W-9' },
+    'us-entity': { label: 'U.S. entity (LLC, corporation, trust, IRA, joint)', form: 'W-9' },
+    'foreign-individual': { label: 'Foreign individual', form: 'W-8BEN' },
+    'foreign-entity': { label: 'Foreign entity', form: 'W-8BEN-E' }
+  };
+  /**
+   * The sponsor's one choice (the invite forms' "Investor type"): a kind of U.S. account (an ENTITY_TYPES key), or a
+   * foreign type. Returns the account type and the investor type; anything else is a U.S. individual (the default).
+   */
+  NS.investorKind = (v) => {
+    if (v === 'foreign-individual') return { type: 'individual', taxType: v };
+    if (v === 'foreign-entity') return { type: 'entity', taxType: v };
+    if (v === 'us-entity') return { type: 'entity', taxType: v };
+    const type = NS.ENTITY_TYPES[v] ? v : 'individual';
+    return { type, taxType: type === 'individual' ? 'us-individual' : 'us-entity' };
+  };
+  /** The choice that stands for an investor record (the reverse of investorKind). */
+  NS.investorKindOf = (i) => (i && /^foreign-/.test(i.taxType || '') ? i.taxType : (i && NS.ENTITY_TYPES[i.type] ? i.type : 'individual'));
+  /** The options of the "Investor type" select: U.S. individual, the kinds of U.S. entity, then the two foreign types. */
+  NS.investorKindOptions = (sel, esc) => {
+    const o = (v, label) => `<option value="${v}"${sel === v ? ' selected' : ''}>${esc(label)}</option>`;
+    return `${o('individual', 'U.S. individual')}<optgroup label="U.S. entity">${o('entity', 'LLC or corporation')}${o('trust', 'Trust')}${o('ira', 'IRA')}${o('joint', 'Joint account')}</optgroup>${o('foreign-individual', 'Foreign individual')}${o('foreign-entity', 'Foreign entity')}`;
+  };
+  /** "U.S. individual", "U.S. entity: Trust", "Foreign entity": what the sponsor chose, in words. */
+  NS.investorKindLabel = (v) => {
+    const k = NS.investorKind(v);
+    if (k.taxType !== 'us-entity') return NS.INVESTOR_TYPES[k.taxType].label;
+    return `U.S. entity: ${{ entity: 'LLC or corporation', trust: 'Trust', ira: 'IRA', joint: 'Joint account' }[k.type] || 'LLC or corporation'}`;
   };
 
   function makeInvestor(t, i, R, used) {
@@ -143,6 +181,7 @@
       tinLast4: digits(R, 4),
       accreditation: { basis: type === 'entity' || type === 'ira' ? ACCRED[pick(R, [3, 4])] : ACCRED[pick(R, [0, 1, 1, 2])], date: `2026-0${1 + Math.floor(R() * 8)}-1${Math.floor(R() * 9)}` },
       taxForm: 'W-9',
+      taxCert: { signed: true, source: 'sample' }, // plan 10-07 (C-10): a signature record for the sample's signed W-9s
       edelivery: true,
       onboarding: { status: 'complete', step: 5, invited: '2022-01-10', completed: '2022-01-24' },
       payment: {
@@ -169,9 +208,10 @@
         tinLast4: '4417',
         accreditation: { basis: ACCRED[1], date: '2026-03-18' },
         taxForm: 'W-9',
+        taxCert: { signed: true, source: 'sample' }, // plan 10-07 (C-10)
         edelivery: true,
         onboarding: { status: 'complete', step: 5, invited: '2022-01-10', completed: '2022-01-12' },
-        payment: { method: 'ach', bank: { holder: 'Davis Family Trust', routing: '044003186', account: '48213307', type: 'checking' } },
+        payment: { method: 'ach', bank: { holder: 'Davis Family Trust', routing: '154003186', account: '48213307', type: 'checking' } },
         positions: []
       }
     ];
@@ -183,6 +223,7 @@
       list[k].payment = { method: 'check', bank: null };
       list[k].accreditation = { basis: '', date: '' };
       list[k].taxForm = '';
+      delete list[k].taxCert; // plan 10-07: no form, so no signature record
       list[k].edelivery = false;
     });
     [[n - 3, 2], [n - 4, 4]].forEach(([k, step]) => {
@@ -218,11 +259,15 @@
 
   const FREQ_MONTHS = { Monthly: 1, Quarterly: 3, 'Semi-annual': 6, Annual: 12 };
 
+  /**
+   * Who holds an offering on a date. A position redeemed in full (p.redeemed, its dealing date) is held through that
+   * date and not after it, so it takes no share of a later distribution.
+   */
   function holdersAt(investors, offeringId, date) {
     const out = [];
     investors.forEach((inv) => {
       inv.positions.forEach((p) => {
-        if (p.offeringId === offeringId && p.date <= date) out.push({ investor: inv, amount: p.amount });
+        if (p.offeringId === offeringId && p.date <= date && !(p.redeemed && p.redeemed < date)) out.push({ investor: inv, amount: p.amount });
       });
     });
     return out;
@@ -292,7 +337,7 @@
       portal_name: tenant.portalName,
       firm: tenant.name,
       team: tenant.support.team,
-      phone: tenant.support.phone,
+      phone: tenant.support.phone || tenant.support.email,
       call_number: notice.callNumber != null ? String(notice.callNumber) : '',
       call_amount: notice.amounts && notice.amounts[inv.id] != null ? '$' + (notice.amounts[inv.id] / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '',
       due_date: notice.due ? parse(notice.due).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : ''
@@ -375,14 +420,196 @@
   function allocate(ws, run) {
     const key = ws.tenant.id + ':' + run.offeringId + ':' + run.id + ':' + run.total + ':' + run.date;
     if (cache.has(key)) return cache.get(key);
+    const rows = shares(ws, run);
+    cache.set(key, rows);
+    return rows;
+  }
+  /** allocate, worked out from the register as it is now (never from the cache). */
+  function shares(ws, run) {
     const merged = {};
     holdersAt(ws.investors, run.offeringId, run.date).forEach((h) => {
       if (!merged[h.investor.id]) merged[h.investor.id] = { investor: h.investor, amount: 0 };
       merged[h.investor.id].amount += h.amount;
     });
-    const rows = split(run.total, Object.values(merged));
-    cache.set(key, rows);
-    return rows;
+    return split(run.total, Object.values(merged));
+  }
+
+  /* ---------- The distribution record ---------- */
+  /*
+   * What each investor was paid is stored on the run when the distribution is recorded and is never worked out again.
+   * A run is an entry of ws.runs. Keys of the record:
+   *   lines: [ { investorId, grossCents, withheld: [ w ], netCents } ]   one per investor paid
+   *   w = { kind, cents, basisCents, ratePct, source: 'rule' | 'entered', why, confirmedBy, confirmedAt }
+   *   linesBasis: 'recorded' (stored when the distribution was recorded) | 'confirmed' (stored later by a person, for a
+   *   run saved before the record existed); linesAt, linesBy; cancelled: { at, by, why } once cancelled.
+   * Always true of stored lines: the grossCents add up to run.total; netCents = grossCents minus that line's withheld
+   * cents; one line per investor; whole cents only. run.status is still written and nothing reads it: runPaid is the test.
+   */
+  const WITHHELD_KINDS = ['backup', 'foreign', 'partnership', 'real-property', 'fatca', 'state'];
+  const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const wholeCents = (n) => typeof n === 'number' && Number.isInteger(n) && n > 0;
+  const hasLines = (run) => !!run && Array.isArray(run.lines);
+  const who = (by, what) => {
+    if (typeof by !== 'string' || !by.trim()) throw new Error(`${what} needs the name of the person doing it.`);
+    return by.trim();
+  };
+  /** One withheld entry in the stored shape; throws when it is not a positive whole number of cents or not of a known kind. */
+  function withheldEntry(w, investorId) {
+    if (!w || WITHHELD_KINDS.indexOf(w.kind) < 0) throw new Error(`Tax withheld from ${investorId} needs one of these kinds: ${WITHHELD_KINDS.join(', ')}.`);
+    if (!wholeCents(w.cents)) throw new Error(`Tax withheld from ${investorId} must be a positive whole number of cents.`);
+    if (!wholeCents(w.basisCents)) throw new Error(`The amount the tax withheld from ${investorId} is worked out on must be a positive whole number of cents.`);
+    if (w.source !== 'rule' && w.source !== 'entered') throw new Error(`Tax withheld from ${investorId} must say whether it follows a rule or was entered.`);
+    const rate = w.ratePct == null ? null : Number(w.ratePct);
+    if (rate !== null && !(rate >= 0 && rate <= 100)) throw new Error(`The rate of the tax withheld from ${investorId} must be between 0 and 100.`);
+    return { kind: w.kind, cents: w.cents, basisCents: w.basisCents, ratePct: rate, source: w.source, why: String(w.why || ''), confirmedBy: String(w.confirmedBy || ''), confirmedAt: String(w.confirmedAt || '') };
+  }
+  /**
+   * The lines of one distribution: gross from the register as it is now (investors with a share above zero, in
+   * allocate's order); withheld = { [investorId]: [ w ] } or nothing. Throws on a withheld entry for an investor with no
+   * share, on an amount that is not a positive whole number of cents, when a line's withheld is more than its gross, or
+   * when the gross amounts do not add up to the total. Stores nothing.
+   */
+  function buildLines(ws, spec, withheld) {
+    if (!spec || !wholeCents(spec.total)) throw new Error('A distribution needs a total that is a positive whole number of cents.');
+    if (!ISO_DAY.test(String(spec.date || ''))) throw new Error('A distribution needs a payment date (YYYY-MM-DD).');
+    const held = withheld || {};
+    const lines = shares(ws, { offeringId: spec.offeringId, date: spec.date, total: spec.total })
+      .filter((r) => r.cents > 0)
+      .map((r) => {
+        const list = held[r.investor.id] || [];
+        if (!Array.isArray(list)) throw new Error(`Tax withheld from ${r.investor.id} must be a list.`);
+        const w = list.map((x) => withheldEntry(x, r.investor.id));
+        const out = w.reduce((a, x) => a + x.cents, 0);
+        if (out > r.cents) throw new Error(`Tax withheld from ${r.investor.id} is more than the amount of the payment.`);
+        return { investorId: r.investor.id, grossCents: r.cents, withheld: w, netCents: r.cents - out };
+      });
+    Object.keys(held).forEach((id) => {
+      if (!lines.some((l) => l.investorId === id)) throw new Error(`Tax withheld is entered for ${id}, who has no share of this distribution.`);
+    });
+    if (lines.some((l) => !wholeCents(l.grossCents)) || lines.reduce((a, l) => a + l.grossCents, 0) !== spec.total) throw new Error('The investors’ amounts do not add up to the total of the distribution.');
+    return lines;
+  }
+  /**
+   * Record a distribution: builds its lines, stores the run in date order (newest first) and returns it. Throws, and
+   * stores nothing, when the total is not a positive whole number of cents, nobody holds the offering on the date, or
+   * nobody is named as recording it. opts: { by, today, id }.
+   */
+  function recordRun(ws, spec, opts) {
+    opts = opts || {};
+    spec = spec || {};
+    if (!wholeCents(spec.total)) throw new Error('A distribution needs a total that is a positive whole number of cents.');
+    if (!ISO_DAY.test(String(spec.date || ''))) throw new Error('A distribution needs a payment date (YYYY-MM-DD).');
+    const by = who(opts.by, 'Recording a distribution');
+    if (!holdersAt(ws.investors, spec.offeringId, spec.date).some((x) => x.amount > 0)) throw new Error('No investor holds this offering on the payment date.');
+    const lines = buildLines(ws, spec, spec.withheld);
+    const now = opts.today || today();
+    const run = Object.assign(
+      { id: opts.id || `${spec.offeringId}-${spec.date}-${Date.now().toString(36)}`, offeringId: spec.offeringId, date: spec.date, type: spec.type, total: spec.total, status: spec.date > now ? 'scheduled' : 'paid', source: 'console', file: spec.file || '' },
+      spec.gp != null ? { gp: spec.gp, gross: spec.gross } : {},
+      { lines, linesBasis: 'recorded', linesAt: new Date().toISOString(), linesBy: by }
+    );
+    if (ws.runs.some((r) => r.id === run.id)) throw new Error('A distribution with this id is already recorded.');
+    ws.runs.unshift(run);
+    ws.runs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    NS.clearCaches();
+    return run;
+  }
+  /**
+   * A run's lines: the stored ones as they are, or, for a run saved without them, the shares worked out from the register
+   * as it is now (stored false, basis 'recomputed', nothing withheld).
+   */
+  function runLines(ws, run) {
+    if (hasLines(run)) return { stored: true, basis: run.linesBasis === 'confirmed' ? 'confirmed' : 'recorded', lines: run.lines.slice() };
+    return {
+      stored: false,
+      basis: 'recomputed',
+      lines: shares(ws, run)
+        .filter((r) => r.cents > 0)
+        .map((r) => ({ investorId: r.investor.id, grossCents: r.cents, withheld: [], netCents: r.cents }))
+    };
+  }
+  /** The one test of whether a distribution is paid: it is not cancelled and its date has arrived (now: 'YYYY-MM-DD', default today). */
+  function runPaid(run, now) {
+    return !!run && !run.cancelled && run.date <= (now || today());
+  }
+  /** 'paid' | 'scheduled' | 'cancelled', by the same rule. */
+  function runState(run, now) {
+    return run.cancelled ? 'cancelled' : run.date <= (now || today()) ? 'paid' : 'scheduled';
+  }
+  const runById = (ws, runId) => {
+    const run = (ws.runs || []).find((r) => r.id === runId);
+    if (!run) throw new Error('No distribution with this id is recorded.');
+    return run;
+  };
+  /**
+   * Store the lines of a run saved before the record existed, once: the shares as worked out from the register now, or
+   * gross = { [investorId]: cents } as entered (each investor on the run, whole cents, adding up to the total). Throws, and
+   * changes nothing, otherwise or when the run already has lines. opts: { by, at, gross }.
+   */
+  function confirmLines(ws, runId, opts) {
+    opts = opts || {};
+    const run = runById(ws, runId);
+    if (hasLines(run)) throw new Error('This distribution’s amounts are already stored.');
+    const by = who(opts.by, 'Confirming a distribution’s amounts');
+    const worked = runLines(ws, run).lines;
+    let lines = worked;
+    if (opts.gross) {
+      const g = opts.gross;
+      Object.keys(g).forEach((id) => {
+        if (!worked.some((l) => l.investorId === id)) throw new Error(`${id} has no share of this distribution.`);
+        if (!wholeCents(g[id])) throw new Error(`The amount for ${id} must be a positive whole number of cents.`);
+      });
+      lines = worked.filter((l) => g[l.investorId] != null).map((l) => ({ investorId: l.investorId, grossCents: g[l.investorId], withheld: [], netCents: g[l.investorId] }));
+    }
+    if (!lines.length || lines.reduce((a, l) => a + l.grossCents, 0) !== run.total) throw new Error('The investors’ amounts do not add up to the total of the distribution.');
+    Object.assign(run, { lines, linesBasis: 'confirmed', linesAt: opts.at || new Date().toISOString(), linesBy: by });
+    NS.clearCaches();
+    return run;
+  }
+  /** Cancel a recorded distribution: it is paid nowhere afterwards; its lines stay. A second cancel throws. opts: { by, at, why }. */
+  function cancelRun(ws, runId, opts) {
+    opts = opts || {};
+    const run = runById(ws, runId);
+    if (run.cancelled) throw new Error('This distribution is already cancelled.');
+    const by = who(opts.by, 'Cancelling a distribution');
+    const why = String(opts.why || '').trim();
+    if (!why) throw new Error('Cancelling a distribution needs a reason.');
+    run.cancelled = { at: opts.at || new Date().toISOString(), by, why };
+    NS.clearCaches();
+    return run;
+  }
+  /**
+   * Every line of every paid run dated from..to inclusive, oldest first, narrowed by offering and investor when given:
+   * [ { run, line, stored } ]. The one source for a period's figures. f: { offeringId, investorId, from, to, today }.
+   */
+  function paidLines(ws, f) {
+    f = f || {};
+    const out = [];
+    (ws.runs || [])
+      .filter((r) => runPaid(r, f.today) && (!f.offeringId || r.offeringId === f.offeringId) && (!f.from || r.date >= f.from) && (!f.to || r.date <= f.to))
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      .forEach((run) => {
+        const L = runLines(ws, run);
+        L.lines.forEach((line) => {
+          if (!f.investorId || line.investorId === f.investorId) out.push({ run, line, stored: L.stored });
+        });
+      });
+    return out;
+  }
+  /** Carried interest paid to the GP on an offering's distributions dated on or before a day; cancelled runs count nowhere. */
+  function gpPaid(ws, offeringId, onOrBefore) {
+    return (ws.runs || []).filter((r) => !r.cancelled && r.offeringId === offeringId && r.gp > 0 && (!onOrBefore || r.date <= onOrBefore)).reduce((a, r) => a + r.gp, 0);
+  }
+  /** runLines joined to the investor records; cents is the gross amount. An investor no longer on the register is { id, title: id }. */
+  function runRows(ws, run) {
+    return runLines(ws, run).lines.map((line) => ({
+      investor: ws.investors.find((i) => i.id === line.investorId) || { id: line.investorId, title: line.investorId },
+      cents: line.grossCents,
+      withheldCents: line.grossCents - line.netCents,
+      netCents: line.netCents,
+      line
+    }));
   }
 
   /* ---------- Time until exit ---------- */
@@ -397,16 +624,20 @@
     const e = o.exit || {};
     const close = o.closeDate;
     const frac = (a, b) => Math.max(0, Math.min(1, (parse(now) - parse(a)) / (parse(b) - parse(a) || 1)));
+    // No date entered: nothing to show (an empty date would read as 1 January 1900).
+    const unset = { label: 'Projected exit', value: 'Not set', remaining: '', progress: null, state: 'open' };
     switch (e.basis) {
       case 'exited':
         return { label: 'Exited', value: e.date ? longDate(e.date) : 'Exited', remaining: e.date ? `Held ${span(monthsBetween(close, e.date))}` : '', progress: 1, state: 'exited' };
       case 'open':
         return { label: 'Term', value: 'No set term', remaining: `Held ${span(monthsBetween(close, now))}`, progress: null, state: 'open' };
       case 'maturity': {
+        if (!e.date) return unset;
         const m = monthsBetween(now, e.date);
         return { label: 'Maturity', value: longDate(e.date), remaining: now >= e.date ? 'Matured' : `${span(m)} remaining`, progress: frac(close, e.date), state: now >= e.date ? 'due' : 'active' };
       }
       case 'range': {
+        if (!e.from || !e.to) return unset;
         const fy = parse(e.from).getUTCFullYear();
         const ty = parse(e.to).getUTCFullYear();
         const value = fy === ty ? String(fy) : `${fy}–${ty}`;
@@ -423,7 +654,7 @@
         return { label: 'Projected exit', value, remaining, progress: frac(close, e.to), windowStart: frac(close, e.to) > 0 ? (parse(e.from) - parse(close)) / (parse(e.to) - parse(close)) : 0, state };
       }
       default: {
-        if (!e.date) return { label: 'Projected exit', value: 'Not set', remaining: '', progress: null, state: 'open' };
+        if (!e.date) return unset;
         const m = monthsBetween(now, e.date);
         return { label: 'Projected exit', value: monthYear(e.date), remaining: now >= e.date ? 'Past projected date' : `${span(m)} remaining`, progress: frac(close, e.date), state: now >= e.date ? 'due' : 'active' };
       }
@@ -464,7 +695,7 @@
     if (set >= 1 && set <= 31) return set;
     const counts = {};
     ws.runs.forEach((r) => {
-      if (r.offeringId === o.id) {
+      if (r.offeringId === o.id && !r.cancelled) {
         const k = Number(r.date.slice(8, 10));
         counts[k] = (counts[k] || 0) + 1;
       }
@@ -476,7 +707,7 @@
     const f = o.distribution.frequency;
     const step = FREQ_MONTHS[f];
     if (step === 1) return `Monthly on the ${ordinal(day)}`;
-    const ref = ws.runs.filter((r) => r.offeringId === o.id).map((r) => r.date).sort().pop() || o.closeDate;
+    const ref = ws.runs.filter((r) => r.offeringId === o.id && !r.cancelled).map((r) => r.date).sort().pop() || o.closeDate;
     const m0 = Number(ref.slice(5, 7)) - 1;
     const months = [];
     for (let k = 0; k < 12; k += step) months.push((m0 + k) % 12);
@@ -493,10 +724,10 @@
     const step = FREQ_MONTHS[(o.distribution || {}).frequency];
     const day = step ? paymentDay(ws, o) : null;
     const schedule = step ? scheduleText(ws, o, day) : '';
-    const sched = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'scheduled' && r.date >= now).map((r) => r.date).sort()[0];
+    const sched = ws.runs.filter((r) => r.offeringId === o.id && runState(r, now) === 'scheduled').map((r) => r.date).sort()[0];
     if (sched) return { date: sched, nominal: sched, moved: false, scheduled: true, day, schedule };
     if (!step) return null;
-    const paid = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'paid').map((r) => r.date).sort();
+    const paid = ws.runs.filter((r) => r.offeringId === o.id && runPaid(r, now)).map((r) => r.date).sort();
     let nominal = withDay(addMonths(firstOf(paid.length ? paid[paid.length - 1] : o.closeDate), step), day);
     for (let guard = 0; bankingOnOrAfter(nominal) < now && guard < 600; guard++) nominal = withDay(addMonths(firstOf(nominal), step), day);
     if (o.exit && o.exit.basis === 'maturity' && o.exit.date) {
@@ -522,9 +753,11 @@
     });
     const payments = [];
     ws.runs.forEach((run) => {
-      if (!byOffering[run.offeringId]) return;
-      const mine = allocate(ws, run).find((r) => r.investor.id === inv.id);
-      if (mine && mine.cents > 0) payments.push({ run, date: run.date, offeringId: run.offeringId, type: run.type, cents: mine.cents, status: run.status });
+      // A run with stored lines says what this investor was paid; one saved without them is worked out from positions.
+      // A cancelled run is paid nowhere.
+      if (run.cancelled || (!byOffering[run.offeringId] && !Array.isArray(run.lines))) return;
+      const mine = runRows(ws, run).find((r) => r.investor.id === inv.id);
+      if (mine && mine.cents > 0) payments.push({ run, date: run.date, offeringId: run.offeringId, type: run.type, cents: mine.cents, withheldCents: mine.withheldCents, netCents: mine.netCents, status: runState(run, now) });
     });
     payments.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     const positions = Object.keys(byOffering)
@@ -563,9 +796,13 @@
     };
   };
 
-  /** Documents available to one investor, built from their positions. */
+  /**
+   * Documents available to one investor, built from their positions: the sample firms' and the managed edition's demo
+   * statements. A firm that signed itself up has only what it published and its investors signed (none built here).
+   */
   NS.investorDocs = function (ws, view) {
     const docs = [];
+    if (NS.EDITION && NS.EDITION.diy && !(NS.workspace && NS.workspace.isBuiltin(ws.tenant.id))) return docs;
     const year = Number(today().slice(0, 4));
     view.positions.forEach((p) => {
       const o = p.offering;
@@ -576,7 +813,8 @@
       } else {
         docs.push({ id: `final-${o.id}`, title: 'Final Distribution Notice', offeringId: o.id, cat: 'Notices', kind: 'final', date: o.exit.date, pages: 2 });
       }
-      if (p.date < `${year - 1}-12-31`) {
+      // a generated tax document is a demonstration: only a sample firm lists one (nobody's CPA prepared it)
+      if (ws.tenant && ws.tenant.sample && p.date < `${year - 1}-12-31`) {
         const taxTitle = o.type === 'Delaware Statutory Trust' ? `${year - 1} Grantor Trust Tax Letter` : o.type === 'Private credit' ? `${year - 1} Form 1099-INT` : `${year - 1} Schedule K-1`;
         docs.push({ id: `tax-${o.id}-${year - 1}`, title: taxTitle, offeringId: o.id, cat: 'Tax', kind: 'tax', date: `${year}-03-12`, pages: o.type === 'Private credit' ? 1 : 12 });
       }
@@ -587,5 +825,5 @@
     return docs;
   };
 
-  NS.data = { allocate, split, holdersAt, investedAt, fakeRouting, abaCheckDigit, FREQ_MONTHS, ACCRED, rng, hashStr, ordinal, paymentDay };
+  NS.data = { allocate, runPaid, runState, buildLines, recordRun, runLines, runRows, confirmLines, cancelRun, paidLines, gpPaid, split, holdersAt, investedAt, fakeRouting, abaCheckDigit, FREQ_MONTHS, ACCRED, rng, hashStr, ordinal, paymentDay };
 })(window.CVPortal);

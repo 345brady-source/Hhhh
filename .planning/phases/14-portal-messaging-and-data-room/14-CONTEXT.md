@@ -63,3 +63,15 @@
 - 14-13's header: the security_notice kind in emails.js is 15-14's, not 15-04's.
 - 14-08 also waits while 15-12, 15-15, 15-18 and 15-20 run (index.mjs, roles.mjs, workspace.mjs). 14-04 also waits for 15-17 (diy.html, portal.html).
 - 15-06's section table (server/lib/workspace.mjs) has one line per section; if 14's browser sections exist before 15-06 runs, 15-06 adds the inbox and rooms lines itself with 14-08's rules and 14-08 skips them. ROUTES in roles.mjs is a flat array with `who` (team, investor, link, public, operator); prospects are `who: 'link'`. Investors added before phase 15 get an access invitation (15-05 routes, 15-14 email, 15-08 button).
+
+## After 14-05 (merged 2026-11-26)
+- server/lib/dataroom.mjs merged, not mounted; 15 tests; server tests 437 on the merged tree, all pass; GATE_SERVER_TESTS=437 from here. Write-once records (B1); 25 MB stamp 660-771 ms first serve, 483-616 ms cached (container, not phone).
+- Accepted deviations: a renewed personal link keeps the access's original end date (renewal after end gets 409 "Invite them again"); extra checks (page views bounded by page count; e-sign form matched to its template SHA-256; access re-checked after every upload); the e-sign NDA form white-labelled by the server (its served SHA-256 becomes the version's).
+- 14-08 must: add the data.rooms line to store.mjs; expose X-View-Id and X-Pages through CORS; render room_invite with the payload's firm (postal address); make notify fall back to the room's firm address when a prospect's question has no firm snapshot (otherwise message_received goes to an empty `to`).
+- 14-12 / 14-07: the device takes the e-sign template from GET /v1/room (its SHA-256 may differ from the E-sign page's original after white-labelling).
+
+## After 14-01 (merged 2026-11-27)
+- assets/js/inbox.js (threads, send, read times, hash chain, broadcasts, corrections, attachments, screening, notices, export with README and messages.csv) and gate14.sh (self-test 8; GATE_FRESH=1 on a changed base) merged; INBOX MODEL 11 cases passes on the merged tree; server tests 456. Gate GATE_EXIT=0 on run 3 (run 1: four reference steps failed with the disk at 100%; run 2: time limit).
+- Accepted deviations: a broadcast attachment stored once in the record zip (matches the orchestrator's once-per-send rule); formula-looking CSV cells guarded with a leading '; export compares each attachment's bytes with its SHA-256 and lists mismatches; zip name carries the scope id.
+- Note: phase 13's checks folder holds no .js check yet, so gate14/gate13 print nothing for phase 13 until its plans add checks.
+- The reference gate for the merged 14-01/14-02/14-03/14-05 runs on the merged tree in a separate worktree (scratchpad ref-gate-0127/).

@@ -33,8 +33,24 @@
 //             scan; the new tabs' own addresses are the one place outside the portal and the server; the typed taxpayer
 //             number is in no world record, no server output and no file this part writes; each scan proved first on a
 //             planted copy; the counts scanned are printed
+// Plan 08-18 (D-01; the accreditation part of the package and its slow result):
+//   full      1280x800: the console ticks the box for a new investor to a Rule 506(c) offering ("Add verification package
+//             ($99)"); one charge of 9900 cents before the email; the investor's identity and accreditation steps each read
+//             "A secure page opens in a new tab for this step."; identity verified (signed delivery); the accreditation check
+//             started on the stand-in's page ("Continue"); the investor continues and finishes with the result pending; the
+//             console imports; the AML/KYC details read "Accreditation: waiting for the result" and the waiting line; the
+//             stand-in turns verified; the page opened again shows, with no button pressed, verified, "valid until" (the
+//             stand-in's date or the firm's cap) and "Third-party verification letter"; "Download letter" saves exactly one
+//             file whose SHA-256 equals the stand-in's PDF; no "verified by" with the platform's or the product's name; the
+//             full-tier investor's screens, emails and GET /v1/invite replies hold no price, tier or entitlement; the typed
+//             taxpayer number is in no world record, no server output and no file the part writes (the scan proved first)
+//   letter-phone  the same with the console at 390x844 with touch: the waiting line and the details fit the width; a tap on
+//             "Download letter" saves the one letter
+//   letter-none  the owner's preview (framed, connect-src none, no server) at 1280x800 and at 390x844 with touch: records
+//             holding a verified accreditation with a letter, and one still waiting, show no "Download letter", no waiting
+//             line, no refused connection and no raw error; the frame refuses a fetch first
 // Every part ends with the leak scan of the investor's screens it saw (phase 6's leak check and frame.js's vendor scan).
-//   NODE_PATH=$(npm root -g) node package-flow.js [--only identity,refused,start-limit,phone,preview-desktop,preview-phone,leak]
+//   NODE_PATH=$(npm root -g) node package-flow.js [--only identity,refused,start-limit,phone,preview-desktop,preview-phone,leak,full,letter-phone,letter-none]
 // The last line is "PACKAGE FLOW: PASS (parts run: N)" or "PACKAGE FLOW: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -68,7 +84,14 @@ Lib.describeShots([
   ['preview-desktop-kyc.png', 'The owner\'s preview (no server, every connection refused) at 1280x800: the console\'s AML/KYC page as before.'],
   ['preview-desktop-identity.png', 'The owner\'s preview at 1280x800: an invited investor\'s identity step with the firm\'s own sandbox connection, as before.'],
   ['preview-phone-kyc.png', 'The owner\'s preview at 390x844 with touch: the console\'s AML/KYC page as before.'],
-  ['preview-phone-identity.png', 'The owner\'s preview at 390x844 with touch: an invited investor\'s identity step as before.']
+  ['preview-phone-identity.png', 'The owner\'s preview at 390x844 with touch: an invited investor\'s identity step as before.'],
+  ['accreditation-step-desktop.png', 'Plan 08-18: the investor\'s accreditation step through the package at 1280x800: "A secure page opens in a new tab for this step."'],
+  ['letter-waiting-desktop.png', 'Plan 08-18: the console\'s AML/KYC details while the accreditation result is pending: "waiting for the result" and the line about the reviewer\'s letter.'],
+  ['letter-verified-desktop.png', 'Plan 08-18: the same details days later, with no button pressed: verified, valid until, the method and "Download letter".'],
+  ['letter-waiting-phone.png', 'Plan 08-18: the waiting line at 390x844 with touch.'],
+  ['letter-verified-phone.png', 'Plan 08-18: the verified details and "Download letter" at 390x844 with touch.'],
+  ['letter-none-desktop.png', 'Plan 08-18: the owner\'s preview (no server) at 1280x800: a record holding a letter shows no download control and no error.'],
+  ['letter-none-phone.png', 'Plan 08-18: the owner\'s preview at 390x844 with touch: the same, no download control and no error.']
 ]);
 
 const SECURE = 'A secure page opens in a new tab for this step.';
@@ -83,18 +106,19 @@ const WHO3 = { first: 'Marisol', last: 'Achterberg', email: 'marisol.achterberg@
 const WHO4 = { first: 'Ingrid', last: 'Nakashima', email: 'ingrid.nakashima@example.net' };
 const WHO5 = { first: 'Benedikt', last: 'Oyelaran', email: 'benedikt.oyelaran@example.net' };
 
-/** The console on a sponsor account of the real server, wired to a fresh world. */
-async function boot(S, check) {
+/** The console on a sponsor account of the real server, wired to a fresh world. opts: { exemption, view } (08-18). */
+async function boot(S, check, opts) {
+  opts = opts || {};
   const w = W.world();
   const srv = await W.startServer(S, w, { dir: Lib.OUT });
-  const A = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({ acceptDownloads: true }, F.VIEW.desktop) });
+  const A = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({ acceptDownloads: true }, F.VIEW[opts.view || 'desktop']) });
   const C = { S, w, srv, A, cp: A.page, marks: [], investors: [], invited: [], closers: [() => A.context.close()] };
   C.close = async () => {
     for (const c of C.closers.reverse()) await c().catch(() => {});
     await srv.close().catch(() => {});
   };
   try {
-    C.off = await Lib.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    C.off = await Lib.setupPortal(S, A, { exemption: opts.exemption || 'Rule 506(b)' });
     check('the console uses the integration server with the sponsor account\'s token', (await srv.configure(A.page)) === true);
     // At every outside call, how many emails the server holds (the order: charge, then the invitation email, then the session).
     w.onCall = (e) => C.marks.push({ kind: e.kind, n: e.n, outbox: srv.server.store.list('outbox').length });
@@ -510,8 +534,375 @@ const FLOWS = {
       await collect(C, sink);
       await C.close();
     }
+  },
+  // Plan 08-18: the Rule 506(c) package (full price), the accreditation step through the package, the waiting line, the
+  // result days later with no button pressed, and the third party's letter downloaded from the console.
+  async full(check, S) {
+    tinProof(check);
+    const cap = capture();
+    const C = await boot(S, check, { exemption: 'Rule 506(c)' });
+    try {
+      const R = await rule506c(C, check, WHO6, 'desktop');
+      const { it, B } = R;
+      const p = C.cp;
+      let d = await kycDetails(p, it.investorId);
+      await showDetail(p);
+      await p.screenshot({ path: path.join(SHOTS, 'letter-waiting-desktop.png') });
+      check('the AML/KYC details read "Accreditation: waiting for the result"', /^Accreditation: waiting for the result/.test(d.acc), d.open ? d.acc : d);
+      check(`the AML/KYC details show the line "${WAIT}"`, d.acc.indexOf(WAIT) >= 0, d.acc);
+      check('no "Download letter" while the result is pending', d.letters === 0, d.letters);
+      // Days later: the third party's result arrives. Nothing is pressed; the page is opened again.
+      C.srv.accredit.control.state = 'verified';
+      await Lib.consoleRoute(p, 'console-investors', '[data-action=invite-toggle]');
+      d = await kycDetails(p, it.investorId);
+      const ok = await verifiedOnScreen(p);
+      d = await details(p);
+      const rec = await p.evaluate((id) => {
+        const NS = window.CVPortal;
+        const x = NS.integrations.peek(NS.state.ws.investors.find((i) => i.id === id)).accreditation;
+        return { status: x.status, expiresAt: x.expiresAt || '', shown: x.expiresAt ? NS.ui.date(x.expiresAt) : '', method: x.method || '', evidence: (x.evidence || []).length, validDays: NS.integrations.ensure(NS.state.ws).rules.validDays };
+      }, it.investorId);
+      const given = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
+      const capDay = new Date(Date.now() + Number(rec.validDays || 90) * 864e5).toISOString().slice(0, 10);
+      await showDetail(p);
+      await p.screenshot({ path: path.join(SHOTS, 'letter-verified-desktop.png') });
+      check('with no button pressed, the details turn to "Accreditation: verified"', ok && /^Accreditation: verified/.test(d.acc), d.acc);
+      check('"valid until" shows the stand-in\'s date, or the firm\'s cap if earlier', rec.status === 'verified' && (rec.expiresAt === given || (rec.expiresAt === capDay && capDay < given)) && d.acc.indexOf(`valid until ${rec.shown}`) >= 0, { rec, given, capDay, line: d.acc });
+      check('the method reads "Third-party verification letter"', rec.method === 'Third-party verification letter' && d.acc.indexOf('Third-party verification letter') >= 0, d.acc);
+      check('the waiting line is gone once the result arrived', d.acc.indexOf(WAIT) < 0, d.acc);
+      check('one "Download letter" for the one letter', d.letters === 1 && rec.evidence === 1, { buttons: d.letters, evidence: rec.evidence });
+      const got = await downloadLetter(p, false);
+      check('"Download letter" saves exactly one file', got.files.length === 1, got.files.map((f) => f.name));
+      check('the saved file is the third party\'s letter (its SHA-256 equals the stand-in\'s PDF)', got.files.length === 1 && got.files[0].sha === sha(C.srv.accredit.LETTER), got.files.map((f) => ({ name: f.name, same: f.sha === sha(C.srv.accredit.LETTER) })));
+      check('the server fetched the letter from the provider once', C.srv.accredit.control.calls.filter((c) => c.kind === 'evidence').length === 1, C.srv.accredit.control.calls.map((c) => c.kind));
+      check('no failure sentence after the download', got.toasts.indexOf(LETTER_FAIL) < 0, got.toasts);
+      const kycText = await Lib.screenText(p);
+      const own = await p.evaluate(() => ({ name: window.CVPortal.state.ws.tenant.name, short: window.CVPortal.state.ws.tenant.shortName }));
+      const claim = new RegExp(`verified by\\s+(the\\s+)?(${['Carrow', 'Vale', 'platform', 'portal', own.name, own.short].filter(Boolean).map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'i');
+      check('the page never says the platform or the product verified anyone (no "verified by" with their names)', !claim.test(kycText), (kycText.match(claim) || [])[0] || '');
+      F.leakFree(check, 'the console\'s AML/KYC page', kycText);
+
+      // W (08-07): the full-tier investor never sees a price, a tier or an entitlement.
+      const mail = (await emails(C, it.serverId)).map((m) => [m.subject, m.text, String(m.html || '').replace(/<[^>]*>/g, ' ')].join('\n'));
+      const replies = B.replies.map(inviteText);
+      check(`the full-tier investor's texts were kept: ${B.screens.length} screens, ${mail.length} emails, ${replies.length} GET /v1/invite replies (each above zero)`, B.screens.length > 0 && mail.length > 0 && replies.length > 0);
+      for (const [label, texts] of [['the full-tier investor\'s screens', B.screens], ['the full-tier investor\'s emails', mail], ['GET /v1/invite replies of the full-tier invitation', replies]]) {
+        const ps = priceScan(texts.join('\n'));
+        check(`${label}: none of ${PRICE_WORDS.join(', ')}`, ps.ok, ps.hits);
+        F.leakFree(check, label, texts.join('\n'));
+      }
+      noPayment(check, B);
+      worldClean(check, C);
+      check('no script error in the console or on the investor\'s device', C.A.errors.length === 0 && B.errors.length === 0, { console: C.A.errors, investor: B.errors });
+      tinChecks(check, C, cap.stop(), got.files.map((f) => f.path).concat(writeRecord('full', { screens: B.screens.length, emails: mail.length, replies: replies.length, files: got.files.length })));
+    } finally {
+      cap.stop();
+      await C.close();
+    }
+  },
+  // Plan 08-18: the same at the phone size, the console at 390x844 with touch.
+  async 'letter-phone'(check, S) {
+    tinProof(check);
+    const cap = capture();
+    const C = await boot(S, check, { exemption: 'Rule 506(c)', view: 'phone' });
+    try {
+      const p = C.cp;
+      const size = p.viewportSize();
+      check('the console\'s window is 390x844 with touch', size.width === 390 && size.height === 844 && (await p.evaluate(() => navigator.maxTouchPoints > 0)), size);
+      const { it } = await rule506c(C, check, WHO7, 'desktop');
+      let d = await kycDetails(p, it.investorId);
+      await showDetail(p);
+      await p.screenshot({ path: path.join(SHOTS, 'letter-waiting-phone.png') });
+      check(`the waiting line reads "${WAIT}" at the phone size`, d.acc.indexOf(WAIT) >= 0, d.acc);
+      check('the waiting line fits the width (no sideways scroll)', await fitsWidth(p, '.kyc-detail .kyc-wait'), await widths(p, '.kyc-detail .kyc-wait'));
+      check('the details fit the width before the result (no sideways scroll)', await fitsWidth(p, '.kyc-detail .kyc-match'), await widths(p, '.kyc-detail .kyc-match'));
+      C.srv.accredit.control.state = 'verified';
+      await Lib.consoleRoute(p, 'console-investors', '[data-action=invite-toggle]');
+      await kycDetails(p, it.investorId);
+      const ok = await verifiedOnScreen(p);
+      d = await details(p);
+      await showDetail(p);
+      await p.screenshot({ path: path.join(SHOTS, 'letter-verified-phone.png') });
+      check('the result arrives with no button pressed: "Accreditation: verified" and one "Download letter"', ok && /^Accreditation: verified/.test(d.acc) && d.letters === 1, { acc: d.acc, letters: d.letters });
+      check('the verified details fit the width (no sideways scroll)', await fitsWidth(p, '.kyc-detail .kyc-match'), await widths(p, '.kyc-detail .kyc-match'));
+      check('"Download letter" is inside the width', await fitsWidth(p, '.kyc-detail [data-action=kyc-evidence]'), await widths(p, '.kyc-detail [data-action=kyc-evidence]'));
+      const got = await downloadLetter(p, true);
+      check('a tap on "Download letter" saves one file, the third party\'s letter', got.files.length === 1 && got.files[0].sha === sha(C.srv.accredit.LETTER), got.files.map((f) => ({ name: f.name, same: f.sha === sha(C.srv.accredit.LETTER) })));
+      F.leakFree(check, 'the console\'s AML/KYC page at the phone size', await Lib.screenText(p));
+      worldClean(check, C);
+      check('no script error in the console', C.A.errors.length === 0, C.A.errors);
+      tinChecks(check, C, cap.stop(), got.files.map((f) => f.path).concat(writeRecord('letter-phone', { files: got.files.length })));
+    } finally {
+      cap.stop();
+      await C.close();
+    }
   }
 };
+
+/* ---------- Plan 08-18: the accreditation step through the package, the waiting line and the letter ---------- */
+const WHO6 = { first: 'Leocadia', last: 'Ferreira', email: 'leocadia.ferreira@example.net' };
+const WHO7 = { first: 'Anselm', last: 'Kowalczyk', email: 'anselm.kowalczyk@example.net' };
+const WAIT = "A reviewer's letter usually arrives within two business days; this page updates when it does.";
+const LETTER_FAIL = 'The letter could not be downloaded. Try again.';
+const sha = (buf) => require('crypto').createHash('sha256').update(buf).digest('hex');
+
+/** A verification panel of the investor's step (kind: 'identity' | 'accreditation'). */
+const panelOf = (ip, kind) =>
+  ip.evaluate((kind) => {
+    const p = document.getElementById(`iv-${kind}`);
+    const btn = p && p.querySelector('[data-action=iv-start]');
+    const err = p ? Array.from(p.querySelectorAll('.iv-refused')).map((e) => e.innerText.trim()) : [];
+    return { text: p ? p.innerText : '', chip: p ? ((p.querySelector('.iv-chip') || {}).textContent || '').trim() : '', button: btn ? btn.textContent.trim() : '', refusal: err };
+  }, kind);
+
+/**
+ * "Verify my accreditation" pressed: the stand-in's own page opens in a new tab, "Continue" is pressed there (the check stays
+ * pending: the result comes days later), and the tab is closed. Resolves to { opened, page: its address, after: its text }.
+ */
+async function accStart(B, ip) {
+  const popup = B.context.waitForEvent('page', { timeout: 15000 }).catch(() => null);
+  await ip.click('#iv-accreditation [data-action=iv-start]');
+  const tab = await popup;
+  const out = { opened: !!tab, page: '', after: '' };
+  if (!tab) return out;
+  await tab.waitForURL(/\/hosted\/ver_/, { timeout: 15000 }).catch(() => {});
+  out.page = tab.url();
+  const go = tab.locator('button[type=submit]');
+  await go.waitFor({ timeout: 15000 }).catch(() => {});
+  if ((await go.count()) && (await go.innerText()).trim() === 'Continue') {
+    await Promise.all([tab.waitForNavigation({ timeout: 15000 }).catch(() => {}), go.click()]);
+    out.after = await tab.evaluate(() => document.body.innerText).catch(() => '');
+  }
+  await tab.close().catch(() => {});
+  await ip.waitForTimeout(500);
+  return out;
+}
+
+/**
+ * The console invites `who` to the Rule 506(c) offering with the package (full price); the investor's own browser verifies
+ * identity (signed delivery), starts the accreditation check on the stand-in's page and continues with the result pending,
+ * then finishes onboarding; the console imports. Asserts each step; resolves to { it, B, ip }.
+ */
+async function rule506c(C, check, who, view) {
+  const it = await sendPackage(C, check, who);
+  check('the box carries the server\'s full price for a Rule 506(c) offering', it.label === 'Add verification package ($99)', it.label);
+  const pays = C.srv.server.store.list('payments');
+  const charges = C.marks.filter((m) => m.kind === 'charge');
+  check('the sponsor\'s card is charged once, $99 (9900 cents), and the payment succeeded', C.w.count('charge') === 1 && pays.length === 1 && pays[0].cardCents === 9900 && pays[0].status === 'succeeded', { charges: C.w.count('charge'), pays: pays.map((x) => ({ cents: x.cardCents, status: x.status })) });
+  const mail = await emails(C, it.serverId);
+  check('the charge came before the invitation email existed', charges.length === 1 && charges[0].outbox === 0 && mail.length === 1, { atCharge: charges.map((m) => m.outbox), mail: mail.length });
+
+  const { B, ip, wk } = await investor(C, it, who, view);
+  check('the investor reaches the identity step with no field error', wk.reached && wk.errors.length === 0, wk);
+  let pn = await panelOf(ip, 'identity');
+  await B.keep();
+  check(`the identity step reads "${SECURE}"`, pn.text.indexOf(SECURE) >= 0, pn.text);
+  await startCheck(B, ip, false);
+  check('"Verify my identity" asks the world for one session', C.w.sessions.length === 1, C.w.calls.map((c) => c.kind));
+  const code = await C.w.deliver(C.srv.base, C.w.sessions[0], 'Approved');
+  const idOk = await waitVerified(ip);
+  await B.keep();
+  check('the signed identity result arrives: the step reads "Verified"', code === 200 && idOk, { code, idOk });
+  await Lib.submit(ip);
+  const toAcc = await Lib.walk(ip, { name: `${who.first} ${who.last}`, until: /Accredit/ });
+  check('the investor walks on to the accreditation step with no field error', toAcc.reached && toAcc.errors.length === 0, toAcc);
+  pn = await panelOf(ip, 'accreditation');
+  await B.keep();
+  await ip.locator('#iv-accreditation').scrollIntoViewIfNeeded().catch(() => {});
+  if (view === 'desktop' && who === WHO6) await ip.screenshot({ path: path.join(SHOTS, 'accreditation-step-desktop.png') });
+  check(`the accreditation step reads "${SECURE}" and names no one`, pn.text.indexOf(SECURE) >= 0 && pn.text.indexOf('Handled by') < 0, pn.text);
+  check('the step offers "Verify my accreditation"', pn.button === 'Verify my accreditation', pn.button);
+  const acc = await accStart(B, ip);
+  check('the stand-in\'s page opens in a new tab and "Continue" is pressed there', acc.opened && /\/hosted\/ver_/.test(acc.page) && acc.after.length > 0, { opened: acc.opened, hosted: /\/hosted\/ver_/.test(acc.page) });
+  check('the server holds one accreditation check, still pending', C.srv.server.store.list('verifications').filter((v) => v.kind === 'accreditation' && v.status === 'pending').length === 1 && C.srv.accredit.control.calls.some((c) => c.kind === 'submitted'), C.srv.server.store.list('verifications').map((v) => ({ kind: v.kind, status: v.status })));
+  pn = await panelOf(ip, 'accreditation');
+  await B.keep();
+  check('the step shows the check under way, with no refusal', pn.refusal.length === 0 && /Finish in the tab that opened/.test(pn.text), pn);
+  // D-30: no wait is forced on the investor; they continue with the result still pending.
+  if (await ip.locator('#ob-accAttest').count()) await ip.check('#ob-accAttest');
+  await Lib.submit(ip);
+  const rest = await Lib.walk(ip, { name: `${who.first} ${who.last}` });
+  check('the investor continues while the result is pending and walks on to the agreement with no field error', rest.reached && rest.errors.length === 0, rest);
+  await B.keep();
+  const done = await Lib.finishAgreement(ip).catch((e) => `NOT FINISHED: ${e.message}`);
+  await B.keep();
+  check('the investor finishes onboarding with the accreditation result still pending', !/^NOT FINISHED/.test(done) && C.srv.accredit.control.state === 'pending', done);
+  const row = await completed(C, it.serverId);
+  check('the server holds the completed submission', !!row, row);
+  await Lib.importFromConsole(C.cp, it.id);
+  await C.cp.waitForFunction(() => !document.querySelector('#toasts .toast'), null, { timeout: 8000 }).catch(() => {});
+  return { it, B, ip };
+}
+
+/** The AML/KYC details of the investor (All investors), as the details row shows them. */
+const details = (p) =>
+  p.evaluate(() => {
+    const d = document.querySelector('tr.kyc-detail');
+    const li = d ? Array.from(d.querySelectorAll('li')).find((l) => ((l.querySelector('strong') || {}).textContent || '') === 'Accreditation:') : null;
+    const flat = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+    return { open: !!d, text: d ? flat(d.innerText) : '', acc: li ? flat(li.innerText) : '', letters: d ? d.querySelectorAll('[data-action=kyc-evidence]').length : 0 };
+  });
+/** The console's AML/KYC page, All investors, with the investor's details open (their own button when closed). */
+async function kycDetails(p, investorId) {
+  await Lib.consoleRoute(p, 'console-kyc', '[data-action=kyc-tab]');
+  await p.click('[data-action=kyc-tab][data-t=all]');
+  await p.waitForTimeout(300);
+  if (!(await details(p)).open) {
+    const b = p.locator(`button[data-action=kyc-open][data-id="${investorId}"]`).first();
+    if (await b.count()) {
+      await b.scrollIntoViewIfNeeded().catch(() => {});
+      await b.click();
+      await p.waitForTimeout(400);
+    }
+  }
+  const d = await details(p);
+  // What the investor's row offers, for the record when the details did not open.
+  if (!d.open) d.row = await p.evaluate((id) => Array.from(document.querySelectorAll('table.cs-tbl tbody tr')).filter((r) => (r.innerText || '').indexOf(id) >= 0).map((r) => r.innerText.replace(/\s+/g, ' ').trim()), investorId);
+  return d;
+}
+/** The details row in the middle of the window, the notices faded, for the owner's screenshot. */
+async function showDetail(p) {
+  await p.evaluate(() => {
+    const d = document.querySelector('tr.kyc-detail');
+    if (d) d.scrollIntoView({ block: 'center' });
+  });
+  await p.waitForFunction(() => !document.querySelector('#toasts .toast'), null, { timeout: 8000 }).catch(() => {});
+}
+/** The details turn to verified by themselves (the page's own polling), or the time is up (the server reads the provider at most every 20 s). */
+const verifiedOnScreen = (p) =>
+  p
+    .waitForFunction(() => {
+      const d = document.querySelector('tr.kyc-detail');
+      const li = d ? Array.from(d.querySelectorAll('li')).find((l) => ((l.querySelector('strong') || {}).textContent || '') === 'Accreditation:') : null;
+      return !!li && /Accreditation:\s*verified/.test(li.innerText) && !!li.querySelector('[data-action=kyc-evidence]');
+    }, null, { timeout: 120000 })
+    .then(() => true)
+    .catch(() => false);
+/** "Download letter" pressed (tapped on a phone); every file the browser saved in the next moments, with its SHA-256. */
+async function downloadLetter(p, tap) {
+  const files = [];
+  const toasts = [];
+  const on = (dl) => files.push(dl);
+  p.on('download', on);
+  const btn = p.locator('.kyc-detail [data-action=kyc-evidence]').first();
+  if (await btn.count()) {
+    await btn.scrollIntoViewIfNeeded().catch(() => {});
+    if (tap) await btn.tap();
+    else await btn.click();
+  }
+  for (let i = 0; i < 40 && !files.length; i++) {
+    toasts.push(...(await p.locator('#toasts .toast').allInnerTexts().catch(() => [])));
+    await p.waitForTimeout(250);
+  }
+  await p.waitForTimeout(1500);
+  toasts.push(...(await p.locator('#toasts .toast').allInnerTexts().catch(() => [])));
+  p.off('download', on);
+  const out = [];
+  for (const dl of files) {
+    const to = path.join(Lib.OUT, `package-flow-${process.pid}-${out.length}-${dl.suggestedFilename().replace(/[^\w.-]+/g, '_')}`);
+    await dl.saveAs(to);
+    out.push({ name: dl.suggestedFilename(), path: to, sha: sha(fs.readFileSync(to)) });
+  }
+  return { files: out, toasts: Array.from(new Set(toasts.map((t) => t.trim()))) };
+}
+
+/* W2 (wave 6): the typed taxpayer number in no world record, no server output and no file a part writes. */
+function tinProof(check) {
+  const plant = path.join(path.dirname(Lib.OUT), `package-flow-planted-${process.pid}.txt`);
+  fs.writeFileSync(plant, `planted copy: ${TIN}\n`);
+  check('the taxpayer-number scan finds the number in a planted copy of a file', TIN.length === 9 && holdsTin(fs.readFileSync(plant, 'utf8')));
+  fs.rmSync(plant, { force: true });
+}
+/** Everything this process prints from now until stop(), which restores the output and resolves to the text. */
+function capture() {
+  let printed = '';
+  let on = true;
+  const out = process.stdout.write.bind(process.stdout);
+  const err = process.stderr.write.bind(process.stderr);
+  process.stdout.write = (c, ...a) => {
+    printed += String(c);
+    return out(c, ...a);
+  };
+  process.stderr.write = (c, ...a) => {
+    printed += String(c);
+    return err(c, ...a);
+  };
+  return {
+    stop: () => {
+      if (on) {
+        process.stdout.write = out;
+        process.stderr.write = err;
+        on = false;
+      }
+      return printed;
+    }
+  };
+}
+/** A part's record of what it kept (counts only), written where the gate keeps its outputs; resolves to its path. */
+function writeRecord(partName, counts) {
+  const f = path.join(path.dirname(Lib.OUT), `package-flow-${partName}.txt`);
+  fs.writeFileSync(f, [`PACKAGE FLOW ${partName} part, ${new Date().toISOString()}`].concat(Object.keys(counts).map((k) => `${k} ${counts[k]}`)).join('\n') + '\n');
+  return f;
+}
+function tinChecks(check, C, printed, files) {
+  check('the typed taxpayer number is in no world record', C.w.calls.length > 0 && !holdsTin(JSON.stringify(C.w.calls)));
+  check('the typed taxpayer number is in no server output (event log, anything this process printed)', !holdsTin(JSON.stringify(C.srv.server.store.list('events'))) && !holdsTin(printed));
+  check(`the typed taxpayer number is in no file this part writes (${files.length})`, files.length > 0 && files.every((f) => !holdsTin(fs.readFileSync(f, 'latin1'))));
+}
+
+/**
+ * Plan 08-18: the owner's preview (framed, every connection refused, no server) at 1280x800 or 390x844 with touch: an
+ * investor whose record holds a verified accreditation with a letter shows no "Download letter", no waiting line, nothing
+ * attempted and no raw error.
+ */
+async function letterNone(check, S, view) {
+  const { A, fr } = await F.framed(S, view);
+  try {
+    const size = A.page.viewportSize();
+    const tap = view === 'phone';
+    check(`the window is ${F.VIEW[view].viewport.width}x${F.VIEW[view].viewport.height}${tap ? ' with touch' : ''}`, size.width === F.VIEW[view].viewport.width && size.height === F.VIEW[view].viewport.height && (await fr.evaluate(() => navigator.maxTouchPoints > 0)) === tap, size);
+    await F.proveRefused(check, A, fr);
+    await Lib.setupPortal(S, { page: fr, context: A.context });
+    check('no integration server is connected', (await fr.evaluate(() => window.CVPortal.integrations.serverUrl(window.CVPortal.state.ws))) === '');
+    // Two records as an import leaves them: one verified with the third party's letter, one still waiting for the result.
+    const ids = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const [a, b] = ws.investors.slice(0, 2);
+      const until = new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10);
+      const base = (acc) => ({ identity: { status: 'passed', connection: 'package-id', via: 'Identity check', how: 'server', remote: true, ref: 'ver_standin_id' }, aml: { status: 'clear', results: [] }, accreditation: acc, decision: { status: 'pending' } });
+      a.verify = base({ status: 'verified', connection: 'package-acc', via: 'Accreditation check', how: 'server', remote: true, ref: 'ver_standin_acc', method: 'Third-party verification letter', expiresAt: until, evidence: [{ type: 'letter', label: 'Verification letter' }] });
+      b.verify = base({ status: 'pending', connection: 'package-acc', via: 'Accreditation check', how: 'server', remote: true, ref: 'ver_standin_acc2' });
+      [a, b].forEach((i) => (i.kyc = Object.assign({}, i.kyc, { status: 'pending' })));
+      NS.app.save(true);
+      return [a.id, b.id];
+    });
+    const seen = [];
+    for (const id of ids) {
+      await Lib.consoleRoute(fr, 'console-kyc', '[data-action=kyc-tab]');
+      await fr.click('[data-action=kyc-tab][data-t=all]');
+      await fr.waitForTimeout(300);
+      const b = fr.locator(`button[data-action=kyc-open][data-id="${id}"]`).first();
+      if (await b.count()) {
+        await b.scrollIntoViewIfNeeded().catch(() => {});
+        if (tap) await b.tap();
+        else await b.click();
+        await fr.waitForTimeout(400);
+      }
+      seen.push(await details(fr));
+      await fr.locator('tr.kyc-detail').scrollIntoViewIfNeeded().catch(() => {});
+      if (id === ids[0]) await A.page.screenshot({ path: path.join(SHOTS, `letter-none-${view}.png`) });
+    }
+    check('both investors\' details open, the verified one with its accreditation line', seen.length === 2 && seen.every((d) => d.open) && /^Accreditation: verified/.test(seen[0].acc) && /^Accreditation: waiting for the result/.test(seen[1].acc), seen.map((d) => d.acc));
+    check('no "Download letter" without a server', seen.every((d) => d.letters === 0 && d.text.indexOf('Download letter') < 0), seen.map((d) => d.letters));
+    check('no waiting line without a server', seen.every((d) => d.text.indexOf(WAIT) < 0), seen.map((d) => d.acc));
+    const text = await F.noRawError(check, fr, 'the console\'s AML/KYC page with a letter on file');
+    check('nothing outside the page was asked for', A.net.external.length === 0 && A.net.allowed.length === 0, A.net);
+    F.leakFree(check, 'the AML/KYC page of the preview', text);
+  } finally {
+    await A.context.close().catch(() => {});
+  }
+}
 
 /** An element (selector) and the page inside the window's width. */
 const widths = (p, sel) =>
@@ -679,7 +1070,13 @@ const PARTS = {
   phone: part('phone'),
   'preview-desktop': ({ check, S }) => preview(check, S, 'desktop'),
   'preview-phone': ({ check, S }) => preview(check, S, 'phone'),
-  leak
+  leak,
+  full: part('full'),
+  'letter-phone': part('letter-phone'),
+  'letter-none': async ({ check, S }) => {
+    await letterNone(check, S, 'desktop');
+    await letterNone(check, S, 'phone');
+  }
 };
 
 Lib.runParts(PARTS, { name: 'PACKAGE FLOW', unit: 'parts', flag: '--only', browser: true });

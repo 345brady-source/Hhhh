@@ -59,7 +59,7 @@
   const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && NS.dates.isoOf(NS.dates.parse(s)) === s;
   const days = (a, b) => Math.round((NS.dates.parse(b) - NS.dates.parse(a)) / 864e5);
   const addDays = (s, n) => NS.dates.isoOf(new Date(NS.dates.parse(s).getTime() + n * 864e5));
-  /** n business days before s (Monday to Friday). NS.ops.businessDays counts forward only. */
+  /** n business days before s (Monday to Friday); the same count as NS.ops.businessDays(s, -n). */
   function businessBack(s, n) {
     let d = s;
     for (let k = 0; k < n; ) {

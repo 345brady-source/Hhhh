@@ -35,3 +35,20 @@
 - W1 (15-01): the JSON + Origin rule applies to every POST under /v1/auth/, cookie or not; csrf test adds a foreign text/plain sign-in refused with no Set-Cookie. W2: password.check uses timingSafeEqual (verify greps it). W3: 'Wait 1 second and try again.' for 1. W4: the setup-session-on-invitations assertion lives in auth-gate only (or Task 2 wires the stage refusal).
 - W5 (15-12): roles.js exports DEFAULT_PAGES (read by the check) and has rows for the books (11-13) and report-builder (12-06) view keys with the Accountant 'read'.
 - W6 (15-06): its gate run adds a browser check of the served portal (Chromium, WebKit; e-sign preview and a document read) with 0 securitypolicyviolation events. W7: 15-05 also waits for 15-02 (it runs gate15.sh).
+
+## After 15-13 (merged 2026-11-26)
+- server/lib/pages.mjs merged (fixed file list, O_NOFOLLOW, security headers incl. CORP same-site and HSTS on https, CSP with 'wasm-unsafe-eval' and never 'unsafe-eval', security.txt builder, /health warnings); 7 tests; not mounted until 15-06. Server tests 444 on the merged tree, all pass; GATE_SERVER_TESTS=444 from here.
+- Chromium loaded the served portal.html under the policy with 0 violations at load; not yet run: e-sign preview, a document read, WebKit. 15-06's gate must run them (W6).
+- Open: the policy is built at server start (a page edited on disk needs a restart); esign.js's jsdelivr font fallback is refused by connect-src 'self' (only used if the shipped font fails); `CVPortalConfig.signInServer` is injected but read by no page yet (a later sign-in plan reads it).
+
+## After 15-12 (merged 2026-11-26)
+- assets/js/roles.js, server/lib/roles.mjs, server/lib/auditlog.mjs merged; 12 tests; ROLES TABLE check 3 cases. Server tests 456 on the merged tree, all pass; GATE_SERVER_TESTS=456 from here.
+- Change log entry: dh = SHA-256 of the sealed plaintext JSON { s (16 random bytes), personName, record, detail }; chain hash = sha256(JSON [prev, workspace, seq, at, personId, action, dh]); additional data audit:<workspace>:<seq>; id aud_<workspace>_<seq>. A reseal leaves the chain intact (15-03 proves it).
+- DEFAULT_PAGES exported (empty: all 21 menu pages have explicit rows). console-books has the Accountant on 'read'; the report builder is a tab inside console-reports (Accountant 'read'; 12-06's own can('operate') decides the tab). Extra rows console-offering (as Offerings) and console-envelope (as E-sign).
+- When 11-13 and 12-06 merge, rerun ROLES TABLE on the merged tree.
+
+## After 15-01 (merged 2026-11-27)
+- Server sign-up, sign-in, sign-out, password rules (scrypt N=2^15 r=8 p=3, 260 ms here; timingSafeEqual; 9,126-entry common-password list in assets/vendor/pwlist/), waits and locks (same answer for unknown emails; one password check at a time per email), address limits, purge, sessions at the sponsor gate; the open server closes once anyone signs up. 16 tests; server tests 472 on the merged tree, all pass; GATE_SERVER_TESTS=472 from here. Gate (gate13.sh with every phase) GATE_EXIT=0 on its fourth run (first run: disk at 100%, every browser step crashed; two reruns hit the time limit waiting for browser slots).
+- Interface facts for later plans: people.create is async; sessions.clear(), limits.keys(), purge, cookieName, optional `accounts` argument to createAuth; sessions have endedAt (purged a day after sign-out); index.mjs's error handler sends e.body when a thrown error carries one; sentence 'Fill in every field.'; an investor whose firm requires two-step but has none starts at 'setup'; email sealed as typed, index lower-cased; people indexed under DATA_KEY_PREVIOUS still sign in and are re-indexed.
+- Open for later plans: 15-18 must let cors() pass the server's own origin when PORTAL_ORIGIN is set (otherwise a portal served by this server cannot sign in); 15-03's reseal tool must recompute every person's emailIndex; POST /v1/invite/login answers 404 until 15-04; ADMIN_TOKEN expiry (recorded).
+- 08-08 also edits server/index.mjs (separate hunks): it merges second and re-runs its gate on the merged tree.

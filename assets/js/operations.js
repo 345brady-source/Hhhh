@@ -25,9 +25,10 @@
   }
   const days = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
   const addDays = (s, n) => isoOf(new Date(parse(s).getTime() + n * 864e5));
+  /** s moved n business days (Monday to Friday, no holidays): later for n > 0, earlier for n < 0, s itself for n = 0. */
   function businessDays(s, n) {
     let d = s;
-    for (let k = 0; k < n; ) {
+    for (let k = 0; k < Math.abs(n); ) {
       d = addDays(d, n > 0 ? 1 : -1);
       const wd = parse(d).getUTCDay();
       if (wd !== 0 && wd !== 6) k++;

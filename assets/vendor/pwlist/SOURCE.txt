@@ -1,0 +1,14 @@
+list.js: the common-password list. The server refuses these passwords at sign-up and on every password change
+(server/lib/auth.mjs, plan 15-01); a page can load the same file (window.CVPortalPwList) to say so before sending.
+
+Taken from the SecLists project (license MIT, https://github.com/danielmiessler/SecLists), file
+https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/100k-most-used-passwords-NCSC.txt
+downloaded on 2026-11-26 (99,840 lines, 835,538 bytes, SHA-256
+c2e5696882c603b76bb67a47ee970897e5a76fc4c3f5547abe3d0ca340c576e0).
+
+Filter: the lines of 10 or more characters (9,248 lines; 9,307 when counted in bytes), lower-cased, duplicates removed,
+sorted: 9,126 entries. Passwords shorter than 10 characters are refused by length already, so they are not kept.
+The server compares the NFKC form of a password, lower-cased, with this list.
+
+LICENSE is SecLists' MIT licence text, downloaded from the project on the same day and copied unchanged.
+SHA256SUMS pins both files.

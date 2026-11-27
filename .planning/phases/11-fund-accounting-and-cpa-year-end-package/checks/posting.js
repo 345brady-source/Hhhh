@@ -67,7 +67,7 @@ const jsum = (NS, ws, oid, code, q) => NS.books.entries(ws, oid, Object.assign({
 function fundB(paidCents) {
   return {
     v: 2,
-    tenant: { id: 'fund-b-sponsor', sample: false, name: 'Fund B Sponsor', shortName: 'Fund B Sponsor', legalName: 'Fund B Sponsor Management, LLC', ach: { companyName: 'FUND B LP', companyId: '1000000002', odfiRouting: '044003186', odfiName: 'Sample Bank' } },
+    tenant: { id: 'fund-b-sponsor', sample: false, name: 'Fund B Sponsor', shortName: 'Fund B Sponsor', legalName: 'Fund B Sponsor Management, LLC', ach: { companyName: 'FUND B LP', companyId: '1000000002', odfiRouting: '154003186', odfiName: 'Sample Bank' } },
     offerings: [
       {
         id: 'fund-b',
@@ -90,7 +90,7 @@ function fundB(paidCents) {
         type: 'individual',
         email: 'b-1@example.com',
         taxForm: 'W-9',
-        payment: { method: 'ach', bank: { holder: 'Investor B', routing: '044003186', account: '20010001', type: 'checking' } },
+        payment: { method: 'ach', bank: { holder: 'Investor B', routing: '154003186', account: '20010001', type: 'checking' } },
         positions: [{ offeringId: 'fund-b', amount: 100000, date: '2026-01-31' }]
       }
     ],
