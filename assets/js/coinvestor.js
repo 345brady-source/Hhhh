@@ -100,26 +100,12 @@
     if (expired(si) && !si.openedAt) return 'Sign-in link expired';
     return si.sentAt ? `Sign-in sent ${day(si.sentAt)}` : 'Sign-in link ready to send';
   }
-  /** The person sending, as an invitation names them (invitations.js senderName). */
-  function senderName(ws) {
-    const team = ws.team || [];
-    const role = S().role;
-    const me = team.find((m) => m.current && m.role === role) || team.find((m) => m.role === role && m.status !== 'invited') || null;
-    return me ? me.name : ws.tenant.support.team;
-  }
-  /** The sign-in email, worded and laid out as the investor's invitation email (invitations.js emailFor). */
-  function emailOf(ws, inv) {
-    const t = ws.tenant;
-    const c = coOf(inv);
-    const si = signInOf(inv);
-    const by = senderName(ws);
-    const sender = by && by !== t.support.team ? `${by} at ${t.name}` : t.name;
-    const subject = `${t.name}: sign the subscription agreement for ${inv.title}`;
-    const lines = [`Dear ${c.first || c.name},`, `${sender} asks you to sign the subscription agreement for ${inv.title} as co-investor.`, 'The link below opens the agreement with only your places to sign. Nothing else is asked.'];
-    const tail = [`This link is personal to you; please do not forward it. It expires on ${U.date(String(si.expiresAt).slice(0, 10), 'long')}.`, `Questions? Contact ${t.support.team}${isEmail(t.support.email) ? ` at ${t.support.email}` : ''}.`];
-    const text = [lines.join('\n\n'), `Start here: ${si.link}`, tail.join('\n'), t.legalName || t.name].join('\n\n');
-    return { subject, lines, tail, text, link: si.link, to: c.email, toName: c.name, fromName: t.name, button: 'Open the agreement' };
-  }
+
+  /**
+   * The sign-in email: the one renderer's co-investor message (assets/js/emails.js), with the data the integration server
+   * is sent (invitations.js coMailData), so the dialog, the email app's draft and the server's email say the same words.
+   */
+  const emailOf = (ws, inv) => NS.invitations.coEmail(ws, inv, signInOf(inv));
   /** mailto: with the subject and body; CRLF line breaks (RFC 6068). */
   const mailtoOf = (m) => `mailto:${encodeURIComponent(m.to)}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.text.replace(/\r?\n/g, '\r\n'))}`;
   /** The "Co-investor sign-in email" dialog (the investor invitation email's layout, invitations.js showEmail). */
@@ -150,16 +136,7 @@
           <div><dt>To</dt><dd>${h(m.toName)} &lt;${h(m.to)}&gt;</dd></div>
           <div><dt>Subject</dt><dd class="inv8-subject">${h(m.subject)}</dd></div>
         </dl>
-        <article class="email">
-          <div class="email-head">${B.lockup(t)}</div>
-          <div class="email-body">
-            ${m.lines.map((l) => `<p>${h(l)}</p>`).join('')}
-            <p><span class="email-btn">${h(m.button)}</span></p>
-            <p class="inv8-raw">${h(m.link)}</p>
-            ${m.tail.map((l) => `<p>${h(l)}</p>`).join('')}
-          </div>
-          <div class="email-foot">${h(t.legalName || t.name)}</div>
-        </article>
+        ${NS.invitations.emailCard(t, m)}
         <label class="cs-field inv8-linkfield" for="co-link"><span>Sign-in link</span><input id="co-link" type="text" readonly value="${h(m.link)}"></label>
         ${local ? '<p class="cs-hint">This link opens the portal in this browser only.</p>' : ''}
         <div class="cs-row cs-row-end inv8-actions">
@@ -422,6 +399,8 @@
   NS.actions['co-link-sent'] = (el) => {
     const inv = signInFor(el);
     if (!inv || !canEdit()) return;
+    // EM-08: the sign-in email the sponsor sent from their email app, in the sent log (the link taken out).
+    if (NS.invitations.logMail) NS.invitations.logMail(W(), inv.id, 'manual', emailOf(W(), inv));
     signInOf(inv).sentAt = new Date().toISOString();
     audit('Co-investor sign-in sent', `${inv.title}: ${coOf(inv).name} <${coOf(inv).email}>, from the sender's own email app`, inv.id);
     NS.app.save(true);
