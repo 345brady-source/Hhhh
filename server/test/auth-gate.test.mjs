@@ -1,4 +1,4 @@
-// gate: tests 7
+// gate: tests 8
 // Sessions at the sponsor gate (plan 15-01): once anyone has signed up the open server is closed; a full console session
 // acts on its own workspace only, as an account token does; half-done sign-ins and investors never reach a sponsor route;
 // a cookie write must be JSON from the server's own origin (or one listed in PORTAL_ORIGIN); token callers are unchanged;
@@ -6,7 +6,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, createHash } from 'node:crypto';
-import { withServer } from './helpers.mjs';
+import { withServer, keysDeep } from './helpers.mjs';
+
+/** A field the operator's people list must never carry, matched against field names at any depth (never the values). */
+const SECRET_FIELD = /pw|emailIndex|salt|hash|session/i;
+const secretFields = (body) => keysDeep(body).filter((k) => SECRET_FIELD.test(k));
 
 const ORIGIN = 'http://127.0.0.1';
 const key = () => randomBytes(32).toString('base64');
@@ -209,7 +213,8 @@ test('operator', async () => {
     const list = await call(base, 'GET', `/v1/admin/people?workspace=${ws}`, { bearer: ADMIN, origin: '' });
     assert.equal(list.status, 200, list.text);
     assert.deepEqual(list.body, [{ id: a.body.person.id, name: 'Pat Owner', email: o.email, kind: 'team', role: 'owner', status: 'active', locked: true, twoStep: false }]);
-    assert.ok(!/pw|emailIndex|salt|hash|session/i.test(list.text));
+    // Field names only: the reply text also holds the random person id, which can hold "pw" or "Hash" by chance.
+    assert.deepEqual(secretFields(list.body), [], 'no secret field at any depth');
     assert.equal((await call(base, 'POST', '/v1/admin/people/per_nobody/unlock', { bearer: ADMIN, origin: '', body: {} })).status, 404);
     const un = await call(base, 'POST', `/v1/admin/people/${a.body.person.id}/unlock`, { bearer: ADMIN, origin: '', body: {} });
     assert.equal(un.status, 200, un.text);
@@ -217,4 +222,15 @@ test('operator', async () => {
     assert.equal((await call(base, 'GET', `/v1/admin/people?workspace=${ws}`, { bearer: ADMIN, origin: '' })).body[0].locked, false);
     assert.equal((await signin(base, { email: o.email, password: o.password })).status, 200, 'the next right password signs in');
   });
+});
+
+test('operator scan: a random person id holding "pw" is no secret field; a pwHash or session field at any depth is', () => {
+  // The exact shape of a row of the operator's list, with an id as crypto.id('per') makes it (12 base64url characters).
+  const row = { id: 'per_Q3pwX9aK_rHL', name: 'Pat Owner', email: 'patA@harborridge.example', kind: 'team', role: 'owner', status: 'active', locked: true, twoStep: false };
+  const clean = JSON.parse(JSON.stringify([row]));
+  assert.ok(SECRET_FIELD.test(JSON.stringify(clean)), 'the whole reply text does match: the random id holds "pw" (the old check failed here)');
+  assert.deepEqual(secretFields(clean), [], 'its field names hold no secret');
+  assert.deepEqual(secretFields([Object.assign({}, row, { pwHash: 'x' })]), ['pwHash'], 'a pwHash field is still caught');
+  assert.deepEqual(secretFields([Object.assign({}, row, { signIn: { session: 'x', parts: [{ salt: 'y' }] } })]), ['session', 'salt'], 'nested fields are caught at any depth');
+  assert.deepEqual(secretFields([Object.assign({}, row, { emailIndex: 'z' })]), ['emailIndex']);
 });

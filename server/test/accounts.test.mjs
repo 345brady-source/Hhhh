@@ -7,7 +7,7 @@ import { randomBytes, createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { withServer } from './helpers.mjs';
+import { withServer, keysDeep } from './helpers.mjs';
 import { openStore } from '../lib/store.mjs';
 import { BUILTINS } from '../providers/index.mjs';
 
@@ -278,7 +278,9 @@ test('admin: a wrong token answers 401; a used or bad workspace answers 400; the
     assert.deepEqual(list.body.accounts.map((a) => a.workspace), ['alpha', 'Fund.II_2026-a']);
     for (const a of list.body.accounts) assert.deepEqual(Object.keys(a).sort(), ['createdAt', 'id', 'name', 'workspace']);
     const text = JSON.stringify(list.body);
-    assert.ok(!text.includes(alpha.token) && !text.includes(sha(alpha.token)) && !/token/i.test(text));
+    assert.ok(!text.includes(alpha.token) && !text.includes(sha(alpha.token)));
+    // The word runs over the field names at any depth: an account id is random and could hold "token" by chance.
+    assert.deepEqual(keysDeep(list.body).filter((k) => /token/i.test(k)), [], 'no token field');
   }));
 
 test('shared token: with API_TOKEN and no account every call works as before (workspace from the body and the query)', () => {

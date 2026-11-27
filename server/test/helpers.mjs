@@ -73,3 +73,19 @@ export function stripLinkTokens(text) {
     return url.slice(0, cut) + rest;
   });
 }
+
+/*
+ * Every key, at any depth, of a parsed JSON value (the objects inside arrays included). A check that a reply holds no
+ * secret field (a hash, a salt, a session) runs over these names, not over the whole reply text: the text also holds
+ * random ids, and one that holds "pw" or "Hash" by chance is no secret field. The values stay pinned by the test's own
+ * deepEqual of the reply, and its includes() checks of the real secrets.
+ */
+export function keysDeep(value, out = []) {
+  if (Array.isArray(value)) for (const v of value) keysDeep(v, out);
+  else if (value && typeof value === 'object')
+    for (const [k, v] of Object.entries(value)) {
+      out.push(k);
+      keysDeep(v, out);
+    }
+  return out;
+}
