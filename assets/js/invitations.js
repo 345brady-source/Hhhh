@@ -1751,7 +1751,7 @@
   const unsent = (it) => it.status === 'sent' && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0;
   /** Never sent: open and unsent, or closed (cancelled, expired) before its email went and before it was opened. */
   const neverSent = (it) => unsent(it) || (['cancelled', 'expired'].indexOf(it.status) >= 0 && !it.openedAt && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0);
-  const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : agreementUnsent(it) ? ['warn', 'Agreement not sent'] : STATUS[it.status] || ['mute', it.status]);
+  const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : it.status === 'sent' && NOT_SENT.indexOf(it.emailStatus) >= 0 ? ['warn', it.emailStatus === 'held' ? 'Waiting to send' : 'Not sent'] : agreementUnsent(it) ? ['warn', 'Agreement not sent'] : STATUS[it.status] || ['mute', it.status]);
   const EMAIL = { sent: 'Emailed', outbox: 'In the server outbox', manual: 'Send from your email app', not_sent: 'Not sent yet', failed: 'Could not send', delivered: 'Delivered', complained: 'Marked as spam by the investor' };
   /** EM-08: what the server said became of the email, in one plain line on the row (13-03 and 13-04 set these statuses). */
   const MAIL_LINE = {
