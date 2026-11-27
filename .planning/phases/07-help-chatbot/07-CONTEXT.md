@@ -33,3 +33,4 @@
 
 ## Owner decision, 2026-11-27
 - Paid unseen-question run (fresh set of 48, cap $1.00): owner answered "Not now". HELP-06 stays open; the fresh set is being written and frozen (outside the repo) so it is ready when the owner says yes. No paid call is made until then.
+- Fresh unseen set ready (written by an agent that never read the guide; kept outside the repository; LINT: PASS, 48 cases: sponsor 27, investor 21; 16 sponsor-covered, 12 investor-covered, 8 not-covered, 5 advice, 3 injection, 2 personal data, 1 two-turn conversation, 1 unrelated). Frozen SHA-256 dd00390965e3fcb2ebaf836bcf2850f279d22ee125d95e6ed3af8495b415dc6f; verify the hash before the run. Its patterns were tried only on made-up answers. It lives in the session scratchpad, so a reboot could lose it; it would then be rewritten the same way.
