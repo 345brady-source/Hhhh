@@ -17,3 +17,6 @@ Written by the orchestrator from the executor's hand-back (the executor's Write 
 - achreturns.js comment about the comma splitter is now out of date (code correct).
 - invitations.js csvRows (pasted invitation lists) still splits semicolon lists at commas.
 - Owner check pending for all four.
+
+## On the merged tree (6e01bb7)
+NEW SCHEDULES PASS (7), BANK REC PASS (10), BANK FILES PASS (12), POSTING RETURNS PASS (10), RETURNS READ PASS (12), AUDIT SAME PASS (4; base d0012a9 from a separate worktree). Server tests 506/506.
