@@ -912,14 +912,10 @@
       })
       .join('');
   const NUM = { money: 1, pct: 1, ratio: 1, price: 1, int: 1 };
-  // A word with a hyphen, a dash or a slash stays whole on one line ('Single-name'): the browser may break after any of
-  // them, and a phone draws a text column at its narrowest. Number cells never wrap (.num), so they are left as they are.
-  const words = (s) => h(s).replace(/\S*[-‐–—/]\S*/g, (w) => `<span class="rb-nw">${w}</span>`);
   function tableHTML(b) {
     const cls = (c) => (NUM[c.t] ? ' class="num"' : '');
-    const text = (c, s) => (NUM[c.t] ? h(s) : words(s));
-    const row = (cells, tag) => `<tr>${cells.map((c, i) => `<${tag}${cls(b.cols[i] || {})}>${text(b.cols[i] || {}, c.s)}</${tag}>`).join('')}</tr>`;
-    return `<div class="tbl-scroll rb-tblwrap"><table class="rb-tbl"><caption>${h(b.title)}</caption><thead><tr>${b.cols.map((c) => `<th scope="col"${cls(c)}>${text(c, c.h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => row(r, 'td')).join('')}</tbody>${b.total ? `<tfoot>${row(b.total, 'td')}</tfoot>` : ''}</table></div>`;
+    const row = (cells, tag) => `<tr>${cells.map((c, i) => `<${tag}${cls(b.cols[i] || {})}>${h(c.s)}</${tag}>`).join('')}</tr>`;
+    return `<div class="tbl-scroll rb-tblwrap"><table class="rb-tbl"><caption>${h(b.title)}</caption><thead><tr>${b.cols.map((c) => `<th scope="col"${cls(c)}>${h(c.h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => row(r, 'td')).join('')}</tbody>${b.total ? `<tfoot>${row(b.total, 'td')}</tfoot>` : ''}</table></div>`;
   }
   function chartHTML(b, accent) {
     const W0 = 320;
