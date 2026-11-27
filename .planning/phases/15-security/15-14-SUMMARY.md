@@ -41,3 +41,22 @@ Tests 2 to 4 passed already on Task 1's code (its request, check and confirm wer
 and the two-step rule); they are kept as the plan lists them.
 Verify (t2.txt, 4ce4cde; W1 adds emails-kinds.test.mjs): `# tests 30`, `# pass 30`, `# fail 0` (8 new + render 8 +
 guard 4 + kinds 10, the last three unchanged); verify exit 0.
+
+### Task 3
+RED (red-3.txt, f5fd5a8; auth-notices.test.mjs 5 and auth-carried.test.mjs 2):
+```
+not ok 1 - invite login workspace record        ('the sign-in made the workspace record': actual ~)
+not ok 2 - confirm a firm made before confirmations ('sign-in offers the link')
+not ok 3 - password change                      ('two-step turned on: one notice')
+not ok 4 - confirmation                         ('sign-up emails a #confirm- link': actual '')
+not ok 5 - new device                           ('the first full sign-in sets the device cookie': actual '')
+not ok 6 - lock                                 ('one notice for the lock, not one per try')
+not ok 7 - invitations emailed and ended access
+# tests 7
+# pass 0
+# fail 7
+```
+First full suite after the code (all-a.txt): `# tests 616`, `# pass 614`, `# fail 2`: roles.test.mjs "each role" (an
+unconfirmed firm's Owner now gets 403 'Confirm your email address first: ...' on POST /v1/invitations) and "accountant
+ends" (the ended Accountant's sign-in itself is now refused 403, so the test's member() could not sign in). Both are
+this plan's rules; the two tests were adapted (deviations below), then all-b.txt: `# tests 616`, `# pass 616`, `# fail 0`.
