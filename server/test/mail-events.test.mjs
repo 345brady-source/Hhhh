@@ -6,6 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
+import net from 'node:net';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -167,6 +168,161 @@ test('tracer', async () => {
     const list = await call(h.base, 'GET', '/v1/invitations', { bearer: acct.token });
     assert.equal(list.status, 200, list.text);
     assert.equal(list.body.find((x) => x.id === made.body.id).emailStatus, 'bounced');
+  } finally {
+    await h.close();
+  }
+});
+
+/** A one-connection-at-a-time SMTP stand-in that answers DATA as the provider's relay does: "250 Ok <its message id>". */
+async function idRelay(relayId) {
+  const messages = [];
+  const sockets = new Set();
+  const server = net.createServer((sock) => {
+    sockets.add(sock);
+    sock.on('close', () => sockets.delete(sock));
+    sock.on('error', () => {});
+    let buf = '';
+    let data = null;
+    let from = '';
+    const w = (s) => sock.write(`${s}\r\n`);
+    sock.on('data', (chunk) => {
+      buf += chunk.toString('utf8');
+      let i;
+      while ((i = buf.indexOf('\r\n')) >= 0) {
+        const line = buf.slice(0, i);
+        buf = buf.slice(i + 2);
+        if (data) {
+          if (line === '.') {
+            messages.push({ from, data: data.join('\r\n') });
+            data = null;
+            w(`250 Ok ${relayId}`);
+          } else data.push(line);
+          continue;
+        }
+        const verb = line.split(' ')[0].toUpperCase();
+        if (verb === 'EHLO') w('250 relay.test');
+        else if (verb === 'MAIL') {
+          from = (/<([^>]*)>/.exec(line) || [])[1] || '';
+          w('250 Ok');
+        } else if (verb === 'RCPT') w('250 Ok');
+        else if (verb === 'DATA') {
+          data = [];
+          w('354 go ahead');
+        } else if (verb === 'QUIT') {
+          w('221 Bye');
+          sock.end();
+        } else w('502 no');
+      }
+    });
+    w('220 relay.test ESMTP');
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  return {
+    port: server.address().port,
+    messages,
+    close: () =>
+      new Promise((r) => {
+        for (const s of sockets) s.destroy();
+        server.close(r);
+      })
+  };
+}
+
+test('refused', async () => {
+  const h = await harness();
+  try {
+    const acct = await readySponsor(h);
+    const made = await call(h.base, 'POST', '/v1/invitations', { bearer: acct.token, body: invitation() });
+    assert.equal(made.body.emailStatus, 'sent', made.text);
+    const mid = messageIdOf(h.relay.messages[0].data);
+    const before = JSON.stringify(h.store.list('maillog'));
+    const good = JSON.parse(notification(permanentBounce(), { messageId: mid }));
+    const unsigned = Object.assign({}, good);
+    delete unsigned.Signature;
+    const cases = {
+      unsigned: JSON.stringify(unsigned),
+      'wrong topic': notification(permanentBounce(), { messageId: mid, over: { TopicArn: 'arn:aws:sns:us-east-1:000000000000:another-topic' } }),
+      'wrong certificate host': notification(permanentBounce(), { messageId: mid, over: { SigningCertURL: 'https://certs.attacker.example/SimpleNotificationService-0.pem' } }),
+      'old timestamp': notification(permanentBounce(), { messageId: mid, over: { Timestamp: new Date(Date.now() - 2 * 3600e3).toISOString() } }),
+      'changed after signing': JSON.stringify(Object.assign({}, good, { Message: good.Message.replace('Permanent', 'Permanent ') }))
+    };
+    for (const [name, raw] of Object.entries(cases)) {
+      const r = await call(h.base, 'POST', '/v1/mail/events', { raw });
+      assert.equal(r.status, 401, `${name}: ${r.text}`);
+      assert.deepEqual(r.body, { error: 'Not authorized' }, name);
+    }
+    assert.equal(JSON.stringify(h.store.list('maillog')), before, 'no entry changed');
+    assert.equal(h.store.list('mailsuppress').length, 0, 'nothing suppressed');
+    // A body over 256 KB is refused by the size limit before any parsing.
+    const big = await call(h.base, 'POST', '/v1/mail/events', { raw: JSON.stringify({ Type: 'Notification', Message: 'x'.repeat(300 * 1024) }) });
+    assert.equal(big.status, 413, big.text);
+    assert.deepEqual(big.body, { error: 'Request body too large' });
+    assert.equal((await call(h.base, 'POST', '/v1/mail/events', { raw: 'not json {' })).status, 400);
+    assert.equal(JSON.stringify(h.store.list('maillog')), before);
+    // The route takes POST only.
+    assert.equal((await call(h.base, 'GET', '/v1/mail/events')).status, 405);
+  } finally {
+    await h.close();
+  }
+});
+
+test('delivery', async () => {
+  const relay = await idRelay('0100018c7f2a-relay-000000');
+  const h = await harness({ smtp: relay });
+  try {
+    const acct = await readySponsor(h);
+    const made = await call(h.base, 'POST', '/v1/invitations', { bearer: acct.token, body: invitation() });
+    assert.equal(made.body.emailStatus, 'sent', made.text);
+    assert.equal(relay.messages[0].from, 'notices@harborridge.example');
+    assert.equal(h.store.list('maillog')[0].relayId, '0100018c7f2a-relay-000000', 'the relay’s id is read from its reply');
+    // Matched by the relay's id alone (no Message-ID in the event).
+    const at = new Date(Date.now() - 5000).toISOString();
+    const r = await call(h.base, 'POST', '/v1/mail/events', { raw: notification({ eventType: 'Delivery', delivery: { timestamp: at, recipients: [INVESTOR_EMAIL] } }, { relayId: '0100018c7f2a-relay-000000' }) });
+    assert.equal(r.status, 200, r.text);
+    const [e] = (await call(h.base, 'GET', '/v1/messages/log', { bearer: acct.token })).body.entries;
+    assert.equal(e.status, 'delivered');
+    assert.deepEqual(e.events, [{ type: 'delivered', at }]);
+    // The same notification again records nothing new.
+    await call(h.base, 'POST', '/v1/mail/events', { raw: notification({ eventType: 'Delivery', delivery: { timestamp: at } }, { relayId: '0100018c7f2a-relay-000000' }) });
+    assert.equal((await call(h.base, 'GET', '/v1/messages/log', { bearer: acct.token })).body.entries[0].events.length, 1);
+  } finally {
+    await h.close();
+  }
+});
+
+test('transient', async () => {
+  const h = await harness();
+  try {
+    const acct = await readySponsor(h);
+    const made = await call(h.base, 'POST', '/v1/invitations', { bearer: acct.token, body: invitation() });
+    const mid = messageIdOf(h.relay.messages[0].data);
+    const soft = { eventType: 'Bounce', bounce: { bounceType: 'Transient', bouncedRecipients: [{ emailAddress: INVESTOR_EMAIL }], timestamp: new Date().toISOString() } };
+    const r = await call(h.base, 'POST', '/v1/mail/events', { raw: notification(soft, { messageId: mid }) });
+    assert.equal(r.status, 200, r.text);
+    const [e] = (await call(h.base, 'GET', '/v1/messages/log', { bearer: acct.token })).body.entries;
+    assert.equal(e.status, 'sent', 'a transient bounce does not change the status');
+    assert.deepEqual(e.events.map((x) => [x.type, x.permanent]), [['bounced', false]]);
+    assert.equal(h.store.list('mailsuppress').length, 0, 'not suppressed');
+    const row = (await call(h.base, 'GET', '/v1/invitations', { bearer: acct.token })).body.find((x) => x.id === made.body.id);
+    assert.equal(row.emailStatus, 'sent');
+    const again = await call(h.base, 'POST', '/v1/invitations', { bearer: acct.token, body: invitation() });
+    assert.equal(again.body.emailStatus, 'sent', 'the address still gets mail');
+  } finally {
+    await h.close();
+  }
+});
+
+test('unknown', async () => {
+  const h = await harness();
+  try {
+    const acct = await readySponsor(h);
+    await call(h.base, 'POST', '/v1/invitations', { bearer: acct.token, body: invitation() });
+    const before = JSON.stringify(h.store.list('maillog'));
+    const r = await call(h.base, 'POST', '/v1/mail/events', { raw: notification(permanentBounce(), { relayId: 'no-such-relay-id', messageId: '<00000000000000000000000000000000@harborridge.example>' }) });
+    assert.equal(r.status, 200, r.text);
+    assert.deepEqual(r.body, { received: 1 });
+    assert.equal(JSON.stringify(h.store.list('maillog')), before, 'nothing changed');
+    assert.equal(h.store.list('mailsuppress').length, 0);
   } finally {
     await h.close();
   }
