@@ -188,8 +188,18 @@
       e.amount = `The minimum for ${off.name}${cls && Number(cls.minimum) > Number(off.minimum || 0) ? ` (${cls.name})` : ''} is ${money(off, minimumCents(off, o.cls))}.`;
     }
     if (off && o.cls && !openClasses(off).some((c) => c.id === o.cls)) e.cls = 'Choose a share class that is open.';
+    // C-06 (plan 13-05): an invitation to a new offering for an investor on file, or to an offering with no commitment, may
+    // be commercial mail: it needs the firm's postal address in its footer. Not prepared while that address is empty.
+    if (!e.offering && off && postalMissing(ws) && (onFileEmail(ws, email) || !(cents > 0))) e.offering = POSTAL_NEEDED;
     return e;
   }
+  const POSTAL_NEEDED = "Add your firm's postal address under Settings, then Portal and brand, before inviting to a new offering. (To be confirmed with counsel.)";
+  /**
+   * The firm's postal address is asked for and empty. A workspace whose firm record has no postal address field yet (the
+   * field comes with the Portal and brand setting, plan 13-09) is not stopped: the sentence would point to a setting that
+   * is not there.
+   */
+  const postalMissing = (ws) => Object.prototype.hasOwnProperty.call(ws.tenant, 'postalAddress') && !String(ws.tenant.postalAddress || '').trim();
 
   /** Add the investor and their invitation. Nothing is sent yet (send()). */
   function create(ws, o) {
@@ -281,45 +291,74 @@
     return { invitation, investor };
   }
 
-  /* ---------- Email text (the manual path; the server writes its own) ---------- */
+  /* ---------- Email text: the one renderer (assets/js/emails.js) with the data the server is sent (plan 13-05, EM-01) ---------- */
+  /** The investor as snapshot() sends them (without the on-file summary and the tax prefill, which no message prints). */
+  function investorData(ws, it, inv) {
+    return Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest || it.includeTax ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {});
+  }
+  /** The invitation as snapshot() sends it (a portal link says so: the server's email and summary are the portal link's). */
+  function invitationData(it) {
+    return Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.access ? { access: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}, it.reverify ? { reverify: true } : {}, it.package ? { package: true, clientId: it.id } : {});
+  }
+  /** What the renderer is given for this invitation's email: the firm, the investor, the offering, the invitation, link and expiry. */
+  function mailData(ws, it) {
+    const inv = invOf(ws, it.investorId) || { id: it.investorId, contact: '', title: '', type: '', email: '' };
+    const off = offOf(ws, it.offeringId);
+    return { firm: firmOf(ws), investor: investorData(ws, it, inv), offering: off ? { id: off.id, name: off.name, shortName: off.shortName || off.name, currency: curOf(off) } : null, invitation: invitationData(it), link: linkFor(ws, it), expiresAt: it.expiresAt, started: !!it.mailStarted };
+  }
+  /**
+   * The invitation's email as the investor receives it: rendered by NS.emails from the data the server is sent, so the
+   * dialog, the email app's draft and the server's message say the same words. 'invitation_resent' (subject "New link: ")
+   * only when the integration server sent a new link (resend); a manual resend keeps the link and the message.
+   */
   function emailFor(ws, it) {
     const t = ws.tenant;
     const inv = invOf(ws, it.investorId) || { contact: '', title: '', email: '' };
-    const off = offOf(ws, it.offeringId);
-    // "Anita Shah" or "Shah, Anita": the given name, without stray punctuation.
-    const full = String(inv.contact || '').trim();
-    const given = full.indexOf(',') > 0 ? full.split(',').slice(1).join(' ').trim() || full : full;
-    const first = given.split(/\s+/)[0].replace(/[^\p{L}\p{M}'’.-]/gu, '') || 'there';
-    const cls = off && it.cls ? openClasses(off).concat(off.classes || []).find((c) => c.id === it.cls) : null;
-    const form = it.taxRequest ? `Form ${taxFormFor(inv)}` : '';
-    const subject = off ? `${t.name}: your invitation to invest in ${off.name}` : it.taxRequest ? `${t.name}: your ${form}` : it.reverify ? `${t.name}: verify your accredited investor status` : it.access ? `${t.name}: your investor portal` : `${t.name}: set up your investor account`;
-    const link = linkFor(ws, it);
-    const by = date(String(it.expiresAt || '').slice(0, 10), 'long');
-    const amount = off && it.cents ? `, for a commitment of ${money(off, it.cents)}${cls ? ` in ${cls.name}` : ''}` : '';
-    const what = off ? `${it.existing ? 'subscribe to' : 'set up your investor account and your subscription to'} ${off.name}${amount}` : it.access ? 'open your investor portal' : 'set up your investor account';
-    const sender = it.sentBy && it.sentBy !== t.support.team ? `${it.sentBy} at ${t.name}` : t.name;
-    const lines = [`Dear ${first},`, it.taxRequest ? sentence(`${sender} asks you to complete your ${form}`) : it.reverify ? sentence(`${sender} asks you to verify your accredited investor status again`) : sentence(`${sender} has invited you to ${what}`)];
-    if (it.note) lines.push(it.note);
-    if (it.taxRequest) lines.push(`The link below opens your ${form}, filled in from the details we hold. You check it and sign it online, or upload a completed form instead. Nothing else is asked.`);
-    else if (it.reverify) lines.push('The link below opens the accreditation step only: you verify your status online. Nothing else is asked.');
-    else if (it.access) lines.push('Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below opens your portal.');
-    else if (it.existing && off) lines.push(`The link below takes you through your subscription in one place: the offering documents, ${it.includeTax ? 'your tax form, ' : ''}your commitment and the subscription agreement, which you sign online. Your account details are already on file.`);
-    else
-      lines.push(
-        `The link below takes you through everything in one place, in about 10 to 15 minutes: your login, investor information, identity verification${off ? ', accreditation' : ''}, tax certification, where to send distributions${off ? ', and your subscription documents, which you sign online' : ''}. Your progress is saved, so you can stop and come back.`,
-        'Have a government-issued photo ID and your bank account details ready.'
-      );
-    const tail = [
-      `This link is personal to you; please do not forward it. It expires on ${by}.`,
-      `Questions? Contact ${t.support.team}${isEmail(t.support.email) ? ` at ${t.support.email}` : ''}${t.support.phone ? ` or ${t.support.phone}` : ''}.`
-    ];
-    const text = [lines.join('\n\n'), `Start here: ${link}`, tail.join('\n'), t.legalName || t.name].join('\n\n');
-    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : it.taxRequest ? 'Complete your tax form' : it.reverify ? 'Verify your accreditation' : it.access ? 'Open your portal' : 'Set up your account' };
+    const kind = it.serverId && it.mailKind === 'invitation_resent' ? 'invitation_resent' : 'invitation';
+    const d = mailData(ws, it);
+    const r = NS.emails.render(kind, d);
+    return { kind, subject: r.subject, text: r.text, html: r.html, link: d.link, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '' };
   }
   /** mailto: with the subject and body; CRLF line breaks (RFC 6068). */
   function mailtoFor(ws, it) {
     const m = emailFor(ws, it);
     return `mailto:${encodeURIComponent(m.to)}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.text.replace(/\r?\n/g, '\r\n'))}`;
+  }
+  /**
+   * The email card of the dialogs (this file's and coinvestor.js's): the message's text block by block as it is written
+   * (line breaks kept), the button's block shown as the button and its link, then the footer. Nothing added or reworded.
+   */
+  function emailCard(t, m) {
+    const text = String(m.text || '');
+    const at = text.lastIndexOf('\n\n--\n');
+    const body = at >= 0 ? text.slice(0, at) : text;
+    const foot = at >= 0 ? text.slice(at + 5) : '';
+    const tail = m.link ? `:\n${m.link}` : '';
+    const pre = ' style="white-space:pre-wrap"';
+    const para = (b) => (tail && b.length > tail.length && b.slice(-tail.length) === tail ? `<p class="email-cta"${pre}><span class="email-btn">${h(b.slice(0, -tail.length))}</span>\n<span class="inv8-raw">${h(m.link)}</span></p>` : `<p${pre}>${h(b)}</p>`);
+    return `<article class="email"><div class="email-head">${B.lockup(t)}</div><div class="email-body">${body.split('\n\n').map(para).join('')}</div>${foot ? `<div class="email-foot">${foot.split('\n\n').map((f) => `<p style="white-space:pre-wrap;margin:0 0 6px">${h(f)}</p>`).join('')}</div>` : ''}</article>`;
+  }
+
+  /**
+   * EM-08: one sent-log entry (NS.emails.log, ws.mailLog) for an email the console handled: 'manual' when the sponsor marks
+   * it sent from their email app, else the integration server's status. The personal link is taken out of the stored
+   * text. A status the log does not know is kept as the nearest it does (an unsubscribed investor: suppressed).
+   */
+  function logMail(ws, investorId, status, m) {
+    if (!NS.emails || !NS.emails.log || !m) return null;
+    const st = NS.emails.STATUSES.indexOf(status) >= 0 ? status : status === 'unsubscribed' ? 'suppressed' : 'failed';
+    return NS.emails.log(ws, { kind: m.kind || 'invitation', subject: m.subject, to: m.to, investorId, status: st, text: m.text, link: m.link });
+  }
+  /** The co-investor's sign-in email data, as coSignIn sends the server (and coinvestor.js shows it). */
+  function coMailData(ws, inv, si) {
+    const c = inv.coInvestor || {};
+    return { firm: firmOf(ws), investor: { id: inv.id, contact: c.name, title: inv.title, type: inv.type, email: c.email }, offering: null, invitation: { cents: 0, cls: '', note: '', existing: true, coSign: true, envelopeId: (si && si.envelopeId) || '', senderName: senderName(ws) }, link: (si && si.link) || '', expiresAt: (si && si.expiresAt) || '' };
+  }
+  /** The co-investor's sign-in email as the renderer writes it: { kind, subject, text, html, link, to, toName, fromName }. */
+  function coEmail(ws, inv, si) {
+    const d = coMailData(ws, inv, si);
+    const r = NS.emails.render('invitation', d);
+    return { kind: 'invitation', subject: r.subject, text: r.text, html: r.html, link: d.link, to: d.investor.email, toName: d.investor.contact, fromName: ws.tenant.name };
   }
 
   /* ---------- Notifications ---------- */
@@ -496,7 +535,7 @@
   function firmOf(ws) {
     const t = ws.tenant;
     const logo = t.logo && t.logo.type === 'image' && /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,/i.test(t.logo.image || '') && t.logo.image.length <= 600 * 1024 ? t.logo.image : '';
-    return { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) };
+    return { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', postalAddress: String(t.postalAddress || ''), onboarding: clone(t.onboarding || {}) };
   }
   /** Everything the investor's browser needs, from this workspace (no secrets: verification settings are names and rules). */
   async function snapshot(ws, it) {
@@ -546,9 +585,9 @@
       consoleUrl: `${portalPage()}#console-investors`,
       notifyEmail: senderEmail(ws),
       firm: firmOf(ws),
-      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest || it.includeTax ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest || it.includeTax ? { taxPrefill: taxPrefill(inv) } : {}),
+      investor: Object.assign(investorData(ws, it, inv), it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest || it.includeTax ? { taxPrefill: taxPrefill(inv) } : {}),
       offering,
-      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}, it.reverify ? { reverify: true } : {}, it.package ? { package: true, clientId: it.id } : {}),
+      invitation: invitationData(it),
       verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired: needsVerified },
       esign
     };
@@ -643,7 +682,10 @@
       // The agreement template the investor's device was given (or none): an envelope it sends back is checked against it on
       // import, even after the template is replaced or deleted here (merge).
       const tpl = snap.esign && snap.esign.template;
+      delete it.mailKind;
+      delete it.mailStarted;
       Object.assign(it, { serverId: String(r.id || ''), link: String(r.link || ''), token: '', emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), esignTemplate: tpl ? { id: tpl.id, roles: (tpl.roles || []).slice(), docId: tpl.docId } : null });
+      logMail(ws, it.investorId, it.emailStatus, emailFor(ws, it));
       audit(ws, it.emailStatus === 'sent' ? 'Invitation emailed' : 'Invitation saved on the integration server', `${inv ? inv.title : it.investorId}: ${it.emailStatus === 'sent' ? `link emailed to ${inv ? inv.email : ''}` : it.emailStatus === 'outbox' ? 'kept in the server outbox (no SMTP settings)' : it.emailError || it.emailStatus}`, it.offeringId, it.investorId);
       NS.app.save(true);
       return it.emailError ? { emailStatus: it.emailStatus, error: it.emailError } : { emailStatus: it.emailStatus };
@@ -696,8 +738,10 @@
     if (serverOn(ws) && it.serverId) {
       try {
         const r = await api(ws, 'POST', `/v1/invitations/${encodeURIComponent(it.serverId)}/resend`, { sendEmail: true, portalUrl: portalPage() });
-        Object.assign(it, { link: String(r.link || it.link), emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent' });
+        // The server wrote its "New link:" message (started: the investor had begun, as the server reads it).
+        Object.assign(it, { mailKind: 'invitation_resent', mailStarted: !!it.stepKey, link: String(r.link || it.link), emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent' });
         delete it.resendError;
+        logMail(ws, it.investorId, it.emailStatus, emailFor(ws, it));
       } catch (e) {
         it.emailError = e.message;
         // The server refused (a returned package, a closed invitation): its sentence stays on the row until a resend goes.
@@ -708,8 +752,9 @@
     } else if (serverOn(ws)) {
       return send(ws, it);
     } else {
-      // A new link: the one sent before stops working (the investor's progress is kept on their record).
-      Object.assign(it, { token: newToken(), link: '', expiresAt: new Date(Date.now() + VALID_DAYS * DAY).toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent', emailStatus: 'manual', emailError: '' });
+      // Plan 13-05 (EM-02): the same link, valid 30 more days, so the email the sponsor sends again is the same invitation
+      // (no "New link"); the investor's progress is kept on their record.
+      Object.assign(it, { token: it.token || newToken(), link: '', expiresAt: new Date(Date.now() + VALID_DAYS * DAY).toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent', emailStatus: 'manual', emailError: '' });
       it.link = linkFor(ws, it);
     }
     audit(ws, 'Invitation resent', `${inv ? inv.title : it.investorId}: link valid until ${date(String(it.expiresAt).slice(0, 10))}`, it.offeringId, it.investorId);
@@ -798,6 +843,7 @@
       const failed = r.emailStatus === 'failed';
       Object.assign(si, { serverId: String(r.id || ''), link: String(r.link || ''), token: '', envelopeId: env.id, emailStatus: String(r.emailStatus || 'sent'), error: failed ? String(r.emailError || 'The integration server could not send the email.') : '', expiresAt: String(r.expiresAt || ''), sentAt: failed ? '' : nowIso(), openedAt: '', signedAt: '', importedAt: '' });
       delete si.retry;
+      if (NS.emails) logMail(ws, inv.id, si.emailStatus, coEmail(ws, inv, si));
       audit(ws, failed ? 'Co-investor sign-in not emailed' : 'Co-investor sign-in emailed', `${inv.title}: ${c.name} <${c.email}>, for ${env.title}: ${si.emailStatus === 'outbox' ? 'kept in the server outbox (no SMTP settings)' : failed ? si.error : 'emailed by the integration server'}${copy.redacted ? '; the copy sent to the co-investor leaves out the taxpayer number' : ''}`, env.offeringId || '', inv.id);
       return true;
     } catch (e) {
@@ -1705,8 +1751,25 @@
   const unsent = (it) => it.status === 'sent' && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0;
   /** Never sent: open and unsent, or closed (cancelled, expired) before its email went and before it was opened. */
   const neverSent = (it) => unsent(it) || (['cancelled', 'expired'].indexOf(it.status) >= 0 && !it.openedAt && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0);
-  const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : agreementUnsent(it) ? ['warn', 'Agreement not sent'] : STATUS[it.status] || ['mute', it.status]);
-  const EMAIL = { sent: 'Emailed', outbox: 'In the server outbox', manual: 'Send from your email app', not_sent: 'Not sent yet', failed: 'Could not send' };
+  const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : it.status === 'sent' && NOT_SENT.indexOf(it.emailStatus) >= 0 ? ['warn', it.emailStatus === 'held' ? 'Waiting to send' : 'Not sent'] : agreementUnsent(it) ? ['warn', 'Agreement not sent'] : STATUS[it.status] || ['mute', it.status]);
+  const EMAIL = { sent: 'Emailed', outbox: 'In the server outbox', manual: 'Send from your email app', not_sent: 'Not sent yet', failed: 'Could not send', delivered: 'Delivered', complained: 'Marked as spam by the investor' };
+  /** EM-08: what the server said became of the email, in one plain line on the row (13-03 and 13-04 set these statuses). */
+  const MAIL_LINE = {
+    bounced: (inv) => `The email to ${inv.email} came back. Check the address with the investor, then choose Resend.`,
+    held: () => 'Waiting: email sending from your domain is not set up yet.',
+    suppressed: () => 'Not sent: an earlier email to this address came back.',
+    unsubscribed: () => 'Not sent: this investor turned off invitations to new offerings.'
+  };
+  /** Statuses with which no email reached the investor (the row says "Created", not "Sent"). */
+  const NOT_SENT = ['held', 'suppressed', 'unsubscribed'];
+  /** The toast for an email the server did not send, or '' (a toast never says "emailed" for one). */
+  function notSent(status, what, inv) {
+    if (status === 'held') return `${what} for ${inv.title} is waiting: email sending from your domain is not set up yet.`;
+    if (status === 'suppressed') return `${what} for ${inv.title} was not sent: an earlier email to this address came back.`;
+    if (status === 'unsubscribed') return `${what} for ${inv.title} was not sent: this investor turned off invitations to new offerings.`;
+    if (status === 'bounced') return `${what} for ${inv.title} came back. Check the address with the investor, then choose Resend.`;
+    return '';
+  }
   function stepText(it) {
     if (it.status === 'completed') return 'Finished';
     if (it.stepIndex && it.stepCount) return `Step ${it.stepIndex} of ${it.stepCount}: ${it.stepLabel || it.stepKey}`;
@@ -1849,7 +1912,7 @@
     const cur = off ? curOf(off) : 'USD';
     // Only the name and email are asked for; everything else is optional and stays folded away until it is used or has a problem.
     const dflt = offs.length === 1 ? offs[0].id : '';
-    const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || /Choose an offering/.test(d.errors.email || '') || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
+    const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || d.errors.note || /Choose an offering/.test(d.errors.email || '') || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
     const agreement = off && NS.esign && NS.esign.templateReady ? (NS.esign.templateReady(w, off.id) ? 'ready' : 'missing') : '';
     // Plan 08-06: what the connected server offers is asked once the form is open (never without a server).
     if (NS.pkg && serverOn(w)) NS.pkg.load(w).then(syncPackage);
@@ -1876,7 +1939,7 @@
           <label class="cs-field" for="iv-off"><span>Offering <em>Optional</em></span><select id="iv-off" name="offering" data-bind="inv8:offeringId"${inval(d, 'offering')}><option value=""${!off ? ' selected' : ''}>No offering: account only</option>${offs.map((o) => `<option value="${h(o.id)}"${off && off.id === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>${offs.length ? '' : '<span class="cs-hint">No offering is raising. The investor sets up their account and can subscribe later.</span>'}${fieldErr(d, 'offering')}</label>
           <label class="cs-field" for="iv-amt"><span>Commitment (${cur === 'USD' ? '$' : h(cur)}) <em>Optional</em></span><input id="iv-amt" name="amount" type="number" min="0" step="1000" inputmode="decimal" data-bind="inv8:amount" value="${h(d.amount)}"${off ? '' : ' disabled'}${inval(d, 'amount')}><span class="cs-hint">${off ? `Minimum ${h(money(off, min))}. Leave blank for the investor to choose; if you set it, they cannot change it.` : 'Choose an offering to set a commitment.'}</span>${fieldErr(d, 'amount')}</label>
           ${classes.length > 1 ? `<label class="cs-field" for="iv-cls"><span>Share class</span><select id="iv-cls" name="cls" data-bind="inv8:cls"${inval(d, 'cls')}><option value="">Investor chooses</option>${classes.map((c) => `<option value="${h(c.id)}"${d.cls === c.id ? ' selected' : ''}>${h(c.name)}${Number(c.minimum) ? `, minimum ${h(money(off, Math.round(Number(c.minimum) * 100)))}` : ''}</option>`).join('')}</select>${fieldErr(d, 'cls')}</label>` : ''}
-          <label class="cs-field cs-wide" for="iv-note"><span>Personal note <em>Optional</em></span><textarea id="iv-note" name="note" rows="3" maxlength="2000" data-bind="inv8:note">${h(d.note)}</textarea><span class="cs-hint">Shown in the email and on the investor’s welcome page.</span></label>
+          <label class="cs-field cs-wide" for="iv-note"><span>Personal note <em>Optional</em></span><textarea id="iv-note" name="note" rows="3" maxlength="2000" data-bind="inv8:note"${inval(d, 'note')}>${h(d.note)}</textarea><span class="cs-hint">Shown in the email and on the investor’s welcome page.</span>${fieldErr(d, 'note')}</label>
         </div>
       </details>
       <p class="cs-error cs-wide" id="iv-error" role="alert"${Object.keys(d.errors).length ? '' : ' hidden'}>${Object.keys(d.errors).length ? 'Check the highlighted fields.' : ''}</p>
@@ -2105,6 +2168,9 @@
     const cents = dollars === '' ? '' : isFinite(dollars) ? Math.round(dollars * 100) : NaN;
     const e = validate(w, { name: x.name, first: x.first, last: x.last, email: x.email, offeringId: x.offeringId, cents: cents === '' ? '' : cents, cls: x.cls });
     if (cents !== '' && isNaN(cents)) e.amount = 'Enter the commitment as an amount, or leave it blank.';
+    // EM-04: a note that holds a taxpayer number, a long number or a password is stopped here, before anything is made.
+    const bad = x.note && NS.emails ? NS.emails.screen(x.note) : null;
+    if (bad) e.note = bad.reason;
     d.errors = e;
     if (Object.keys(e).length) {
       NS.app.render();
@@ -2127,7 +2193,7 @@
     const inv = invOf(w, it.investorId);
     if (res.emailStatus === 'manual') return showEmail(it.id);
     if (res.emailStatus === 'failed') return U.toast(`The invitation for ${inv.title} could not be sent: ${res.error}`);
-    U.toast(res.emailStatus === 'outbox' ? `Invitation for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Invitation emailed to ${inv.contact}.`);
+    U.toast(notSent(res.emailStatus, 'The invitation', inv) || (res.emailStatus === 'outbox' ? `Invitation for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Invitation emailed to ${inv.contact}.`));
   }
   // The DIY edition's invite form replaces the managed edition's (same form id, so existing links keep working).
   const baseInviteOne = NS.forms['invite-one'];
@@ -2530,16 +2596,7 @@
           <div><dt>To</dt><dd>${h(m.toName)} &lt;${h(m.to)}&gt;</dd></div>
           <div><dt>Subject</dt><dd class="inv8-subject">${h(m.subject)}</dd></div>
         </dl>
-        <article class="email">
-          <div class="email-head">${B.lockup(t)}</div>
-          <div class="email-body">
-            ${m.lines.map((l) => `<p>${h(l).replace(/\n/g, '<br>')}</p>`).join('')}
-            <p><span class="email-btn">${h(m.button)}</span></p>
-            <p class="inv8-raw">${h(m.link)}</p>
-            ${m.tail.map((l) => `<p>${h(l)}</p>`).join('')}
-          </div>
-          <div class="email-foot">${h(t.legalName || t.name)}</div>
-        </article>
+        ${emailCard(t, m)}
         <label class="cs-field inv8-linkfield" for="inv8-link"><span>Invitation link</span><input id="inv8-link" type="text" readonly value="${h(m.link)}"></label>
         ${local && it.emailError ? `<p class="cs-error-text inv8-why">${h(it.emailError)}</p>` : ''}
         ${local ? `<p class="cs-hint">This link opens the portal in this browser only, because no integration server is connected. ${NS.app.can('configure') ? '<a href="#console-integrations" data-action="close-dialog">Connect your integration server</a>' : 'Ask an admin to connect your integration server'} so investors can onboard on their own devices and the email is sent for you.</p>` : ''}
@@ -2577,7 +2634,7 @@
     const res = out.res || {};
     if (res.emailStatus === 'manual') return showEmail(out.invitation.id);
     if (res.emailStatus === 'failed') return U.toast(`The tax form request for ${inv.title} could not be sent: ${res.error}`);
-    U.toast(res.emailStatus === 'outbox' ? `Tax form request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Tax form request emailed to ${inv.contact}.`);
+    U.toast(notSent(res.emailStatus, 'The tax form request', inv) || (res.emailStatus === 'outbox' ? `Tax form request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Tax form request emailed to ${inv.contact}.`));
   };
   // Plan 08-09 (D-04, C-06): "Ask to re-verify" on the Investors page (console.js shows it for an active investor whose
   // verification by a third party is missing, lapsed or about to lapse while an offering needs one). Its dialog names the
@@ -2662,7 +2719,7 @@
     // used package has left a new request, sent with the next "Send request".
     if (res.emailStatus === 'failed') return reverifySaid(el, res.error, inv);
     U.closeDialog();
-    U.toast(res.emailStatus === 'outbox' ? `Re-verification request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Re-verification request emailed to ${inv.contact}.`);
+    U.toast(notSent(res.emailStatus, 'The re-verification request', inv) || (res.emailStatus === 'outbox' ? `Re-verification request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Re-verification request emailed to ${inv.contact}.`));
   };
   NS.actions['inv8-copy'] = (el) => {
     const it = itById(el);
@@ -2684,6 +2741,7 @@
       U.closeDialog();
       return U.toast('This invitation is closed, so it was not marked as sent.');
     }
+    logMail(w, it.investorId, 'manual', emailFor(w, it));
     Object.assign(it, { emailStatus: 'sent', emailError: '', sentAt: new Date().toISOString() });
     audit(w, 'Invitation sent', `${inv ? inv.title : it.investorId}: emailed from the sender's own email app`, it.offeringId, it.investorId);
     NS.app.save(true);
@@ -2712,7 +2770,7 @@
     const r = await resend(w, it);
     NS.app.render();
     if (r.emailStatus === 'manual') return showEmail(it.id);
-    U.toast(r.error ? r.error : r.emailStatus === 'outbox' ? `New link for ${inv.title} saved in the server outbox.` : `New invitation emailed to ${inv.contact}.`);
+    U.toast(r.error ? r.error : notSent(r.emailStatus, 'The new link', inv) || (r.emailStatus === 'outbox' ? `New link for ${inv.title} saved in the server outbox.` : `New invitation emailed to ${inv.contact}.`));
   };
   NS.actions['inv8-cancel'] = (el) => {
     const it = itById(el);
@@ -2816,7 +2874,7 @@
         const off = offOf(w, it.offeringId);
         const x = it.status === 'completed' ? outcome(w, it) : null;
         const st = statusOf(it);
-        const em = it.emailStatus === 'failed' ? `<span class="cs-error-text">${h(EMAIL.failed)}${it.emailError ? `: ${h(it.emailError)}` : ''}</span>` : h(EMAIL[it.emailStatus] || it.emailStatus || '');
+        const em = it.emailStatus === 'failed' ? `<span class="cs-error-text">${h(EMAIL.failed)}${it.emailError ? `: ${h(it.emailError)}` : ''}</span>` : MAIL_LINE[it.emailStatus] ? `<span class="inv8-mailline${it.emailStatus === 'held' ? '' : ' cs-error-text'}">${h(MAIL_LINE[it.emailStatus](inv))}</span>` : h(EMAIL[it.emailStatus] || it.emailStatus || '');
         const acts = [];
         if (ops && OPEN.indexOf(it.status) >= 0) {
           if (linkFor(w, it)) acts.push(`<button class="cs-btn cs-btn-small" type="button" data-action="inv8-copy" data-id="${h(it.id)}">Copy link</button>`);
@@ -2827,7 +2885,7 @@
         else if (ops && it.status === 'cancelled' && invOf(w, it.investorId) && forInvestor(w, it.investorId) === it) acts.push(`<button class="cs-btn cs-btn-small" type="button" data-action="inv8-reinvite" data-id="${h(it.id)}">Invite again</button>`);
         else if (x && waitingCountersign(x.env)) acts.push(`<a class="cs-btn cs-btn-small cs-btn-primary" href="#console-envelope-${h(x.env.id)}">Countersign</a>`);
         else if (x && x.inv && x.inv.onboarding && x.inv.onboarding.status === 'complete') acts.push(`<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(x.inv.id)}">View portal</button>`);
-        const activity = [[neverSent(it) ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
+        const activity = [[neverSent(it) || NOT_SENT.indexOf(it.emailStatus) >= 0 ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
         return `<tr data-invitation="${h(it.id)}">
           <th scope="row"><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.email)}</span></th>
           <td data-label="Offering">${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : it.reverify ? 'Re-verification only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
@@ -3044,6 +3102,12 @@
     validate,
     emailFor,
     mailtoFor,
+    mailData,
+    emailCard,
+    firmOf,
+    coMailData,
+    coEmail,
+    logMail,
     sweep,
     serverOn,
     accreditationRequired,
