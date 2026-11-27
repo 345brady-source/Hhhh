@@ -168,17 +168,27 @@ async function saveCo(cp, invId, co) {
   await cp.fill('#co-last', co.last);
   await cp.fill('#co-email', co.email);
   await cp.click('#dlg form[data-form="co-save"] button[type=submit]');
-  await cp.waitForTimeout(800);
+  // Saved: the form gives way to the Account window (or to the email to send by hand). A form still open is read as it is.
+  await cp.waitForFunction(() => !document.querySelector('#dlg form[data-form="co-save"]'), null, { timeout: 10000 }).catch(() => {});
   return dialogNow(cp);
 }
-async function removeCo(cp, invId) {
+/** "Remove co-investor"; resolves once the console has the server's answer to the cancel it sends (true), or false after ms. */
+async function removeCo(cp, invId, ms) {
+  const answers = () => cp.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((a) => /^Co-investor sign-in (cancelled|not cancelled yet)$/.test(a.action)).length);
+  const n = await answers();
   await investorsPage(cp, invId);
   await cp.click(`[data-action=co-record][data-id="${invId}"]`);
   await cp.waitForSelector('#dlg[open] [data-action=co-remove]', { timeout: 10000 });
   await cp.click('#dlg [data-action=co-remove]');
   await cp.waitForSelector('#dlg[open] [data-action=co-remove-yes]', { timeout: 10000 });
   await cp.click('#dlg [data-action=co-remove-yes]');
-  await cp.waitForTimeout(800);
+  // invitations.js coCancel logs its line once the server has answered (cancelled, already ended, or not reached).
+  return cp
+    .waitForFunction((k) => (window.CVPortal.state.ws.audit || []).filter((a) => /^Co-investor sign-in (cancelled|not cancelled yet)$/.test(a.action)).length > k, n, { timeout: ms || 20000 })
+    .then(
+      () => true,
+      () => false
+    );
 }
 /** The account's co-investor, sign-in record and the agreement that has the co-investor as a signer, as the console holds them. */
 const consoleState = (cp, invId) =>
@@ -407,7 +417,13 @@ async function coSigns(S, F, dev, link, opts) {
     () => true,
     () => false
   );
-  await p.waitForTimeout(800);
+  // The send is confirmed: onboarding.js sendCoSign removes the device's copies, then records invite.sentAt.
+  R.confirmed = R.doneShown
+    ? await p.waitForFunction(() => !!(window.CVPortal.state.ws && window.CVPortal.state.ws.invite && window.CVPortal.state.ws.invite.sentAt), null, { timeout: 30000 }).then(
+        () => true,
+        () => false
+      )
+    : false;
   R.done = R.doneShown ? await p.locator('.ivf-done').innerText() : await L.screenText(p);
   R.texts.push(R.done);
   await p.screenshot({ path: path.join(OUT, `${tag}-co-done.png`), fullPage: true });
@@ -419,24 +435,38 @@ async function coSigns(S, F, dev, link, opts) {
   }, env.workDocId);
   return R;
 }
-/** The console's own "Check now"; resolves once the co-investor's signer on the account's agreement is signed (or ms passed). */
-async function consoleChecks(cp, invId, ms) {
+// What the console's "Check now" says once the check it started (or joined) has ended (invitations.js inv8-check).
+const CHECK_END = String.raw`^(Checked\. Nothing new\.|.+ added to the portal\.|Could not check: .*)$`;
+/**
+ * The console's own "Check now" on the Investors page. Resolves once that check has ended, which is when its toast is up
+ * (by then it has imported, refused and deleted on the server whatever it found), or ms passed: { finished, toast }.
+ * A check still running when the next step starts deletes on the server what that step stores there (debug
+ * coinvestor-server-flaky), so every step that reads what a check did waits for this, never for a fixed time.
+ */
+async function checkNow(cp, ms) {
+  const limit = ms || 30000;
   await cp.evaluate(() => window.CVPortal.ui.closeDialog());
   await L.consoleRoute(cp, 'console-investors', '[data-action=inv8-check]');
+  const seen = await cp.evaluate(() => {
+    if (!window.__checkToasts) {
+      const list = (window.__checkToasts = []);
+      new MutationObserver((muts) => muts.forEach((m) => m.addedNodes.forEach((x) => x.nodeType === 1 && x.classList.contains('toast') && list.push(x.textContent)))).observe(document.getElementById('toasts'), { childList: true });
+    }
+    return window.__checkToasts.length;
+  });
   await cp.click('[data-action=inv8-check]');
   return cp
-    .waitForFunction(
-      (id) => {
-        const ws = window.CVPortal.state.ws;
-        return (ws.envelopes || []).some((e) => e.signers.some((s) => s.investorId === id && s.co && s.status === 'signed'));
-      },
-      invId,
-      { timeout: ms || 20000 }
-    )
+    .waitForFunction(({ n, re }) => (window.__checkToasts || []).slice(n).find((t) => new RegExp(re).test(t)) || '', { n: seen, re: CHECK_END }, { timeout: limit })
     .then(
-      () => true,
-      () => false
+      async (h) => ({ finished: true, toast: await h.jsonValue() }),
+      () => ({ finished: false, toast: `the console's Check now had not ended after ${limit / 1000} s` })
     );
+}
+/** The console's own "Check now", ended: { took: the co-investor's signer on the account's agreement is signed, finished, toast }. */
+async function consoleChecks(cp, invId, ms) {
+  const c = await checkNow(cp, ms);
+  const signed = await cp.evaluate((id) => (window.CVPortal.state.ws.envelopes || []).some((e) => e.signers.some((s) => s.investorId === id && s.co && s.status === 'signed')), invId);
+  return Object.assign({ took: c.finished && signed }, c);
 }
 /** The firm's signing view: agree, sign, give the signer's name, Finish (as signing-documents.js). */
 async function firmSigns(cp, env) {
@@ -480,8 +510,12 @@ async function countersign(cp, invId) {
   const funded = `[data-action=req-funded][data-id="${x.rid}"]`;
   if (await cp.locator(funded).count()) {
     await cp.click(funded);
-    await cp.waitForTimeout(900);
-    if (await cp.locator('.es-sign-console').count()) return firmSigns(cp, x);
+    // Countersign opens the firm's signing view by a route change (esign.js countersign, NS.app.go): wait for it.
+    const opened = await cp.waitForSelector('.es-sign-console', { timeout: 30000 }).then(
+      () => true,
+      () => false
+    );
+    if (opened) return firmSigns(cp, x);
   }
   return false;
 }
@@ -591,7 +625,7 @@ function cosign(dev, full) {
       await F.srv.waitCompleted(si.serverId).catch(() => null);
       const took = await consoleChecks(F.cp, F.who.id);
       const after = await consoleState(F.cp, F.who.id);
-      check('the console’s Check now imports the co-investor’s signature', took, after.env);
+      check('the console’s Check now imports the co-investor’s signature', took.took, { check: { finished: took.finished, toast: took.toast }, env: after.env });
       importChecks(check, F, before, after);
       const coTxt = after.work ? await pdfText(Buffer.from(after.work, 'base64')).catch(() => '') : '';
       check('the console’s new work copy carries the co-investor’s name and still the investor’s taxpayer number (the console’s copy is the record)', coTxt.indexOf(R.typedName || F.coName) >= 0 && coTxt.indexOf(SSN) >= 0, coTxt.slice(-300));
@@ -692,11 +726,10 @@ const parts = {
       await C.page.screenshot({ path: path.join(OUT, 'desktop-co-old-link.png') });
       check('the device opening the old link says it no longer works', h1 === 'This invitation link no longer works', h1);
       // Removed: the new sign-in is cancelled too.
-      await removeCo(F.cp, F.who.id);
-      await F.cp.waitForTimeout(1500);
+      const answered = await removeCo(F.cp, F.who.id);
       const st2 = await consoleState(F.cp, F.who.id);
       const newOpen = await openLink(F.srv, second.link);
-      check('"Remove co-investor" takes the co-investor off and cancels their sign-in on the server', !st2.co && newOpen.status === 410 && /This invitation was cancelled/.test((newOpen.body && newOpen.body.error) || ''), { co: st2.co, status: newOpen.status, body: newOpen.body });
+      check('"Remove co-investor" takes the co-investor off and cancels their sign-in on the server', !st2.co && newOpen.status === 410 && /This invitation was cancelled/.test((newOpen.body && newOpen.body.error) || ''), { co: st2.co, status: newOpen.status, body: newOpen.body, answered: answered || 'the console had no answer to its cancel after 20 s' });
       check('the change and the removal are in the audit log', st2.audit.some((x) => /^Co-investor sign-in cancelled:/.test(x)) && st2.audit.filter((x) => /^Co-investor sign-in cancelled:/.test(x)).length >= 2, st2.audit.filter((x) => /co-investor/i.test(x)).slice(-6));
       check('no script error in the console or on the device', F.A.errors.length === 0 && C.errors.length === 0, F.A.errors.concat(C.errors));
     } finally {
@@ -735,21 +768,19 @@ const parts = {
       const stored = F.srv.alter(si.serverId, (sub) => sub.envelope && forge(sub.envelope));
       const took = await consoleChecks(F.cp, F.who.id);
       const after = await consoleState(F.cp, F.who.id);
-      check('the console takes the co-investor’s signature from the forged submission', took && after.env.co.status === 'signed', after.env && after.env.co);
+      check('the console takes the co-investor’s signature from the forged submission', took.took && after.env.co.status === 'signed', { check: { finished: took.finished, toast: took.toast }, co: after.env && after.env.co });
       check('the investor’s and the firm’s places keep the console’s values; no field or signer was added', JSON.stringify(after.env.otherFields) === JSON.stringify(before.env.otherFields) && JSON.stringify(after.env.fieldIds) === JSON.stringify(before.env.fieldIds) && after.env.signers === before.env.signers, { before: before.env.otherFields, after: after.env.otherFields });
       check('the firm is not marked signed, the investor keeps their name, the agreement still waits for the firm', after.env.firm.status !== 'signed' && after.env.investor.name === before.env.investor.name && after.env.status === 'sent', { firm: after.env.firm, investor: after.env.investor, status: after.env.status });
-      // The same submission again: the co-investor already signed.
+      // The same submission again: the co-investor already signed. It is stored only after the check above has ended (that
+      // check's own delete of the forged submission would otherwise remove it), and read once the check it gets has ended.
       const replay = async () => {
         F.srv.server.store.put('invitations', { id: si.serverId, status: 'completed', hasSubmission: true, submission: { plain: JSON.parse(JSON.stringify(stored)) } });
-        await F.cp.evaluate(() => window.CVPortal.ui.closeDialog());
-        await L.consoleRoute(F.cp, 'console-investors', '[data-action=inv8-check]');
-        await F.cp.click('[data-action=inv8-check]');
-        await F.cp.waitForTimeout(2500);
-        return consoleState(F.cp, F.who.id);
+        const ran = await checkNow(F.cp);
+        return Object.assign(await consoleState(F.cp, F.who.id), { check: ran });
       };
       const r1 = await replay();
       const said1 = r1.audit.filter((x) => /^Co-investor signature not used:/.test(x));
-      check('the same submission arriving again changes nothing: the co-investor already signed, and an audit line says so', said1.length === 1 && /already signed/.test(said1[0]) && JSON.stringify(r1.env) === JSON.stringify(after.env) && r1.sha === after.sha, { said: said1, same: JSON.stringify(r1.env) === JSON.stringify(after.env) });
+      check('the same submission arriving again changes nothing: the co-investor already signed, and an audit line says so', r1.check.finished && said1.length === 1 && /already signed/.test(said1[0]) && JSON.stringify(r1.env) === JSON.stringify(after.env) && r1.sha === after.sha, { said: said1, same: JSON.stringify(r1.env) === JSON.stringify(after.env), check: r1.check });
       const left1 = (await F.srv.rows()).find((x) => x.id === si.serverId);
       check('the refused submission is deleted on the server too', !!left1 && left1.hasSubmission === false, left1);
       // The firm voids the agreement; the submission arrives once more.
@@ -761,7 +792,7 @@ const parts = {
       const voided = await consoleState(F.cp, F.who.id);
       const r2 = await replay();
       const said2 = r2.audit.filter((x) => /^Co-investor signature not used:/.test(x));
-      check('after the firm voided the agreement, the submission changes nothing and the audit line says it is no longer out for signature', said2.length === 2 && /no longer out for signature/.test(said2[1]) && JSON.stringify(r2.env) === JSON.stringify(voided.env), { said: said2, status: r2.env && r2.env.status });
+      check('after the firm voided the agreement, the submission changes nothing and the audit line says it is no longer out for signature', r2.check.finished && said2.length === 2 && /no longer out for signature/.test(said2[1]) && JSON.stringify(r2.env) === JSON.stringify(voided.env), { said: said2, status: r2.env && r2.env.status, check: r2.check });
       check('no script error in the console', F.A.errors.length === 0, F.A.errors);
     } finally {
       await F.close();
