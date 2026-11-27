@@ -113,8 +113,15 @@ started: first seen at 75b2fc5 (13-03 merged); 13-03's own gate on base 8efaa5c 
   implication: verification in progress (5 more full runs)
 
 ## Resolution
+<!-- OVERWRITE as understanding evolves -->
 
-root_cause:
-fix:
-verification:
-files_changed: []
+root_cause: "In the check, not the product (ranked first; the failing run's own lines were overwritten by the rerun, so this is the cause the evidence points to, not one observed in that run). server-mode.js:1588-1596 (part tax-request): the device's response listener pushed each GET /v1/invite body only after its own `await res.json()`, a second round trip to the browser after the response event, and the part read the list at the device's first heading with nothing ordering the two. The check wins by 78-173 ms in measured runs; with its process held up longer than that (a 4-core machine running 3-4 gates) the heading comes first, snaps is [], and only 'the snapshot is a tax-form request ...' FAILs while every later step passes - the observed signature (one part FAIL, normal length, reruns PASS). Part clean (server-mode.js:1027-1039) had the same read behind a fixed 300 ms wait. No product race found: every other read of the part waits for what it reads, and 13-03's mailer stores the outbox message before the server replies."
+fix: "server-mode.js only: both listeners keep each body read as its promise (`snaps.push(res.json().catch(() => null))`, `bodies.push(res.text().catch(() => ''))`); tax-request reads `(await Promise.all(snaps)).find(...)`, clean `const raw = await Promise.all(bodies)` after its existing wait. Same fields checked, nothing skipped; at the heading the page has consumed the body, so the awaited read returns after one round trip."
+oracle_type: specified (the snapshot's fields as the plan states them; unchanged)
+verification: |
+  RED (unfixed, body forced 1500 ms late at the check): tax-request FAIL 19 PASS / 1 FAIL (the snapshot check); clean FAIL 11 PASS / 2 FAIL ('received the snapshot :: 0', 'the investor in the snapshot ...').
+  GREEN (fixed, same forced delay): tax-request PASS 20/20; clean PASS 13/13.
+  Natural runs of the unfixed check: 0 failures in 58 (42 --only tax-request incl. three at once at load 4.6-12.9, 3 full, 13 instrumented incl. 3 full and 6 pinned to one CPU).
+  Fixed tree d146e80: server tests 584/584 pass; CO-INVESTOR SERVER PASS (5); EMAIL DIALOG PASS (3); SERVER MODE full: see Evidence (x10).
+guardrail_verdict: pending (SERVER MODE x10 still running)
+files_changed: [.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/server-mode.js]
