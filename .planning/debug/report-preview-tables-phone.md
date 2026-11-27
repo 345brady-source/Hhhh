@@ -108,6 +108,11 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
   found: `REPORTS FLOW: PASS (parts run: 8)` (includes preview-pdf: every preview word in the PDF's words, counted)
   implication: preview text unchanged by the spans.
 
+- timestamp: 2026-11-27T16:20:00Z
+  checked: the other listed checks after the fix (outputs in scratchpad/debug-report-tables/)
+  found: deliver-flow.txt `DELIVER FLOW: PASS (parts run: 8)` (82 s); reports-sweep.txt `REPORTS SWEEP: PASS (parts run: 4)` (51 s); report-fixes.txt `REPORT FIXES: PASS (parts run: 5)` (49 s); phone-layout.txt `PHONE LAYOUT: PASS (parts run: 8)` (335 s); screen-edges.txt `SCREEN EDGES: PASS (parts run: 5)` (107 s)
+  implication: no regression in the report builder flows, the sweep (no vendor name / forbidden word added), phone layout or screen edges.
+
 ## Resolution
 
 root_cause: "assets/css/reports.css:41 `.rb-doc { overflow-wrap: anywhere }` is inherited by the preview's table cells; `anywhere` (unlike break-word) counts a break between any two letters in a cell's narrowest (min-content) width, so the automatic table layout at the phone's 308 px squeezed text columns to one letter (27-36 px) and gave the width to the nowrap number columns; tables whose number columns alone exceeded 308 px also overflowed (343-544 px). Contributing (AND): a hyphenated word ('Single-name') breaks at its hyphen whenever its column sits at its narrowest width."
