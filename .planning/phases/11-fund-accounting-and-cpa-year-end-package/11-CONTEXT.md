@@ -192,3 +192,8 @@
 
 ## After audit-same-books (merged 2026-11-27)
 - AUDIT SAME now loads each side's books scripts and proves a one-cent journal change is reported (quick task summary .planning/quick/2026-11-26-audit-same-books/SUMMARY.md). Against 169b219 (both sides build schedules 20-24) all 1228 schedules and 60 packages agree except the declared moved-notice change. 11-14's start conditions (16-03 and this task merged) are met.
+
+## After 11-15 (merged 2026-11-27)
+- The Bank section merged (bank accounts by name and last four; statement import with the CSV layout form `layoutHTML` for 16-11; suggestions, Accept all, decisions with an Investor field on 2000, Undo, Move match; overlap question incl. "Add only the n other lines"; the opening reconciled balance, dated the first statement line's date because the reader does not return the file's DTSTART, stored with who and when; until entered the difference reads "To be confirmed: opening balance at <date>" and Mark reconciled stays off). Gate GATE_EXIT=0 (first run failed EMAIL DIALOG under load, then the time limit; rerun passed). BANK REC passes on the merged tree; server 472. books-flow.js reframe() fixed (each page load's file asks compared on their own).
+- Open: the Audit page's bank-reconciliation schedule prints the before-opening figure with a blank description (only when not zero); an entry posted from a bank line and then reversed from Entries leaves the line decided and Undo reports "already reversed" (small books-bank.js fix); bank-flow.js captions only 2 of 6 screenshots. Owner's iPhone check: picking a statement file in the preview; no real bank export read yet.
+- Guide lines held for the guide pass: .planning/GUIDE-PASS.md.
