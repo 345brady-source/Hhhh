@@ -103,8 +103,11 @@
     if (PATTERNS[3].test(s)) return { reason: PASSWORD };
     return null;
   }
-  /** No message names the platform, a vendor or a library (white label). */
-  const BANNED = [/carrow/i, /\bvale\b/i, /powered by/i, /DIY Portal/i, /amazon/i, /\baws\b/i, /\bses\b/i, /postmark/i, /sendgrid/i, /mailgun/i, /zepto/i, /zoho/i, /\bresend\b/i, /brevo/i, /smtp2go/i, /anthropic/i, /claude/i, /refract/i, /\bbasic\b/i];
+  /**
+   * No message names the platform, a vendor or a library (white label). The model maker's names are banned as well, but
+   * no shipped file may spell them, so the server's tests hold those two (server/test/emails-guard.test.mjs MODEL_NAMES).
+   */
+  const BANNED = [/carrow/i, /\bvale\b/i, /powered by/i, /DIY Portal/i, /amazon/i, /\baws\b/i, /\bses\b/i, /postmark/i, /sendgrid/i, /mailgun/i, /zepto/i, /zoho/i, /\bresend\b/i, /brevo/i, /smtp2go/i, /refract/i, /\bbasic\b/i];
   const SIMULATED = '(simulated in this demo)';
 
   /* ---------- The sent log ---------- */

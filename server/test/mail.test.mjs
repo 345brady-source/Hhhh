@@ -232,5 +232,5 @@ test('templates are the firm’s alone: brand, note, link, expiry, support; no p
   const no = notificationMessage({ firm: FIRM, investor: INVESTOR, offering: OFFERING, completedAt: '2026-11-12T10:00:00Z', consoleUrl: 'https://portal.example/diy.html#console-investors', summary: { rows: [['Investor', 'Ann Lee'], ['Commitment', '$250,000'], ['Identity', 'Verified']], next: 'Next: countersign the subscription agreement in the console.' } });
   assert.equal(no.subject, 'Ann Lee finished onboarding for Harbor Ridge Fund II');
   for (const s of ['completed every onboarding step on November 12, 2026', 'Commitment: $250,000', 'Identity: Verified', 'Open the console:\nhttps://portal.example/diy.html#console-investors', 'countersign']) assert.ok(no.text.includes(s), s);
-  for (const m of [inv, re, no]) for (const banned of [/carrow/i, /vale\b/i, /powered by/i, /DIY Portal/i].concat(BANNED)) assert.ok(!banned.test(m.text + m.html), `${banned} in ${m.subject}`);
+  for (const m of [inv, re, no]) for (const banned of [/carrow/i, /vale\b/i, /powered by/i, /DIY Portal/i].concat(BANNED, [/anthropic/i, /claude/i])) assert.ok(!banned.test(m.text + m.html), `${banned} in ${m.subject}`);
 });
