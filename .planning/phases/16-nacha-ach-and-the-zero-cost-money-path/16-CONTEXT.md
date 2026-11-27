@@ -67,3 +67,8 @@
 - Failure to watch: on the merged tree's first server test run 1 of 472 failed; three reruns follow (scratchpad st-run-*.txt); a flaky server test is a debugger task once named.
 - Open: audit.js does not count 'date' refusals on the Audit page; books-bank.js suggests a repaid: check only within 3 business days (16-11 decides); 16-08 must store sample run lines (NS.data.confirmLines) or refuse before applying a return on a sample firm (16-14's walk).
 - AUDIT SAME against the pre-merge tree must run from a separate checkout (P11_ROOT may not be the main checkout itself).
+
+## After 16-05 (merged 2026-11-27)
+- nacha.js: entries with no SEC type or an unused one, or an unknown kind, are left out with a reason (result.entries, excluded reasons); refusals for an empty settlement account, empty company name, bad destination routing; dated same-day limits ($1M per entry, $10M from 2027-09-17; investor entries only); pre-note entries; check levels (warn false whenever ok is false). NACHA BUILD 11, HOLIDAYS 10, MOBILE SYNC 3, INDEPENDENT READER 6 pass on the merged tree; server 472. Gate GATE_EXIT=0 (first run hit the time limit).
+- Failure that stays until 16-02 merges: console.js still lets a file with a red check be downloaded and copied (a balanced file with a bad settlement account would download without its offset). The owner's builder check waits for 16-02.
+- Open: 8 of 11 reserved entry descriptions assumed, not cited; whether the bank counts the offsetting debit against the same-day limit (owner's bank guide, "To be confirmed"). Fields later plans rely on: checks[].level, blocked, entries[] (id, ref, trace, cents, code, kind, sec, batch), excluded reasons, SAME_DAY_LIMITS, RESERVED_DESCRIPTIONS.
