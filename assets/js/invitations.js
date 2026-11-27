@@ -1,8 +1,9 @@
 /*
  * Turnkey investor onboarding (DIY edition): the sponsor enters an investor's
- * basic details, the portal emails one link, the link walks the investor
- * through every step (onboarding.js, route #invite-<token>), the sponsor is
- * notified when it is finished and the investor is in the portal.
+ * name, email address and investor type, the portal emails one link, the link
+ * walks the investor through every step (onboarding.js, route
+ * #invite-<token>), the sponsor is notified when it is finished and the
+ * investor is in the portal.
  *
  * NS.invitations is the shared API: invitation records (ws.invitations), the
  * sponsor's notifications (ws.notifications), sending (the integration

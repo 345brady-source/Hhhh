@@ -1,5 +1,5 @@
 // gate: node
-// last "REPORTS MODEL: PASS (cases run: 11)"
+// last "REPORTS MODEL: PASS (cases run: 12)"
 // Plan 12-02: the report model (assets/js/reports.js, NS.reports), proven in Node on stand-in figures.
 // The portal is loaded with phase 11's loader (today 2027-01-20). Figures come from a stand-in D written below that
 // returns plan 12-01's NS.reportsData shapes (every function takes ws first, 12-CONTEXT W1; the stand-in throws when
@@ -942,6 +942,90 @@ const parts = {
     same(check, "chart 'none': no chart block", chartsOf(R.resolve(ws, withChart('none'), one, 'FA-1001', D).model).length, 0);
     const lt = chartsOf(R.resolve(ws, withChart('dist'), { audience: { kind: 'letter', offeringIds: ['fund-a'] }, from: year.from, to: year.to, when: WHEN }, null, D).model);
     same(check, "dist in a letter: the fund's distributions", lt.map((x) => x.values), [[0, 0, 0, 900000]]);
+  },
+
+  /**
+   * Quick small-fixes-c: a distributions or capital chart whose every value is 0 draws nothing but two $0.00 labels, so
+   * the model holds one plain sentence in the chart's place instead; a series with one value above 0 still gives the
+   * chart, exactly as before. For an investor (FA-1001) and for a letter (the fund).
+   */
+  async 'empty-charts'({ check }) {
+    const NS = portal();
+    const R = NS.reports;
+    const ws = seat();
+    const year = { from: '2026-01-01', to: '2026-12-31', when: WHEN };
+    const audiences = {
+      investor: [Object.assign({ audience: { kind: 'investor', investorId: 'FA-1001', offeringId: 'fund-a' } }, year), 'FA-1001'],
+      letter: [Object.assign({ audience: { kind: 'letter', offeringIds: ['fund-a'] } }, year), null]
+    };
+    const SENTENCE = {
+      investor: { dist: 'You received no distributions in this period.', capital: 'Your capital account was zero throughout this period.' },
+      letter: { dist: 'The fund made no distributions in this period.', capital: 'The fund had no capital in this period.' }
+    };
+    const TITLE = {
+      investor: { dist: 'Your distributions by quarter', capital: 'Your capital account at month-end' },
+      letter: { dist: 'Distributions by quarter', capital: 'Fund capital at month-end' }
+    };
+    /** The stand-in with its series replaced: the same quarter labels and month keys, every cents value from `cents(i)`. */
+    const withSeries = (dist, cap) => {
+      const D = standIn(ws);
+      const base = D.series;
+      D.series = (w, oid, id, from, to) => {
+        const s = base(w, oid, id, from, to);
+        return { capital: s.capital.map((c, i) => ({ key: c.key, cents: cap(i) })), dist: s.dist.map((d, i) => ({ label: d.label, cents: dist(i) })) };
+      };
+      return D;
+    };
+    const zero = withSeries(() => 0, () => 0);
+    const control = withSeries((i) => (i === 2 ? 250000 : 0), (i) => (i === 5 ? 1200000 : 0));
+    const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m) => `${m} 2026`);
+    const expected = (aud, chart) =>
+      chart === 'dist'
+        ? {
+            k: 'chart',
+            kind: 'columns',
+            title: TITLE[aud].dist,
+            labels: ['Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026'],
+            values: [0, 0, 250000, 0],
+            shown: ['$0.00', '$0.00', '$2,500.00', '$0.00'],
+            ticks: [
+              { at: 0, s: '$0.00' },
+              { at: 0.5, s: '$1,250.00' },
+              { at: 1, s: '$2,500.00' }
+            ]
+          }
+        : {
+            k: 'chart',
+            kind: 'line',
+            title: TITLE[aud].capital,
+            labels: MONTH_LABELS,
+            values: MONTH_LABELS.map((x, i) => (i === 5 ? 1200000 : 0)),
+            shown: MONTH_LABELS.map((x, i) => (i === 5 ? '$12,000.00' : '$0.00')),
+            ticks: [
+              { at: 0, s: '$0.00' },
+              { at: 0.5, s: '$6,000.00' },
+              { at: 1, s: '$12,000.00' }
+            ]
+          };
+    for (const aud of Object.keys(audiences)) {
+      const [opts, rid] = audiences[aud];
+      for (const chart of ['dist', 'capital']) {
+        const t = Object.assign(R.blank('quarterly', ws), { chart });
+        const mz = R.resolve(ws, t, opts, rid, zero).model;
+        const mc = R.resolve(ws, t, opts, rid, control).model;
+        const where = `${aud} ${chart}`;
+        if (!mz || !mc) {
+          check(`${where}: both models resolve`, false, { zero: !!mz, control: !!mc });
+          continue;
+        }
+        const at = mc.blocks.findIndex((b) => b.k === 'chart');
+        same(check, `${where}, one value above 0: the chart, exactly as before`, mc.blocks.filter((b) => b.k === 'chart'), [expected(aud, chart)]);
+        same(check, `${where}, every value 0: no chart block`, mz.blocks.filter((b) => b.k === 'chart').length, 0);
+        same(check, `${where}, every value 0: one sentence in the chart's place`, mz.blocks[at], { k: 'note', text: SENTENCE[aud][chart] });
+        same(check, `${where}, every value 0: every other block unchanged`, mz.blocks.filter((b, i) => i !== at), mc.blocks.filter((b, i) => i !== at));
+        same(check, `${where}: the sentence appears once`, mz.blocks.filter((b) => b.k === 'note' && b.text === SENTENCE[aud][chart]).length, 1);
+      }
+    }
   },
 
   /** Task 3: the model's tables as schedule objects for the workbook writer, reopened by an independent reader. */

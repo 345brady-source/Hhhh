@@ -879,7 +879,7 @@
         ['onboarding', `Not activated (${incomplete.length})`],
         ['nobank', `Paid by check (${nobank.length})`]
       ];
-      // DIY: turnkey invitations (invitations.js): the basics only, one link through every step, and their progress.
+      // DIY: turnkey invitations (invitations.js): name, email and type only, one link through every step, and their progress.
       const I8 = E.diy && NS.invitations;
       const canInvite = !I8 || NS.app.can('operate');
       return shell(

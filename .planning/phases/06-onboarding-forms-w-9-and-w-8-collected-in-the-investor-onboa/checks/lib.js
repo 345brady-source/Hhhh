@@ -605,6 +605,12 @@ function reporter(prefix) {
  * that passed under exactly the same key; it still counts in "(<unit> run: N)". A failed part, or any difference in the
  * key, runs again. GATE_FRESH=1 runs every part. Nothing is kept for a tree without a key (a base tree made by git
  * archive) or when the tree changed while the part ran.
+ * A rerun replaces a failed part's record, so a failed part's lines are also copied (quick small-fixes-c) to
+ * <OUT>.failed-parts/<check>-<checkout hash>/<part>-<sha8>.failed-<UTC stamp YYYYMMDDTHHMMSSZ>-<pid>.json, a new name
+ * every time, written even when the tree changed while the part ran (then with treeChanged: true), and named in a
+ * "NOTE part <part> failed: its lines are kept in <path>" line. The folder sits beside OUT, not in it, because the
+ * gates' finish lines remove checks-out (OUT); nothing removes or rewrites a file there. Those copies are never read
+ * back: resume reads only the record under OUT/.parts.
  */
 function partKeyBase(flag) {
   const crypto = require('crypto');
@@ -655,21 +661,60 @@ function keptPart(K, part) {
     return null;
   }
 }
+/**
+ * Saves a part's record for a rerun (see partKeyBase). A part that failed is also copied, first and whatever happens to
+ * the tree, to <OUT>.failed-parts/<check>-<hash>/<part>-<sha8>.failed-<UTC stamp>-<pid>.json, a name no other run uses;
+ * nothing ever rewrites or removes those copies. Returns the copy's path ('' when there is none).
+ */
 function savePart(K, part, ok, lines) {
-  if (!K) return;
+  if (!K) return '';
+  const now = new Date();
+  const at = now.toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+  const changed = K.treeKey() !== K.tree;
+  let copy = '';
+  if (!ok) {
+    let tmp = '';
+    try {
+      const dir = path.join(path.resolve(OUT) + '.failed-parts', path.basename(K.dir));
+      fs.mkdirSync(dir, { recursive: true });
+      const stem = path.basename(K.fileOf(part), '.json');
+      const stamp = now.toISOString().replace(/\.\d+Z$/, 'Z').replace(/[-:]/g, '');
+      let f = path.join(dir, `${stem}.failed-${stamp}-${process.pid}.json`);
+      for (let n = 2; fs.existsSync(f); n++) f = path.join(dir, `${stem}.failed-${stamp}-${process.pid}-${n}.json`);
+      tmp = `${f}.part.${process.pid}`;
+      fs.writeFileSync(tmp, JSON.stringify({ key: K.key(part), part, ok, at, treeChanged: changed, lines }, null, 1));
+      // link, not rename: link fails when the name is taken, so an existing copy is never replaced (where the folder
+      // takes no links, an exclusive copy, which also refuses a taken name)
+      try {
+        fs.linkSync(tmp, f);
+      } catch (e) {
+        if (e && e.code === 'EEXIST') throw e;
+        fs.copyFileSync(tmp, f, fs.constants.COPYFILE_EXCL);
+      }
+      copy = f;
+    } catch (e) {
+      console.log(`NOTE the lines of failed part ${part} could not be kept: ${e && e.message}`);
+    }
+    try {
+      if (tmp) fs.unlinkSync(tmp);
+    } catch (e) {
+      /* already gone */
+    }
+  }
   try {
-    if (K.treeKey() !== K.tree) {
+    if (changed) {
       console.log(`NOTE the tree changed while part ${part} ran; its result is not kept for a rerun`);
-      return;
+      return copy;
     }
     fs.mkdirSync(K.dir, { recursive: true });
     const f = K.fileOf(part);
     const tmp = `${f}.part.${process.pid}`;
-    fs.writeFileSync(tmp, JSON.stringify({ key: K.key(part), part, ok, at: new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC'), lines }, null, 1));
+    fs.writeFileSync(tmp, JSON.stringify({ key: K.key(part), part, ok, at, lines }, null, 1));
     fs.renameSync(tmp, f);
   } catch (e) {
     console.log(`NOTE the result of part ${part} could not be saved: ${e && e.message}`);
   }
+  return copy;
 }
 
 /**
@@ -738,7 +783,8 @@ async function runParts(parts, opts) {
     }
     if (R.failed() || !R.results.length) failed.push(n);
     summary.push({ part: n, ok: !(R.failed() || !R.results.length), failed: R.results.filter((r) => !r.ok).map((r) => r.name) });
-    savePart(K, n, !(R.failed() || !R.results.length), R.results.map((r) => r.line));
+    const copy = savePart(K, n, !(R.failed() || !R.results.length), R.results.map((r) => r.line));
+    if (copy) console.log(`NOTE part ${n} failed: its lines are kept in ${copy}`);
   }
   shotRun.part = '';
   if (opts.browser) {
