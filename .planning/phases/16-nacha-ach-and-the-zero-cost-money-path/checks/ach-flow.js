@@ -72,11 +72,13 @@ async function generate(fr) {
     return f ? { name: f.filename, modifier: f.modifier } : null;
   });
 }
-/** The workspace's file log and change log, as plain data. */
+/** The workspace's file log and change log, as plain data (the change log made first: the sample seeds it on first use). */
 const logs = (fr) =>
   fr.evaluate(() => {
-    const w = window.CVPortal.state.ws;
-    return { ach: JSON.parse(JSON.stringify(w.achLog || [])), audit: (w.audit || []).map((e) => ({ action: e.action, detail: e.detail })) };
+    const NS = window.CVPortal;
+    const w = NS.state.ws;
+    const audit = NS.audit && NS.audit.ensureLog ? NS.audit.ensureLog(w) : w.audit || [];
+    return { ach: JSON.parse(JSON.stringify(w.achLog || [])), audit: audit.map((e) => ({ action: e.action, detail: e.detail })) };
   });
 /** Every full bank account number of the sample (investors and the settlement account), 6 digits or more. */
 const accountsOf = (fr) =>
