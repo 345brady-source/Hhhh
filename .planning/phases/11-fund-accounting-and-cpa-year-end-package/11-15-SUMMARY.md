@@ -63,3 +63,9 @@ FAIL published ran to the end :: frame.waitForSelector: Timeout 30000ms exceeded
 BANK FLOW: FAIL (parts run: 1) - published
 ```
 The extracted base tree was deleted after the run.
+
+### Task 2 verify (O/t2.txt; code of 8eb30df, check of 57e15c5): 169 passed, none failed
+Per part: import-phone 42, csv-desktop 25, twice-phone 21, file-kept 15, refused 20, split-desktop 17, undo-roles 29.
+```
+BANK FLOW: PASS (parts run: 7)
+```
