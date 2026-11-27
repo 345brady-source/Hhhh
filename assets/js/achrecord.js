@@ -203,5 +203,463 @@
   /** The day a record's file left the console (YYYY-MM-DD, local). */
   const sentOn = (rec) => dayOf(rec && rec.at, rec && rec.date);
 
-  NS.achRecord = { ensure, keyOf, modifierFor, targetOf, sentFor, filesOf, paidRun, recordFile, attach, canPay, sentOn, longDay, MODIFIERS };
+  /* ---------- Who may be paid in a file (plan 16-07: C-03, C-15, AC-03, AC-07; the owner's D-04 hold) ----------
+   * The state of an investor's bank account lives in investor.payment.bank.check (absent on accounts saved before this
+   * phase): { state: 'new' | 'prenote-sent' | 'returned' | 'blocked' | 'unconfirmed', code, date, until, fileId, why, at,
+   * by }. 'unconfirmed' is written for a change the investor made ({ state, at, by: 'investor' }, phase 15) and leaves
+   * only through confirmChange. A change the bank sent (NOC) waits in bank.pending until an admin applies it (16-08).
+   * Every sentence here names an account by its last four digits at most.
+   */
+  const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const STORED = ['new', 'prenote-sent', 'returned', 'blocked'];
+  const last4 = (v) => strip(v).slice(-4);
+  /** Runs of 5 or more digits in free text cut to their last four (no full account number in a stored reason). */
+  const maskDigits = (s) => String(s == null ? '' : s).replace(/\d{5,}/g, (m) => 'ending ' + m.slice(-4));
+  /** "Nov 19" for a YYYY-MM-DD day. */
+  function monthDay(iso) {
+    const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+    return new Date(Date.UTC(y, (m || 1) - 1, d || 1)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  }
+  const todayOf = (t) => (ISO_DAY.test(String(t || '')) ? String(t) : dayOf(new Date().toISOString(), ''));
+  const person = (by, what) => {
+    const s = String(by == null ? '' : by).trim();
+    if (!s) throw new Error(`${what} needs the name of the person doing it.`);
+    return s;
+  };
+  const paymentOf = (inv) => (inv && inv.payment) || {};
+  /** The investor's ACH bank, or null (a check payee, or a foreign investor paid by wire). */
+  function achBank(inv) {
+    const p = paymentOf(inv);
+    return p.method !== 'wire' && p.method !== 'check' && p.bank && typeof p.bank === 'object' ? p.bank : null;
+  }
+  const isWire = (inv) => paymentOf(inv).method === 'wire';
+
+  const W = {
+    wire: 'Paid by international wire: see "Wires".',
+    none: 'No bank account on file: paid by check.',
+    unconfirmed: 'The investor changed this account: an admin confirms it before it is paid.',
+    newOn: 'A pre-note checks this account first: build it on the ACH origination page.',
+    ready: 'Ready to be paid.',
+    prenote: (until) => `Can be paid from ${longDay(until)}, three banking days after its pre-note.`,
+    returned: (code, date) => `Returned by the bank (${code || 'no code'}, ${monthDay(date)}): waits for new bank details.`,
+    pending: (since) => `A change from the bank waits for an admin since ${monthDay(since)}.`,
+    pendingPaid: (since) => `A change from the bank waits for an admin since ${monthDay(since)}. The account on file is still paid for now.`
+  };
+
+  /** Pre-notes apply: the self-serve edition, unless the sponsor turned them off (tenant.ach.prenotes false). */
+  function prenotesOn(ws) {
+    const E = NS.EDITION || {};
+    const ach = (ws && ws.tenant && ws.tenant.ach) || {};
+    return !!E.diy && ach.prenotes !== false;
+  }
+
+  /** Per call: the investors a paid run line pays (worked out once, only when an account with no check needs it). */
+  function context(ws, today) {
+    let paid = null;
+    return {
+      today,
+      paidIds() {
+        if (!paid) {
+          paid = new Set();
+          const D = NS.data;
+          if (D && D.paidLines) D.paidLines(ws, { today }).forEach((x) => x.line && paid.add(x.line.investorId));
+        }
+        return paid;
+      }
+    };
+  }
+  /** A sent file record holds a credit entry for this investor (to the account ending last4, when given). */
+  function paidByFile(ws, investorId, l4, after) {
+    return files(ws).some((rec) => (!after || sentOn(rec) > after) && (rec.entries || []).some((e) => e.investorId === investorId && e.kind === 'credit' && (!l4 || e.last4 === l4)));
+  }
+
+  function stateOf(ws, inv, ctx) {
+    const today = ctx.today;
+    if (isWire(inv)) return { state: 'wire', words: W.wire };
+    const bank = achBank(inv);
+    if (!bank) return { state: 'none', words: W.none };
+    const c = bank.check && typeof bank.check === 'object' ? bank.check : null;
+    if (c && c.state === 'unconfirmed') return { state: 'unconfirmed', at: c.at || '', by: c.by || '', words: W.unconfirmed };
+    const p = bank.pending && typeof bank.pending === 'object' ? bank.pending : null;
+    if (p && ISO_DAY.test(String(p.date || ''))) {
+      // 16-CONTEXT choice (4), re-check B1: the old details are paid for 6 banking days or until the next payment,
+      // whichever is later; after both, the account is held.
+      const until = NS.nacha.nextBankingDay(p.date, 6);
+      const held = today > until && paidByFile(ws, inv.id, '', p.date);
+      return { state: 'pending', code: p.code || '', date: p.date, until, held, words: held ? W.pending(p.date) : W.pendingPaid(p.date) };
+    }
+    if (c && c.state === 'returned') return { state: 'returned', code: c.code || '', date: c.date || '', words: W.returned(c.code, c.date) };
+    if (c && c.state === 'blocked') return { state: 'blocked', why: c.why || '', words: c.why || 'Held by the bank.' };
+    if (c && c.state === 'prenote-sent') {
+      if (c.until && today < c.until) return { state: 'prenote-sent', date: c.date || '', until: c.until, fileId: c.fileId || '', words: W.prenote(c.until) };
+      return { state: 'ready', date: c.date || '', until: c.until || '', words: W.ready };
+    }
+    const fresh = c ? c.state === 'new' : !(paidByFile(ws, inv.id, last4(bank.account)) || ctx.paidIds().has(inv.id));
+    if (fresh) return { state: 'new', at: (c && c.at) || '', words: prenotesOn(ws) ? W.newOn : W.ready };
+    return { state: 'ready', words: W.ready };
+  }
+
+  /**
+   * The state of an investor's account on `today`: { state, code, date, until, why, words } (state 'none', 'wire',
+   * 'unconfirmed', 'pending' (with held), 'returned', 'blocked', 'prenote-sent', 'new' or 'ready'; words the console's
+   * sentence). With pre-notes off a 'new' account is payable.
+   */
+  function checkOf(ws, inv, today) {
+    const s = stateOf(ws, inv, context(ws, todayOf(today)));
+    return Object.assign({ state: s.state, code: '', date: '', until: '', why: '', words: '' }, s);
+  }
+
+  /** Write bank.check (one of the four stored states); refused for an investor with no ACH bank. info: { code, date, until, fileId, why, by, at }. */
+  function setCheck(ws, inv, state, info) {
+    const bank = achBank(inv);
+    if (!bank) throw new Error('This investor has no bank account on file for ACH.');
+    if (STORED.indexOf(state) < 0) throw new Error('That is not a state an account can be given.');
+    const i = info || {};
+    if (state === 'returned' && (!i.code || !ISO_DAY.test(String(i.date || '')))) throw new Error('A returned account needs the return code and the day it was returned.');
+    if (state === 'prenote-sent' && (!ISO_DAY.test(String(i.date || '')) || !ISO_DAY.test(String(i.until || '')))) throw new Error('A pre-noted account needs its pre-note date and the day it can be paid.');
+    const why = maskDigits(i.why).trim().slice(0, 300);
+    if (state === 'blocked' && !why) throw new Error('Holding an account needs the reason.');
+    const out = { state };
+    if (i.code) out.code = String(i.code).slice(0, 3);
+    if (i.date) out.date = String(i.date);
+    if (i.until) out.until = String(i.until);
+    if (i.fileId) out.fileId = String(i.fileId);
+    if (why) out.why = why;
+    out.at = i.at || new Date().toISOString();
+    if (i.by) out.by = String(i.by).trim();
+    bank.check = out;
+    return out;
+  }
+
+  /** New or changed bank details: the account is 'new' (the bank step and the console call it when details change). */
+  function markNew(inv, at) {
+    const bank = achBank(inv);
+    if (!bank) throw new Error('This investor has no bank account on file for ACH.');
+    bank.check = { state: 'new', at: at || new Date().toISOString() };
+    return bank.check;
+  }
+
+  /**
+   * D-04: an admin confirms an account the investor changed; it becomes 'new' (its pre-note follows, C-03). Refused with no
+   * person or when no change waits. The calling screen checks canPay() (and phase 15's server route its own rights).
+   */
+  function confirmChange(ws, inv, opts) {
+    const o = opts || {};
+    const by = person(o.by, 'Confirming a bank account change');
+    const bank = achBank(inv);
+    const c = bank && bank.check;
+    if (!c || c.state !== 'unconfirmed') throw new Error('This account has no change waiting for an admin.');
+    bank.check = { state: 'new', at: o.at || new Date().toISOString(), by };
+    return bank.check;
+  }
+
+  /** Investors whose account waits for a pre-note (pre-notes on), in register order. */
+  function prenotesDue(ws, today) {
+    if (!prenotesOn(ws)) return [];
+    const ctx = context(ws, todayOf(today));
+    return (ws.investors || []).filter((inv) => stateOf(ws, inv, ctx).state === 'new');
+  }
+
+  /** An entry to the investor's ACH bank for the builder (the investor id in the entry's id field, read back by recordFile). */
+  function entryOf(inv, cents, ref, kind) {
+    const bank = achBank(inv);
+    const e = { name: bank.holder || inv.title, id: inv.id, routing: bank.routing, account: bank.account, accountType: bank.type, cents, sec: (NS.ENTITY_TYPES && NS.ENTITY_TYPES[inv.type] ? NS.ENTITY_TYPES[inv.type] : {}).sec, ref: ref || inv.id };
+    if (kind) e.kind = kind;
+    return e;
+  }
+
+  /** The pre-note entries ($0, kind prenote) for prenotesDue (C-15: pre-notes go in their own file). */
+  function prenoteEntries(ws, today) {
+    return prenotesDue(ws, today).map((inv) => entryOf(inv, 0, inv.id, 'prenote'));
+  }
+
+  /**
+   * After a pre-note file leaves (its record, for 'prenote'): each of its entries' investors, still on the account the
+   * entry names and not waiting for an admin, becomes 'prenote-sent' from the file's effective date, payable three banking
+   * days after it by the holiday rule. Returns the investors marked. Refused for any other record.
+   */
+  function prenotesSent(ws, record, opts) {
+    const o = opts || {};
+    if (!record || record.kind !== 'file' || record.for !== 'prenote') throw new Error('Only a pre-note file marks accounts as pre-noted.');
+    if (!ISO_DAY.test(String(record.effective || ''))) throw new Error('This pre-note file has no payment date.');
+    const by = person(o.by, 'Recording a pre-note');
+    const until = NS.nacha.nextBankingDay(record.effective, 3);
+    const marked = [];
+    (record.entries || []).forEach((e) => {
+      if (e.kind !== 'prenote') return;
+      const inv = (ws.investors || []).find((x) => x.id === e.investorId);
+      const bank = achBank(inv);
+      if (!bank || last4(bank.account) !== e.last4) return;
+      if (bank.check && bank.check.state === 'unconfirmed') return;
+      setCheck(ws, inv, 'prenote-sent', { date: record.effective, until, fileId: record.id, by, at: o.at });
+      marked.push(inv);
+    });
+    return marked;
+  }
+
+  /**
+   * AC-03: who a file of payments may pay on its effective date. rows: [ { investor, cents, ref?, request? } ] (the net to
+   * pay). Returns { entries, held }: entries for the builder (an unknown investor type keeps sec undefined, so the builder
+   * leaves it out with 'No SEC type'); held [ { investor, cents, kind, reason, until, ref?, request? } ] with one sentence
+   * each. Check payees are neither (the console lists them as checks).
+   */
+  function fileEntries(ws, rows, opts) {
+    const o = opts || {};
+    const ctx = context(ws, todayOf(o.today));
+    const effective = String(o.effective || ctx.today);
+    const on = prenotesOn(ws);
+    const entries = [];
+    const held = [];
+    (rows || []).forEach((row) => {
+      const inv = row && row.investor;
+      if (!inv) return;
+      const s = stateOf(ws, inv, ctx);
+      const hold = (kind, reason, until) => {
+        const h = { investor: inv, cents: row.cents, kind, reason, until: until || '' };
+        if (row.ref) h.ref = row.ref;
+        if (row.request) h.request = row.request;
+        held.push(h);
+      };
+      const pay = () => entries.push(entryOf(inv, row.cents, row.ref));
+      const bank = achBank(inv);
+      const c = (bank && bank.check) || {};
+      switch (s.state) {
+        case 'none':
+          return;
+        case 'wire':
+          return hold('wire', W.wire);
+        case 'unconfirmed':
+          return hold('unconfirmed', W.unconfirmed);
+        case 'pending':
+          return s.held ? hold('pending', W.pending(s.date), s.until) : pay();
+        case 'returned':
+          return hold('returned', W.returned(s.code, s.date));
+        case 'blocked':
+          return hold('blocked', s.words);
+        case 'prenote-sent':
+          return effective >= s.until ? pay() : hold('prenote-sent', W.prenote(s.until), s.until);
+        case 'new':
+          return on ? hold('new', W.newOn) : pay();
+        default:
+          // 'ready'; a pre-noted account whose day has come
+          return c.state === 'prenote-sent' && c.until && effective < c.until ? hold('prenote-sent', W.prenote(c.until), c.until) : pay();
+      }
+    });
+    return { entries, held };
+  }
+
+  /* ---------- Redemption payment files (D-06, AC-16) ---------- */
+  /**
+   * The payees of a redemption payment file: approved redemptions whose dealing month is final (r.dealing on or before
+   * NS.audit.lastMonthEnd(today), the console's rule) and whose NS.ops.redemptionAmount is a number. Returns
+   * { entries, held, wires, checks }: entries and held as fileEntries gives them (each entry's ref the request id, each
+   * held item's request); wires [ { request, investor, cents, details } ]; checks [ { request, investor, cents } ].
+   */
+  function redemptionPayees(ws, requests, opts) {
+    const o = opts || {};
+    const today = todayOf(o.today);
+    const lastEnd = NS.audit && NS.audit.lastMonthEnd ? NS.audit.lastMonthEnd(today) : '';
+    const rows = [];
+    const wires = [];
+    const checks = [];
+    (requests || []).forEach((r) => {
+      if (!r || r.type !== 'redemption' || r.status !== 'approved' || !r.dealing || !lastEnd || r.dealing > lastEnd) return;
+      const cents = NS.ops && NS.ops.redemptionAmount ? NS.ops.redemptionAmount(ws, r) : null;
+      if (typeof cents !== 'number' || !(cents > 0)) return;
+      const investor = (ws.investors || []).find((x) => x.id === r.investorId);
+      if (!investor) return;
+      if (isWire(investor)) wires.push({ request: r, investor, cents, details: wireDetails(investor) });
+      else if (!achBank(investor)) checks.push({ request: r, investor, cents });
+      else rows.push({ investor, cents, ref: r.id, request: r });
+    });
+    const out = fileEntries(ws, rows, { today, effective: o.effective });
+    return { entries: out.entries, held: out.held, wires, checks };
+  }
+
+  /* ---------- International wires (D-04, AC-12; no IAT file) ---------- */
+  /*
+   * investor.payment = { method: 'wire', bank: null, wire: { beneficiary, address, bankName, country, bic, iban, account,
+   * intermediary: null | { name, bic }, at } } (iban or account). The shapes are checked, not the banks [ASSUMED,
+   * 16-RESEARCH A10]: a BIC is 4 letters (bank), 2 letters (country), 2 letters or digits (place), optionally 3 more
+   * (branch); an IBAN is 2 letters, 2 check digits and 11 to 30 letters or digits whose ISO 13616 mod 97 is 1.
+   */
+  const compact = (s) => String(s == null ? '' : s).replace(/\s/g, '').toUpperCase();
+  function bicValid(s) {
+    return /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(compact(s));
+  }
+  function ibanValid(s) {
+    const v = compact(s);
+    if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(v)) return false;
+    const moved = (v.slice(4) + v.slice(0, 4)).replace(/[A-Z]/g, (c) => String(c.charCodeAt(0) - 55));
+    let mod = 0;
+    for (let k = 0; k < moved.length; k++) mod = (mod * 10 + Number(moved[k])) % 97;
+    return mod === 1;
+  }
+  /** The stored wire block of a wire payee, or null. */
+  function wireDetails(inv) {
+    const p = paymentOf(inv);
+    return p.method === 'wire' && p.wire && typeof p.wire === 'object' ? p.wire : null;
+  }
+  /** What a screen may show of the wire details: { bankName, country, ending } (the last four of the IBAN or account). */
+  function wireMasked(inv) {
+    const w = wireDetails(inv) || {};
+    return { bankName: w.bankName || '', country: w.country || '', ending: last4(w.iban || w.account) };
+  }
+  const runLinesOf = (ws, run) => (NS.data && NS.data.runLines ? NS.data.runLines(ws, run) : { stored: Array.isArray(run.lines), lines: run.lines || [] });
+  /**
+   * A wire payee's line is a wire to send when its run has stored lines and was recorded, or is dated, on or after the day
+   * the wire details were saved: a payment made before the investor had wire details was not a wire.
+   */
+  function wireLine(run, inv) {
+    const w = wireDetails(inv);
+    if (!w || !Array.isArray(run.lines)) return false;
+    if (!w.at) return true;
+    return String(run.linesAt || '') >= String(w.at) || run.date >= dayOf(w.at, String(w.at).slice(0, 10));
+  }
+  /**
+   * The Wires list: every line of a recorded, not cancelled distribution paid to a wire payee and not marked sent, oldest
+   * first: [ { runId, offeringId, date, investorId, name, cents (net), reference, details } ].
+   */
+  function wiresDue(ws) {
+    const out = [];
+    (ws.runs || [])
+      .filter((run) => run && !run.cancelled && Array.isArray(run.lines))
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      .forEach((run) => {
+        const o = (ws.offerings || []).find((x) => x.id === run.offeringId) || {};
+        run.lines.forEach((line) => {
+          const inv = (ws.investors || []).find((x) => x.id === line.investorId);
+          if (!inv || line.wire || !wireLine(run, inv)) return;
+          out.push({ runId: run.id, offeringId: run.offeringId, date: run.date, investorId: inv.id, name: inv.title, cents: line.netCents, reference: `${o.shortName || o.name || run.offeringId} ${run.date} ${inv.id}`, details: wireDetails(inv) });
+        });
+      });
+    return out;
+  }
+  const realDay = (s) => {
+    if (!ISO_DAY.test(String(s || ''))) return false;
+    const [y, m, d] = s.split('-').map(Number);
+    const t = new Date(Date.UTC(y, m - 1, d));
+    return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
+  };
+  /** Mark sent: line.wire = { sentOn, by, at }. Refused: no person, a date not YYYY-MM-DD, not a wire payee's line, already marked. */
+  function markWireSent(ws, runId, investorId, opts) {
+    const o = opts || {};
+    const by = person(o.by, 'Marking a wire sent');
+    if (!realDay(o.sentOn)) throw new Error('The day the wire was sent must be a date written YYYY-MM-DD.');
+    const run = runOf(ws, runId);
+    if (!run) throw new Error('No distribution with this id is recorded.');
+    if (run.cancelled) throw new Error('This distribution is cancelled.');
+    const line = Array.isArray(run.lines) ? run.lines.find((l) => l.investorId === investorId) : null;
+    const inv = (ws.investors || []).find((x) => x.id === investorId);
+    if (!line || !inv || !wireLine(run, inv)) throw new Error('This investor is not paid by international wire.');
+    if (line.wire) throw new Error(`This wire was already marked sent on ${longDay(line.wire.sentOn)} by ${line.wire.by}.`);
+    line.wire = { sentOn: o.sentOn, by, at: o.at || new Date().toISOString() };
+    return line.wire;
+  }
+  /** A spreadsheet cell: a value starting =, +, - or @ (or a tab or return) is prefixed with ' so it is never a formula. */
+  function csvCell(v) {
+    let s = String(v == null ? '' : v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  /** The Wires list as CSV text (what the sponsor copies into its bank's wire screen). */
+  function wireCsv(rows) {
+    const head = ['Investor', 'Investor ID', 'Amount', 'Beneficiary', 'Address', 'Bank', 'Country', 'BIC', 'IBAN or account', 'Intermediary', 'Reference'];
+    const body = (rows || []).map((r) => {
+      const d = r.details || {};
+      const mid = d.intermediary ? [d.intermediary.name, d.intermediary.bic].filter(Boolean).join(' ') : '';
+      return [r.name, r.investorId, (Number(r.cents || 0) / 100).toFixed(2), d.beneficiary, d.address, d.bankName, d.country, compact(d.bic), compact(d.iban) || strip(d.account), mid, r.reference];
+    });
+    return [head].concat(body).map((row) => row.map(csvCell).join(',')).join('\r\n');
+  }
+
+  /* ---------- What a payment line reads (AC-11) ---------- */
+  /**
+   * The one reading of a distribution line's payment state, for the console and the investor portal:
+   * { status: 'scheduled' | 'paid' | 'held' | 'returned' | 'repaid' | 'cancelled', method: 'ach' | 'wire' | 'check' | '',
+   * ending, code, date, words, wireSent }. run: the run or its id; null when the investor has no line on it. An ACH line
+   * names the account the sent file paid (its last four), or the account on file for a run with no file record; an ACH
+   * payee left out of the run's sent file is 'held' ('Not paid yet'); a wire not marked sent is 'scheduled'; a wire
+   * payee's payment made before its wire details were saved reads 'Paid' with method '' (how it was paid is not on record).
+   */
+  function lineStatus(ws, run, investorId, today) {
+    const r = typeof run === 'string' ? runOf(ws, run) : run;
+    if (!r) return null;
+    const line = runLinesOf(ws, r).lines.find((l) => l.investorId === investorId);
+    if (!line) return null;
+    const t = todayOf(today);
+    const inv = (ws.investors || []).find((x) => x.id === investorId) || { id: investorId };
+    const sent = r.id ? files(ws).filter((x) => x.runId === r.id).reverse() : [];
+    const entry = sent.map((x) => (x.entries || []).find((e) => e.investorId === investorId && e.kind === 'credit')).find(Boolean);
+    let method = 'check';
+    let ending = '';
+    let savings = false;
+    let held = false;
+    if (entry) {
+      method = 'ach';
+      ending = entry.last4 || '';
+      savings = entry.code === '32';
+    } else if (line.wire || wireLine(r, inv)) {
+      method = 'wire';
+      ending = wireMasked(inv).ending;
+    } else if (isWire(inv)) {
+      // paid before the investor's wire details were saved: how it was paid is not on record
+      method = '';
+    } else if (achBank(inv)) {
+      method = 'ach';
+      ending = last4(achBank(inv).account);
+      savings = achBank(inv).type === 'savings';
+      // the run's file was sent without this investor (held out of it: fileEntries' reason)
+      held = sent.length > 0;
+    }
+    const out = { status: 'paid', method, ending, code: '', date: r.date, words: '', wireSent: line.wire || null };
+    const a = line.ach && typeof line.ach === 'object' ? line.ach : null;
+    if (r.cancelled) return Object.assign(out, { status: 'cancelled', words: 'Cancelled' });
+    if (r.date > t) return Object.assign(out, { status: 'scheduled', words: `Scheduled for ${longDay(r.date)}` });
+    if (a && a.status === 'repaid' && a.repaid && a.repaid.on) return Object.assign(out, { status: 'repaid', code: a.code || '', date: a.repaid.on, words: `Paid again on ${longDay(a.repaid.on)}` });
+    if (a && (a.status === 'returned' || a.status === 'repaid')) return Object.assign(out, { status: 'returned', code: a.code || '', date: a.date || '', words: `Returned by your bank on ${longDay(a.date)}` });
+    if (method === 'wire') {
+      if (!line.wire) return Object.assign(out, { status: 'scheduled', words: `To be paid by wire to the account ending ${ending}` });
+      return Object.assign(out, { date: line.wire.sentOn, words: `Paid by wire to the account ending ${ending}` });
+    }
+    if (held) return Object.assign(out, { status: 'held', words: 'Not paid yet' });
+    if (method === 'ach') return Object.assign(out, { words: `Paid by ACH to the ${savings ? 'savings' : 'checking'} account ending ${ending}` });
+    if (!method) return Object.assign(out, { words: 'Paid' });
+    return Object.assign(out, { words: 'Paid by check' });
+  }
+
+  NS.achRecord = {
+    ensure,
+    keyOf,
+    modifierFor,
+    targetOf,
+    sentFor,
+    filesOf,
+    paidRun,
+    recordFile,
+    attach,
+    canPay,
+    sentOn,
+    longDay,
+    MODIFIERS,
+    prenotesOn,
+    checkOf,
+    setCheck,
+    markNew,
+    confirmChange,
+    prenotesDue,
+    prenoteEntries,
+    prenotesSent,
+    fileEntries,
+    redemptionPayees,
+    bicValid,
+    ibanValid,
+    wireDetails,
+    wireMasked,
+    wiresDue,
+    markWireSent,
+    wireCsv,
+    lineStatus
+  };
 })(window.CVPortal);
