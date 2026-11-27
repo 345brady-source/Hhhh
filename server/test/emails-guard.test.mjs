@@ -36,7 +36,10 @@ function renders() {
   return out;
 }
 const parts = (m) => [m.subject, m.preheader, m.text, m.html];
-const linkOf = (kind, data) => (E().KINDS[kind].audience === 'investor' ? data.link : data.consoleUrl);
+/** The addresses a message may link to (13-11): the personal link, the portal, the console and the stop link. */
+const linksOf = (data) => [data.link, data.portalUrl, data.consoleUrl, data.unsubscribeUrl].filter(Boolean);
+/** The text with every allowed address taken out (the HTML-escaped form too). */
+const without = (s, data) => linksOf(data).reduce((t, l) => t.split(E().esc(l)).join(' ').split(l).join(' '), String(s));
 /** Every key of a value, at any depth. */
 function keys(x, out = []) {
   if (Array.isArray(x)) x.forEach((v) => keys(v, out));
@@ -65,9 +68,8 @@ test('patterns: screen() refuses taxpayer numbers, long numbers and passwords wi
 
 test('no sensitive data in any render: no pattern in what is sent, no field for one in the data, the note screened', () => {
   for (const { kind, variant, data, m } of renders()) {
-    const link = linkOf(kind, data);
     for (const p of parts(m)) {
-      const s = String(p).split(link || '\u0000').join(' ').replace(/(January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4}/g, ' ');
+      const s = without(p, data).replace(/(January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2}, \d{4}/g, ' ');
       for (const re of E().PATTERNS) assert.ok(!re.test(s), `${kind} ${variant}: ${re} in ${(re.exec(s) || [])[0]}`);
     }
     const bad = keys(data).filter(SENSITIVE_KEY);
@@ -102,16 +104,17 @@ test('banned words: no platform, vendor or library name, and never the plain-tie
   assert.deepEqual(named, [], `assets/js/emails.js lines ${named.join(', ')}`);
 });
 
-test('links: only the investor’s own link and the firm’s support address; redactLink and log() keep no link', () => {
+test('links: only the investor’s own link, the portal, the console, the stop link and the firm’s support address; redactLink and log() keep no link', () => {
   const URL_RE = /\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+/gi;
   const DOMAIN_RE = /\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:example|com|net|org|io|co|us|app|dev|biz|info)\b/gi;
   for (const { kind, variant, data, m } of renders()) {
-    const link = linkOf(kind, data);
+    const allowed = linksOf(data).map((l) => E().esc(l));
     const support = data.firm.supportEmail || '';
     const hrefs = (m.html.match(/\bhref="[^"]*"/g) || []).map((h) => h.slice(6, -1));
-    for (const h of hrefs) assert.ok(h === E().esc(link) || (support && h === `mailto:${support}`), `${kind} ${variant}: href ${h}`);
+    for (const h of hrefs) assert.ok(allowed.indexOf(h) >= 0 || (support && h === `mailto:${support}`), `${kind} ${variant}: href ${h}`);
     for (const p of [m.text, m.html]) {
-      const rest = p.split(E().esc(link)).join(' ').split(link).join(' ').split(support || '\u0000').join(' ').split((data.investor && data.investor.email) || '\u0000').join(' ');
+      // The firm's support address, the investor's own, and a tax notice's contact address (13-11) may be printed.
+      const rest = without(p, data).split(support || '\u0000').join(' ').split((data.investor && data.investor.email) || '\u0000').join(' ').split((data.contact && data.contact.email) || '\u0000').join(' ');
       assert.deepEqual(rest.match(URL_RE) || [], [], `${kind} ${variant}: a URL`);
       assert.deepEqual(rest.match(DOMAIN_RE) || [], [], `${kind} ${variant}: a domain`);
     }

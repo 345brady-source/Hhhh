@@ -57,10 +57,26 @@ const VARIANTS = {
   invitation: ['new-offering', 'new-account', 'subscribe', 'subscribe-tax', 'access', 'taxRequest-w9', 'taxRequest-w8ben', 'coSign', 'reverify'],
   invitation_resent: ['new-offering', 'new-account', 'subscribe', 'subscribe-tax', 'access', 'taxRequest-w9', 'taxRequest-w8ben', 'coSign', 'reverify', 'started'],
   sponsor_notification: ['onboarding', 'onboarding-account', 'subscription', 'subscription-tax', 'none', 'access', 'coSign-signed', 'coSign-unsigned', 'taxRequest-signed', 'taxRequest-notsigned', 'taxRequest-none', 'reverify-reverified', 'reverify-finished'],
-  submission_reminder: ['onboarding', 'subscription', 'taxRequest', 'reverify', 'coSign']
+  submission_reminder: ['onboarding', 'subscription', 'taxRequest', 'reverify', 'coSign'],
+  // Plan 13-11's kinds: the same goldens, wording, button and structure rules (no server builder of their own here).
+  notice: ['quarterly', 'documents', 'custom', 'offeringNews'],
+  capital_call: ['call'],
+  capital_call_reminder: ['reminder'],
+  confirmation: ['onboarding', 'subscription', 'taxForm', 'coSign', 'reverify'],
+  tax_notice: ['portal', 'link'],
+  tax_consent: ['link'],
+  esign_request: ['portal'],
+  esign_reminder: ['portal'],
+  esign_voided: ['portal'],
+  esign_completed: ['portal'],
+  esign_declined: ['console'],
+  password_reset: ['investor', 'team'],
+  team_invitation: ['team'],
+  filing_order: ['placed', 'changed']
 };
 const BUILDERS = { invitation: invitationMessage, invitation_resent: resendMessage, sponsor_notification: notificationMessage, submission_reminder: reminderMessage };
-const linkOf = (kind, data) => (E().KINDS[kind].audience === 'investor' ? data.link : data.consoleUrl);
+/** Where a message's one button may lead (13-11): the personal link, the portal, or the console. */
+const targetsOf = (data) => [data.link, data.portalUrl, data.consoleUrl].filter(Boolean);
 /** Every sample of every kind of this plan, rendered. */
 function all(firmOver, opts) {
   const out = [];
@@ -89,6 +105,7 @@ test('every variant has a golden, and the server’s builders return exactly wha
     assert.ok(existsSync(join(GOLD, `${name}.txt`)) && existsSync(join(GOLD, `${name}.html`)), `no golden for ${name}`);
     assert.equal(goldText(m), readFileSync(join(GOLD, `${name}.txt`), 'utf8'), `${name}.txt`);
     assert.equal(m.html, readFileSync(join(GOLD, `${name}.html`), 'utf8'), `${name}.html`);
+    if (!BUILDERS[kind]) continue;
     const b = BUILDERS[kind](JSON.parse(JSON.stringify(data)));
     assert.deepEqual([b.subject, b.preheader, b.text, b.html], [m.subject, m.preheader, m.text, m.html], `${name}: the builder`);
   }
@@ -151,14 +168,20 @@ test('wording: subjects, the greeting by given name, New link:, one expiry and o
   assert.equal(expiry, 'This link is personal to you; please do not forward it. It expires on December 10, 2026.');
   const support = E().supportSentence(E().KINDS.invitation.sample('new-offering').firm);
   assert.equal(support, 'Questions? Contact Investor Relations at ir@harborridge.example or +1 212 555 0100.');
-  for (const { kind, variant, m } of all()) {
+  for (const { kind, variant, data, m } of all()) {
     assert.ok(!/Dear investor/i.test(m.text + m.html), `${kind} ${variant}`);
     if (E().KINDS[kind].audience !== 'investor') continue;
     assert.ok(/^(Dear [A-Z][a-z]+,|Hello,)\n\n/.test(m.text), `${kind} ${variant}: ${m.text.slice(0, 30)}`);
-    assert.ok(!/Reminder:/.test(m.subject), `${kind} ${variant}: ${m.subject}`);
+    // An invitation's new link is "New link:", never "Reminder:" (a capital call reminder is the sponsor's own subject).
+    if (kind === 'invitation' || kind === 'invitation_resent') assert.ok(!/Reminder:/.test(m.subject), `${kind} ${variant}: ${m.subject}`);
     if (kind === 'invitation_resent') assert.ok(m.subject.startsWith('New link: '), m.subject);
-    assert.equal(count(m.text, expiry), 1, `${kind} ${variant}: the expiry sentence once`);
-    assert.equal(count(m.text, support), 1, `${kind} ${variant}: the support sentence once`);
+    // A personal link that expires says so once, beside one support sentence; a message with no such link (a notice in
+    // the sponsor's own words, a portal link) has no expiry sentence and at most one support sentence.
+    const personal = !!(data.link && data.expiresAt);
+    if (personal) assert.equal(count(m.text, E().expirySentence(data.expiresAt)), 1, `${kind} ${variant}: the expiry sentence once`);
+    else assert.equal(count(m.text, 'This link is personal to you'), 0, `${kind} ${variant}: no expiry sentence`);
+    if (personal) assert.equal(count(m.text, support), 1, `${kind} ${variant}: the support sentence once`);
+    else assert.ok(count(m.text, E().supportSentence(data.firm)) <= 1, `${kind} ${variant}: the support sentence at most once`);
   }
 });
 
@@ -166,11 +189,12 @@ test('one button, its link also printed (investor messages); at most one, to the
   for (const { kind, variant, data, m } of all()) {
     const buttons = m.html.match(/<a data-button [^>]*>/g) || [];
     const href = (buttons[0] && (/href="([^"]*)"/.exec(buttons[0]) || [])[1]) || '';
-    const link = linkOf(kind, data);
+    const targets = targetsOf(data);
     if (E().KINDS[kind].audience === 'investor') assert.equal(buttons.length, 1, `${kind} ${variant}`);
     else assert.ok(buttons.length <= 1, `${kind} ${variant}`);
     if (buttons.length) {
-      assert.equal(href, E().esc(link), `${kind} ${variant}`);
+      const link = targets.filter((t) => E().esc(t) === href)[0];
+      assert.ok(link, `${kind} ${variant}: the button leads to ${href}`);
       assert.ok(m.text.includes(link), `${kind} ${variant}: the link in the text`);
     }
   }
@@ -182,6 +206,8 @@ test('one button, its link also printed (investor messages); at most one, to the
 
 test('structure: lang, title, color-scheme, presentation tables, a 44 px button cell, the logo’s alt, inline styles, under 100 KB', () => {
   for (const { kind, variant, data, m } of all({ logo: PNG })) {
+    // The staff's own filing order email is plain text with a one-paragraph HTML twin, as it always was (13-11).
+    if (E().KINDS[kind].audience === 'staff') continue;
     const h = m.html;
     const tag = `${kind} ${variant}`;
     assert.ok(/^<!doctype html><html lang="en">/.test(h), tag);

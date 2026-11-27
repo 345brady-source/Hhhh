@@ -6,10 +6,16 @@
  * clock when it loads, so it also loads in Node (module.exports), as formd.js does.
  *
  *   render(kind, data, opts)   { kind, variant, subject, preheader, text, html, inline: [ { cid, contentType, base64 } ],
- *                              commercial: false, headers: {} }. opts.preview: the logo is an <img> with its data URL and
+ *                              commercial, headers, needs }. opts.preview: the logo is an <img> with its data URL and
  *                              inline is empty (in-page previews); otherwise a PNG, JPEG or GIF logo is cid:logo@firm with
  *                              one inline part, and any other logo gives the firm's name in text. No attachment, ever.
- *   KINDS[kind]                { audience: 'investor' | 'sponsor' | 'staff', label, variants, sample(variant) }
+ *                              A possibly commercial message (C-02, "To be confirmed with counsel") ends with the firm's
+ *                              postal address and a way to stop such messages (List-Unsubscribe headers when
+ *                              data.unsubscribeUrl is given); needs is ['postalAddress'] when the firm has none.
+ *                              Kinds with named variants (13-11) take data.variant, else their first variant.
+ *   KINDS[kind]                { audience: 'investor' | 'sponsor' | 'team' | 'staff', label, variants, sample(variant) }
+ *   firmFromTenant, prefsAllow, applyPrefs, dispatch, summary   the console's one hand-off to the server (13-11):
+ *                              dispatch({ ws, kind, variant, items, connected, api, firm, portalUrl, offeringNews })
  *   givenName, greeting, expirySentence, supportSentence, senderLine, contrastText, money, longDate
  *   PATTERNS, screen(text)     what a message may never carry (taxpayer numbers, long digit runs, passwords) and the one
  *                              sentence that says what to remove
@@ -111,7 +117,7 @@
   const SIMULATED = '(simulated in this demo)';
 
   /* ---------- The sent log ---------- */
-  const STATUSES = ['simulated', 'manual', 'outbox', 'held', 'sent', 'failed', 'suppressed', 'delivered', 'bounced', 'complained'];
+  const STATUSES = ['simulated', 'manual', 'outbox', 'held', 'sent', 'failed', 'suppressed', 'unsubscribed', 'delivered', 'bounced', 'complained'];
   const LOG_MAX = 2000;
   const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   function redactLink(text, link) {
@@ -164,7 +170,13 @@
       inline.push({ cid: 'logo@firm', contentType: raster[1], base64: raster[2].replace(/\s+/g, '') });
       logoHtml = `<img src="cid:logo@firm" alt="${esc(firm.name)}" height="44" style="max-height:44px;max-width:220px;border:0;display:block">`;
     }
-    const foot = footerParts(firm);
+    // A possibly commercial message (C-02) ends with the way to stop such messages; its link, when there is one, is a link.
+    const stop = o.stop || null;
+    const foot = footerParts(firm).concat(stop ? [stop.line] : []);
+    const footHtml = (s) => {
+      const h = esc(s).replace(/\n/g, '<br>');
+      return stop && stop.url && s === stop.line ? h.replace(esc(stop.url), `<a href="${esc(stop.url)}" style="color:#5b6470">${esc(stop.url)}</a>`) : h;
+    };
 
     const text = [];
     if (parts.greeting) text.push(parts.greeting);
@@ -200,7 +212,7 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
         : ''
     }${(parts.before || []).map(para).join('')}${button}${(parts.after || []).map(para).join('')}
 </td></tr>
-<tr><td style="padding:18px 28px;border-top:1px solid #e2e5e9;font-size:12px;line-height:1.5;color:#5b6470">${foot.map((s) => `<p style="margin:0 0 8px">${esc(s).replace(/\n/g, '<br>')}</p>`).join('')}</td></tr>
+<tr><td style="padding:18px 28px;border-top:1px solid #e2e5e9;font-size:12px;line-height:1.5;color:#5b6470">${foot.map((s) => `<p style="margin:0 0 8px">${footHtml(s)}</p>`).join('')}</td></tr>
 </table></td></tr></table></body></html>`;
     return { subject, preheader, text: text.join('\n\n'), html, inline };
   }
@@ -472,6 +484,167 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
     });
   }
 
+  /* ---------- The firm's notices: the sponsor's own subject and text, in the firm's layout (EM-09) ---------- */
+  const STOP_NOTICES = 'To stop these notices, open Account in your portal and change your email choices.';
+  const GREETING_LINE = /^(Dear|Hello|Hi)\b[^\n]*,$/;
+  /** The sponsor's text as typed (merge fields already filled for this investor), one paragraph per blank line. */
+  const paragraphs = (body) => str(body).replace(/\r\n?/g, '\n').split(/\n[ \t]*\n/).map((p) => p.trim()).filter(Boolean);
+  const portalButton = (firm, d, signIn) => (d.portalUrl ? { label: signIn ? `Sign in to ${oneLine(firm.portalName) || 'your portal'}` : 'Activate your account', href: d.portalUrl } : null);
+  /** A notice or a capital call: no greeting of its own (the sponsor's text has one), one button to the portal. */
+  function sponsorText(firm, d, parts) {
+    const paras = paragraphs(d.body);
+    const subject = oneLine(d.subject);
+    const pre = paras.filter((p) => !GREETING_LINE.test(p))[0] || subject;
+    return layout(firm, subject, pre, Object.assign({ paras, button: portalButton(firm, d, d.activated !== false) }, parts), d.opts);
+  }
+  const NOTICE_VARIANTS = ['quarterly', 'documents', 'custom', 'offeringNews'];
+  function notice(firm, d, variant) {
+    return sponsorText(firm, d, { after: variant === 'quarterly' || variant === 'documents' ? [STOP_NOTICES] : [] });
+  }
+
+  /* ---------- Messages to the investor with nothing to fill in: one sentence, the portal, the support line ---------- */
+  /** Greeting, what happened, one button, then the support sentence (no expiry: a portal link does not expire). */
+  function portalMessage(firm, d, name, subject, parts) {
+    const support = supportSentence(firm);
+    const paras = parts.paras || [];
+    return layout(firm, subject, paras[0] || subject, Object.assign({}, parts, { greeting: greeting(name), after: (parts.after || []).concat([support]), support }), d.opts);
+  }
+  const portalOpen = (d) => (d.portalUrl ? { label: 'Open your portal', href: d.portalUrl } : null);
+
+  /** EM-10, C-09: what the firm received, what happens next, the portal. Nothing sensitive (no number, no document). */
+  const CONFIRMATION_VARIANTS = ['onboarding', 'subscription', 'taxForm', 'coSign', 'reverify'];
+  function confirmation(firm, d, variant) {
+    const investor = d.investor || {};
+    const off = d.offering && d.offering.name ? d.offering.name : '';
+    const account = investor.title || investor.contact || 'your account';
+    const on = longDate(d.completedAt);
+    const form = `Form ${taxFormOf(investor)}`;
+    const what = {
+      onboarding: [`${firm.name}: we received your onboarding`, `your completed investor onboarding${off ? ` for ${off}` : ''}`],
+      subscription: [`${firm.name}: we received your subscription${off ? ` to ${off}` : ''}`, `your subscription${off ? ` to ${off}` : ''} and your signed subscription agreement`],
+      taxForm: [`${firm.name}: we received your ${form}`, `your ${form}`],
+      coSign: [`${firm.name}: we received your signature for ${account}`, `your signature on the subscription agreement for ${account}`],
+      reverify: [`${firm.name}: we received your verification`, 'your accredited investor verification']
+    }[variant];
+    return portalMessage(firm, d, investor.contact || investor.title, what[0], {
+      paras: [`Thank you. ${firm.name} received ${what[1]}${on ? ` on ${on}` : ''}.`],
+      before: [`What happens next: ${firm.name} reviews it and will contact you if anything else is needed. Nothing is due from you now.`],
+      button: portalOpen(d)
+    });
+  }
+
+  /** C-11 to C-15 (C-04, C-12): a notice with a portal link. The document is never attached and no signing link is sent. */
+  const NOT_ATTACHED = 'The document is not attached to this email.';
+  function esign(firm, d, kind) {
+    const who = (d.signer && d.signer.name) || '';
+    const title = oneLine(d.envelope && d.envelope.title) || 'your document';
+    const M = {
+      esign_request: [`${firm.name}: please sign ${title}`, `${firm.name} asks you to sign ${title}.`, `Sign in to your portal to read it and sign it online. ${NOT_ATTACHED}`],
+      esign_reminder: [`${firm.name}: reminder to sign ${title}`, `${title} is still waiting for your signature.`, `Sign in to your portal to read it and sign it online. ${NOT_ATTACHED}`],
+      esign_voided: [`${firm.name}: ${title} was withdrawn`, `${firm.name} has withdrawn ${title}. You no longer need to sign it.`, 'Nothing else is needed from you.'],
+      esign_completed: [`${firm.name}: ${title} is signed by everyone`, `Everyone has signed ${title}.`, 'The completed copy is in your portal under Documents, where you can download it. It is not attached to this email, to keep it safe.']
+    }[kind];
+    return portalMessage(firm, d, who, M[0], { paras: [M[1]], before: [M[2]], button: portalOpen(d) });
+  }
+  /** C-14: to the sponsor, when a signer declines. */
+  function esignDeclined(firm, d) {
+    const who = oneLine(d.signer && d.signer.name) || 'A signer';
+    const title = oneLine(d.envelope && d.envelope.title) || 'a document';
+    const rows = [['Signer', who], ['Document', title]];
+    if (oneLine(d.reason)) rows.push(['Reason', d.reason]);
+    return sponsorMessage(firm, d, `${who} declined to sign ${title}`, { paras: [`${who} declined to sign ${title}.`], rows, after: ['Open the console to see the envelope and, if needed, send a corrected one.'] });
+  }
+
+  /** C-17, C-03: the password reset (investor or team). A template and preview only in this phase. */
+  function passwordReset(firm, d, variant) {
+    const where = variant === 'team' ? `${firm.name} console` : oneLine(firm.portalName) || `${firm.name} investor portal`;
+    const support = supportSentence(firm);
+    return layout(firm, `${firm.name}: reset your password`, `We received a request to reset the password for your ${where} account.`, {
+      greeting: greeting(d.person && d.person.name),
+      paras: [`We received a request to reset the password for your ${where} account.`],
+      // Not "Choose a new password": the text twin's "<label>:" would read as a password given in the message.
+      button: { label: 'Open the reset page', href: d.link },
+      after: ['If you did not ask for this, ignore this email: your password stays as it is.', expirySentence(d.expiresAt), support],
+      support
+    }, d.opts);
+  }
+  /** C-18, C-03: a team member invited to the firm's console. A template and preview only in this phase. */
+  function teamInvitation(firm, d) {
+    const inviter = oneLine(d.inviter);
+    const role = oneLine(d.role);
+    const support = supportSentence(firm);
+    const first = `${inviter ? `${inviter} at ${firm.name}` : firm.name} has invited you to join the ${firm.name} console${role ? ` with the ${role} role` : ''}.`;
+    return layout(firm, `${firm.name}: you are invited to the console`, first, {
+      greeting: greeting(d.person && d.person.name),
+      paras: [first],
+      before: ['The console is where the team works with investors, offerings and documents. The link below lets you create your login.'],
+      button: { label: 'Accept the invitation', href: d.link },
+      after: [expirySentence(d.expiresAt), support],
+      support
+    }, d.opts);
+  }
+
+  /* ---------- Tax documents (Rev. Proc. 2012-17; wording from assets/js/taxdocs.js and server/lib/taxdocs.mjs, 10-12) ---------- */
+  const TAX_SUBJECT = 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE';
+  const TAX_CONSENT_SUBJECT = 'Your consent to receive tax documents electronically';
+  /** A day as 'YYYY-MM-DD' or a timestamp, as a long date; any other text as it was given. */
+  function dayText(day) {
+    const s = oneLine(day);
+    if (!s) return '';
+    const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(s) ? `${s}T12:00:00Z` : s);
+    return Number.isNaN(d.getTime()) ? s : longDate(d.toISOString());
+  }
+  /** "Questions: <name>, <address>, telephone <phone>, email <email>." with only the parts that are there. */
+  function questionsLine(firm, contact) {
+    const c = contact || {};
+    const list = [oneLine(c.name), oneLine(c.address), oneLine(c.phone) ? `telephone ${oneLine(c.phone)}` : '', oneLine(c.email) ? `email ${oneLine(c.email)}` : ''].filter(Boolean);
+    return list.length ? `Questions: ${list.join(', ')}.` : supportSentence(firm);
+  }
+  function taxNotice(firm, d, variant) {
+    const doc = d.doc || {};
+    const until = dayText(doc.availableUntil);
+    const name = d.investor && (d.investor.contact || d.investor.name || d.investor.title);
+    if (variant === 'link') {
+      const paras = [`${firm.name} has posted a tax document for you: ${oneLine(doc.title)}.`];
+      return layout(firm, TAX_SUBJECT, paras[0], {
+        greeting: greeting(name),
+        paras,
+        before: ['To open it on any device, use the link below.'],
+        button: { label: 'Open your tax document', href: d.link },
+        after: [`You will be asked for the last four digits of the tax number you gave ${firm.name}. Once the document is open, use Save to keep a copy, and print the saved file.`, until ? `It stays available until ${until}.` : '', questionsLine(firm, d.contact)].filter(Boolean)
+      }, d.opts);
+    }
+    const paras = [`A tax document is available for you in the investor portal: ${oneLine(doc.label)} for ${oneLine(doc.year)}${doc.replaces ? ', which replaces the one posted earlier' : ''}.`, 'To open it, sign in, go to Documents and tap it. Use Download to save or print it.'];
+    return layout(firm, TAX_SUBJECT, paras[0], {
+      greeting: greeting(name),
+      paras,
+      button: portalButton(firm, d, true),
+      after: [until ? `It stays available in the portal until ${until}.` : '', questionsLine(firm, d.contact)].filter(Boolean)
+    }, d.opts);
+  }
+  /** Without consent in effect, the first message asks for it (section 4.01). It is not the notice: never its words. */
+  function taxConsent(firm, d) {
+    const doc = d.doc || {};
+    const name = d.investor && (d.investor.contact || d.investor.name || d.investor.title);
+    const first = `${firm.name} has a tax document for you: ${oneLine(doc.title)}. It can be delivered to you electronically only with your consent.`;
+    return layout(firm, TAX_CONSENT_SUBJECT, first, {
+      greeting: greeting(name),
+      paras: [first],
+      before: ['To read how electronic delivery works and give your consent, use the link below on any device.'],
+      button: { label: 'Review and give your consent', href: d.link },
+      after: [`You will be asked for the last four digits of the tax number you gave ${firm.name}. Once you consent, the document opens there; use Save to keep a copy, and print the saved file.`, 'If you do not consent, the document will be sent to you on paper.', questionsLine(firm, d.contact)]
+    }, d.opts);
+  }
+
+  /* ---------- The filing agent's staff: the order email, word for word as server/lib/filings.mjs has always written it ---------- */
+  const FILING_SERVICE = { formd: 'Form D', 'formd-amendment': 'Form D amendment', bluesky: 'State notice filings', 'bluesky-renewal': 'State notice renewals' };
+  function filingOrder(d, variant) {
+    const service = FILING_SERVICE[d.kind];
+    const lines = [`Order: ${d.id}`, `Service: ${service}`, `Firm: ${d.firm && d.firm.name}`, `Offering: ${d.offering && d.offering.name}`, `Amount due: ${money(d.dueCents)}${d.openFees ? ' plus fees still to be confirmed' : ''}`, '', `Open it with the staff call GET /v1/filings/staff/orders/${d.id}`];
+    const text = lines.join('\n');
+    return { subject: `${variant === 'changed' ? 'Filing order changed' : 'Filing order'} ${d.id}: ${service}`, preheader: lines[0], text, html: `<p>${esc(text).replace(/\n/g, '<br>')}</p>`, inline: [] };
+  }
+
   /* ---------- Sample data (previews, goldens): fixed dates, never-issued numbers, no personal data ---------- */
   const SAMPLE_FIRM = {
     name: 'Harbor Ridge Capital',
@@ -507,7 +680,9 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
   };
   function invitationSample(variant) {
     const [investor, offering, inv] = INVITE[variant === 'started' ? 'new-offering' : variant];
-    return { firm: copy(SAMPLE_FIRM), investor: copy(investor), offering: copy(offering), invitation: Object.assign({ cents: 0, cls: '', note: '', senderName: '' }, copy(inv)), link: SAMPLE_LINK, expiresAt: EXPIRES, started: variant === 'started' };
+    // An invitation to subscribe to another offering is possibly commercial (C-02): its sample firm has a postal address.
+    const firm = /^subscribe/.test(variant) ? Object.assign(copy(SAMPLE_FIRM), { postalAddress: SAMPLE_ADDRESS }) : copy(SAMPLE_FIRM);
+    return { firm, investor: copy(investor), offering: copy(offering), invitation: Object.assign({ cents: 0, cls: '', note: '', senderName: '' }, copy(inv)), link: SAMPLE_LINK, expiresAt: EXPIRES, started: variant === 'started' };
   }
 
   const who = [['Investor', 'Shah, Anita'], ['Email', 'anita@investor.example']];
@@ -536,36 +711,256 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
     return Object.assign({ firm: copy(SAMPLE_FIRM), investor: copy(variant === 'coSign' ? CO : ANITA), offering: copy(offering), consoleUrl: SAMPLE_CONSOLE, completedAt: SENT, deleteOn: EXPIRES, existing: false, taxRequest: false, reverify: false, coSign: false }, flags);
   }
 
+  const SAMPLE_PORTAL = 'https://portal.example/portal.html';
+  const SAMPLE_ADDRESS = '1 Harbor Way, Boston, MA 02110';
+  const SAMPLE_STOP = 'https://api.example/v1/messages/unsubscribe?t=sample';
+  const SIGN_OFF = 'If you have any questions, contact Investor Relations at +1 212 555 0100.\n\nHarbor Ridge Capital';
+  const NOTICES = {
+    quarterly: ['Q3 2026 report for Harbor Ridge Fund II is now available', 'The Q3 2026 quarterly report for Harbor Ridge Fund II has been posted to your Harbor Ridge Investor Portal. Sign in and open Documents to read it.'],
+    documents: ['New documents are available in your Harbor Ridge Investor Portal', 'New documents have been uploaded to your Harbor Ridge Investor Portal: Fund II subscription agreement, countersigned. Sign in and open Documents to view them.'],
+    custom: ['Our office moves in January', 'From January 5, 2027 our office is at 1 Harbor Way, Boston. Nothing changes in your portal or in your investments.'],
+    offeringNews: ['Harbor Ridge Fund III is open for subscriptions', 'Harbor Ridge Fund III is now accepting subscriptions from our investors. Its offering documents are in your portal under Offerings.']
+  };
+  function noticeSample(variant) {
+    const [subject, para] = NOTICES[variant];
+    const out = { variant, firm: copy(SAMPLE_FIRM), investor: copy(ANITA), subject, body: `Dear Anita,\n\n${para}\n\n${SIGN_OFF}`, portalUrl: SAMPLE_PORTAL, activated: true };
+    // Offering news is possibly commercial: the sample firm has its postal address, and the server's one-click stop link.
+    if (variant === 'offeringNews') Object.assign(out, { firm: Object.assign(copy(SAMPLE_FIRM), { postalAddress: SAMPLE_ADDRESS }), unsubscribeUrl: SAMPLE_STOP });
+    return out;
+  }
+  /** assets/js/operations.js callNotice wording, merged for one investor (call 2 of Fund II, $25,000.00). */
+  const CALLS = {
+    call: ['Capital call 2 for Harbor Ridge Fund II: $25,000.00 due December 10, 2026', 'Harbor Ridge Fund II is calling capital. Your contribution of $25,000.00 is due December 10, 2026. Sign in to your Harbor Ridge Investor Portal for the wire instructions and the call notice.\n\nBefore sending a wire, call Investor Relations at +1 212 555 0100 to confirm the instructions. We never change wire instructions by email.'],
+    reminder: ['Reminder: capital call 2 for Harbor Ridge Fund II ($25,000.00) is due December 10, 2026', 'Our records show that your contribution of $25,000.00 for capital call 2 of Harbor Ridge Fund II is due December 10, 2026 and has not yet been received. Wire instructions are in your Harbor Ridge Investor Portal.\n\nIf you have already sent the wire, please disregard this reminder.']
+  };
+  const callSample = (variant) => {
+    const [subject, para] = CALLS[variant];
+    return { variant, firm: copy(SAMPLE_FIRM), investor: copy(ANITA), subject, body: `Dear Anita,\n\n${para}\n\nHarbor Ridge Capital`, portalUrl: SAMPLE_PORTAL, activated: true };
+  };
+  const CONTACT = { name: 'Investor Relations, Harbor Ridge Capital', address: '1 Harbor Way, Boston, MA 02110', phone: '+1 212 555 0100', email: 'ir@harborridge.example' };
+  const TAX_DOC = { label: 'Schedule K-1', year: '2026', title: 'Schedule K-1 for 2026, Harbor Ridge Fund II', replaces: false, availableUntil: '2027-10-15' };
+  const SAMPLE_TAX_LINK = 'https://portal.example/portal.html?server=https%3A%2F%2Fapi.example#taxdoc-sample';
+  function taxSample(variant) {
+    const out = { variant, firm: copy(SAMPLE_FIRM), investor: copy(ANITA), doc: copy(TAX_DOC), contact: copy(CONTACT) };
+    if (variant === 'portal') out.portalUrl = SAMPLE_PORTAL;
+    else out.link = SAMPLE_TAX_LINK;
+    return out;
+  }
+  const ENVELOPE = { title: 'Fund II side letter' };
+  const esignSample = (variant) => ({ variant, firm: copy(SAMPLE_FIRM), signer: { name: 'Anita Shah' }, envelope: copy(ENVELOPE), portalUrl: SAMPLE_PORTAL });
+  const declinedSample = (variant) => ({ variant, firm: copy(SAMPLE_FIRM), signer: { name: 'Anita Shah' }, envelope: copy(ENVELOPE), consoleUrl: SAMPLE_CONSOLE, reason: 'The commitment amount is not the one we agreed.' });
+  function confirmationSample(variant) {
+    const investor = copy(variant === 'coSign' ? CO : Object.assign({ taxType: 'us-individual' }, ANITA));
+    return { variant, firm: copy(SAMPLE_FIRM), investor, offering: variant === 'subscription' || variant === 'onboarding' ? copy(FUND) : null, invitation: {}, portalUrl: SAMPLE_PORTAL, completedAt: SENT };
+  }
+  const SAMPLE_RESET = 'https://portal.example/portal.html#reset-sample';
+  const SAMPLE_TEAM = 'https://portal.example/diy.html#team-sample';
+  const resetSample = (variant) => ({ variant, firm: copy(SAMPLE_FIRM), person: { name: variant === 'team' ? 'Maria Ortiz' : 'Anita Shah' }, link: variant === 'team' ? SAMPLE_RESET.replace('portal.html', 'diy.html') : SAMPLE_RESET, expiresAt: '2026-11-10T13:00:00.000Z' });
+  const teamSample = (variant) => ({ variant, firm: copy(SAMPLE_FIRM), person: { name: 'Daniel Brooks' }, inviter: 'Maria Ortiz', role: 'Operations', link: SAMPLE_TEAM, expiresAt: EXPIRES });
+  /** The staff email's sample is the record of server/test/fixtures/emails/base-filing.json. */
+  const filingSample = (variant) => ({ variant, id: 'fil_sample-order', kind: variant === 'changed' ? 'bluesky' : 'formd', firm: { name: 'Harbor Ridge Capital' }, offering: { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II' }, dueCents: variant === 'changed' ? 125000 : 29900, openFees: variant === 'changed' });
+
   const INVITE_VARIANTS = Object.keys(INVITE);
   /** Every message kind: who receives it, its name in the console, its sample variants. Later plans add kinds here. */
   const KINDS = {
     invitation: { audience: 'investor', label: 'Invitation', variants: INVITE_VARIANTS, sample: invitationSample },
     invitation_resent: { audience: 'investor', label: 'New link', variants: INVITE_VARIANTS.concat(['started']), sample: invitationSample },
     sponsor_notification: { audience: 'sponsor', label: 'Investor finished', variants: Object.keys(NOTIFY), sample: notificationSample },
-    submission_reminder: { audience: 'sponsor', label: 'Waiting in your console', variants: Object.keys(REMIND), sample: reminderSample }
+    submission_reminder: { audience: 'sponsor', label: 'Waiting in your console', variants: Object.keys(REMIND), sample: reminderSample },
+    notice: { audience: 'investor', label: 'Notice', variants: NOTICE_VARIANTS, sample: noticeSample },
+    capital_call: { audience: 'investor', label: 'Capital call', variants: ['call'], sample: callSample },
+    capital_call_reminder: { audience: 'investor', label: 'Capital call reminder', variants: ['reminder'], sample: callSample },
+    confirmation: { audience: 'investor', label: 'We received it', variants: CONFIRMATION_VARIANTS, sample: confirmationSample },
+    tax_notice: { audience: 'investor', label: 'Tax document notice', variants: ['portal', 'link'], sample: taxSample },
+    tax_consent: { audience: 'investor', label: 'Tax document consent', variants: ['link'], sample: taxSample },
+    esign_request: { audience: 'investor', label: 'Signature request', variants: ['portal'], sample: esignSample },
+    esign_reminder: { audience: 'investor', label: 'Signature reminder', variants: ['portal'], sample: esignSample },
+    esign_voided: { audience: 'investor', label: 'Signature request withdrawn', variants: ['portal'], sample: esignSample },
+    esign_completed: { audience: 'investor', label: 'Signed by everyone', variants: ['portal'], sample: esignSample },
+    esign_declined: { audience: 'sponsor', label: 'Signer declined', variants: ['console'], sample: declinedSample },
+    password_reset: { audience: 'investor', label: 'Password reset', variants: ['investor', 'team'], sample: resetSample },
+    team_invitation: { audience: 'team', label: 'Team invitation', variants: ['team'], sample: teamSample },
+    filing_order: { audience: 'staff', label: 'Filing order', variants: ['placed', 'changed'], sample: filingSample }
   };
+  /** The variant a kind with named variants renders: the data's own, else the kind's first. */
+  const variantOf = (kind, d) => (KINDS[kind].variants.indexOf(d.variant) >= 0 ? d.variant : KINDS[kind].variants[0]);
 
   /* ---------- render ---------- */
+  /**
+   * C-02 ("To be confirmed with counsel"): an invitation to subscribe to another offering, an invitation to an offering
+   * with no commitment yet (and their new links), and a notice the sponsor marks as offering news are possibly
+   * commercial. Every other message is transactional.
+   */
+  function isCommercial(kind, variant, d) {
+    if (kind === 'notice') return variant === 'offeringNews';
+    if (kind !== 'invitation' && kind !== 'invitation_resent') return false;
+    if (variant === 'subscribe') return true;
+    return variant === 'new' && !!(d.offering && d.offering.name) && !(Number(d.invitation && d.invitation.cents) > 0);
+  }
   function render(kind, data, opts) {
-    const d = Object.assign({}, data || {}, { opts: opts || {} });
+    const d = Object.assign({}, data || {}, { opts: Object.assign({}, opts || {}) });
     const firm = d.firm || {};
     let variant;
+    if (kind === 'invitation' || kind === 'invitation_resent') variant = invitationVariant(d, kind === 'invitation_resent');
+    else if (kind === 'sponsor_notification') variant = notificationVariant(d);
+    else if (kind === 'submission_reminder') variant = reminderVariant(d);
+    else if (KINDS[kind]) variant = variantOf(kind, d);
+    else throw new Error(`Unknown message kind: ${str(kind)}`);
+    const commercial = isCommercial(kind, variant, d);
+    const stopUrl = commercial ? oneLine(d.unsubscribeUrl) : '';
+    if (commercial) d.opts.stop = { line: `To stop invitations to new offerings from ${firm.name}, ${stopUrl ? `use this link: ${stopUrl}` : 'reply to this email.'}`, url: stopUrl };
     let out;
-    if (kind === 'invitation' || kind === 'invitation_resent') {
-      const again = kind === 'invitation_resent';
-      variant = invitationVariant(d, again);
-      out = INVESTOR[variant](firm, d, again);
-    } else if (kind === 'sponsor_notification') {
-      variant = notificationVariant(d);
-      out = notification(firm, d, variant);
-    } else if (kind === 'submission_reminder') {
-      variant = reminderVariant(d);
-      out = reminder(firm, d, variant);
-    } else throw new Error(`Unknown message kind: ${str(kind)}`);
-    return { kind, variant, subject: out.subject, preheader: out.preheader, text: out.text, html: out.html, inline: out.inline, commercial: false, headers: {} };
+    if (kind === 'invitation' || kind === 'invitation_resent') out = INVESTOR[variant](firm, d, kind === 'invitation_resent');
+    else if (kind === 'sponsor_notification') out = notification(firm, d, variant);
+    else if (kind === 'submission_reminder') out = reminder(firm, d, variant);
+    else if (kind === 'notice') out = notice(firm, d, variant);
+    else if (kind === 'capital_call' || kind === 'capital_call_reminder') out = sponsorText(firm, d, {});
+    else if (kind === 'confirmation') out = confirmation(firm, d, variant);
+    else if (kind === 'tax_notice') out = taxNotice(firm, d, variant);
+    else if (kind === 'tax_consent') out = taxConsent(firm, d);
+    else if (kind === 'esign_declined') out = esignDeclined(firm, d);
+    else if (/^esign_/.test(kind)) out = esign(firm, d, kind);
+    else if (kind === 'password_reset') out = passwordReset(firm, d, variant);
+    else if (kind === 'team_invitation') out = teamInvitation(firm, d);
+    else out = filingOrder(d, variant);
+    const headers = stopUrl ? { 'List-Unsubscribe': `<${stopUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } : {};
+    // A possibly commercial message may not go without the firm's postal address: the caller refuses it (13-04, 13-05).
+    const needs = commercial && !oneLine(firm.postalAddress) ? ['postalAddress'] : [];
+    return { kind, variant, subject: out.subject, preheader: out.preheader, text: out.text, html: out.html, inline: out.inline, commercial, headers, needs };
   }
 
-  const API = { KINDS, render, givenName, greeting, expirySentence, supportSentence, senderLine, screen, PATTERNS, contrastText, contrast, SIMULATED, BANNED, STATUSES, redactLink, log, money, longDate, esc };
+  /* ---------- The console's one hand-off (dispatch) ---------- */
+  /** The firm as the server is sent it: exactly the fields assets/js/invitations.js firmOf sends, and the postal address. */
+  function firmFromTenant(tenant) {
+    const t = tenant || {};
+    const s = t.support || {};
+    const c = t.colors || {};
+    const image = t.logo && t.logo.type === 'image' ? str(t.logo.image) : '';
+    return {
+      name: str(t.name),
+      shortName: str(t.shortName),
+      legalName: str(t.legalName),
+      supportTeam: str(s.team),
+      supportEmail: isEmail(s.email) ? s.email : '',
+      supportPhone: str(s.phone),
+      colors: { primary: str(c.primary), accent: str(c.accent) },
+      logo: ANY_IMAGE.test(image) && image.length <= 600 * 1024 ? image : '',
+      portalName: str(t.portalName),
+      disclaimer: str(t.disclaimer),
+      postalAddress: str(t.postalAddress)
+    };
+  }
+  /**
+   * May this investor be emailed this message? false only for an optional notice they turned off (new documents,
+   * quarterly reports) or a possibly commercial message once they turned offering news off. Required messages always go.
+   */
+  function prefsAllow(inv, kind, variant, commercial) {
+    const p = (inv && inv.emailPrefs) || {};
+    if (kind === 'notice' && variant === 'documents' && p.documents === false) return false;
+    if (kind === 'notice' && variant === 'quarterly' && p.quarterly === false) return false;
+    const isCommercial = commercial === true || (kind === 'notice' && variant === 'offeringNews') || ((kind === 'invitation' || kind === 'invitation_resent') && variant === 'subscribe');
+    if (isCommercial && p.offering === false) return false;
+    return true;
+  }
+  /**
+   * The server's record of who turned offering news off (GET /v1/messages/preferences: [ { investorId, offering } ]) on the
+   * workspace's investors. Returns how many investors changed; the caller saves.
+   */
+  function applyPrefs(ws, preferences) {
+    let changed = 0;
+    for (const p of preferences || []) {
+      if (!p || typeof p.offering !== 'boolean') continue;
+      const inv = ((ws && ws.investors) || []).filter((x) => x && x.id === p.investorId)[0];
+      if (!inv) continue;
+      // Absent means on (13-08): an investor whose choice is already the server's is not counted.
+      const now = inv.emailPrefs && typeof inv.emailPrefs.offering === 'boolean' ? inv.emailPrefs.offering : true;
+      if (now === p.offering) continue;
+      if (!inv.emailPrefs || typeof inv.emailPrefs !== 'object') inv.emailPrefs = {};
+      inv.emailPrefs.offering = p.offering;
+      changed += 1;
+    }
+    return changed;
+  }
+  const POSTAL = 'Add your firm’s postal address to its brand settings first: emails about new offerings must carry it.';
+  const plural = (n, one, many) => (n === 1 ? one : many);
+  /** One sentence for the sponsor: what happened to the messages dispatch handed over. */
+  function summary(counts, connected) {
+    const c = counts || {};
+    const n = (k) => Number(c[k]) || 0;
+    const tail = [];
+    const off = n('unsubscribed');
+    if (!connected) {
+      const all = n('simulated');
+      if (off) tail.push(off === 1 ? ' 1 has turned these emails off.' : ` ${off} have turned these emails off.`);
+      return `Email to ${all} ${plural(all, 'investor', 'investors')} ${SIMULATED}.${tail.join('')}`;
+    }
+    const sent = n('sent');
+    if (n('outbox')) tail.push(n('outbox') === 1 ? ' 1 is in the server’s outbox: no sending service is set up yet.' : ` ${n('outbox')} are in the server’s outbox: no sending service is set up yet.`);
+    if (n('held')) tail.push(n('held') === 1 ? ' 1 is waiting: your sending domain is not ready.' : ` ${n('held')} are waiting: your sending domain is not ready.`);
+    if (n('suppressed')) tail.push(n('suppressed') === 1 ? ' 1 was not sent: an earlier email to that address came back.' : ` ${n('suppressed')} were not sent: earlier emails to those addresses came back.`);
+    if (off) tail.push(off === 1 ? ' 1 has turned these emails off.' : ` ${off} have turned these emails off.`);
+    if (n('failed')) tail.push(n('failed') === 1 ? ' 1 could not be sent; try again later.' : ` ${n('failed')} could not be sent; try again later.`);
+    return `${sent ? `Emailed to ${sent} ${plural(sent, 'investor', 'investors')}.` : 'No email was sent.'}${tail.join('')}`;
+  }
+  const SERVER_STATUSES = ['sent', 'outbox', 'held', 'failed', 'suppressed', 'unsubscribed'];
+  /**
+   * Hand one message to each investor: with a server, one POST /v1/messages for all of them; without one, no request, and
+   * every message is logged as simulated. Free text screen() refuses stops the whole send before anything is logged.
+   * The caller saves the workspace. api(method, path, body) is the caller's call to its integration server.
+   */
+  async function dispatch(o) {
+    const ws = o.ws;
+    const kind = o.kind;
+    const variant = o.variant;
+    const items = o.items || [];
+    if (!KINDS[kind]) throw new Error(`Unknown message kind: ${str(kind)}`);
+    for (const it of items) {
+      for (const s of [it.data && it.data.subject, it.data && it.data.body]) {
+        const bad = screen(s);
+        if (bad) throw new Error(bad.reason);
+      }
+    }
+    const firm = o.firm || firmFromTenant(ws.tenant);
+    const rows = items.map((it) => {
+      const data = it.data || {};
+      const m = render(kind, Object.assign({ firm, portalUrl: o.portalUrl }, data, variant ? { variant } : {}));
+      return { it, data, m, allowed: prefsAllow(it.inv, kind, variant || m.variant, m.commercial) };
+    });
+    // A possibly commercial message without the firm's postal address is refused whole, before any request or log entry.
+    if (rows.some((r) => r.m.needs.indexOf('postalAddress') >= 0)) throw new Error(POSTAL);
+    const status = {};
+    const error = {};
+    for (const r of rows) if (!r.allowed) status[r.it.investorId] = 'unsubscribed';
+    const go = rows.filter((r) => r.allowed);
+    if (o.connected && go.length) {
+      const body = {
+        workspace: str(ws.tenant && ws.tenant.id),
+        kind,
+        variant: variant || go[0].m.variant,
+        firm,
+        portalUrl: o.portalUrl,
+        offeringNews: !!o.offeringNews,
+        recipients: go.map((r) => ({ investorId: r.it.investorId, name: str(r.it.to && r.it.to.name), email: str(r.it.to && r.it.to.email), subject: str(r.data.subject), body: str(r.data.body), data: r.data }))
+      };
+      const answer = await o.api('POST', '/v1/messages', body);
+      const results = (answer && Array.isArray(answer.results) && answer.results) || [];
+      for (const r of go) {
+        const got = results.filter((x) => x && x.investorId === r.it.investorId)[0];
+        status[r.it.investorId] = got && SERVER_STATUSES.indexOf(got.emailStatus) >= 0 ? got.emailStatus : 'failed';
+        error[r.it.investorId] = got ? str(got.error) : 'The integration server did not answer for this investor.';
+      }
+    } else for (const r of go) status[r.it.investorId] = 'simulated';
+    const counts = { total: rows.length };
+    const results = rows.map((r) => {
+      const s = status[r.it.investorId];
+      counts[s] = (counts[s] || 0) + 1;
+      log(ws, { kind, subject: r.m.subject, to: str(r.it.to && r.it.to.email), investorId: r.it.investorId, status: s, text: r.m.text, link: r.data.link });
+      return { investorId: r.it.investorId, status: s, error: error[r.it.investorId] || '' };
+    });
+    return { results, counts };
+  }
+
+  const API = { KINDS, render, givenName, greeting, expirySentence, supportSentence, senderLine, screen, PATTERNS, contrastText, contrast, SIMULATED, BANNED, STATUSES, redactLink, log, money, longDate, esc, firmFromTenant, prefsAllow, applyPrefs, dispatch, summary, TAX_SUBJECT };
   if (NS) NS.emails = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);

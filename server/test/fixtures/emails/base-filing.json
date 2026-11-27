@@ -1,0 +1,44 @@
+{
+  "base": "af0b7b95adf50f66c70a26af75430fd9e0bd746c",
+  "built": "lines 193-196 of git show <base>:server/lib/filings.mjs, run with the base mail.mjs money()",
+  "placed": {
+    "input": {
+      "id": "fil_sample-order",
+      "kind": "formd",
+      "firm": {
+        "name": "Harbor Ridge Capital"
+      },
+      "offering": {
+        "id": "hr-fund-ii",
+        "name": "Harbor Ridge Fund II"
+      },
+      "dueCents": 29900,
+      "openFees": false
+    },
+    "kind": "filing_order",
+    "fromName": "Filings",
+    "subject": "Filing order fil_sample-order: Form D",
+    "text": "Order: fil_sample-order\nService: Form D\nFirm: Harbor Ridge Capital\nOffering: Harbor Ridge Fund II\nAmount due: $299\n\nOpen it with the staff call GET /v1/filings/staff/orders/fil_sample-order",
+    "html": "<p>Order: fil_sample-order<br>Service: Form D<br>Firm: Harbor Ridge Capital<br>Offering: Harbor Ridge Fund II<br>Amount due: $299<br><br>Open it with the staff call GET /v1/filings/staff/orders/fil_sample-order</p>"
+  },
+  "changed": {
+    "input": {
+      "id": "fil_sample-order",
+      "kind": "bluesky",
+      "firm": {
+        "name": "Harbor Ridge Capital"
+      },
+      "offering": {
+        "id": "hr-fund-ii",
+        "name": "Harbor Ridge Fund II"
+      },
+      "dueCents": 125000,
+      "openFees": true
+    },
+    "kind": "filing_order",
+    "fromName": "Filings",
+    "subject": "Filing order changed fil_sample-order: State notice filings",
+    "text": "Order: fil_sample-order\nService: State notice filings\nFirm: Harbor Ridge Capital\nOffering: Harbor Ridge Fund II\nAmount due: $1,250 plus fees still to be confirmed\n\nOpen it with the staff call GET /v1/filings/staff/orders/fil_sample-order",
+    "html": "<p>Order: fil_sample-order<br>Service: State notice filings<br>Firm: Harbor Ridge Capital<br>Offering: Harbor Ridge Fund II<br>Amount due: $1,250 plus fees still to be confirmed<br><br>Open it with the staff call GET /v1/filings/staff/orders/fil_sample-order</p>"
+  }
+}
