@@ -337,6 +337,7 @@ title: Audit
 menu: Report, then Audit
 anchor: Download audit package
 anchor: Audit readiness
+anchor: Download year-end package
 
 Audit-ready records for each fund: financial statements, capital accounts, investor register, capital activity, schedule of investments, fees, performance and a change log.
 
@@ -344,6 +345,7 @@ Audit-ready records for each fund: financial statements, capital accounts, inves
 2. Read "Audit readiness": each check says Pass or lists its exceptions, such as an investor with no tax form on file.
 3. Under "Audit package", "Preview" shows a schedule on the page; each file can be downloaded on its own.
 4. Choose "Download audit package" for one .zip with every schedule as a CSV, a README and a SHA-256 manifest; every download goes in the change log.
+5. Owners: "Download year-end package" gives the CPA one .zip for the "Year" (workbook, PDF, CSVs); "View" shows each sheet.
 
 ## console-kyc
 audience: sponsor

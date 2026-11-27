@@ -667,6 +667,167 @@
     return { name, bytes, hash, files: files.map((f) => ({ name: f.name, size: f.data.length })) };
   }
 
+  /* ---------- The panel on the Audit page (plan 11-16) ---------- */
+  // Drawn through NS.runHooks('auditPanels', ws) in the console's Audit view, for the fund that page has chosen, only for
+  // an owner of a self-serve firm. withholding.js (the package reads each W-8's validity from it) and filesout.js (the
+  // workbook and PDF writers) are loaded from beside this file when first needed, with the portal's own script loader.
+  const doc = root.document;
+  const HERE = (doc && doc.currentScript && doc.currentScript.src) || '';
+  const besideMe = (name) => {
+    try {
+      return HERE ? new URL(name, HERE).href : new URL(`assets/js/${name}`, doc.baseURI).href;
+    } catch (e) {
+      return '';
+    }
+  };
+  const whReady = () => !!(NS.withholding && typeof NS.withholding.w8 === 'function');
+  const filesReady = () => !!(NS.files && typeof NS.files.workbook === 'function' && typeof NS.files.pdf === 'function');
+  function need(name, ready) {
+    if (ready()) return Promise.resolve();
+    const E = NS.esignKit;
+    if (!E || typeof E.loadScript !== 'function') return Promise.reject(new Error('this page cannot load the files it needs'));
+    return E.loadScript(besideMe(name), ready).then(() => {
+      if (!ready()) throw new Error(`${name} did not load`);
+    });
+  }
+  const wh = { loading: false, err: '' };
+  function loadWithholding() {
+    if (wh.loading || wh.err) return;
+    wh.loading = true;
+    need('withholding.js', whReady).then(
+      () => {
+        wh.loading = false;
+        if (NS.state && NS.state.route === 'console-audit' && NS.app) NS.app.render();
+      },
+      (e) => {
+        wh.loading = false;
+        wh.err = `The package could not be prepared on this page: ${(e && e.message) || e}.`;
+        if (NS.state && NS.state.route === 'console-audit' && NS.app) NS.app.render();
+      }
+    );
+  }
+  const esc = (s) => (NS.ui && NS.ui.h ? NS.ui.h(s) : String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]));
+  const allowed = () => !!(NS.EDITION && NS.EDITION.diy && NS.app && typeof NS.app.can === 'function' && NS.app.can('configure'));
+  /** The panel's own state for the fund the Audit page shows: year, tick, the sheet in view, busy, the last error. */
+  function yeState(o) {
+    const u = NS.state.ui;
+    if (!u.ye || u.ye.fund !== o.id) u.ye = { fund: o.id, year: '', forms: false, view: -1, busy: false, err: '' };
+    return u.ye;
+  }
+  /** The years the fund's journal has a live entry in, newest first. */
+  function yearsOf(ws, o) {
+    const ys = new Set();
+    liveLines(ws, o, '', '').forEach((l) => /^\d{4}-/.test(l.date) && ys.add(l.date.slice(0, 4)));
+    return Array.from(ys).sort().reverse();
+  }
+  // The package for the panel's list and views is built once per fund, year and state of the records.
+  const cache = { key: '', ws: null, pkg: null };
+  function pkgFor(ws, o, year) {
+    const f = ws.books && ws.books.funds && ws.books.funds[o.id];
+    const key = [o.id, year, f && Array.isArray(f.journal) ? f.journal.length : 0, Array.isArray(ws.audit) ? ws.audit.length : 0, (ws.investors || []).length, (ws.envelopes || []).length, NS.dates.today()].join('|');
+    if (cache.ws !== ws || cache.key !== key) {
+      const pkg = build(ws, o, year, { today: NS.dates.today() });
+      cache.ws = ws;
+      cache.key = key;
+      cache.pkg = pkg;
+    }
+    return cache.pkg;
+  }
+  /** A sheet as the Audit page's preview tables it, at most `limit` rows; a text cell in a money column reads as text. */
+  function sheetTable(s, limit) {
+    const A = NS.audit;
+    const NUM = ['money', 'pct', 'ratio', 'price', 'int', 'qty'];
+    const num = (c) => NUM.indexOf(c.t) >= 0;
+    const show = (c, v) => (typeof v === 'string' && c.t !== 'text' && c.t !== 'date' ? v : A.display(c, v));
+    const cell = (c, v) => `<td${num(c) ? ' class="num"' : ''}>${esc(show(c, v))}</td>`;
+    const body = s.rows.slice(0, limit).map((r) => `<tr>${s.cols.map((c, i) => cell(c, r[i])).join('')}</tr>`).join('');
+    const total = s.total ? `<tfoot><tr>${s.cols.map((c, i) => cell(c, s.total[i])).join('')}</tr></tfoot>` : '';
+    return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact aud-tbl"><thead><tr>${s.cols.map((c) => `<th scope="col"${num(c) ? ' class="num"' : ''}>${esc(c.h)}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${s.cols.length}" class="cs-muted">No rows for this year.</td></tr>`}</tbody>${total}</table></div>${s.rows.length > limit ? `<p class="cs-hint">Showing ${limit} of ${s.rows.length} rows. The file has every row.</p>` : ''}`;
+  }
+  function panelHTML(ws) {
+    if (!ws || !allowed() || !NS.state || !NS.state.ui) return '';
+    const a = NS.state.ui.aud;
+    const o = a && (ws.offerings || []).find((x) => x.id === a.offering);
+    if (!o) return '';
+    const st = yeState(o);
+    const wrap = (body) =>
+      `<section class="cs-panel ye" id="ye-panel" data-fund="${esc(o.id)}"><div class="cs-panel-head"><h2>Year-end package</h2></div><p class="cs-muted ye-line">Everything the fund’s CPA needs for the return, as a workbook and a PDF.</p>${body}</section>`;
+    const years = yearsOf(ws, o);
+    if (!years.length) return wrap('<p class="cs-hint">The books hold no entries for this fund yet.</p>');
+    if (years.indexOf(st.year) < 0) {
+      const now = NS.dates.today().slice(0, 4);
+      st.year = years.find((y) => y < now) || years[0];
+      st.view = -1;
+    }
+    if (!whReady()) {
+      loadWithholding();
+      return wrap(wh.err ? `<p class="cs-error" role="alert">${esc(wh.err)}</p>` : '<p class="cs-hint" role="status">Loading…</p>');
+    }
+    let pkg;
+    try {
+      pkg = pkgFor(ws, o, Number(st.year));
+    } catch (e) {
+      return wrap(`<p class="cs-error" role="alert">The package could not be prepared: ${esc((e && e.message) || e)}</p>`);
+    }
+    const icon = NS.ui && NS.ui.icon ? NS.ui.icon('download') : '';
+    const shown = st.view >= 0 && pkg.sheets[st.view] ? pkg.sheets[st.view] : null;
+    return wrap(
+      `<div class="cs-grid cs-grid-3">
+        <label class="cs-field" for="ye-year"><span>Year</span><select id="ye-year" data-bind="ye:year">${years.map((y) => `<option value="${y}"${y === st.year ? ' selected' : ''}>${y}</option>`).join('')}</select></label>
+        <label class="cs-check cs-wide" for="ye-forms"><input id="ye-forms" type="checkbox" data-bind="ye:forms"${st.forms ? ' checked' : ''}>Include signed W-9 and W-8 forms</label>
+      </div>
+      <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ye-dl"${st.busy ? ' disabled aria-busy="true"' : ''}>${icon}Download year-end package</button></div>
+      ${st.err ? `<p class="cs-error" role="alert">${esc(st.err)}</p>` : ''}
+      <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact ye-sheets"><thead><tr><th scope="col">Sheet</th><th scope="col"><span class="sr-only">View</span></th></tr></thead><tbody>${pkg.sheets
+        .map((s, k) => `<tr class="ye-sheet" data-k="${k}"><td class="ye-title">${esc(s.title)}</td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="ye-view" data-k="${k}" aria-pressed="${st.view === k}">View</button></td></tr>`)
+        .join('')}</tbody></table></div>
+      ${shown ? `<div class="ye-view" id="ye-view" data-k="${st.view}"><h3>${esc(shown.title)}</h3><p class="cs-muted aud-desc">${esc(shown.desc)}</p>${sheetTable(shown, 60)}</div>` : ''}`
+    );
+  }
+  if (NS.hooks) (NS.hooks.auditPanels = NS.hooks.auditPanels || []).push(panelHTML);
+  if (NS.binders)
+    NS.binders.ye = (p, v) => {
+      const st = NS.state && NS.state.ui && NS.state.ui.ye;
+      if (!st) return;
+      if (p === 'year') {
+        st.year = String(v);
+        st.view = -1;
+        st.err = '';
+        NS.app.render();
+      } else if (p === 'forms') st.forms = v === true;
+    };
+  if (NS.actions) {
+    NS.actions['ye-view'] = (el) => {
+      const st = NS.state && NS.state.ui && NS.state.ui.ye;
+      const k = Number(el.getAttribute('data-k'));
+      if (!st || !Number.isInteger(k) || k < 0) return;
+      st.view = k;
+      NS.app.render();
+      const v = doc && doc.getElementById('ye-view');
+      if (v && v.scrollIntoView) v.scrollIntoView({ block: 'start' });
+    };
+    NS.actions['ye-dl'] = async () => {
+      const ws = NS.state && NS.state.ws;
+      const a = NS.state && NS.state.ui && NS.state.ui.aud;
+      const st = NS.state && NS.state.ui && NS.state.ui.ye;
+      const o = ws && a && (ws.offerings || []).find((x) => x.id === a.offering);
+      if (!o || !st || st.fund !== o.id || st.busy || !allowed()) return;
+      st.busy = true;
+      st.err = '';
+      NS.app.render();
+      try {
+        await need('withholding.js', whReady);
+        await need('filesout.js', filesReady);
+        const pkg = await packageFiles(ws, o, Number(st.year), { includeForms: st.forms === true, actor: NS.app.actor ? NS.app.actor() : '' });
+        await NS.ui.download(pkg.name, pkg.bytes, { mime: 'application/zip' });
+      } catch (e) {
+        st.err = `The package could not be written: ${(e && e.message) || e}`;
+      }
+      st.busy = false;
+      NS.app.render();
+    };
+  }
+
   B.package = build;
   B.packageCsv = packageCsv;
   B.packageFiles = packageFiles;
