@@ -36,8 +36,9 @@ metrics:
 actuals:
   tokens: 24000
   tasks: 3
-  commits: 10
+  commits: 11
 plan_head_before: af0b7b95adf50f66c70a26af75430fd9e0bd746c
+plan_head_after: 72c7a5e (the gate ran here; the SUMMARY commit follows it)
 ---
 
 # Phase 15 Plan 06: Workspace on the server Summary
@@ -46,7 +47,7 @@ The firm's workspace is now held on the server, sealed with DATA_KEY, one blob p
 
 ## Failures first
 
-- GATE: see "Gate" below (filled in when the run ends).
+- Gate: no failure. The first run on 72c7a5e ended GATE_EXIT=0 with 99 GATE ok lines and no GATE FAIL.
 - The text reader is not covered by the page policy in Chromium. I measured this with `--plant no-wasm`: the text reader still started and read the document after 'wasm-unsafe-eval' was taken out of the page's policy. Its worker takes no policy from the page, because the worker script is served without a CSP header. What fails without 'wasm-unsafe-eval' is WebAssembly compiled in the page itself, plus the header check and the violation count. So in Chromium, 'wasm-unsafe-eval' is not what lets the reader run. WebKit may treat workers differently, so this goes to the owner's iPhone check.
 - 'versions' (test 2) passed already in the Task 2 RED run. Task 1 built versions and the ten-version limit, as the plan's Task 1 says. All other new tests failed first.
 - 15-04 open item NOT closed: an invitation made with the shared token, for a workspace with no record, gives an investor sign-in with no firm rule and an empty issuer. The fix belongs in POST /v1/invite/login in server/lib/auth.mjs, which 15-14 owns in this wave and which this plan's diff gate keeps unchanged. It is recorded for 15-14. Nothing in this plan makes it worse: the workspace routes refuse tokens, and a session's workspace always has its record.
@@ -124,6 +125,151 @@ SERVED PORTAL (`O/served-portal.txt`): every line PASS in both parts, `SERVED PO
 
 ## Gate
 
-(filled in when the run ends)
+`GATE_SERVER_TESTS=556 GATE_OUT=SCRATCH/exec-15-06 bash .planning/phases/15-security/checks/gate15.sh` ran on 72c7a5e, base commit af0b7b9. It was run by `SCRATCH/exec-15-06/verify3.sh`, which is the plan's Task 3 verify with wave 3 B1 applied: `rm -f $O/gate.txt` first, and `|| exit 1` after the `git diff --quiet ... index.html` step. The added grep `^GATE ok +SERVED PORTAL` is B3. It passed on the first run. The last lines of `O/gate.txt`, verbatim:
+```
+GATE ok   phase 13 checks: none in this tree
+GATE ok   DATAROOM MODEL
+GATE ok   INBOX MODEL
+GATE ok   WATERMARK
+GATE ok   ROLES TABLE
+GATE ok   SECTIONS
+GATE ok   SERVED PORTAL
+GATE ok   TOTP FRAME
+GATE_EXIT=0
+```
+It also printed `GATE ok   server tests 556 = base 544 + 12 declared`, then 99 `GATE ok` lines in all, no `GATE FAIL` and no base-change note. The reference gate (`O/gate/reference.txt`) ended `GATE_EXIT=0`. The verify printed `VERIFY3_OK`.
 
-<!-- gsd:write-continue -->
+GATE_EXIT=0.
+
+## Test counts
+
+- Base at af0b7b9: 544 tests, all 544 pass (`O/base-all.txt`; `O/base-count.txt` = 544).
+- This tree: 556 tests, all 556 pass, 0 fail. That is 544 + 12: server/test/workspace.test.mjs (`// gate: tests 9`) and server/test/serve.test.mjs (`// gate: tests 3`). GATE_SERVER_TESTS=556.
+- Checks added: SECTIONS (node, 2 cases) and SERVED PORTAL (browser, 2 parts).
+
+## The SECTIONS table as built (server/lib/workspace.mjs; later plans add lines only)
+
+```
+tenant           write configure, fields { ach: pay }, masked ach.odfiRouting ach.destinationRouting ach.immediateOrigin ach.companyId ach.offset.routing ach.offset.account
+offerings        write configure, masked achOverride.companyId
+integrations     write configure
+invitationRules  write configure
+amlProgram       write configure
+esignTemplates   write configure
+setup            write configure
+investors        write operate, each { payment: pay }, masked payment.bank.routing payment.bank.account, read { personalFields: email phone address contact }
+runs calls requests notices envelopes taxdocs taxDeposits books reports notifications invitations filings
+coSignInCancel coSignInRetired coServerRetired v opsV       write operate
+docs             write operate, read { personalItems: a doc whose cat is Identity or Verification }
+achLog           write pay
+audit            write operate, grow true
+team             write server
+```
+What each line can hold:
+- `write`: a permission, 'server' or 'never'.
+- `read`: a permission, or { personalFields, personalItems }.
+- `grow`: true, or a function (stored, next) → '' | a sentence.
+- `fields` (object section) and `each` (array section, items paired by id): sub-keys that need their own permission.
+- `masked`: paths shown as '****' and the last four digits to a role without pay.
+
+A change that needs 'pay' also needs a sign-in in the last 10 minutes. A key with no line is refused (REFUSALS.never). 'invite' never has a line, so the console (15-17) must leave ws.invite out of a save.
+
+The keys case found 25 keys, all with lines. It looked in three places: the four sample workspaces after NS.integrations.ensure; a new workspace after NS.integrations.ensure and NS.ops.ensure; and the keys that every script diy.html loads creates with the "make it when missing" idiom. Three keys are created only by scripts diy.html does not load yet. The check prints them as NOTE lines:
+- `rooms` (dataroom.js) and `inbox` (inbox.js). The sample workspaces hold neither, so under the plan header's rule this plan did not add them. 14-08 adds both lines: write operate, read personal, and a grow function that keeps earlier messages and room events. grow takes `(stored, next) → '' | sentence`. 14-08 then runs `node .planning/phases/15-security/checks/sections.js`.
+- `mailLog` (emails.js, 13-01). The plan that loads emails.js into the console adds its line.
+
+## Routes 15-15 and 15-17 build on
+
+- `GET /v1/workspace` → `{ version, ws }`. ws is mask(stored, role), and ws.team is the server's people `{ id, name, email, role, status, owner, endsOn }` (the Accountant gets no emails). Before the first save it answers 404 `{ code: 'empty' }`.
+- `PUT /v1/workspace { version, ws }` → `{ version }`. Refusals:
+  - 409 `version`: the save started from an older version.
+  - 400 `tin`: a full taxpayer number.
+  - 403 `section`: the role may not change that section (the REFUSALS sentence).
+  - 403 `grow`: the change log would shrink or change.
+  - 401 `fresh`: a pay change without a recent sign-in.
+  - 403 `person`: a token instead of a person.
+
+  The console sends back what it read, masked values included. The server restores the masked values and puts back, from the stored version, any fields or documents the role could not read.
+- `GET|PUT|DELETE /v1/workspace/files/:id`, where the id is 1-120 letters, digits, '.', '_' or '-'.
+  - PUT `{ name, type, base64 }` → `{ id, size, sha256 }`.
+  - GET serves the file as an attachment with `Content-Security-Policy: default-src 'none'; sandbox` and nosniff.
+  - DELETE needs `Content-Type: application/json` from the server's own origin, like every cookie write; the console sends `{}`.
+- For 15-15: `server.workspaces.get(id)` → `{ ws, version } | null`, unmasked. `put(id, ws, version, person)` saves with no role check but keeps the version check and the taxpayer rule, and logs 'Workspace saved' and 'Bank account changed'.
+
+## Deviations from plan
+
+1. [Orchestrator rule] Fixtures. The plan named routing 500000005 and accounts 000123456789 and 000987654321. This run's rule requires routing prefix 19 and accounts starting 99, so the tests use:
+   - routing 190000004 (prefix 19 is never issued; the check digit is valid);
+   - accounts 990012346789, 990098764321 and 990055501234;
+   - new values 190000017 and 990011112222;
+   - taxpayer values 000-12-3456, 00-1234567 and 000123456, only in cases that must be refused.
+
+   The masked values in the tests are therefore '****0004', '****6789' and '****4321'.
+2. [Rule 3] The file blob key is `wsf-<ws>-<sha256(fileId), 40 hex>` instead of `wsf-<ws>-<fileId>`. store.mjs's BLOB_KEY refuses '.', and file ids may contain one.
+3. [Rule 2] File names and types are sealed in the store (`workspaces:<id>:file:<fileId>`). Otherwise a file name like "Form_W-9_<investor>.pdf" would put an investor's name in store.json in plain text (T-15-42). The files test checks this.
+4. [Rule 2] Files are served as attachments with `default-src 'none'; sandbox` and nosniff. The pages now share an origin with the API, so an uploaded HTML file must never run as a page.
+5. [Rule 2] Masking also covers tenant.ach.immediateOrigin, tenant.ach.companyId and offerings[*].achOverride.companyId. The mask case found 10-digit runs in those fields in every sample.
+6. [Rule 2] The taxpayer rule also covers `ein`, `itin`, `usTin` and `e8Owner<n>Tin` (onboarding.js's own secret field names), on top of the six the plan names.
+7. [Rule 2] A role without 'operate' gets REFUSALS.operate for any change, even a change to a configure section. This matches the test's rule that Read-only and the Accountant get REFUSALS.operate for anything.
+8. Interface: createWorkspaces takes no `team` argument. team.mjs exports no people list, and 15-14 owns team.mjs in this wave, so the module reads people through signin.people the same way team.mjs does. `purge` is not built, because nothing in the workspace expires: versions are trimmed at each save, and 15-20 deletes a closed portal.
+9. Interface: createServer takes `opts.pages`. The SERVED PORTAL check uses it for `--plant`.
+10. ROUTES: besides the five workspace lines, public lines were added for `/.well-known/security.txt`, `/`, `/portal.html`, `/security.html`, `/disclosure.html` and the `/assets` prefix. They document what is reachable before the guard; the guard reads only /v1/ lines.
+11. GATE_OUT is O (`exec-15-06`), as the orchestrator set it, instead of the plan's O/gate.
+12. README: two wordings that used the word the project rules forbid were changed: one in Security notes (an Authorization header example) and one in Investor invitations (the investor's name and details). The connector auth type name at line 179 is a value in code, so it was left as is.
+13. SERVED PORTAL's e-sign preview step draws a one-page agreement with NS.esign.viewPdf, the same page-drawing code the e-sign preview and signing screens use. It does not click through the console's E-sign page: the served portal starts signed out, with no demo control.
+
+## Decisions (owner may reverse)
+
+- The last 10 versions are kept (C-04). A version blob's additional data is its key (15-03's rule). A saved 'team' is ignored, and a read gives the server's people.
+- The workspace routes are for people only; tokens are refused.
+- Adding a new investor with a bank account needs pay and a fresh sign-in. Staff can add an investor without bank details. This reaches 15-17: when Staff import an onboarding submission that carries a bank account, the save is refused until 15-15's pending flow (D-04) holds the investor's own account.
+- I7: an Owner or Admin who changes a bank account with a fresh sign-in is the firm's own confirmation. Phase 16's pre-note rule still applies.
+- A save that changes nothing stores nothing.
+
+## For later plans
+
+- 15-17: the first save after the move needs a sign-in in the last 10 minutes (pay plus fresh) if the workspace holds tenant.ach or investors' bank accounts. Run the move right after sign-in, or after `POST /v1/auth/confirm-password`. Leave ws.invite out of the save. /v1/workspace is not under the 60-writes-per-minute limit (it sits with the team routes, before the limiter).
+- 15-18: cors() and PORTAL_ORIGIN for the served origin, unchanged here. Also decide whether worker scripts get a policy header of their own (Threat flags).
+- 15-14: close the 15-04 open item above.
+- The SECTIONS check runs on every gate. A new script in diy.html that creates a workspace key fails it until that key has a line.
+
+## Threat flags
+
+| Flag | File | Description |
+|------|------|-------------|
+| threat_flag: same-origin files | server/lib/workspace.mjs | Uploaded files are served from the portal's origin, so they go out as attachments with `default-src 'none'; sandbox` and nosniff (deviation 4). |
+| threat_flag: worker policy | server/lib/pages.mjs (unchanged) | Scripts under assets/ are served without a policy header. A worker started from them (the text reader) runs under no policy in Chromium (measured with --plant no-wasm). |
+
+## Known stubs
+
+None.
+
+## Guide lines (for .planning/GUIDE-PASS.md; no guide bytes written)
+
+- Workspace on the server: in server mode the firm's data lives on the firm's server, encrypted, and the last 10 saved versions are kept. If two people save at once, the second sees "Someone else saved changes. Reload to see them."
+- Bank accounts: only an Admin or the Owner can change an investor's or the firm's bank account, and only within 10 minutes of entering the password. Staff, Read-only and the Accountant see '****' and the last four digits.
+- The Accountant sees no investor's email, phone, address or contact name, sees no identity or verification document, and cannot open a signed tax form.
+- The change log can only grow. Nothing in it can be removed or edited.
+- A full taxpayer number cannot be saved in the workspace. Only the last four digits are kept.
+
+## State files
+
+STATE.md, ROADMAP.md and REQUIREMENTS.md are not updated in this worktree. The orchestrator writes them when it merges, as for 15-04 and 15-05.
+
+## Commits (wip/15-06)
+
+- 8759db3 test(15-06): RED tracer
+- 173af8f feat(15-06): the workspace held sealed on the server, one blob per version, last 10 kept
+- 304116c test(15-06): RED sections by role, bank rule, masking, accountant, growing log, files, minimization; SECTIONS check
+- df7a5ff feat(15-06): every save checked by role and section; bank numbers masked and protected; log only grows; files sealed; no full taxpayer number
+- fec78de test(15-06): RED served page, security.txt route, health warnings
+- 3cb3e9e feat(15-06): pages, security.txt and health warnings mounted; README Workspace on the server
+- 537c0a4 wip(15-06): save served-portal check draft
+- 4e84060 test(15-06): SERVED PORTAL check (B3)
+- 3aa03ec fix(15-06): an offering's ACH company id masked without pay; a file of a workspace with nothing saved needs personal
+- 72c7a5e wip(15-06): save SUMMARY draft before the gate
+- this SUMMARY commit
+
+## Self-Check: PASSED
+
+The created files exist. Every commit above is an ancestor of HEAD. `git diff --quiet af0b7b9 HEAD -- server/lib/auth.mjs assets diy.html portal.html index.html` shows no change. The server/node_modules link was removed. The gate removed the base tree, the shots and checks-out, and the check's own output folders were deleted.
