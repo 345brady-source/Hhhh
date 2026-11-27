@@ -272,7 +272,7 @@
     } else if (!run.delivered && run.state === 'stopped') parts.push('<p class="rb-line">A stopped report is not delivered. Generate it again to deliver it.</p>');
     if (run.delivered) {
       parts.push(`<div class="rb-acts"><button type="button" class="cs-btn" data-action="rd-tell" data-id="${h(run.id)}">Tell investors</button><button type="button" class="cs-btn" data-action="rd-paper" data-id="${h(run.id)}" aria-expanded="${s.paper === run.id}">Send on paper</button></div>`);
-      if (s.tellMsg) parts.push(`<p class="rb-msg" role="alert">${h(s.tellMsg)}</p>`);
+      if (s.tellMsg) parts.push(`<p class="rb-msg" role="alert" data-rd="tell-msg">${h(s.tellMsg)}</p>`);
       if (s.paper === run.id) parts.push(paperHTML(ws, run));
     }
     return `<div class="rd-detail">${parts.join('')}</div>`;

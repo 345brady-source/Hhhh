@@ -305,7 +305,8 @@
   /**
    * The Notices page's draft for a delivered run, with exactly the keys console.js noticeDraft writes: the investors it
    * was delivered to, the 'quarterly' template for a quarterly report and 'documents' otherwise. It is only a draft:
-   * the person reads it, may change it, and sends it on the Notices page.
+   * the person reads it, may change it, and sends it on the Notices page. When every file of the run is withdrawn there
+   * is no one to tell: it refuses with one sentence, so the Notices page is never filled in for every investor.
    */
   function noticeDraft(ws, runId) {
     const run = needRun(ws, runId);
@@ -313,6 +314,7 @@
     const kind = run.type === 'quarterly' ? 'quarterly' : 'documents';
     const docs = run.delivered.docs.map((id) => reportDoc(ws, id)).filter((d) => d && d.report.state !== 'withdrawn');
     const investors = uniq(docs.reduce((a, d) => a.concat(d.investors || []), []));
+    if (!investors.length) refuse('Every file of this report is withdrawn; there is no one to tell.');
     const tpl = (NS && NS.NOTICE_TEMPLATES && NS.NOTICE_TEMPLATES[kind]) || { subject: '', body: '' };
     return { kind, audience: 'all', investors, pickerOpen: false, pickerQuery: '', includePending: true, quarter: quarterOf(run.period.to), docName: run.title, subject: tpl.subject, body: tpl.body, subjectEdited: false, bodyEdited: false, confirm: false };
   }
