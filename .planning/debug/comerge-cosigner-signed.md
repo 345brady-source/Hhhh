@@ -81,6 +81,13 @@ started: since coMerge was written (to confirm with git log).
   found: "PRESS AND CO-INVESTOR: PASS (parts run: 1)", 29 PASS (incl. "the co-investor signs, and the firm has the notification that they signed as co-investor"). PROBE: row "Marisol Quenneville Marisol Quenneville · marisol@example.org Co-investor: Theodora Mbeki-Larsen · Sign-in sent Nov 27, 2026 Individual $0 0 investments ..."; the local record { token, link, createdAt, expiresAt, sentAt, openedAt } (no signedAt field in this kind); audit lines only "Co-investor added", "Co-investor sign-in sent: ... from the sender's own email app", "Co-investor sign-in opened" (no cancel, no "not used").
   implication: the preview has no coMerge, sends nothing and logs no false cancel: that part is correct. But it does NOT behave the same: after the co-investor signed, its row still says "Sign-in sent Nov 27, 2026", while the server path (after the fix) says "Signed Nov 27, 2026". Cause: coinvestor.js signInText's local branch has only "Sign-in link ready to send" / "Sign-in sent <date>" / "Sign-in link expired" (06-37's design never had a signed state for the account-wide local link). Separate from the coMerge defect (a design gap, not a stale read). The owner's own walkthroughs run in the preview, so this is the row he would see. Decision: fix as its own atomic commit (coinvestor.js only; 08-09 does not touch coinvestor.js), RED first in press-and-co-investor.js co-link parts; the probe is replaced by that assertion.
 
+- timestamp: 2026-11-27T02:22Z (run 02:20:27-02:21:42 UTC)
+  checked: preview RED, commit 147213f (the probe replaced by the assertion; product = ebe8b55), press-and-co-investor.js --only co-link-desktop,co-link-phone, heavy.sh, GATE_FRESH=1 (scratchpad comerge/preview-red/run.txt)
+  found: "PRESS AND CO-INVESTOR: FAIL (parts run: 2) - co-link-desktop, co-link-phone"; 58 PASS, 2 FAIL, only the new one:
+    FAIL co-link-desktop once the co-investor signed, the investors row says "Signed <date>" (as with the integration server) :: {"row":"Marisol Quenneville Marisol Quenneville · marisol@example.org Co-investor: Theodora Mbeki-Larsen · Sign-in sent Nov 27, 2026 Individual $0 0 investments Active since Nov 27, 2026 W-9 not signed ACH · Checking ••6789 Account Request tax form View portal"}
+    FAIL co-link-phone (same; "Co-investor: Ingrid Vasquez-Holm · Sign-in sent Nov 27, 2026")
+  implication: preview RED confirmed on both devices.
+
 ## Resolution
 
 root_cause:
