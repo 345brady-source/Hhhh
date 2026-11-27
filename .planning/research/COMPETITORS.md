@@ -197,4 +197,36 @@ Key: **Y** yes (source says so) · **P** partial · **A** add-on or charged per 
 
 Reading the "?" cells: many are features these vendors probably have but did not show up in search extracts (for example K-1 delivery at Juniper Square). They must not be used as "they don't have it" in any sales material until someone checks the vendor's own page.
 
+## 4. What a sponsor pays today for the same set of tools
+
+### 4.1 Unit prices of the separate tools (seen 2026-11-27)
+
+| Tool | Price evidence | Source |
+|---|---|---|
+| DocuSign eSignature | Standard $25/user/mo billed yearly ($45 monthly); Business Pro $40/user/mo yearly ($65 monthly); DocuSign's US listing also shows Business Pro at $45/user/mo. 100 envelopes per user per year on yearly plans. Sources conflict by a few dollars | https://www.capterra.com/p/121506/Docusign/pricing/, https://docusign.com/en-gb/products-and-pricing, https://www.docusign.com/blog/docusign-plans-and-pricing |
+| signNow | Business $8/user/mo, Business Premium $15, Enterprise $30 (yearly billing); $20/$30/$50 monthly. Some 2026 sources say it moved to per-account pricing with 100 invites a year; unresolved | https://www.signnow.com/help/plans-pricing, https://www.signnow.com/blog/signnow-pricing/ |
+| Accreditation letter | Parallel Markets through SponsorCloud $59 per letter; Verivest $75 per accreditation; Platform Eleven $100 per verification; VerifyInvestor not published (third-party estimates $15-$100); a CPA letter about $150 (forum) | https://help.sponsorcloud.io/investor-platform/how-to-verify-an-investors-accreditation-in-sponsorcloud, https://support.verivest.com/knowledge/parallel-markets-faq-verivest-help-center, https://platformeleven.io/506c-accredited-investor-verifications, https://angelinvestorsnetwork.com/regulatory-compliance/accredited-investor-verification-guide-third-party-services-2026, https://biggerpockets.com/forums/12/topics/955852-accredited-investor-online-certification-services |
+| Parallel Markets direct | Not per investor: priced per record in the client database, with annual minimums, set by contract | https://support.parallelmarkets.com/hc/en-us/articles/4417810700685 |
+| KYC and AML (Didit, the provider our package uses) | 500 full KYC checks free each month, then $0.33 per check; AML $0.20 (pricing page) or $0.30 (docs); conflicting | https://didit.me/pricing, https://docs.didit.me/identity-verification/pricing |
+| 1099 e-filing | IRS IRIS portal free; Tax1099 $2.99 per form at 1-20 forms; Track1099 from $0.55 per form at volume | https://www.tax1099.com/tax-1099-efile-pricing, https://track1099.com/info/pricing |
+| K-1 preparation | $150-$300 per investor per year (a vendor blog; the search extract did not tie the figure to one URL; probably https://www.cashflowportal.com/blog/guide-to-k-1s-for-real-estate-syndications) | see note |
+| Fund administrator | Allocations Fund plan $19,500/yr (K-1 preparation extra); Agora's claim of outside-administrator minimums of $50K-$150K/yr; Carta $20K-$50K/yr for small VC funds (secondhand); "usually under 0.5% per year" (White Coat Investor) | https://www.allocations.com/insights/how-spv-pricing-works-on-allocations, https://agorareal.com/gp-hub/fund-admin-vs-software/, https://teel.substack.com/p/the-emerging-vc-stack-angellist-vs, https://www.whitecoatinvestor.com/private-real-estate-fund-fees/ |
+| Form D and state notices | SEC charges no Form D fee; state fees vary (Utah: $600 for a Rule 506 notice); filing services quote case by case. The NASAA fee matrix is dated 2025-04-21 (possibly outdated by now) | https://commerce.utah.gov/securities/securities-library/fees/, https://www.nasaa.org/wp-content/uploads/efd/Form-D-fees-matrix.pdf, https://www.newsfilecorp.com/filing/edgar/formd.php |
+
+### 4.2 A worked example (an illustration, not a quote)
+
+Assumptions: one sponsor user; 60 investors; one 506(c) offering a year with 30 new investors who need accreditation letters; quarterly distributions of about $2,000 per investor; a CPA prepares K-1s either way.
+
+| Line | Stitched together today (per year) | Our portal (per year, after the free year) |
+|---|---|---|
+| Portal software | InvestNext Fundraising $1,188-$3,588; All-In-One $5,988 plus an unpublished onboarding fee; Covercy Starter $5,976; Agora Essential $8,988 | $1,200 at $100/mo |
+| E-signature (if the portal lacks it or charges per envelope) | signNow $96 to DocuSign Business Pro $540; Juniper Square: 1,000 envelopes included, then $5 each | $0 (included) |
+| Accreditation, 30 letters | $1,770 (at $59) to $3,000 (at $100) | $2,970 at the $99 package, which also covers KYC and screening; the per-letter price is no better than the market. BUILT against stand-ins only |
+| ACH distributions, 240 payments | Juniper Square 240 × $0.50 = $120; InvestNext about 240 × ($0.25 + 0.03% of $2,000) ≈ $204 (third-party fee figure); Agora Pro and Enterprise $0 | $0 from us. The sponsor's bank may charge for ACH origination; that fee was not researched and is not sourced here |
+| 1099 forms | $0 (IRIS) to about $179 (Tax1099, 60 × $2.99) | $0: the portal builds the IRIS file and the sponsor uploads it with its own free code |
+| Fund administrator | $19,500 to $150,000 (see 4.1) | Not included; the managed edition is the firm's paid service |
+| **Software total without an administrator** | **about $3,000 to $12,700** | **about $1,200, or about $4,200 with 30 verification packages** |
+
+What this shows: on software alone, a small sponsor pays roughly $3,000-$12,700 a year to the competitors or the separate tools. At $100/mo our list price is $1,200, the lowest of any full set found. But the competitors' prices buy things we do not have yet: hosted team data, money movement, CRM, and track record (section 5).
+
 <!-- gsd:write-continue -->
