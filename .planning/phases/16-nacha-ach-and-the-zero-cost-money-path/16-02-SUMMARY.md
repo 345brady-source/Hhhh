@@ -3,19 +3,20 @@ phase: 16-nacha-ach-and-the-zero-cost-money-path
 plan: 02
 subsystem: payments (NACHA file record, console Distributions)
 tags: [nacha, ach, file-record, payment-release, both-editions]
-status: gate-failed
+status: complete
 requires: [16-01 gate16.sh, 16-05 builder checks/blocked, 13-05 page script lines]
 provides: [NS.achRecord (assets/js/achrecord.js), FILE RECORD (6), ACH FLOW (5)]
 affects: [16-07 (adds to achrecord.js), 15-08 (canPay, masked preview), 16-13 (guide line), 13-09 and 15-17 (console.js, diy.html, portal.html)]
 key-files:
   created: [assets/js/achrecord.js, .planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/file-record.js, .planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/ach-flow.js]
-  modified: [assets/js/console.js, diy.html, index.html, portal.html]
+  modified: [assets/js/console.js, diy.html, index.html, portal.html, server/lib/workspace.mjs, .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/audit-flow.js, .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/books-flow.js, .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/package-flow.js, .planning/phases/11-fund-accounting-and-cpa-year-end-package/11-CONTEXT.md]
 decisions:
   - "16-CONTEXT wave 1 B4 applied over the plan's interfaces: a recorded, non-cancelled run with no file record is treated as paid; a draft loaded from the History targets { runId } whatever is edited (d.forRun, kept apart from fromRun, which phase 10 checks drop on edit)"
   - "W5: a person without canPay gets the preview with every account shown as * plus the last four (field view too) and no Download, Copy or Build again buttons (not rendered), with 'Only an admin can download or copy a payment file.'"
   - "The same file already on record may be downloaded or copied again (same bytes, same file ID) with a change-log entry and no new record; a second, different file needs Build again"
   - "A draft key is kept on every distribution record, so a new draft for the same offering and payment date as a recorded run's file also needs Build again (unless that run is cancelled)"
-server_tests: "567 = base 567 + 0 declared (measured by gate16.sh in this run)"
+server_tests: "567 = base 567 + 0 declared (measured by gate16.sh; unchanged by the mailLog SECTIONS line)"
+gate: "GATE_EXIT=0 on run 3 into the same GATE_OUT (98 GATE ok, 0 FAIL)"
 start_commit: 38a85ea0f5f3c62e74a629ef7589a67846d6751f
 ---
 
@@ -27,45 +28,42 @@ Nothing here is ready until the owner has checked it.
 
 ## FAILURES FIRST
 
-1. **gate16.sh ended GATE_EXIT=1.** Four steps failed; the plan's own checks and every step the plan names passed.
-   - **AUDIT FLOW, BOOKS FLOW, PACKAGE FLOW (phase 11), part `managed` of each: caused by this plan.** Each asserts that index.html is unchanged against the base commit (audit-flow.js: `git diff --quiet <base> HEAD -- index.html`; books-flow.js and package-flow.js: index.html byte for byte equal to the base tree, 3029 vs 3078 bytes). This plan adds one line to index.html, `<script src="assets/js/achrecord.js"></script>` after nacha.js, as the plan requires (files_modified lists index.html; C-12 makes AC-06 a builder fix in both editions; Task 1's verify checks the line in index.html; part managed-desktop proves the managed record). Every other check in those three parts passed. Since 11-07, no plan has changed index.html, so this plan is the first to meet these guards. The plan's rule is that a check of another phase is not edited here: **stopped and reported. Decision needed** (options at the end).
-   - **SECTIONS (phase 15, case keys): not caused by this plan.** `mailLog (emails.js)` has no SECTIONS line. The start tree 38a85ea fails it the same way (run separately on an extracted start tree: `FAIL keys every key found (26) has a SECTIONS line :: mailLog (emails.js)`). It comes from 13-05's emails.js script line meeting 15-06's SECTIONS table. Logged in deferred-items.md.
-2. ach-flow.js on this tree failed once before passing. It was a fault in the check, not in the product: the sample's change log is seeded on first use, so the baseline was read before the log existed. Fixed in the check (NS.audit.ensureLog before the baseline).
-3. The first owner screenshots showed only messages over the top of the page. Fixed in the check: messages are cleared and the file section is scrolled into view before each shot.
+1. **The first gate run ended GATE_EXIT=1, with four failed steps.**
+   - **AUDIT FLOW, BOOKS FLOW and PACKAGE FLOW (phase 11, the `managed` part of each): caused by this plan.**
+     - Each asserted that index.html was unchanged against the base: 3029 bytes at the base, 3078 now.
+     - This plan adds the line `<script src="assets/js/achrecord.js"></script>` to index.html. C-12 requires it: the file record applies in both editions.
+     - Every other check in those parts passed.
+     - I stopped and reported. The orchestrator chose option (a) (16-CONTEXT and 11-CONTEXT "Decision during 16-02"), fixed below as a blocking-issue deviation.
+   - **SECTIONS (phase 15, case keys): already failing at the start tree 38a85ea.** The failure is `mailLog (emails.js)` has no SECTIONS line, from 13-05 meeting 15-06. The orchestrator decided to add a mailLog line, fixed below.
+2. **The second gate run (after both fixes) was stopped at the 2-hour background limit, part-way through the phase 10 steps.** It failed nothing before it stopped. Run 3 went into the same GATE_OUT, kept every step that had passed, and ended GATE_EXIT=0.
+3. **ach-flow.js failed once before passing, on this tree.** The fault was in the check, not the product: the sample's change log is created on first use, so the check read its starting count before the log existed. The check now calls NS.audit.ensureLog before taking that count.
+4. **The first owner screenshots showed only messages covering the top of the page.** The check now clears messages and scrolls to the file section before each shot.
 
 ## Gate (Task 3; 16-CONTEXT re-check B1 prefix and B2: gate16.sh, GATE16_PHASES="12 13 15")
 
-verify3 (O/gate.sh): B1 prefix passed (rec.txt and flow.txt PASS lines, achrecord.js present, no `log.push({ date: todayIso, modifier` in console.js), then `GATE16_PHASES="12 13 15" GATE_OUT=O bash $P/checks/gate16.sh`.
+The verify script (O/gate.sh) first ran the B1 prefix, which passed: the rec.txt and flow.txt PASS lines are present, achrecord.js exists, and console.js has no `log.push({ date: todayIso, modifier`. It then ran `GATE16_PHASES="12 13 15" GATE_OUT=O bash $P/checks/gate16.sh`.
 
-Required lines (all present):
+Run 3 (final; HEAD 096ec33), the required and changed lines:
 ```
 GATE ok   server tests 567 = base 567 + 0 declared
-GATE ok   DIST FLOW
-GATE ok   DIST RECORD
+GATE ok   DIST FLOW (kept from 2026-11-27 16:32:02 UTC)
 GATE ok   WITHHOLDING FLOW
+GATE ok   AUDIT FLOW
 GATE ok   AUDIT SAME
+GATE ok   BOOKS FLOW
+GATE ok   PACKAGE FLOW
 GATE ok   ROLES TABLE
+GATE ok   SECTIONS
 GATE ok   ACH FLOW
 GATE ok   ACH LEAK
 GATE ok   FILE RECORD
 GATE ok   MOBILE SYNC
 ```
-Failed lines:
-```
-GATE FAIL AUDIT FLOW
-  audit-flow.js: the last line was:       AUDIT FLOW: FAIL (parts run: 4) - managed
-GATE FAIL BOOKS FLOW
-  books-flow.js: the last line was:       BOOKS FLOW: FAIL (parts run: 8) - managed
-GATE FAIL PACKAGE FLOW
-  package-flow.js: the last line was:       PACKAGE FLOW: FAIL (parts run: 6) - managed
-GATE FAIL SECTIONS
-  sections.js: the last line was:       SECTIONS: FAIL (cases run: 2) - keys
-```
 The gate's last 15 lines:
 ```
-GATE FAIL SECTIONS
-  sections.js: the last line should be: SECTIONS: PASS (cases run: 2)
-  sections.js: the last line was:       SECTIONS: FAIL (cases run: 2) - keys
+GATE ok   INVITE MAIL
+GATE ok   ROLES TABLE
+GATE ok   SECTIONS
 GATE ok   SERVED PORTAL
 GATE ok   TOTP FRAME
 GATE ok   ACH FLOW
@@ -77,9 +75,72 @@ GATE ok   NACHA BUILD
 GATE ok   POSTING RETURNS
 GATE ok   INDEPENDENT READER
 GATE ok   RETURNS READ
+GATE_EXIT=0
+```
+**GATE_EXIT=0**: 98 "GATE ok" lines, 0 "GATE FAIL" lines. VERIFY3_EXIT=0.
+
+Server tests: 567 on this tree = 567 on the start tree + 0 declared. I measured this in the gate run. The mailLog SECTIONS line changed no server test count, and `node --test test/workspace.test.mjs` gives 9 of 9 passing. No test needed the new line.
+
+The first run's failed lines (kept in O/gate-run1.txt):
+```
+GATE FAIL AUDIT FLOW      (AUDIT FLOW: FAIL (parts run: 4) - managed)
+GATE FAIL BOOKS FLOW      (BOOKS FLOW: FAIL (parts run: 8) - managed)
+GATE FAIL PACKAGE FLOW    (PACKAGE FLOW: FAIL (parts run: 6) - managed)
+GATE FAIL SECTIONS        (SECTIONS: FAIL (cases run: 2) - keys)
 GATE_EXIT=1
 ```
-GATE_EXIT=1 (89 "GATE ok" lines, 4 "GATE FAIL" steps). VERIFY3_EXIT=1. The reference gate passed every step it runs. Server tests: 567 on this tree = 567 on the start tree + 0 declared (this plan adds no server test).
+
+## Blocking-issue deviations (orchestrator's decisions during 16-02), RED then GREEN
+
+**D1. The phase 11 managed guards were narrowed** (audit-flow.js, books-flow.js, package-flow.js; commit 096ec33; 11-CONTEXT "Decision during 16-02").
+- Each check had asserted that index.html was unchanged. Each now passes when no line index.html has gained since the base loads one of phase 11's own files.
+- Phase 11's own files are matched by `P11_OWN`: assets/js/books*.js, assets/css/books.css, bankfiles.js and filesout.js. The helper `p11Added` is in each check.
+- audit-flow reads the base file with `git show <base>:index.html` against the working file. books-flow and package-flow read it from P11_ROOT.
+- Every other managed assertion is unchanged:
+  - books-flow and package-flow still check that index.html names none of their own plan's files;
+  - package-flow still requires no uncommitted change to index.html;
+  - audit-flow still checks the NAV and NAV_SECTIONS menu lines.
+- Both runs below are `--only managed` against the extracted start tree.
+
+RED: a stand-in line `<script src="assets/js/books-bank.js"></script>` was added to index.html, uncommitted (O/guards-red.txt):
+```
+FAIL managed index.html loads no phase 11 file it did not load at the base commit 38a85ea, and the menu (NAV, NAV_SECTIONS lines of console.js) has no change since it :: {"base":"38a85ea0f5f3c62e74a629ef7589a67846d6751f","page":["<script src=\"assets/js/books-bank.js\"></script>"],"console":0,"menu":[]}
+AUDIT FLOW: FAIL (parts run: 1) - managed
+PASS managed index.html names none of this plan's files
+FAIL managed index.html loads no phase 11 file it did not load in the base tree :: ["<script src=\"assets/js/books-bank.js\"></script>"]
+FAIL managed no bank file was asked for :: ["/assets/js/books-bank.js"]
+BOOKS FLOW: FAIL (parts run: 1) - managed
+PASS managed index.html names no file of this plan (books-pkg.js, filesout.js)
+FAIL managed index.html loads no phase 11 file it did not load in the base tree :: ["<script src=\"assets/js/books-bank.js\"></script>"]
+FAIL managed git shows no uncommitted change to index.html ::  M index.html
+PACKAGE FLOW: FAIL (parts run: 1) - managed
+```
+GREEN: the stand-in line removed with `git checkout -- index.html`, on this tree (O/guards-green.txt):
+```
+PASS managed index.html loads no phase 11 file it did not load at the base commit 38a85ea, and the menu (NAV, NAV_SECTIONS lines of console.js) has no change since it
+AUDIT FLOW: PASS (parts run: 1)
+PASS managed index.html names none of this plan's files
+PASS managed index.html loads no phase 11 file it did not load in the base tree
+BOOKS FLOW: PASS (parts run: 1)
+PASS managed index.html names no file of this plan (books-pkg.js, filesout.js)
+PASS managed index.html loads no phase 11 file it did not load in the base tree
+PASS managed git shows no uncommitted change to index.html
+PACKAGE FLOW: PASS (parts run: 1)
+```
+
+**D2. SECTIONS gained a mailLog line** (server/lib/workspace.mjs: `mailLog: Object.freeze({ write: 'operate' })`; commit 3607d3b). It uses 'operate', not grow, because emails.js trims the log to LOG_MAX.
+
+RED: the start tree 38a85ea, and this tree's first gate run (p15-sections.txt):
+```
+FAIL keys every key found (26) has a SECTIONS line :: mailLog (emails.js)
+SECTIONS: FAIL (cases run: 2) - keys
+```
+GREEN (O/sections-green.txt):
+```
+PASS keys every key found (26) has a SECTIONS line
+SECTIONS: PASS (cases run: 2)
+```
+The deferred-items.md entry for it is removed; the file held only that item.
 
 ## Evidence (pasted as produced)
 
@@ -242,7 +303,8 @@ server/lib/help-guide.mjs, the Distributions entry, is untrue now: '"History" li
    - attach of an unknown record is refused.
    - A cancelled run's file no longer blocks a new draft for its offering and date.
    - A failed check in ach-flow prints no run of nine or more digits (company IDs, traces, accounts cut to their last four).
-5. "lib10.leak finds no full account number" is done by the check's own `noAccounts`, because lib10.leak looks only for vendor names. It reads the page's text against every full account number of the sample (19). For someone who may release the file, it leaves out the file's own records, which W5 lets them read.
+5. **The orchestrator's decisions during 16-02 (blocking issues), each RED then GREEN, shown above:** D1, the phase 11 managed guards narrowed; D2, the mailLog SECTIONS line.
+6. "lib10.leak finds no full account number" is done by the check's own `noAccounts`, because lib10.leak looks only for vendor names. It reads the page's text against every full account number of the sample (19). For someone who may release the file, it leaves out the file's own records, which W5 lets them read.
 
 ## Threat model
 
@@ -255,10 +317,8 @@ T-16-05 to T-16-09 are mitigated as planned:
 
 ## Open items
 
-- **Decision needed: phase 11's managed index.html guards.** Options:
-  - (a) Recommended: a small debugger or quick task (RED first) lets the three phase 11 managed parts accept lines added after phase 11 by plans that name index.html, or narrows them to phase 11's own files, as books-flow's first managed check already does ("index.html names none of this plan's files"). Then rerun gate16 into the same GATE_OUT; every step that passed is kept.
-  - (b) Leave index.html untouched. The managed edition would then have no file record, which breaks C-12 and AC-06 in the managed edition and fails part managed-desktop. Not recommended.
-- SECTIONS `mailLog` (13-05 and 15-06): exists at the start tree; needs a SECTIONS line in server/lib/workspace.mjs (15-xx owner).
+- **A team member recording a distribution writes achLog.** dist-record attaches the draft's sent file to the new run. In server mode achLog needs 'pay', so a team member's save would be refused. Not fixed here; the orchestrator passes it to 15-08 and 15-17.
+- mailLog is 'operate' for now; 14-08 or 15-17 may tighten it.
 - 16-07 adds parts to ach-flow.js; its marker line changes with them.
 - The owner's check of the builder (16-05's open item) can follow once this plan merges.
 
@@ -276,5 +336,9 @@ Kept in /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scrat
 ## Self-Check
 
 - FOUND: assets/js/achrecord.js, checks/file-record.js, checks/ach-flow.js; the achrecord.js line after nacha.js in diy.html, index.html, portal.html.
-- Commits on wip/16-02: 52c49d1 (RED), de11f05 (Task 1), b6410cb (Task 2), plus save commits 3bd00d8, bbfab32, 1611c5b, de1b169.
-- Self-Check: PASSED for files and commits. The plan's done criterion (gate16 GATE_EXIT=0) is NOT met: see Failures first.
+- Commits on wip/16-02:
+  - 52c49d1 (RED), de11f05 (Task 1), b6410cb (Task 2), 69a8538 (first summary)
+  - 3607d3b (D2, SECTIONS mailLog), 096ec33 (D1, phase 11 guards)
+  - save commits 3bd00d8, bbfab32, 1611c5b, de1b169, 849d392
+- gate16 GATE_EXIT=0 (run 3).
+- Self-Check: PASSED.
