@@ -88,3 +88,12 @@ Binding on the executors (full text: scratchpad checks-15-wave3.md).
 - W3 (15-14), orchestrator's choice: firms signed up before 15-14 (confirmedAt '') are offered the confirmation resend from sign-in and from `me`; a test with such a firm proves it can confirm and then invite.
 - I7 recorded: an Owner or Admin changing an investor's bank account with a fresh sign-in is the firm's own confirmation; phase 16's pre-note rule still applies.
 - Start: 15-06 when 15-04 and 15-05 are merged (fresh pull) and no plan editing server/index.mjs or server/README.md runs (13-03, 13-04, 14-08). 15-14 also after 13-01, 13-11 and 13-03 merge, while no plan edits emails.js or invitations.mjs.
+
+## After 15-05 (merged e703292, 2026-11-27)
+- Gate GATE_EXIT=0 on run 2 (run 1 hit the 2-hour limit with every finished step passing). Plan tree 514 = 502 + 12. Merged tree 521 of 521 (509 + 12).
+- Every server request goes through ROUTES (server/lib/roles.mjs): lines `{ method, path | prefix | source, who: team|investor|link|public|operator, permission, tokens, reason? }`, a flat frozen array extended by adding lines only. A path the table does not name answers 404 for every caller; when several lines match, all must allow it. The walk test fails on any route in index.mjs or a lib module with no line.
+- Deviations: reading a verification, evidence or screening needs 'personal'; listing investors' sign-ins 'personal'; GET /v1/team floor 'view' with 'team' checked inside team.mjs; invite/resend floor 'operate', 'team' inside. guard/guardInvestor come from createGuards({signin, store, now, routes}). An Accountant without a valid end date is treated as ended. Two existing tests changed: billing.test (unknown billing path now 404) and backup.test (sign-up/sign-in now write the change log: chain counts 3 and 4).
+- For 14-08: lines for the unmounted inbox.mjs and dataroom.mjs are already in ROUTES (team reads 'personal', writes 'operate', tokens false; investor /v1/my-inbox*; link prefix /v1/room). 14-08 checks them, does not add them again.
+- For phase 16: payment-release routes add team lines with permission 'pay'. For 13-03: its routes add lines (13 wave 2 B1).
+- Open: sign-up collects no phone, so the README's Owner-reset procedure calls a number already held for the firm; 15-04's /v1/auth/* routes are covered by the public prefix line with role checks in auth.mjs; 15-04 merges second and reruns the suite (expected 521 + 11 = 532).
+- Merged-tree reruns of server-backed browser checks and the gate15 self-test: running.
