@@ -82,7 +82,7 @@ const fileName = (s, dflt) => clip(String(s || '').replace(/[\\/:*?"<>|\u0000-\u
 
 /* ---------- What the console sends ---------- */
 
-function cleanFirm(x) {
+export function cleanFirm(x) {
   const f = obj(x);
   if (!f || !clip(f.name, 120).trim()) throw fail(400, 'firm.name is required');
   const colors = {};

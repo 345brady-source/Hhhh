@@ -81,6 +81,8 @@ export const ROUTES = Object.freeze([
   team('PUT', { path: '/v1/mail/sender' }, 'configure', true),
   team('POST', { path: '/v1/mail/sender/check' }, 'configure', true),
   team('GET', { path: '/v1/messages/log' }, 'personal', true), // investors' addresses and the texts sent to them
+  team('POST', { path: '/v1/messages' }, 'operate', true), // notices, capital calls and e-sign notices (lib/messages.mjs, plan 13-04)
+  team('GET', { path: '/v1/messages/preferences' }, 'view', true), // who turned offering news off (no address)
 
   /* --- checks, reading and help (index.mjs) --- */
   team('GET', { path: '/v1/connectors' }, 'person', true),

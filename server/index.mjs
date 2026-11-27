@@ -31,6 +31,7 @@
  *   GET  /v1/outbox               messages kept here when no SMTP server is set (and held ones, waiting for a sponsor's domain)
  *   GET/PUT /v1/mail/sender, POST /v1/mail/sender/check  the address a workspace's messages go from (lib/senders.mjs)
  *   GET  /v1/messages/log         the workspace's sealed sent log (lib/maillog.mjs)
+ *   POST /v1/messages             notices, capital calls and e-sign notices to up to 500 investors (lib/messages.mjs)
  *   POST /v1/mail/events          delivery events from the mail provider, signature-checked by its adapter (server/mailers/)
  *   POST /v1/admin/accounts       the operator makes a sponsor account with its own token (ADMIN_TOKEN; lib/accounts.mjs)
  *   GET  /v1/admin/accounts       the accounts; POST /v1/admin/accounts/:id/token replaces an account's token
@@ -61,7 +62,8 @@ import { readRaw, parseJson, send, cors, header } from './lib/http.mjs';
 import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
-import { createInvitations } from './lib/invitations.mjs';
+import { createInvitations, cleanFirm } from './lib/invitations.mjs';
+import { createMessages } from './lib/messages.mjs';
 import { createTaxDocs } from './lib/taxdocs.mjs';
 import { createAccounts } from './lib/accounts.mjs';
 import { createAuth } from './lib/auth.mjs';
@@ -216,6 +218,7 @@ export function createServer(opts = {}) {
   const pages = opts.pages || createPages({ env, now }); // the portal's own pages and security.txt from this server (plan 15-13, mounted by 15-06)
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
+  const messages = createMessages({ env, store, vault: invites.vault, mailer: invites.mailer, log: invites.mailLog, publicUrl, returnTo: (u) => returnTo(u), cleanFirm, limited, now }); // notices, capital calls, e-sign notices (plan 13-04)
   const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
   const pkg = invites.usePackages({ billing, providers: PROVIDERS, identity: env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', accreditation: env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit' }); // the package on invitations (08-05); 08-15 adds its route helpers
   /**
@@ -1031,6 +1034,7 @@ export function createServer(opts = {}) {
     }
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (auth && (path === '/v1/mail/sender' || path === '/v1/mail/sender/check' || path === '/v1/messages/log')) return mailRoutes(req, res, url, auth); // the sender and the sent log (plan 13-03)
+    if (auth && (path === '/v1/messages' || path === '/v1/messages/preferences')) return messages.sponsor(req, res, url, auth); // the firm's notices and its investors' choices (plan 13-04)
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
     if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)
 
