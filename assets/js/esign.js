@@ -190,8 +190,10 @@
   /*
    * E-sign emails in the self-serve edition (plan 13-08, EM-09, EM-13, C-04, C-09, C-12); the managed edition keeps its own
    * words (C-05). With an integration server connected, each investor signer is emailed by it a notice with a link to
-   * their portal (emails.js dispatch, POST /v1/messages): never the document, never a signing link; the envelope history
-   * records what the server answered once it has. With no server every email is simulated: the history's "Email sent" and
+   * their portal (emails.js dispatch, POST /v1/messages): never the document, never a signing link. The envelope history
+   * says, at that moment, that the email was handed to the integration server; the server's answer for each message is
+   * kept in the sent log (ws.mailLog), never written onto the envelope later, so an envelope never changes once the
+   * moment's call has returned (a voided envelope stays exactly as it was voided). With no server every email is simulated: the history's "Email sent" and
    * a simulated entry in the sent log. The rule for the others (I2): a signer with no investor record (the firm's
    * countersigner) or a co-investor keeps today's path in both cases (simulated, in the history and the sent log).
    */
@@ -209,9 +211,8 @@
     const inv = (ws.investors || []).find((x) => x.id === s.investorId);
     return inv && (s.email || inv.email) ? inv : null;
   }
-  /** on: the server emails this moment (mailServer, and not a quiet send): its investor signers' history waits for it. */
+  /** on: the server emails this moment (mailServer, and not a quiet send): mailSigners writes its investor signers' line. */
   const byServer = (ws, s, on) => !!on && !!mailedInvestor(ws, s);
-  const AFTER = { sent: 'Email sent', outbox: 'Email waiting to send', held: 'Email waiting to send' };
   const NO_SERVER = 'The integration server could not be reached.';
   /**
    * The emails of one moment (kind: esign_request, esign_reminder, esign_voided or esign_completed) to these signers,
@@ -245,6 +246,15 @@
         if (window.console) console.error(e);
       }
     });
+    // Written now, in the same turn as the moment itself: the server's answer goes to the sent log only.
+    if (on && mine.length) {
+      const env = envById(ws, envId);
+      mine.forEach(({ s, inv }) => {
+        const m = E.render(kind, Object.assign({ firm, portalUrl }, data(s)));
+        if (env) addEvent(env, 'System', 'Email handed to the integration server', `To ${s.name} <${s.email || inv.email}>: ${m.subject}`);
+      });
+      NS.app.save(true);
+    }
     let out = null;
     let error = '';
     if (mine.length) {
@@ -255,18 +265,13 @@
         error = (e && e.status && e.message) || NO_SERVER;
       }
     }
-    if (on && mine.length) {
-      const env = envById(ws, envId);
+    // The call failed before the server answered: each message is logged as failed (dispatch logged nothing).
+    if (on && mine.length && !out)
       mine.forEach(({ s, inv }) => {
         const m = E.render(kind, Object.assign({ firm, portalUrl }, data(s)));
-        const r = out ? out.results.find((x) => x.investorId === inv.id) : null;
-        const st = r ? r.status : 'failed';
-        if (!out) E.log(ws, { kind, subject: m.subject, to: s.email || inv.email, investorId: inv.id, status: 'failed', text: m.text });
-        if (env) addEvent(env, 'System', AFTER[st] || 'Email not sent', `To ${s.name} <${s.email || inv.email}>: ${m.subject}`);
+        E.log(ws, { kind, subject: m.subject, to: s.email || inv.email, investorId: inv.id, status: 'failed', text: m.text });
       });
-    }
     NS.app.save(true);
-    if (on && /^console-(envelope|esign)$/.test(S().route)) NS.app.render();
     if (!on) return null;
     const said = [];
     if (mine.length) said.push(out ? E.summary(out.counts, true) : error);
