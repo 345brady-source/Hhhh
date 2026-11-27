@@ -271,7 +271,7 @@
     // Plan 08-06 (D-01): the sponsor ticked "Add verification package". Kept only where the box could be ticked: a server
     // is connected and offers the package for this invitation. The server is sent the choice and this invitation's id
     // (snapshot); it decides what is charged.
-    if (o.package === true && packageBox(ws, { email, offeringId: off ? off.id : '' }).enabled) invitation.package = true;
+    if (o.package === true && (invitation.reverify ? reverifyPackage(ws) : packageBox(ws, { email, offeringId: off ? off.id : '' })).enabled) invitation.package = true;
     if (token) invitation.link = linkFor(ws, invitation);
     if (!have) ws.investors.push(investor);
     list(ws).push(invitation);
