@@ -391,6 +391,40 @@ Four messages are sent: the invitation (who invited them, the offering and commi
 
 Without `SMTP_HOST`, messages are kept, encrypted, in an outbox: `GET /v1/outbox?workspace=…&invitation=…` (API_TOKEN) → `{ messages: [{ id, at, kind, invitationId, workspace, from, to, toName, replyTo, subject, text, html }] }`. Outbox messages carry live links, so they are deleted after `OUTBOX_DAYS`.
 
+### Sending as each sponsor (plan 13-03)
+
+On a server with sponsor accounts (made by the operator, or by a firm signing up), each workspace's messages go `From: "<firm name>" <the sponsor's own address>`, envelope included, once that address's domain is Ready. Until then a message is **held**: kept encrypted in the outbox (listed there with `held: true`, deleted after `OUTBOX_DAYS` like any outbox message) and never sent from another domain; the invitation shows `emailStatus: held` and `emailError: "Email sending from your domain is not set up yet."`. When a check finds the domain Ready, the held messages younger than `OUTBOX_DAYS` go out from the sponsor's address. A server with no sponsor accounts (one firm, the shared `API_TOKEN`) keeps sending from `MAIL_FROM` as before, and the staff filing order email always uses `MAIL_FROM`.
+
+No message ever carries an attachment; the only inline part is the firm's logo. An invitation whose note holds a taxpayer number, a long number or a password is refused with 422 and the sentence saying what to remove; nothing is stored or sent.
+
+Settings (operator only; sponsors and investors never see a provider's name):
+
+| Setting | What it does |
+|---|---|
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ALLOW_PLAIN`, `SMTP_SECURE`, `SMTP_HELO`, `SMTP_TIMEOUT_MS` | The relay every message is sent through, as above. With the provider below, its SMTP endpoint and SMTP credentials. |
+| `MAIL_FROM` | The sender on a single-sponsor server, and for the staff filing order email. |
+| `MAIL_PROVIDER` | `smtp` (default: the sponsor's own mail service publishes its records) or `ses` (the provider's API makes each domain's DKIM key and reports its status and delivery events). |
+| `SES_REGION`, `SES_ACCESS_KEY_ID`, `SES_SECRET_ACCESS_KEY` | The provider's region and API keys (with `MAIL_PROVIDER=ses`). Kept in the server's settings only, never stored or shown. |
+| `SES_CONFIGURATION_SET` | Optional: the configuration set new domains are put in (where delivery events are published). |
+| `MAIL_EVENTS_TOPIC_ARN` | The notification topic delivery events come from; events from any other topic are refused. |
+| `MAIL_EVENTS_PER_MIN` | Delivery events accepted per minute from one address (default 600; the provider sends one per message). |
+| `MAIL_LOG_DAYS` | How long sent-log entries are kept, 1 to 3650 days (default 2,555, about seven years; any other value uses 2,555). |
+| `MAIL_LIVE` | `1` only after the provider has granted production access and a real message reached a real mailbox: the console then says sending is live. Unset, it says "To be confirmed". |
+
+Routes (a sponsor account's token or a signed-in person acts on its own workspace, whatever the query or body names; the shared token names the workspace):
+
+- `GET /v1/mail/sender?workspace=…` (view) → `{ address, domain, status: not_set_up | pending | ready | failed, detail, records: [{ type, name, value, purpose }], live }`.
+- `PUT /v1/mail/sender { address }` (configure) → `{ address, domain, status, records, live }`: a new domain starts at `pending` with the DNS records the sponsor adds (one DKIM TXT record, and a DMARC record only when the domain has none). 400 for an address that is not one, 409 when another account already sends from the domain.
+- `POST /v1/mail/sender/check` (configure) → `{ status, detail, records, released, live }`: when the domain is Ready, `released` held messages were sent.
+- `GET /v1/messages/log?workspace=…&investorId=…&limit=…` (personal) → `{ entries: [{ id, at, kind, refId, investorId, status, events: [{ type, at, permanent? }], to, subject, text }] }`, newest first.
+- `POST /v1/mail/events`: delivery events. Subscribe this address (`<PUBLIC_URL>/v1/mail/events`, https) to `MAIL_EVENTS_TOPIC_ARN`; the subscription is confirmed on its own. No token: every message must carry a valid signature from a certificate at the provider's own notification address, name the configured topic and be under an hour old, or it answers 401 and changes nothing. Bodies over 256 KB answer 413. A verified event answers `200 { received }`.
+
+The sent log: every message the server handles leaves one entry, whatever became of it: `sent`, `outbox`, `held`, `failed`, `suppressed` (or `unsubscribed`, plan 13-04), later `delivered`, `bounced` or `complained` as events arrive (matched by the relay's id or the message's own Message-ID). A permanent bounce puts the address on the bounce list: nothing more is sent to it from any workspace (`emailStatus: suppressed`) and the invitation shows `emailStatus: bounced`. A complaint stops optional and possibly commercial mail to that address from that workspace only. A transient bounce is recorded and changes nothing.
+
+What is stored, and for how long: each entry keeps in the clear when, the kind, the record it belongs to, the investor's id in the console, the status, the relay's id and Message-ID, and the events' types and times; the recipient's address and name, the subject and the text are encrypted with `DATA_KEY`, and the text is stored with the personal link replaced by `[personal link]`. Entries are deleted `MAIL_LOG_DAYS` after they were made (the same hourly run that deletes invitations). The bounce and complaint lists hold no address, only a SHA-256 of the address in lower case, and are never deleted (an address that bounced for good stays unsendable). Never stored: a personal link or its token in the log, the provider's keys, the DKIM private key (it goes to the provider once and is not kept), attachments of any kind.
+
+Live sending is "To be confirmed": the provider adapter is built and tested against local stand-ins only; it needs the owner's provider account and production access (plan 13-10) before `MAIL_LIVE=1` is set.
+
 ## Reading offering documents
 
 The portal's offering intake (Offerings, set up from documents) proposes an offering's terms from its private placement memorandum, partnership or operating agreement, subscription documents or term sheet. When the workspace has this server's address under Integrations, the intake screen sends this server the same prompt it has always built (its instructions and the documents' text; the whole text, never cut to excerpts on this path), and this server has it read with `CARROWVALE_API_KEY`. Without the address, or when the reading cannot finish, the intake screen uses its built-in reader, as before. Either way the sponsor reviews every term before anything is applied.
