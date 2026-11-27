@@ -86,3 +86,15 @@ NACHA BUILD: FAIL (cases run: 11) - modifier, sameday, offset, company, descript
 The independent reader refused three files the old builder showed with no red check: an empty settlement account
 number (DFIAccountNumber mandatory), an empty company name (CompanyName mandatory) and an immediate destination failing
 the check digit. The offset routing '123' gave two 88-character records.
+
+## Task 2 GREEN (first half of the plan's verify)
+
+```
+PASS reader at least one file was read by the independent reader
+NACHA BUILD: PASS (cases run: 11)
+PART1=0
+MOBILE=0
+```
+168 PASS lines, 0 FAIL; 19 files read by the independent reader (every scenario with no red check, plus the offset and
+pre-note files); no leak found by lib16.leaks in the output. Also on this tree: INDEPENDENT READER: PASS (cases run: 6),
+HOLIDAYS: PASS (cases run: 10), MOBILE SYNC: PASS (cases run: 3).
