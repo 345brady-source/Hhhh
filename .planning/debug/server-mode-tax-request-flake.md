@@ -45,15 +45,20 @@ started: first seen at 75b2fc5 (13-03 merged); 13-03's own gate on base 8efaa5c 
   found: runs 1-2, 16-19, 30-32 so far: all PASS (in progress)
   implication: low failure rate at --only granularity; continue to 43 runs and add full-check runs
 
-- timestamp: 2026-11-27T14:50Z
+- timestamp: 2026-11-27T14:46Z
   checked: unmodified check, `--only tax-request`, 30 runs (run-1..2, 16..29, 30..43 so far; three loops at once through heavy.sh, other agents' forms-flow holding the other slots), load average 5-12.9 on 4 cores; outputs debug-tax-flake/run-N.txt, summary.txt
   found: 30 of 30 PASS, 14-34 s each
   implication: no natural failure at part granularity yet. The original failure was in a full 15-part run (one node process holding 13 earlier parts' heap and the in-process server, so longer GC pauses are possible); next: full runs, plus the instrumented copy now also records the node event-loop's worst delay and heap between goto and the heading.
 
-- timestamp: 2026-11-27T14:50Z
+- timestamp: 2026-11-27T14:46Z
   checked: other assertions of the part by reading, for a race of the same shape (a value read at a moment, no wait): 1570 row text (after consoleRoute's waitForSelector and fixed waits), 1578/1580 (server awaits mailer.send before replying; no SMTP_HOST, no accounts -> outbox stored synchronously, server/lib/mail.mjs:450-458; lib/invitations.mjs:1260-1266, 1392), 1601-1608 (the tax step renders from ensureFlow synchronously with the prefill already in the workspace, onboarding.js:1371-1395), 1621 (the POST request event precedes the done screen, which needs its response), 1622 (wipeTax awaited before save, onboarding.js:3298-3318), 1629-1631 (merge awaited before importedAt, invitations.js:1664-1667), 1644 (the link's token sits after #invite- and is stripped by PREFIX_TOKEN_RE; the server's emails.js BANNED list is used only by tests; note screen only on a note, and a tax request has none)
   found: none of these reads can see a half-finished state the way 1596 can
   implication: the snapshot read at 1596 is the only race found by reading in this part
+
+- timestamp: 2026-11-27T14:49Z
+  checked: every `on('response', async` listener in the checks (grep): server-mode.js:379 (serverFlow, read after the whole walk), server-mode.js:1028 (part clean: read after the first heading plus a fixed waitForTimeout(300)), server-mode.js:1588 (tax-request: read at the first heading, no wait), co-investor-server.js:335 (read much later, with a fallback fetch openLink), phase 8 reverify.js:1219 (read at the part's end)
+  found: the same pattern in part clean of the same check, covered only by a fixed 300 ms guess
+  implication: fix both reads in server-mode.js the same way (keep each body read as its promise; await at the read). The other files' reads are late and are left alone.
 
 ## Resolution
 
