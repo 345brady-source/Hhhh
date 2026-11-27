@@ -58,3 +58,32 @@
 - I1 (18-12): not while 13-10 edits gate-reference.sh or guide.md; the gate-reference.sh commit is recorded in the walkthrough.
 - I2 (18-11): a class token may be appended to an existing class attribute; nothing else.
 - Start: 18-09 after 18-06, 18-07, 13-08, 13-09 (own-fonts and 13-06 through 18-02); not while 06-14, 08-10, 14-04, 14-07, 15-09, 15-10, 15-16 or 16-10 runs. 18-10 after 18-08 and 18-09; not while 14-04, 15-08, 16-09 or 16-12 runs. 18-11 after 18-09, 18-07, 18-04; not while 06-14, 08-10, 15-09 or 16-10 runs; may run beside 18-10. 18-12 after all eleven, B2 and B3 applied, not while 13-10 edits.
+
+## Plan-check additions, 18-05..18-08 (gsd-plan-checker at e1bf3c3; binding; full text scratchpad checks-18-b.md)
+All four (and, orchestrator's extension, every phase 18 plan):
+- W-A: each Task 1 verify `-ge 605` becomes `-ge 622`.
+- W-B: each look check's full run must also pass `grep -q '^NOTE WebKit not run' <its output>` in the verify.
+- W-C: each closing gate verify adds `grep -qx 'SAME SCREENS: PASS (parts run: 11)' $O/gate/same-screens.txt`.
+18-05:
+- B-1: Task 2 runs `node .planning/phases/12-report-builder/checks/walk12.js` through heavy.sh into $O/walk12.txt; verify `grep -Eq '^WALK12: PASS \(steps run: [0-9]+\)$' $O/walk12.txt || exit 1`, and the steps-run number equals a run on the base commit.
+- W-1: Task 2 verify adds `git diff --quiet "$(cat $O/base-commit.txt)" HEAD -- assets/js/reports.js assets/js/reports-pdf.js assets/js/reports-run.js assets/js/reports-data.js assets/js/reports-templates.js assets/js/reports-deliver.js assets/js/reports-record.js assets/js/filesout.js || exit 1`.
+- I-1: name `GATE ok +REPORTS SWEEP` and `GATE ok +REPORTS RECORD` in the gate greps.
+- Start: after 18-02; wave 3 beside 18-03 and 18-04.
+18-06:
+- W-2: Task 3 verify adds `grep -qx 'HELP CHAT: PASS (parts run: 10)'` on the gate's helpchat output and `test "$(grep -c 'check(' H)" -ge "$(git show $(cat $O/base-commit.txt):H | grep -c 'check(')"` for H = help-chat.js; the SUMMARY lists each changed assertion old→new; the managed part keeps proving zero help controls, zero help actions and zero help- classes.
+- W-3: state the top-bar DOM order; the keys part asserts Tab order equals the order seen (firm lockup, Ask me anything, bell, per §6.1); no CSS `order` splitting seen and focus order; page script order unchanged.
+- I-2: cmp the HELP SCREENS console menu text outputs (base vs plan) in the verify.
+- Start: after 18-02, 18-03, 13-06; wave 4 beside 18-07; not while 14-04, 15-08, 16-09, 16-12 (console.js), 14-12, 15-07, 15-08, 15-17 (app.js) or any plan editing help.js, console.css or help-chat.js runs.
+18-07:
+- W-4: add the investor tax documents ledger (1280 and phone) to the ledgers part (or move it to 18-10 with its reason).
+- W-5: the garish part runs at 1280 and the iPhone profile, asserts computed --brand-fill for #39FF14 equals the spec's measured #377B2F, and applies the area rule on Home, Investments and Distributions (chart columns and hold rules included).
+- W-6: list any phase 10/11 check file edited for stacked blocks in files_modified with what it proves after (same values, never weaker), else the verify adds `git diff --quiet base HEAD -- .planning/phases/10-*/checks .planning/phases/11-*/checks`.
+- I-3: name the wide tables that keep today's sideways scroll.
+- Start: after 18-02, 18-03, 13-06, 13-08, 13-09; wave 4 beside 18-06; not while 14-04, 15-09, 15-10 or 16-10 runs; record at start whether 15-07 has merged (where sign-in lives).
+18-08:
+- B-2: the intake.js diff is exactly one `-` line equal to the base's line 1313 and one `+` line adding `|| at === '#console-offerings'` and nothing else; the verify runs intake-server.js and every phase 01.4 check that loads intake.js on the base tree and on this tree with identical passing last lines, and `git diff --quiet base HEAD -- '.planning/phases/01.4-*/checks'` holds.
+- B-3: the help guide stays true: verify adds `! grep -q 'lacks Offering intake' server/help/guide.md`; line 89 becomes `menu: Raise, then Offerings`; line 58 ("opens Offering intake") describes the panel on the same page; guide rebuilt and --verify in sync.
+- W-7: the roles part names and sets team, readonly and accountant explicitly (roles.js hides console-intake for all three), plus admin and owner.
+- W-8: rerun `node .planning/tools/preview/make-help-data.mjs` in the verify, then `git diff --quiet -- .planning/tools/preview/help-data.js`.
+- I-4: note in the SUMMARY that HELP SCREENS no longer walks console-intake (out of NAV).
+- Start: after 18-06 (so 18-02, 18-03) and 13-06; wave 5 beside 18-09; not while 13-10, the guide-trim task, 14-04, 14-10, 15-07, 15-08, 15-09, 15-10, 15-16, 16-09, 16-12 or 16-13 runs.
