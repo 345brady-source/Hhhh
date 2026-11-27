@@ -28,3 +28,6 @@ Every RED ran on the untouched start tree with only the new check files copied i
 - Fix 4 tested against a stand-in file name only (real provider name unconfirmed, 08-12).
 - FORMS FLOW reference check output prints the invented foreign tax ID 12345678901.
 - Owner checks: iPhone package start failure shows the contact line; Documents Remove leaves a "Hidden from investors" row; -5 notice days refused; AML/KYC Re-screen on a package investor.
+
+## On the merged tree (5afa54c)
+SMALL FIXES PASS (2), MONITORING PASS (9), PACKAGE CONSOLE PASS (7), PACKAGE FLOW PASS (10). Server tests 506/506.
