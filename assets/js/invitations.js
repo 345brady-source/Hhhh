@@ -1701,6 +1701,8 @@
   const STATUS = { sent: ['mute', 'Sent'], opened: ['adj', 'Opened'], in_progress: ['adj', 'In progress'], completed: ['ok', 'Completed'], cancelled: ['mute', 'Cancelled'], expired: ['bad', 'Expired'] };
   /** Status as the list shows it: an invitation the sponsor has not emailed yet says so. */
   const unsent = (it) => it.status === 'sent' && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0;
+  /** Never sent: open and unsent, or closed (cancelled, expired) before its email went and before it was opened. */
+  const neverSent = (it) => unsent(it) || (['cancelled', 'expired'].indexOf(it.status) >= 0 && !it.openedAt && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0);
   const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : agreementUnsent(it) ? ['warn', 'Agreement not sent'] : STATUS[it.status] || ['mute', it.status]);
   const EMAIL = { sent: 'Emailed', outbox: 'In the server outbox', manual: 'Send from your email app', not_sent: 'Not sent yet', failed: 'Could not send' };
   function stepText(it) {
@@ -2789,7 +2791,7 @@
         else if (ops && it.status === 'cancelled' && invOf(w, it.investorId) && forInvestor(w, it.investorId) === it) acts.push(`<button class="cs-btn cs-btn-small" type="button" data-action="inv8-reinvite" data-id="${h(it.id)}">Invite again</button>`);
         else if (x && waitingCountersign(x.env)) acts.push(`<a class="cs-btn cs-btn-small cs-btn-primary" href="#console-envelope-${h(x.env.id)}">Countersign</a>`);
         else if (x && x.inv && x.inv.onboarding && x.inv.onboarding.status === 'complete') acts.push(`<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(x.inv.id)}">View portal</button>`);
-        const activity = [[unsent(it) ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
+        const activity = [[neverSent(it) ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
         return `<tr data-invitation="${h(it.id)}">
           <th scope="row"><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.email)}</span></th>
           <td data-label="Offering">${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : it.reverify ? 'Re-verification only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
