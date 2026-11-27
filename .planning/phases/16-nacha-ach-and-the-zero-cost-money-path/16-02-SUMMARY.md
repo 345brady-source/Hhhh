@@ -19,3 +19,12 @@ FAIL record B4: a recorded run with no file record is refused a file without a r
 FAIL record ran to the end :: TypeError: Cannot read properties of undefined (reading 'ensure')
 FILE RECORD: FAIL (cases run: 1) - record
 ```
+
+### Task 1 verify (verify1.sh = the plan's Task 1 automated line)
+
+```
+PASS record a second file for that run without a reason is refused with the sentence
+PASS record and nothing more is stored
+FILE RECORD: PASS (cases run: 1)
+VERIFY1_EXIT=0
+```

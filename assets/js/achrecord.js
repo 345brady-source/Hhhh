@@ -146,7 +146,7 @@
     const why = m.again && String(m.again.why == null ? '' : m.again.why).trim();
     if (target && !why) {
       const prev = sentFor(ws, target);
-      if (prev) throw new Error(`A file for this distribution was already sent on ${longDay(dayOf(prev.at, prev.date))} (${prev.name}). Use "Build again" and give the reason.`);
+      if (prev) throw new Error(`A file for this distribution was already sent on ${longDay(sentOn(prev))} (${prev.name}). Use "Build again" and give the reason.`);
       const paid = target.runId ? paidRun(ws, target.runId) : null;
       if (paid) throw new Error(`This distribution is recorded as paid on ${longDay(paid.date)}. Use "Build again" and give the reason.`);
     }
@@ -200,5 +200,8 @@
     return !!(app.can('pay') || app.can('configure'));
   }
 
-  NS.achRecord = { ensure, keyOf, modifierFor, targetOf, sentFor, filesOf, paidRun, recordFile, attach, canPay, longDay, MODIFIERS };
+  /** The day a record's file left the console (YYYY-MM-DD, local). */
+  const sentOn = (rec) => dayOf(rec && rec.at, rec && rec.date);
+
+  NS.achRecord = { ensure, keyOf, modifierFor, targetOf, sentFor, filesOf, paidRun, recordFile, attach, canPay, sentOn, longDay, MODIFIERS };
 })(window.CVPortal);
