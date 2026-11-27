@@ -25,6 +25,12 @@
   const KIND = (k) => ((TD() && TD().KINDS[k]) || {}).label || k;
   const day = (iso) => (iso ? U.date(String(iso).slice(0, 10), 'long') : '');
   const stamp = () => new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const pad2 = (n) => String(n).padStart(2, '0');
+  /** The calendar day, here, of a moment the server gives ('' when it is not one): as NS.dates.today reads today. */
+  function localDay(at) {
+    const d = new Date(String(at || ''));
+    return Number.isNaN(d.getTime()) ? '' : `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
 
   /* ---------- the console's side ---------- */
   const serverOf = (ws) => {
@@ -123,6 +129,8 @@
     if (l.status === 'withdrawn') return line('Link withdrawn: it no longer opens.');
     if (l.status === 'expired') return line('Link ended with the access period.');
     if (l.status === 'locked') return line('Link locked after five wrong tries.', btn('txl-resend', 'Resend', doc));
+    // a new link to the same address would not be sent (the address bounced for good), so there is no Resend here
+    if (l.emailStatus === 'bounced') return line(doc.tax.notice && doc.tax.notice.bounced ? `The email with the link came back on ${day(doc.tax.notice.bounced)}: send it on paper.` : 'The email with the link came back: send it on paper.');
     if (l.emailStatus === 'failed') return line(`The email with the link could not be sent: ${l.emailError || 'the mail server refused it.'}`, btn('txl-resend', 'Resend', doc));
     const n = (doc.tax.opens || {}).count || 0;
     if (l.status === 'opened' && n) return line(n === 1 ? 'Opened once on their device.' : `Opened ${n} times on their device.`);
@@ -166,6 +174,19 @@
             } catch (e) {
               if (window.console) console.error(e);
             }
+          }
+        }
+        // Rev. Proc. 2012-17 section 7.02: the server's notice came back for good (a permanent bounce the mail provider
+        // signed). The notice is marked as came back on that day, once, as the sponsor marks it by hand (plan 10-06's own
+        // record), which starts the 30 days for paper and puts the document on the Send on paper list.
+        const t = doc.tax;
+        const back = x.emailStatus === 'bounced' ? localDay(x.bouncedAt) : '';
+        if (back && t.state === 'delivered' && t.notice && !t.notice.bounced && !t.paper) {
+          try {
+            TD().bounced(ws, doc.id, back);
+            changed = true;
+          } catch (e) {
+            if (window.console) console.error(e);
           }
         }
       });
