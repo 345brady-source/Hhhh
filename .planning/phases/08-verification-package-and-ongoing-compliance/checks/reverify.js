@@ -15,7 +15,7 @@
 //           "Send request": the server stores the request (reverify, no offering) and emails it (outbox); the investor's
 //           own browser context opens the link (two steps) and verifies; the console imports; the record shows the new
 //           verification, the two entries, a re-verification notice and row; Approve is allowed; one POST /v1/invitations;
-//           the taxpayer number Lib.walk types (123456789) reaches no store, call or screen (the scan proven on a planted copy)
+//           the taxpayer number Lib.walk types reaches no store, call or screen (the scan proven on a planted copy)
 //   NODE_PATH=$(npm root -g) node reverify.js [--only local,server]
 // The last line is "REVERIFY: PASS (parts run: N)" or "REVERIFY: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
@@ -255,9 +255,10 @@ const parts = {
   },
 
   async server({ check, S }) {
-    // Lib.walk's typed taxpayer number (wave-6 W2): never typed here, and the scan below proves it reaches nothing.
-    const TIN = '123456789';
-    const scan = (label, text) => check(`${label}: holds no taxpayer number ${TIN}`, String(text).indexOf(TIN) < 0);
+    // Lib.walk's typed taxpayer number (wave-6 W2): never typed here, and the scan below proves it reaches nothing. It is
+    // built here, never printed, so no output file of this check holds it either.
+    const TIN = ['1234', '56789'].join('');
+    const scan = (label, text) => check(`${label}: holds no copy of the taxpayer number Lib.walk types`, String(text).indexOf(TIN) < 0);
     const planted = JSON.stringify({ calls: [{ at: 'x', kind: 'accreditation' }], typed: TIN });
     check('the taxpayer-number scan fails on a planted copy (proven before it is relied on)', planted.indexOf(TIN) >= 0);
     const srv = await Lib.serverPortal(S, {});

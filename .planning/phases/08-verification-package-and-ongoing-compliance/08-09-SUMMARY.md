@@ -57,3 +57,15 @@ FAIL server the server's email asks the investor to verify their accredited inve
 FAIL server the investor's device opens on step 1 of 2; the steps are accreditation and done; the request's own line :: {"count":"Step 1 of 2: Welcome","steps":["welcome","done"]}
 REVERIFY: FAIL (parts run: 1) - server
 ```
+
+### Task 2 verify (verify-2.sh, exit 0)
+
+```
+# tests 6 / # pass 6 / # fail 0        (invitations-reverify.test.mjs)
+# tests 462 / # pass 462 / # fail 0    (whole server suite)
+REVERIFY: PASS (parts run: 2)
+COUNTS: base 456 + own 6 = 462
+```
+Found after this run and fixed before the commit: part server's own PASS labels printed Lib.walk's taxpayer number (the
+scan's label named the number it looked for), so flow2.txt held it three times. The number is now built in the check and
+never printed; the gate's run of the check is the evidence that no output holds it (scan below, under the gate).
