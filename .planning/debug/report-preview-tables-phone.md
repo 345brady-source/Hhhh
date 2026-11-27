@@ -113,6 +113,16 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
   found: deliver-flow.txt `DELIVER FLOW: PASS (parts run: 8)` (82 s); reports-sweep.txt `REPORTS SWEEP: PASS (parts run: 4)` (51 s); report-fixes.txt `REPORT FIXES: PASS (parts run: 5)` (49 s); phone-layout.txt `PHONE LAYOUT: PASS (parts run: 8)` (335 s); screen-edges.txt `SCREEN EDGES: PASS (parts run: 5)` (107 s)
   implication: no regression in the report builder flows, the sweep (no vendor name / forbidden word added), phone layout or screen edges.
 
+- timestamp: 2026-11-27T16:40:00Z
+  checked: the generated PDFs' multi-column tables (never looked at before): Download PDF for KB PE letter, KB statement, AR RE letter, PB open-ended letter (scratchpad/debug-report-tables/pdf/*.pdf), every page drawn with pdftoppm at 110 dpi and the Net performance tables at 220 dpi
+  found: all 3 pages of each drawn. Page 2/3 tables are whole and readable: Net performance (8 columns) fits the page width, every figure whole and right-aligned, no overlap ('$6,375,000.00 $1,976,250.00' about one space apart, tight but clear); names wrap on whole words ('The Residences at Cedar / Row', 'Brightline Packaging / Holdings, LLC'); Holdings (5 columns) splits across pages 2-3 in the KB letter with its header row repeated on page 3; Distributions (5), Totals (4) whole. No word broken mid-letter in any PDF table.
+  implication: the PDF composer does not share the fault; reports-pdf.js left unchanged. Side observation outside this fault: KB statement page 2 'Your distributions by quarter' with no distributions draws an empty chart with '$0.00' as both its top and bottom axis label.
+
+- timestamp: 2026-11-27T17:00:00Z
+  checked: regression assertions added: reports-flow.js tableLayout() (shared); REPORTS FLOW open-phone: no broken word + each wide table keeps title and first column in place scrolled to its end, no figure cut; REPORTS FLOW preview-pdf (1280 px): every table fits its box, no broken word, no cut figure, no fixed column; walk12 layout(): the same held-in-place check in its 5 preview steps. walk12-final.txt (552 s, machine loaded)
+  found: `WALK12: FAIL (steps run: 28) - kb-open, ar-letter, pb-letter`; 249 PASS, 3 FAIL (all W5); 5 new held-in-place checks PASS; compare-walk.py: 0 base-passing checks lost.
+  implication: walk GREEN for this fault with the stronger guard.
+
 ## Resolution
 
 root_cause: "assets/css/reports.css:41 `.rb-doc { overflow-wrap: anywhere }` is inherited by the preview's table cells; `anywhere` (unlike break-word) counts a break between any two letters in a cell's narrowest (min-content) width, so the automatic table layout at the phone's 308 px squeezed text columns to one letter (27-36 px) and gave the width to the nowrap number columns; tables whose number columns alone exceeded 308 px also overflowed (343-544 px). Contributing (AND): a hyphenated word ('Single-name') breaks at its hyphen whenever its column sits at its narrowest width."
