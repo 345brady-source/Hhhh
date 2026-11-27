@@ -127,3 +127,4 @@ Binding (full text: scratchpad checks-15-wave4.md). 15-15-PLAN.md is revised by 
 - W4: page text through stripLinkTokens, storage and JSON by keys with keysDeep; investor ids compared as exact values.
 - W5 (15-17): session.js files.del sends JSON from the page's own origin; the minimization import role has 'pay' and a fresh sign-in.
 - Start: 15-15 after 15-14, 13-03 and 16-07 merge, no plan editing index.mjs, roles.mjs or workspace.mjs running. 15-17 after 13-05 and 13-08 merge, order 13-05 -> 16-02 -> 15-17 (shared pages), with 13-06, 13-09, 13-12, 14-04, 14-12 not running.
+- Merged tree 8efaa5c: SECTIONS 2, SERVED PORTAL 2, ROLES TABLE 3, SERVER MODE 15, CO-INVESTOR SERVER 5, PACKAGE FLOW 10 pass; GATE15 SELF-TEST PASS (9).
