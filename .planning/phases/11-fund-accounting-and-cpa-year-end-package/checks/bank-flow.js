@@ -14,6 +14,27 @@
 //                  $32,000.00, one outstanding item −$3,000.00, no line left to decide, difference $0.00; Mark
 //                  reconciled; the Audit page's 2026 trial balance equals fund A's hand-worked one and its bank
 //                  reconciliation shows the same four figures; the change log holds the six kinds of bank entry
+//   csv-desktop    1280x800: fund-a-signed.csv shows the column layout guessed (Date, Description, Amount, Balance,
+//                  month/day/year, money out negative) with its first five lines as money in and money out; "Use this
+//                  layout" gives "9 new lines, 0 already imported." and the statement balance $35,000.00 is offered;
+//                  fund-a.ofx next is caught as the same lines in another format and Cancel adds nothing; a second file
+//                  to the account is read with the kept layout, no form; a second account's fund-a-inout.csv (no balance
+//                  column) leaves the statement balance empty and shows no difference until one is typed (W3)
+//   twice-phone    390x844, fund A plus a cash entry dated 2025-12-15 that is on no statement (B3): a statement that
+//                  starts in January shows "To be confirmed: opening balance at Jan 15, 2026" and cannot be stored; the
+//                  opening balance entered ($1,000.00, kept with who and when) brings it to $0.00 at 2026-12-31 without
+//                  listing that entry; fund-a.ofx uploaded again gives "0 new lines, 9 already imported."
+//   file-kept      the import's stored file is byte for byte the uploaded one; after a reload of the framed page the
+//                  import, its lines and the stored file are still there
+//   refused        a PDF, a BAI2 file whose trailer does not add up, a file over the size limit and a statement for
+//                  another account are each refused with one line, and nothing is stored
+//   split-desktop  1280x800: a one-line statement of −$10,000.00 split as 5200 $6,000.00 and 2500 $4,000.00 posts one
+//                  entry with those two lines and the cash line; parts adding to $9,999.99 show "Off by $0.01" and Post
+//                  is refused
+//   undo-roles     Undo on the 5100 decision puts the line back to decide and 5100 at $0.00 in the Audit page's trial
+//                  balance; a distribution changed after its match offers "Move match" to the new entry (W1); a team
+//                  member uploads, accepts, posts a sale and reconciles; an investor opening #console-books gets the
+//                  investor's own default page
 // Every part: the frame refuses a fetch; no full account number anywhere but the stored file (only its last four);
 // quiet, leak, white label and a way out on screen; the page asks only for files that ship and none fails.
 //   NODE_PATH=$(npm root -g) node bank-flow.js [--only part1,part2]
@@ -386,6 +407,39 @@ async function importAndReconcile(check, A, fr, size) {
   await bankPage(fr);
 }
 
+/** A part's start: the frame at a size, Kestrel Bay as admin, fund A seated (with `extra` entries), the Bank section. */
+async function start(check, S, size, opts) {
+  opts = opts || {};
+  const { A, fr } = await open(S, size, { check, page: opts.page });
+  await T.sample(fr, { role: 'admin' });
+  await seatA(fr, opts.extra);
+  await bankPage(fr);
+  return { A, fr };
+}
+/** A file made by the check in memory. */
+const mem = (name, text, mimeType) => ({ name, mimeType: mimeType || 'text/plain', buffer: Buffer.from(text, 'utf8') });
+const ofxText = () => fs.readFileSync(fixture('fund-a.ofx'), 'utf8');
+const layoutOf = (fr) =>
+  fr.evaluate(() => {
+    const v = (id) => {
+      const el = document.getElementById(id);
+      return el ? (el.type === 'checkbox' ? el.checked : el.value) : null;
+    };
+    const opt = (id) => {
+      const el = document.getElementById(id);
+      return el && el.selectedOptions && el.selectedOptions[0] ? el.selectedOptions[0].text : '';
+    };
+    const rows = Array.from(document.querySelectorAll('.bb-preview tbody tr')).map((r) => Array.from(r.querySelectorAll('td')).map((c) => c.innerText.trim()));
+    const head = Array.from(document.querySelectorAll('.bb-preview thead th')).map((c) => c.innerText.trim());
+    return { date: opt('bb-m-date'), text: opt('bb-m-text'), amount: opt('bb-m-amount'), in: opt('bb-m-in'), out: opt('bb-m-out'), balance: opt('bb-m-balance'), check: opt('bb-m-check'), order: v('bb-m-order'), neg: v('bb-m-neg'), head, rows };
+  });
+async function useLayout(fr) {
+  await T.press(fr, '[data-action=bb-layout-use]');
+  await fr.waitForFunction(() => !!document.querySelector('[data-bk="part-bank"] .bb-result, [data-bk="part-bank"] .bb-overlap, [data-bk="part-bank"] .bk-err'), null, { timeout: 30000 }).catch(() => {});
+  await fr.waitForTimeout(400);
+  return bank(fr);
+}
+
 const parts = {
   async 'import-phone'({ check, S }) {
     const { A, fr } = await open(S, 'phone', { check });
@@ -395,6 +449,258 @@ const parts = {
     await bankPage(fr);
     await importAndReconcile(check, A, fr, 'phone');
     await endChecks(check, A, fr, 'phone');
+    await A.context.close();
+  },
+  async 'csv-desktop'({ check, S }) {
+    const { A, fr } = await start(check, S, 'desktop');
+    await addAccount(fr, 'Operating', '6789');
+    let b = await upload(fr, 'fund-a-signed.csv');
+    check('fund-a-signed.csv shows the layout form and stores nothing yet', b.layout && (await store(fr)).lines.length === 0, { layout: b.layout, errs: b.errs });
+    let m = await layoutOf(fr);
+    check(
+      'the layout is filled from the guess: Date, Description, Amount, Balance, month/day/year, money out negative',
+      /Date/.test(m.date) && /Description/.test(m.text) && /Amount/.test(m.amount) && /Balance/.test(m.balance) && m.order === 'mdy' && m.neg === true,
+      m
+    );
+    check(
+      'the first five lines are shown with money in and money out',
+      m.rows.length === 5 && m.head.join('|') === 'Date|Description|Money in|Money out' && /WIRE IN FA-1001/.test(m.rows[0][1]) && m.rows[0][2] === '$300,000.00' && m.rows[0][3] === '' && /WIRE OUT PORTFOLIO CO X/.test(m.rows[2][1]) && m.rows[2][2] === '' && m.rows[2][3] === '$400,000.00' && /=SUM\(A1\)/.test(m.rows[3][1]),
+      m.rows
+    );
+    await shot(A, 'csv-desktop-layout', fr, '.bb-form[data-kind="layout"]');
+    b = await useLayout(fr);
+    check('"Use this layout" gives "9 new lines, 0 already imported."', b.result === '9 new lines, 0 already imported.', { result: b.result, errs: b.errs });
+    let st = await store(fr);
+    const map = st.accounts[0].map || {};
+    check('the layout is kept on the bank account', map.date === 0 && map.text === 1 && map.amount === 2 && map.balance === 3 && map.order === 'mdy' && map.outNegative === true, map);
+    check('the statement balance $35,000.00 is offered from the file', money(b.rec.stmtIn) === 3500000, b.rec.stmtIn);
+    b = await upload(fr, 'fund-a.ofx');
+    check('fund-a.ofx next: "These lines match lines already imported from another file."', b.overlap.indexOf('These lines match lines already imported from another file.') === 0, { overlap: b.overlap, result: b.result, errs: b.errs });
+    await T.press(fr, '[data-action=bb-pending-cancel]');
+    await fr.waitForTimeout(500);
+    st = await store(fr);
+    b = await bank(fr);
+    check('Cancel adds nothing', st.lines.length === 9 && st.imports.length === 1 && !b.overlap, { lines: st.lines.length, imports: st.imports.length });
+    b = await upload(fr, 'fund-a-2027-01.csv');
+    st = await store(fr);
+    check('a second file to the account is read with the kept layout, with no form', !b.layout && b.result === '2 new lines, 0 already imported.' && st.lines.length === 11, { layout: b.layout, result: b.result, errs: b.errs });
+    // W3: a statement with no closing balance
+    await addAccount(fr, 'Reserve', '4321');
+    await fr.selectOption('#bb-acct', (await store(fr)).accounts[1].id);
+    await fr.waitForTimeout(500);
+    b = await upload(fr, 'fund-a-inout.csv');
+    m = await layoutOf(fr);
+    check(
+      'fund-a-inout.csv: the guess is Posting Date, Description, Credit as money in, Debit as money out, year-month-day',
+      b.layout && /Posting Date/.test(m.date) && /Description/.test(m.text) && /Credit/.test(m.in) && /Debit/.test(m.out) && m.order === 'ymd' && m.rows.length === 5 && m.rows[0][2] === '$300,000.00' && m.rows[2][3] === '$400,000.00',
+      m
+    );
+    b = await useLayout(fr);
+    check('its 9 lines are added to the second account', b.result === '9 new lines, 0 already imported.', { result: b.result, errs: b.errs });
+    check('no balance in the file: the statement balance is empty, no difference is shown and nothing can be stored', b.rec.stmtIn === '' && !/\$/.test(b.rec.diff) && /Type the statement balance/.test(b.rec.diff) && !b.rec.markOn, b.rec);
+    await fr.fill('#bb-r-stmt', '35,000.00');
+    await fr.waitForTimeout(400);
+    b = await bank(fr);
+    check('typed, the difference is shown: $0.00 (the nine lines are not decided yet)', b.rec.diff === '$0.00' && /^9\b/.test(b.rec.und), b.rec);
+    await endChecks(check, A, fr, 'csv-desktop');
+    await A.context.close();
+  },
+  async 'twice-phone'({ check, S }) {
+    const E0 = { date: '2025-12-15', memo: 'Opening deposit', src: 'man:e-pre', lines: [['1000', 100000], ['3000', -100000, 'FA-1001']] };
+    const { A, fr } = await start(check, S, 'phone', { extra: [E0] });
+    await addAccount(fr, 'Operating', '6789');
+    // the bank held $1,000.00 before its first statement, so the statement closes at $36,000.00
+    const text = ofxText().replace('<BALAMT>35000.00</BALAMT>', '<BALAMT>36000.00</BALAMT>');
+    let b = await upload(fr, mem('fund-a-from-january.ofx', text, 'application/x-ofx'));
+    check('a statement starting 2026-01-01 adds its 9 lines', b.result === '9 new lines, 0 already imported.', { result: b.result, errs: b.errs });
+    await setRecDate(fr, '2026-12-31');
+    b = await bank(fr);
+    check('the statement balance $36,000.00 comes from the file', money(b.rec.stmtIn) === 3600000, b.rec.stmtIn);
+    check('before the opening balance: "To be confirmed: opening balance at Jan 15, 2026", never $0.00, and nothing can be stored', b.rec.diff === 'To be confirmed: opening balance at Jan 15, 2026' && !b.rec.markOn && b.rec.openField, b.rec);
+    if (b.rec.openField) {
+      await fr.fill('#bb-r-open', '1,000.00');
+      await T.press(fr, '[data-action=bb-open-save]');
+      await fr.waitForTimeout(600);
+    }
+    const st = await store(fr);
+    const actor = await fr.evaluate(() => window.CVPortal.app.actor());
+    const op = st.accounts[0].opening || null;
+    check('the opening balance is stored at 2026-01-15 with who entered it and when', !!op && op.date === '2026-01-15' && op.cents === 100000 && op.by === actor && /^\d{4}-\d{2}-\d{2}T/.test(op.at || ''), op);
+    const log = (await logOf(fr)).filter((e) => e.action === 'Bank opening balance entered');
+    check('the change log records it with the person', log.length === 1 && log[0].actor === actor && /\$1,000\.00/.test(log[0].detail) && /2026-01-15/.test(log[0].detail), log);
+    b = await bank(fr);
+    if (A.p10.size === 'phone') await shot(A, 'twice-phone-opening', fr, '.bb-rec');
+    check('the difference at 2026-12-31 is $0.00', b.rec.diff === '$0.00' && b.rec.markOn, b.rec);
+    check('the 2025-12-15 entry is not listed as outstanding', b.rec.outs.length === 4 && b.rec.outs.every((t) => !/Opening deposit|Dec 15, 2025|Before/.test(t)), b.rec.outs);
+    b = await upload(fr, 'fund-a.ofx');
+    check('fund-a.ofx uploaded a second time gives "0 new lines, 9 already imported."', b.result === '0 new lines, 9 already imported.', { result: b.result, errs: b.errs });
+    check('and stores no second import', (await store(fr)).imports.length === 1);
+    await endChecks(check, A, fr, 'twice-phone');
+    await A.context.close();
+  },
+  async 'file-kept'({ check, S }) {
+    let { A, fr } = await start(check, S, 'phone');
+    await addAccount(fr, 'Operating', '6789');
+    await upload(fr, 'fund-a.ofx');
+    const bytes = fs.readFileSync(fixture('fund-a.ofx'));
+    const kept = (f) =>
+      f.evaluate(async () => {
+        const imp = window.CVPortal.state.ws.books.funds['fund-a'].bank.imports[0];
+        if (!imp) return null;
+        const blob = await window.CVPortal.ops.files.get(imp.fileId);
+        if (!blob) return { fileId: imp.fileId, missing: true };
+        const b = new Uint8Array(await blob.arrayBuffer());
+        return { fileId: imp.fileId, n: b.length, sha: window.CVPortal.audit.sha256(b) };
+      });
+    let k = await kept(fr);
+    check('the stored file is byte for byte the uploaded one', !!k && !k.missing && k.n === bytes.length && k.sha === sha(bytes), { k, n: bytes.length });
+    const lines = (await store(fr)).lines.map((l) => l.id);
+    fr = await reframe(A);
+    await bankPage(fr);
+    const st = await store(fr);
+    const b = await bank(fr);
+    check('after a reload the import and its 9 lines are still there', st.imports.length === 1 && JSON.stringify(st.lines.map((l) => l.id)) === JSON.stringify(lines) && b.sug.length + b.lines.length === 9, { imports: st.imports.length, lines: st.lines.length, shown: b.sug.length + b.lines.length });
+    k = await kept(fr);
+    check('after a reload the stored file is still the uploaded one', !!k && !k.missing && k.n === bytes.length && k.sha === sha(bytes), k);
+    await endChecks(check, A, fr, 'file-kept');
+    await A.context.close();
+  },
+  async refused({ check, S }) {
+    const { A, fr } = await start(check, S, 'desktop');
+    await addAccount(fr, 'Operating', '6789');
+    const none = async (label) => {
+      const st = await store(fr);
+      const acts = await logActions(fr);
+      check(`${label}: nothing is stored`, st.lines.length === 0 && st.imports.length === 0 && acts.indexOf('Bank statement imported') < 0, { lines: st.lines.length, imports: st.imports.length });
+    };
+    let b = await upload(fr, mem('statement.pdf', '%PDF-1.7\n1 0 obj << /Type /Catalog >> endobj\n', 'application/pdf'));
+    check('a PDF shows one line saying the file cannot be read', b.errs.length === 1 && /cannot be read/.test(b.errs[0]) && !b.result, b.errs);
+    await none('the PDF');
+    b = await upload(fr, 'fund-a-bad-trailer.bai');
+    check('fund-a-bad-trailer.bai shows one line naming the trailer', b.errs.length === 1 && /trailer/i.test(b.errs[0]) && !b.result, b.errs);
+    await none('the BAI2 file');
+    b = await upload(fr, mem('big.csv', 'Date,Description,Amount\n' + 'x'.repeat(2000001), 'text/csv'));
+    check('a file over the size limit shows one line', b.errs.length === 1 && /larger than 2 MB/.test(b.errs[0]), b.errs);
+    await none('the large file');
+    await addAccount(fr, 'Other', '1111');
+    await fr.selectOption('#bb-acct', (await store(fr)).accounts[1].id);
+    await fr.waitForTimeout(500);
+    b = await upload(fr, 'fund-a.ofx');
+    check('a statement for another account is refused with one line naming only the last four digits', b.errs.length === 1 && /ending 6789/.test(b.errs[0]) && /ending 1111/.test(b.errs[0]), b.errs);
+    await none("the other account's statement");
+    await endChecks(check, A, fr, 'refused');
+    await A.context.close();
+  },
+  async 'split-desktop'({ check, S }) {
+    const { A, fr } = await start(check, S, 'desktop');
+    await addAccount(fr, 'Operating', '6789');
+    await upload(fr, mem('one-line.csv', 'Date,Description,Amount,Balance\n12/20/2026,LOAN PAYMENT PORTFOLIO CO X,-10000.00,-10000.00\n', 'text/csv'));
+    let b = await useLayout(fr);
+    check('the one-line statement is read', b.result === '1 new line, 0 already imported.', { result: b.result, errs: b.errs });
+    const k = await lineK(fr, 'LOAN PAYMENT PORTFOLIO CO X');
+    await fr.selectOption(`#bb-d-acct-${k}`, 'split');
+    await fr.waitForSelector(`#bb-s-acct-${k}-1`, { timeout: 10000 });
+    await fr.selectOption(`#bb-s-acct-${k}-0`, '5200');
+    await fr.fill(`#bb-s-amt-${k}-0`, '6,000.00');
+    await fr.selectOption(`#bb-s-acct-${k}-1`, '2500');
+    await fr.fill(`#bb-s-amt-${k}-1`, '3,999.99');
+    await fr.waitForTimeout(300);
+    const off = await fr.innerText(`#bb-offby-${k}`).catch(() => '');
+    check('parts adding to $9,999.99 show "Off by $0.01"', off.trim() === 'Off by $0.01', off);
+    await shot(A, 'split-desktop-offby', fr, `.bb-line[data-k="${k}"]`);
+    const j0 = (await journal(fr)).length;
+    await post(fr, k);
+    b = await bank(fr);
+    check('and Post is refused with one line, nothing posted', (await journal(fr)).length === j0 && b.errs.length === 1, b.errs);
+    await fr.fill(`#bb-s-amt-${k}-1`, '4,000.00');
+    await post(fr, k);
+    const j = await journal(fr);
+    const e = j.slice(j0).find((x) => /^bank:/.test(x.src));
+    check('the split posts one entry: 5200 $6,000.00, 2500 $4,000.00 and the cash line', !!e && j.length === j0 + 1 && e.date === '2026-12-20' && JSON.stringify(e.lines) === JSON.stringify([['5200', 600000], ['2500', 400000], ['1000', -1000000]]), e);
+    b = await bank(fr);
+    check('the line is decided', b.lines.length === 0 && b.done.length === 1 && /5200/.test(b.done[0].text) && /2500/.test(b.done[0].text), b.done);
+    await endChecks(check, A, fr, 'split-desktop');
+    await A.context.close();
+  },
+  async 'undo-roles'({ check, S }) {
+    const { A, fr } = await start(check, S, 'desktop');
+    await addAccount(fr, 'Operating', '6789');
+    await upload(fr, 'fund-a.ofx');
+    await T.press(fr, '[data-action=bb-accept-all]');
+    await fr.waitForTimeout(600);
+    const k = await decide(fr, '=SUM(A1) LAW FIRM INV 2231', { acct: '5100' });
+    await post(fr, k);
+    let b = await bank(fr);
+    const d = b.done.find((x) => x.k === k);
+    check('the 5100 decision is listed as decided with Undo', !!d && d.undo, b.done);
+    await T.press(fr, `[data-action=bb-undo][data-k="${k}"]`);
+    await fr.waitForTimeout(600);
+    b = await bank(fr);
+    check('Undo puts the line back among the lines to decide', b.lines.some((l) => l.k === k) && !b.done.some((x) => x.k === k), { lines: b.lines.map((l) => l.k), done: b.done.map((x) => x.k) });
+    const tb = await auditRows(fr, 'tb');
+    const r5100 = tb.find((r) => r[0] === '5100');
+    check("5100 is $0.00 in the Audit page's trial balance", !!r5100 && money(r5100[r5100.length - 1]) === 0, r5100);
+    await bankPage(fr);
+    // W1: the distribution changes after its bank line was matched; the page's sync posts it again
+    const acts0 = (await logActions(fr)).filter((a) => a === 'Bank line matched').length;
+    await T.ws(fr, (w) => {
+      w.runs.find((r) => r.id === 'fa-run-1').date = '2026-12-14';
+    });
+    await bankPage(fr);
+    b = await bank(fr);
+    const stale = b.done.find((x) => /DISTRIBUTION FILE/.test(x.text));
+    check('the matched line offers "Move match" to the new entry', !!stale && stale.move === 1, b.done);
+    if (stale && stale.move) {
+      await T.press(fr, `[data-action=bb-move][data-k="${stale.k}"]`);
+      await fr.waitForTimeout(600);
+    }
+    const moved = await fr.evaluate(() => {
+      const f = window.CVPortal.state.ws.books.funds['fund-a'];
+      const l = f.bank.lines.find((x) => /DISTRIBUTION FILE/.test(x.text));
+      const e = l && l.match && f.journal.find((x) => x.id === l.match.entry);
+      return { match: l && l.match, date: e && e.date, src: e && e.src, reversed: !!(e && f.journal.some((x) => x.rev === e.id)) };
+    });
+    check('after Move match the line names the new entry, dated 2026-12-14 and not reversed', !!moved.match && moved.date === '2026-12-14' && moved.src === 'run:fa-run-1' && !moved.reversed, moved);
+    check('the change log has another "Bank line matched"', (await logActions(fr)).filter((a) => a === 'Bank line matched').length === acts0 + 1);
+    // a team member uploads, accepts, posts a sale and reconciles
+    await T.sample(fr, { role: 'team' });
+    await bankPage(fr);
+    b = await upload(fr, 'fund-a-2027-01.csv');
+    check('a team member can upload (the layout form, as the account has no kept layout)', b.layout, b.errs);
+    b = await useLayout(fr);
+    check('"2 new lines, 0 already imported."', b.result === '2 new lines, 0 already imported.', { result: b.result, errs: b.errs });
+    const chk = b.sug.find((x) => /CHECK 1001/.test(x.text));
+    check('the check that cleared in January is suggested with Accept', !!chk && chk.accept, b.sug);
+    if (chk && chk.accept) {
+      await T.press(fr, `[data-action=bb-accept][data-k="${chk.k}"]`);
+      await fr.waitForTimeout(500);
+    }
+    const j0 = (await journal(fr)).length;
+    const ks = await decide(fr, 'WIRE IN SALE PORTFOLIO CO X PART', { acct: 'sale', hold: 'fa-x', cost: '200,000.00' });
+    await post(fr, ks);
+    const sale = (await journal(fr)).slice(j0).find((x) => /^bank:/.test(x.src));
+    // u = round(9,000,000 x 20,000,000 / 40,000,000) = 4,500,000
+    check(
+      'the team member posts the sale: cost $200,000.00 given up, gain $40,000.00, $45,000.00 of unrealized gain realized',
+      !!sale && JSON.stringify(sale.lines) === JSON.stringify([['1000', 24000000], ['1100', -20000000, '', 'fa-x'], ['6000', -4000000, '', 'fa-x'], ['6100', 4500000, '', 'fa-x'], ['1150', -4500000, '', 'fa-x']]),
+      sale
+    );
+    await setRecDate(fr, '2027-01-31');
+    b = await bank(fr);
+    check('the January statement balance $272,000.00 comes from the file', money(b.rec.stmtIn) === 27200000, b.rec.stmtIn);
+    check('the difference at 2027-01-31 is $0.00 (the 2026 lines still to decide are reconciling items)', b.rec.diff === '$0.00' && b.rec.markOn, b.rec);
+    await T.press(fr, '[data-action=bb-mark]');
+    await fr.waitForTimeout(600);
+    const recs = (await store(fr)).recs;
+    const actor = await fr.evaluate(() => window.CVPortal.app.actor());
+    check('the team member reconciles', recs.length === 1 && recs[0].asOf === '2027-01-31' && recs[0].by === actor, recs);
+    await endChecks(check, A, fr, 'undo-roles');
+    await T.sample(fr, { role: 'investor' });
+    await fr.evaluate((r) => (location.hash = '#' + r), ROUTE);
+    await fr.waitForTimeout(1200);
+    const at = await fr.evaluate(() => ({ route: window.CVPortal.state.route, bk: !!document.querySelector('.bk'), bank: !!document.querySelector('[data-bk="part-bank"]'), console: !!document.querySelector('.cs-nav') }));
+    check("an investor opening #console-books gets the investor's own default page", at.route === 'overview' && !at.bk && !at.bank && !at.console, at);
+    await T.quiet(check, A, fr);
     await A.context.close();
   }
 };
