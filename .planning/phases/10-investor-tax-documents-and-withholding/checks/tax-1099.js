@@ -1,6 +1,7 @@
 // gate: node
-// last "TAX 1099: PASS (cases run: 10)"
-// Form 1099-INT's core (plan 10-09, assets/js/tax1099.js and tax1099-data.js), no browser: data.js, audit.js,
+// last "TAX 1099: PASS (cases run: 14)"
+// Form 1099-INT's core (plan 10-09) and Form 1099-DIV's (plan 10-11: cases div-split, div-rules, div-stops and div-rows,
+// hand-worked example E below), assets/js/tax1099.js and tax1099-data.js, no browser: data.js, audit.js,
 // withholding.js, taxmaps.js, taxforms.js, tax1099-data.js and tax1099.js run in one sandbox with window.CVPortal = {},
 // on workspaces written out here. The sandbox clock stands at noon on 20 January 2027 and every function is given its
 // own date. The PDF writer, the reader and the Unicode font are the copies shipped in the repository (plan 10-03).
@@ -220,6 +221,65 @@ const codes = (F) => (F.stops || []).map((s) => s.code).sort().join(' ');
 // Invented numbers for the W-9 reading (never-issued ranges).
 const W9_SSN = '000' + '12' + '7730';
 const W9_EIN = '00' + '1234567';
+
+/* ---------- Form 1099-DIV (plan 10-11): hand-worked example E ---------- */
+// A fund set to corporation or REIT, tax year 2026, looked at on 2027-01-20.
+//   Distribution 1, 2026-04-15, 1,000,000 cents: stored lines S-2001 400,000 and S-2003 600,000. The CPA's split: 1a 70%,
+//   2a 10%, 3 20%, box 5 the whole of 1a: 700,000 / 100,000 / 200,000, box 5 700,000.
+//   Distribution 2, 2026-10-15, 600,000 cents: S-2001 240,000, S-2002 120,000 (joined in between), S-2003 240,000. The
+//   split: 1a 50%, 3 50%, box 5 the whole of 1a: 300,000 / 0 / 300,000, box 5 300,000.
+//   S-2001: 1a 280,000 + 120,000 = 400,000; 2a 40,000; 3 80,000 + 120,000 = 200,000; 5 400,000; cash 640,000.
+//   S-2002: 1a 60,000; 3 60,000; 5 60,000; cash 120,000.
+//   S-2003: 1a 420,000 + 120,000 = 540,000; 2a 60,000; 3 120,000 + 120,000 = 240,000; 5 540,000; cash 840,000.
+//   Fund: 1a 1,000,000; 2a 100,000; 3 500,000; cash 1,600,000.
+//   The odd line: a gross of 333,333 under 70 / 10 / 20 is 233,333.1 / 33,333.3 / 66,666.6; whole cents 233,333 + 33,333 +
+//   66,666 = 333,332 and the odd cent goes to the largest remainder (box 3): 233,333 / 33,333 / 66,667. Box 5 as the whole
+//   of 1a is 233,333; box 1b at 35% of the distribution is 116,666.55, so 116,667.
+//   In the upload file S-2001's row has 4000.00 (AM, 1a), 400.00 (AO, 2a), 2000.00 (AU, 3), 4000.00 (AW, 5); AN (1b), AP to
+//   AT (2b to 2f) and AV (4) empty.
+const DIV_BOXES = ['1a', '1b', '2a', '2b', '2c', '2d', '2e', '2f', '3', '4', '5'];
+const DIV_COL = { '1a': 'AM', '1b': 'AN', '2a': 'AO', '2b': 'AP', '2c': 'AQ', '2d': 'AR', '2e': 'AS', '2f': 'AT', '3': 'AU', '4': 'AV', '5': 'AW' };
+/** The box columns of Form 1099-DIV in the upload file: AM (box 1a) to BQ. */
+const DIV_BOX_COLS = Array.from({ length: col('BQ') - col('AM') + 1 }, (_, k) => letters(col('AM') + k));
+const TIN_E = { 'S-2001': '000' + '33' + '6601', 'S-2002': '000' + '33' + '6602', 'S-2003': '000' + '33' + '6603' };
+const RECIPIENT_E = {
+  'S-2001': { tinType: 'SSN', nameType: 'I', name: 'Riley Example', name2: '', first: 'Riley', middle: '', last: 'Example', suffix: '', country: 'US', address1: '31 Birch Ln', address2: '', city: 'Plano', state: 'TX', zip: '75024' },
+  'S-2002': { tinType: 'SSN', nameType: 'I', name: 'Casey Sample', name2: '', first: 'Casey', middle: '', last: 'Sample', suffix: '', country: 'US', address1: '8 Cedar Ct', address2: '', city: 'Austin', state: 'TX', zip: '78702' },
+  'S-2003': { tinType: 'SSN', nameType: 'I', name: 'Quinn Testcase', name2: '', first: 'Quinn', middle: '', last: 'Testcase', suffix: '', country: 'US', address1: '400 Pecan St', address2: 'Unit 2', city: 'Dallas', state: 'TX', zip: '75204' }
+};
+const recipientE = (id) => Object.assign({ tin: TIN_E[id] }, RECIPIENT_E[id]);
+const PAYER_E = { name: 'Example E Holdings Inc', name2: '', address1: '200 Main St', address2: '', city: 'Dallas', state: 'TX', zip: '75201', phone: '214-555-0199', tinLast4: '4321' };
+const payerE = () => Object.assign({ tinType: 'EIN', tin: PAYER_TIN, nameType: 'B', country: 'US' }, PAYER_E);
+/** A paid distribution of fund f1 with its lines as stored ([ [investorId, grossCents, withheld] ]). */
+function runE(id, date, lines, more) {
+  const stored = lines.map(([investorId, grossCents, withheld]) => ({ investorId, grossCents, withheld: withheld || [], netCents: grossCents - (withheld || []).reduce((a, w) => a + w.cents, 0) }));
+  return Object.assign({ id, offeringId: 'f1', date, type: 'Distribution', total: stored.reduce((a, l) => a + l.grossCents, 0), status: 'paid', source: 'console', file: '', lines: stored, linesBasis: 'recorded', linesAt: AT, linesBy: BY }, more || {});
+}
+/** Example E's workspace without any split (opts.reporting: another type or '' for none; opts.investors: more seated). */
+function wsE(NS, opts) {
+  opts = opts || {};
+  const ws = {
+    v: 2,
+    tenant: { id: 'example', shortName: 'Example' },
+    offerings: [{ id: 'f1', name: 'Fund Five Equity', shortName: 'Fund Five', type: 'Real estate', status: 'Active', closeDate: '2025-01-02', distribution: { frequency: 'Semiannual', type: 'Distribution' } }],
+    investors: [inv('S-2001', 400000, w9('6601')), inv('S-2002', 200000, w9('6602')), inv('S-2003', 600000, w9('6603'))].concat(opts.investors || []),
+    runs: [runE('d-apr', '2026-04-15', [['S-2001', 400000], ['S-2003', 600000]]), runE('d-oct', '2026-10-15', [['S-2001', 240000], ['S-2002', 120000], ['S-2003', 240000]])],
+    requests: [],
+    audit: []
+  };
+  const rep = opts.reporting === undefined ? 'corp' : opts.reporting;
+  if (rep) NS.withholding.setReporting(ws, 'f1', rep, { by: BY, at: AT });
+  NS.tax1099.setPayer(ws, 'f1', PAYER_E, { by: BY, at: AT });
+  return ws;
+}
+/** Example E's two splits, as the CPA gives them, entered as percents. */
+function splitE(NS, ws) {
+  NS.tax1099.setSplit(ws, 'd-apr', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '5': 70 } }, { by: BY, at: AT });
+  NS.tax1099.setSplit(ws, 'd-oct', { pct: { '1a': 50, '2a': 0, '3': 50 }, partPct: { '5': 50 } }, { by: BY, at: AT });
+}
+/** A form's boxes as one line: '1a/1b/2a/2b/2c/2d/2e/2f/3/4/5' in cents. */
+const boxLine = (f) => (f && f.boxes ? DIV_BOXES.map((b) => f.boxes[b]).join('/') : String(f && f.boxes));
+const briefDiv = (F) => (F.forms || []).map((f) => `${f.investorId}=${boxLine(f)}`).join(' ');
 
 const cases = {
   async figures({ check: raw }) {
@@ -672,6 +732,346 @@ const cases = {
       const b = run(file, [flag, ',']);
       check(`${file}: an empty list exits 1 with a FAIL line`, b.status === 1 && /^FAIL no /m.test(b.stdout), b.stdout);
     });
+  },
+
+  // Form 1099-DIV (plan 10-11, D-02, C-07): example E to the cent, the odd line, S-2001's row and its recipient copy.
+  async 'div-split'({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const ws = wsE(NS);
+    const o = ws.offerings[0];
+    let F = null;
+    await block(check, 'div-split', () => {
+      splitE(NS, ws);
+      const s1 = (ws.runs.find((r) => r.id === 'd-apr').tax || {}).div || {};
+      const s2 = (ws.runs.find((r) => r.id === 'd-oct').tax || {}).div || {};
+      check('the April split is stored as amounts of the distribution: 700,000 / 100,000 / 200,000, box 5 700,000, entered by a named person', J(s1.cents) === J({ '1a': 700000, '2a': 100000, '3': 200000 }) && s1.part && s1.part['5'] === 700000 && s1.source === 'entered' && s1.by === BY && s1.at === AT, s1);
+      check('the October split: 300,000 / 0 / 300,000, box 5 300,000', J(s2.cents) === J({ '1a': 300000, '2a': 0, '3': 300000 }) && s2.part && s2.part['5'] === 300000, s2);
+      F = T.figuresDiv(ws, o, '2026', { today: TODAY });
+      check('no stop and nobody left out', (F.stops || []).length === 0 && (F.leftOut || []).length === 0, { stops: F.stops, leftOut: F.leftOut });
+      check(
+        'example E: S-2001 400,000 / 40,000 / 200,000 with box 5 400,000; S-2002 60,000 / 0 / 60,000 with box 5 60,000; S-2003 540,000 / 60,000 / 240,000 with box 5 540,000 (boxes 1a/1b/2a/2b/2c/2d/2e/2f/3/4/5)',
+        briefDiv(F) === 'S-2001=400000/0/40000/0/0/0/0/0/200000/0/400000 S-2002=60000/0/0/0/0/0/0/0/60000/0/60000 S-2003=540000/0/60000/0/0/0/0/0/240000/0/540000',
+        briefDiv(F)
+      );
+      const cash = (F.forms || []).map((f) => `${f.investorId}=${f.cashCents}`).join(' ');
+      check('cash paid: S-2001 640,000, S-2002 120,000, S-2003 840,000', cash === 'S-2001=640000 S-2002=120000 S-2003=840000', cash);
+      check("each investor's 1a + 2a + 3 is exactly what they were paid", (F.forms || []).length === 3 && F.forms.every((f) => f.boxes['1a'] + f.boxes['2a'] + f.boxes['3'] === f.cashCents));
+      const sum = (b) => (F.forms || []).reduce((a, f) => a + f.boxes[b], 0);
+      check("the fund's totals: 1a 1,000,000 = 700,000 + 300,000, 2a 100,000, 3 500,000 = 200,000 + 300,000, cash 1,600,000", sum('1a') === 1000000 && sum('2a') === 100000 && sum('3') === 500000 && F.totalCents === 1600000, [sum('1a'), sum('2a'), sum('3'), F.totalCents]);
+      const a1 = (F.forms || []).find((f) => f.investorId === 'S-2001') || {};
+      check("S-2001's form names both distributions; S-2002's only October's", J((a1.runIds || []).slice().sort()) === J(['d-apr', 'd-oct']) && J(((F.forms || []).find((f) => f.investorId === 'S-2002') || {}).runIds) === J(['d-oct']), a1.runIds);
+      check('figuresDiv reads nothing from the capital-account engine: the figures stand after every position is set to zero', (() => {
+        const w2 = JSON.parse(J(ws));
+        w2.investors.forEach((i) => i.positions.forEach((p) => (p.amount = 0)));
+        return briefDiv(T.figuresDiv(w2, w2.offerings[0], '2026', { today: TODAY })) === briefDiv(F);
+      })());
+    });
+    await block(check, 'odd line', () => {
+      const w = wsE(NS);
+      w.runs = [runE('d-odd', '2026-06-30', [['S-2001', 333333], ['S-2003', 666667]])];
+      T.setSplit(w, 'd-odd', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '5': 70, '1b': 35 } }, { by: BY, at: AT });
+      const G = T.figuresDiv(w, w.offerings[0], '2026', { today: TODAY });
+      const s = (G.forms || []).find((f) => f.investorId === 'S-2001') || {};
+      const b = s.boxes || {};
+      check('a gross of 333,333 under 70 / 10 / 20: 233,333 / 33,333 / 66,667 (the odd cent to the largest remainder, box 3)', b['1a'] === 233333 && b['2a'] === 33333 && b['3'] === 66667, b);
+      check('box 5 as the whole of 1a is 233,333; box 1b at 35% of the distribution is 116,667 (116,666.55)', b['5'] === 233333 && b['1b'] === 116667, b);
+      const t = (G.forms || []).find((f) => f.investorId === 'S-2003') || {};
+      check("the other line, 666,667: its three boxes add up to it and box 5 equals its 1a", !!t.boxes && t.boxes['1a'] + t.boxes['2a'] + t.boxes['3'] === 666667 && t.boxes['5'] === t.boxes['1a'], t.boxes);
+    });
+    if (!F || !(F.forms || []).length) return;
+    const f1 = F.forms.find((f) => f.investorId === 'S-2001');
+    await block(check, 'row', () => {
+      const r = T.iris.row('1099-DIV', '2026', f1, payerE(), recipientE('S-2001'));
+      check('a Form 1099-DIV row has 69 cells, A to BQ', Array.isArray(r) && r.length === 69, r && r.length);
+      check("S-2001's row: AM (1a) 4000.00, AO (2a) 400.00, AU (3) 2000.00, AW (5) 4000.00", r[col('AM')] === '4000.00' && r[col('AO')] === '400.00' && r[col('AU')] === '2000.00' && r[col('AW')] === '4000.00', ['AM', 'AO', 'AU', 'AW'].map((c) => `${c}=${r[col(c)]}`));
+      check('AN (1b), AP to AT (2b to 2f) and AV (4) are empty', ['AN', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AV'].every((c) => r[col(c)] === ''), ['AN', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AV'].map((c) => `${c}=${r[col(c)]}`));
+      const others = DIV_BOX_COLS.filter((c) => ['AM', 'AO', 'AU', 'AW'].indexOf(c) < 0 && r[col(c)] !== '');
+      check('every other box column, AM to BQ, is empty', others.length === 0, others);
+      check('form type 1099-DIV, tax year 2026, the payer and the recipient in full in D and U', r[col('A')] === '1099-DIV' && r[col('B')] === '2026' && r[col('D')] === dashedEin(PAYER_TIN) && r[col('U')] === dashedSsn(TIN_E['S-2001']) && r[col('Y')] === 'Riley' && r[col('AA')] === 'Example');
+      const faults = T.iris.validate('1099-DIV', [r]);
+      check('iris.validate finds no fault in the row', Array.isArray(faults) && faults.length === 0, faults);
+    });
+    await block(check, 'copy B', async () => {
+      const map = NS.tax1099data.MAPS['1099-DIV 2024-01 Copy B'];
+      check('the Copy B map of Form 1099-DIV exists and T.COPY_B_OF names it', !!map && T.COPY_B_OF && T.COPY_B_OF['1099-DIV'] === '1099-DIV 2024-01 Copy B');
+      const answers = T.copyBAnswers(f1, payerE(), recipientE('S-2001'), '2026', '1099-DIV');
+      check('the answers carry the four amounts and leave every other box empty', answers.box1a === '4,000.00' && answers.box2a === '400.00' && answers.box3 === '2,000.00' && answers.box5 === '4,000.00' && ['box1b', 'box2b', 'box2c', 'box2d', 'box2e', 'box2f', 'box4'].every((k) => answers[k] === ''), answers);
+      const bytes = await T.recipientCopy(W(), fs.readFileSync(path.join(ROOT, map.file)), map, answers, fillOpts());
+      const got = await readPdf(bytes, NS);
+      check("the recipient's copy has two pages: Copy B and the recipient's instructions", got.pages.length === 2, got.pages.length);
+      const p1 = got.pages[0] ? got.pages[0].text : '';
+      check('its first page is Copy B, For Recipient, of Form 1099-DIV', /Copy B/.test(p1) && /For Recipient/.test(p1) && /1099-DIV/.test(p1));
+      check('its second page is the instructions for the recipient', !!got.pages[1] && /Instructions for Recipient/.test(got.pages[1].text));
+      check('it has no form field left', got.fields === 0, got.fields);
+      check("the first page shows the recipient's number truncated to its last four", p1.indexOf('***-**-6601') >= 0);
+      check('the first page shows 4,000.00, 400.00 and 2,000.00', p1.indexOf('4,000.00') >= 0 && p1.indexOf('400.00') >= 0 && p1.indexOf('2,000.00') >= 0);
+      const all = got.pages.map((p) => p.text).join(' ');
+      check("the recipient's nine digits appear nowhere on the copy, with or without dashes", all.replace(/\s+/g, '').indexOf(TIN_E['S-2001']) < 0 && all.replace(/\s+/g, '').indexOf(dashedSsn(TIN_E['S-2001'])) < 0 && all.replace(/\D/g, '').indexOf(TIN_E['S-2001']) < 0);
+    });
+    check('the workspace and its change log hold no taxpayer number', numberHits(J(ws), [PAYER_TIN].concat(Object.values(TIN_E))).length === 0, numberHits(J(ws), [PAYER_TIN].concat(Object.values(TIN_E))));
+  },
+
+  // Every arithmetic rule refused by name, nothing stored; percents and amounts; the year's split; the IRS's rule by choice.
+  async 'div-rules'({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const R = T.DIV_RULES || {};
+    const div = (ws, id) => ((ws.runs.find((r) => r.id === id) || {}).tax || {}).div;
+    await block(check, 'refusals', () => {
+      const ws = wsE(NS);
+      const bad = [
+        ['1a + 2a + 3 of 70 + 10 + 10 percent', 'sum', { pct: { '1a': 70, '2a': 10, '3': 10 } }],
+        ['amounts that do not add up to the distribution', 'sum', { cents: { '1a': 700000, '2a': 100000, '3': 100000 } }],
+        ['box 1b more than box 1a', '1b', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '1b': 71 } }],
+        ['box 5 more than box 1a', '5', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '5': 80 } }],
+        ['box 2e more than box 1a', '2e', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '2e': 75 } }],
+        ['2b + 2c + 2d more than 2a', '2bcd', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '2b': 5, '2c': 4, '2d': 2 } }],
+        ['box 2f more than box 2a', '2f', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '2f': 11 } }],
+        ['a negative percent', 'negative', { pct: { '1a': 110, '2a': -10, '3': 0 } }],
+        ['a negative amount', 'negative', { cents: { '1a': 1100000, '2a': -100000, '3': 0 } }],
+        ['a negative portion', 'negative', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '1b': -1 } }],
+        ['a percent with five decimals', 'decimals', { pct: { '1a': '33.33333', '2a': '33.33333', '3': '33.33334' } }],
+        ['amounts in parts of a cent', 'whole', { cents: { '1a': 700000.5, '2a': 99999.5, '3': 200000 } }]
+      ];
+      bad.forEach(([what, rule, spec]) => {
+        let err = null;
+        const before = J(ws);
+        try {
+          T.setSplit(ws, 'd-apr', spec, { by: BY, at: AT });
+        } catch (e) {
+          err = e;
+        }
+        check(`${what}: refused, naming the rule (${rule}), and nothing stored`, !!err && err.rule === rule && !!R[rule] && String(err.message).indexOf(R[rule]) >= 0 && J(ws) === before && !div(ws, 'd-apr'), err ? { rule: err.rule, msg: err.message } : 'not refused');
+      });
+      let e2 = null;
+      try {
+        T.setSplit(ws, 'd-apr', { pct: { '1a': 70, '2a': 10, '3': 20 } }, { by: BY, at: AT, offeringId: 'f2' });
+      } catch (e) {
+        e2 = e;
+      }
+      check('a split given for a distribution that is not the fund\'s: refused (fund), nothing stored', !!e2 && e2.rule === 'fund' && !div(ws, 'd-apr'), e2 && e2.message);
+      const wn = wsE(NS, { reporting: 'notes' });
+      const r3 = refuses(wn, () => T.setSplit(wn, 'd-apr', { pct: { '1a': 70, '2a': 10, '3': 20 } }, { by: BY, at: AT }));
+      check('a split for a fund not set to corporation or REIT: refused, nothing stored', r3.threw && r3.unchanged && /corporation or REIT/.test(r3.msg), r3.msg);
+      check('setSplit needs a named person', refuses(ws, () => T.setSplit(ws, 'd-apr', { pct: { '1a': 70, '2a': 10, '3': 20 } }, { at: AT })).threw && !div(ws, 'd-apr'));
+      check('setYearSplit needs a named person and refuses a broken split', refuses(ws, () => T.setYearSplit(ws, 'f1', '2026', { pct: { '1a': 70, '2a': 10, '3': 20 } }, { at: AT })).threw && refuses(ws, () => T.setYearSplit(ws, 'f1', '2026', { pct: { '1a': 70, '2a': 10, '3': 10 } }, { by: BY, at: AT })).threw);
+      check('wholeDividend needs a named person', refuses(ws, () => T.wholeDividend(ws, 'd-apr', { at: AT })).threw && !div(ws, 'd-apr'));
+    });
+    await block(check, 'amounts', () => {
+      const ws = wsE(NS);
+      T.setSplit(ws, 'd-apr', { pct: { '1a': '33.3333', '2a': '33.3333', '3': '33.3334' } }, { by: BY, at: AT });
+      check('33.3333 / 33.3333 / 33.3334 percent of 1,000,000 cents stores 333,333 / 333,333 / 333,334', J(div(ws, 'd-apr').cents) === J({ '1a': 333333, '2a': 333333, '3': 333334 }), div(ws, 'd-apr').cents);
+      T.setSplit(ws, 'd-apr', { cents: { '1a': 700000, '2a': 100000, '3': 200000 }, part: { '5': 700000 } }, { by: BY, at: AT });
+      const a = div(ws, 'd-apr');
+      check('a split given as amounts is stored as given, with who and when', J(a.cents) === J({ '1a': 700000, '2a': 100000, '3': 200000 }) && a.part['5'] === 700000 && a.part['1b'] === 0 && a.by === BY && a.source === 'entered', a);
+      check("the odd cent's tie goes by box order 1a, 2a, 3: 2 cents of a 1 / 1 / 1 split are 1 / 1 / 0", J(T.divShare(2, { cents: { '1a': 1, '2a': 1, '3': 1 }, part: {} })) === J({ '1a': 1, '2a': 1, '3': 0, '1b': 0, '2e': 0, '5': 0, '2b': 0, '2c': 0, '2d': 0, '2f': 0 }), T.divShare(2, { cents: { '1a': 1, '2a': 1, '3': 1 }, part: {} }));
+      const s = T.divShare(333333, { cents: { '1a': 700000, '2a': 100000, '3': 200000 }, part: { '2b': 40000, '2c': 30000, '2d': 30000, '2f': 100000 } });
+      check('2b + 2c + 2d equal to 2a in the split: the three add up to exactly the investor\'s 2a, and 2f equal to 2a is the investor\'s 2a', s['2b'] + s['2c'] + s['2d'] === s['2a'] && s['2f'] === s['2a'], s);
+    });
+    await block(check, 'year and IRS rule', () => {
+      const ws = wsE(NS);
+      const o = ws.offerings[0];
+      const before = J(ws);
+      const F0 = T.figuresDiv(ws, o, '2026', { today: TODAY });
+      check('the portal never proposes a split: with none given, both distributions stop the forms and figuresDiv stores nothing', codes(F0) === 'split split' && F0.forms.length === 0 && J(ws) === before, codes(F0));
+      T.setYearSplit(ws, 'f1', '2026', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '5': 70 } }, { by: BY, at: AT });
+      const src = ws.runs.map((r) => `${r.id}:${(T.splitOf(ws, o, r) || {}).source}`).join(' ');
+      check('setYearSplit applies one split to every distribution of the year, each marked as from the year', src === 'd-apr:year d-oct:year' && !!((o.tax.years || {})['2026'] || {}).divYear && ((o.tax.years || {})['2026'] || {}).divYear.by === BY, src);
+      let F = T.figuresDiv(ws, o, '2026', { today: TODAY });
+      check('with the year\'s split, October\'s 600,000 is 420,000 / 60,000 / 120,000 (S-2002 84,000 / 12,000 / 24,000)', F.stops.length === 0 && boxLine(F.forms.find((f) => f.investorId === 'S-2002')) === '84000/0/12000/0/0/0/0/0/24000/0/84000', briefDiv(F));
+      T.setSplit(ws, 'd-oct', { pct: { '1a': 50, '2a': 0, '3': 50 }, partPct: { '5': 50 } }, { by: BY, at: AT });
+      F = T.figuresDiv(ws, o, '2026', { today: TODAY });
+      check("a distribution's own split wins over the year's: example E's figures", (T.splitOf(ws, o, ws.runs[1]) || {}).source === 'entered' && briefDiv(F) === 'S-2001=400000/0/40000/0/0/0/0/0/200000/0/400000 S-2002=60000/0/0/0/0/0/0/0/60000/0/60000 S-2003=540000/0/60000/0/0/0/0/0/240000/0/540000', briefDiv(F));
+      T.clearYearSplit(ws, 'f1', '2026', { by: BY, at: AT });
+      check("with the year's split removed, April stops again", codes(T.figuresDiv(ws, o, '2026', { today: TODAY })) === 'split');
+      const w2 = wsE(NS);
+      const before2 = J(w2.runs);
+      check('the IRS rule is never applied by the portal: figuresDiv leaves the runs as they were', T.figuresDiv(w2, w2.offerings[0], '2026', { today: TODAY }).forms.length === 0 && J(w2.runs) === before2);
+      T.wholeDividend(w2, 'd-apr', { by: BY, at: AT });
+      const d = div(w2, 'd-apr');
+      check('wholeDividend stores 1a as the whole distribution, the source irs-default and the person', J(d.cents) === J({ '1a': 1000000, '2a': 0, '3': 0 }) && d.source === 'irs-default' && d.by === BY && d.at === AT, d);
+      check('the change log names the IRS rule and the person who chose it', (w2.audit || []).some((e) => /whole payment/i.test(e.action + ' ' + e.detail) && e.actor === BY));
+    });
+  },
+
+  // The stops and the leave-outs of Form 1099-DIV; box 4; other withholding; confirming every box.
+  async 'div-stops'({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const run = (ws) => T.figuresDiv(ws, ws.offerings[0], '2026', { today: TODAY });
+    const sentence = (s) => !!s && /CPA/.test(s.text) && /^[^\n]+\.$/.test(s.text) && s.text.length < 300;
+    await block(check, 'reporting', () => {
+      for (const rep of ['notes', 'partnership', '']) {
+        const ws = wsE(NS, { reporting: rep });
+        const F = run(ws);
+        const s = (F.stops || []).find((x) => x.code === 'reporting');
+        check(`a fund set to ${rep || 'nothing'}: the stop reporting, naming the CPA, and no form`, !!s && sentence(s) && /1099-DIV/.test(s.text) && F.forms.length === 0, F.stops);
+      }
+    });
+    await block(check, 'split', () => {
+      const ws = wsE(NS);
+      T.setSplit(ws, 'd-apr', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '5': 70 } }, { by: BY, at: AT });
+      const F = run(ws);
+      const s = (F.stops || [])[0];
+      check('a paid distribution with no split: the stop split naming it (its date), and no form', codes(F) === 'split' && s.runId === 'd-oct' && /2026-10-15/.test(s.text) && sentence(s) && F.forms.length === 0, F.stops);
+      ws.runs.push(runE('d-dec', '2026-12-28', [['S-2001', 1000]]));
+      ws.runs[ws.runs.length - 1].cancelled = true;
+      ws.runs.push(runE('d-next', '2027-02-15', [['S-2001', 1000]]));
+      check('a cancelled distribution and one of another year stop nothing', codes(run(ws)) === 'split');
+    });
+    await block(check, 'stored', () => {
+      const ws = wsE(NS);
+      splitE(NS, ws);
+      ws.runs.push({ id: 'd-old', offeringId: 'f1', date: '2026-07-15', type: 'Distribution', total: 100000, status: 'paid', source: 'history' });
+      const F = run(ws);
+      check('a distribution without stored lines: the stop stored naming it, and no form', codes(F) === 'stored' && F.stops[0].runId === 'd-old' && sentence(F.stops[0]) && F.forms.length === 0, F.stops);
+    });
+    await block(check, 'leftout', () => {
+      const seat = [
+        inv('B-IRA', 1000, Object.assign(w9('1111'), { type: 'ira' })),
+        inv('B-FOR', 1000, w8ben()),
+        inv('B-EXM', 1000, w9('2222')),
+        inv('B-SMALL', 1000, w9('3333')),
+        inv('B-NOW9', 1000, { taxType: 'us-individual', taxForm: '', tinLast4: '' }),
+        inv('B-TEN', 1000, w9('4444')),
+        inv('B-SMALLBK', 1000, w9('5555', true)),
+        inv('B-EXP', 1000, w8ben({ validUntil: '2025-12-31' }))
+      ];
+      const ws = wsE(NS);
+      ws.investors = ws.investors.concat(seat);
+      ws.runs = [runE('d-b', '2026-09-15', [['B-IRA', 50000], ['B-FOR', 50000], ['B-EXM', 50000], ['B-SMALL', 999], ['B-NOW9', 50000], ['B-TEN', 1000], ['B-SMALLBK', 999, [bk(240, 999)]], ['B-EXP', 50000]])];
+      NS.withholding.markExempt(ws, 'B-EXM', { by: BY, at: AT });
+      T.setSplit(ws, 'd-b', { pct: { '1a': 70, '2a': 10, '3': 20 } }, { by: BY, at: AT });
+      const F = run(ws);
+      check('forms: B-SMALLBK ($9.99 paid, $2.40 withheld) and B-TEN ($10.00 paid); nobody else', (F.forms || []).map((f) => f.investorId).join() === 'B-SMALLBK,B-TEN', briefDiv(F));
+      const lo = {};
+      (F.leftOut || []).forEach((x) => (lo[x.investorId] = x));
+      const want = { 'B-IRA': ['ira', /IRA.*1099-DIV/, 50000], 'B-FOR': ['foreign', /1042-S/, 50000], 'B-EXM': ['exempt', /exempt.*1099-DIV/i, 50000], 'B-SMALL': ['under-10', /\$10.*1099-DIV/, 999], 'B-NOW9': ['no-w9', /signed W-9.*1099-DIV/, 50000], 'B-EXP': ['no-form', /expired.*1099-DIV/, 50000] };
+      Object.keys(want).forEach((id) => {
+        const [code, re, cents] = want[id];
+        const x = lo[id] || {};
+        check(`${id} is left out (${code}) with its own reason naming Form 1099-DIV where it applies, and its ${cents} cents paid`, x.code === code && re.test(x.reason || '') && x.cents === cents, x);
+      });
+      check('exactly six are left out, and the forms and the left out add up to the whole paid (252,998)', (F.leftOut || []).length === 6 && F.totalCents === 252998 && (F.forms || []).reduce((a, f) => a + f.cashCents, 0) + (F.leftOut || []).reduce((a, x) => a + x.cents, 0) === 252998, F.totalCents);
+      const b = (F.forms || []).find((f) => f.investorId === 'B-SMALLBK') || {};
+      check("B-SMALLBK's box 4 is 240, equal to NS.withholding.withheldFor (kind backup), and its three boxes add up to 999", !!b.boxes && b.boxes['4'] === 240 && b.boxes['4'] === NS.withholding.withheldFor(ws, { investorId: 'B-SMALLBK', offeringId: 'f1', year: '2026', kind: 'backup', today: TODAY }) && b.boxes['1a'] + b.boxes['2a'] + b.boxes['3'] === 999, b.boxes);
+      const t = (F.forms || []).find((f) => f.investorId === 'B-TEN') || {};
+      check("B-TEN's box 4 is empty (0)", !!t.boxes && t.boxes['4'] === 0, t.boxes);
+    });
+    await block(check, 'other-withholding', () => {
+      const ws = wsE(NS);
+      splitE(NS, ws);
+      ws.runs.push(runE('d-nov', '2026-11-16', [['S-2001', 500000, [other('foreign', 150000, 500000)]]]));
+      T.setSplit(ws, 'd-nov', { pct: { '1a': 100, '2a': 0, '3': 0 } }, { by: BY, at: AT });
+      let F = run(ws);
+      const s = (F.stops || [])[0];
+      check('a confirmed 30% line on S-2001 (on a form): the stop other-withholding naming that distribution, no form (box 4 holds backup only)', codes(F) === 'other-withholding' && s.runId === 'd-nov' && sentence(s) && F.forms.length === 0, F.stops);
+      NS.data.cancelRun(ws, 'd-nov', { by: BY, at: AT, why: 'Recorded by mistake.' });
+      F = run(ws);
+      check('with it cancelled, example E returns', !F.stops.length && briefDiv(F) === 'S-2001=400000/0/40000/0/0/0/0/0/200000/0/400000 S-2002=60000/0/0/0/0/0/0/0/60000/0/60000 S-2003=540000/0/60000/0/0/0/0/0/240000/0/540000', briefDiv(F));
+      const w2 = wsE(NS, { investors: [inv('S-2009', 1000, w8ben())] });
+      splitE(NS, w2);
+      w2.runs.push(runE('d-for', '2026-11-16', [['S-2009', 100000, [other('foreign', 30000, 100000)]]]));
+      T.setSplit(w2, 'd-for', { pct: { '1a': 100, '2a': 0, '3': 0 } }, { by: BY, at: AT });
+      const G = run(w2);
+      check('a 30% line on a foreign investor, who is left out (Form 1042-S), stops nothing', !G.stops.length && (G.leftOut || []).some((x) => x.investorId === 'S-2009' && x.code === 'foreign'), G.stops);
+    });
+    await block(check, 'confirm', () => {
+      const ws = wsE(NS);
+      const o = ws.offerings[0];
+      splitE(NS, ws);
+      let F = run(ws);
+      const form = () => F.forms.find((f) => f.investorId === 'S-2001');
+      check('not confirmed before confirmTotals', T.confirmed(ws, o, '2026', form()) === false);
+      check('confirmTotals needs a named person', refuses(ws, () => T.confirmTotals(ws, 'f1', '2026', 'S-2001', { at: AT, today: TODAY })).threw);
+      T.confirmTotals(ws, 'f1', '2026', 'S-2001', { by: BY, at: AT, today: TODAY });
+      const c = (((o.tax.years || {})['2026'] || {}).confirmed || {})['S-2001'] || {};
+      check('confirmTotals stores every box of the form with who and when', c.form === '1099-DIV' && !!c.boxes && DIV_BOXES.every((b) => c.boxes[b] === form().boxes[b]) && c.by === BY && c.at === AT, c);
+      check('confirmed answers true', T.confirmed(ws, o, '2026', form()) === true);
+      check('the change log has "Form 1099-DIV totals confirmed"', (ws.audit || []).some((e) => e.action === 'Form 1099-DIV totals confirmed' && e.record === 'S-2001'));
+      T.setSplit(ws, 'd-oct', { pct: { '1a': 40, '2a': 10, '3': 50 }, partPct: { '5': 40 } }, { by: BY, at: AT });
+      F = run(ws);
+      check('after the split of a distribution changes, confirmed answers false again', T.confirmed(ws, o, '2026', form()) === false, boxLine(form()));
+    });
+  },
+
+  // The Form 1099-DIV rows and files (TAX-12): the header, example E's three rows, the faults of case faults, the files.
+  async 'div-rows'({ check: raw }) {
+    const check = masked(raw);
+    const NS = load();
+    const T = NS.tax1099;
+    const cols = (NS.tax1099data.IRIS.columns || {})['1099-DIV'] || [];
+    let head = [];
+    await block(check, 'header', () => {
+      head = T.iris.header('1099-DIV');
+      check('the header has 69 names in the IRS order, A to BQ: Form Type first, Box 1a at AM, Box 5 at AW, State 2 - Special Data Entries last', head.length === 69 && head[0] === 'Form Type' && head[col('AM')] === 'Box 1a - Total ordinary dividends' && head[col('AW')] === 'Box 5 - Section 199A dividends' && head[68] === 'State 2 - Special Data Entries' && cols.every((c, k) => c.col === letters(k)), head.length);
+      check('every column carries its source in the 1099-DIV guidelines and its rule', cols.length === 69 && cols.every((c) => /1099-DIV Template Formatting Guidelines/.test(c.source) && typeof c.rule === 'string' && c.rule.length > 5), cols.filter((c) => !c.rule || !/1099-DIV/.test(c.source)).map((c) => c.col));
+      check('the box columns: 1a AM, 1b AN, 2a AO, 2b-2f AP-AT, 3 AU, 4 AV, 5 AW', J(NS.tax1099data.IRIS.boxes['1099-DIV']) === J(DIV_COL), NS.tax1099data.IRIS.boxes['1099-DIV']);
+      check('column A takes only 1099-DIV, and headerPinned stays false (the header is not compared with the IRS\'s own template)', J(cols[0].values) === J(['1099-DIV']) && NS.tax1099data.IRIS.headerPinned === false);
+    });
+    const ws = wsE(NS);
+    splitE(NS, ws);
+    const F = T.figuresDiv(ws, ws.offerings[0], '2026', { today: TODAY });
+    const rowOf = (id, rec) => T.iris.row('1099-DIV', '2026', F.forms.find((f) => f.investorId === id), payerE(), rec || recipientE(id));
+    let rows = [];
+    await block(check, 'rows', () => {
+      rows = ['S-2001', 'S-2002', 'S-2003'].map((id) => rowOf(id));
+      const v = (r) => ['AM', 'AO', 'AU', 'AW'].map((c) => r[col(c)]).join(' ');
+      check("example E's three rows: S-2001 4000.00 400.00 2000.00 4000.00; S-2002 600.00, empty, 600.00, 600.00; S-2003 5400.00 600.00 2400.00 5400.00 (AM AO AU AW)", v(rows[0]) === '4000.00 400.00 2000.00 4000.00' && v(rows[1]) === '600.00  600.00 600.00' && v(rows[2]) === '5400.00 600.00 2400.00 5400.00', rows.map(v));
+      const filled = (r) => r.map((x, k) => (x !== '' ? letters(k) : '')).filter(Boolean).join(' ');
+      check("S-2001's row fills exactly the form type, year, payer, recipient and its four amounts", filled(rows[0]) === 'A B C D E F L M O P Q R S T U V Y AA AC AD AF AG AH AM AO AU AW', filled(rows[0]));
+      check('the three rows pass every rule', T.iris.validate('1099-DIV', rows).length === 0, T.iris.validate('1099-DIV', rows));
+      const withBk = T.iris.row('1099-DIV', '2026', Object.assign({}, F.forms[0], { boxes: Object.assign({}, F.forms[0].boxes, { '4': 240 }) }), payerE(), recipientE('S-2001'));
+      check('box 4 is written in AV (2.40) and nowhere else', withBk[col('AV')] === '2.40' && withBk[col('AQ')] === '', [withBk[col('AV')], withBk[col('AQ')]]);
+    });
+    if (!rows.length) return;
+    await block(check, 'faults', () => {
+      const good = rows[0];
+      const ent = rowOf('S-2003', { tinType: 'EIN', tin: W9_EIN, nameType: 'B', name: 'Example Holdings LLC', name2: '', country: 'US', address1: '77 Market St Ste 5', address2: '', city: 'Boston', state: 'MA', zip: '02110' });
+      check('a business recipient row passes', T.iris.validate('1099-DIV', [good, ent]).length === 0);
+      const list = [
+        ['an accented letter in a first name', good, 'Y', 'Rílëy'],
+        ['a period in a last name', good, 'AA', 'Ex.ample'],
+        ['a comma in a business name', ent, 'W', 'Example, Holdings'],
+        ['a business name of 41 characters', ent, 'W', 'A'.repeat(41)],
+        ['an address line with a character the rule does not list', good, 'AD', '31 Birch Ln #4'],
+        ['a digit in a city', good, 'AF', 'Plano2'],
+        ['a ZIP of four digits', good, 'AH', '7502'],
+        ['a doubled space', good, 'AD', '31  Birch Ln'],
+        ["a recipient number not in its type's pattern", good, 'U', TIN_E['S-2001']],
+        ['a required cell left empty', good, 'AD', ''],
+        ['a negative box 1a', good, 'AM', '-5.00'],
+        ['box 3 with three decimals', good, 'AU', '2000.001'],
+        ['box 5 in scientific notation', good, 'AW', '4.0E+3'],
+        ['a cell that starts with an equals sign', good, 'AE', '=1+1'],
+        ['a cell that starts with an at sign', good, 'AE', '@Floor']
+      ];
+      list.forEach(([what, base, c, v]) => {
+        const bad = base.slice();
+        bad[col(c)] = v;
+        const rs = [base === good ? ent : good, bad];
+        const faults = T.iris.validate('1099-DIV', rs);
+        const hit = faults.find((x) => x.row === 2 && x.col === c);
+        check(`${what}: caught on row 2, column ${c} (${head[col(c)]}), with a plain reason, and no file`, !!hit && hit.name === head[col(c)] && hit.why.length > 10 && faults.every((x) => x.row === 2 && x.col === c) && refuses(ws, () => T.iris.files('1099-DIV', rs)).threw, faults);
+      });
+    });
+    await block(check, 'files', () => {
+      const many = Array.from({ length: 237 }, (_, k) => rowOf('S-2001', Object.assign({}, recipientE('S-2001'), { tin: '000' + String(k + 1).padStart(6, '0') })));
+      const big = T.iris.files('1099-DIV', many);
+      check('237 rows: three files of 100, 100 and 37 rows, each starting with the header line', big.length === 3 && big.map((x) => x.rows).join(',') === '100,100,37' && big.every((x) => x.text.split('\r\n')[0] === head.join(',')), big.map((x) => x.rows));
+      check('every line of every file has 69 cells', big.every((x) => x.text.split('\r\n').filter(Boolean).every((l) => l.split(',').length === 69)));
+      check('the files are named for Form 1099-DIV, the year and the part', big.every((x) => /^1099-DIV-2026-part-[1-3]-of-3\.csv$/.test(x.name)), big.map((x) => x.name));
+    });
+    await block(check, 'filed', () => {
+      T.markFiled(ws, 'f1', '2026', { receiptId: 'Receipt-E1', date: '2027-02-10', sha256: 'cd'.repeat(32), rows: 3, by: BY, at: AT });
+      const got = (((ws.offerings[0].tax.years || {})['2026'] || {}).filed || [])[0] || {};
+      check('markFiled on a corporation fund records the form 1099-div, logged as Form 1099-DIV', got.form === '1099-div' && got.rows === 3 && (ws.audit || []).some((e) => e.action === 'Form 1099-DIV file recorded as filed'), got.form);
+    });
+    check('the workspace and its change log hold no taxpayer number', numberHits(J(ws), [PAYER_TIN, W9_EIN].concat(Object.values(TIN_E))).length === 0);
   }
 };
 

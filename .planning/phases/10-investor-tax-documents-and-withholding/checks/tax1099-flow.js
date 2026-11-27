@@ -1,6 +1,6 @@
 // gate: browser
-// last "TAX1099 FLOW: PASS (parts run: 8)"
-// The Form 1099 section of the Tax documents page (plan 10-10, D-02, C-01, C-05, TAX-07, TAX-08, TAX-10, TAX-11, TAX-12):
+// last "TAX1099 FLOW: PASS (parts run: 11)"
+// The Form 1099 section of the Tax documents page (plans 10-10 and 10-11, D-02, C-01, C-05, TAX-07, TAX-08, TAX-10, TAX-11, TAX-12):
 // the sponsor of a notes fund reviews the Form 1099-INT figures the portal's records prove, confirms each against the
 // bank, has each recipient's number read from the signed W-9 or types it, makes the recipients' copies and delivers them
 // through the consent path, downloads the file for the IRS's IRIS site and records the IRS's receipt. Every part runs the
@@ -44,6 +44,22 @@
 //   roles          1280x800: an admin marks A-1001 as an exempt recipient (left out with that reason) and unmarks it (back);
 //                  a team member confirms totals and sees no control for the payer's details, the exempt mark, the numbers,
 //                  the copies or the file; an investor cannot open the address; portal.html at 390x844 has the same section
+//   div-split-phone   390x844 with touch (plan 10-11, D-02, C-07, TAX-09): example E seated in one fund of the sample set to
+//   div-split-desktop and 1280x800: corporation or REIT: the Form 1099 section lists the fund; before any split the two
+//                  distributions are listed with "Split from your CPA" and no form; the IRS's whole-payment rule is one line
+//                  with its button and is not applied until pressed; nothing proposes a split; a split of 70, 10 and 10 is
+//                  refused with the rule in one line; 70 / 10 / 20 and 50 / 0 / 50 with box 5 opened under "More boxes from
+//                  your CPA" and set to the whole of 1a show the three forms with example E's dollar amounts; box 3 above
+//                  zero shows the one line naming Form 5452 and the CPA; each form is confirmed singly with every box stored.
+//                  Each open split has the box "Use this split for every distribution of the year". Desktop also: a third distribution stops the
+//                  forms until "Report the whole payment as a dividend" is pressed, recorded as the IRS rule chosen by the
+//                  signed-in person; the change log holds the splits, the confirmations and the choice
+//   div-file       1280x800: with the numbers typed as in plan 10-10 (S-2002's read from its signed W-9), the downloaded file
+//                  has the Form 1099-DIV header and three rows with example E's amounts in AM, AO, AU and AW (AV empty); the
+//                  header line shows the template is not yet confirmed; Create recipient copies makes three documents of
+//                  kind 1099-div, delivered on the Tax documents page (S-2001, consented) or listed to send on paper; S-2001's
+//                  copy shows ***-**-6601 and its amounts, and S-2001 opens it in Documents; after it no number rests in
+//                  storage, the workspace, the change log, the page or its fields
 // Every part: quiet, leak and a way out on screen.
 //   NODE_PATH=$(npm root -g) node tax1099-flow.js [--only part1,part2]
 // The last line is "TAX1099 FLOW: PASS (parts run: N)" or "TAX1099 FLOW: FAIL (parts run: N) - <parts>".
@@ -82,7 +98,8 @@ const IDS = ['A-1001', 'A-1002', 'A-1003'];
 // Invented numbers, in ranges the IRS never issues; built from parts so no line of this file holds nine digits in a row.
 const TIN = { 'A-1001': '000' + '41' + '4821', 'A-1002': '000' + '55' + '7730' };
 const PAYER_TIN = '00' + '765' + '4321';
-const NUMBERS = [TIN['A-1001'], TIN['A-1002'], PAYER_TIN];
+// and example E's (plan 10-11), searched for by every part
+const NUMBERS = [TIN['A-1001'], TIN['A-1002'], PAYER_TIN, '000' + '33' + '6601', '000' + '33' + '6602', '000' + '33' + '6603'];
 
 /* ---------- what this check prints ---------- */
 function mask(s) {
@@ -814,5 +831,305 @@ const parts = {
     await P.A.context.close();
   }
 };
+
+/* ---------- Form 1099-DIV (plan 10-11): hand-worked example E in the sample ---------- */
+// Example E (plan 10-11's TAX 1099 numbers) seated in one new fund of the Kestrel Bay sample set to corporation or REIT:
+// S-2001 holds $200,000 from 2 January 2025 and $100,000 more from 1 June 2026, S-2003 $300,000 from 2 January 2025, and
+// S-2002 joins with $150,000 on 1 June 2026. Distribution 1, 2026-04-15, $10,000.00: S-2001 400,000, S-2003 600,000
+// cents (2 : 3). Distribution 2, 2026-10-15, $6,000.00: S-2001 240,000, S-2002 120,000, S-2003 240,000 (2 : 1 : 2). The
+// CPA's splits: 70 / 10 / 20 and 50 / 0 / 50, box 5 the whole of 1a each time. Looked at on 2027-01-20.
+//   S-2001: 1a $4,000.00, 2a $400.00, 3 $2,000.00, 5 $4,000.00; S-2002: 1a $600.00, 3 $600.00, 5 $600.00;
+//   S-2003: 1a $5,400.00, 2a $600.00, 3 $2,400.00, 5 $5,400.00. In the upload file: AM (1a), AO (2a), AU (3), AW (5).
+const FUND_E = 'exe-corp';
+const IDS_E = ['S-2001', 'S-2002', 'S-2003'];
+const TIN_E = { 'S-2001': '000' + '33' + '6601', 'S-2002': '000' + '33' + '6602', 'S-2003': '000' + '33' + '6603' };
+const NUMBERS_E = Object.values(TIN_E);
+/** Example E seated in the sample (opts.split: the two splits given through the module by a named person). */
+async function seatE(fr, opts) {
+  opts = opts || {};
+  const out = await T.ws(
+    fr,
+    (w, arg, NS) => {
+      const W = NS.withholding;
+      const o = JSON.parse(JSON.stringify(w.offerings[0]));
+      o.id = arg.fund;
+      o.name = 'Example E <b>Equity</b> Fund';
+      o.shortName = 'Example E';
+      delete o.tax;
+      o.distribution = Object.assign({}, o.distribution || {}, { type: 'Distribution' });
+      w.offerings.push(o);
+      const tmpl = w.investors.find((i) => i.onboarding && i.onboarding.status === 'complete' && i.positions.length);
+      const pos0 = tmpl.positions[0];
+      const signedW9 = (last4, env) => ({ taxType: 'us-individual', taxForm: 'W-9', tinLast4: last4, taxCert: { form: 'W-9', revision: 'March 2024', envelopeId: env, at: '2025-01-02T10:00:00.000Z', signed: true, signedBy: 'Signer', tinLast4: last4, backupWithholding: false } });
+      const pos = (amount, date) => Object.assign(JSON.parse(JSON.stringify(pos0)), { offeringId: o.id, amount, date });
+      const people = [
+        ['S-2001', 'Riley Example', [pos(200000, '2025-01-02'), pos(100000, '2026-06-01')], signedW9('6601', 'env-w9-e1'), '31 Birch Ln, Plano, TX 75024'],
+        ['S-2002', 'Casey Sample', [pos(150000, '2026-06-01')], signedW9('6602', 'env-w9-e2'), '8 Cedar Ct, Austin, TX 78702'],
+        ['S-2003', 'Quinn Testcase', [pos(300000, '2025-01-02')], signedW9('6603', 'env-w9-e3'), '400 Pecan St, Dallas, TX 75204']
+      ];
+      people.forEach(([id, title, positions, tax, address]) => {
+        if (w.investors.some((i) => i.id === id)) throw new Error('seatE: id taken ' + id);
+        const inv = JSON.parse(JSON.stringify(tmpl));
+        ['taxCert', 'taxW8', 'taxForm', 'taxDelivery', 'irsNotice', 'exempt1099'].forEach((k) => delete inv[k]);
+        Object.assign(inv, { id, title, contact: title, type: 'individual', email: `${id.toLowerCase()}@example.com`, address, positions }, JSON.parse(JSON.stringify(tax)));
+        inv.positions.forEach((p) => delete p.redeemed);
+        w.investors.push(inv);
+      });
+      W.setReporting(w, o.id, 'corp', { by: arg.by, at: '2026-03-01T15:00:00.000Z' });
+      NS.data.recordRun(w, { offeringId: o.id, date: '2026-04-15', type: 'Distribution', total: 1000000 }, { by: arg.by, today: '2026-04-15', id: 'exe-apr' });
+      NS.data.recordRun(w, { offeringId: o.id, date: '2026-10-15', type: 'Distribution', total: 600000 }, { by: arg.by, today: '2026-10-15', id: 'exe-oct' });
+      const lines = (id) => w.runs.find((r) => r.id === id).lines.map((l) => `${l.investorId}=${l.grossCents}`).join(' ');
+      if (lines('exe-apr') !== 'S-2001=400000 S-2003=600000' || lines('exe-oct') !== 'S-2001=240000 S-2002=120000 S-2003=240000') throw new Error('seatE: the stored lines are not example E: ' + lines('exe-apr') + ' | ' + lines('exe-oct'));
+      NS.tax1099.setPayer(w, o.id, { name: 'Example E Holdings Inc', name2: '', address1: '200 Main St', address2: '', city: 'Dallas', state: 'TX', zip: '75201', phone: '214-555-0199' }, { by: arg.by, at: '2026-12-20T15:00:00.000Z' });
+      if (arg.split) {
+        NS.tax1099.setSplit(w, 'exe-apr', { pct: { '1a': 70, '2a': 10, '3': 20 }, partPct: { '5': 70 } }, { by: arg.by, at: '2027-01-10T15:00:00.000Z' });
+        NS.tax1099.setSplit(w, 'exe-oct', { pct: { '1a': 50, '2a': 0, '3': 50 }, partPct: { '5': 50 } }, { by: arg.by, at: '2027-01-10T15:00:00.000Z' });
+      }
+      NS.clearCaches();
+      return { offeringId: o.id };
+    },
+    { fund: FUND_E, by: BY, split: !!opts.split }
+  );
+  return out;
+}
+/** Open the section on example E's fund and 2026. */
+async function openE(fr) {
+  await go(fr, 'console-taxdocs-1099', '.tx');
+  if (await fr.locator('#t99-fund').count()) {
+    await fr.selectOption('#t99-fund', FUND_E);
+    await fr.waitForTimeout(300);
+    if (await fr.locator('#t99-year').count()) {
+      await fr.selectOption('#t99-year', '2026');
+      await fr.waitForTimeout(300);
+    }
+  }
+}
+/** The Form 1099-DIV forms as drawn: per investor, each box drawn (data-box) and the row's text. */
+const formsDiv = (fr) =>
+  fr.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-list="forms"] .tx-row[data-id]')).map((r) => {
+      const boxes = {};
+      r.querySelectorAll('[data-box]').forEach((el) => (boxes[el.getAttribute('data-box')] = el.innerText.trim()));
+      return { id: r.getAttribute('data-id'), boxes, text: r.innerText.replace(/\s+/g, ' ').trim(), confirm: !!r.querySelector('[data-action=t99-confirm]') };
+    })
+  );
+/** Example E's fund's year record. */
+const yearRecE = (fr, y) => fr.evaluate(({ id, y }) => JSON.parse(JSON.stringify((((window.CVPortal.state.ws.offerings.find((o) => o.id === id) || {}).tax || {}).years || {})[y] || null)), { id: FUND_E, y });
+/** A distribution's split as stored. */
+const splitStored = (fr, runId) => fr.evaluate((id) => JSON.parse(JSON.stringify(((window.CVPortal.state.ws.runs.find((r) => r.id === id) || {}).tax || {}).div || null)), runId);
+/** Type a split into a distribution's row and save it: main { 1a, 2a, 3 } in percents, more { 5: ... } under More boxes. */
+async function enterSplit(fr, runId, main, more) {
+  for (const k of Object.keys(main)) await fr.fill(`#t99-s-${runId}-${k}`, String(main[k]));
+  if (more && Object.keys(more).length) {
+    const open = await fr.evaluate((id) => !!(document.querySelector(`[data-more="${id}"]`) || {}).open, runId);
+    if (!open) await T.press(fr, `[data-more="${runId}"] summary`);
+    await fr.waitForTimeout(200);
+    for (const k of Object.keys(more)) await fr.fill(`#t99-s-${runId}-${k}`, String(more[k]));
+  }
+  await T.press(fr, `[data-action=t99-split][data-run="${runId}"]`);
+  await fr.waitForTimeout(500);
+}
+const wantE = {
+  'S-2001': { '1a': '$4,000.00', '2a': '$400.00', 3: '$2,000.00', 5: '$4,000.00', 4: '' },
+  'S-2002': { '1a': '$600.00', '2a': '', 3: '$600.00', 5: '$600.00', 4: '' },
+  'S-2003': { '1a': '$5,400.00', '2a': '$600.00', 3: '$2,400.00', 5: '$5,400.00', 4: '' }
+};
+const sameE = (f) => IDS_E.every((id) => {
+  const x = f.find((y) => y.id === id);
+  return !!x && Object.keys(wantE[id]).every((b) => (x.boxes[b] === undefined ? '' : x.boxes[b]) === wantE[id][b]) && ['1b', '2b', '2c', '2d', '2e', '2f'].every((b) => !x.boxes[b]);
+});
+
+/** div-split-phone and div-split-desktop: the split's entry, the refusal, the IRS's rule by choice, the forms of example E. */
+async function divSplit(check, S, size) {
+  const { A, fr } = await open(S, size);
+  await T.proveRefused(check, A, fr);
+  await T.sample(fr, { role: 'admin' });
+  await seatE(fr);
+  await go(fr, 'console-taxdocs', '.tx');
+  check('as admin, Tax documents shows the Form 1099 line for a fund set to corporation or REIT', await until(fr, '[data-list="parts"] a[href="#console-taxdocs-1099"]', 20000));
+  await openE(fr);
+  const funds = await fr.evaluate(() => Array.from(document.querySelectorAll('#t99-fund option')).map((o) => o.value));
+  check('the Form 1099 section lists the fund', funds.indexOf(FUND_E) >= 0 || (await fr.evaluate(() => !document.querySelector('#t99-fund'))), funds);
+  let rows = await rowsOf(fr, 'splits');
+  check('before any split, the two distributions are listed with "Split from your CPA"', rows.map((r) => r.id).join() === 'exe-apr,exe-oct' && rows.every((r) => /Split from your CPA/.test(r.text)) && /April 15, 2026/.test(rows[0].text) && /\$10,000\.00/.test(rows[0].text) && /\$6,000\.00/.test(rows[1].text), rows);
+  check('and no form is drawn and no Confirm offered', (await formsDiv(fr)).length === 0 && !(await has(fr, '[data-action=t99-confirm]')));
+  const whole = await fr.evaluate(() => {
+    const el = document.querySelectorAll('[data-notice="whole"]');
+    return { n: el.length, text: el[0] ? el[0].innerText.trim() : '', buttons: document.querySelectorAll('[data-action=t99-whole]').length };
+  });
+  check("the IRS's whole-payment rule is one line with its button", whole.n === 1 && /entire payment must be reported as a dividend/.test(whole.text) && !/\n/.test(whole.text) && whole.buttons >= 1, whole);
+  check('it is not applied until pressed: no distribution has a split', !(await splitStored(fr, 'exe-apr')) && !(await splitStored(fr, 'exe-oct')));
+  check('nothing proposes a split: every split field is empty', await fr.evaluate(() => Array.from(document.querySelectorAll('[data-list="splits"] input[type="text"], [data-list="splits"] input:not([type])')).every((i) => i.value === '')));
+  check('the boxes beyond 1a, 2a and 3 are behind "More boxes from your CPA", closed', await fr.evaluate(() => {
+    const d = document.querySelectorAll('[data-list="splits"] details[data-more]');
+    return d.length === 2 && Array.from(d).every((x) => !x.open && /More boxes from your CPA/.test(x.querySelector('summary').innerText));
+  }));
+  check('each open split has one box "Use this split for every distribution of the year", unticked', await fr.evaluate(() => {
+    const boxes = Array.from(document.querySelectorAll('[data-list="splits"] input[type="checkbox"]'));
+    return boxes.length === 2 && boxes.every((x) => !x.checked && /Use this split for every distribution of the year/.test(x.closest('label').innerText));
+  }));
+  // a split that does not add up
+  await enterSplit(fr, 'exe-apr', { '1a': 70, '2a': 10, '3': 10 });
+  const said = await alerts(fr);
+  check('a split of 70, 10 and 10 is refused with the rule in one line', said.length === 1 && /1a \+ 2a \+ 3/.test(said[0]) && !/\n/.test(said[0]) && !(await splitStored(fr, 'exe-apr')), said);
+  // the CPA's splits
+  await enterSplit(fr, 'exe-apr', { '1a': 70, '2a': 10, '3': 20 }, { 5: 70 });
+  await enterSplit(fr, 'exe-oct', { '1a': 50, '2a': 0, '3': 50 }, { 5: 50 });
+  const s1 = (await splitStored(fr, 'exe-apr')) || {};
+  const s2 = (await splitStored(fr, 'exe-oct')) || {};
+  check('the splits are stored as amounts of each distribution, entered by the signed-in person', JSON.stringify(s1.cents) === JSON.stringify({ '1a': 700000, '2a': 100000, 3: 200000 }) && (s1.part || {})['5'] === 700000 && JSON.stringify(s2.cents) === JSON.stringify({ '1a': 300000, '2a': 0, 3: 300000 }) && (s2.part || {})['5'] === 300000 && s1.source === 'entered' && !!s1.by && s1.by === s2.by, { s1: s1.cents, s2: s2.cents, by: s1.by });
+  rows = await rowsOf(fr, 'splits');
+  check('each row now shows its split and who entered it', rows.length === 2 && rows.every((r) => /Entered by/.test(r.text) && !/Split from your CPA/.test(r.text)) && /\$7,000\.00/.test(rows[0].text), rows);
+  let f = await formsDiv(fr);
+  check("the three forms show example E's dollar amounts (1a, 2a, 3, 5; box 4 empty; no other box)", f.map((x) => x.id).join() === IDS_E.join() && sameE(f), f.map((x) => `${x.id} ${JSON.stringify(x.boxes)}`));
+  const n5452 = await fr.evaluate(() => Array.from(document.querySelectorAll('[data-notice="5452"]')).map((x) => x.innerText.trim()));
+  check('box 3 above zero: one line naming Form 5452 and the CPA', n5452.length === 1 && /Form 5452/.test(n5452[0]) && /CPA/.test(n5452[0]) && !/\n/.test(n5452[0]), n5452);
+  check('nothing is typed into a form: the figures are text', !(await has(fr, '[data-list="forms"] input')));
+  // each form confirmed singly
+  await T.press(fr, '[data-list="forms"] .tx-row[data-id="S-2002"] [data-action=t99-confirm]');
+  await fr.waitForTimeout(400);
+  f = await formsDiv(fr);
+  check('Confirm on S-2002 confirms that form only', /Confirmed by/.test((f.find((x) => x.id === 'S-2002') || {}).text || '') && f.filter((x) => x.confirm).map((x) => x.id).join() === 'S-2001,S-2003', f.map((x) => [x.id, x.confirm]));
+  const conf = await yearRecE(fr, '2026');
+  const cfE = ((conf || {}).confirmed || {})['S-2002'] || {};
+  check("S-2002's confirmation stores every box with who and when", cfE.form === '1099-DIV' && !!cfE.boxes && cfE.boxes['1a'] === 60000 && cfE.boxes['3'] === 60000 && cfE.boxes['5'] === 60000 && !!cfE.by && !!cfE.at, cfE);
+  check('no copy and no file while two forms are unconfirmed', !(await has(fr, '[data-action=t99-copies]')) && !(await has(fr, '[data-action=t99-file]')));
+  await confirmAll(fr);
+  check('with all three confirmed, the numbers step and the file are offered', (await has(fr, '[data-panel="numbers"]')) && (await has(fr, '[data-action=t99-file]')));
+  if (size === 'desktop') {
+    // a third distribution: its row asks for the split and the forms stop; the IRS's rule is applied only when pressed
+    await T.ws(fr, (w, by, NS) => NS.data.recordRun(w, { offeringId: 'exe-corp', date: '2026-12-15', type: 'Distribution', total: 100000 }, { by, today: '2026-12-15', id: 'exe-dec' }) && true, BY);
+    await openE(fr);
+    rows = await rowsOf(fr, 'splits');
+    check('a third distribution is listed with "Split from your CPA" and the forms are withdrawn', rows.length === 3 && /Split from your CPA/.test((rows.find((r) => r.id === 'exe-dec') || {}).text || '') && (await formsDiv(fr)).length === 0, rows.map((r) => r.id));
+    await T.press(fr, '[data-action=t99-whole][data-run="exe-dec"]');
+    await fr.waitForTimeout(500);
+    const s3 = (await splitStored(fr, 'exe-dec')) || {};
+    check('pressed, the whole payment is box 1a, recorded as the IRS rule chosen by the signed-in person', JSON.stringify(s3.cents) === JSON.stringify({ '1a': 100000, '2a': 0, 3: 0 }) && s3.source === 'irs-default' && !!s3.by, s3);
+    f = await formsDiv(fr);
+    check("then S-2001's box 1a is $4,400.00 and its confirmation is withdrawn", (f.find((x) => x.id === 'S-2001') || { boxes: {} }).boxes['1a'] === '$4,400.00' && /Not confirmed/.test((f.find((x) => x.id === 'S-2001') || {}).text || ''), f.map((x) => `${x.id} ${x.boxes['1a']}`));
+    const logged = await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((e) => /^Form 1099-DIV/.test(e.action)).map((e) => e.action));
+    check('the change log has the splits, the confirmations and the IRS rule', logged.filter((a) => a === 'Form 1099-DIV split entered').length === 2 && logged.indexOf('Form 1099-DIV: whole payment reported as a dividend') >= 0 && logged.filter((a) => a === 'Form 1099-DIV totals confirmed').length === 3, logged);
+  }
+  await T.wayOut(check, fr);
+  await T.leak(check, fr);
+  await T.quiet(check, A, fr);
+  await A.context.close();
+}
+
+const partsDiv = {
+  async 'div-split-phone'({ check, S }) {
+    await divSplit(masked(check), S, 'phone');
+  },
+  async 'div-split-desktop'({ check, S }) {
+    await divSplit(masked(check), S, 'desktop');
+  },
+  // the IRS file and the recipients' copies for Form 1099-DIV, with the numbers typed as in plan 10-10
+  async 'div-file'({ check: raw, S }) {
+    const check = masked(raw);
+    const { A, fr } = await open(S, 'desktop');
+    await T.sample(fr, { role: 'admin' });
+    await seatE(fr, { split: true });
+    await putW9(fr, 'S-2002', TIN_E['S-2002']);
+    await T.ws(fr, (w, a, NS) => {
+      NS.taxdocs.setContact(w, { name: 'Example E investor relations', address: '1 Market Street, Wilmington, DE 19801', phone: '302-555-0100', email: 'tax@example.com' });
+      NS.taxdocs.consent(w, 'S-2001', { where: 'portal' });
+      return true;
+    });
+    await openE(fr);
+    await confirmAll(fr);
+    const read = await until(fr, '[data-list="numbers"] .tx-row[data-id="S-2002"][data-from="w9"]');
+    check("S-2002's number is read from the signed W-9: 'ending 6602'", read && /ending 6602/.test(((await rowsOf(fr, 'numbers')).find((r) => r.id === 'S-2002') || {}).text || ''));
+    const base = await stored(fr);
+    const baseShapes = new Set([].concat(...['ls', 'ws', 'log', 'page'].map((k) => numberHits(base[k]).shapes)));
+    const keys0 = await fileKeys(fr);
+    await fr.fill('#t99-payer-tin', PAYER_TIN);
+    await fr.fill('#t99-tin-S-2001', TIN_E['S-2001']);
+    await fr.fill('#t99-tin-S-2003', TIN_E['S-2003']);
+    await T.press(fr, '[data-action=t99-check]');
+    await fr.waitForTimeout(500);
+    const nums = (await rowsOf(fr, 'numbers')).map((r) => r.text).join(' ');
+    check('the typed numbers are accepted: ending 6601 and ending 6603', /ending 6601/.test(nums) && /ending 6603/.test(nums), nums.replace(/\d{5,}/g, '[digits]').slice(0, 300));
+    const header = await fr.evaluate(() => !!document.querySelector('[data-notice="header"]'));
+    check('the file shows the same line: its header has not yet been compared with the IRS\'s own template', header);
+    const got = await download(A, fr, '[data-action=t99-file]');
+    const want = await fr.evaluate(() => window.CVPortal.tax1099.iris.header('1099-DIV').join(','));
+    const L = got ? lines(got.text) : [];
+    check('Download the IRS file saves one .csv named for Form 1099-DIV', !!got && /^1099-DIV-2026-part-1-of-1\.csv$/.test(got.name), got && got.name);
+    check('its first line is the Form 1099-DIV header (69 names)', L[0] === want && want.split(',').length === 69);
+    const rows = L.slice(1).map((l) => l.split(','));
+    const by = (v) => rows.find((r) => r[col('AM')] === v) || [];
+    const v = (r) => ['AM', 'AO', 'AU', 'AW', 'AV'].map((c) => r[col(c)]).join(' ');
+    check("three rows with example E's amounts in their columns (AM 1a, AO 2a, AU 3, AW 5, AV 4)", rows.length === 3 && rows.every((r) => r.length === 69) && v(by('4000.00')) === '4000.00 400.00 2000.00 4000.00 ' && v(by('600.00')) === '600.00  600.00 600.00 ' && v(by('5400.00')) === '5400.00 600.00 2400.00 5400.00 ', rows.map(v));
+    check('every row is form type 1099-DIV for 2026 and holds no asterisk', rows.every((r) => r[0] === '1099-DIV' && r[1] === '2026' && r.every((c) => c.indexOf('*') < 0)));
+    const yr = (await yearRecE(fr, '2026')) || {};
+    const file = (yr.files || [])[0];
+    const sha = got ? crypto.createHash('sha256').update(Buffer.from(got.text, 'utf8')).digest('hex') : '';
+    check("the file's SHA-256 and row count 3 are on the fund's year record", !!file && file.sha256 === sha && file.rows === 3, file ? { rows: file.rows, same: file.sha256 === sha } : yr);
+    // the recipients' copies
+    await typeE(fr);
+    await T.press(fr, '[data-action=t99-copies]');
+    await fr.waitForFunction(() => (window.CVPortal.state.ws.docs || []).filter((d) => d.tax && d.tax.kind === '1099-div').length >= 3, null, { timeout: 90000 }).catch(() => {});
+    await fr.waitForTimeout(500);
+    let docs = await fr.evaluate(() => (window.CVPortal.state.ws.docs || []).filter((d) => d.tax && d.tax.kind === '1099-div').map((d) => ({ id: d.id, investor: d.investors[0], year: d.tax.year, state: d.tax.state, hidden: d.hidden, title: d.title })));
+    check('Create recipient copies makes three documents of kind 1099-div for 2026, confirmed and not yet delivered', docs.length === 3 && docs.map((d) => d.investor).sort().join() === IDS_E.join() && docs.every((d) => d.year === '2026' && d.state === 'confirmed' && d.hidden && d.title === 'Form 1099-DIV 2026'), docs);
+    await T.press(fr, '[data-action=t99-deliver]');
+    await fr.waitForTimeout(400);
+    await T.press(fr, '[data-action=t99-deliver-go]');
+    await fr.waitForTimeout(800);
+    docs = await fr.evaluate(() => (window.CVPortal.state.ws.docs || []).filter((d) => d.tax && d.tax.kind === '1099-div').map((d) => ({ id: d.id, investor: d.investors[0], state: d.tax.state, until: d.tax.availableUntil })));
+    const d1 = docs.find((d) => d.investor === 'S-2001') || {};
+    check('S-2001 (who consented) has it delivered, available until 2027-10-15; the others wait for consent', d1.state === 'delivered' && d1.until === '2027-10-15' && docs.filter((d) => d.investor !== 'S-2001').every((d) => d.state === 'waiting'), docs);
+    const text = await fr.evaluate(
+      async ({ docId, numbers }) => {
+        const NS = window.CVPortal;
+        const blob = await NS.ops.files.get(docId);
+        const lib = await NS.taxUI.reader();
+        const pdf = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise;
+        let t = '';
+        for (let i = 1; i <= pdf.numPages; i++) t += ' ' + (await (await pdf.getPage(i)).getTextContent()).items.map((x) => x.str).join(' ');
+        const n = pdf.numPages;
+        pdf.destroy();
+        const flat = t.replace(/\s+/g, '');
+        return { pages: n, div: /1099-DIV/.test(t), masked: /\*\*\*-\*\*-6601/.test(flat), full: numbers.some((d) => flat.indexOf(d) >= 0 || flat.indexOf(`${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`) >= 0), a: ['4,000.00', '400.00', '2,000.00'].every((x) => flat.indexOf(x) >= 0) };
+      },
+      { docId: d1.id, numbers: NUMBERS_E }
+    );
+    check("S-2001's copy is the official Form 1099-DIV's Copy B with the instructions (two pages), its number as ***-**-6601 and no full number, with $4,000.00, $400.00 and $2,000.00", text.pages === 2 && text.div && text.masked && !text.full && text.a, text);
+    // after it: no number rests anywhere
+    const after = await stored(fr);
+    for (const [k, what] of [['ls', 'every localStorage value'], ['ws', 'the saved workspace'], ['log', 'the change log'], ['page', "the page's text"], ['inputs', "the page's fields"]]) {
+      const x = numberHits(after[k]);
+      const fresh = x.shapes.filter((s) => !baseShapes.has(s));
+      check(`after the file and the copies, ${what} holds none of the numbers, no new run of nine digits and no dashed shape`, x.hits.length === 0 && fresh.length === 0, { hits: x.hits, fresh });
+    }
+    check('the search can fail: it finds a number put into a copy of the workspace', numberHits(after.ws.replace('"Riley Example"', `"Riley ${TIN_E['S-2001']}"`)).hits.length === 1);
+    const keys1 = await fileKeys(fr);
+    check('the file store gained exactly the three copies', keys1.length === keys0.length + 3);
+    await go(fr, 'console-taxdocs', '.tx');
+    const paper = await rowsOf(fr, 'paper');
+    check('S-2002 and S-2003 are on the send-on-paper list of the Tax documents page with Form 1099-DIV 2026', ['S-2002', 'S-2003'].every((id) => paper.some((r) => r.text.indexOf(id) >= 0 && /Form 1099-DIV 2026/.test(r.text))), paper);
+    await T.wayOut(check, fr);
+    await T.leak(check, fr);
+    await T.quiet(check, A, fr);
+    // as S-2001
+    await T.sample(fr, { role: 'investor', investor: 'S-2001' });
+    await go(fr, 'documents', '#view');
+    await fr.waitForTimeout(400);
+    const list = await fr.evaluate(() => Array.from(document.querySelectorAll('.tbl-docs tbody tr')).map((r) => r.innerText.replace(/\s+/g, ' ').trim()));
+    check('S-2001 finds Form 1099-DIV in Documents', list.some((r) => /Form 1099-DIV 2026/.test(r)), list);
+    const o = await openDoc(fr, d1.id);
+    check('its first page is drawn, leaving the portal on October 15, 2027', o.pages >= 1 && /October 15, 2027/.test(o.head), o);
+    await T.quiet(check, A, fr);
+    await A.context.close();
+  }
+};
+/** After the file the numbers are forgotten: give them again for the copies (S-2002's is read from its W-9 again). */
+async function typeE(fr) {
+  await until(fr, '[data-list="numbers"] .tx-row[data-id="S-2002"][data-from="w9"]', 2000);
+  if (await has(fr, '#t99-payer-tin')) await fr.fill('#t99-payer-tin', PAYER_TIN);
+  for (const id of ['S-2001', 'S-2003']) if (await has(fr, `#t99-tin-${id}`)) await fr.fill(`#t99-tin-${id}`, TIN_E[id]);
+}
+Object.assign(parts, partsDiv);
 
 Lib.runParts(parts, { name: 'TAX1099 FLOW', unit: 'parts', flag: '--only', browser: true });
