@@ -64,9 +64,13 @@
 .rb-tbl th, .rb-tbl td { overflow-wrap: normal; }
 .rb-tbl .rb-nw { white-space: nowrap; }
 /* On the phone, a table of 4 or more columns scrolls sideways in its own box: its title and first column stay in place,
-   and a text column is at least 8em wide, so names wrap on whole words and the figures keep their full width. */
+   and a text column is at least 8em wide, so names wrap on whole words and the figures keep their full width. A shade on
+   the box's right edge shows that columns remain to the right; a white end scrolls with the table and covers it at the end. */
 @media (max-width: 640px) {
-  .rb-tblwrap:has(> .rb-tbl th:nth-child(4)) { container-type: inline-size; isolation: isolate; }
+  .rb-tblwrap:has(> .rb-tbl th:nth-child(4)) {
+    container-type: inline-size; isolation: isolate;
+    background: linear-gradient(to left, #FFFFFF 40%, rgba(255, 255, 255, 0)) right / 20px 100% no-repeat local, linear-gradient(to left, rgba(26, 29, 33, 0.18), rgba(26, 29, 33, 0)) right / 14px 100% no-repeat scroll;
+  }
   .rb-tbl:has(th:nth-child(4)) caption { position: sticky; left: 0; width: 100cqw; }
   .rb-tbl:has(th:nth-child(4)) :is(th, td):not(.num) { min-width: 8em; }
   .rb-tbl:has(th:nth-child(4)) tr > :first-child { position: sticky; left: 0; z-index: 1; background: #FFFFFF; box-shadow: inset -1px 0 0 #E5E7EA; }
