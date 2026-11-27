@@ -39,3 +39,8 @@
 - "Sign out" becomes a link (§6.2): every check or walk that selects it as a button is listed and updated.
 - The names listed as must-stay are real (.cs-help, .pt-foot-help, .cs-nav-group, .cs-nav-label, .cs-nav-count, .cs-main, .pt-head, .pt-nav, .pt-menu, .pt-foot, #ik-files, help-open); help-chat.js:422's footer "Help" assertion moves to exactly one `.help-entry` named "Ask me anything".
 - UI Considerations section written from the state-coverage probe (56 considerations over 10 surfaces, auto-resolved as today's behaviour restyled).
+
+## Orchestrator decisions after planning (2026-11-27)
+- C-02: 18-08's one-line change at intake.js:1313 (a reading in progress also refreshes on #console-offerings) is a routing condition needed by the owner's D-05 merge, not reader logic; allowed despite D-33 (no work on the in-house reader), on the condition that no other line of intake.js or the reader changes and the reader checks still pass unchanged.
+- C-03: the UI-SPEC Registry Safety table (exact versions, sha512) plus own-fonts DECISIONS 4 serve as the font package audit; no extra human checkpoint.
+- C-04: screens other phases add after a phase 18 plan merges use phase 18's tokens and classes (recorded in 13/14/15/16 CONTEXT when they are next launched).
