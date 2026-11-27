@@ -28,6 +28,9 @@
   .hm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
   .hm-head p { color: var(--fg-3); font-size: 14px; margin-top: 4px; }
   .sec-link { font-size: 14px; }
+  .hold { display: flex; flex-direction: column; gap: 6px; min-width: 120px; }
+  .hold-bar { display: block; height: 4px; background: var(--surface-3); }
+  .hold-fill { display: block; height: 100%; background: var(--brand); }
   @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpis > div:nth-child(3) { padding-left: 0; border-left: 0; } .kpis > div:nth-child(n+3) { border-top: 1px solid var(--line); margin-top: 16px; } .hm-head { flex-direction: column; align-items: flex-start; gap: 4px; } }
 </style>
 </head>
@@ -76,10 +79,10 @@
             <div class="sec-head"><h2>Investments</h2><a class="sec-link" href="#">All investments</a></div>
             <div class="tbl-scroll">
               <table class="tbl">
-                <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Current value</th><th scope="col" class="num">Distributions received</th></tr></thead>
+                <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Distributions</th><th scope="col" class="num">Value</th><th scope="col">Time to exit</th></tr></thead>
                 <tbody>
-                  <tr><th scope="row"><a href="#">Harbor Point Apartments</a><span class="sub">Real estate syndication</span></th><td class="num">$500,000</td><td class="num">$548,900.00</td><td class="num">$61,412.50</td></tr>
-                  <tr><th scope="row"><a href="#">Tidewater Credit Fund</a><span class="sub">Private credit fund</span></th><td class="num">$250,000</td><td class="num">$263,400.00</td><td class="num">$35,000.00</td></tr>
+                  <tr><th scope="row"><a href="#">Harbor Point Apartments</a><span class="sub">Real estate syndication</span></th><td class="num">$500,000</td><td class="num">$61,412.50</td><td class="num">$548,900.00</td><td><span class="hold"><span class="hold-bar"><span class="hold-fill" style="width:38%"></span></span><span class="sub">3 years remaining</span></span></td></tr>
+                  <tr><th scope="row"><a href="#">Tidewater Credit Fund</a><span class="sub">Private credit fund</span></th><td class="num">$250,000</td><td class="num">$35,000.00</td><td class="num">$263,400.00</td><td><span class="hold"><span class="hold-bar"><span class="hold-fill" style="width:72%"></span></span><span class="sub">7 months remaining</span></span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -95,7 +98,16 @@
             </div>
           </section>
           <section class="sec">
-            <div class="sec-head"><h2>Recent documents</h2></div>
+            <div class="sec-head"><h2>Company overview</h2></div>
+            <p style="color:var(--fg-2)">Kestrel Bay Capital invests in coastal multifamily and private credit for families and foundations.</p>
+            <dl class="figs" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:16px;border-left:0;border-right:0;border-radius:0">
+              <div class="fig" style="padding:16px 8px 16px 0"><dt>Capital managed</dt><dd style="font-size:22px">$410M</dd></div>
+              <div class="fig" style="padding:16px 8px"><dt>Properties</dt><dd style="font-size:22px">18</dd></div>
+              <div class="fig" style="padding:16px 0 16px 8px"><dt>Founded</dt><dd style="font-size:22px">2011</dd></div>
+            </dl>
+          </section>
+          <section class="sec">
+            <div class="sec-head"><h2>Recent documents</h2><a class="sec-link" href="#">All documents</a></div>
             <ul class="docs">
               <li><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg><div><a href="#">Q3 2026 investor letter</a><time>Nov 20, 2026</time></div></li>
               <li><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg><div><a href="#">Distribution notice, Q3 2026</a><time>Oct 15, 2026</time></div></li>
