@@ -19,3 +19,7 @@
 - Accessibility floors from UI/UX Pro Max (contrast 4.5:1, focus rings, 44px touch targets, reduced motion).
 - Never the owner's forbidden word; no taxpayer or bank numbers on any new screen text or fixture.
 - Nothing is called ready before the owner has checked it.
+
+## Owner directions after the first mockups (2026-11-27, verbatim)
+- D-09: "the tables and charts look the same and the font looks played out, it needs to be an overhaul" — the first direction is rejected. Two clearly different directions (A and B) are mocked on the console Overview and the investor Home (phone and desktop); the owner picks one; fonts not used or offered by the portal today and not overused web faces; tables and charts visibly re-treated (same data, same columns, no new chart types); the whole composition should feel like a different, more expensive product.
+- D-10: "new icons for the sponsors over 20 origional icons, none of the ones included now included in the new 20" — the sponsor logo marks (assets/js/brand.js MARKS: monogram, wing, ridge, wave, arch) are replaced by at least 20 new original hand-built SVG marks in the same 40x40 three-colour contract (primary, accent, ink), none reusing the five current designs, regal/institutional in character, no copy of any real firm's logo or stock icon library, legible at 24px and 64px. Firms that chose an old mark are shown a mapped new mark; stored data is not rewritten. brand.js's mobile copy is regenerated (sync-core).
