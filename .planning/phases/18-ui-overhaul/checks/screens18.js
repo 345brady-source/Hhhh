@@ -325,8 +325,9 @@ function line(part, key, res) {
  * role signed in per edition; setup: the named state step (same-screens.js SETUP; never a click that sends, deletes or
  * saves, except the named state helpers listed in the SUMMARY); open: the steps that open it ({ route }, { press: selector
  * by data-action or id }, { fill: [selector, value] }; {inv}, {invited}, {raising}, {plain}, {newInv}, {it}, {draft},
- * {conn} are the ids the setups leave). The rows run in this order in one session per edition and size; each dialog is
- * recorded (root = the open dialog) and closed by its X.
+ * {conn} are the ids the setups leave). The rows run in this order in one session per edition and size (rows marked early
+ * first, on the sample as it is; then the agreement state of P6 setupPortal); each dialog is recorded (root = the open
+ * dialog) and closed by its X.
  */
 const D = (file, nth, line, what, editions, setup, open) => ({ file, nth, line, what, editions, setup, open });
 const DIALOGS = [
@@ -340,8 +341,8 @@ const DIALOGS = [
   D('coinvestor.js', 2, 130, 'Co-investor sign-in email', ['diy'], 'coSignIn', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }, { press: '#dlg [data-action="co-link"]' }]),
   D('coinvestor.js', 6, 355, 'Remove the co-investor?', ['diy', 'managed'], 'coSignIn', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }, { press: '#dlg [data-action="co-remove"]' }]),
   D('coinvestor.js', 1, 122, 'Co-investor sign-in email, the link expired', ['diy'], 'coExpired', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }, { press: '#dlg [data-action="co-link"]' }]),
-  D('console.js', 3, 1677, 'Cancel this distribution', ['diy', 'managed'], 'none', [{ route: 'console-distributions' }, { press: '[data-action="dist-cancel"]' }]),
-  D('console.js', 2, 1505, 'Build the file again (a distribution whose NACHA file was downloaded)', ['diy', 'managed'], 'nachaReleased', [{ press: '[data-action="nacha-again"]' }]),
+  Object.assign(D('console.js', 3, 1677, 'Cancel this distribution', ['diy', 'managed'], 'none', [{ route: 'console-distributions' }, { press: '[data-action="dist-cancel"]' }]), { early: true }),
+  Object.assign(D('console.js', 2, 1505, 'Build the file again (a distribution whose NACHA file was downloaded)', ['diy', 'managed'], 'nachaReleased', [{ press: '[data-action="nacha-again"]' }]), { early: true }),
   D('diy.js', 1, 162, 'Investor sign-up link', ['diy'], 'none', [{ route: 'console-offering-{raising}' }, { press: '[data-action="join-link"]' }]),
   D('esign.js', 11, 4484, 'Remove the subscription agreement?', ['diy', 'managed'], 'none', [{ route: 'console-offering-{raising}' }, { press: '[data-action="es-agreement-remove"]' }]),
   D('esign.js', 10, 4170, 'Subscription agreement (an offering without one)', ['diy', 'managed'], 'none', [{ route: 'console-offering-{plain}' }, { press: '[data-action="es-agreement-new"]' }]),
@@ -352,7 +353,7 @@ const DIALOGS = [
   D('invitations.js', 4, 2780, 'Cancel this invitation?', ['diy'], 'none', [{ route: 'console-investors' }, { press: '[data-action="inv8-cancel"][data-id="{it}"]' }]),
   D('invitations.js', 1, 2575, 'Invitation cancelled (a closed invitation)', ['diy'], 'invitationClosed', [{ route: 'console-investors' }, { press: '[data-action="invite-preview"][data-id="{newInv}"]' }]),
   D('esign.js', 1, 1726, 'Delete this template?', ['diy', 'managed'], 'templatesTab', [{ press: '[data-action="es-tpl-del"]' }]),
-  D('esign.js', 3, 2182, 'Read the PDF again?', ['diy', 'managed'], 'editorRead', [{ press: '[data-action="es-reread"]' }]),
+  D('esign.js', 3, 2182, 'Read the PDF again?', ['diy', 'managed'], 'editorRead', [{ press: '[data-action="es-reread"]:visible' }]),
   D('esign.js', 4, 2480, 'Delete this draft?', ['diy', 'managed'], 'draft', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-delete"]' }]),
   D('esign.js', 5, 2506, 'Review and send', ['diy', 'managed'], 'draftFields', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-review"]' }]),
   D('esign.js', 6, 2543, 'Save as template', ['diy', 'managed'], 'none', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-save-tpl"]' }]),

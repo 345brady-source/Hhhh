@@ -28,6 +28,7 @@
 // Every part also checks, on each screen of this tree, no vendor, model or library name and no forbidden word that the
 // base tree's screen does not have, and no request outside the page's origin.
 //   P18_BASE=<dir> | P18_BASE_COMMIT=<commit> NODE_PATH=$(npm root -g) node same-screens.js [--only selftest,...]
+//   (P18_DIALOGS_ONLY=<file#nth,...> runs some DIALOGS rows only, for debugging; such a run always fails)
 // The last line is "SAME SCREENS: PASS (parts run: N)" or "SAME SCREENS: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const os = require('os');
@@ -522,28 +523,30 @@ const SETUP = {
       },
       c.inv
     ),
-  // a recorded distribution's file built and downloaded (the download marks it sent: the one state step this dialog
-  // needs), then the same distribution loaded again: its sent file's record offers Build again
+  // a recorded distribution whose ACH file was sent (the sample holds such runs): loaded, its sent file's record offers
+  // Build again. Only when no run has one is a run's file built and downloaded (the download marks it sent: the one state
+  // step this dialog would need then)
   nachaReleased: async (W, c) => {
     await route(W, 'console-distributions');
     const runs = await ev(W, () => Array.from(document.querySelectorAll('[data-action="dist-load"]')).map((b) => b.getAttribute('data-id')));
-    c.run = '';
-    for (const id of runs) {
+    const load = async (id) => {
       await route(W, 'console');
       await route(W, 'console-distributions');
-      if (!(await press(W, `[data-action="dist-load"][data-id="${id}"]`, { wait: 700 }))) continue;
-      if (await press(W, '[data-action=nacha-build]:not([disabled])', { wait: 900 })) {
-        c.run = id;
-        break;
-      }
+      return press(W, `[data-action="dist-load"][data-id="${id}"]`, { wait: 700 });
+    };
+    for (const id of runs) {
+      if (!(await load(id))) continue;
+      if (await W.fr.locator('[data-action="nacha-again"]').count()) return (c.run = id);
     }
-    if (!c.run) throw new Error(`no recorded distribution of ${runs.length} builds a file`);
-    const got = W.A.page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
-    if (!(await press(W, '[data-action=nacha-download]:not([disabled])', { wait: 700 }))) throw new Error('nacha-download could not be pressed');
-    await got;
-    await route(W, 'console');
-    await route(W, 'console-distributions');
-    if (!(await press(W, `[data-action="dist-load"][data-id="${c.run}"]`, { wait: 700 }))) throw new Error('the distribution could not be loaded again');
+    for (const id of runs) {
+      if (!(await load(id))) continue;
+      if (!(await press(W, '[data-action=nacha-build]:not([disabled])', { wait: 900 }))) continue;
+      const got = W.A.page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
+      if (!(await press(W, '[data-action=nacha-download]:not([disabled])', { wait: 700 }))) continue;
+      await got;
+      if ((await load(id)) && (await W.fr.locator('[data-action="nacha-again"]').count())) return (c.run = id);
+    }
+    throw new Error(`none of the ${runs.length} recorded distributions offers Build again, and none builds a file`);
   },
   connection: async (W, c) => {
     c.conn = 'conn-p18-link';
@@ -596,6 +599,7 @@ const SETUP = {
     await route(W, `console-offering-${c.raising}`);
     if (!(await press(W, '[data-action="es-agreement-edit"]'))) throw new Error('no Edit fields on the offering');
     await W.fr.waitForSelector('.fe .es-fld', { timeout: 60000 });
+    await W.fr.waitForTimeout(600);
     await ev(W, () => {
       const NS = window.CVPortal;
       const env = (NS.state.ws.envelopes || []).find((e) => e.agreementFor && e.status === 'draft');
@@ -604,7 +608,15 @@ const SETUP = {
       env.docId = env.docId || 'tpl-doc-test';
       NS.app.render();
     });
-    await W.fr.waitForSelector('[data-action="es-reread"]', { timeout: 20000 });
+    // the button stands in the left column on a desktop and at the end of the read summary on narrower screens (one shown)
+    const rr = await W.fr.waitForSelector('[data-action="es-reread"]:visible', { timeout: 20000 }).then(() => true, () => false);
+    if (!rr) {
+      const why = await ev(W, () => {
+        const ws = window.CVPortal.state.ws;
+        return JSON.stringify({ hash: location.hash, fe: !!document.querySelector('.fe'), envs: (ws.envelopes || []).map((e) => `${e.id}:${e.status}:${e.agreementFor || ''}:${e.docId || ''}:${e.read ? 'read' : ''}`) });
+      });
+      throw new Error(`no Read the PDF again in the editor ${why}`);
+    }
     await W.fr.waitForTimeout(600);
   },
   taxImport: async (W, c) => {
@@ -697,11 +709,18 @@ function dialogsWalk(edition, only) {
     walk: async (W) => {
       const c = W.ctx;
       await T.sample(W.fr, { role: edition === 'managed' ? 'staff' : 'admin' });
-      const ag = await agreementState(W, 'Rule 506(c)');
       Object.assign(c, await sampleIds(W));
-      c.raising = ag.offeringId;
       const rows = S18.DIALOGS.filter((r) => r.editions.indexOf(edition) >= 0 && (!only || only.indexOf(`${r.file}#${r.nth}`) >= 0));
-      for (const r of rows) {
+      // rows marked early run on the sample as it is, before the agreement state (the NACHA file needs the sample's own
+      // offerings as they are); then the agreement state every other row starts from
+      const order = rows.filter((r) => r.early).concat([null], rows.filter((r) => !r.early));
+      for (const r of order) {
+        if (r === null) {
+          const ag = await agreementState(W, 'Rule 506(c)');
+          Object.assign(c, await sampleIds(W));
+          c.raising = ag.offeringId;
+          continue;
+        }
         const key = `${r.file}#${r.nth} ${edition}`;
         const states = (r.first ? [[r.first[0], r.first[1]]] : []).concat([[r.setup, '']]);
         for (const [setup, suffix] of states) {
@@ -744,9 +763,9 @@ async function dialogsPart(check, S, size, only) {
     out.push(...(await sameWalk(check, S, part, size, [dialogsWalk(ed, only)], { min: 1 })));
   }
   // every row on every edition it names was opened and recorded on both trees
-  const want = S18.DIALOGS.flatMap((r) => r.editions.map((ed) => `${r.file}#${r.nth} ${ed}`));
+  const want = S18.DIALOGS.filter((r) => !only || only.indexOf(`${r.file}#${r.nth}`) >= 0).flatMap((r) => r.editions.map((ed) => `${r.file}#${r.nth} ${ed}`));
   const seen = out.filter((x) => x.res.ok).map((x) => x.key);
-  const missing = want.filter((k) => seen.indexOf(k) < 0 && (!only || only.indexOf(k.split(' ')[0]) >= 0));
+  const missing = want.filter((k) => seen.indexOf(k) < 0);
   check(`every DIALOGS row was recorded and is the same on every edition it names (${want.length - missing.length} of ${want.length} row x edition at ${size})`, !missing.length, missing.slice(0, 12));
 }
 
@@ -846,6 +865,13 @@ async function selftest({ check, S }) {
 }
 
 /* ---------- parts ---------- */
+/** P18_DIALOGS_ONLY=<file#nth,...>: a debugging run of some rows only; such a run can never pass. */
+function debugRows(check) {
+  const v = process.env.P18_DIALOGS_ONLY;
+  if (!v) return undefined;
+  check(`a run restricted to the DIALOGS rows ${v} (P18_DIALOGS_ONLY) is for debugging and never passes`, false);
+  return v.split(',').map((x) => x.trim());
+}
 L.runParts(
   {
     selftest,
@@ -857,8 +883,8 @@ L.runParts(
     'investor-phone': ({ check, S }) => sameWalk(check, S, 'investor-phone', 'phone', [investorWalk('diy.html'), investorWalk('index.html')], { min: 18 }),
     'flows-desktop': ({ check, S }) => sameWalk(check, S, 'flows-desktop', 'desktop', [flowsWalk()], { min: 15 }),
     'flows-phone': ({ check, S }) => sameWalk(check, S, 'flows-phone', 'phone', [flowsWalk()], { min: 15 }),
-    'dialogs-desktop': ({ check, S }) => dialogsPart(check, S, 'desktop'),
-    'dialogs-phone': ({ check, S }) => dialogsPart(check, S, 'phone')
+    'dialogs-desktop': ({ check, S }) => dialogsPart(check, S, 'desktop', debugRows(check)),
+    'dialogs-phone': ({ check, S }) => dialogsPart(check, S, 'phone', debugRows(check))
   },
   { name: 'SAME SCREENS', unit: 'parts', flag: '--only', browser: true }
 );
