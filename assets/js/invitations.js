@@ -682,7 +682,8 @@
       if (it.reverify) o.reverify = true;
       const e = validate(ws, o);
       if (e.amount || e.cls) Object.assign(o, { cents: 0, cls: '' });
-      if (!Object.keys(validate(ws, o)).length) made = create(ws, o).invitation;
+      // Plan 08-20 (G6): a re-verification is made again as requestReverify makes it (an active investor on file, no offering).
+      if (it.reverify ? active(inv) : !Object.keys(validate(ws, o)).length) made = create(ws, o).invitation;
     }
     if (made) audit(ws, 'Invitation replaced', `${inv.title}: ${said}`, it.offeringId, it.investorId);
     NS.app.save(true);
@@ -2611,6 +2612,7 @@
         ${now ? `<p>${h(now)}</p>` : ''}
         <p>${h(inv.contact)} gets a link that holds the accreditation step only. A Rule 506(c) subscription needs a current verification.</p>
         ${open ? '<p class="cs-hint">A request is already open: sending it again gives a new link, and the earlier one stops working.</p>' : reverifyBoxHtml(w)}
+        <p class="cs-error" id="rv-said" role="alert" hidden></p>
         <div class="cs-row cs-row-end inv8-actions"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="reverify-send" data-id="${h(inv.id)}">Send request</button></div>
       </div>`,
       'dlg-reverify'
@@ -2624,6 +2626,15 @@
     const inv = invOf(w, el.getAttribute('data-id'));
     if (inv) reverifyDialog(w, inv);
   };
+  /** The refusal's sentence in the open dialog ("Send request" can be pressed again); a toast when the dialog was closed. */
+  function reverifySaid(el, said, inv) {
+    const line = document.getElementById('rv-said');
+    const d = document.getElementById('dlg');
+    if (!line || !d || !d.open) return U.toast(`The re-verification request for ${inv.title} could not be sent: ${said}`);
+    line.textContent = said;
+    line.hidden = false;
+    el.disabled = false;
+  }
   NS.actions['reverify-send'] = async (el) => {
     if (!E.diy) return;
     if (!NS.app.can('operate')) return U.toast('Only your team can ask investors to verify their accreditation.');
@@ -2645,8 +2656,10 @@
     if (!out) return U.closeDialog();
     const res = out.res || {};
     if (res.emailStatus === 'manual') return showEmail(out.invitation.id);
+    // Plan 08-20 (G6): a refusal stays in the dialog as the server's own sentence, alone (the request's row shows it too); a
+    // used package has left a new request, sent with the next "Send request".
+    if (res.emailStatus === 'failed') return reverifySaid(el, res.error, inv);
     U.closeDialog();
-    if (res.emailStatus === 'failed') return U.toast(`The re-verification request for ${inv.title} could not be sent: ${res.error}`);
     U.toast(res.emailStatus === 'outbox' ? `Re-verification request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Re-verification request emailed to ${inv.contact}.`);
   };
   NS.actions['inv8-copy'] = (el) => {

@@ -568,7 +568,8 @@ async function g6(check, S) {
   });
   const seen = [];
   const plainOn = (label, text) => {
-    const hits = (String(text).match(/\b[45]\d\d\b|answered/g) || []).concat(F.vendorScan(text).hits);
+    // A status number (4xx, 5xx); "Rule 506(c)" is the offering's exemption, not a status.
+    const hits = (String(text).match(/(?<!Rule )\b[45]\d\d\b|answered/g) || []).concat(F.vendorScan(text).hits);
     check(`${label}: no status number, "answered" or vendor word in the dialog`, hits.length === 0, hits);
   };
   const reread = (p) => p.evaluate(() => window.CVPortal.pkg.load(window.CVPortal.state.ws, true));

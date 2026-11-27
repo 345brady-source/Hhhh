@@ -29,3 +29,37 @@ REVERIFY: PASS (parts run: 1)
 VERIFY1_EXIT=0
 ```
 Tracer gate: the verify re-ran end to end on the fixed code and passed; expanding.
+
+## Task 2 RED (red2.txt, part server with G6 against Task 1's code 1b356ae; 57 PASS)
+
+```
+FAIL server an amount owed: no status number, "answered" or vendor word in the dialog :: ["506"]
+FAIL server tier_mismatch: the dialog shows the server's sentence word for word, alone :: {"said":"","SENT":"This invitation's package was paid at another level. Nothing was charged."}
+FAIL server package_used: the dialog shows the server's sentence word for word, alone :: {"said":"","SENT":"This package belongs to another invitation."}
+FAIL server package_used: one new request for the same investor with a different id, still a re-verification (reverify, on file, no offering), with the package choice, not sent :: {"one":"invt-mwym4yd3ij6ci","fresh":[]}
+REVERIFY: FAIL (parts run: 1) - server
+```
+- The first FAIL is the check's own: its status-number scan matched "506" in "A Rule 506(c) subscription needs a current
+  verification." Fixed in the check (a number after "Rule " is the exemption, not a status).
+- The other three needed code: the dialog closed and showed a refusal only in a toast with a prefix; and replaceUsed made
+  no new request for a re-verification, because `validate` refuses an account-only invitation for an investor with an
+  active account ("Choose an offering to invite them to subscribe"). A used package on a re-verification left no request.
+- Passing before the code (guards): the shared token (account_required sentence), unreachable, no card (with and without
+  the link), the amount owed (switched off with the real credit_owed sentence, sent without the package, nothing charged),
+  tier_mismatch's row sentence and nothing charged, package_used's old row sentence and nothing charged.
+
+## Task 2 mutation (red2-mut.txt: a copy of 1b356ae whose dialog ignores the box's state; 52 PASS)
+
+```
+FAIL server the shared token: the dialog's box shown switched off, unticked, with exactly the server's account_required sentence :: {"sb":{"present":true,"shown":true,"enabled":true,...,"line":"Card payments need a sponsor account."},...}
+FAIL server unreachable: the box shown switched off, unticked, with "The integration server could not be reached." :: {...,"enabled":true,...}
+FAIL server no card: the box shown switched off with "Add a card on the Integrations page to use it." leading to the Integrations page (an admin) :: {...,"enabled":true,...}
+FAIL server no card: for someone who cannot open Integrations, the same line with no link :: {...,"enabled":true,...}
+FAIL server an amount owed: the box shown switched off, unticked, with the server's price and exactly its credit_owed sentence :: {"b":{...,"enabled":true,...}}
+FAIL server an amount owed: no status number, "answered" or vendor word in the dialog :: ["506"]
+FAIL server tier_mismatch: the dialog shows the server's sentence word for word, alone :: ...
+FAIL server package_used: the dialog shows the server's sentence word for word, alone :: ...
+FAIL server package_used: one new request ... :: {"one":"invt-mwym5skl1ovqj","fresh":[]}
+REVERIFY: FAIL (parts run: 1) - server
+```
+The guard states fail when the dialog ignores the box's state, so they measure the dialog, not only package.js.
