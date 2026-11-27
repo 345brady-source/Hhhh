@@ -1301,7 +1301,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       return { link: url, emailStatus: 'unsubscribed', emailError: '' };
     }
     if (msg.commercial) {
-      const stop = unsub.urls(rec.workspace, snap.investor.id, snap.investor.email, snap.portalUrl);
+      const stop = unsub.urls(rec.workspace, snap.investor.id, snap.investor.email, snap.portalUrl, snap.firm.name);
       const m = render(head.kind, { firm: snap.firm, investor: snap.investor, offering: snap.offering, invitation: snap.invitation, link: url, expiresAt: rec.expiresAt, started, unsubscribeUrl: stop.footer });
       Object.assign(msg, { text: m.text, html: m.html, headers: stopHeaders(m, stop.header) });
     }
@@ -1310,6 +1310,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   }
 
   async function create(req, res, auth) {
+    if (auth && auth.via === 'session' && auth.confirmed === false) throw fail(403, 'Confirm your email address first: use the link we sent when you signed up.'); // C-16 (15-14)
     const body = parseObject(await readRaw(req, INVITE_LIMITS.create));
     const pin = pinned(auth);
     const portalUrl = returnTo(body.portalUrl);
@@ -1540,6 +1541,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     mailer,
     senders,
     mailLog,
+    firmRecord, // the firm's stored brand, for lib/auth.mjs's messages (plan 15-14)
     vault,
     usePackages,
     stop: () => clearInterval(timer)

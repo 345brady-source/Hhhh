@@ -1,0 +1,18 @@
+Subject: Harbor Ridge Capital: confirm your email address
+Preheader: Confirm that this is your email address for the Harbor Ridge Capital console. Until you do, the console cannot invite investors.
+
+Dear Maria,
+
+Confirm that this is your email address for the Harbor Ridge Capital console. Until you do, the console cannot invite investors.
+
+Confirm my email:
+https://portal.example/diy.html#confirm-sample
+
+This link is personal to you; please do not forward it. It expires on November 17, 2026.
+
+If you did not sign up, ignore this email.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

@@ -1,0 +1,17 @@
+Subject: Harbor Ridge Capital: your bank account was changed
+Preheader: The bank account for your payments from Harbor Ridge Capital was changed on November 10, 2026 at 12:00 UTC. The new account ends in 4321.
+
+Dear Anita,
+
+The bank account for your payments from Harbor Ridge Capital was changed on November 10, 2026 at 12:00 UTC. The new account ends in 4321.
+
+No payment goes to it until Harbor Ridge Capital has confirmed the change.
+
+If you did not make this change, contact us at once and reset your password from the sign-in page.
+
+Questions? Contact Investor Relations at ir@harborridge.example or +1 212 555 0100.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

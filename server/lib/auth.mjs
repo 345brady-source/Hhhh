@@ -10,10 +10,13 @@ import { createRequire } from 'node:module';
 import { readRaw, parseJson, send, header } from './http.mjs';
 import { id, sha256 } from './crypto.mjs';
 import { createAccounts } from './accounts.mjs';
-import { permissionsOf, allows, REFUSALS } from './roles.mjs';
+import { permissionsOf, allows, REFUSALS, SAY as ROLE_SAY, plainDay } from './roles.mjs';
+import { validAddress } from './mail.mjs';
 
 /** The two-step code module the pages use too (assets/js/totp.js), always with Node's own HMAC-SHA-1 here. */
 const TOTP = createRequire(import.meta.url)('../../assets/js/totp.js');
+/** The firm's messages (assets/js/emails.js, phase 13): the password reset, the security notices, access invitations. */
+const EMAILS = createRequire(import.meta.url)('../../assets/js/emails.js');
 const hmacSha1 = (k, m) => createHmac('sha1', Buffer.from(k)).update(Buffer.from(m)).digest();
 
 const MIN = 60 * 1000;
@@ -24,6 +27,12 @@ const SID = /^[A-Za-z0-9_-]{43}$/;
 const PERSON_ID = /^per_[\w-]{1,64}$/;
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{1,63}$/;
 const HALF_DONE_MS = 10 * MIN;
+const LINK_TOKEN = /^[A-Za-z0-9_-]{43}$/;
+const RESET_MS = 30 * MIN;
+const RESET_TRIES = 5; // wrong codes on one reset link before it stops working
+const CONFIRM_MS = 7 * 24 * 60 * MIN;
+const DEVICE_DAYS = 400;
+const DEVICES_KEPT = 20;
 
 /** The only sentences these routes answer with (the screens show them as they are). */
 const SAY = {
@@ -41,7 +50,12 @@ const SAY = {
   fresh: 'Enter your password again to do this.',
   codes: 'Too many wrong codes. Sign in again.',
   console: 'Two-step sign-in is required for everyone who uses the console.',
-  firmRule: 'Your firm requires two-step sign-in.'
+  firmRule: 'Your firm requires two-step sign-in.',
+  resetSent: 'If an account uses that address, we emailed a link to choose a new password. It works for 30 minutes.',
+  badLink: 'This link is not valid or has expired. Ask for a new one.',
+  needCode: 'Enter the code from your authenticator app or a recovery code.',
+  confirmFirst: 'Confirm your email address first: use the link we sent when you signed up.',
+  ownerOnly: 'Only the Owner confirms the firm’s email address.'
 };
 const wait = (n) => `Too many tries. Wait ${n} ${n === 1 ? 'second' : 'seconds'} and try again.`;
 
@@ -246,7 +260,8 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
   };
   function freeWorkspaceId(firm) {
     const base = nfkc(firm).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32).replace(/-+$/, '') || 'firm';
-    const taken = (w) => !!store.get('workspaces', w) || store.list('accounts').some((a) => a.workspace === w);
+    // People in a workspace with no record (investor sign-ins made before 15-14 gave each one) keep it taken too.
+    const taken = (w) => !!store.get('workspaces', w) || store.list('accounts').some((a) => a.workspace === w) || store.list('people').some((p) => p.workspace === w);
     if (!taken(base)) return base;
     for (let n = 2; ; n++) {
       const suffix = `-${n}`;
@@ -323,7 +338,8 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     if (!s || s.person.kind !== 'team') return null;
     if (s.session.stage !== 'full') throw fail(401, SAY.stage, { code: 'stage' });
     const account = accountOf(s.person.workspace);
-    return account ? { account, session: s.session, person: s.person, role: s.person.role, via: 'session' } : null;
+    // confirmed: the Owner's email confirmed (C-16); lib/invitations.mjs refuses a session's investor invitation until it is.
+    return account ? { account, session: s.session, person: s.person, role: s.person.role, via: 'session', confirmed: confirmed(s.person.workspace) } : null;
   }
   function investor(req) {
     const s = sessionOf(req);
@@ -337,6 +353,159 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     if (audit && typeof audit.append === 'function') return audit.append({ workspace, personId: person ? person.id : '', action, detail, record });
     store.event({ type: 'auth', action, workspace });
   }
+
+  /* --- email (plan 15-14): phase 13's messages through the mailer 13-03 built, reached as invites.mailer --- */
+  const mailer = invites && invites.mailer ? invites.mailer : null;
+  const senders = invites && invites.senders ? invites.senders : null;
+  const firmRecord = invites && typeof invites.firmRecord === 'function' ? invites.firmRecord : () => null;
+  const audienceOf = (p) => (p && p.kind === 'investor' ? 'investor' : 'team');
+  /**
+   * True only when the mailer would send a message for this audience now (never into the outbox, never held): a team
+   * person's mail goes from the platform's MAIL_FROM (13-03's rule for mail with no workspace); an investor's from the
+   * firm's own ready address, or MAIL_FROM on a server with no sponsor accounts. A link that cannot be sent is never made.
+   */
+  function canSend(audience, wid) {
+    if (!mailer || !mailer.configured) return false;
+    if (audience !== 'investor') return validAddress(env.MAIL_FROM);
+    const s = senders && wid ? senders.get(wid) : null;
+    if (s && s.status === 'ready' && validAddress(s.address)) return true;
+    return !store.list('accounts').length && validAddress(env.MAIL_FROM);
+  }
+  /** The firm as its messages name it: the brand the workspace keeps on this server, else the name given at sign-up. */
+  function firmOf(wid) {
+    let t = null;
+    try {
+      t = firmRecord(wid);
+    } catch {
+      t = null;
+    }
+    const f = t && typeof t === 'object' ? EMAILS.firmFromTenant(t) : {};
+    if (!f.name) {
+      const w = workspaceOf(wid);
+      f.name = (w && w.name) || '';
+    }
+    return f;
+  }
+  /** The refusal when a link cannot be emailed: whom to ask, the firm's team on its portal, else the server's operator. */
+  function mailRefused(wid) {
+    const f = wid && workspaceOf(wid) ? firmOf(wid) : null;
+    const who = f && f.name ? (oneWord(f.supportTeam) ? `${oneWord(f.supportTeam)} at ${f.name}` : f.name) : 'its operator';
+    return `Email is not set up on this server; contact ${who}.`;
+  }
+  const oneWord = (s) => String(s || '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
+  const inFlight = new Set();
+  /** Mail is sent after the answer (an answer never waits for the relay, so its timing says nothing); settled() waits. */
+  function later(work) {
+    const p = Promise.resolve()
+      .then(work)
+      .catch(() => ({ emailStatus: 'failed' }));
+    inFlight.add(p);
+    p.finally(() => inFlight.delete(p));
+    return p;
+  }
+  const settled = async () => {
+    while (inFlight.size) await Promise.all(Array.from(inFlight));
+  };
+  /** One message to one recipient { audience, workspace, email, name, investorId }; link is the personal link it holds. */
+  async function mailOne(r, kind, data, link = '') {
+    const firm = firmOf(r.workspace);
+    const m = EMAILS.render(kind, Object.assign({ firm }, data));
+    const team = r.audience !== 'investor';
+    return mailer.send({
+      kind,
+      workspace: team ? '' : r.workspace,
+      investorId: r.investorId || '',
+      fromName: firm.name,
+      replyTo: team ? '' : firm.supportEmail,
+      to: r.email,
+      toName: r.name || '',
+      subject: m.subject,
+      text: m.text,
+      html: m.html,
+      inline: (m.inline || []).map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })),
+      headers: { 'Auto-Submitted': 'auto-generated' },
+      link
+    });
+  }
+  /** A person as a recipient: the address and name as they are stored now. */
+  const recipientOf = (p) => {
+    const o = people.open(p);
+    return { audience: audienceOf(p), workspace: p.workspace, email: o.email, name: o.name, investorId: p.investorId || '', personId: p.id };
+  };
+  /**
+   * notify(to, variant, data) → Promise<{ results: [{ personId, status }] }>: the security_notice variant (assets/js/emails.js)
+   * to each recipient in the explicit list `to`: a person's record (the address as stored now), or { email, name,
+   * audience: 'team' | 'investor', workspace, investorId, personId } for an address as it was stored before a change (an
+   * investor's bankChanged goes to the address held before the save, also when that save changes it, D-04). data adds
+   * the variant's own fields (device, left, change, last4, investor, when). status is the mailer's, or 'not_sent' when
+   * the server cannot send it now; a notice not sent is logged 'Notice not sent' with the variant only.
+   */
+  async function notify(to, variant, data = {}) {
+    const results = [];
+    for (const x of (Array.isArray(to) ? to : [to]).filter(Boolean)) {
+      const r = typeof x.email === 'string' ? { audience: x.audience === 'team' ? 'team' : 'investor', workspace: String(x.workspace || ''), email: x.email.trim(), name: String(x.name || ''), investorId: String(x.investorId || ''), personId: String(x.personId || '') } : recipientOf(x);
+      const person = PERSON_ID.test(r.personId) ? store.get('people', r.personId) : null;
+      let status = 'not_sent';
+      if (validAddress(r.email) && canSend(r.audience, r.workspace)) {
+        try {
+          status = (await mailOne(r, 'security_notice', Object.assign({}, data, { variant, audience: r.audience, person: { name: r.name }, when: data.when || iso(now()) }))).emailStatus;
+        } catch {
+          status = 'failed';
+        }
+      }
+      if (status !== 'sent') log({ workspace: r.workspace, person, action: 'Notice not sent', detail: variant });
+      results.push({ personId: r.personId, status });
+    }
+    return { results };
+  }
+  /** A notice sent after the answer (its sending never slows or shapes the answer). */
+  const notifyLater = (to, variant, data) => later(() => notify(to, variant, data));
+  /** The firm's Owner and Admins who can be told now (the bankChangedFirm notice, D-04). */
+  const firmAdmins = (wid) => store.list('people').filter((p) => p.workspace === wid && p.kind === 'team' && p.status === 'active' && (p.role === 'owner' || p.role === 'admin'));
+  /** A link message (lib/team.mjs's invitations): sent after the answer; the caller has checked canSend. */
+  const mailLink = (p, kind, data, link) => later(() => mailOne(recipientOf(p), kind, Object.assign({}, data, { person: { name: people.open(p).name } }), link));
+
+  /* --- the device cookie (plan 15-14): a console sign-in from a device not seen before is told to the person --- */
+  const DEVICE = https ? '__Host-device' : 'device';
+  function deviceCookieOf(req) {
+    const raw = header(req.headers, 'cookie');
+    if (typeof raw !== 'string') return '';
+    const mine = raw.split(';').map((s) => s.trim()).filter((s) => s.startsWith(`${DEVICE}=`)).map((s) => s.slice(DEVICE.length + 1));
+    return mine.length === 1 && SID.test(mine[0]) ? mine[0] : '';
+  }
+  /**
+   * A team person's session has just become full: a known device cookie changes nothing; otherwise a new cookie (43
+   * random characters, only its SHA-256 kept, at most 20 per person) and, when the person has signed in fully before, a
+   * newDevice notice naming the device type only. Returns the Set-Cookie value, or ''.
+   */
+  function deviceStep(req, pid) {
+    const p = store.get('people', pid);
+    if (!p || p.kind !== 'team') return '';
+    const known = Array.isArray(p.devices) ? p.devices : [];
+    const have = deviceCookieOf(req);
+    if (have && known.includes(sha256(have))) return '';
+    const value = randomBytes(32).toString('base64url');
+    people.update(p.id, { devices: known.concat(sha256(value)).slice(-DEVICES_KEPT) });
+    if (known.length) notifyLater([p], 'newDevice', { device: deviceOf(req) });
+    return `${DEVICE}=${value}${FLAGS}; Max-Age=${DEVICE_DAYS * 24 * 3600}`;
+  }
+  const cookies = (...list) => list.filter(Boolean);
+
+  /* --- the Owner's email confirmation (C-16): investors are invited only once the Owner's address is confirmed --- */
+  /** A new 7-day confirmation link for the Owner, emailed when the platform's mail can go now; true when it was sent. */
+  function sendConfirmation(p) {
+    if (!canSend('team', '')) return false;
+    const token = randomBytes(32).toString('base64url');
+    const until = iso(now() + CONFIRM_MS);
+    people.update(p.id, { confirm: { hash: sha256(token), until, sentAt: iso(now()) } });
+    const link = `${publicUrl}/#confirm-${token}`;
+    notifyLater([store.get('people', p.id)], 'confirmEmail', { link, expiresAt: until });
+    return true;
+  }
+  const isOwnerOf = (p) => {
+    const w = p && workspaceOf(p.workspace);
+    return !!(w && p.kind === 'team' && p.role === 'owner' && w.ownerId === p.id);
+  };
 
   /* --- routes --- */
   async function body(req) {
@@ -371,6 +540,8 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     store.put('workspaces', { id: wid, name: firm, ownerId: person.id, accountId: account.id, createdAt: iso(now()), confirmedAt: '' });
     const { sid, rec } = sessions.issue(person, 'setup', req);
     log({ workspace: wid, person, action: 'signup' });
+    // C-16: the confirmation link; when the server cannot send it now the sign-up still succeeds and me says why.
+    if (!sendConfirmation(person)) people.update(person.id, { confirm: { hash: '', until: '', sentAt: '' } });
     return send(res, 201, { workspace: wsView(wid), person: personView(person), stage: rec.stage }, { 'Set-Cookie': sessions.cookie(sid) });
   }
 
@@ -380,6 +551,12 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     if (p.kind === 'team') return 'setup';
     const w = workspaceOf(p.workspace);
     return w && w.investorTwoStep ? 'setup' : 'full';
+  }
+  /** null while the person's access runs; else the day it ended ('' for an Accountant with no valid end date), as lib/roles.mjs's guard reads it. */
+  function endedOn(p) {
+    if (!p || p.role !== 'accountant') return null;
+    const ends = /^\d{4}-\d{2}-\d{2}$/.test(String(p.endsOn || '')) ? p.endsOn : '';
+    return ends && ends >= iso(now()).slice(0, 10) ? null : ends;
   }
   const checking = new Set(); // email indexes whose password check is running
   const lockOf = (f, t) => (f && f.lockedUntil > t ? f.lockedUntil : 0);
@@ -426,6 +603,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
         if (r.locked) {
           locked = true;
           log({ workspace: p.workspace, person: p, action: 'locked' });
+          notifyLater([store.get('people', p.id)], 'locked'); // once, when the 15-minute lock starts
         }
       }
       return locked ? send(res, 423, { error: SAY.locked }, { 'Retry-After': String(LOCK_MS / 1000) }) : send(res, 401, { error: SAY.wrong });
@@ -433,11 +611,16 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     for (const p of matched) people.update(p.id, { fails: NO_FAILS(), status: p.status === 'invited' ? 'active' : p.status, emailIndex: ix }); // re-indexed under the current key
     if (matched.length > 1) return send(res, 200, { stage: 'choose', firms: matched.map((p) => wsView(p.workspace)) });
     const person = store.get('people', matched[0].id);
+    // An Accountant whose access ended is told so, only after the right password (a guesser learns nothing).
+    const ended = endedOn(person);
+    if (ended !== null) return send(res, 403, { error: ROLE_SAY.ended(plainDay(ended || iso(t).slice(0, 10))), code: 'ended' });
     const old = cookieOf(req);
     if (old) sessions.end(sha256(old)); // a new id at every sign-in
     const { sid, rec } = sessions.issue(person, stageOf(person), req);
     log({ workspace: person.workspace, person, action: 'signin' });
-    return send(res, 200, { stage: rec.stage }, { 'Set-Cookie': sessions.cookie(sid) });
+    // W3: an Owner whose firm signed up before confirmations existed (no link ever made) is offered the link.
+    const offer = isOwnerOf(person) && !confirmed(person.workspace) && !person.confirm ? { confirmEmail: 'resend' } : {};
+    return send(res, 200, Object.assign({ stage: rec.stage }, offer), { 'Set-Cookie': sessions.cookie(sid) });
   }
 
   function signout(req, res) {
@@ -470,6 +653,12 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     purge(t);
   };
 
+  /** me's emailConfirmed: the firm's Owner has confirmed the address (C-16); when not, whether the Owner can ask again and why not. */
+  function confirmView(p) {
+    if (confirmed(p.workspace)) return { emailConfirmed: true };
+    const can = canSend('team', '');
+    return { emailConfirmed: false, emailConfirm: { resend: isOwnerOf(p) && can, reason: can ? '' : mailRefused('') } };
+  }
   function me(req, res) {
     const s = sessionOf(req);
     if (!s) return send(res, 401, { error: SAY.unauthorized });
@@ -483,7 +672,8 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
       permissions: permissionsOf(p.role),
       recoveryLeft: p.twoStep ? unusedCodes(p) : 0,
       firm: { investorTwoStep: !!(w && w.investorTwoStep) },
-      idleMinutes: IDLE_MS / MIN
+      idleMinutes: IDLE_MS / MIN,
+      ...confirmView(p)
     });
   }
 
@@ -529,7 +719,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     const p = s.person;
     const b32 = TOTP.base32Encode(TOTP.newKey(randomBytes));
     people.update(p.id, { twoStepPending: { key: seal(p.id, 'twoStepPending', b32), until: iso(now() + HALF_DONE_MS) } });
-    const issuer = wsView(p.workspace).name;
+    const issuer = wsView(p.workspace).name || p.workspace; // never an empty issuer
     return send(res, 200, { key: TOTP.formatKey(b32), otpauth: TOTP.otpauth({ issuer, label: people.open(p).email, key: b32 }) });
   }
 
@@ -551,7 +741,8 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     sessions.endAll(p.id); // every session of this person, this one too: the cookie from before is dead
     const { sid } = sessions.issue(p, 'full', req, { authAt: t, mfaAt: t });
     log({ workspace: p.workspace, person: p, action: 'Two-step sign-in turned on' });
-    return send(res, 200, { recoveryCodes: codes }, { 'Set-Cookie': sessions.cookie(sid) });
+    notifyLater([store.get('people', p.id)], 'twoStepChanged', { change: 'on' });
+    return send(res, 200, { recoveryCodes: codes }, { 'Set-Cookie': cookies(sessions.cookie(sid), deviceStep(req, p.id)) });
   }
 
   /** POST /v1/auth/code { code }: the second step of a sign-in; the only way from 'code' to 'full'. */
@@ -573,7 +764,8 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     }
     sessions.end(s.session.id); // a new id after the code
     const { sid, rec } = sessions.issue(p, 'full', req, { authAt: s.session.authAt, mfaAt: iso(now()) });
-    return send(res, 200, Object.assign({ stage: rec.stage }, extra), { 'Set-Cookie': sessions.cookie(sid) });
+    if (recovery) notifyLater([store.get('people', p.id)], 'recoveryCodeUsed', { left: extra.recoveryLeft });
+    return send(res, 200, Object.assign({ stage: rec.stage }, extra), { 'Set-Cookie': cookies(sessions.cookie(sid), deviceStep(req, p.id)) });
   }
 
   const typedCode = (code) => (typeof code === 'string' || typeof code === 'number' ? String(code).replace(/\s+/g, '') : '');
@@ -615,6 +807,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     const { codes, stored } = newRecovery();
     people.update(p.id, { recovery: stored });
     log({ workspace: p.workspace, person: p, action: 'Recovery codes replaced' });
+    notifyLater([store.get('people', p.id)], 'recoveryCodesReplaced');
     return send(res, 200, { recoveryCodes: codes });
   }
 
@@ -631,6 +824,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     people.update(p.id, { twoStep: null, twoStepPending: null, recovery: [] });
     sessions.endAll(p.id, s.session.id); // the person's other sign-ins end; this one stays
     log({ workspace: p.workspace, person: p, action: 'Two-step sign-in turned off' });
+    notifyLater([store.get('people', p.id)], 'twoStepChanged', { change: 'off' });
     return send(res, 200, { ok: true });
   }
 
@@ -660,12 +854,86 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
       people.update(p.id, { fails: r.fails });
       if (r.locked) {
         log({ workspace: p.workspace, person: p, action: 'locked' });
+        notifyLater([store.get('people', p.id)], 'locked');
         return send(res, 423, { error: SAY.locked }, { 'Retry-After': String(LOCK_MS / 1000) });
       }
       return send(res, 401, { error: SAY.wrong });
     }
     people.update(p.id, { fails: NO_FAILS() });
     store.put('sessions', { id: s.session.id, authAt: iso(now()) });
+    return send(res, 200, { ok: true });
+  }
+
+  /** The current password checked as a sign-in checks it (waits, the lock, one check at a time); null when it is right. */
+  async function checkCurrent(p, typed, res) {
+    const t = now();
+    if (lockOf(p.fails, t)) return send(res, 423, { error: SAY.locked }, { 'Retry-After': String(Math.ceil((lockOf(p.fails, t) - t) / 1000)) });
+    if (waitOf(p.fails, t)) {
+      const n = Math.max(1, Math.ceil((waitOf(p.fails, t) - t) / 1000));
+      return send(res, 429, { error: wait(n) }, { 'Retry-After': String(n) });
+    }
+    if (checking.has(p.emailIndex)) return send(res, 429, { error: wait(1) }, { 'Retry-After': '1' });
+    checking.add(p.emailIndex);
+    let ok = false;
+    try {
+      ok = await password.check(typed, p.pw);
+    } finally {
+      checking.delete(p.emailIndex);
+    }
+    if (ok) return null;
+    const r = failed(store.get('people', p.id).fails, t);
+    people.update(p.id, { fails: r.fails });
+    if (r.locked) {
+      log({ workspace: p.workspace, person: p, action: 'locked' });
+      notifyLater([store.get('people', p.id)], 'locked');
+      return send(res, 423, { error: SAY.locked }, { 'Retry-After': String(LOCK_MS / 1000) });
+    }
+    return send(res, 401, { error: SAY.wrong });
+  }
+  /** POST /v1/auth/password { current, next }: a full session changes its own password; every other session ends. */
+  async function changePassword(req, res) {
+    requireVault();
+    const s = caller(req);
+    const b = await body(req);
+    if (typeof b.current !== 'string' || !b.current || b.current.length > 1024 || typeof b.next !== 'string') return send(res, 400, { error: SAY.fields });
+    const p = store.get('people', s.person.id);
+    const problem = password.problem(b.next, p.kind);
+    if (problem) return send(res, 400, { error: problem });
+    if ((await checkCurrent(p, b.current, res)) !== null) return;
+    const pw = await password.hash(b.next);
+    people.update(p.id, { pw, fails: NO_FAILS(), reset: null });
+    sessions.endAll(p.id, s.session.id); // every other session ends; this one stays
+    store.put('sessions', { id: s.session.id, authAt: iso(now()) });
+    log({ workspace: p.workspace, person: p, action: 'Password changed' });
+    notifyLater([store.get('people', p.id)], 'passwordChanged');
+    return send(res, 200, { ok: true });
+  }
+
+  /** POST /v1/auth/confirm-email { token }: the Owner's address is confirmed (and with it the firm's, C-16). */
+  async function confirmEmail(req, res) {
+    const b = await body(req);
+    const token = typeof b.token === 'string' && LINK_TOKEN.test(b.token) ? b.token : '';
+    const h = token ? sha256(token) : '';
+    const t = now();
+    const p = h ? store.list('people').find((x) => x.confirm && x.confirm.hash === h && ms(x.confirm.until) > t && x.status === 'active') : null;
+    if (!p) return send(res, 404, { error: SAY.badLink });
+    const at = iso(t);
+    people.update(p.id, { confirm: { hash: '', until: '', sentAt: p.confirm.sentAt || '' }, confirmedAt: at });
+    if (isOwnerOf(p)) store.put('workspaces', { id: p.workspace, confirmedAt: at });
+    log({ workspace: p.workspace, person: p, action: 'Email confirmed' });
+    return send(res, 200, { ok: true });
+  }
+  /** POST /v1/auth/confirm-email/resend: the Owner's full session asks for a new link (5 an hour). */
+  async function confirmResend(req, res) {
+    requireVault();
+    const s = caller(req);
+    await body(req);
+    const p = store.get('people', s.person.id);
+    if (!isOwnerOf(p)) return send(res, 403, { error: SAY.ownerOnly });
+    if (confirmed(p.workspace)) return send(res, 200, { ok: true });
+    if (!canSend('team', '')) return send(res, 503, { error: mailRefused(''), code: 'mail' });
+    if (limits.hit(`confirm:${p.id}`, 5, HOUR)) return send(res, 429, { error: SAY.busy });
+    sendConfirmation(p);
     return send(res, 200, { ok: true });
   }
 
@@ -692,6 +960,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     people.update(target.id, { twoStep: null, twoStepPending: null, recovery: [] });
     sessions.endAll(target.id);
     log({ workspace: target.workspace, person: target, action: 'Two-step sign-in reset' });
+    notifyLater([store.get('people', target.id)], 'twoStepChanged', { change: 'reset' });
   }
   /** POST /v1/auth/people/:id/two-step/reset: the firm resets someone's two-step (Owner or Admin; never the Owner's unless the Owner). */
   async function resetRoute(req, res, pid) {
@@ -707,6 +976,80 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     } else if (!allows(me.role, 'operate')) return send(res, 403, { error: REFUSALS.operate });
     needFresh(s);
     clearTwoStep(target);
+    return send(res, 200, { ok: true });
+  }
+
+  /* --- "Forgot your password?" (plan 15-14, SE-04): one answer for every address; the link's token after '#', hash only --- */
+  const resetOf = (token) => {
+    if (typeof token !== 'string' || !LINK_TOKEN.test(token)) return null;
+    const h = sha256(token);
+    const t = now();
+    return store.list('people').find((p) => p.reset && p.reset.hash === h && ms(p.reset.until) > t && p.status === 'active' && p.pw) || null;
+  };
+  /** POST /v1/auth/reset/request { email, workspace? }: the same answer whether or not an account uses the address. */
+  async function resetRequest(req, res) {
+    requireVault();
+    const b = await body(req);
+    if (typeof b.email !== 'string' || !b.email.trim() || b.email.length > 254) return send(res, 400, { error: SAY.fields });
+    const ws = typeof b.workspace === 'string' && b.workspace ? b.workspace : undefined;
+    // With no way to send the link now, refused for every address alike: nothing is made, nothing kept (Pitfall 2). The
+    // portal's page names its workspace (an investor's mail goes as the firm); the console's does not (the platform's).
+    if (!(ws ? canSend('investor', ws) : canSend('team', ''))) return send(res, 503, { error: mailRefused(ws), code: 'mail' });
+    // 10 requests an hour from one network address and 3 for one email address; beyond them the same answer, no email.
+    if (limits.hit(addressKey(req, 'reset'), 10, HOUR) || limits.hit(`reset:${mac('reset', emailKey(b.email))}`, 3, HOUR)) return send(res, 200, { ok: true, message: SAY.resetSent });
+    // A locked person may reset (Pitfall 8); a removed, disabled or not yet accepted one has no password to reset.
+    for (const p of people.byEmail(b.email, ws).filter((x) => x.status === 'active' && x.pw)) {
+      if (!canSend(audienceOf(p), p.workspace)) continue; // never a link that cannot go out at once (Pitfall 2)
+      const token = randomBytes(32).toString('base64url');
+      const until = iso(now() + RESET_MS);
+      people.update(p.id, { reset: { hash: sha256(token), until, tries: 0 } }); // any earlier link stops working
+      const link = `${publicUrl}/#reset-${token}`;
+      const r = recipientOf(p);
+      later(() => mailOne(r, 'password_reset', { variant: r.audience, person: { name: r.name }, link, expiresAt: until }, link));
+    }
+    return send(res, 200, { ok: true, message: SAY.resetSent });
+  }
+  /** POST /v1/auth/reset/check { token }: the firm and whether a code will be asked for; nothing else about the person. */
+  async function resetCheck(req, res) {
+    const b = await body(req);
+    const p = resetOf(b.token);
+    if (!p) return send(res, 404, { error: SAY.badLink });
+    return send(res, 200, { firm: firmOf(p.workspace).name, twoStep: !!p.twoStep });
+  }
+  /** The app code (after the last step accepted) or an unused recovery code, for a person with two-step; true when it is right. */
+  async function secondStep(p, code) {
+    const typed = typedCode(code);
+    if (/^[0-9]{6}$/.test(typed)) {
+      const step = await appStep(p, typed);
+      return step !== null && acceptStep(p.id, step) ? 'app' : '';
+    }
+    const normal = typed ? TOTP.normalRecovery(typed) : '';
+    return normal && useRecovery(p.id, normal) ? 'recovery' : '';
+  }
+  /** POST /v1/auth/reset/confirm { token, password, code? }: the new password; a reset never skips two-step. */
+  async function resetConfirm(req, res) {
+    requireVault();
+    const b = await body(req);
+    const p = resetOf(b.token);
+    if (!p) return send(res, 404, { error: SAY.badLink });
+    const problem = password.problem(b.password, p.kind);
+    if (problem) return send(res, 400, { error: problem });
+    const step = p.twoStep ? await secondStep(p, b.code) : '';
+    if (p.twoStep && !step) {
+      const cur = store.get('people', p.id);
+      const tries = (Number(cur.reset && cur.reset.tries) || 0) + 1;
+      people.update(p.id, { reset: tries >= RESET_TRIES ? null : Object.assign({}, cur.reset, { tries }) }); // the 5th wrong code ends the link
+      return send(res, 401, { error: SAY.needCode, code: 'code' });
+    }
+    const pw = await password.hash(b.password);
+    const cur = resetOf(b.token); // still the same link after the hash (a second confirm at once finds none)
+    if (!cur || cur.id !== p.id) return send(res, 404, { error: SAY.badLink });
+    people.update(p.id, { pw, reset: null, fails: NO_FAILS(), status: 'active' }); // the lock ends with the reset
+    sessions.endAll(p.id);
+    log({ workspace: p.workspace, person: p, action: 'Password reset' });
+    const now1 = store.get('people', p.id);
+    notifyLater([now1], 'passwordChanged');
+    if (step === 'recovery') notifyLater([now1], 'recoveryCodeUsed', { left: unusedCodes(now1) });
     return send(res, 200, { ok: true });
   }
 
@@ -728,6 +1071,12 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     if (taken()) return send(res, 409, { error: SAY.already });
     const pw = await password.hash(b.password);
     if (taken()) return send(res, 409, { error: SAY.already }); // a second call that arrived while this one hashed
+    // An invitation the shared token made for a workspace no one signed up for: the sign-in gets the workspace's record,
+    // named as the invitation names the firm (its two-step issuer, the place of the firm's rule; no sign-up can take it).
+    if (!workspaceOf(rec.workspace)) {
+      const firmName = (snap.firm && typeof snap.firm.name === 'string' && snap.firm.name.trim().slice(0, 120)) || rec.workspace;
+      store.put('workspaces', { id: rec.workspace, name: firmName, ownerId: '', accountId: '', createdAt: iso(now()), confirmedAt: '', investorTwoStep: false, from: 'invitation' });
+    }
     const person = await people.create({ workspace: rec.workspace, kind: 'investor', role: 'investor', investorId: inv.id, co: !!(snap.invitation && snap.invitation.coSign), email: inv.email, name: inv.contact, pw, invitationId: rec.id });
     const old = cookieOf(req);
     if (old) sessions.end(sha256(old));
@@ -765,11 +1114,17 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     '/v1/auth/firm/investor-two-step': ['POST', investorRule],
     '/v1/auth/confirm-password': ['POST', confirmPassword],
     '/v1/auth/sessions': ['GET', sessionsList],
-    '/v1/auth/sessions/end-others': ['POST', endOthers]
+    '/v1/auth/sessions/end-others': ['POST', endOthers],
+    '/v1/auth/reset/request': ['POST', resetRequest],
+    '/v1/auth/reset/check': ['POST', resetCheck],
+    '/v1/auth/reset/confirm': ['POST', resetConfirm],
+    '/v1/auth/password': ['POST', changePassword],
+    '/v1/auth/confirm-email': ['POST', confirmEmail],
+    '/v1/auth/confirm-email/resend': ['POST', confirmResend]
   };
   const RESET = /^\/v1\/auth\/people\/(per_[\w-]{1,64})\/two-step\/reset$/;
   /** The routes a half-done sign-in (or none) may call; every other /v1/auth/ path needs a full session first (Pitfall 1). */
-  const OPEN = new Set(['/v1/auth/status', '/v1/auth/signup', '/v1/auth/signin', '/v1/auth/signout', '/v1/auth/me', '/v1/auth/two-step/start', '/v1/auth/two-step/confirm', '/v1/auth/code']);
+  const OPEN = new Set(['/v1/auth/status', '/v1/auth/signup', '/v1/auth/signin', '/v1/auth/signout', '/v1/auth/me', '/v1/auth/two-step/start', '/v1/auth/two-step/confirm', '/v1/auth/code', '/v1/auth/reset/request', '/v1/auth/reset/check', '/v1/auth/reset/confirm', '/v1/auth/confirm-email']);
   /** The /v1/auth/ routes and POST /v1/invite/login; false for any other path. */
   async function handle(req, res, path) {
     const login = req.method === 'POST' && path === '/v1/invite/login';
@@ -829,5 +1184,5 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     return send(res, 200, { ok: true });
   }
 
-  return { handle, admin, sessionOf, sponsor, investor, required, people, sessions, password, fresh, log, workspaceOf, confirmed, limits, purge, cookieName: COOKIE };
+  return { handle, admin, sessionOf, sponsor, investor, required, people, sessions, password, fresh, log, workspaceOf, confirmed, limits, purge, cookieName: COOKIE, canSend, settled, notify, firmAdmins, mailLink };
 }
