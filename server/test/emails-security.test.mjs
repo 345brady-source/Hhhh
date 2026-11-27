@@ -45,7 +45,7 @@ const buttonsOf = (html) => (html.match(/<a data-button [^>]*>[^<]*<\/a>/g) || [
 function every(over = {}) {
   const out = [];
   for (const variant of E().KINDS.security_notice.variants) {
-    for (const audience of TEAM_ONLY.includes(variant) ? ['team'] : ['investor', 'team']) {
+    for (const audience of TEAM_ONLY.includes(variant) ? ['team'] : variant === 'bankChanged' ? ['investor'] : ['investor', 'team']) {
       const data = Object.assign(E().KINDS.security_notice.sample(variant), { audience }, over);
       out.push({ kind: 'security_notice', variant, audience, data, m: E().render('security_notice', data) });
     }

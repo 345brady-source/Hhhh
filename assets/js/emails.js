@@ -584,6 +584,88 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
     }, d.opts);
   }
 
+  /* ---------- Security notices (plan 15-14, SE-02, D-04) and the investor's access invitation (SE-05) ---------- */
+  // Each notice says what happened, when, and what to do if it was not the person. No code, password, taxpayer or bank
+  // number is ever printed: a bank account is named by its last four digits only, a device by its type only.
+  const SECURITY_SUBJECTS = {
+    passwordChanged: 'your password was changed',
+    twoStepChanged: 'two-step sign-in changed',
+    recoveryCodesReplaced: 'your recovery codes were replaced',
+    recoveryCodeUsed: 'a recovery code was used',
+    newDevice: 'a new sign-in to your console',
+    locked: 'your account is locked for 15 minutes',
+    confirmEmail: 'confirm your email address',
+    bankChanged: 'your bank account was changed',
+    bankChangedFirm: "an investor's bank account was changed, confirm it before paying"
+  };
+  const SECURITY_VARIANTS = Object.keys(SECURITY_SUBJECTS);
+  /** The notices only the firm's own console people receive. */
+  const TEAM_ONLY = ['newDevice', 'confirmEmail', 'bankChangedFirm'];
+  const DEVICE_WORDS = { Computer: 'computer', Phone: 'phone', Tablet: 'tablet' };
+  const TWO_STEP_CHANGE = { on: 'was turned on', off: 'was turned off', reset: 'was reset by your firm; you set it up again at your next sign-in' };
+  /** "November 10, 2026 at 12:00 UTC", or '' for a time that is not one. */
+  function whenText(at) {
+    const d = new Date(str(at));
+    if (!str(at) || Number.isNaN(d.getTime())) return '';
+    const two = (n) => String(n).padStart(2, '0');
+    return `${longDate(d.toISOString())} at ${two(d.getUTCHours())}:${two(d.getUTCMinutes())} UTC`;
+  }
+  /** The last four digits of whatever is given, never more. */
+  const lastFour = (v) => str(v).replace(/\D/g, '').slice(-4);
+  function securityNotice(firm, d, variant) {
+    // An investor's own bank account is the investor's only (the firm hears of it through bankChangedFirm).
+    const team = variant !== 'bankChanged' && (d.audience === 'team' || TEAM_ONLY.indexOf(variant) >= 0);
+    const where = team ? `${firm.name} console` : oneLine(firm.portalName) || `${firm.name} investor portal`;
+    const at = whenText(d.when);
+    const on = at ? ` on ${at}` : '';
+    const support = team ? '' : supportSentence(firm);
+    const notMe = team ? 'If this was not you, reset your password now from the sign-in page and tell the Owner of your firm’s console.' : 'If this was not you, reset your password now from the sign-in page and contact us.';
+    const four = lastFour(d.last4);
+    const subject = `${firm.name}: ${SECURITY_SUBJECTS[variant]}`;
+    let paras;
+    let after = [notMe];
+    let button = null;
+    if (variant === 'passwordChanged') paras = [`The password for your ${where} account was changed${on}.`];
+    else if (variant === 'twoStepChanged') paras = [`${at ? `On ${at}, two-step` : 'Two-step'} sign-in for your ${where} account ${TWO_STEP_CHANGE[d.change] || 'was changed'}.`];
+    else if (variant === 'recoveryCodesReplaced') paras = [`New recovery codes were made for your ${where} account${on}. The earlier codes no longer work.`];
+    else if (variant === 'recoveryCodeUsed') {
+      const n = Math.max(0, Math.min(10, Math.floor(Number(d.left) || 0)));
+      paras = [`A recovery code was used to sign in to your ${where} account${on}. You have ${n} ${n === 1 ? 'code' : 'codes'} left; each one works once.`];
+      if (n <= 2) paras.push('Make new recovery codes in your account settings.');
+    } else if (variant === 'newDevice') paras = [`Someone signed in to your ${where} account from a new ${DEVICE_WORDS[d.device] || 'device'}${on}.`, 'If it was you, there is nothing to do.'];
+    else if (variant === 'locked') {
+      paras = [`${at ? `On ${at}, your` : 'Your'} ${where} account was locked for 15 minutes after too many wrong passwords.`];
+      after = [team ? 'If these tries were not yours, reset your password from the sign-in page (a new password ends the lock) and tell the Owner of your firm’s console.' : 'If these tries were not yours, reset your password from the sign-in page (a new password ends the lock) and contact us.'];
+    } else if (variant === 'confirmEmail') {
+      paras = [`Confirm that this is your email address for the ${firm.name} console. Until you do, the console cannot invite investors.`];
+      button = { label: 'Confirm my email', href: d.link };
+      after = [expirySentence(d.expiresAt), 'If you did not sign up, ignore this email.'].filter(Boolean);
+    } else if (variant === 'bankChanged') {
+      paras = [`The bank account for your payments from ${firm.name} was changed${on}.${four ? ` The new account ends in ${four}.` : ''}`, `No payment goes to it until ${firm.name} has confirmed the change.`];
+      after = ['If you did not make this change, contact us at once and reset your password from the sign-in page.'];
+    } else {
+      const who = oneLine(d.investor && (d.investor.contact || d.investor.title || d.investor.name)) || 'An investor';
+      paras = [`${who}’s bank account for payments was changed${on}.${four ? ` The new account ends in ${four}.` : ''}`, 'No payment goes to it until someone who can release payments confirms the change in the console. Confirm it with the investor first, by a phone number you already hold, never one given in an email.'];
+      after = [];
+    }
+    if (support) after = after.concat([support]);
+    return layout(firm, subject, paras[0], { greeting: greeting(d.person && d.person.name), paras, button, after, support }, d.opts);
+  }
+  /** An investor already on the firm's books is invited to set up a sign-in of their own (lib/team.mjs, kind investor). */
+  function portalAccess(firm, d) {
+    const where = oneLine(firm.portalName) || `${firm.name} investor portal`;
+    const support = supportSentence(firm);
+    const first = `${firm.name} has invited you to set up your own sign-in to the ${where}.`;
+    return layout(firm, `${firm.name}: set up your sign-in to the investor portal`, first, {
+      greeting: greeting(d.person && d.person.name),
+      paras: [first],
+      before: ['There you see your investments, your documents and the firm’s messages. The link below lets you choose your password.'],
+      button: { label: 'Set up my sign-in', href: d.link },
+      after: [expirySentence(d.expiresAt), support],
+      support
+    }, d.opts);
+  }
+
   /* ---------- Tax documents (Rev. Proc. 2012-17; wording from assets/js/taxdocs.js and server/lib/taxdocs.mjs, 10-12) ---------- */
   const TAX_SUBJECT = 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE';
   const TAX_CONSENT_SUBJECT = 'Your consent to receive tax documents electronically';
@@ -757,6 +839,25 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
   const SAMPLE_TEAM = 'https://portal.example/diy.html#team-sample';
   const resetSample = (variant) => ({ variant, firm: copy(SAMPLE_FIRM), person: { name: variant === 'team' ? 'Maria Ortiz' : 'Anita Shah' }, link: variant === 'team' ? SAMPLE_RESET.replace('portal.html', 'diy.html') : SAMPLE_RESET, expiresAt: '2026-11-10T13:00:00.000Z' });
   const teamSample = (variant) => ({ variant, firm: copy(SAMPLE_FIRM), person: { name: 'Daniel Brooks' }, inviter: 'Maria Ortiz', role: 'Operations', link: SAMPLE_TEAM, expiresAt: EXPIRES });
+  // Plan 15-14's samples: who each notice goes to in the goldens (the investor variants render for a team person too).
+  const SAMPLE_CONFIRM = 'https://portal.example/diy.html#confirm-sample';
+  const SAMPLE_ACCESS = 'https://portal.example/portal.html#accept-sample';
+  const SECURITY_SAMPLE = {
+    passwordChanged: ['investor', {}],
+    twoStepChanged: ['team', { change: 'on' }],
+    recoveryCodesReplaced: ['team', {}],
+    recoveryCodeUsed: ['investor', { left: 9 }],
+    newDevice: ['team', { device: 'Phone' }],
+    locked: ['team', {}],
+    confirmEmail: ['team', { link: SAMPLE_CONFIRM, expiresAt: '2026-11-17T12:00:00.000Z' }],
+    bankChanged: ['investor', { last4: '4321' }],
+    bankChangedFirm: ['team', { last4: '4321', investor: { name: 'Anita Shah' } }]
+  };
+  function securitySample(variant) {
+    const [audience, extra] = SECURITY_SAMPLE[variant];
+    return Object.assign({ variant, audience, firm: copy(SAMPLE_FIRM), person: { name: audience === 'team' ? 'Maria Ortiz' : 'Anita Shah' }, when: SENT }, copy(extra));
+  }
+  const accessSample = (variant) => ({ variant, firm: copy(SAMPLE_FIRM), person: { name: 'Anita Shah' }, link: SAMPLE_ACCESS, expiresAt: EXPIRES });
   /** The staff email's sample is the record of server/test/fixtures/emails/base-filing.json. */
   const filingSample = (variant) => ({ variant, id: 'fil_sample-order', kind: variant === 'changed' ? 'bluesky' : 'formd', firm: { name: 'Harbor Ridge Capital' }, offering: { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II' }, dueCents: variant === 'changed' ? 125000 : 29900, openFees: variant === 'changed' });
 
@@ -780,6 +881,10 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
     esign_declined: { audience: 'sponsor', label: 'Signer declined', variants: ['console'], sample: declinedSample },
     password_reset: { audience: 'investor', label: 'Password reset', variants: ['investor', 'team'], sample: resetSample },
     team_invitation: { audience: 'team', label: 'Team invitation', variants: ['team'], sample: teamSample },
+    // Plan 15-14: the security notices go to the firm's console people and, for the investor variants (data.audience
+    // 'investor'), to the investor's own address; the access invitation to an investor already on the firm's books.
+    security_notice: { audience: 'team', label: 'Security notice', variants: SECURITY_VARIANTS, sample: securitySample },
+    portal_access: { audience: 'investor', label: 'Portal sign-in invitation', variants: ['access'], sample: accessSample },
     filing_order: { audience: 'staff', label: 'Filing order', variants: ['placed', 'changed'], sample: filingSample }
   };
   /** The variant a kind with named variants renders: the data's own, else the kind's first. */
@@ -822,6 +927,8 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
     else if (/^esign_/.test(kind)) out = esign(firm, d, kind);
     else if (kind === 'password_reset') out = passwordReset(firm, d, variant);
     else if (kind === 'team_invitation') out = teamInvitation(firm, d);
+    else if (kind === 'security_notice') out = securityNotice(firm, d, variant);
+    else if (kind === 'portal_access') out = portalAccess(firm, d);
     else out = filingOrder(d, variant);
     const headers = stopUrl ? { 'List-Unsubscribe': `<${stopUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } : {};
     // A possibly commercial message may not go without the firm's postal address: the caller refuses it (13-04, 13-05).

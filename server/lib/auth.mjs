@@ -379,6 +379,13 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     }
     return f;
   }
+  /** The refusal when a link cannot be emailed: whom to ask, the firm's team on its portal, else the server's operator. */
+  function mailRefused(wid) {
+    const f = wid && workspaceOf(wid) ? firmOf(wid) : null;
+    const who = f && f.name ? (oneWord(f.supportTeam) ? `${oneWord(f.supportTeam)} at ${f.name}` : f.name) : 'its operator';
+    return `Email is not set up on this server; contact ${who}.`;
+  }
+  const oneWord = (s) => String(s || '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
   const inFlight = new Set();
   /** Mail is sent after the answer (an answer never waits for the relay, so its timing says nothing); settled() waits. */
   function later(work) {
@@ -804,6 +811,11 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     const b = await body(req);
     if (typeof b.email !== 'string' || !b.email.trim() || b.email.length > 254) return send(res, 400, { error: SAY.fields });
     const ws = typeof b.workspace === 'string' && b.workspace ? b.workspace : undefined;
+    // With no way to send the link now, refused for every address alike: nothing is made, nothing kept (Pitfall 2). The
+    // portal's page names its workspace (an investor's mail goes as the firm); the console's does not (the platform's).
+    if (!(ws ? canSend('investor', ws) : canSend('team', ''))) return send(res, 503, { error: mailRefused(ws), code: 'mail' });
+    // 10 requests an hour from one network address and 3 for one email address; beyond them the same answer, no email.
+    if (limits.hit(addressKey(req, 'reset'), 10, HOUR) || limits.hit(`reset:${mac('reset', emailKey(b.email))}`, 3, HOUR)) return send(res, 200, { ok: true, message: SAY.resetSent });
     // A locked person may reset (Pitfall 8); a removed, disabled or not yet accepted one has no password to reset.
     for (const p of people.byEmail(b.email, ws).filter((x) => x.status === 'active' && x.pw)) {
       if (!canSend(audienceOf(p), p.workspace)) continue; // never a link that cannot go out at once (Pitfall 2)
