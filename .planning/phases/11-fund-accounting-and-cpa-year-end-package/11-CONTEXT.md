@@ -166,3 +166,9 @@
 - W6 (sample real estate funds): the property sheet comes from the generated property rows with land, building and placed in service 'To be confirmed'; t15 asserts it exists for each sample real-estate fund.
 - W7 (interface): NS.audit.period returns exactly L, o, S, from, to, ms, inv, fund, hold, empty, before.
 - Confirmed: Form 8825 lines match the Rev. December 2025 form; markers fit gate11.sh; every verify fails on an unchanged tree. Line numbers: sched audit.js 1359 (currency 1731), rollforward 1551, fees 1652, carry 1655; figures in the plan are cents.
+
+## After 11-13 (merged 2026-11-27)
+- The Accounting page merged (journal, entries, values, opening balances only on real funds; NS.books.sync on every render; investments with no value read "At cost (no value entered)" / "No value entered"; PARTS empty until 11-15). Gate GATE_EXIT=0 on its fourth run (run 1: 2 help-guide server tests failed because the view key was not written out, fixed; run 2: five signing steps crashed with every browser slot busy, then the time limit; run 3: CO-INVESTOR SERVER cosign-forged failed after its fixed 2500 ms wait; run 4 passed). Generated help files rebuilt at merge; sponsor guide 47,504 of 48,000 bytes. Server tests 456; ROLES TABLE, BOOKS FLOW and HELP PREVIEW rerun on the merged tree (scratchpad merge-11-13/).
+- 11-15 must also edit books-ui.js to add its bank part: PARTS `bank: ['bankfiles.js','books-bank.js','books-bank-ui.js']` (add books-ui.js to 11-15's files_modified at its plan check).
+- CO-INVESTOR SERVER's fixed 2500 ms wait failed again under load (second time; first was 08-17). Queue a debugger to replace its fixed waits with condition waits.
+- Owner's iPhone check pending (shots in scratchpad exec-11-13/shots).
