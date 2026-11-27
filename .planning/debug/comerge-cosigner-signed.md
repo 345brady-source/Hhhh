@@ -9,10 +9,27 @@ bug_class: Bohrbug (deterministic, code reading; to confirm by run)
 
 ## Current Focus
 
-hypothesis: coMerge captures coS (signer object) before importSignature; applySignature replaces env.signers with new objects (Object.assign(env, next)), so si.signedAt = coS.signedAt reads the stale object and stays empty; coSweep then cancels the finished sign-in.
-test: run the co-investor-server.js check (its server mode) on the current tree and capture the Investors row text and the audit lines after the co-investor signs.
-expecting: row says "Sign-in emailed / in the server outbox ..." (not "Signed ..."), and the audit holds "Co-investor sign-in cancelled: ... had already ended on the server".
-next_action: read coMerge, coSweep, coinvestor.js signInText, esign.js applySignature, and the check's server mode.
+hypothesis: CONFIRMED by the RED run (02:12Z): coMerge captures coS (signer object) before importSignature; applySignature replaces env.signers with new objects (Object.assign(env, next)), so si.signedAt = coS.signedAt reads the stale object and stays empty; coSweep then cancels the finished sign-in.
+test: fix coMerge (read the co-investor's signer again from env after the import), rerun the RED parts.
+expecting: both new assertions pass in cosign-desktop and cosign-phone; whole check 5 parts PASS.
+next_action: edit invitations.js coMerge line 849 only; rerun co-investor-server.js --only cosign-desktop,cosign-phone.
+
+reasoning_checkpoint:
+  hypothesis: "si.signedAt stays empty because coMerge reads signedAt from coS, the signer object it found before importSignature; applySignature's Object.assign(env, next) puts a new signers array (deep copy, signed) on the same env, so coS is detached and unsigned; coSweep then sees !si.signedAt with an agreement that no longer waits for the co-investor and cancels the finished sign-in (409, 'had already ended' line); signInText shows the email/outbox line because si.signedAt is empty"
+  confirming_evidence:
+    - "RED run: signedAt '' on the record while the agreement's co-investor signer has signedAt 2026-11-27T02:11:13.889Z"
+    - "RED run: POST .../cancel for that sign-in, cancelledAt set within the same Check now, audit 'Co-investor sign-in cancelled: ... had already ended on the server (the agreement no longer waits for the co-investor)'"
+    - "RED run: row 'Co-investor: Theodora Mbeki-Larsen · Sign-in in the server outbox Nov 27, 2026'"
+    - "code: esign.js 1333 deep copy, 1386 Object.assign(env, next); importSignature's s is signerById(env, id) === coS (envById returns the stored object)"
+  falsification_test: "if, with coMerge reading the signer from env after the import, the record's signedAt is still empty, or a cancel is still sent, or the row still lacks 'Signed <date>', the hypothesis is wrong or incomplete"
+  fix_rationale: "the stale reference is the cause; reading the co-investor's signer from env.signers after importSignature gives the signed object and its signedAt (the time the import stamped), so the record says the co-investor signed; coSweep's !si.signedAt guard and the removed hook's !si.signedAt guard then hold, so no cancel; signInText says 'Signed <date>'"
+  blind_spots: "other stale-reference readers after applySignature in esign.js finishSigning paths (not this defect; grep shows invitations.js reads no other signer object across importSignature); the preview (no server) path has no coMerge and its row design (06-37) has no 'Signed' text: measured separately"
+  candidate_causes:
+    - "code (product): stale signer reference in coMerge (confirmed)"
+    - "code (product): applySignature replacing env.signers by design (the work-on-a-copy rule; not changed: it is what keeps a failed stamp from touching the envelope)"
+    - "data/server: the server's 409 on cancel (correct: the invitation is completed; a consequence, not a cause)"
+    - "config/environment: none (the check's server has no SMTP, which only chooses 'outbox' vs 'emailed' wording)"
+  and_gate: "no: the stale read alone empties signedAt in every import; coSweep's cancel follows deterministically from that"
 
 ## Symptoms
 
@@ -40,6 +57,14 @@ started: since coMerge was written (to confirm with git log).
   checked: co-investor-server.js cosign() part (589-649) and press-and-co-investor.js co-link part (690-830)
   found: the server check never reads the Investors row or the audit after the co-investor's import (the row read at 636 follows a route change to the envelope and feeds only the white-label check). The preview check (no server) reads the row only before signing ("Sign-in link ready to send", "Sign-in sent <date>"). 06-37's plan defines the local (preview) row text as only "Sign-in link ready to send" / "Sign-in sent <date>"; 06-39's summary defines the server row text "Signed <date>" first.
   implication: no gate existed for this. RED goes into cosign() (desktop and phone): after the import, on Investors, the row says "Signed <date>", the record's signedAt equals the co-investor signer's, no POST .../cancel for that sign-in, no "Co-investor sign-in cancelled" audit line, no cancelledAt. Preview path to be measured by a run (row text after the co-investor signs).
+
+- timestamp: 2026-11-27T02:12Z
+  checked: RED, commit 3892ff7 (check only; product unchanged = 47f25ae's invitations.js), co-investor-server.js --only cosign-desktop,cosign-phone through heavy.sh, GATE_FRESH=1, the check's own server mode (in-process server/index.mjs, NODE_ENV=test, no SMTP settings, so emails go to the outbox), 02:03:00-02:11:37 UTC (scratchpad comerge/red/run.txt)
+  found: "CO-INVESTOR SERVER: FAIL (parts run: 2) - cosign-desktop, cosign-phone"; 83 PASS, 4 FAIL, the 4 being the new ones:
+    FAIL cosign-desktop after the import the investors row says the co-investor signed ("Signed <date>"), and the sign-in record has when they signed :: {"row":"Daniel Whitaker Daniel Whitaker · daniel.whitaker@example.com Co-investor: Theodora Mbeki-Larsen · Sign-in in the server outbox Nov 27, 2026 Individual $100,000 1 investment Active since Jan 24, 2022 ACH · Savings ••8756 Account View portal","signedAt":"","signer":"2026-11-27T02:11:13.889Z"}
+    FAIL cosign-desktop the console sends no cancel for the sign-in the co-investor finished, and the audit has no "sign-in cancelled" line :: {"cancels":["POST http://127.0.0.1:39245/v1/invitations/ivt_u9_zuPfMy2Cx/cancel"],"cancelledAt":"2026-11-27T02:11:15Z","audit":["Co-investor sign-in emailed: Daniel Whitaker: Theodora Mbeki-Larsen <theodora.ml@example.net>, for Subscription Agreement - Daniel Whitaker: kept in the server outbox (no SMTP settings); the copy sent to the co-investor leaves out the taxpayer number","Co-investor sign-in cancelled: Daniel Whitaker: the link sent to Theodora Mbeki-Larsen had already ended on the server (the agreement no longer waits for the co-investor)"]}
+    FAIL cosign-phone (same two, co-investor Ingrid Vasquez-Holm, row "... Co-investor: Ingrid Vasquez-Holm · Sign-in in the server outbox Nov 27, 2026 ...", signedAt "", signer 2026-11-27T02:11:32.867Z; cancels ["POST .../v1/invitations/ivt_g2kwRaYldqQt/cancel"], same "had already ended on the server" line)
+  implication: SYMPTOM CONFIRMED BY RUN. The row says "Sign-in in the server outbox Nov 27, 2026" after the co-investor signed (the agreement's signer is signed at 02:11:13.889Z, the sign-in record's signedAt is empty), the console POSTs the cancel for the finished sign-in, sets cancelledAt, and logs "Co-investor sign-in cancelled: Daniel Whitaker: the link sent to Theodora Mbeki-Larsen had already ended on the server (the agreement no longer waits for the co-investor)". Every older assertion of both parts still passes, so the RED isolates this defect. No taxpayer-number pattern in the output (grep 0).
 
 ## Resolution
 

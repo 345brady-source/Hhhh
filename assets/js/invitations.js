@@ -846,7 +846,9 @@
     const from = Date.parse(si.sentAt || si.createdAt || '');
     const r = await NS.esign.importSignature(ws, env.id, coS.id, Object.assign({ values, from: isFinite(from) ? from : 0 }, sent ? { status: sent.status, viewedAt: sent.viewedAt, consentAt: sent.consentAt, signedAt: sent.signedAt, signature: sent.signature, initials: sent.initials, userAgent: sent.userAgent } : {}));
     if (!r.ok) return notUsed(r.why);
-    si.signedAt = coS.signedAt;
+    // The signing step replaced the envelope's signers (it works on a copy), so the co-investor's is read again, now signed.
+    const signed = env.signers.find((s) => s.id === coS.id) || null;
+    si.signedAt = (signed && signed.signedAt) || nowIso();
     si.importedAt = nowIso();
     audit(ws, 'Co-investor signed', `${inv.title}: ${c.name} signed ${env.title} on their own device; their signature is on this portal's copy of the agreement, which ${r.complete ? 'is now complete' : 'waits for your countersignature'}. The copy on the integration server is deleted.`, env.offeringId || '', inv.id);
     return true;
