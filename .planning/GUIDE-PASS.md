@@ -31,3 +31,6 @@ The guide trim is merged (sponsor guide 44,641 of 48,000 bytes on 2026-11-27). L
 
 ## report-fixes (merged)
 - console-reports: If every file of a report is withdrawn, "Tell investors" says so and fills in nothing. (87 bytes)
+
+## portal-report-hash (merged)
+- portal-documents: a report opens or downloads only when it is exactly the file on record; otherwise the portal says the original is not kept. (143 bytes)
