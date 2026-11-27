@@ -11,9 +11,12 @@ import { readRaw, parseJson, send, header } from './http.mjs';
 import { id, sha256 } from './crypto.mjs';
 import { createAccounts } from './accounts.mjs';
 import { permissionsOf, allows, REFUSALS } from './roles.mjs';
+import { validAddress } from './mail.mjs';
 
 /** The two-step code module the pages use too (assets/js/totp.js), always with Node's own HMAC-SHA-1 here. */
 const TOTP = createRequire(import.meta.url)('../../assets/js/totp.js');
+/** The firm's messages (assets/js/emails.js, phase 13): the password reset, the security notices, access invitations. */
+const EMAILS = createRequire(import.meta.url)('../../assets/js/emails.js');
 const hmacSha1 = (k, m) => createHmac('sha1', Buffer.from(k)).update(Buffer.from(m)).digest();
 
 const MIN = 60 * 1000;
@@ -24,6 +27,9 @@ const SID = /^[A-Za-z0-9_-]{43}$/;
 const PERSON_ID = /^per_[\w-]{1,64}$/;
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{1,63}$/;
 const HALF_DONE_MS = 10 * MIN;
+const LINK_TOKEN = /^[A-Za-z0-9_-]{43}$/;
+const RESET_MS = 30 * MIN;
+const RESET_TRIES = 5; // wrong codes on one reset link before it stops working
 
 /** The only sentences these routes answer with (the screens show them as they are). */
 const SAY = {
@@ -41,7 +47,10 @@ const SAY = {
   fresh: 'Enter your password again to do this.',
   codes: 'Too many wrong codes. Sign in again.',
   console: 'Two-step sign-in is required for everyone who uses the console.',
-  firmRule: 'Your firm requires two-step sign-in.'
+  firmRule: 'Your firm requires two-step sign-in.',
+  resetSent: 'If an account uses that address, we emailed a link to choose a new password. It works for 30 minutes.',
+  badLink: 'This link is not valid or has expired. Ask for a new one.',
+  needCode: 'Enter the code from your authenticator app or a recovery code.'
 };
 const wait = (n) => `Too many tries. Wait ${n} ${n === 1 ? 'second' : 'seconds'} and try again.`;
 
@@ -337,6 +346,78 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     if (audit && typeof audit.append === 'function') return audit.append({ workspace, personId: person ? person.id : '', action, detail, record });
     store.event({ type: 'auth', action, workspace });
   }
+
+  /* --- email (plan 15-14): phase 13's messages through the mailer 13-03 built, reached as invites.mailer --- */
+  const mailer = invites && invites.mailer ? invites.mailer : null;
+  const senders = invites && invites.senders ? invites.senders : null;
+  const firmRecord = invites && typeof invites.firmRecord === 'function' ? invites.firmRecord : () => null;
+  const audienceOf = (p) => (p && p.kind === 'investor' ? 'investor' : 'team');
+  /**
+   * True only when the mailer would send a message for this audience now (never into the outbox, never held): a team
+   * person's mail goes from the platform's MAIL_FROM (13-03's rule for mail with no workspace); an investor's from the
+   * firm's own ready address, or MAIL_FROM on a server with no sponsor accounts. A link that cannot be sent is never made.
+   */
+  function canSend(audience, wid) {
+    if (!mailer || !mailer.configured) return false;
+    if (audience !== 'investor') return validAddress(env.MAIL_FROM);
+    const s = senders && wid ? senders.get(wid) : null;
+    if (s && s.status === 'ready' && validAddress(s.address)) return true;
+    return !store.list('accounts').length && validAddress(env.MAIL_FROM);
+  }
+  /** The firm as its messages name it: the brand the workspace keeps on this server, else the name given at sign-up. */
+  function firmOf(wid) {
+    let t = null;
+    try {
+      t = firmRecord(wid);
+    } catch {
+      t = null;
+    }
+    const f = t && typeof t === 'object' ? EMAILS.firmFromTenant(t) : {};
+    if (!f.name) {
+      const w = workspaceOf(wid);
+      f.name = (w && w.name) || '';
+    }
+    return f;
+  }
+  const inFlight = new Set();
+  /** Mail is sent after the answer (an answer never waits for the relay, so its timing says nothing); settled() waits. */
+  function later(work) {
+    const p = Promise.resolve()
+      .then(work)
+      .catch(() => ({ emailStatus: 'failed' }));
+    inFlight.add(p);
+    p.finally(() => inFlight.delete(p));
+    return p;
+  }
+  const settled = async () => {
+    while (inFlight.size) await Promise.all(Array.from(inFlight));
+  };
+  /** One message to one recipient { audience, workspace, email, name, investorId }; link is the personal link it holds. */
+  async function mailOne(r, kind, data, link = '') {
+    const firm = firmOf(r.workspace);
+    const m = EMAILS.render(kind, Object.assign({ firm }, data));
+    const team = r.audience !== 'investor';
+    return mailer.send({
+      kind,
+      workspace: team ? '' : r.workspace,
+      investorId: r.investorId || '',
+      fromName: firm.name,
+      replyTo: team ? '' : firm.supportEmail,
+      to: r.email,
+      toName: r.name || '',
+      subject: m.subject,
+      text: m.text,
+      html: m.html,
+      inline: (m.inline || []).map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })),
+      headers: { 'Auto-Submitted': 'auto-generated' },
+      link
+    });
+  }
+  /** A person as a recipient: the address and name as they are stored now. */
+  const recipientOf = (p) => {
+    const o = people.open(p);
+    return { audience: audienceOf(p), workspace: p.workspace, email: o.email, name: o.name, investorId: p.investorId || '', personId: p.id };
+  };
 
   /* --- routes --- */
   async function body(req) {
@@ -710,6 +791,71 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     return send(res, 200, { ok: true });
   }
 
+  /* --- "Forgot your password?" (plan 15-14, SE-04): one answer for every address; the link's token after '#', hash only --- */
+  const resetOf = (token) => {
+    if (typeof token !== 'string' || !LINK_TOKEN.test(token)) return null;
+    const h = sha256(token);
+    const t = now();
+    return store.list('people').find((p) => p.reset && p.reset.hash === h && ms(p.reset.until) > t && p.status === 'active' && p.pw) || null;
+  };
+  /** POST /v1/auth/reset/request { email, workspace? }: the same answer whether or not an account uses the address. */
+  async function resetRequest(req, res) {
+    requireVault();
+    const b = await body(req);
+    if (typeof b.email !== 'string' || !b.email.trim() || b.email.length > 254) return send(res, 400, { error: SAY.fields });
+    const ws = typeof b.workspace === 'string' && b.workspace ? b.workspace : undefined;
+    // A locked person may reset (Pitfall 8); a removed, disabled or not yet accepted one has no password to reset.
+    for (const p of people.byEmail(b.email, ws).filter((x) => x.status === 'active' && x.pw)) {
+      if (!canSend(audienceOf(p), p.workspace)) continue; // never a link that cannot go out at once (Pitfall 2)
+      const token = randomBytes(32).toString('base64url');
+      const until = iso(now() + RESET_MS);
+      people.update(p.id, { reset: { hash: sha256(token), until, tries: 0 } }); // any earlier link stops working
+      const link = `${publicUrl}/#reset-${token}`;
+      const r = recipientOf(p);
+      later(() => mailOne(r, 'password_reset', { variant: r.audience, person: { name: r.name }, link, expiresAt: until }, link));
+    }
+    return send(res, 200, { ok: true, message: SAY.resetSent });
+  }
+  /** POST /v1/auth/reset/check { token }: the firm and whether a code will be asked for; nothing else about the person. */
+  async function resetCheck(req, res) {
+    const b = await body(req);
+    const p = resetOf(b.token);
+    if (!p) return send(res, 404, { error: SAY.badLink });
+    return send(res, 200, { firm: firmOf(p.workspace).name, twoStep: !!p.twoStep });
+  }
+  /** The app code (after the last step accepted) or an unused recovery code, for a person with two-step; true when it is right. */
+  async function secondStep(p, code) {
+    const typed = typedCode(code);
+    if (/^[0-9]{6}$/.test(typed)) {
+      const step = await appStep(p, typed);
+      return step !== null && acceptStep(p.id, step) ? 'app' : '';
+    }
+    const normal = typed ? TOTP.normalRecovery(typed) : '';
+    return normal && useRecovery(p.id, normal) ? 'recovery' : '';
+  }
+  /** POST /v1/auth/reset/confirm { token, password, code? }: the new password; a reset never skips two-step. */
+  async function resetConfirm(req, res) {
+    requireVault();
+    const b = await body(req);
+    const p = resetOf(b.token);
+    if (!p) return send(res, 404, { error: SAY.badLink });
+    const problem = password.problem(b.password, p.kind);
+    if (problem) return send(res, 400, { error: problem });
+    if (p.twoStep && !(await secondStep(p, b.code))) {
+      const cur = store.get('people', p.id);
+      const tries = (Number(cur.reset && cur.reset.tries) || 0) + 1;
+      people.update(p.id, { reset: tries >= RESET_TRIES ? null : Object.assign({}, cur.reset, { tries }) }); // the 5th wrong code ends the link
+      return send(res, 401, { error: SAY.needCode, code: 'code' });
+    }
+    const pw = await password.hash(b.password);
+    const cur = resetOf(b.token); // still the same link after the hash (a second confirm at once finds none)
+    if (!cur || cur.id !== p.id) return send(res, 404, { error: SAY.badLink });
+    people.update(p.id, { pw, reset: null, fails: NO_FAILS(), status: 'active' }); // the lock ends with the reset
+    sessions.endAll(p.id);
+    log({ workspace: p.workspace, person: p, action: 'Password reset' });
+    return send(res, 200, { ok: true });
+  }
+
   /** POST /v1/invite/login { password } with X-Invite-Token: the investor's own sign-in, made from the invitation. */
   async function inviteLogin(req, res) {
     requireVault();
@@ -765,11 +911,14 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     '/v1/auth/firm/investor-two-step': ['POST', investorRule],
     '/v1/auth/confirm-password': ['POST', confirmPassword],
     '/v1/auth/sessions': ['GET', sessionsList],
-    '/v1/auth/sessions/end-others': ['POST', endOthers]
+    '/v1/auth/sessions/end-others': ['POST', endOthers],
+    '/v1/auth/reset/request': ['POST', resetRequest],
+    '/v1/auth/reset/check': ['POST', resetCheck],
+    '/v1/auth/reset/confirm': ['POST', resetConfirm]
   };
   const RESET = /^\/v1\/auth\/people\/(per_[\w-]{1,64})\/two-step\/reset$/;
   /** The routes a half-done sign-in (or none) may call; every other /v1/auth/ path needs a full session first (Pitfall 1). */
-  const OPEN = new Set(['/v1/auth/status', '/v1/auth/signup', '/v1/auth/signin', '/v1/auth/signout', '/v1/auth/me', '/v1/auth/two-step/start', '/v1/auth/two-step/confirm', '/v1/auth/code']);
+  const OPEN = new Set(['/v1/auth/status', '/v1/auth/signup', '/v1/auth/signin', '/v1/auth/signout', '/v1/auth/me', '/v1/auth/two-step/start', '/v1/auth/two-step/confirm', '/v1/auth/code', '/v1/auth/reset/request', '/v1/auth/reset/check', '/v1/auth/reset/confirm']);
   /** The /v1/auth/ routes and POST /v1/invite/login; false for any other path. */
   async function handle(req, res, path) {
     const login = req.method === 'POST' && path === '/v1/invite/login';
@@ -829,5 +978,5 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     return send(res, 200, { ok: true });
   }
 
-  return { handle, admin, sessionOf, sponsor, investor, required, people, sessions, password, fresh, log, workspaceOf, confirmed, limits, purge, cookieName: COOKIE };
+  return { handle, admin, sessionOf, sponsor, investor, required, people, sessions, password, fresh, log, workspaceOf, confirmed, limits, purge, cookieName: COOKIE, canSend, settled };
 }

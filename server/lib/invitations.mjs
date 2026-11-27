@@ -1540,6 +1540,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     mailer,
     senders,
     mailLog,
+    firmRecord, // the firm's stored brand, for lib/auth.mjs's messages (plan 15-14)
     vault,
     usePackages,
     stop: () => clearInterval(timer)
