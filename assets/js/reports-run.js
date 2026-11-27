@@ -152,9 +152,10 @@
   const NO_PHOTO = 'The original file is not kept on this device, and a photo it used is no longer on this device.';
 
   /**
-   * An archived file, byte-identical or not at all: the kept bytes when their SHA-256 equals the record; otherwise the
-   * file remade from the run's own copy of the template, spec and audience at the time it was made, served only when its
-   * SHA-256 equals the record. Nothing is recorded or kept here.
+   * An archived file, byte-identical or not at all: the kept bytes when their SHA-256 equals the record; otherwise (nothing
+   * kept, or kept bytes that are not this file: another firm's file under an id made before ids named the firm, or a
+   * changed byte) the file remade from the run's own copy of the template, spec and audience at the time it was made,
+   * served only when its SHA-256 equals the record. Nothing is recorded or kept here, and kept bytes are never replaced.
    *   opts: { kit, store = NS.ops.files, logo, D = NS.reportsData } → { bytes, source: 'kept' | 'remade' } | { error }
    */
   async function fileBytes(ws, runId, fileId, opts) {
@@ -173,7 +174,8 @@
     }
     if (kept) {
       const bytes = new Uint8Array(await kept.arrayBuffer());
-      return R.verifyFile(ws, runId, fileId, bytes) ? { bytes, source: 'kept' } : { error: 'The kept file does not match its record.' };
+      if (R.verifyFile(ws, runId, fileId, bytes)) return { bytes, source: 'kept' };
+      // not the file on record: remade below like a file that is not kept
     }
     const aud = run.audience || {};
     const rid = aud.kind === 'letter' && !aud.statements ? null : file.investorIds[0] || null;

@@ -94,7 +94,11 @@
     r.runs.push(run);
     return run;
   }
-  /** One generated file of a run: its investors, its offering, its name, size, SHA-256 and pages. */
+  /**
+   * One generated file of a run: its investors, its offering, its name, size, SHA-256 and pages. Its id is the key of the
+   * file in the browser's file store, which every portal in the browser shares, so it names the firm:
+   * rf-<tenant id>-<run>-<file>, as the builder's photo ids do (rp-<tenant id>-<n>). Files made before carry rf-<run>-<file>.
+   */
   function addFile(ws, runId, a) {
     const run = needRun(ws, runId);
     if (run.state !== 'generating') refuse('Files can only be added while the report is being generated.');
@@ -103,7 +107,8 @@
     const ids = Array.isArray(a.investorIds) ? uniq(a.investorIds.filter(Boolean).map(String)) : [];
     if (!ids.length) refuse('The file needs the investors it is for.');
     const n = String(run.id).replace(/^rr-/, '');
-    const file = { id: `rf-${n}-${run.files.length + 1}`, investorIds: ids, offeringId: String(a.offeringId || ''), name: String(a.name || ''), size: a.size, sha256: a.sha256, pages: Number(a.pages) || 0 };
+    const firm = ws.tenant && ws.tenant.id ? `${ws.tenant.id}-` : '';
+    const file = { id: `rf-${firm}${n}-${run.files.length + 1}`, investorIds: ids, offeringId: String(a.offeringId || ''), name: String(a.name || ''), size: a.size, sha256: a.sha256, pages: Number(a.pages) || 0 };
     run.files.push(file);
     return file;
   }
