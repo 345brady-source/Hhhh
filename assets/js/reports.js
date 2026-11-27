@@ -793,8 +793,8 @@
       if (kind === 'dist' || kind === 'capital') {
         const mine = !!(X.rid && X.st[o.id]);
         const S = X.D.series(X.ws, o.id, mine ? X.rid : null, X.from, X.to) || { capital: [], dist: [] };
-        if (kind === 'dist') chartBlock(X, 'columns', mine ? 'Your distributions by quarter' : 'Distributions by quarter', S.dist.map((d) => d.label), S.dist.map((d) => d.cents), show);
-        else chartBlock(X, 'line', mine ? 'Your capital account at month-end' : 'Fund capital at month-end', S.capital.map((c) => fmt.month(c.key)), S.capital.map((c) => c.cents), show);
+        if (kind === 'dist') chartBlock(X, 'columns', mine ? 'Your distributions by quarter' : 'Distributions by quarter', S.dist.map((d) => d.label), S.dist.map((d) => d.cents), show, mine ? 'You received no distributions in this period.' : 'The fund made no distributions in this period.');
+        else chartBlock(X, 'line', mine ? 'Your capital account at month-end' : 'Fund capital at month-end', S.capital.map((c) => fmt.month(c.key)), S.capital.map((c) => c.cents), show, mine ? 'Your capital account was zero throughout this period.' : 'The fund had no capital in this period.');
       } else if (kind === 'allocation') {
         const H = X.D.holdings(X.ws, o.id, X.to) || { rows: [] };
         bar100(X, 'Fair value by holding', (H.rows || []).map((h) => h.name), (H.rows || []).map((h) => h.fv));
@@ -823,14 +823,21 @@
     if (typeof v === 'number') return { v, s: t === 'price' ? v.toFixed(2) : String(v) };
     return txt(v);
   }
-  /** A columns or line chart of whole cents: ticks at 0 (the lower of zero and the least value) and 1 (the greatest). */
-  function chartBlock(X, kind, title, labels, values, show) {
+  /**
+   * A columns or line chart of whole cents: ticks at 0 (the lower of zero and the least value) and 1 (the greatest).
+   * When every value is 0 there is nothing to draw (only two $0.00 labels), so the sentence `empty` stands in its place.
+   */
+  function chartBlock(X, kind, title, labels, values, show, empty) {
     if (!labels.length) return;
     values = values.map((v) => whole(v, title));
+    if (values.every((v) => v === 0)) {
+      X.B.push(note(empty));
+      return;
+    }
     const max = Math.max(0, ...values);
     const min = Math.min(0, ...values);
     const span = max - min;
-    const ticks = span ? [min, Math.round(min + span / 2), max].map((v) => ({ at: (v - min) / span, s: show(v) })) : [{ at: 0, s: show(0) }, { at: 1, s: show(0) }];
+    const ticks = [min, Math.round(min + span / 2), max].map((v) => ({ at: (v - min) / span, s: show(v) }));
     X.B.push({ k: 'chart', kind, title, labels, values, shown: values.map(show), ticks });
   }
   /** Whole parts of `unit` in proportion to the values, by largest remainder (they add to `unit` exactly). */
