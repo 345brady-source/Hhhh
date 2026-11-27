@@ -1,4 +1,4 @@
-// gate: tests 9
+// gate: tests 10
 // Keys and backups (plan 15-03, SE-10, SE-11; C-05, C-06; W-15, W-16, W-19): the backup tool seals the store and every
 // blob with BACKUP_KEY in 1 MiB pieces, verify finds any changed, missing or reordered piece, restore writes only into an
 // empty folder, prune keeps 7 daily / 4 weekly / 12 monthly; the vault opens values under several previous keys; the
@@ -248,7 +248,7 @@ test('previous keys', () => {
   assert.throws(() => v.open(Object.assign({}, box, { a: 'inv_2:submission' }), 'inv_2:submission'), /failed its integrity check/);
 });
 
-const emailIndex = (k, email) => createHmac('sha256', Buffer.from(hkdfSync('sha256', Buffer.from(k, 'base64'), 'cv-email-index', 'v1', 32))).update(String(email).trim().normalize('NFKC').toLowerCase()).digest('hex');
+const emailIndex = (k, email) => createHmac('sha256', Buffer.from(hkdfSync('sha256', Buffer.from(k, 'base64'), 'cv-email-index', 'v1', 32))).update(`email:${String(email).normalize('NFKC').trim().toLowerCase()}`).digest('hex');
 const auditHash = (e) => createHash('sha256').update(JSON.stringify([e.prev, e.workspace, e.seq, e.at, e.personId, e.action, e.dh]), 'utf8').digest('hex');
 const fileShas = (file) => {
   const out = { 'store.json': sha(readFileSync(file)) };
@@ -413,4 +413,44 @@ test('flush on exit', async (t) => {
     assert.equal(read(f).invitations.inv_sig.status, 'opened', sig);
     assert.equal(existsSync(`${f}.lock`), false, sig);
   }
+});
+
+/** One call as the portal's own page makes it (JSON, the server's Origin). */
+async function call(base, path, body) {
+  const res = await fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'http://127.0.0.1' }, body: JSON.stringify(body) });
+  return { status: res.status, text: await res.text() };
+}
+
+test('reseal people sign in', async (t) => {
+  // A person signed up under k1 (15-01's real sign-up) is found by the real sign-in after the reseal with k1 dropped.
+  const dir = tmp(t);
+  const [k1, k2] = [key(), key()];
+  const file = join(dir, 'live', 'store.json');
+  const person = { firm: 'Harbor Ridge Capital', name: 'Pat Owner', email: 'Pat@HarborRidge.example', password: randomBytes(12).toString('hex') };
+  const env = (DATA_KEY) => ({ DATA_KEY, PUBLIC_URL: 'http://127.0.0.1' });
+  const { withServer } = await import('./helpers.mjs');
+  let st = openStore(file);
+  await withServer({ env: env(k1), store: st }, async (base) => {
+    const up = await call(base, '/v1/auth/signup', person);
+    assert.equal(up.status, 201, up.text);
+  });
+  st.close();
+  const signIn = async (DATA_KEY) => {
+    const s = openStore(file);
+    let status = 0;
+    await withServer({ env: env(DATA_KEY), store: s }, async (base) => {
+      status = (await call(base, '/v1/auth/signin', { email: 'pat@harborridge.example', password: person.password })).status;
+    });
+    s.close();
+    return status;
+  };
+  assert.notEqual(await signIn(k2), 200, 'control: with k1 dropped and no reseal, the person indexed under k1 is not found');
+  const r = run(RESEAL, ['--store', file], { DATA_KEY: k2, DATA_KEY_PREVIOUS: k1 });
+  assert.equal(r.status, 0, r.out);
+  assert.match(r.out, /^resealed people: 2$/m);
+  assert.equal(await signIn(k2), 200, 'found after the reseal with only the new key');
+  st = openStore(file);
+  const [p] = st.list('people');
+  assert.equal(p.emailIndex, emailIndex(k2, person.email));
+  st.close();
 });
