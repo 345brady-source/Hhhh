@@ -722,4 +722,4 @@ const parts = {
 if (require.main === module) {
   Lib.runParts(parts, { name: 'REPORTS FLOW', unit: 'parts', flag: '--only', browser: true });
 }
-module.exports = { parts, open, toTab, create, previewState };
+module.exports = { parts, open, toTab, create, previewState, previewFor, openSec, png };

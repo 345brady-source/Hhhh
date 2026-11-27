@@ -709,4 +709,4 @@ const parts = {
 if (require.main === module) {
   Lib.runParts(parts, { name: 'DELIVER FLOW', unit: 'parts', flag: '--only', browser: true });
 }
-module.exports = { parts };
+module.exports = { parts, seed, toList, openTpl, openRun, stored, holders };

@@ -214,8 +214,25 @@ const cases = {
     const offs = (N) => sampleWorkspaces(N).reduce((a, ws) => a.concat(ws.offerings.map((x) => [ws.tenant.id, x])), []);
     const B = offs(base);
     const T = offs(tree);
-    const diff = T.filter(([tid, x], i) => !B[i] || B[i][1].id !== x.id || J(base.audit.settings(B[i][1])) !== J(tree.audit.settings(x))).map(([tid, x]) => tid + '/' + x.id);
-    check(`each of the ${T.length} sample offerings' settings is exactly the base tree's (15 expected)`, T.length === 15 && B.length === 15 && !diff.length, diff);
+    // Declared expected difference (quick task 2026-11-27-report-fixes): each seeded sample holding carries an id,
+    // '<offering id>-<its name, lower case, every run of other characters one hyphen>'. A holding's id is set aside only
+    // when the base's holding at the same place has no id and the tree's id is exactly that one; everything else,
+    // including every other field of every holding, is compared byte for byte as before.
+    const slug = (s) => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    let gained = 0;
+    const asBase = (bs, ts, oid) => {
+      const t = JSON.parse(J(ts));
+      (t.holdings || []).forEach((h, k) => {
+        const bh = (bs.holdings || [])[k];
+        if (h && bh && !Object.prototype.hasOwnProperty.call(bh, 'id') && h.id === `${oid}-${slug(h.name)}`) {
+          delete h.id;
+          gained++;
+        }
+      });
+      return J(t);
+    };
+    const diff = T.filter(([tid, x], i) => !B[i] || B[i][1].id !== x.id || J(base.audit.settings(B[i][1])) !== asBase(base.audit.settings(B[i][1]), tree.audit.settings(x), x.id)).map(([tid, x]) => tid + '/' + x.id);
+    check(`each of the ${T.length} sample offerings' settings is exactly the base tree's (15 expected), apart from the holding ids declared above (${gained} holdings)`, T.length === 15 && B.length === 15 && !diff.length, diff);
     const gen = T.filter(([, x]) => !tree.audit.generated(x)).map(([, x]) => x.id);
     check('every sample offering is generated; fund A, B and the probe are not', !gen.length && !tree.audit.generated(set.o) && !tree.audit.generated(probeWs().offerings[0]), gen);
   },
