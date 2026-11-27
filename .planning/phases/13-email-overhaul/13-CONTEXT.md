@@ -165,3 +165,4 @@ Both plans:
 - I2: e-sign signers with no investor record (the firm's countersigner, a co-investor) keep today's path and are logged as such; state the rule.
 - I1 is 13-09's (logSection reads GET /v1/messages/log per investor, which holds the server-sent consent notice). I3: the forgot toast's "simulated" wording is wired by a later plan after 15-14.
 - Start: now, beside 15-14 and 16-02 (no shared file); merge before own-fonts starts. Gate: GATE13_PHASES="08 10".
+- Merged tree ef87afa (13-04): SERVER MODE 15, CO-INVESTOR SERVER 5, EMAIL DIALOG 3, INVITE MAIL 9, EMAILS PARITY 3, PACKAGE INVITE 12, MONITORING 9, ROLES TABLE 3, FILINGS SERVER 7 pass; GATE13 SELF-TEST PASS (8).
