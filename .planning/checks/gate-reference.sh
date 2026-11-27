@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The reference gate: the debug finish-notfound-safari gate grown by later fixes: HELP CHAT (10), REAL FIRM (9), SIGNING
-# DOCUMENTS (8), PHONE LAYOUT (8), BANK STEP TYPING (2), RECORD AND LOST AGREEMENT (7), SCREEN EDGES (5), WALK3 FIXES (9), TITLES AND EDITOR (4), PRESS AND CO-INVESTOR (10), CO-INVESTOR SERVER (5), HELP PREVIEW (6). The server test count is exact when GATE_SERVER_TESTS is given.
+# DOCUMENTS (8), PHONE LAYOUT (8), BANK STEP TYPING (2), RECORD AND LOST AGREEMENT (7), SCREEN EDGES (5), WALK3 FIXES (9), TITLES AND EDITOR (4), PRESS AND CO-INVESTOR (10), CO-INVESTOR SERVER (5), HELP PREVIEW (6), REPORTS FLOW (8), DELIVER FLOW (8). The server test count is exact when GATE_SERVER_TESTS is given.
 # two persons, owner walks and leak search, the owner's folder, phase-4 signing and phase-5 record checks on the base tree
 # and on this tree) plus email-dialog, agreement-name, tax-request-leave and this plan's ways-out. Every step runs, but a
 # rerun into the same output folder keeps each step that passed under exactly the same key (.planning/checks/gate-lib.sh:
@@ -60,6 +60,8 @@ gate_run titles $O/titles.txt 'TITLES AND EDITOR (4)' "grep -qx 'TITLES AND EDIT
 gate_run pressco $O/pressco.txt 'PRESS AND CO-INVESTOR (10)' "grep -qx 'PRESS AND CO-INVESTOR: PASS (parts run: 10)' $O/pressco.txt" -- env NODE_PATH=$GN $H node $P/checks/press-and-co-investor.js
 gate_run coserver $O/coserver.txt 'CO-INVESTOR SERVER (5)' "grep -qx 'CO-INVESTOR SERVER: PASS (parts run: 5)' $O/coserver.txt" -- env NODE_PATH=$GN $H node $P/checks/co-investor-server.js
 gate_run helpprev $O/helpprev.txt 'HELP PREVIEW (6)' "grep -qx 'HELP PREVIEW: PASS (parts run: 6)' $O/helpprev.txt" -- env NODE_PATH=$GN $H node .planning/phases/07-help-chatbot/checks/help-preview.js
+gate_run repflow $O/repflow.txt 'REPORTS FLOW (8)' "grep -qx 'REPORTS FLOW: PASS (parts run: 8)' $O/repflow.txt" -- env NODE_PATH=$GN $H node .planning/phases/12-report-builder/checks/reports-flow.js
+gate_run delflow $O/delflow.txt 'DELIVER FLOW (8)' "grep -qx 'DELIVER FLOW: PASS (parts run: 8)' $O/delflow.txt" -- env NODE_PATH=$GN $H node .planning/phases/12-report-builder/checks/deliver-flow.js
 BASE=$(cat $O/base-commit.txt)
 HEADC=$(git rev-parse HEAD)
 ok 'base is an ancestor of HEAD and HEAD moved' "git merge-base --is-ancestor $BASE HEAD && test '$BASE' != '$HEADC'"
