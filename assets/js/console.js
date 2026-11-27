@@ -2046,7 +2046,10 @@
     return u.calls;
   }
   /** Notice the offering's documents give for capital calls (business days), else the usual 10. */
-  const callDays = (o) => Number(((o && o.structure) || {}).callNoticeDays) || 10;
+  const callDays = (o) => {
+    const n = Number(((o && o.structure) || {}).callNoticeDays);
+    return Number.isInteger(n) && n >= 1 ? n : 10; // a value stored before the field's rule never suggests a past date
+  };
   function callDraft() {
     const c = callState();
     if (!c.draft) {
@@ -2899,6 +2902,7 @@
     const st = ikState();
     if (!st.profile) return;
     if (path === 'offering.name' && el && String(v).trim()) el.removeAttribute('aria-invalid');
+    if (path === 'structure.callNoticeDays' && el && noticeOk(v)) el.removeAttribute('aria-invalid');
     if (path === 'fees.other') v = String(v).split('\n').map((x) => x.trim()).filter(Boolean);
     // A corrected Name corrects the Short name, until the sponsor types a short name of their own (an existing offering's
     // counts as theirs unless it is its Name's own short form). Set in place, so typing in the Name is never interrupted.
@@ -3026,9 +3030,19 @@
     NS.app.render();
     window.scrollTo(0, 0);
   };
+  /** Capital call notice (days): empty, or a whole number of 1 or more. */
+  const noticeOk = (v) => v === '' || v == null || (Number.isInteger(v) && v >= 1);
   NS.actions['ik-apply'] = async () => {
     const st = ikState();
     if (!st.profile || st.busy) return;
+    if (!noticeOk((st.profile.structure || {}).callNoticeDays)) {
+      const f = document.getElementById('ik-structure-callNoticeDays');
+      if (f) {
+        f.setAttribute('aria-invalid', 'true');
+        f.focus();
+      }
+      return U.toast('Enter the capital call notice as a whole number of days, 1 or more.');
+    }
     if (!String(st.profile.offering.name || '').trim()) {
       // The field is marked and takes focus (the mark goes once a name is typed: NS.binders.ik)
       const f = document.getElementById('ik-offering-name');
