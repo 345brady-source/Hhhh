@@ -17,7 +17,7 @@
 //   investor-desktop  diy.html and index.html as the sample investor: every tab, one investment, portfolio, preferences,
 //                     subscribe-<id> for an open offering, sign-in
 //   investor-phone    the same on the phone, with the menu opened
-//   flows-desktop     diy-start; join-<id> (open and closed); the field editor on the sample agreement; the report builder
+//   flows-desktop     diy-start; join-<id> for an open offering; the field editor on the sample agreement; the report builder
 //                     with a starter template; a new invitation walked step by step (each step recorded before it is
 //                     filled, filled the same way on both trees), the W-9 signing view, the agreement signing view and
 //                     the done page; the activation page; the bank update page; the e-sign sender list and the envelope
@@ -180,7 +180,9 @@ function judge(check, part, got, o) {
     Object.values(vendorNotes).forEach((n) => console.log(n));
     Object.keys(vendorNotes).forEach((k) => delete vendorNotes[k]);
     check(`no request left the page's origin on this tree (${keys.length} screens)`, got.plan.outside.length === 0, got.plan.outside.slice(0, 6));
-    const fresh = got.plan.pageErrors.filter((e) => got.base.pageErrors.indexOf(e) < 0);
+    const nerr = (e) => String(e).replace(S18.ORIGIN_RE, 'http://origin.example').replace(S18.ID_RE, '<id>');
+    const baseErr = got.base.pageErrors.map(nerr);
+    const fresh = got.plan.pageErrors.map(nerr).filter((e) => baseErr.indexOf(e) < 0);
     check('no script error on this tree that the base tree does not have', fresh.length === 0, fresh.slice(0, 4));
     check(`screens recorded on both trees: ${keys.length}`, keys.length > 0 && (o.min === undefined || keys.length >= o.min), { min: o.min, keys: keys.length });
   }
@@ -276,6 +278,11 @@ async function finishOnboarding(W, who, onStep) {
   await W.fr.waitForTimeout(500);
 }
 const newInvitation = (W, o) => L.createInvitation(W.fr, o);
+/** lib10 sample() from any page: a standalone page (an invitation, a sign-up link) has no demo bar, so the console is opened first. */
+async function asRole(W, role, investor) {
+  if (!(await W.fr.locator('#demo-role').count())) await route(W, 'console', 700);
+  return T.sample(W.fr, investor ? { role, investor } : { role });
+}
 
 /* ---------- the walks ---------- */
 /** Every console menu page as `role`, the menu read from the page. */
@@ -381,12 +388,8 @@ function flowsWalk() {
       const ids = await sampleIds(W);
       await route(W, `join-${ag.offeringId}`);
       await rec(W, 'join, an open offering');
-      if (ids.plain) {
-        await route(W, `join-${ids.plain}`);
-        await rec(W, 'join, an offering not raising');
-      }
       // the field editor on the sample agreement
-      await T.sample(W.fr, { role: 'admin' });
+      await asRole(W, 'admin');
       await route(W, `console-offering-${ag.offeringId}`);
       if (await press(W, '[data-action="es-agreement-edit"]')) {
         const opened = await W.fr.waitForSelector('.fe .es-fld', { timeout: 60000 }).then(() => true, () => false);
@@ -428,19 +431,25 @@ function flowsWalk() {
       await rec(W, 'invitation: done');
       // the activation page (an investor on file who has not activated) and the bank update page
       if (ids.notDone) {
-        await T.sample(W.fr, { role: 'investor', investor: ids.notDone });
+        await asRole(W, 'investor', ids.notDone);
         await W.fr.waitForTimeout(500);
         await rec(W, 'activation');
       } else miss(W, 'activation', 'the sample has no investor still to activate');
-      await T.sample(W.fr, { role: 'investor', investor: ids.inv });
+      await asRole(W, 'investor', ids.inv);
       await route(W, 'account');
       if (await press(W, '[data-action="update-bank"]', { wait: 700 })) await rec(W, 'bank update');
       else miss(W, 'bank update', 'no Update bank account button');
       // the e-sign sender list and the envelope the invitation made
-      await T.sample(W.fr, { role: 'admin' });
+      await asRole(W, 'admin');
       await route(W, 'console-esign');
       await rec(W, 'e-sign list');
-      const env = await ev(W, (id) => ((window.CVPortal.state.ws.envelopes || []).find((e) => e.agreementFor && (e.signers || []).some((s) => s.investorId === id)) || {}).id || '', who.investorId);
+      const env = await ev(W, (id) => (() => {
+        const ws = window.CVPortal.state.ws;
+        const i = ws.investors.find((x) => x.id === id) || { onboarding: {} };
+        const tax = ((i.onboarding || {}).flow || {}).taxEnvelopeId;
+        const mine = (ws.envelopes || []).filter((e) => e.id !== tax && (e.signers || []).some((s) => s.investorId === id));
+        return (mine.pop() || {}).id || '';
+      })(), who.investorId);
       if (env) {
         await route(W, `console-envelope-${env}`);
         await rec(W, 'e-sign envelope');
@@ -506,18 +515,19 @@ const SETUP = {
       },
       c.inv
     ),
-  nachaReleased: async (W) => {
+  // a recorded distribution's file built and downloaded (the download marks it sent: the one state step this dialog
+  // needs), then the same distribution loaded again: its sent file's record offers Build again
+  nachaReleased: async (W, c) => {
     await route(W, 'console-distributions');
-    if (await W.fr.locator('input[name="ds-mode"][value="total"]:not(:checked)').count()) {
-      await W.fr.check('input[name="ds-mode"][value="total"]', { force: true });
-      await W.fr.waitForTimeout(300);
-    }
-    await W.fr.fill('#ds-total', '25000');
-    await W.fr.waitForTimeout(400);
+    c.run = await ev(W, () => (document.querySelector('[data-action="dist-load"]') || { getAttribute: () => '' }).getAttribute('data-id'));
+    if (!c.run || !(await press(W, `[data-action="dist-load"][data-id="${c.run}"]`, { wait: 700 }))) throw new Error('no recorded distribution to load');
     if (!(await press(W, '[data-action=nacha-build]:not([disabled])', { wait: 900 }))) throw new Error('nacha-build could not be pressed');
     const got = W.A.page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
-    if (!(await press(W, '[data-action=nacha-download]', { wait: 700 }))) throw new Error('nacha-download could not be pressed');
+    if (!(await press(W, '[data-action=nacha-download]:not([disabled])', { wait: 700 }))) throw new Error('nacha-download could not be pressed');
     await got;
+    await route(W, 'console');
+    await route(W, 'console-distributions');
+    if (!(await press(W, `[data-action="dist-load"][data-id="${c.run}"]`, { wait: 700 }))) throw new Error('the distribution could not be loaded again');
   },
   connection: async (W, c) => {
     c.conn = 'conn-p18-link';
@@ -553,6 +563,13 @@ const SETUP = {
     await W.fr.waitForSelector('[data-change="es-pick"]', { timeout: 10000 });
     await W.fr.locator('[data-change="es-pick"]').first().check({ force: true });
     await W.fr.waitForTimeout(300);
+    // the template has a Sponsor role: its countersigner is named (the form's own fields)
+    if (await W.fr.locator('#es-csn').count()) {
+      await W.fr.fill('#es-csn', 'Dana');
+      await W.fr.fill('#es-csl', 'Whitcombe');
+      await W.fr.fill('#es-cse', 'dana.whitcombe@sponsor.example');
+      await W.fr.waitForTimeout(200);
+    }
     await press(W, '[data-action="es-create"]', { wait: 600 });
     await W.fr.waitForFunction(() => /^#console-envelope-/.test(location.hash), null, { timeout: 30000 });
     c.draft = await ev(W, () => location.hash.replace('#console-envelope-', ''));
@@ -567,6 +584,8 @@ const SETUP = {
       const NS = window.CVPortal;
       const env = (NS.state.ws.envelopes || []).find((e) => e.agreementFor && e.status === 'draft');
       env.read = { ok: true, error: '', pages: env.pages, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 2, signatures: 1, initials: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [] };
+      // what an agreement uploaded on the offering keeps: the file it was read from (the stand-in agreement's file)
+      env.docId = env.docId || 'tpl-doc-test';
       NS.app.render();
     });
     await W.fr.waitForSelector('[data-action="es-reread"]', { timeout: 20000 });
@@ -587,11 +606,14 @@ const SETUP = {
       const u = (NS.state.ui || {}).tx || {};
       return !u.busy && ((NS.state.ws.taxdocs || {}).batches || []).length >= 1;
     }, null, { timeout: 120000, polling: 250 });
-    await W.fr.waitForSelector('[data-action="tx-view"]:not([disabled])', { timeout: 30000 });
+    // the imported file's own page (the list links to it)
+    await W.fr.waitForTimeout(500);
+    if (!(await press(W, '#main a[href^="#console-taxdocs-"]', { wait: 700 }))) throw new Error('the imported file is not listed');
+    await W.fr.waitForSelector('[data-action="tx-view"]', { timeout: 30000 });
     await W.fr.waitForTimeout(500);
   },
   asInvestor: async (W, c) => {
-    const r = await T.sample(W.fr, { role: 'investor', investor: c.inv });
+    const r = await asRole(W, 'investor', c.inv);
     c.viewer = r.viewer;
   },
   uploadedDoc: async (W, c) => {
@@ -607,7 +629,9 @@ const SETUP = {
     await W.fr.waitForTimeout(300);
   },
   w9View: async (W, c) => {
-    await T.sample(W.fr, { role: 'admin' });
+    await asRole(W, 'admin');
+    // the re-verify row needed Rule 506(c); this invitation is walked as the flows parts walk it (Rule 506(b))
+    await T.ws(W.fr, (w, id) => (w.offerings.find((o) => o.id === id).structure.exemption = 'Rule 506(b)'), c.raising);
     const name = W.size === 'phone' ? 'Ines Okafor-Lind' : 'Tomas Ruiz-Hallam';
     const who = Object.assign({ name }, await newInvitation(W, { name, email: W.size === 'phone' ? 'ines.okafor@example.com' : 'tomas.ruiz@example.com', type: 'individual', offeringId: c.raising }));
     c.who = who;
@@ -620,11 +644,34 @@ const SETUP = {
   onboarded: async (W, c) => {
     await finishOnboarding(W, c.who);
     await L.finishAgreement(W.fr);
-    await T.sample(W.fr, { role: 'investor', investor: c.who.investorId });
+    await asRole(W, 'investor', c.who.investorId);
+  },
+  // the fully signed copy an investor is given once the agreement completes (published by the portal then): its record, so
+  // the investor's Documents list it with its certificate (the state helper this dialog needs; nothing is signed)
+  signedDoc: async (W, c) => {
+    await W.fr.evaluate(async (id) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const i = ws.investors.find((x) => x.id === id);
+      const tax = ((i.onboarding || {}).flow || {}).taxEnvelopeId;
+      const env = (ws.envelopes || []).filter((e) => e.id !== tax && (e.signers || []).some((s) => s.investorId === id)).pop();
+      await NS.ops.files.put('doc-p18-signed', new Blob(['%PDF-1.4 signed agreement'], { type: 'application/pdf' }));
+      ws.docs = ws.docs || [];
+      if (!ws.docs.some((d) => d.id === 'doc-p18-signed')) ws.docs.push({ id: 'doc-p18-signed', title: 'Subscription Agreement', fileName: 'Subscription_Agreement_signed.pdf', type: 'application/pdf', size: 25, sha256: '', cat: 'Legal', offeringId: env ? env.offeringId || '' : '', audience: 'investors', investors: [id], envelopeId: env ? env.id : 'env-p18', date: NS.dates.today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'test', hidden: false });
+      NS.app.save(true);
+      NS.app.render();
+    }, c.who.investorId);
+    await W.fr.waitForTimeout(300);
   },
   asAdminEnvelope: async (W, c) => {
-    await T.sample(W.fr, { role: 'admin' });
-    c.agrEnv = await ev(W, (id) => ((window.CVPortal.state.ws.envelopes || []).find((e) => e.agreementFor && (e.signers || []).some((s) => s.investorId === id)) || {}).id || '', c.who.investorId);
+    await asRole(W, 'admin');
+    c.agrEnv = await ev(W, (id) => (() => {
+        const ws = window.CVPortal.state.ws;
+        const i = ws.investors.find((x) => x.id === id) || { onboarding: {} };
+        const tax = ((i.onboarding || {}).flow || {}).taxEnvelopeId;
+        const mine = (ws.envelopes || []).filter((e) => e.id !== tax && (e.signers || []).some((s) => s.investorId === id));
+        return (mine.pop() || {}).id || '';
+      })(), c.who.investorId);
   }
 };
 /** Every DIALOGS row of `edition`, in the table's order, in one session. */
