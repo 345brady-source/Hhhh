@@ -358,11 +358,11 @@ const DIALOGS = [
   D('esign.js', 5, 2506, 'Review and send', ['diy', 'managed'], 'draftFields', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-review"]' }]),
   D('esign.js', 6, 2543, 'Save as template', ['diy', 'managed'], 'none', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-save-tpl"]' }]),
   D('taxdocs-ui.js', 1, 537, 'Tax document pages (View pages on an imported K-1 file)', ['diy'], 'taxImport', [{ press: '[data-action="tx-view"]' }]),
-  D('integrations.js', 1, 914, 'Verification (the investor\'s Verify now; the managed Account page has no Verify now)', ['diy'], 'asInvestor', [{ route: 'account' }, { press: '.pt-main [data-action="iv-start"]' }]),
+  D('integrations.js', 1, 914, 'Verification (the investor\'s Verify now; the managed Account page has no Verify now)', ['diy'], 'asInvestor', [{ route: 'account' }, { press: '#main [data-action="iv-start"]' }]),
   D('portal.js', 2, 1160, 'A document (the investor\'s Documents)', ['diy', 'managed'], 'asInvestor', [{ route: 'documents' }, { press: '[data-action="open-doc"]' }]),
   D('portal.js', 1, 1102, 'An uploaded document (the investor\'s Documents)', ['diy', 'managed'], 'uploadedDoc', [{ route: 'documents' }, { press: '[data-action="open-doc"][data-id="doc-p18-upload"]' }]),
   D('esign.js', 7, 2890, 'Decline to sign (the W-9 signing view of a new invitation)', ['diy'], 'w9View', [{ press: '[data-action="es-decline"]' }]),
-  D('signature.js', 1, 673, 'Adopt your signature (the W-9 signing view)', ['diy'], 'w9Consent', [{ press: '.es-doc-sign [data-fid="{sigField}"]' }]),
+  D('signature.js', 1, 673, 'Adopt your signature (the W-9 signing view)', ['diy'], 'w9Consent', [{ press: '#main [data-fid="{sigField}"]' }]),
   D('esign.js', 9, 3465, 'An agreement signed by the investor, waiting for countersignature (the investor\'s Documents)', ['diy'], 'onboarded', [{ route: 'documents' }, { press: '[data-action="es-open-mine"]' }]),
   D('esign.js', 8, 3040, 'A signed document with its certificate (the investor\'s Documents)', ['diy'], 'signedDoc', [{ route: 'documents' }, { press: '[data-action="es-open-doc"]' }]),
   D('esign.js', 2, 1915, 'Void the agreement? (the sponsor\'s envelope page)', ['diy'], 'asAdminEnvelope', [{ route: 'console-envelope-{agrEnv}' }, { press: '[data-action="es-void"]' }])
