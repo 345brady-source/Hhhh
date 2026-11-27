@@ -49,6 +49,16 @@ started: seen during plan 13-04's gate (base ef87afa area)
     (5) record(C.cp, pk.id) (651) is read right after runNow returns, so when runNow returns early, the record is read before rescreenWith wrote it.
   implication: one defect explains both FAIL lines: runNow does not wait for the toast its click raises. The list-read / POST check (653) passes because the POST /v1/screenings request and the server's list read happen before the console has the answer (the server runs in the check's own process). Same shape, unchecked toast: package-not-run's second runNow (667, r2/r3 read at once), monitored-not-due's runNow (601, toast + records read at once), preview's runNow (843).
 
+- timestamp: 2026-11-27T17:01Z
+  checked: RED, scratch copy debug-monitoring/inst/monitoring-red.js (built by mkinst.py from the unfixed check: requires made absolute; in-page recorder armed before the click; FORCE_HOLD_MS=1500 sets the world's list hold, so the in-process server answers POST /v1/screenings 1500 ms late), --only package-not-run, GATE_FRESH=1, heavy.sh, load 12.4
+  found: |
+    TIMING pnr-A atClick=["Signed in as admin of Kestrel Bay","Signed in as admin of Kestrel Bay","Signed in as admin of Kestrel Bay"] resultAfterClick=none readAfterClick=32 recordAfterClick=34 margin=none
+    FAIL package-not-run "Run now" re-screened them :: Signed in as admin of Kestrel Bay
+    FAIL package-not-run the package result is kept as it was, the Treasury result is added, the next date moved :: {"title":"Davis Family Trust",...,"nextScreen":"2026-11-26","results":[{"connection":"package-id",...,"ref":"scr_seedpackage"}],...}
+    PASS package-not-run through the Treasury connection only: one list read, one screening asked of the server, for the Treasury lists
+    MONITORING: FAIL (parts run: 1) - package-not-run   (15 PASS, 2 FAIL)
+  implication: exactly the gate's signature: the same two FAIL lines, the list-read line PASS. Three sign-in toasts are on screen at the click (errorLines' two consoleRoutes and attention's one), so runNow's wait returned at once and the toast and the record were read 32-34 ms after the click, before the answer.
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
