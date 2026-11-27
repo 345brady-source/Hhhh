@@ -33,3 +33,6 @@ Owner instruction (2026-11-20, verbatim): "work around whatever bullshit you thi
 - Every .mjs under server/test counts as at least one test with node --test, so helper files count one each (ses-fake.mjs carries `// gate: tests 1`). Later plans count helper files the same way.
 - Owner-run items for 13-10: the provider's v2 request and response shapes, the private-key encoding (base64 PKCS#1 DER), the event fields (mail.commonHeaders.messageId with angle brackets), and the certificate host pattern.
 - A domain already used by another workspace is refused with 409. A domain the provider already holds gets the new key (PUT .../dkim/signing). A DMARC record is offered only when the lookup proves none exists (ENOTFOUND or ENODATA), never after a timeout.
+
+## From phase 16 (2026-11-27)
+- 13-01-PLAN.md:174 and 13-06-PLAN.md:115 use a real bank routing number (ending 0021) as test data. Executors use its never-issued image instead (prefix 13, same last seven digits, as 16-03 swapped it in server/test/invitations.test.mjs); ACH LEAK must keep passing.
