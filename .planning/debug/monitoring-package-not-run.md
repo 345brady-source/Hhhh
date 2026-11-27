@@ -111,6 +111,27 @@ started: seen during plan 13-04's gate (base ef87afa area)
     TIMING pnr-B atClick=[3 sign-in toasts] resultAfterClick=29 readAfterClick=66  margin=37
   implication: every "Run now" press so far has sign-in toasts on screen, so the old wait never waits; the result toast beats the read by only 23-37 ms (the earlier SERVER MODE race had 78-173 ms). A hold-up of the check's process (which also runs the server) of a few tens of ms at that moment gives the gate's failure. monitored-not-due and package-not-run's second press have the same exposure.
 
+- timestamp: 2026-11-27T17:13Z
+  checked: instrumented natural runs inst-1, inst-3 (full, PASS 9) and the parts done of inst-2/4/5/6: 16 "Run now" presses timed
+  found: |
+    every press had sign-in toasts on screen at the click: mnd 2, pnr-A 3, pnr-B 3-4, preview-desktop 1, preview-phone 1
+    margin (result toast -> end of the old read), ms: mnd 32 23 27 38 | pnr-A 20 34 28 28 | pnr-B 22 37 28 20 | preview-desktop 36 68 | preview-phone 28 16
+    result toast after the click 29-99 ms (sandbox presses included: not synchronous)
+  implication: all four callers of runNow (monitored-not-due 601, package-not-run 650 and 667, preview 843 desktop and phone) read a toast and records whose arrival nothing waited for, with 16-68 ms to spare; all are fixed by the same runNow change
+
+- timestamp: 2026-11-27T17:13Z
+  checked: the other reads of all 9 parts, by reading, for a positive read with nothing ordering it after what it reads
+  found: |
+    alert: ordered (server applies the alert before 200; waitDecision before record; hits, log entry, decision written in one step by pullChanged)
+    hold-only: 551/557 ordered by waitDecision / pulled; 566 kyc-iv-approve is synchronous (record written before the click returns); 556 reads the answer's own body. Reads after pulled() are negative (the console must NOT clear) bounded only by pulled()'s fixed 800 ms -> strengthened by the pulled() change
+    monitored-not-due: 601-604 runNow (fixed); 592-595 settleMonitored runs in the render reopen waits for; 615-631 awaited in the page
+    package-not-run: 650-655 and 667-670 runNow (fixed); 644 'the console's own pass at load has run' relied on pulled()'s 800 ms: if the console applies its pull later, its own pass (autoRescreen, which looks for the free connection right after pullChanged in the same task) would find the Treasury connection the part seeds next and re-screen the investor itself -> fixed by the pulled() change
+    kyc-buttons: 691/699/710 kycPress read the last toast in two steps after a wait for any toast (it cleared old toasts first) -> moved to toastAfter; 685 same as package-not-run 644 -> pulled() change
+    auto-free: 736-753 ordered by the waitForFunction on the moved date (results, log entry written in the same step); 759-762 negative after pulled() -> pulled() change
+    once: 787-792 ordered by the moved-date wait; 801-803 `tried = C.posts.length` (a positive count of the run's screening request) read after pulled() + 1500 ms with nothing waiting for the request -> now waits for that request's answer; 804-807 negative
+    preview-desktop / preview-phone: 843-845 runNow (fixed); 836-839 negative, no server
+  implication: beyond runNow, two more reads of the same kind: pulled()'s callers that seed right after it (package-not-run 644, kyc-buttons 685) and once's `tried` (803). Forced RED/GREEN for both are running (FORCE_PULL_HOLD=3000: the page applies the pull 3 s after it arrived; FORCE_POST_DELAY=5000: the console's run sends its screening 5 s late)
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
