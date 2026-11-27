@@ -59,6 +59,23 @@ started: seen during plan 13-04's gate (base ef87afa area)
     MONITORING: FAIL (parts run: 1) - package-not-run   (15 PASS, 2 FAIL)
   implication: exactly the gate's signature: the same two FAIL lines, the list-read line PASS. Three sign-in toasts are on screen at the click (errorLines' two consoleRoutes and attention's one), so runNow's wait returned at once and the toast and the record were read 32-34 ms after the click, before the answer.
 
+- timestamp: 2026-11-27T17:05Z
+  checked: server/index.mjs:824-862 (POST /webhooks/:provider), server/lib/changed.mjs:44-66, integrations.js:1116-1141 (ongoing), 1150-1166 (autoRescreen), 1203-1248 (pullChanged), console.js:2571-2584 (kyc-screen, kyc-screen-due), 2610-2618 (kyc-iv-approve)
+  found: the server applies a webhook before it answers 200; pullChanged applies every listed check, writes hits, the "Monitoring alert" entry and the decision in one synchronous step after its last await, then sets server.pulledAt = the answer's `now` (server time - 1 ms); autoRescreen follows in the same task when it has nothing to run; kyc-screen and kyc-screen-due raise their toast only after awaiting the re-screen and render; kyc-iv-approve is synchronous (record written before the click returns)
+  implication: product order is sound everywhere the check reads (result written before the toast; alert applied before 200). The defects are only in the check's waits.
+
+- timestamp: 2026-11-27T17:06Z
+  checked: GREEN, debug-monitoring/inst/monitoring-green.js (the fixed check, same instrumentation, FORCE_HOLD_MS=1500), --only package-not-run
+  found: |
+    TIMING pnr-A atClick=["Signed in as admin of Kestrel Bay","Signed in as admin of Kestrel Bay","Signed in as admin of Kestrel Bay"] resultAfterClick=1618 readAfterClick=1640 recordAfterClick=1643 margin=22
+    MONITORING: PASS (parts run: 1)   (17 PASS, 0 FAIL)
+  implication: with the same three sign-in toasts on screen and the answer 1.6 s late, the fixed runNow waits for the result toast and reads the record after it; same assertions
+
+- timestamp: 2026-11-27T17:05Z
+  checked: unmodified monitoring.js --only package-not-run, three loops at once through heavy.sh (loop.sh nat 1-8, 9-16, 17-24; GATE_FRESH=1, own P6_OUT each), other agents holding heavy.sh slots, load 2.5-7.7
+  found: 20 of 20 PASS so far (summary-nat.txt), 18-38 s each (170-195 s incl. queue)
+  implication: natural rate at part granularity is low, as with the earlier SERVER MODE flake; the instrumented natural runs will give the margin
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
