@@ -1024,18 +1024,17 @@ const parts = {
       const B = await L.open(S, { allow: [srv.base], init: srv.init });
       closers.push(() => B.context.close());
       const ip = B.page;
-      const raw = [];
-      ip.on('response', async (res) => {
+      // Each GET /v1/invite body the page received, kept as its promise: the body reaches this check by a second call to the
+      // browser after the response event, so it is awaited where it is read (a fixed wait would only guess how long that takes).
+      const bodies = [];
+      ip.on('response', (res) => {
         if (res.request().method() !== 'GET' || !/\/v1\/invite$/.test(res.url().replace(/[?#].*$/, ''))) return;
-        try {
-          raw.push(await res.text());
-        } catch (e) {
-          raw.push('');
-        }
+        bodies.push(res.text().catch(() => ''));
       });
       await ip.goto(inv.link);
       await ip.waitForSelector('.ivf-form h1', { timeout: 30000 });
       await ip.waitForTimeout(300);
+      const raw = await Promise.all(bodies);
       check('the investor’s page received the snapshot from the server', raw.length >= 1 && raw[0].length > 0, raw.length);
       let snap = {};
       try {
@@ -1583,17 +1582,20 @@ const parts = {
       const B = await L.open(S, { allow: [srv.base], init: srv.init });
       closers.push(() => B.context.close());
       const ip = B.page;
+      // Each GET /v1/invite body the page received, kept as its promise and awaited where the snapshot is read: the body
+      // reaches this check by a second call to the browser after the response event, and the page can show its first
+      // heading before that call returns (a check process held up by load then read no snapshot at all).
       const snaps = [];
       let sent = null;
-      ip.on('response', async (res) => {
-        if (res.request().method() === 'GET' && /\/v1\/invite$/.test(res.url().replace(/[?#].*$/, ''))) snaps.push(await res.json().catch(() => null));
+      ip.on('response', (res) => {
+        if (res.request().method() === 'GET' && /\/v1\/invite$/.test(res.url().replace(/[?#].*$/, ''))) snaps.push(res.json().catch(() => null));
       });
       ip.on('request', (rq) => {
         if (rq.method() === 'POST' && /\/v1\/invite\/complete$/.test(rq.url())) sent = rq.postData();
       });
       await ip.goto(it.link);
       await ip.waitForSelector('.ivf-form h1', { timeout: 30000 });
-      const snap = snaps.find((x) => x && x.investor) || {};
+      const snap = (await Promise.all(snaps)).find((x) => x && x.investor) || {};
       const sj = JSON.stringify(snap);
       check('tax-request: the snapshot is a tax-form request with no offering, carrying the form’s pre-fill and no taxpayer ID, bank or other record detail', !!snap.invitation && snap.invitation.taxRequest === true && snap.offering === null && !!snap.investor && !!snap.investor.taxPrefill && snap.investor.taxPrefill.address === '41 Larkspur Lane, Santa Fe, NM 87501' && sj.indexOf('3917') < 0 && !/routing|"account"/.test(sj), snap.investor);
       const head = await L.heading(ip);
