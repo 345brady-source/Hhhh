@@ -22,12 +22,51 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
 
 ## Eliminated
 
+- hypothesis: the table markup in reports-ui.js (tableHTML) is malformed or missing a scroll box
+  evidence: markup already wraps every table in `.tbl-scroll` (overflow-x: auto); the overflowing tables do scroll inside it (base probe: scroll 365-544 in box 308). Text columns are squeezed by the min-content collapse, not by missing markup. Injecting only `overflow-wrap: normal` (no markup change) removed 125 of 125 squeezed-word breaks.
+  timestamp: 2026-11-27T14:25:00Z
+
 ## Evidence
 
 - timestamp: 2026-11-27T00:00:00Z
   checked: assets/css/reports.css (preview styles) and assets/js/reports-ui.js:915-919 tableHTML
   found: table markup is `<div class="tbl-scroll rb-tblwrap"><table class="rb-tbl">` with `.num` cells (`white-space: nowrap; text-align: right`). `.rb-doc` (reports.css:41) sets `overflow-wrap: anywhere`, inherited by th/td. `.rb-tbl { width: 100% }`, no min-width or white-space on text cells. `.tbl-scroll` (console.css:296, portal.css:198) is `overflow-x: auto`.
   implication: candidate cause in code (CSS): `overflow-wrap: anywhere` collapses text-cell min-content to one glyph; auto table layout then gives the slack to nowrap number columns.
+
+- timestamp: 2026-11-27T14:10:00Z
+  checked: server tests on base b8d8613 (`cd server && node --test`, output scratchpad/debug-report-tables/server-base.txt)
+  found: "# tests 567 / # pass 567 / # fail 0" (not 584: the base count is 567)
+  implication: GREEN target for server tests is 567/567.
+
+- timestamp: 2026-11-27T14:20:00Z
+  checked: probe scratchpad/debug-report-tables/probe/probe-tables.js, phone 390x844, base CSS (probe-base-phone.txt)
+  found: reproduced exactly: KB PE letter 60 broken (Holdings 5 cols 365 px in 308 box, Investment=27 Security=27 px; Net performance 8 cols 544 px, Investment=27 px, 'Kestrel Bay Fund II, L.P.' over 16 lines); AR RE letter 22 (Distributions Date=36 Type=29 px, Totals Period=50); PB open-ended 40 (Holdings 381 px, 'Total return swaps (2 counterparties)' over 34 lines). KB statement Totals 3 broken. Number columns are 49-111 px and never cut (nowrap).
+  implication: RED reproduced outside the 117 s walk; text columns sit at a one-glyph min-content.
+
+- timestamp: 2026-11-27T14:25:00Z
+  checked: same probe with one rule injected through CSSOM: `.rb-tbl th, .rb-tbl td { overflow-wrap: normal; }` (probe-h1-phone.txt)
+  found: broken words 60->0 (KB), 3->0 (KB stmt), 22->0 (AR), 40->1 (PB). Text columns now at their longest word (Investment 80-104 px, Security 69-75, Date 75, Type 58, Period 68). Tables wider than the box now scroll inside it: Holdings 461/506 px, Net performance 587/596 px, Distributions 375, Totals 326 in a 308 px box. Rows shrink (KB Holdings 2878 -> 574 px tall). One word still split in PB Holdings (to identify).
+  implication: CONFIRMS the cause: inherited `overflow-wrap: anywhere` (reports.css:41 .rb-doc) sets each text cell's min-content to one glyph, and the auto table layout gives the room to the nowrap number columns. Removing it from the cells alone fixes nearly all; one remaining break is a different mechanism (likely a hyphen/slash break opportunity, not anywhere).
+
+- timestamp: 2026-11-27T14:40:00Z
+  checked: the one word still split after h1 (probe prints each broken word)
+  found: PB Holdings 'Single-name' split at its hyphen ('Single-' / 'name and basket swaps') in a 75 px Security column. A hyphen (and a slash) is a normal break opportunity, independent of overflow-wrap.
+  implication: second, smaller contributing condition (data: hyphenated words in a column at its min-content). Needs either a wider text column or the hyphenated word kept on one line.
+
+- timestamp: 2026-11-27T14:45:00Z
+  checked: desktop 1280x800, base CSS (probe-base-desktop.txt)
+  found: every preview table fits its 930 px box with every cell on one line (0 broken words; e.g. KB Holdings Investment=283 Security=234; Net performance Investment=207). When a table is wider than the sum of its cells' widest content, auto layout splits the extra by the widest content, not the narrowest, so a change to the narrowest (min-content) width cannot move desktop columns.
+  implication: the root-cause rule (overflow-wrap: normal in cells) should leave desktop unchanged; to be proven by measurement + pixel diff.
+
+- timestamp: 2026-11-27T14:55:00Z
+  checked: variant h2 (phone): root rule + phone-only `min-width: 8em` on text cells + sticky first column (white, 1 px divider) (probe-h2-phone.txt, shots h2-*)
+  found: 0 broken words in all four previews ('Single-name' now whole in a 96 px column); min-width on cells honoured (96 px); first column stays at x 0 when scrolled to the end; numbers never cut (scrollWidth<=clientWidth on every .num). But the caption ('Holdings') scrolls away with the table, and min-width also widened the fine 2-column table (Month 153->174 px).
+  implication: caption must stay too; scope the phone rules to tables of 4+ columns so the fine tables keep their exact look.
+
+- timestamp: 2026-11-27T15:05:00Z
+  checked: variant h3 (phone): h2 + `.rb-tblwrap { container-type: inline-size }` + `caption { position: sticky; left: 0; width: 100cqw }` (probe-h3-phone.txt)
+  found: caption stays at x 0, 308 px wide, in every scrolled table; first column stays; 0 broken words. Screens h3-phone-kb-pe-t3.png (Holdings: names on 3 lines, whole words) and h3-phone-kb-pe-t2-scrolled.png (Net performance scrolled: Investment column and title in place, Net IRR/TVPI/DPI/RVPI whole).
+  implication: chosen design: sideways scroll in the table's own box, first column and title fixed, text columns 8em minimum, phone only, 4+ columns only; root rule at all widths.
 
 ## Resolution
 
