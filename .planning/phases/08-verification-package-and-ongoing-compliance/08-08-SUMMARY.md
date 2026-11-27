@@ -104,4 +104,50 @@ MONITORING: FAIL (parts run: 3) - hold-only, preview-desktop, preview-phone
 
 Before the gate, the whole check on the final tree ($O/full1.txt, a12b2b9's code): `MONITORING: PASS (parts run: 8)`; the whole server suite ($O/server-pre.txt): `# tests 462`, `# fail 0`.
 
+## Gate run 1: FAILED (HELP CHAT), then cut off by the 2-hour limit
+
+The first run of verify-3.sh (tree 04b0243) failed HELP CHAT (phase 7's check) and was stopped by the 2-hour limit after SCREEN EDGES. Every GATE line it printed ($O/gate-run1-cut.txt):
+
+```
+GATE ok   server tests # fail 0
+GATE ok   server tests 462 (found 462)
+GATE ok   STATUS MATH (13)
+GATE ok   FORM MAPS (3)
+GATE ok   FORMS FLOW (34)
+GATE ok   STATUS FLOW (26)
+GATE ok   SERVER MODE (15)
+GATE ok   TWO PERSONS
+GATE ok   MEASURE
+GATE ok   owner's folder: index.txt and four signed PDFs
+GATE ok   EMAIL DIALOG (3)
+GATE ok   AGREEMENT NAME
+GATE ok   TAX REQUEST LEAVE (5)
+GATE ok   WAYS OUT (7)
+GATE ok   NO NETWORK (3)
+GATE ok   EMBED DATA (3)
+GATE ok   SAFARI FINISH (6)
+GATE ok   BANK STEP TYPING (2)
+GATE FAIL HELP CHAT (10)
+GATE ok   REAL FIRM (9)
+GATE ok   SIGNING DOCUMENTS (8)
+GATE ok   PHONE LAYOUT (8)
+GATE ok   RECORD AND LOST AGREEMENT (7)
+GATE ok   SCREEN EDGES (5)
+```
+
+The HELP CHAT failure ($O/red-helpchat.txt), a fault of this plan's code:
+
+```
+FAIL refused-desktop with a server address saved, the console itself attempts no connection :: ["connect-src https://portal-server.example/v1/checks/changed?since=1970-01-01T00%3A00%3A00.000Z&workspace=kestrel-bay"]
+FAIL answers-desktop the stand-in was asked for nothing but /v1/help :: ["GET /v1/checks/changed?since=1970-01-01T00%3A00%3A00.000Z&workspace=kestrel-bay"]
+FAIL failures the stand-in was asked for nothing but /v1/help :: ["/v1/checks/changed?...","/v1/help", ...]
+FAIL refused-phone with a server address saved, the console itself attempts no connection :: [...]
+FAIL answers-phone seven questions, each sent once, to /v1/help only :: 7
+HELP CHAT: FAIL (parts run: 10) - refused-desktop, answers-desktop, failures, refused-phone, answers-phone
+```
+
+Phase 7 requires that a console with a server address only saved attempts no connection by itself; the pull broke that. Fix (68e510d): the console's own pull and free re-screen use only the server the sponsor confirmed with "Check connection" on the Integrations page (that action now records the address it confirmed; settings checked before this plan count when their status line reads "Connected"). monitoring.js now confirms the server the way the sponsor does and proves, in every server part, that an address only saved is asked nothing (`C.pulls === 0`). Then (00d71df) clearing a monitored investor's calendar date, which makes no connection, moved to resume so it happens without a confirmed server too.
+
+After the fix: HELP CHAT alone ($O/helpchat2.txt) `HELP CHAT: PASS (parts run: 10)`; MONITORING alone on 68e510d ($O/full2.txt) and on 00d71df ($O/full3.txt) `MONITORING: PASS (parts run: 8)`.
+
 <!-- gsd:write-continue -->
