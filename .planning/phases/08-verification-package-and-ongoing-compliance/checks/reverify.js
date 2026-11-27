@@ -24,12 +24,36 @@
 //           14 days from lapsing, a firm with only Rule 506(b) offerings and the default rule, an investor not yet active, a
 //           team role that may not invite, or the managed edition (index.html); asking again while the request is open
 //           makes no second request (local), and in server mode resends it with no new POST /v1/invitations
-//   NODE_PATH=$(npm root -g) node reverify.js [--only local,server,leave,button]
+// Plan 08-20 (D-01, G6, the 08-09 warning): the package on a re-verification request, and the investor's way to it.
+//   package  1280x800, the real integration server on a sponsor account with a card on file (doubles/world.js startServer,
+//           the stand-in accreditation provider): the dialog holds "Add verification package (<the server's reverify
+//           price>)"; ticked, "Send request": one charge of exactly that price before the request's email; the server holds
+//           the request with its package at tier reverify; the investor's own browser opens the link (two steps, the
+//           accreditation step reads "A secure page opens in a new tab for this step.") and verifies through the package;
+//           the console imports and shows the new verification with its valid-until date; the request's row reads
+//           "Package"; no investor screen, request email or GET /v1/invite reply holds a price, a tier or an entitlement;
+//           no call leaves the machine outside the stand-in world; the typed taxpayer number reaches nothing
+//   NODE_PATH=$(npm root -g) node reverify.js [--only local,server,leave,button,package]
 // The last line is "REVERIFY: PASS (parts run: N)" or "REVERIFY: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
 const F = require('./frame.js');
+const W = require('./doubles/world.js');
 const Lib = F.Lib;
+
+// The integration server runs in this process: a call it makes to anywhere outside this machine, other than through the
+// stand-in world's fetch, is refused here and kept, so a part can prove none was made (plan 08-20).
+const outside = [];
+const ownFetch = globalThis.fetch;
+W.world.localFetch = ownFetch;
+globalThis.fetch = (input, init) => {
+  const u = new URL(String(input && input.url ? input.url : input));
+  if (['127.0.0.1', 'localhost', '[::1]'].indexOf(u.hostname) < 0) {
+    outside.push(`${(init && init.method) || 'GET'} ${u.origin}${u.pathname}`);
+    return Promise.reject(new Error('refused by the check: no call leaves this machine'));
+  }
+  return ownFetch(input, init);
+};
 
 const SHOTS = path.join(Lib.OUT, 'reverify-shots');
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -40,7 +64,10 @@ Lib.describeShots([
   ['local-link.png', 'Local mode, 1280x800: the request\'s link: step 1 of 2, the accreditation step, with the request\'s own line.'],
   ['local-done.png', 'Local mode, 1280x800: the request\'s done screen after the investor verified.'],
   ['server-link.png', 'Server mode, 1280x800: the investor\'s own device opens the request: step 1 of 2, the accreditation step.'],
-  ['server-row.png', 'Server mode, 1280x800: after the import, the request\'s row reads "Re-verification only".']
+  ['server-row.png', 'Server mode, 1280x800: after the import, the request\'s row reads "Re-verification only".'],
+  ['package-dialog.png', 'Plan 08-20, server mode, 1280x800: the "Ask to re-verify" dialog with "Add verification package" and the server\'s reverify price.'],
+  ['package-link.png', 'Plan 08-20: the investor\'s own device opens the request with the package: step 1 of 2, "A secure page opens in a new tab for this step."'],
+  ['package-row.png', 'Plan 08-20: after the import, the request\'s row reads "Re-verification only" and "Package".']
 ]);
 
 const DAY = 864e5;
@@ -147,6 +174,163 @@ const flowState = (p, itId) =>
       text: form ? form.innerText.replace(/\s+/g, ' ') : document.body.innerText.replace(/\s+/g, ' ')
     };
   }, itId);
+
+/* ---------- Plan 08-20: the package on a re-verification request ---------- */
+// package.js's own sentences, read from the file (never typed here): the box's lines in its no-server, unreachable and no-card
+// states, and the label's first words.
+const PKG_SRC = fs.readFileSync(path.join(Lib.ROOT, 'assets', 'js', 'package.js'), 'utf8');
+const pkgConst = (name) => (PKG_SRC.match(new RegExp(`const ${name} = '([^']+)';`)) || [])[1] || `(${name} not found in package.js)`;
+const PKG_LABEL = pkgConst('LABEL');
+const NO_SERVER_LINE = pkgConst('NO_SERVER');
+const UNREACHABLE_LINE = pkgConst('UNREACHABLE');
+const NO_CARD_LINE = (PKG_SRC.match(/line: '(Add a card on the Integrations page[^']*)'/) || [])[1] || '(no-card line not found in package.js)';
+const SECURE = 'A secure page opens in a new tab for this step.';
+// What the investor never sees about the package (T-08-58).
+const PRICE_WORDS = ['$19', '$99', '1900', '9900', 'tier', 'entitlement'];
+/** Cents as a price on screen, as package.js priceLabel writes it (whole dollars, cents only when there are any). */
+const priceText = (n) => `$${(n / 100).toLocaleString('en-US', { minimumFractionDigits: n % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
+// Lib.walk's typed taxpayer number (wave-6 W2): built here, never printed, so no output of this check holds it.
+const TIN = ['1234', '56789'].join('');
+const holdsTin = (text) => String(text).indexOf(TIN) >= 0;
+/** The scan proven on a planted copy of a file before it is relied on. */
+function tinProof(check) {
+  const plant = path.join(Lib.OUT, `reverify-planted-${process.pid}.txt`);
+  fs.writeFileSync(plant, `planted copy: ${TIN}\n`);
+  check('the taxpayer-number scan finds the number in a planted copy of a file', holdsTin(fs.readFileSync(plant, 'utf8')));
+  fs.rmSync(plant, { force: true });
+}
+/** Everything this process prints from now until stop(), which restores the output and resolves to the text. */
+function capture() {
+  let printed = '';
+  const out = process.stdout.write.bind(process.stdout);
+  const err = process.stderr.write.bind(process.stderr);
+  process.stdout.write = (c, ...a) => {
+    printed += String(c);
+    return out(c, ...a);
+  };
+  process.stderr.write = (c, ...a) => {
+    printed += String(c);
+    return err(c, ...a);
+  };
+  return {
+    stop: () => {
+      process.stdout.write = out;
+      process.stderr.write = err;
+      return printed;
+    }
+  };
+}
+
+/**
+ * The real integration server on a sponsor account (a card on file, the stand-in accreditation provider) wired to a fresh
+ * stand-in world, and the console on it at the given size, with a lapsed investor (lapsedInvestor). opts: { view, handlers
+ * (frame.js stubServer), card: false (no card on file) }. Resolves to { w, srv, A, p, x, stub, marks, close }.
+ */
+async function sponsorConsole(S, check, opts) {
+  opts = opts || {};
+  const w = W.world();
+  const srv = await W.startServer(S, w, { dir: Lib.OUT });
+  const A = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({ acceptDownloads: true }, F.VIEW[opts.view || 'desktop']) });
+  const C = { w, srv, A, p: A.page, marks: [], closers: [() => A.context.close()] };
+  C.close = async () => {
+    for (const c of C.closers.reverse()) await Promise.resolve().then(c).catch(() => {});
+    await srv.close().catch(() => {});
+  };
+  try {
+    C.stub = opts.handlers ? await F.stubServer(A.context, srv.base, opts.handlers) : null;
+    C.x = await lapsedInvestor(S, A);
+    if (opts.card === false) srv.server.store.put('billing', Object.assign({}, srv.server.store.get('billing', srv.account.id), { card: null, creditCents: 0 }));
+    check('the console uses the integration server with the sponsor account\'s token', (await srv.configure(A.page)) === true);
+    // At every outside call, how many emails the server holds (the order: the charge, then the request's email).
+    w.onCall = (e) => C.marks.push({ kind: e.kind, n: e.n, outbox: srv.server.store.list('outbox').length });
+  } catch (e) {
+    await C.close();
+    throw e;
+  }
+  return C;
+}
+/** The account's money as the server holds it: card payments, the balance, the amount owed and every entitlement. */
+function money(C) {
+  const st = C.srv.server.store;
+  const rec = st.get('billing', C.srv.account.id) || {};
+  const ents = st.list('entitlements').filter((e) => e.account === C.srv.account.id);
+  return { charges: C.w.count('charge'), payments: st.list('payments').length, credit: rec.creditCents || 0, owed: rec.owedCents || 0, entitlements: ents.length, ents: ents.map((e) => ({ key: e.key, tier: e.tier, status: e.status, cents: e.cents })) };
+}
+/** The dialog's package box as drawn: { present, shown, enabled, checked, label, line, link }. */
+const rvBox = (p) =>
+  p.evaluate(() => {
+    const row = document.getElementById('rv-package-row');
+    const input = document.getElementById('rv-package');
+    const line = document.getElementById('rv-package-line');
+    const vis = (el) => !!(el && !el.hidden && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+    return { present: !!input, shown: vis(row), enabled: !!input && !input.disabled, checked: !!input && input.checked, label: ((document.getElementById('rv-package-label') || {}).textContent || '').trim(), line: line && !line.hidden ? line.textContent.trim() : '', link: line && line.querySelector('a') ? line.querySelector('a').getAttribute('href') : '' };
+  });
+/** "Ask to re-verify" on the investor's row, then the dialog with its box once the server's answer is drawn. */
+async function openDialog(p, x, settled) {
+  const r = await row(p, x.email);
+  const btn = r.locator('[data-action="reverify-request"]');
+  if (!(await btn.count())) return null;
+  await btn.first().click();
+  await p.waitForSelector('#dlg[open] [data-action="reverify-send"]', { timeout: 10000 });
+  // The box is drawn again when GET /v1/billing answers: wait until it reads as `settled` says (or the time is up).
+  if (settled) await p.waitForFunction(settled, null, { timeout: 15000 }).catch(() => {});
+  else await p.waitForTimeout(800);
+  return rvBox(p);
+}
+/** "Send request" in the dialog; resolves once the request went to the server (or failed), with the request and its row. */
+async function sendRequest(p, x, tick) {
+  if (tick) await p.check('#rv-package');
+  const before = await p.evaluate((id) => (window.CVPortal.state.ws.invitations || []).filter((y) => y.investorId === id).map((y) => `${y.id}:${y.serverId || ''}:${y.emailStatus}:${y.status}`).join('|'), x.id);
+  await p.click('#dlg [data-action="reverify-send"]');
+  await p.waitForFunction(
+    ({ id, before }) => {
+      const ws = window.CVPortal.state.ws;
+      const now = (ws.invitations || []).filter((y) => y.investorId === id).map((y) => `${y.id}:${y.serverId || ''}:${y.emailStatus}:${y.status}`).join('|');
+      return now !== before && (ws.invitations || []).filter((y) => y.investorId === id).every((y) => y.serverId || ['failed', 'manual'].indexOf(y.emailStatus) >= 0 || y.status === 'cancelled' || y.emailStatus === 'not_sent');
+    },
+    { id: x.id, before },
+    { timeout: 30000 }
+  );
+  await p.waitForTimeout(500);
+  return p.evaluate((id) => {
+    const ws = window.CVPortal.state.ws;
+    const d = document.getElementById('dlg');
+    return {
+      all: (ws.invitations || []).filter((y) => y.investorId === id).map((y) => ({ id: y.id, serverId: y.serverId || '', link: y.link || '', emailStatus: y.emailStatus, emailError: y.emailError || '', status: y.status, reverify: !!y.reverify, existing: !!y.existing, offeringId: y.offeringId || '', pkg: y.package === true })),
+      dlg: !!(d && d.open),
+      said: d && d.open ? ((d.querySelector('#rv-said') || {}).textContent || '').trim() : '',
+      dlgText: d && d.open ? d.innerText : ''
+    };
+  }, x.id);
+}
+/** The request's row on the Investors page's invitations list ("All"), as text. */
+async function requestRow(p, itId) {
+  await Lib.consoleRoute(p, 'console-investors', '.cs-tbl');
+  await p.evaluate(() => {
+    window.CVPortal.state.ui.inv8Filter = 'all';
+    window.CVPortal.app.render();
+  });
+  await p.waitForTimeout(300);
+  return p.locator(`tr[data-invitation="${itId}"]`).innerText().catch(() => '');
+}
+/** "Verify my accreditation" on the package's step: the stand-in's own page in a new tab, "Continue" there, the tab closed. */
+async function accStart(B, ip) {
+  const popup = B.context.waitForEvent('page', { timeout: 15000 }).catch(() => null);
+  await ip.click('#iv-accreditation [data-action=iv-start]');
+  const tab = await popup;
+  const out = { opened: !!tab, page: '' };
+  if (!tab) return out;
+  await tab.waitForURL(/\/hosted\/ver_/, { timeout: 15000 }).catch(() => {});
+  out.page = tab.url();
+  const go = tab.locator('button[type=submit]');
+  await go.waitFor({ timeout: 15000 }).catch(() => {});
+  if ((await go.count()) && (await go.innerText()).trim() === 'Continue') await Promise.all([tab.waitForNavigation({ timeout: 15000 }).catch(() => {}), go.click()]);
+  await tab.close().catch(() => {});
+  await ip.waitForTimeout(500);
+  return out;
+}
+/** A text holds none of the package's prices, tier or entitlement words: the words found. */
+const priceHits = (text) => PRICE_WORDS.filter((x) => String(text).indexOf(x) >= 0);
 
 const parts = {
   async local({ check, S }) {
@@ -587,6 +771,126 @@ const parts = {
       check('not shown in the managed edition (index.html): its Investors page lists investors and offers no "Ask to re-verify"', m.edition === 'managed' && m.rows > 0 && m.buttons === 0, m);
     } finally {
       await M.context.close().catch(() => {});
+    }
+  },
+
+  async package({ check, S }) {
+    tinProof(check);
+    const cap = capture();
+    let printed = '';
+    const C = await sponsorConsole(S, check, { view: 'desktop' });
+    const investorSeen = [];
+    const consoleSeen = [];
+    try {
+      const { p, srv, w, x } = C;
+      const bill = await srv.call('GET', '/v1/billing', undefined, srv.token);
+      const PRICE = bill.body && bill.body.prices ? Number(bill.body.prices.reverify) : 0;
+      check('GET /v1/billing (the account\'s token) offers the reverify tier at a price of its own', bill.status === 200 && bill.body.available && bill.body.available.reverify === true && PRICE > 0, bill.body && { available: bill.body.available, prices: bill.body.prices });
+      const LABEL = `${PKG_LABEL} (${priceText(PRICE)})`;
+
+      // The dialog: the box with the server's reverify price, switched on (a card is on file).
+      const box = await openDialog(p, x, () => {
+        const i = document.getElementById('rv-package');
+        return !!i && !i.disabled;
+      });
+      check(`the dialog holds "${LABEL}" (the server's reverify price), switched on and unticked`, !!box && box.shown && box.enabled && !box.checked && box.label === LABEL && box.line === '', box);
+      if (!box || !box.enabled) return;
+      consoleSeen.push(await p.locator('#dlg').innerText());
+      await p.screenshot({ path: path.join(SHOTS, 'package-dialog.png') });
+
+      // Ticked, "Send request": one charge of exactly that price, before the request's email.
+      const sent = await sendRequest(p, x, true);
+      const it = sent.all.filter((y) => y.reverify).pop() || {};
+      check('"Send request" sends the request to the server, marked reverify, with the package; the dialog closes', /^ivt_/.test(it.serverId || '') && it.pkg && sent.dlg === false, sent);
+      const pays = srv.server.store.list('payments');
+      const charges = C.marks.filter((m) => m.kind === 'charge');
+      check(`one charge of exactly the reverify price (${PRICE} cents) on the card, and it succeeded`, w.count('charge') === 1 && pays.length === 1 && pays[0].cardCents === PRICE && pays[0].status === 'succeeded', { charges: w.count('charge'), pays: pays.map((y) => ({ cents: y.cardCents, status: y.status })) });
+      const mail = it.serverId ? ((await srv.call('GET', `/v1/outbox?invitation=${encodeURIComponent(it.serverId)}`, undefined, srv.token)).body.messages || []) : [];
+      check('the charge came before the request\'s email existed; the server then emailed the request once', charges.length === 1 && charges[0].outbox === 0 && mail.length === 1 && mail[0].subject === `${x.firm}: verify your accredited investor status`, { atCharge: charges.map((m) => m.outbox), mail: mail.map((m) => m.subject) });
+      const rec = it.serverId ? srv.server.store.get('invitations', it.serverId) : null;
+      const snap = rec ? srv.server.invitations.vault.open(rec.snapshot, `${rec.id}:snapshot`) : null;
+      check('the server holds the request with its package at tier reverify (an investor on file, no offering)', !!rec && !!rec.package && rec.package.tier === 'reverify' && rec.package.key === it.id && !!snap && snap.invitation.reverify === true && snap.offering === null, rec && { pkg: rec.package, reverify: snap && snap.invitation.reverify });
+      const email = mail.map((m) => `${m.subject}\n${m.text}\n${m.html || ''}`).join('\n');
+      investorSeen.push(email);
+      if (!it.serverId) return;
+
+      // The investor's own browser: two steps; the accreditation step through the package.
+      const B = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({}, F.VIEW.desktop) });
+      C.closers.push(() => B.context.close());
+      const ip = B.page;
+      const replies = [];
+      ip.on('response', async (res) => {
+        if (res.request().method() === 'GET' && /\/v1\/invite$/.test(res.url().replace(/[?#].*$/, ''))) replies.push(await res.text().catch(() => ''));
+      });
+      await ip.goto(it.link);
+      await ip.waitForSelector('.ivf-form', { timeout: 30000 });
+      await ip.waitForTimeout(400);
+      const s1 = await ip.evaluate(() => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const pn = document.getElementById('iv-accreditation');
+        return { count: (document.querySelector('.ivf-progress .ob-count') || {}).innerText || '', steps: NS.inviteFlow.steps(ws, ws.invitations[0]), panel: pn ? pn.innerText : '', button: pn && pn.querySelector('[data-action=iv-start]') ? pn.querySelector('[data-action=iv-start]').textContent.trim() : '' };
+      });
+      check(`the link has two steps (accreditation, done); the accreditation step reads "${SECURE}" and offers "Verify my accreditation"`, /^Step 1 of 2/.test(s1.count) && JSON.stringify(s1.steps) === JSON.stringify(['accreditation', 'done']) && s1.panel.indexOf(SECURE) >= 0 && s1.button === 'Verify my accreditation', s1);
+      await ip.screenshot({ path: path.join(SHOTS, 'package-link.png') });
+      investorSeen.push(await Lib.screenText(ip));
+      if (s1.button !== 'Verify my accreditation') return;
+      const acc = await accStart(B, ip);
+      check('the stand-in\'s page opens in a new tab; the server holds one accreditation check through the package', acc.opened && /\/hosted\/ver_/.test(acc.page) && srv.server.store.list('verifications').filter((v) => v.kind === 'accreditation').length === 1 && srv.accredit.control.calls.some((c) => c.kind === 'session'), { opened: acc.opened, calls: srv.accredit.control.calls.map((c) => c.kind) });
+      // The third party's result: verified. The investor's step reads it, and the investor finishes.
+      srv.accredit.control.state = 'verified';
+      const turned = await ip.waitForFunction(() => /Verified/.test(((document.querySelector('#iv-accreditation .iv-chip') || {}).textContent || '')), null, { timeout: 60000 }).then(() => true, () => false);
+      investorSeen.push(await Lib.screenText(ip));
+      check('the investor\'s step turns to Verified when the stand-in answers', turned, ((await ip.locator('#iv-accreditation').innerText().catch(() => '')) || '').slice(0, 400));
+      if (await ip.locator('#ob-accAttest').count()) await ip.check('#ob-accAttest');
+      await ip.click('.ivf-form button[type=submit]');
+      await ip.waitForSelector('.ivf-done', { timeout: 30000 });
+      const done = await ip.locator('.ivf-done').innerText();
+      check('the investor\'s done screen: verified, and the firm will see the result', /Your accreditation is verified/.test(done) && done.indexOf(`${x.firm} will see the result`) >= 0, done);
+      investorSeen.push(done, await F.noRawError(check, ip, 'the investor\'s device', B.errors));
+      for (let k = 0; k < 60; k++) {
+        const r = await srv.call('GET', '/v1/invitations?workspace=kestrel-bay', undefined, srv.token);
+        const rows = Array.isArray(r.body) ? r.body : (r.body && r.body.invitations) || [];
+        const one = rows.find((y) => y.id === it.serverId);
+        if (one && one.status === 'completed' && one.hasSubmission) break;
+        await new Promise((res) => setTimeout(res, 300));
+      }
+
+      // The console imports: the new verification with its valid-until date; the row reads "Package".
+      await Lib.importFromConsole(p, it.id);
+      const want = iso(Date.now() + 90 * DAY);
+      await Lib.consoleRoute(p, 'console-kyc', '[data-action=kyc-tab]');
+      const got = await p.waitForFunction((id) => {
+        const NS = window.CVPortal;
+        const a = NS.integrations.peek(NS.state.ws.investors.find((y) => y.id === id)).accreditation;
+        return a.status === 'verified' && a.expiresAt > new Date().toISOString().slice(0, 10) ? { status: a.status, expiresAt: a.expiresAt } : null;
+      }, x.id, { timeout: 60000 }).then((h) => h.jsonValue(), () => null);
+      const after = await p.evaluate((id) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const a = NS.integrations.peek(ws.investors.find((y) => y.id === id)).accreditation;
+        return { status: a.status, expiresAt: a.expiresAt, shown: a.expiresAt ? NS.ui.date(a.expiresAt) : '', done: (ws.audit || []).filter((e) => e.record === id && e.action === 'Accreditation re-verified').length };
+      }, x.id);
+      check(`the record shows the new verification, valid until ${want} (the stand-in's 90 days, the firm's 90-day cap)`, !!got && after.status === 'verified' && after.expiresAt === want, after);
+      check('one "Accreditation re-verified" entry', after.done === 1, after);
+      const rowText = await requestRow(p, it.id);
+      check('the request\'s row reads "Re-verification only" and "Package"', /Re-verification only/.test(rowText) && /\bPackage\b/.test(rowText), rowText);
+      await p.locator(`tr[data-invitation="${it.id}"]`).scrollIntoViewIfNeeded().catch(() => {});
+      await p.screenshot({ path: path.join(SHOTS, 'package-row.png') });
+      consoleSeen.push(rowText, await F.noRawError(check, p, 'the console after the import', C.A.errors));
+      check('no second charge: still one payment', w.count('charge') === 1 && srv.server.store.list('payments').length === 1, money(C));
+
+      // T-08-58: the investor never sees a price.
+      const invText = investorSeen.concat(replies).join('\n');
+      check(`no investor screen, the request's email or GET /v1/invite (${replies.length} replies) holds ${PRICE_WORDS.join(', ')}`, replies.length > 0 && priceHits(invText).length === 0, priceHits(invText));
+      check('no call left this machine outside the stand-in world', outside.length === 0 && w.count('other') === 0, { outside, other: w.calls.filter((c) => c.kind === 'other') });
+      F.leakFree(check, 'every screen and email of this part', investorSeen.concat(consoleSeen).join('\n'));
+      printed = cap.stop();
+      check('the typed taxpayer number is in no world record', w.calls.length > 0 && !holdsTin(JSON.stringify(w.calls)));
+      check('the typed taxpayer number is in no server output (store, events, anything this process printed) and on no screen', !holdsTin(JSON.stringify({ i: srv.server.store.list('invitations'), o: srv.server.store.list('outbox'), e: srv.server.store.list('events') })) && !holdsTin(printed) && !holdsTin(investorSeen.concat(consoleSeen).join('\n')));
+    } finally {
+      cap.stop();
+      await C.close();
     }
   }
 };
