@@ -154,6 +154,16 @@ started: seen during plan 13-04's gate (base ef87afa area)
   found: `# tests 601` `# pass 601` `# fail 0` rc=0 (debug-monitoring/server-tests-final.txt)
   implication: server suite unchanged on the final tree
 
+- timestamp: 2026-11-27T17:35Z
+  checked: instrumented natural runs of the unfixed check complete (summary-inst.txt: inst-1..6, full 9 parts, no forced delay; the instrumentation only records in the page, armed before the click, read after the part's own reads)
+  found: |
+    inst-1..5 PASS (parts run: 9); inst-6 (start 17:11:14, 125 s, load 3.41 at start) `MONITORING: FAIL (parts run: 9) - package-not-run`, 2 FAIL, NATURAL (no delay forced):
+    TIMING pnr-A atClick=[3 x "Signed in as admin of Kestrel Bay"] resultAfterClick=none readAfterClick=30 recordAfterClick=32 margin=none
+    FAIL package-not-run "Run now" re-screened them :: Signed in as admin of Kestrel Bay
+    FAIL package-not-run the package result is kept as it was, the Treasury result is added, the next date moved :: {"title":"Davis Family Trust",...,"nextScreen":"2026-11-26","results":[{"connection":"package-id",...,"ref":"scr_seedpackage"}],...}
+    every other press of that run PASSed (margins mnd 31, pnr-B 51, preview-desktop 32, preview-phone 19 ms)
+  implication: the gate's failure reproduced naturally with its exact two lines: the toast and the record were read 30-32 ms after the click, before the result toast existed. Natural rate of the unfixed part measured here: 1 FAIL in 30 runs (0/24 unmodified --only package-not-run + 1/6 instrumented full runs); 16-68 ms margins over 21 timed presses
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
@@ -166,5 +176,5 @@ verification:
   no_op_deletion: { result: pass, deletion_justified_by_rca: n/a, detail: "no assertion removed or loosened; kycPress's clearing of old toasts is replaced by reading only toasts added after the press" }
   adjacent_tests: { result: pending, detail: "server tests 601/601 on the final tree; MONITORING full x10 on ca59fff in progress" }
   revert_reconfirm: { result: pass, detail: "the unfixed check under each forcing FAILs (red-1, red-post); the fixed one PASSes" }
-  natural_repro: "not achieved: 0 FAIL in 24 unmodified --only package-not-run runs (three loops through heavy.sh, load 2.3-7.7) and 6 instrumented full runs; measured margin 16-68 ms over 16 presses"
+  natural_repro: "achieved once: inst-6 (instrumented unfixed check, no forced delay, full run) FAILed package-not-run with the gate's exact two lines; 1 in 30 natural runs of the unfixed part (0/24 unmodified --only package-not-run through heavy.sh at load 2.3-7.7, 1/6 instrumented full runs); measured margin 16-68 ms over 21 presses"
 files_changed: [.planning/phases/08-verification-package-and-ongoing-compliance/checks/monitoring.js]
