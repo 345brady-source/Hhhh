@@ -1,0 +1,26 @@
+Subject: Shah, Anita finished onboarding for Harbor Ridge Fund II
+Preheader: Shah, Anita completed every onboarding step on November 10, 2026.
+
+Shah, Anita completed every onboarding step on November 10, 2026.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+Investing as: Individual
+Offering: Harbor Ridge Fund II
+Commitment: $250,000
+Identity: Verified
+Sanctions screening: Clear
+Accredited investor: Verified
+Subscription agreement: Signed by the investor; waiting for your countersignature
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Next: countersign the subscription agreement in the console.
+
+Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

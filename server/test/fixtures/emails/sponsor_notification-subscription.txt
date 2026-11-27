@@ -1,0 +1,23 @@
+Subject: Shah, Anita finished their subscription to Harbor Ridge Fund II
+Preheader: Shah, Anita completed the subscription steps on November 10, 2026.
+
+Shah, Anita completed the subscription steps on November 10, 2026.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+Offering: Harbor Ridge Fund II
+Commitment: $250,000
+Accredited investor: On file
+Subscription agreement: Signed by the investor; waiting for your countersignature
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Next: countersign the subscription agreement in the console.
+
+Their subscription, signed agreement and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

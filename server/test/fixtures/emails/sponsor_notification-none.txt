@@ -1,0 +1,23 @@
+Subject: Shah, Anita: no subscription to Harbor Ridge Fund II
+Preheader: Shah, Anita went through your invitation on November 10, 2026, but no subscription was submitted: the offering was no longer accepting subscriptions when they reached that step.
+
+Shah, Anita went through your invitation on November 10, 2026, but no subscription was submitted: the offering was no longer accepting subscriptions when they reached that step.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+Offering: Harbor Ridge Fund II
+Commitment: $250,000
+Accredited investor: On file
+Subscription agreement: No subscription submitted
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Next: nothing to do unless the offering opens again.
+
+Nothing is added to their investor record; the details you already hold for them stay as they are.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

@@ -108,7 +108,7 @@ test('an invitation to subscribe that includes the tax form: the flag and the fo
     assert.equal(snap.investor.taxType, 'us-individual');
     assert.ok(!JSON.stringify(snap).includes('529-04-7318') && !JSON.stringify(snap).includes('000765432'), 'no taxpayer ID or bank number');
     const [m] = await outbox(base, r.id);
-    assert.equal(m.subject, 'Harbor Ridge Fund III: your subscription');
+    assert.equal(m.subject, 'Harbor Ridge Capital: your subscription to Harbor Ridge Fund III');
     assert.match(m.text, /has invited you to subscribe to Harbor Ridge Fund III/);
     assert.match(m.text, /the offering documents, your tax form, your commitment and the subscription agreement/);
     assert.ok(!/photo ID|bank details/i.test(m.text), m.text);

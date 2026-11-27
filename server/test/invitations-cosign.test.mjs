@@ -123,13 +123,13 @@ test('create and email: a co-investor sign-in is stored and the co-investor gets
     assert.equal(m.kind, 'invitation');
     assert.equal(m.to, CO.email);
     assert.equal(m.subject, `Lantern Point Partners: sign the subscription agreement for ${ACCOUNT}`);
-    assert.match(m.text, new RegExp(`^Dear ${CO.name},`));
+    assert.match(m.text, /^Dear Rowan,/);
     assert.ok(m.text.includes(`Lantern Point Partners asks you to sign the subscription agreement for ${ACCOUNT} as co-investor.`), m.text);
     assert.ok(m.text.includes('The link below opens the agreement with only your places to sign. Nothing else is asked.'), m.text);
     assert.ok(m.text.includes(`Review and sign:\n${r.link}`), m.text);
     assert.ok(m.html.includes('>Review and sign</a>'), 'the button');
     assert.match(m.text, /It expires on December 4, 2026\./);
-    assert.match(m.text, /Questions\? Reply to this email or contact Investor Relations: ir@lanternpoint\.example, \+1 208 555 0142\./);
+    assert.match(m.text, /Questions\? Contact Investor Relations at ir@lanternpoint\.example or \+1 208 555 0142\./);
     assert.ok(!/photo ID|bank details|onboarding|subscribe to|identity verification|tax form/i.test(m.text), m.text);
     assert.match(m.from, /Lantern Point Partners/);
     clean(m);
@@ -141,7 +141,7 @@ test('email again: the resend and the sponsor’s console reminder use the co-in
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
-    assert.equal(re.subject, `Reminder: Lantern Point Partners: sign the subscription agreement for ${ACCOUNT}`);
+    assert.equal(re.subject, `New link: Lantern Point Partners: sign the subscription agreement for ${ACCOUNT}`);
     assert.ok(re.text.includes(`Here is a new link to sign the subscription agreement for ${ACCOUNT} as co-investor. Any earlier link we sent no longer works.`), re.text);
     assert.ok(re.text.includes('The link below opens the agreement with only your places to sign. Nothing else is asked.'), re.text);
     assert.ok(re.text.includes(`Review and sign:\n${again.body.link}`), re.text);

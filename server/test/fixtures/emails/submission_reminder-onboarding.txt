@@ -1,0 +1,22 @@
+Subject: Waiting in your console: Shah, Anita’s onboarding
+Preheader: Shah, Anita finished onboarding on November 10, 2026, but the console has not added them to your investor records yet.
+
+Shah, Anita finished onboarding on November 10, 2026, but the console has not added them to your investor records yet.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+Offering: Harbor Ridge Fund II
+Finished: November 10, 2026
+Deleted on: December 10, 2026
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Open the console before December 10, 2026: it adds the investor, their verification results, documents and signed agreement as soon as it opens.
+
+After that date their submitted details and signed documents are deleted from the integration server to protect them, and the investor would have to complete onboarding again.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

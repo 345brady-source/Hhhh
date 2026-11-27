@@ -1,0 +1,21 @@
+Subject: Waiting in your console: Shah, Anita’s tax form
+Preheader: Shah, Anita finished your request for their Form W-9 on November 10, 2026, but the console has not added it to your records yet.
+
+Shah, Anita finished your request for their Form W-9 on November 10, 2026, but the console has not added it to your records yet.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+Finished: November 10, 2026
+Deleted on: December 10, 2026
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Open the console before December 10, 2026: it adds the form as soon as it opens.
+
+After that date the form is deleted from the integration server to protect it, and the investor would have to complete it again.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

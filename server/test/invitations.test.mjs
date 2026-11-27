@@ -105,7 +105,7 @@ test('create: a one-time token stored only as its SHA-256, the link, and the fir
     assert.equal(m.to, 'zelda@investor.example');
     assert.equal(m.from, '"Harbor Ridge Capital" <notices@portal-mail.example>');
     assert.equal(m.replyTo, 'ir@harborridge.example');
-    assert.equal(m.subject, 'Harbor Ridge Fund II: complete your investor onboarding');
+    assert.equal(m.subject, 'Harbor Ridge Capital: your invitation to invest in Harbor Ridge Fund II');
     assert.ok(m.text.includes(r.link) && m.text.includes('Welcome aboard, Zelda') && m.text.includes('Commitment: $250,000'));
     assert.ok(!/carrow|powered by|diy portal/i.test(stripLinkTokens(m.text + m.html)));
     // Without sendEmail the sponsor gets the link to send themselves.
@@ -297,7 +297,7 @@ test('expiry: the link answers 410 after INVITE_DAYS; resend gives a new link an
     assert.equal(g2.body.invitation.expiresAt, re.body.expiresAt);
     assert.equal((await list(base))[0].status, 'opened');
     const mail = (await outbox(base, r.id)).find((m) => m.kind === 'invitation_resent');
-    assert.match(mail.subject, /^Reminder: Harbor Ridge Fund II/);
+    assert.match(mail.subject, /^New link: Harbor Ridge Capital: your invitation to invest in Harbor Ridge Fund II/);
     assert.ok(mail.text.includes(re.body.link) && !mail.text.includes(r.token));
     assert.equal(server.store.get('invitations', r.id).tokenHash, sha(re.body.token));
   }));

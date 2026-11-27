@@ -58,7 +58,7 @@ test('an investor already on file: the flag and accreditation summary reach the 
     assert.ok(!JSON.stringify(snap).includes('123-45-6789') && !JSON.stringify(snap).includes('000123456'));
     const [m] = await outbox(base, r.id);
     assert.equal(m.kind, 'invitation');
-    assert.equal(m.subject, 'Harbor Ridge Fund III: your subscription');
+    assert.equal(m.subject, 'Harbor Ridge Capital: your subscription to Harbor Ridge Fund III');
     assert.match(m.text, /has invited you to subscribe to Harbor Ridge Fund III/);
     assert.match(m.text, /Your account details are already on file/);
     assert.ok(!/photo ID|bank details ready/i.test(m.text), 'no request for ID or bank details');
@@ -68,7 +68,7 @@ test('an investor already on file: the flag and accreditation summary reach the 
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
-    assert.equal(re.subject, 'Reminder: Harbor Ridge Fund III: your subscription');
+    assert.equal(re.subject, 'New link: Harbor Ridge Capital: your subscription to Harbor Ridge Fund III');
     assert.match(re.text, /new link to your subscription to Harbor Ridge Fund III/);
     assert.ok(!/photo ID|bank details ready/i.test(re.text));
   }));
@@ -94,7 +94,7 @@ test('a bad existing summary is cleaned: a date that is not a date is dropped, f
     assert.deepEqual(snap.investor.existing, { accredited: false, accreditedUntil: '', holds: false });
     assert.equal(snap.invitation.existing, undefined, 'existing is only set by a real true');
     const [m] = await outbox(base, r.id);
-    assert.equal(m.subject, 'Harbor Ridge Fund III: complete your investor onboarding');
+    assert.equal(m.subject, 'Harbor Ridge Capital: your invitation to invest in Harbor Ridge Fund III');
   }));
 
 test('the sponsor summary for an existing investor: no identity or screening rows, accreditation on file, subscription subject', () =>
@@ -219,7 +219,7 @@ test('a portal link for an investor added from paper documents: its own email, r
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
-    assert.equal(re.subject, 'Reminder: Harbor Ridge Capital: your investor portal');
+    assert.equal(re.subject, 'New link: Harbor Ridge Capital: your investor portal');
     const done = await complete(base, again.body.token, { investor: { id: 'HRC-0031', contact: 'Paula Paper' } });
     assert.equal(done.status, 200, JSON.stringify(done.body));
     const n = (await outbox(base, r.id)).find((x) => x.kind === 'sponsor_notification');
@@ -234,5 +234,5 @@ test('the access flag only counts for an investor already on file', () =>
     const snap = (await j(base, 'GET', '/v1/invite', { token: r.token, auth: false })).body;
     assert.equal(snap.invitation.access, undefined);
     const [m] = await outbox(base, r.id);
-    assert.match(m.subject, /Complete your investor onboarding/);
+    assert.match(m.subject, /: set up your investor account$/);
   }));
