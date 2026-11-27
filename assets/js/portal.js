@@ -1251,21 +1251,36 @@
     ['quarterly', 'Quarterly reports'],
     ['offering', 'Invitations to new offerings']
   ];
+  /*
+   * With an integration server (decision during 13-08): the server keeps its own record of who stopped offering news and
+   * this page cannot change it yet (no investor sign-in on the server until 15-17), so no switch is offered for it; the
+   * email's own link is what the server honours. The other two are honoured by the console's own sends.
+   */
+  const OFFER_LINE = 'To stop invitations to new offerings, use the link at the bottom of any such email.';
+  function serverOn() {
+    try {
+      return !!(NS.integrations && NS.integrations.serverUrl && NS.integrations.serverUrl(W()));
+    } catch (e) {
+      return false;
+    }
+  }
   function emailPrefsHTML(inv) {
     const p = inv.emailPrefs && typeof inv.emailPrefs === 'object' ? inv.emailPrefs : {};
+    const server = serverOn();
     return `<section class="sec settings-sec">
           ${sec('Email')}
           <fieldset class="choice settings-choice">
             <legend class="sr-only">Email</legend>
-            ${EMAIL_PREFS.map(([k, label]) => `<label class="choice-row" for="ep-${k}" style="min-height:44px;align-items:center"><input id="ep-${k}" type="checkbox" role="switch" data-change="email-pref" data-k="${k}"${p[k] === false ? '' : ' checked'}><span><strong>${label}</strong></span></label>`).join('')}
+            ${EMAIL_PREFS.filter(([k]) => !(server && k === 'offering')).map(([k, label]) => `<label class="choice-row" for="ep-${k}" style="min-height:44px;align-items:center"><input id="ep-${k}" type="checkbox" role="switch" data-change="email-pref" data-k="${k}"${p[k] === false ? '' : ' checked'}><span><strong>${label}</strong></span></label>`).join('')}
           </fieldset>
+          ${server ? `<p class="meta">${OFFER_LINE}</p>` : ''}
           <p class="meta">Notices you must receive, such as capital calls and tax documents, are always emailed.</p>
         </section>`;
   }
   NS.changes['email-pref'] = (el) => {
     const inv = viewer();
     const k = el.getAttribute('data-k');
-    if (!inv || !EMAIL_PREFS.some((x) => x[0] === k)) return;
+    if (!inv || !EMAIL_PREFS.some((x) => x[0] === k) || (k === 'offering' && serverOn())) return;
     if (!inv.emailPrefs || typeof inv.emailPrefs !== 'object') inv.emailPrefs = {};
     inv.emailPrefs[k] = !!el.checked;
     NS.app.save(true);

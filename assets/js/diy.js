@@ -321,7 +321,7 @@
             <label class="cs-field" for="tm-email"><span>Email</span><input id="tm-email" type="email" data-bind="team:email" value="${h(f.email)}"></label>
             <label class="cs-field" for="tm-role"><span>Role</span><select id="tm-role" data-bind="team:role">${Object.keys(ROLE_INFO).map((r) => `<option value="${r}"${f.role === r ? ' selected' : ''}>${ROLE_INFO[r][0]}</option>`).join('')}</select></label>
             ${f.err ? `<p class="cs-error cs-wide">${h(f.err)}</p>` : ''}
-            <div class="cs-row cs-wide"><button class="cs-btn cs-btn-primary" type="submit">${icon('plus')}Send invitation</button><span class="cs-hint">They get an email to set a password and turn on two-step sign-in.</span></div>
+            <div class="cs-row cs-wide"><button class="cs-btn cs-btn-primary" type="submit">${icon('plus')}Send invitation</button><span class="cs-hint">${teamHint()}</span></div>
           </form>`
         )}
         ${K.panel('Roles', `<dl class="cs-kv ik-kv">${Object.keys(ROLE_INFO).map((r) => `<div><dt>${ROLE_INFO[r][0]}</dt><dd>${h(ROLE_INFO[r][1])}</dd></div>`).join('')}</dl>`)}`,
@@ -346,6 +346,16 @@
       server = '';
     }
     return server ? `Invitation to ${email} saved; it is emailed once sign-in accounts are connected.` : `Invitation to ${email} ${NS.emails ? NS.emails.SIMULATED : '(simulated in this demo)'}.`;
+  }
+  /** The line under "Send invitation": only what happens in this mode (13-08). */
+  function teamHint() {
+    let server = '';
+    try {
+      server = NS.integrations && NS.integrations.serverUrl ? NS.integrations.serverUrl(W()) : '';
+    } catch (e) {
+      server = '';
+    }
+    return server ? 'The invitation is saved here; it is emailed once sign-in accounts are connected.' : `They get an email to set a password and turn on two-step sign-in ${NS.emails ? NS.emails.SIMULATED : '(simulated in this demo)'}.`;
   }
   NS.forms['team-invite'] = () => {
     const f = teamState();

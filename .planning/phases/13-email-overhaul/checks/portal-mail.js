@@ -220,7 +220,7 @@ const DONE = 'Done. Invitations to new offerings will no longer be emailed to yo
 const ONLY = 'This link works only from the email you received.';
 const TEAM_HINT_SIM = 'They get an email to set a password and turn on two-step sign-in (simulated in this demo).';
 const TEAM_HINT_SERVER = 'The invitation is saved here; it is emailed once sign-in accounts are connected.';
-const VOID_LABEL_SERVER = 'Reason (shown to signers in their portal)';
+const VOID_LABEL_SERVER = 'Reason (kept with the envelope, not emailed)';
 const MSG_LABEL_SERVER = 'Message (shown on the signing page)';
 const OFFER_LINE = 'To stop invitations to new offerings, use the link at the bottom of any such email.';
 /** The Team page's hint under "Send invitation". */

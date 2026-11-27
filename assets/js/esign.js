@@ -1909,7 +1909,7 @@
     if (!env) return;
     U.dialog(
       `<form class="es-dlg-form" data-form="es-void" data-id="${h(env.id)}"><div class="dlg-head"><div><h2>Void ${h(env.title)}?</h2><p>Signers can no longer open it. Signatures already given are kept in the history.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
-      <div class="dlg-body"><label class="cs-field" for="es-void-r"><span>Reason (sent to signers)</span><textarea id="es-void-r" name="reason" rows="3" maxlength="300" required autofocus></textarea></label>
+      <div class="dlg-body"><label class="cs-field" for="es-void-r"><span>${mailServer(W()) ? 'Reason (kept with the envelope, not emailed)' : 'Reason (sent to signers)'}</span><textarea id="es-void-r" name="reason" rows="3" maxlength="300" required autofocus></textarea></label>
       <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="submit">Void envelope</button></div></div></form>`,
       'dlg-es'
     );
@@ -2501,8 +2501,13 @@
     U.dialog(
       `<form class="es-dlg-form" data-form="es-send" data-id="${h(env.id)}"><div class="dlg-head"><div><h2>Review and send</h2><p>${h(env.title)} · ${env.sequential ? 'signers are emailed in order' : 'all signers are emailed now'}</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
       <div class="dlg-body"><div class="cs-grid">
-        <label class="cs-field cs-wide" for="es-subj"><span>Email subject</span><input id="es-subj" name="subject" type="text" maxlength="140" value="${h(env.subject || `Please sign: ${env.title}`)}" required autofocus></label>
-        <label class="cs-field cs-wide" for="es-msg"><span>Message <em>(shown in the email and on the signing page)</em></span><textarea id="es-msg" name="message" rows="4" maxlength="1000">${h(env.message || '')}</textarea></label>
+        ${
+          // With a server (13-08), the investors' notice has its own subject and carries no message: neither is offered as email text.
+          mailServer(W())
+            ? `<label class="cs-field cs-wide" for="es-msg"><span>Message <em>(shown on the signing page)</em></span><textarea id="es-msg" name="message" rows="4" maxlength="1000" autofocus>${h(env.message || '')}</textarea></label>`
+            : `<label class="cs-field cs-wide" for="es-subj"><span>Email subject</span><input id="es-subj" name="subject" type="text" maxlength="140" value="${h(env.subject || `Please sign: ${env.title}`)}" required autofocus></label>
+        <label class="cs-field cs-wide" for="es-msg"><span>Message <em>(shown in the email and on the signing page)</em></span><textarea id="es-msg" name="message" rows="4" maxlength="1000">${h(env.message || '')}</textarea></label>`
+        }
         <div class="cs-field cs-wide"><span>Recipients</span><ul class="es-sel">${list}</ul></div>
       </div>
       ${mailServer(W()) ? '' : '<p class="cs-hint">Emails are simulated in this demo: each one is recorded in the envelope history.</p>'}
@@ -2514,7 +2519,8 @@
     const w = W();
     const env = envById(w, form.getAttribute('data-id'));
     if (!env) return;
-    env.subject = String(form.subject.value || '').trim() || `Please sign: ${env.title}`;
+    if (form.subject) env.subject = String(form.subject.value || '').trim() || `Please sign: ${env.title}`;
+    else env.subject = env.subject || `Please sign: ${env.title}`;
     env.message = String(form.message.value || '').trim();
     const r = send(w, env.id);
     U.closeDialog();
