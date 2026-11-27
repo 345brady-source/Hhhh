@@ -398,14 +398,14 @@ test('files', async () => {
 
       const other = await signedUp(base, server, 'Kestrel Point Partners', 'lee@kestrelpoint.example');
       assert.equal((await call(base, 'GET', '/v1/workspace/files/update-q3.pdf', { cookie: other.cookie })).status, 404, 'another firm’s file');
-      assert.equal((await call(base, 'DELETE', '/v1/workspace/files/update-q3.pdf', { cookie: other.cookie })).status, 404);
+      assert.equal((await call(base, 'DELETE', '/v1/workspace/files/update-q3.pdf', { cookie: other.cookie, body: {} })).status, 404);
       assert.equal((await call(base, 'PUT', '/v1/workspace/files/update-q3.pdf', { cookie: acct.cookie, body: { name: 'x.pdf', type: 'application/pdf', base64: 'AAAA' } })).status, 403);
 
       const big = await call(base, 'PUT', '/v1/workspace/files/big.pdf', { cookie: owner.cookie, body: { name: 'big.pdf', type: 'application/pdf', base64: Buffer.alloc(26 * 1024 * 1024, 7).toString('base64') } });
       assert.deepEqual([big.status, big.body && big.body.error], [413, 'This file is over 25 MB.']);
       assert.equal((await call(base, 'GET', '/v1/workspace/files/big.pdf', { cookie: owner.cookie })).status, 404);
 
-      const del = await call(base, 'DELETE', '/v1/workspace/files/update-q3.pdf', { cookie: staff.cookie });
+      const del = await call(base, 'DELETE', '/v1/workspace/files/update-q3.pdf', { cookie: staff.cookie, body: {} });
       assert.deepEqual([del.status, del.body], [200, { ok: true }]);
       assert.equal((await call(base, 'GET', '/v1/workspace/files/update-q3.pdf', { cookie: owner.cookie })).status, 404);
     });
