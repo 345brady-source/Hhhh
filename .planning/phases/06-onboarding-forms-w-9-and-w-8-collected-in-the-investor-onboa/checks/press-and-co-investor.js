@@ -757,6 +757,9 @@ function coLink(dev) {
     env = await envOf(fr, inv.investorId);
     const note = await fr.evaluate((n) => (window.CVPortal.state.ws.notifications || []).some((x) => x.title === `${n} signed the subscription agreement as co-investor`), coName);
     check('the co-investor signs, and the firm has the notification that they signed as co-investor', !!env.co && env.co.status === 'signed' && note, { co: env.co, note });
+    // PROBE (debug comerge-cosigner-signed, measurement only; removed after the run).
+    await investorsPage(fr, inv.investorId);
+    console.log('PROBE preview after the co-investor signed ::', JSON.stringify({ row: await rowOf(fr, inv.investorId), signIn: (await coState(fr, inv.investorId)).signIn, audit: await fr.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((a) => /co-investor/i.test(a.action)).map((a) => `${a.action}: ${a.detail || ''}`)) }));
 
     // The firm countersigns from Requests.
     await Lib.consoleRoute(fr, 'console-requests', '[data-action=req-tab][data-t=all]');
