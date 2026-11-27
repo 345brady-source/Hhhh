@@ -198,6 +198,77 @@ function cutForScan(text, portalUrl, ids) {
   return L.stripLinkTokens(s);
 }
 
+/** The review dialog of a draft envelope (Review and send), read back: its hint line ('' when none), then closed. */
+async function reviewHint(p, envId) {
+  await p.evaluate((id) => window.CVPortal.actions['es-review']({ getAttribute: () => id }), envId);
+  await p.waitForSelector('#dlg[open]', { timeout: 10000 });
+  const hint = await p.evaluate(() => Array.from(document.querySelectorAll('#dlg .cs-hint')).map((x) => x.textContent).join('\n'));
+  await p.evaluate(() => window.CVPortal.ui.closeDialog());
+  return hint;
+}
+const HINT = 'Emails are simulated in this demo: each one is recorded in the envelope history.';
+const SAVED = (email) => `Invitation to ${email} saved; it is emailed once sign-in accounts are connected.`;
+const TEAM_SIM = (email) => `Invitation to ${email} ${SIM()}.`;
+const ALWAYS = 'Notices you must receive, such as capital calls and tax documents, are always emailed.';
+const SWITCHES = ['New documents', 'Quarterly reports', 'Invitations to new offerings'];
+const STOP = 'Stop invitations to new offerings';
+const DONE = 'Done. Invitations to new offerings will no longer be emailed to you.';
+const ONLY = 'This link works only from the email you received.';
+const forgotWant = (team) => `Password reset email ${SIM()}. If you cannot sign in, contact ${team}.`;
+
+/** Invite a team member on the Team page (and press Resend on that row); resolves to [invite toast, resend toast]. */
+async function teamToasts(p, email) {
+  await p.evaluate(() => (location.hash = '#console-team'));
+  await p.waitForSelector('form[data-form=team-invite]', { timeout: 20000 });
+  await watchToasts(p);
+  await p.fill('#tm-name', 'Rosa');
+  await p.fill('#tm-last', 'Delgado');
+  await p.fill('#tm-email', email);
+  await L10.press(p, 'form[data-form=team-invite] button[type=submit]');
+  const first = await nextToast(p, 0);
+  const id = await p.evaluate((email) => (window.CVPortal.state.ws.team.find((m) => m.email === email) || {}).id || '', email);
+  await p.waitForSelector(`[data-action=team-resend][data-id="${id}"]`, { timeout: 10000 }).catch(() => {});
+  await L10.press(p, `[data-action=team-resend][data-id="${id}"]`);
+  const second = await nextToast(p, 1);
+  return [first, second];
+}
+
+/** The Account page's Email section, read back: { heading, switches: [{ label, checked, role, h }], lines }. */
+const emailSection = (p) =>
+  p.evaluate(() => {
+    const sec = Array.from(document.querySelectorAll('#view section.sec')).find((s) => {
+      const h = s.querySelector('h2, h3');
+      return h && h.textContent.trim() === 'Email';
+    });
+    if (!sec) return null;
+    return {
+      heading: sec.querySelector('h2, h3').textContent.trim(),
+      switches: Array.from(sec.querySelectorAll('input[type=checkbox]')).map((i) => {
+        const lab = i.closest('label');
+        const r = (lab || i).getBoundingClientRect();
+        return { label: lab ? lab.textContent.trim() : '', checked: i.checked, role: i.getAttribute('role') || '', k: i.getAttribute('data-k') || '', h: Math.round(r.height), w: Math.round(r.width) };
+      }),
+      lines: Array.from(sec.querySelectorAll('p')).map((x) => x.textContent.trim())
+    };
+  });
+
+/** The unsubscribe screen as the investor sees it. */
+const unsubScreen = (p) =>
+  p.evaluate(() => {
+    const v = document.getElementById('view') || document.body;
+    const out = document.querySelector('a.txl-out');
+    const r = out ? out.getBoundingClientRect() : null;
+    const btn = document.querySelector('[data-action=unsub-stop]');
+    return {
+      text: v.innerText,
+      logo: ((document.querySelector('.pt-logo') || {}).textContent || '').trim(),
+      button: btn ? btn.textContent.trim() : '',
+      out: !!r && r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight + 1,
+      sw: document.documentElement.scrollWidth,
+      cw: document.documentElement.clientWidth
+    };
+  });
+
 /* ---------- parts ---------- */
 const parts = {
   'esign-server': async ({ check, S }) => {
@@ -269,9 +340,310 @@ const parts = {
       msgs = await outboxBy('esign_voided');
       check('Void: one withdrawn notice, to the signer who had it, subject as emails.js renders esign_voided', msgs.length === 1 && msgs[0].to === a.email && msgs[0].subject === subjectOf('esign_voided', a.name, e2.title), got(msgs));
       check('Void: the toast starts "Envelope voided." and is summary()\'s connected sentence after it', toast === `Envelope voided. ${sum(1)}`, toast);
+      const e3 = await makeEnvelope(page, { title: 'Hint probe', signers: [a.id] });
+      const hint = await reviewHint(page, e3.id);
+      check('with a server the review dialog has no "Emails are simulated" hint', hint.indexOf(HINT) < 0, hint);
       check('no page errors', sc.A.errors.length === 0, sc.A.errors);
     } finally {
       await sc.close();
+    }
+  },
+
+  'esign-simulated-phone': async ({ check, S }) => {
+    const { A, fr } = await T.framedConsole(S, 'phone');
+    try {
+      await L10.proveRefused(check, A, fr);
+      await watchToasts(fr);
+      const [a, b] = await twoInvestors(fr);
+      const e1 = await makeEnvelope(fr, { title: 'Side letter for Fund II', signers: [a.id, b.id] });
+      const e2 = await makeEnvelope(fr, { title: 'Transfer consent', signers: [a.id] });
+      const hint = await reviewHint(fr, e1.id);
+      check(`no server: the review dialog keeps the hint "${HINT}"`, hint.indexOf(HINT) >= 0, hint);
+      const said = {};
+      let n = (await toasts(fr)).length;
+      await fr.evaluate((id) => window.CVPortal.esign.send(window.CVPortal.state.ws, id), e1.id);
+      said.send = await nextToast(fr, n);
+      n = (await toasts(fr)).length;
+      await fr.evaluate((id) => window.CVPortal.esign.remind(window.CVPortal.state.ws, id), e1.id);
+      said.remind = await nextToast(fr, n);
+      said.next = await signAs(fr, e1.id, a.id);
+      const done = await fr.evaluate(() => ((document.querySelector('.es-done') || {}).innerText || '').trim());
+      check('the signer\'s done screen (others still to sign) promises no emailed copy and says where the signed copy will be', /signed copy will be in your Documents/.test(done) && !/email you a copy/i.test(done), done);
+      said.complete = await signAs(fr, e1.id, b.id);
+      await asAdmin(fr);
+      await watchToasts(fr);
+      await fr.evaluate((id) => window.CVPortal.esign.send(window.CVPortal.state.ws, id), e2.id);
+      await nextToast(fr, 0);
+      n = (await toasts(fr)).length;
+      await fr.evaluate((id) => window.CVPortal.esign.void(window.CVPortal.state.ws, id, 'Sent by mistake'), e2.id);
+      said.void = await nextToast(fr, n);
+      for (const [k, t] of Object.entries(said)) {
+        check(`${k}: the toast holds "${SIM()}" and never the short "(simulated)."`, t.indexOf(SIM()) >= 0 && t.indexOf('(simulated).') < 0, t);
+        check(`${k}: no claim of a send outside the simulated sentence`, T.honest(t), t);
+      }
+      check('the last signature: no copy was emailed, the signed copy is in each party\'s portal', !/cop(y|ies)[^.]*emailed|emailed[^.]*cop(y|ies)/i.test(said.complete) && said.complete.indexOf('the signed copy is in each party’s portal') >= 0, said.complete);
+      const log = await mailLog(fr);
+      const sim = (kind) => log.filter((e) => e.kind === kind && e.status === 'simulated').map((e) => e.to).sort();
+      check('each moment left simulated sent-log entries: requests 3, reminders 2, completed 2, withdrawn 1', JSON.stringify([sim('esign_request').length, sim('esign_reminder').length, sim('esign_completed').length, sim('esign_voided').length]) === JSON.stringify([3, 2, 2, 1]), log.map((e) => [e.kind, e.status, e.to]));
+      const env = await envelopeOf(fr, e1.id);
+      const sent = env.events.filter((e) => e.action === 'Email sent').length;
+      check('the envelope history keeps its "Email sent" events (send 2, reminder 2, completed 2)', sent === 6, env.events.map((e) => e.action));
+      const over = await fr.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+      check('phone: no horizontal overflow', over.sw <= over.cw, over);
+      await L10.quiet(check, A, fr);
+    } finally {
+      await A.context.close();
+    }
+  },
+
+  'team-honest': async ({ check, S }) => {
+    const { A, fr } = await T.framedConsole(S, 'desktop');
+    try {
+      const [inv, again] = await teamToasts(fr, 'rosa.delgado@kestrel.example');
+      check(`no server: inviting says "${TEAM_SIM('rosa.delgado@kestrel.example')}"`, inv === TEAM_SIM('rosa.delgado@kestrel.example'), inv);
+      check('no server: Resend invite says the same', again === TEAM_SIM('rosa.delgado@kestrel.example'), again);
+      await L10.quiet(check, A, fr);
+    } finally {
+      await A.context.close();
+    }
+    const sc = await T.serverConsole(S, { context: DESKTOP });
+    try {
+      const [inv, again] = await teamToasts(sc.page, 'rosa.server@kestrel.example');
+      check(`with a server: inviting says "${SAVED('rosa.server@kestrel.example')}"`, inv === SAVED('rosa.server@kestrel.example'), inv);
+      check('with a server: Resend invite says the same', again === SAVED('rosa.server@kestrel.example'), again);
+      check('no toast says "Invitation sent"', [inv, again].every((t) => t.indexOf('Invitation sent') < 0), [inv, again]);
+      check('no page errors', sc.A.errors.length === 0, sc.A.errors);
+    } finally {
+      await sc.close();
+    }
+  },
+
+  'forgot-honest': async ({ check, S }) => {
+    const { A, fr } = await L10.framed(S, 'phone', { page: 'portal.html' });
+    try {
+      await L10.sample(fr, { role: 'investor' });
+      const team = await fr.evaluate(() => window.CVPortal.state.ws.tenant.support.team);
+      await fr.evaluate(() => (location.hash = '#sign-in'));
+      await fr.waitForSelector('[data-action=forgot]', { timeout: 20000 });
+      await watchToasts(fr);
+      await L10.press(fr, '[data-action=forgot]');
+      const t = await nextToast(fr, 0);
+      check(`'Forgot your password?' says "${forgotWant(team)}"`, !!team && t === forgotWant(team), t);
+      check('the toast claims no send outside the simulated sentence', T.honest(t), t);
+      await L10.quiet(check, A, fr);
+    } finally {
+      await A.context.close();
+    }
+  },
+
+  'prefs-phone': async ({ check, S }) => {
+    const { A, fr } = await T.framedConsole(S, 'phone', { role: 'investor' });
+    try {
+      await L10.proveRefused(check, A, fr);
+      const viewer = await fr.evaluate(() => window.CVPortal.state.viewer);
+      await fr.evaluate(() => (location.hash = '#account'));
+      await fr.waitForSelector('#view section.sec', { timeout: 20000 });
+      await fr.waitForTimeout(300);
+      let sec = await emailSection(fr);
+      check('the Account page has an "Email" section', !!sec, sec);
+      check(`three switches, ${SWITCHES.join(', ')}, all on (nothing to set)`, !!sec && JSON.stringify(sec.switches.map((x) => x.label)) === JSON.stringify(SWITCHES) && sec.switches.every((x) => x.checked && x.role === 'switch'), sec && sec.switches);
+      check(`the line "${ALWAYS}"`, !!sec && sec.lines.indexOf(ALWAYS) >= 0, sec && sec.lines);
+      check('each switch is a touch target at least 44 px high', !!sec && sec.switches.every((x) => x.h >= 44), sec && sec.switches.map((x) => x.h));
+      await L10.press(fr, '#view input[data-k=documents]');
+      await fr.waitForTimeout(400);
+      sec = await emailSection(fr);
+      const saved = await fr.evaluate((id) => {
+        const NS = window.CVPortal;
+        const live = NS.state.ws.investors.find((i) => i.id === id);
+        const stored = NS.store.get('ws:' + NS.state.ws.tenant.id, null);
+        const back = stored && stored.investors ? stored.investors.find((i) => i.id === id) : null;
+        return { live: live && live.emailPrefs, stored: back && back.emailPrefs };
+      }, viewer);
+      check('turning off "New documents" saves emailPrefs.documents false on that investor (read back from the stored workspace)', !!saved.live && saved.live.documents === false && !!saved.stored && saved.stored.documents === false, saved);
+      check('the switch now reads off, the other two on', !!sec && sec.switches.map((x) => x.checked).join() === 'false,true,true', sec && sec.switches);
+      const over = await fr.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+      check('phone: no horizontal overflow', over.sw <= over.cw, over);
+      await L10.wayOut(check, fr);
+      await L10.leak(check, fr);
+      await L10.quiet(check, A, fr);
+    } finally {
+      await A.context.close();
+    }
+  },
+
+  'unsubscribe-phone': async ({ check, S }) => {
+    const sc = await T.serverConsole(S, { context: DESKTOP });
+    try {
+      const page = sc.page;
+      const [a] = await twoInvestors(page);
+      const firmName = await page.evaluate(() => {
+        const NS = window.CVPortal;
+        NS.state.ws.tenant.postalAddress = '200 Harbor Street, Suite 4, Boston, MA 02110';
+        NS.app.save(true);
+        return NS.state.ws.tenant.name;
+      });
+      const res = await page.evaluate(async (id) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const inv = ws.investors.find((i) => i.id === id);
+        const out = await NS.emails.dispatch({ ws, kind: 'notice', variant: 'offeringNews', offeringNews: true, items: [{ investorId: inv.id, inv, to: { name: inv.contact, email: inv.email }, data: { subject: 'Kestrel Bay Fund IV is open', body: 'Kestrel Bay Fund IV is now accepting subscriptions.' } }], portalUrl: `${location.origin}${location.pathname}`, connected: true, api: (m, p, b) => NS.integrations.api(ws, m, p, b) });
+        NS.app.save(true);
+        return out.results;
+      }, a.id);
+      check('the server took the offering news for that investor', res.length === 1 && ['outbox', 'sent'].indexOf(res[0].status) >= 0, res);
+      const msg = (await T.outbox(sc.srv)).filter((m) => m.kind === 'notice' && m.to === a.email).pop();
+      const link = ((msg && msg.text) || '').match(/use this link: (\S+)/);
+      const url = link ? link[1].replace(/[.,;:]+$/, '') : '';
+      check('the footer link opens the firm\'s portal page at #unsubscribe-<token> with ?server= the integration server', /^http:\/\/127\.0\.0\.1:\d+\/diy\.html\?server=[^#]+#unsubscribe-[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(url) && decodeURIComponent(new URL(url).searchParams.get('server')) === sc.srv.base, url);
+      // The investor's own phone: no portal data; the firm lists its server in CVPortalConfig.integrationServers (srv.init),
+      // as it does where the portal is published, which is what makes the link's ?server= trusted here (W9).
+      const B = await L.open(S, { allow: [sc.srv.base], init: sc.srv.init, context: PHONE });
+      try {
+        const p = B.page;
+        p.p10 = { size: 'phone' };
+        await p.goto(url);
+        await p.waitForFunction((firm) => {
+          const l = document.querySelector('.pt-logo');
+          return !!document.querySelector('[data-action=unsub-stop]') && !!l && l.textContent.trim() === firm;
+        }, firmName, { timeout: 30000 }).catch(() => {});
+        let s = await unsubScreen(p);
+        check('no portal data on this phone', await p.evaluate(() => !Object.keys(localStorage).some((k) => /ws:/.test(k))), await p.evaluate(() => Object.keys(localStorage)));
+        check(`the page names the firm ("${firmName}")`, s.logo === firmName, s.logo);
+        check(`one button: "${STOP}"`, s.button === STOP && (await p.locator('#view button').count()) === 1, s);
+        check('a way out to sign in is on screen', s.out, s);
+        check('phone: no horizontal overflow', s.sw <= s.cw, s);
+        await L10.press(p, '[data-action=unsub-stop]');
+        await p.waitForFunction((t) => (document.getElementById('view') || document.body).innerText.indexOf(t) >= 0, DONE, { timeout: 20000 }).catch(() => {});
+        s = await unsubScreen(p);
+        check(`after it: "${DONE}"`, s.text.indexOf(DONE) >= 0 && !s.button, s.text);
+        check('a way out to sign in is still on screen', s.out, s);
+        const prefs = (await sc.srv.call('GET', '/v1/messages/preferences?workspace=kestrel-bay')).body;
+        const mine = ((prefs && prefs.preferences) || []).filter((x) => x.investorId === a.id);
+        check('GET /v1/messages/preferences lists that investor with offering false', mine.length === 1 && mine[0].offering === false && mine[0].how === 'link', prefs);
+        const nv = T.noVendor(s.text);
+        check('no vendor, model or library name on the page', nv.ok && !MODEL_NAMES.some((re) => re.test(s.text)), nv.hits);
+        check('no page errors', B.errors.length === 0, B.errors);
+      } finally {
+        await B.context.close();
+      }
+      // The same link pointed at a server the portal does not trust: nothing is fetched from it.
+      const bad = url.replace(/server=[^#&]+/, `server=${encodeURIComponent('http://127.0.0.1:9')}`);
+      const C = await L.open(S, { allow: [sc.srv.base], init: sc.srv.init, context: PHONE });
+      try {
+        const p = C.page;
+        await p.goto(bad);
+        await p.waitForFunction((t) => (document.getElementById('view') || document.body).innerText.indexOf(t) >= 0, ONLY, { timeout: 20000 }).catch(() => {});
+        await p.waitForTimeout(800);
+        const s = await unsubScreen(p);
+        check(`an untrusted ?server= says "${ONLY}" and has no button`, s.text.indexOf(ONLY) >= 0 && !s.button, s.text);
+        check('nothing was fetched from it (or from anywhere outside the page)', C.net.external.length === 0 && C.net.allowed.length === 0, { external: C.net.external, allowed: C.net.allowed });
+        check('a way out to sign in is on screen', s.out, s);
+        check('no page errors', C.errors.length === 0, C.errors);
+      } finally {
+        await C.context.close();
+      }
+    } finally {
+      await sc.close();
+    }
+  },
+
+  'managed-same': async ({ check, S }) => {
+    const base = T.baseRoot();
+    const srv = await T.serveDir(base.dir);
+    const seen = {};
+    try {
+      for (const [name, origin] of [['this tree', S.origin], ['base tree', srv.origin]]) {
+        const A = await L.open({ origin, browser: S.browser }, { context: DESKTOP });
+        try {
+          const page = A.page;
+          await page.goto(`${origin}/index.html`);
+          await page.evaluate(() => Object.keys(localStorage).forEach((k) => localStorage.removeItem(k)));
+          await page.goto(`${origin}/index.html`);
+          await page.waitForFunction(() => !!(window.CVPortal && window.CVPortal.app && window.CVPortal.state), null, { timeout: 30000 });
+          await page.evaluate(() => window.CVPortal.app.setClient('kestrel-bay', 'console'));
+          await page.waitForFunction(() => !!(window.CVPortal.state.ws && window.CVPortal.state.ws.tenant.id === 'kestrel-bay'), null, { timeout: 30000 });
+          await page.evaluate(() => {
+            const el = document.getElementById('demo-role');
+            if (el && Array.from(el.options).some((o) => o.value === 'staff')) {
+              el.value = 'staff';
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          });
+          await page.waitForTimeout(300);
+          await watchToasts(page);
+          const out = {};
+          const [a, b] = await twoInvestors(page);
+          // fixed ids, so both trees read the same words
+          const e1 = await makeEnvelope(page, { title: 'Side letter for Fund II', signers: [a.id, b.id] });
+          out.hint = await reviewHint(page, e1.id);
+          let n = (await toasts(page)).length;
+          await page.evaluate((id) => window.CVPortal.esign.send(window.CVPortal.state.ws, id), e1.id);
+          out.send = await nextToast(page, n);
+          n = (await toasts(page)).length;
+          await page.evaluate((id) => window.CVPortal.esign.remind(window.CVPortal.state.ws, id), e1.id);
+          out.remind = await nextToast(page, n);
+          n = (await toasts(page)).length;
+          await page.evaluate((id) => window.CVPortal.esign.void(window.CVPortal.state.ws, id, 'Sent by mistake'), e1.id);
+          out.void = await nextToast(page, n);
+          await page.evaluate(() => (location.hash = '#console-team'));
+          await page.waitForTimeout(1200);
+          out.team = await page.evaluate(() => ({ hash: location.hash, view: (document.getElementById('view') || document.body).innerText }));
+          await page.evaluate(() => (location.hash = '#sign-in'));
+          await page.waitForSelector('[data-action=forgot]', { timeout: 20000 });
+          n = (await toasts(page)).length;
+          await page.click('[data-action=forgot]');
+          out.forgot = await nextToast(page, n);
+          await L10.sample(page, { role: 'investor' });
+          await page.evaluate(() => (location.hash = '#account'));
+          await page.waitForTimeout(1200);
+          out.account = await page.evaluate(() => (document.getElementById('view') || document.body).innerText);
+          seen[name] = out;
+          check(`${name}: no page errors`, A.errors.length === 0, A.errors);
+        } finally {
+          await A.context.close();
+        }
+      }
+      const a = seen['this tree'];
+      const b = seen['base tree'];
+      for (const k of ['hint', 'send', 'remind', 'void', 'forgot', 'account']) check(`managed: the ${k} ${k === 'account' ? 'page' : k === 'hint' ? 'line' : 'toast'} is byte-identical to the base tree's`, !!a && !!b && a[k] === b[k] && String(a[k]).length > 0, { here: a && String(a[k]).slice(0, 300), base: b && String(b[k]).slice(0, 300) });
+      check("managed: the Team page's text is byte-identical to the base tree's", !!a && !!b && a.team.hash === b.team.hash && a.team.view === b.team.view && a.team.view.length > 0, { here: a && a.team.view.slice(0, 200), base: b && b.team.view.slice(0, 200) });
+    } finally {
+      await srv.close();
+      if (base.made) require('fs').rmSync(base.dir, { recursive: true, force: true });
+    }
+  },
+
+  nonet: async ({ check, S }) => {
+    const { A, fr } = await T.framedConsole(S, 'phone');
+    try {
+      await L10.proveRefused(check, A, fr);
+      await watchToasts(fr);
+      const [a] = await twoInvestors(fr);
+      const e = await makeEnvelope(fr, { title: 'Side letter', signers: [a.id] });
+      await fr.evaluate((id) => window.CVPortal.esign.send(window.CVPortal.state.ws, id), e.id);
+      await fr.evaluate((id) => window.CVPortal.esign.remind(window.CVPortal.state.ws, id), e.id);
+      await fr.evaluate((id) => window.CVPortal.esign.void(window.CVPortal.state.ws, id, 'Sent by mistake'), e.id);
+      await fr.waitForTimeout(500);
+      await teamToasts(fr, 'nonet.person@kestrel.example');
+      await fr.evaluate(() => (location.hash = '#sign-in'));
+      await fr.waitForSelector('[data-action=forgot]', { timeout: 20000 });
+      await L10.press(fr, '[data-action=forgot]');
+      await L10.sample(fr, { role: 'investor' });
+      await fr.evaluate(() => (location.hash = '#account'));
+      await fr.waitForSelector('#view input[data-k=offering]', { timeout: 20000 }).catch(() => {});
+      const had = await fr.locator('#view input[data-k=offering]').count();
+      if (had) await L10.press(fr, '#view input[data-k=offering]');
+      check('the Account page\'s offering switch was there to press', had === 1, had);
+      // the unsubscribe page with no ?server= at all: it says so and fetches nothing
+      await fr.evaluate(() => (location.hash = '#unsubscribe-abc.def'));
+      await fr.waitForTimeout(800);
+      const text = await fr.evaluate(() => (document.getElementById('view') || document.body).innerText);
+      check(`the unsubscribe page with no server says "${ONLY}"`, text.indexOf(ONLY) >= 0, text.slice(0, 300));
+      const all = await toasts(fr);
+      check('every toast here holds the simulated sentence or claims nothing', all.filter((t) => /emailed|sent|Invitation|reset/i.test(t)).every((t) => T.honest(t)), all);
+      await L10.quiet(check, A, fr);
+    } finally {
+      await A.context.close();
     }
   }
 };
