@@ -1,18 +1,18 @@
 ---
-status: verifying
+status: awaiting_human_verify
 trigger: "EMAIL DIALOG (3) fails its phone part under load: 'n of 11 paragraphs seen whole' in the phone frame (4, 7 and 10 of 11 across runs) in the gates of 10-11, 11-15, 14-01 and 11-14 (twice); passes when rerun unchanged."
 created: 2026-11-27T05:40Z
-updated: 2026-11-27T05:46Z
+updated: 2026-11-27T06:07Z
 start_commit: ba62432
 bug_class: Heisenbug as seen (travel per look set by touch timing under load); deterministic once the stroke has no momentum
 ---
 
 ## Current Focus
 
-hypothesis: CONFIRMED (H1). In the check, not the product: readThrough looks once per finger stroke, a fixed 250 ms after the lift; how far a stroke carries the dialog depends on the momentum the browser derives from the timing of the check's synthetic touch events, which under load is large and still running at the look, so one look can land 330-518px past the previous one and skip every part whole only in between.
-test: fix the check (no momentum, wait for rest, bounded), then unfixed vs fixed under RATE=6, 20 fixed runs.
-expecting: unfixed fails some frame520px views under RATE=6; fixed passes 20 of 20 under the same.
-next_action: edit readThrough in email-dialog.js: finger held still 200 ms before lifting; after each stroke or wheel notch wait until the body's scrollTop is unchanged for 5 animation frames (5 s bound, clear message); missed parts reported with their whole-range and the looks.
+hypothesis: CONFIRMED (H1). In the check, not the product (see Resolution).
+test: done (Evidence 05:39Z-06:05Z).
+expecting: confirmed: unfixed 7 of 33 frame520px views FAIL under RATE=6 (all three saved signatures); fixed 20 of 20 under the same, side by side; whole check PASS; server 472/472.
+next_action: owner or orchestrator confirms in a real gate run (EMAIL DIALOG (3) beside other browser checks); then archive to resolved/ and write the knowledge-base entry.
 
 reasoning_checkpoint:
   hypothesis: "frame520px misses a part because readThrough samples once per stroke after a fixed 250 ms, and a stroke's travel (120px drag + browser momentum from the touch velocity) exceeds the part's slack (window 391px minus its height: 234px for the 157px paragraph) when the touch events reach the page bunched under load; the dialog itself shows every part whole at positions between the looks"
@@ -91,9 +91,20 @@ started: seen in the gates of 10-11, 11-15, 14-01, 11-14 (twice).
   found: UNFIXED (frozen copy, sha256 6408d7a9...): COUNTS frame520px pass=16 fail=4 of 20; framefull 20 of 20. The four failures: "(8 of 11)" looks 0 440 964 964; "(4 of 11)" looks 0 964 964 (one stroke carried the body from the top to the end: the 4-of-11 signature of the gates); "(10 of 11) :: [p: The link below takes you through]" looks 0 141 423 704 817 945 945; "(4 of 11)" again, looks 0 962 964. Largest travel between two looks: 964px. FIXED: COUNTS frame520px pass=20 fail=0 of 20; framefull pass=20 fail=0 of 20; no FAIL line at all; "EMAIL DIALOG: PASS (parts run: 20)". Every stroke 75-113px (largest travel between two looks 113px over all 40 views); the new "came to rest" line PASS in all 40 views.
   implication: GREEN under the condition that fails the old check (4 of 20 here, 7 of 33 over all unfixed RATE=6 runs, all three saved signatures reproduced: 10, 7/8 and 4 of 11): the fixed check passes 20 of 20, with every look at most 113px from the previous one, under the 234px the tallest part needs.
 
+- timestamp: 2026-11-27T06:04Z
+  checked: the whole fixed check, all 3 parts, GATE_FRESH=1, twice at once from 05:56:25 UTC: (a) the gate's way, through heavy.sh, unthrottled (ended 06:03:47, load 4.5-9.3; scratchpad emflaky/whole/email.txt); (b) RATE=6 on every page, outside the queue (ended 05:57:13; emflaky/whole-rate6/email.txt)
+  found: both "EMAIL DIALOG: PASS (parts run: 3)", 62 PASS lines, 0 FAIL. Against 11-14's passing gate output (exec-11-14/gate/email.txt, 54 PASS lines) with the numbers in parentheses removed: all 54 check names identical, line for line, plus the 8 new "came to rest" lines (one per framed view: 4 desktop wheel, 2 phone finger, 2 tax-request). Seen-whole counts unchanged: 11 of 11 in all 6 invitation views, 10 of 10 in both tax-request views; every "reaches its end" passes (e.g. 964 of 964px, 531 of 532px).
+  implication: no assertion dropped, renamed or loosened; one per view added. The desktop wheel path (whose fixed 60 ms wait is also replaced by the rest wait) passes too.
+
+- timestamp: 2026-11-27T06:05Z
+  checked: npm --prefix server test on the fixed tree (server/node_modules linked for the run, removed after; scratchpad emflaky/server-tests.txt)
+  found: "# tests 472", "# pass 472", "# fail 0".
+  implication: server tests unchanged (the fix touches only the check).
+
 ## Resolution
 
-root_cause:
-fix:
-verification:
-files_changed: []
+root_cause: In the check, not the product. email-dialog.js readThrough took one look per finger stroke, a fixed 250 ms after the lift (60 ms per wheel notch on desktop). The stroke (8 touchMoves of 15px sent by CDP, lifted at once) let the browser add momentum computed from how fast those touch events reached the page; under load they arrive bunched, the momentum is large and still running at the look, so one look landed 330px, 518px or the whole 964px past the previous one. Every part the body passed between two looks was missed: in the 520px frame on a phone the window is 391px and the tallest part (the paragraph "The link below takes you through", 157px) is whole only within a 234px band of scrollTop, so a single jump over it gives the 10-of-11 failure, a jump over scrollTop ~330-900 gives the 7/8-of-11 family, a jump from the top to the end gives 4 of 11. The product never clipped: in every failing run the card showed all of its content and the body reached its end, every part is shorter than the window, and the scroll events show each missed part whole at positions between the two looks. The 100% frame (715px window, 558px slack) never failed.
+fix: email-dialog.js readThrough only. Each finger stroke drags the same 120px (8 x 15px) and holds still 200 ms before lifting, as a reader does, so the browser starts no momentum: a stroke moves the dialog by the finger's travel whatever the timing. Every look (the first, and after every stroke or wheel notch) waits for atRest(): the body's scrollTop unchanged over 5 animation frames, bounded 5 s; the fixed 250 ms and 60 ms waits are gone. New check line per view: "the dialog came to rest after every finger stroke|wheel notch before it was looked at (within 5 s each)". A miss now reports each missed part's height, the window and the scrollTop band in which it is whole, and every look's scrollTop, so a real clip (a part taller than the window or cut by the card) reads differently from looks that passed it by. Pass condition unchanged: all 11 (10 for tax-request) parts whole at some look, and the end reached.
+verification: RED: the unfixed check (frozen copy, sha256 6408d7a9...) under CDP Emulation.setCPUThrottlingRate 6 fails the phone frame520px view 7 of 33 times (1/3, 2/10, 4/20), reproducing all three saved signatures (10 of 11 "The link below takes you through"; 8 of 11 for the 7-of-11 family; 4 of 11). GREEN: the fixed check, run side by side with the 20-run RED batch under the same throttling and load (load average up to 16 on 4 cores), passes 20 of 20 (frame520px 20/20, framefull 20/20, no FAIL line at all), every stroke 75-113px; earlier 3 of 3. Whole check PASS (parts run: 3) twice (through heavy.sh, and under RATE=6), 62 PASS lines: the same 54 names as 11-14's gate plus 8 "came to rest" lines. Server tests 472/472. Not done: a 20-run batch under plain shared-slot load without throttling (the throttled pair is the proof); the real gate run is the owner's/orchestrator's check.
+oracle_type: specified (the check's own assertions; pass condition unchanged, one line added per view)
+files_changed: [.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/email-dialog.js]
