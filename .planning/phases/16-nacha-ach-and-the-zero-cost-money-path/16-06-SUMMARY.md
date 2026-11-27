@@ -72,4 +72,18 @@ At RED, prenote, refusals and selfcheck already pass: the Task 1 reader already 
 
 Measured (plan-check info): the pinned reader accepts every synthesized return and change file: noc-c01.ach (a COR batch, addenda 98), prenote-r03.ach and mixed.ach (two batches, one COR) each pass -validate-file and -validate-totals with no message. No fixture had to be changed.
 
+GREEN: commit 097e3ea. Task 2 verify (verbatim block, run from a script file; O/verify2.txt):
+```
+PASS selfcheck an empty --case list exits 1 with a FAIL line
+RETURNS READ: PASS (cases run: 12)
+GATE ok   ACH LEAK
+GATE ok   HOLIDAYS
+GATE ok   MOBILE SYNC
+GATE ok   INDEPENDENT READER
+GATE ok   RETURNS READ
+GATE_EXIT=0 (phase 16 checks only)
+VERIFY2_EXIT=0
+```
+BANK FILES (phase 11, shares bankfiles.js, which this plan only reads): `BANK FILES: PASS (cases run: 12)`.
+
 bad-93.ach (plan-check B1, a note, no assertion): the independent reader reads it as valid (it pads the 93-character file control record), as 16-01 measured; the portal's own reader refuses it with "Line 6 has 93 characters; a NACHA file has 94 on every line." (case refusals).
