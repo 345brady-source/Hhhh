@@ -10,7 +10,7 @@
 | Competitor | Typical price (evidence) | White-label | E-sign included | ACH / payments model | Fund accounting | Tax documents |
 |---|---|---|---|---|---|---|
 | **Our portal (self-serve)** | $0 for 12 months for the first 40 sponsors, then $100/mo (owner's current plan) | Yes: only the sponsor's brand; sponsor can run it on its own server (BUILT) | Yes, no per-envelope fee (engine BUILT; automatic field placement BUILDING, scored 65-96% on 4 unseen agreements, 3 of 4 under the 90% bar) | NACHA file the sponsor uploads to its own bank; $0; no money transmitter; credits only, capital calls by wire (BUILT; upgrades BUILDING) | Double-entry journal, bank reconciliation, CPA year-end package (BUILT, CPA review pending) | K-1 split and delivery, 1099-INT/DIV, IRS IRIS file, withholding (BUILT, not yet tried on real CPA K-1 files) |
-| Juniper Square | Not published. Old listed entry price was $18,000/yr for firms under $50M equity | Branded portal; own domain not confirmed | Yes, through DocuSign: 1,000 envelopes/yr included, then $5 each (rate card dated Feb 2024, possibly outdated) | Payments inside the platform, $0.50 per ACH (same rate card) | Yes, plus fund administration services | K-1 delivery |
+| Juniper Square | Not published. Old listed entry price was $18,000/yr for firms under $50M equity | Branded portal; own domain not confirmed | Yes, through DocuSign: 1,000 envelopes/yr included, then $5 each (rate card dated Feb 2024, possibly outdated) | Payments inside the platform, $0.50 per ACH (same rate card) | Yes, plus fund administration services | Not confirmed in the sources found |
 | InvestNext | Fundraising $99 or $299/mo (sources conflict); All-In-One from $499/mo billed yearly (up to $10M); Firm about $699/mo; onboarding fee not published | Yes; own domain is a paid add-on | Yes | Inside the platform; 0.03% + $0.25 per payment, capped at $25 (third-party figure) | Waterfalls and cap table; general ledger not found | One .zip of K-1s matched and delivered |
 | Agora | From $749/mo (Essential, official page; an older page says $599), priced by equity under management | Yes, including own domain | Yes | Inside the platform; ACH fees waived on Pro and Enterprise | Higher tiers, plus co-sourced fund administration | K-1 delivery (through the administration service) |
 | Covercy | Fundraising Starter $498/mo, or $249 per entity per month; banking $79-$799/mo | "White-labeled portal"; own domain not found | Yes (Dropbox Sign integration listed) | Its own banking product (Thread Bank, through Unit); ACH, wire, check | Fund administration tier, quoted on request | K-1 matching, K-1 preparation support |
@@ -159,5 +159,42 @@ Every line was seen on 2026-11-27 in web-search extracts of the page named; I co
 - **Sydecar:** SPVs, but its FAQ says it "does not currently support real estate" (https://sydecar.io/faq). Price for reference: 2% of capital raised, $2,500-$12,500, plus a $2,000 regulatory fee.
 - **Groundbreaker:** real-estate investor management; no real price published (Capterra's "$0.01 per user per year" is a placeholder, https://capterra.com/p/183376/GroundBreaker/).
 - **Market range overall:** "investor portal software for real estate sponsors ranges from $150-$3,000+/month depending on features and scale" (GowerCrowd, https://gowercrowd.com/real-estate-syndication/investor-portal-comparison, undated in the extract).
+
+## 3. Capabilities side by side
+
+Key: **Y** yes (source says so) · **P** partial · **A** add-on or charged per use · **N** no · **?** not found in the searches (not the same as "no"). For our column: **B** BUILT AND MERGED (not owner-checked) · **Bg** BUILDING · **Pl** PLANNED · **N** not built and not planned. Competitor cells cite the subsection of section 2 that holds the URL.
+
+| Capability | Ours | Juniper Sq (2.1) | InvestNext (2.2) | Agora (2.3) | Covercy (2.4) | Cash Flow Portal (2.5) | SponsorCloud (2.6) | AppFolio IM (2.7) | Yardi (2.8) |
+|---|---|---|---|---|---|---|---|---|---|
+| Investor portal in the sponsor's brand | B | Y | Y | Y | Y | Y | Y | Y | Y |
+| On the sponsor's own domain | B (the sponsor publishes the page or runs the server) | ? | A (paid add-on) | Y | ? | P (custom URL) | ? | ? | ? |
+| E-signature inside onboarding | B, no envelope fee | A (DocuSign; $5 per envelope after 1,000) | Y | Y | Y (Dropbox Sign integration) | Y | Y | Y | Y |
+| Signature fields placed automatically on the sponsor's agreement | Bg (65-96% measured; 3 of 4 under the bar) | ? | ? | Y (vendor says "auto-generated signature fields") | ? | P (pre-filled templates) | ? | ? | ? |
+| Official W-9 / W-8 filled and signed in onboarding | B (W-9, W-8BEN, W-8BEN-E) | ? | ? | ? | ? | Y (W-9) | ? | ? | ? |
+| 506(b) count of 35, Reg A Tier 2 limit, ERISA 25% test | B | ? | ? | ? | ? | P (506(b)/(c) support, SEC questionnaire) | ? | ? | ? |
+| KYC and sanctions screening | B against stand-ins; real provider not run | ? | ? | Y | ? | ? | ? | ? | ? |
+| Accreditation verification | B against stand-ins; provider plug-in Bg | ? | ? | Y | ? | A (Parallel Markets) | A ($59 per letter) | ? | ? |
+| ACH distributions | B ($0 bank file; sponsor uploads) | A ($0.50 per ACH) | A (per-payment fee) | Y (fees waived on Pro and Enterprise) | Y (own banking; banking tiers $79-$799/mo) | Y (own banking) | Y | Y | ? |
+| Capital collected by ACH | N (wire) | ? | Y | Y | ? | ? | ? | Y | ? |
+| Money held or moved by the vendor or its bank partner | N (by design) | Y | Y | Y | Y | Y | Y | Y | ? |
+| Waterfalls, share classes | B | ? | Y | ? | Y | Y | Y | Y | Y |
+| Capital calls | B | ? | ? | Y | Y | ? | ? | Y | Y |
+| Fund accounting (general ledger) | B | Y | ? | P (higher tiers, co-sourced) | A (administration tier) | ? | ? | P (property accounting) | A (separate module) |
+| CPA year-end package | B (CPA review pending) | ? | ? | ? | ? | ? | ? | ? | ? |
+| K-1 matched and delivered | B (not tried on real CPA files) | ? | Y | Y (through administration) | Y | ? | ? | ? | Y (tax documents) |
+| 1099-INT / 1099-DIV and the IRS file | B | ? | ? | ? | ? | ? | ? | ? | ? |
+| Withholding (backup 24%, foreign 30%) | B | ? | ? | ? | ? | ? | ? | ? | ? |
+| Form D and state notices | B (staff upload; EDGAR API Pl) | ? | ? | ? | ? | ? | ? | ? | ? |
+| Report builder / investor statements | B | Y | ? | ? | Y | ? | ? | Y | Y |
+| Portal messaging | Bg | ? | ? | ? | ? | ? | ? | Y | ? |
+| Data room | Bg (logic only) | ? | ? | Y (Pro) | ? | ? | ? | ? | ? |
+| CRM and email marketing | N | Y | ? | Y | Y | Y (Marketing Pro $199/mo) | ? | ? | Y |
+| Two-step sign-in, roles | Bg (older admin/team roles B) | ? | ? | Y (two-factor) | ? | ? | ? | ? | ? |
+| Email sent from the sponsor's own domain | Bg | ? | ? | ? | ? | ? | ? | ? | ? |
+| Data held centrally for the whole team (hosted) | Bg (browser storage until 15-17) | Y (hosted service) | Y | Y | Y | Y | Y | Y | Y |
+| Sponsor can run it on its own server | B | ? | ? | ? | ? | ? | ? | ? | ? |
+| Fund administration service from the same company | Managed edition (the firm's service) | Y | ? | Y (co-sourced) | Y (quoted) | ? | ? | ? | ? |
+
+Reading the "?" cells: many are features these vendors probably have but did not show up in search extracts (for example K-1 delivery at Juniper Square). They must not be used as "they don't have it" in any sales material until someone checks the vendor's own page.
 
 <!-- gsd:write-continue -->
