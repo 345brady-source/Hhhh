@@ -220,3 +220,6 @@
 
 ## Orchestrator override on 11-16 (2026-11-27)
 - B4's test numbers: '987-65-1234' / '987651234' are not used (a 9xx number with middle digits 65 falls in an issued taxpayer-number range). The stand-in W-9 carries the never-issued '000-65-1234' / '000651234' instead; the C-04 assertions are otherwise as written. 11-16 is building (wip/11-16).
+
+## Decision during 11-16 (orchestrator, 2026-11-27)
+- AUDIT FLOW part `managed` (11-12's check) asserted that console.js had no change at all since the base commit. Its purpose, stated in the check, is that the menu is unchanged. 11-16 must add one hook line to the Audit view in console.js, so the assertion is narrowed: index.html stays byte-checked; console.js passes when no added or removed diff line matches `\bNAV(_SECTIONS)?\b`. 11-16's executor makes this edit in wip/11-16 and reruns its gate.
