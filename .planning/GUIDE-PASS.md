@@ -19,3 +19,6 @@ The guide trim is merged (sponsor guide 44,641 of 48,000 bytes on 2026-11-27). L
 ## small-fixes-a (merged becfd21)
 - Documents: "Remove" hides a document from investors' portals; it stays in the list marked "Hidden from investors", with its file.
 - Offering structure: "Capital call notice (days)" takes a whole number of days, 1 or more.
+
+## 08-20 (merged)
+- `## investments`: "With no request open, the subscribe page says the firm will send a link." (73 bytes)

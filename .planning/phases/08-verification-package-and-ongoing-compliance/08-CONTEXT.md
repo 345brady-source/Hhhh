@@ -254,3 +254,10 @@
 - W4: no added line under assets or server holds the owner's forbidden word (`git diff $BASE -- assets server | grep '^+[^+]' | grep -ci basic` = 0).
 - W5: payments and accreditation are stand-ins only; the SUMMARY claims nothing as confirmed with a provider.
 - Start: now, with these applied. small-fixes-a and 13-01 edit other hunks of invitations.js; 11-16 and small-fixes-a edit console.js. Whichever merges second reruns step 0 and its final verify on the merged tree. Browser runs queue through heavy.sh behind report-fixes and the email-dialog debugger.
+
+## After 08-20 (merged 2026-11-27)
+- Gate GATE_EXIT=0 on run 2 (run 1 MEASURE walkC entity over its 900 s limit while all browser slots were busy; run 2 walkC 90 s). REVERIFY now 9 parts.
+- Merged tree: server tests run 1 505/506 (invitations-cosign "create and email" white-label scan: `vendor name in`), run 2 506/506, and that file 6 of 6 clean alone. Same class as the phase 6 lib.js onnx flake: the scans match vendor words inside random link tokens. A quick task strips link tokens before the scans (queued).
+- portal.js: the subscribe offer is on the self-serve subscribe line and on the "not available to sign online yet" line (the preview's sample offering has no stored agreement).
+- Open: onboarding.js's own accreditation step does not mention the open re-verification request; guide line held in GUIDE-PASS.md.
+- Owner's check (iPhone): Ask to re-verify shows the greyed package box; Send request, then the investor's subscribe page offers "Verify your accreditation" (Step 1 of 2).
