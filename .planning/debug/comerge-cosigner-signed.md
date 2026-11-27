@@ -88,6 +88,11 @@ started: since coMerge was written (to confirm with git log).
     FAIL co-link-phone (same; "Co-investor: Ingrid Vasquez-Holm · Sign-in sent Nov 27, 2026")
   implication: preview RED confirmed on both devices.
 
+- timestamp: 2026-11-27T02:30Z
+  checked: preview fix, commit 4b77e2e (assets/js/coinvestor.js only: coSignedAt(inv) = the latest signedAt of the account's co-investor signer on a sent/completed agreement, only when esign.js coTask says nothing waits for them and they signed; signInText's local branch says "Signed <date>" then, before the expired/sent lines; the server branch is untouched). Server tests on 4b77e2e (scratchpad comerge/server-tests-final.txt); whole press-and-co-investor.js on 4b77e2e, heavy.sh, GATE_FRESH=1, 02:22:31-02:29:11 UTC (scratchpad comerge/final-press/run.txt)
+  found: server tests "# tests 456", "# pass 456", "# fail 0". "PRESS AND CO-INVESTOR: PASS (parts run: 10)", 139 PASS, 0 FAIL; per part press-tax-desktop 12, press-tax-phone 12, press-nav-desktop 7, press-nav-phone 7, co-link-desktop 30, co-link-phone 30, co-managed 7, press-w8-phone 9, co-link-none-phone 18, co-link-wait-desktop 7. The PASS names equal 11-13's gate run (exec-11-13/gate/pressco.txt, 137) plus exactly the two new ones ("PASS co-link-desktop once the co-investor signed, the investors row says "Signed <date>" (as with the integration server)" and the co-link-phone one). The 4 server-check additions likewise are the only difference against 11-13's coserver.txt (128 -> 132).
+  implication: preview GREEN; nothing else in PRESS AND CO-INVESTOR changed (the "Sign-in link ready to send" / "Sign-in sent <date>" rows before signing still pass; the changed-email, removed and made-up links still pass).
+
 ## Resolution
 
 root_cause:
