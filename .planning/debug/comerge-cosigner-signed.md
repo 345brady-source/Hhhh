@@ -66,6 +66,11 @@ started: since coMerge was written (to confirm with git log).
     FAIL cosign-phone (same two, co-investor Ingrid Vasquez-Holm, row "... Co-investor: Ingrid Vasquez-Holm · Sign-in in the server outbox Nov 27, 2026 ...", signedAt "", signer 2026-11-27T02:11:32.867Z; cancels ["POST .../v1/invitations/ivt_g2kwRaYldqQt/cancel"], same "had already ended on the server" line)
   implication: SYMPTOM CONFIRMED BY RUN. The row says "Sign-in in the server outbox Nov 27, 2026" after the co-investor signed (the agreement's signer is signed at 02:11:13.889Z, the sign-in record's signedAt is empty), the console POSTs the cancel for the finished sign-in, sets cancelledAt, and logs "Co-investor sign-in cancelled: Daniel Whitaker: the link sent to Theodora Mbeki-Larsen had already ended on the server (the agreement no longer waits for the co-investor)". Every older assertion of both parts still passes, so the RED isolates this defect. No taxpayer-number pattern in the output (grep 0).
 
+- timestamp: 2026-11-27T02:17Z
+  checked: the fix, commit ebe8b55 (assets/js/invitations.js coMerge only, +3 -1: after importSignature the co-investor's signer is read again from env.signers; si.signedAt = its signedAt, or now if it were missing); npm --prefix server test on ebe8b55 (scratchpad comerge/server-tests.txt)
+  found: "# tests 456", "# pass 456", "# fail 0".
+  implication: server tests unchanged. Browser GREEN runs started (whole CO-INVESTOR SERVER; preview co-link-desktop with a temporary measurement probe, commit 733ff1f, to be removed).
+
 ## Resolution
 
 root_cause:
