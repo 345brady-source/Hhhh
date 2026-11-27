@@ -67,11 +67,30 @@ const J = (x) => JSON.stringify(x);
 const fixture = () => JSON.parse(JSON.stringify(require('./fixtures/fund-a.js')));
 
 /** The commit the plan started from: the gate's copy, then GATE_OUT's, then this plan's output folder. */
-/** The added or removed lines of a `git diff -U0` (not the +++/--- headers) that touch the menu: NAV or NAV_SECTIONS. */
+/**
+ * An added menu line that cannot reach the managed edition (plan 13-09): it adds one page, ['console-<key>', ...], whose
+ * module it names in its comment, "(<file>.js)", when assets/js/<file>.js registers NS.views['console-<key>'] and index.html
+ * does not load that file (the menu shows a page only when its module is loaded: console.js shell). A removed line, a line
+ * naming no file or a file index.html loads, or a key the file does not register, is never one.
+ */
+function selfServeOnly(l) {
+  if (!/^\+/.test(l)) return false;
+  const file = (/\/\/[^\n]*\(([a-z0-9-]+\.js)\)/.exec(l) || [])[1];
+  const key = (/\['(console-[a-z0-9-]+)', '/.exec(l) || [])[1];
+  if (!file || !key) return false;
+  let src = '';
+  try {
+    src = fs.readFileSync(path.join(Lib.ROOT, 'assets/js', file), 'utf8');
+  } catch (e) {
+    return false;
+  }
+  return src.indexOf(`NS.views['${key}'] = {`) >= 0 && fs.readFileSync(path.join(Lib.ROOT, 'index.html'), 'utf8').indexOf(`assets/js/${file}`) < 0;
+}
+/** The added or removed lines of a `git diff -U0` (not the +++/--- headers) that touch the menu: NAV or NAV_SECTIONS (selfServeOnly lines aside). */
 function menuChanges(diff) {
   return String(diff || '')
     .split('\n')
-    .filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l) && /\bNAV(_SECTIONS)?\b/.test(l));
+    .filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l) && /\bNAV(_SECTIONS)?\b/.test(l) && !selfServeOnly(l));
 }
 if (process.argv.includes('--menu-selftest')) {
   // RED/GREEN proof of the menu test on real git diffs (11-CONTEXT "Decision during 11-16"):
@@ -94,8 +113,14 @@ if (process.argv.includes('--menu-selftest')) {
   const g = menuChanges(green.stdout);
   const gAdded = String(green.stdout || '').split('\n').filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l));
   console.log(`${r.length === 1 ? 'PASS' : 'FAIL'} menu-selftest RED: a console.js copy with one NAV_SECTIONS line added is reported :: ${JSON.stringify(r)}`);
-  console.log(`${green.status === 0 && gAdded.length === 1 && g.length === 0 ? 'PASS' : 'FAIL'} menu-selftest GREEN: this tree against ${String(base).slice(0, 7)} changes ${gAdded.length} line of console.js, none of the menu :: ${JSON.stringify(gAdded.map((l) => l.trim().slice(0, 60)))}`);
-  process.exit(r.length === 1 && green.status === 0 && gAdded.length === 1 && g.length === 0 ? 0 : 1);
+  // plan 13-09: a menu line for a page whose module index.html loads, or for a key its file does not register, is reported
+  const loaded = "+  NAV.splice(1, 0, ['console-co', 'Co']); NAV_SECTIONS[0][1].push('console-co'); // Co (coinvestor.js) kept on its own line";
+  const unknown = "+  NAV.splice(1, 0, ['console-nothing', 'Nothing']); NAV_SECTIONS[0][1].push('console-nothing'); // Nothing (emails-ui.js) kept on its own line";
+  const removed = "-  NAV.splice(1, 0, ['console-emails', 'Emails']); NAV_SECTIONS[0][1].push('console-emails'); // Emails (emails-ui.js) kept on its own line";
+  const r2 = menuChanges([loaded, unknown, removed].join('\n'));
+  console.log(`${r2.length === 3 ? 'PASS' : 'FAIL'} menu-selftest RED: an added line for a page index.html loads, a key its file does not register and a removed line are each reported :: ${JSON.stringify(r2)}`);
+  console.log(`${green.status === 0 && g.length === 0 ? 'PASS' : 'FAIL'} menu-selftest GREEN: this tree against ${String(base).slice(0, 7)} changes ${gAdded.length} line(s) of console.js, none of the managed menu :: ${JSON.stringify(gAdded.map((l) => l.trim().slice(0, 60)))}`);
+  process.exit(r.length === 1 && r2.length === 3 && green.status === 0 && g.length === 0 ? 0 : 1);
 }
 
 function baseCommit() {
