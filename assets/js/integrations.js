@@ -1311,6 +1311,7 @@
    * confirmed" until the server reports it (MAIL_LIVE, set by the operator after production access and a real send).
    * Everything the server says is drawn as text. */
   const MAIL_WORDS = { not_set_up: 'Not set up', pending: 'Waiting for DNS records', ready: 'Ready' };
+  const MAIL_BADGE = { not_set_up: 'cs-badge-mute', pending: 'cs-badge-warn', ready: 'cs-badge-ok' };
   function mailState() {
     const st = pageState();
     if (!st.mail) st.mail = { url: '', loading: false, data: null, draft: null, error: '', fieldError: '', busy: '', released: 0 };
@@ -1366,9 +1367,9 @@
     const fe = m.fieldError;
     const status = !d ? '' : d.status === 'failed' ? d.detail || 'A record does not match; check it was copied exactly.' : MAIL_WORDS[d.status];
     const rec = (r, i) => {
-      const item = (k, label, v, copy, wide) =>
-        `<div${wide ? ' style="grid-column: 1 / -1"' : ''}><dt>${label}</dt><dd>${copy ? `<code class="sd-link ms-${k}" id="ms-${k}-${i}">${h(v)}</code><span class="cs-row ms-copy-row"><button class="cs-btn cs-btn-small" type="button" data-action="ms-copy" data-for="ms-${k}-${i}" aria-label="Copy the ${label.toLowerCase()} of record ${i + 1}">Copy</button><span class="cs-hint ms-said" aria-live="polite"></span></span>` : `<span class="ms-${k}">${h(v)}</span>`}</dd></div>`;
-      return `<li class="ms-rec"><dl class="cs-kv">${item('type', 'Type', r.type, false)}${item('name', 'Name', r.name, true)}${item('value', 'Value', r.value, true, true)}</dl></li>`;
+      const item = (k, label, v, copy) =>
+        `<div><dt>${label}</dt><dd>${copy ? `<code class="sd-link ms-${k}" id="ms-${k}-${i}">${h(v)}</code><span class="cs-row ms-copy-row"><button class="cs-btn cs-btn-small" type="button" data-action="ms-copy" data-for="ms-${k}-${i}" aria-label="Copy the ${label.toLowerCase()} of record ${i + 1}">Copy</button><span class="cs-hint ms-said" aria-live="polite"></span></span>` : `<span class="ms-${k}">${h(v)}</span>`}</dd></div>`;
+      return `<li class="ms-rec" style="border: 1px solid var(--line); border-radius: var(--r-inner); padding: var(--space-sm) var(--space-md)"><dl class="cs-kv" style="grid-template-columns: minmax(0, 1fr)">${item('type', 'Type', r.type, false)}${item('name', 'Name', r.name, true)}${item('value', 'Value', r.value, true)}</dl></li>`;
     };
     const set = !!d && d.status !== 'not_set_up';
     const body = `<form class="ms-form" data-form="ms-setup" novalidate>
@@ -1377,7 +1378,7 @@
           <button class="cs-btn" type="submit"${m.busy ? ' disabled' : ''}>Set up</button>
         </div>
       </form>
-      ${status ? `<p class="ms-state"><strong id="ms-status" tabindex="-1"${d.status === 'failed' ? ' class="cs-error"' : ''}>${h(status)}</strong></p>` : ''}
+      ${!status ? '' : d.status === 'failed' ? `<p class="cs-error ms-state" id="ms-status" tabindex="-1">${h(status)}</p>` : `<p class="ms-state"><span class="cs-badge ${MAIL_BADGE[d.status]}" id="ms-status" tabindex="-1">${h(status)}</span></p>`}
       ${m.error ? `<p class="cs-error" id="ms-error" role="alert">${h(m.error)}</p>` : ''}
       ${d && d.records.length && d.status !== 'ready' ? `<p class="cs-hint">Add these records where your domain's DNS is managed, then choose Check.</p>` : ''}
       ${d && d.records.length ? `<ul class="cs-list ms-records" style="list-style: none; padding-left: 0; gap: var(--space-md)">${d.records.map(rec).join('')}</ul>` : ''}

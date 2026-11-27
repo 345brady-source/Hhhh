@@ -159,6 +159,16 @@ const section = (page) =>
     };
   });
 
+/** A picture of the section for the owner (the page's coordinates, so a tall section is taken whole). */
+async function shot(page, name) {
+  await page.waitForFunction(() => !document.querySelector('#toasts > *'), null, { timeout: 12000 }).catch(() => {});
+  const clip = await page.evaluate(() => {
+    const r = document.getElementById('iv-mail').getBoundingClientRect();
+    return { x: Math.max(0, r.left + scrollX - 8), y: Math.max(0, r.top + scrollY - 8), width: Math.min(document.documentElement.scrollWidth, r.width + 16), height: r.height + 16 };
+  });
+  await page.screenshot({ path: path.join(L.OUT, name), fullPage: true, clip });
+}
+
 /** Press a button of the section by its words (tap on a touch screen). */
 async function press(page, words, touch) {
   const b = page.locator('#iv-mail button', { hasText: new RegExp(`^\\s*${words}\\s*$`) }).first();
@@ -255,7 +265,7 @@ const parts = {
       whiteLabel(check, 'the section', s2 && s2.text, ready.records);
       whiteLabel(check, 'the Integrations page', view, ready.records);
       whiteLabel(check, "the server's sentences shown", [failed.detail, ready.detail].join('\n'), []);
-      await page.screenshot({ path: path.join(L.OUT, 'email-sending-desktop.png'), fullPage: true });
+      await shot(page, 'email-sending-desktop-ready.png');
 
       // T-13-27: a record value and a server sentence carrying markup are drawn as text, never as markup.
       const MARK = '<img src=x onerror="window.__msx=1">';
