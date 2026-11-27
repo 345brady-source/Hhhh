@@ -60,9 +60,9 @@
     return !!(I && I.needsAccreditation && ((off && I.needsAccreditation(ws, probe(inv), off)) || I.needsAccreditation(ws, probe(inv))));
   }
   /** "finished onboarding", or for an investor already on file invited to another offering, "finished their subscription". */
-  const finishedWhat = (it) => (it && it.taxRequest ? 'finished your tax form request' : it && it.existing ? 'finished their subscription' : 'finished onboarding');
+  const finishedWhat = (it) => (it && it.taxRequest ? 'finished your tax form request' : it && it.reverify ? 'finished your re-verification request' : it && it.existing ? 'finished their subscription' : 'finished onboarding');
   /** "started onboarding", or for an investor already on file, "started their subscription". */
-  const startedWhat = (it) => (it && it.taxRequest ? 'opened your tax form request' : it && it.existing ? 'started their subscription' : 'started onboarding');
+  const startedWhat = (it) => (it && it.taxRequest ? 'opened your tax form request' : it && it.reverify ? 'opened your re-verification request' : it && it.existing ? 'started their subscription' : 'started onboarding');
   /**
    * Plan 06-26: the official form an investor's tax-form request is for, by the investor type the sponsor chose (D-09);
    * an investor with none recorded is taken by their kind of account (a U.S. person: Form W-9).
@@ -73,6 +73,8 @@
   };
   /** Plan 06-26: the investor's open tax-form request (one not completed, cancelled or expired), or null. */
   const openTaxRequest = (ws, inv) => (ws && inv ? list(ws).filter((x) => x.investorId === inv.id && x.taxRequest && OPEN.indexOf(x.status) >= 0 && !expiredNow(x)).pop() || null : null);
+  /** Plan 08-09 (D-04): the investor's open request to verify their accreditation again (not completed, cancelled or expired), or null. */
+  const openReverifyRequest = (ws, inv) => (ws && inv ? list(ws).filter((x) => x.investorId === inv.id && x.reverify && OPEN.indexOf(x.status) >= 0 && !expiredNow(x)).pop() || null : null);
 
   /* ---------- Records ---------- */
   const list = (ws) => (ws.invitations = ws.invitations || []);
@@ -137,6 +139,8 @@
         changed = true;
       }
     });
+    // Plan 08-09: a re-verification request finished while its check was still waiting: its entry is written once the result is in.
+    list(ws).forEach((it) => it.reverify && it.status === 'completed' && !it.reverifiedAt && reverified(ws, it) && (changed = true));
     return changed;
   }
   function linkFor(ws, it) {
@@ -261,6 +265,9 @@
     // Plan 06-27 (D-10): the sponsor chose "Include tax form" inviting an investor on file to subscribe: the short flow holds
     // the tax step too (before subscribe). Never on the investor's own portal entry points (onboarding.js selfInvite).
     if (existing && o.includeTax === true && off && !invitation.taxRequest) invitation.includeTax = true;
+    // Plan 08-09 (D-04, C-06): the sponsor asks an investor on file to verify their accreditation again: the accreditation
+    // step and the done screen only. Never with an offering, a tax-form request or a portal link.
+    if (existing && o.reverify === true && !off && !invitation.taxRequest && !invitation.access) invitation.reverify = true;
     // Plan 08-06 (D-01): the sponsor ticked "Add verification package". Kept only where the box could be ticked: a server
     // is connected and offers the package for this invitation. The server is sent the choice and this invitation's id
     // (snapshot); it decides what is charged.
@@ -269,6 +276,7 @@
     if (!have) ws.investors.push(investor);
     list(ws).push(invitation);
     if (invitation.taxRequest) audit(ws, 'Tax form requested', `${investor.title} (${email}): Form ${taxFormFor(investor)}, the tax step only`, '', investor.id);
+    else if (invitation.reverify) audit(ws, 'Accreditation re-verification requested', `${investor.title} (${email}): the accreditation step only`, '', investor.id);
     else audit(ws, invitation.access ? 'Portal link sent to investor' : existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}${invitation.includeTax ? `; tax form included (Form ${taxFormFor(investor)})` : ''}` : invitation.access ? ': added manually, account already set up' : ': account only'}`, off ? off.id : '', investor.id);
     return { invitation, investor };
   }
@@ -284,15 +292,16 @@
     const first = given.split(/\s+/)[0].replace(/[^\p{L}\p{M}'’.-]/gu, '') || 'there';
     const cls = off && it.cls ? openClasses(off).concat(off.classes || []).find((c) => c.id === it.cls) : null;
     const form = it.taxRequest ? `Form ${taxFormFor(inv)}` : '';
-    const subject = off ? `${t.name}: your invitation to invest in ${off.name}` : it.taxRequest ? `${t.name}: your ${form}` : it.access ? `${t.name}: your investor portal` : `${t.name}: set up your investor account`;
+    const subject = off ? `${t.name}: your invitation to invest in ${off.name}` : it.taxRequest ? `${t.name}: your ${form}` : it.reverify ? `${t.name}: verify your accredited investor status` : it.access ? `${t.name}: your investor portal` : `${t.name}: set up your investor account`;
     const link = linkFor(ws, it);
     const by = date(String(it.expiresAt || '').slice(0, 10), 'long');
     const amount = off && it.cents ? `, for a commitment of ${money(off, it.cents)}${cls ? ` in ${cls.name}` : ''}` : '';
     const what = off ? `${it.existing ? 'subscribe to' : 'set up your investor account and your subscription to'} ${off.name}${amount}` : it.access ? 'open your investor portal' : 'set up your investor account';
     const sender = it.sentBy && it.sentBy !== t.support.team ? `${it.sentBy} at ${t.name}` : t.name;
-    const lines = [`Dear ${first},`, it.taxRequest ? sentence(`${sender} asks you to complete your ${form}`) : sentence(`${sender} has invited you to ${what}`)];
+    const lines = [`Dear ${first},`, it.taxRequest ? sentence(`${sender} asks you to complete your ${form}`) : it.reverify ? sentence(`${sender} asks you to verify your accredited investor status again`) : sentence(`${sender} has invited you to ${what}`)];
     if (it.note) lines.push(it.note);
     if (it.taxRequest) lines.push(`The link below opens your ${form}, filled in from the details we hold. You check it and sign it online, or upload a completed form instead. Nothing else is asked.`);
+    else if (it.reverify) lines.push('The link below opens the accreditation step only: you verify your status online. Nothing else is asked.');
     else if (it.access) lines.push('Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below opens your portal.');
     else if (it.existing && off) lines.push(`The link below takes you through your subscription in one place: the offering documents, ${it.includeTax ? 'your tax form, ' : ''}your commitment and the subscription agreement, which you sign online. Your account details are already on file.`);
     else
@@ -305,7 +314,7 @@
       `Questions? Contact ${t.support.team}${isEmail(t.support.email) ? ` at ${t.support.email}` : ''}${t.support.phone ? ` or ${t.support.phone}` : ''}.`
     ];
     const text = [lines.join('\n\n'), `Start here: ${link}`, tail.join('\n'), t.legalName || t.name].join('\n\n');
-    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : it.taxRequest ? 'Complete your tax form' : it.access ? 'Open your portal' : 'Set up your account' };
+    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : it.taxRequest ? 'Complete your tax form' : it.reverify ? 'Verify your accreditation' : it.access ? 'Open your portal' : 'Set up your account' };
   }
   /** mailto: with the subject and body; CRLF line breaks (RFC 6068). */
   function mailtoFor(ws, it) {
@@ -375,6 +384,32 @@
     const fresh = !!tc && Date.parse(tc.at || '') >= Date.parse(it.sentAt || '') - 60000;
     return !fresh ? 'no tax form returned' : tc.received === false ? `Form ${form} ${tc.uploaded ? 'uploaded' : 'signed'}, copy not received: ask the investor for it` : tc.uploaded ? `Form ${form} uploaded` : tc.signed === false ? `Form ${form} not signed` : `Form ${form} signed`;
   }
+  /** Plan 08-09: an accreditation result made after this request was sent (a result from before it is not what it brought). */
+  const freshAcc = (a, it) => !!a && a.status !== 'not_started' && Date.parse(a.completedAt || a.startedAt || '') >= Date.parse(it.sentAt || '') - 60000;
+  /** Plan 08-09: what a re-verification request brought: the accreditation result, in the console's words. */
+  function reverifyText(inv, it) {
+    const a = inv && IV() ? IV().peek(inv).accreditation : null;
+    if (!freshAcc(a, it)) return 'no new accreditation verification';
+    if (a.status === 'verified' && !IV().selfCertified(a)) return `accreditation verified${a.expiresAt ? `, valid until ${date(a.expiresAt)}` : ''}`;
+    return a.status === 'pending' || a.status === 'review' ? 'accreditation submitted, waiting for the result' : 'accreditation not verified';
+  }
+  /**
+   * Plan 08-09: a re-verification request finished (local mode) or was imported (server mode). Its accreditation result is
+   * capped by the firm's validity days as every verification is (capAccreditation), and a verified, current result made
+   * after the request was sent is logged once as "Accreditation re-verified" (a result that arrives after the request
+   * finished: refresh, on the console's Investors page). Answers whether it was logged now.
+   */
+  function reverified(ws, it) {
+    const inv = invOf(ws, it.investorId);
+    const I = IV();
+    const a = inv && I && I.recorded && I.recorded(inv) ? inv.verify.accreditation : null;
+    if (it.reverifiedAt || !freshAcc(a, it) || a.status !== 'verified' || I.selfCertified(a)) return false;
+    capAccreditation(ws, inv, a);
+    if (!I.accreditationValid(ws, inv)) return false;
+    it.reverifiedAt = nowIso();
+    audit(ws, 'Accreditation re-verified', `${inv.title}: ${a.via || 'verified'}${a.method ? `, ${a.method}` : ''}; valid until ${date(a.expiresAt)}`, '', inv.id);
+    return true;
+  }
   /** Who finished, for what, and where things stand: the completion notice and the list. */
   function outcome(ws, it) {
     const inv = invOf(ws, it.investorId);
@@ -385,6 +420,8 @@
     const parts = [];
     // Plan 06-26: a tax-form request: the form that came back, and how (its record is the one rule taxOnFile reads).
     if (it.taxRequest) return { text: taxText(inv, it), route: 'console-investors', inv, off: null, r: null, env: null };
+    // Plan 08-09: a re-verification request: the accreditation result it brought, nothing else.
+    if (it.reverify) return { text: reverifyText(inv, it), route: 'console-investors', inv, off: null, r: null, env: null };
     // A request this invitation's import dropped comes first: an earlier request for the same offering is not this one.
     if (it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription${off ? ` to ${off.name}` : ''} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
     else if (r && off) parts.push(`${money(off, r.cents)} subscription to ${off.name}`);
@@ -401,6 +438,7 @@
     if (!ws || !it || it.status === 'completed') return;
     const wasStep = it.stepCount;
     Object.assign(it, { status: 'completed', completedAt: new Date().toISOString(), stepKey: 'done', stepLabel: 'Done', stepIndex: wasStep || it.stepIndex, stepCount: wasStep || it.stepCount });
+    if (it.reverify) reverified(ws, it);
     const x = outcome(ws, it);
     notify(ws, 'onboarding_completed', `${x.inv ? x.inv.title : 'An investor'} ${finishedWhat(it)}`, x.text, x.route);
     sweep(ws);
@@ -510,7 +548,7 @@
       firm: firmOf(ws),
       investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest || it.includeTax ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest || it.includeTax ? { taxPrefill: taxPrefill(inv) } : {}),
       offering,
-      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}, it.package ? { package: true, clientId: it.id } : {}),
+      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}, it.reverify ? { reverify: true } : {}, it.package ? { package: true, clientId: it.id } : {}),
       verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired: needsVerified },
       esign
     };
@@ -570,6 +608,20 @@
     NS.app.save(true);
     return { invitation: it, reused: false, res: await send(ws, it) };
   }
+  /**
+   * Plan 08-09 (D-04, C-06): ask an investor on file to verify their accreditation again. Built as requestTax: an open request
+   * is reused (in server mode its email is sent again with a new link); otherwise a new invitation (existing, reverify, no
+   * offering) holds the accreditation step and the done screen only. opts.package: the verification package (plan 08-20).
+   * Resolves to { invitation, res, reused }.
+   */
+  async function requestReverify(ws, inv, opts) {
+    if (!inv || !active(inv)) throw new Error('Only an investor with an active account can be asked to verify their accreditation again here.');
+    const open = openReverifyRequest(ws, inv);
+    if (open) return { invitation: open, reused: true, res: serverOn(ws) ? await resend(ws, open) : { emailStatus: 'manual' } };
+    const it = create(ws, Object.assign({ name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, reverify: true }, opts && opts.package === true ? { package: true } : {})).invitation;
+    NS.app.save(true);
+    return { invitation: it, reused: false, res: await send(ws, it) };
+  }
   /** Send (or hand to the sponsor's email app). Resolves to { emailStatus, error? }. */
   async function send(ws, it) {
     if (!it) return { emailStatus: 'failed', error: 'No invitation.' };
@@ -626,6 +678,7 @@
       const off = offOf(ws, it.offeringId);
       const o = { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note, includeTax: it.includeTax === true };
       if (it.package) o.package = true;
+      if (it.reverify) o.reverify = true;
       const e = validate(ws, o);
       if (e.amount || e.cls) Object.assign(o, { cents: 0, cls: '' });
       if (!Object.keys(validate(ws, o)).length) made = create(ws, o).invitation;
@@ -1188,7 +1241,7 @@
         // Nothing new to record: a blank record an earlier version left goes, so they read as their KYC on file again.
         delete inv.verify;
       }
-      if (src.esignConsent && typeof src.esignConsent === 'object') inv.esignConsent = clone(src.esignConsent);
+      if (src.esignConsent && typeof src.esignConsent === 'object' && !it.reverify) inv.esignConsent = clone(src.esignConsent);
       // the tax form this request brought: the device's record of it, checked below against the envelope and files that came
       if ((taxReq || withTax) && src.taxCert && typeof src.taxCert === 'object' && typeof src.taxCert.form === 'string' && src.taxCert.form) {
         inv.taxCert = clone(src.taxCert);
@@ -1196,7 +1249,7 @@
       }
       // D-01: the status answers the link collected. The benefit plan answers, cleaned to known fields (T-06-17).
       const e = cleanErisa(src.erisa);
-      if (e && e.plan) inv.erisa = Object.assign(e, { at: nowIso() });
+      if (e && e.plan && !it.reverify) inv.erisa = Object.assign(e, { at: nowIso() });
       // The ground the investor self-certified on the status step, when no verification was taken: only the answer the request
       // records (accredited, on this ground), and never over an accreditation a third party verified (that keeps today's rules).
       const sq = sub.request && typeof sub.request === 'object' && sub.request.qual && typeof sub.request.qual === 'object' ? sub.request.qual : null;
@@ -1565,14 +1618,16 @@
             await merge(ws, it, sub);
             coAfterImport(ws, it);
             it.importedAt = new Date().toISOString();
+            const rv = !!it.reverify && reverified(ws, it);
             const x = outcome(ws, it);
             // An investor already on file finished a subscription only: their account stays as this console holds it.
             if (it.taxRequest) audit(ws, 'Tax form imported', `${x.inv ? x.inv.title : it.investorId}: the tax form request from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, '', it.investorId);
+            else if (it.reverify) rv || audit(ws, 'Re-verification imported', `${x.inv ? x.inv.title : it.investorId}: ${x.text}; the copy on the integration server is deleted`, '', it.investorId);
             else if (it.existing) audit(ws, 'Subscription imported', `${x.inv ? x.inv.title : it.investorId}: the subscription from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
             else audit(ws, 'Onboarding imported', `${x.inv ? x.inv.title : it.investorId}: records from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
             notify(ws, 'onboarding_completed', `${x.inv ? x.inv.title : 'An investor'} ${finishedWhat(it)}`, x.text, x.route);
             n++;
-            if (it.existing && !it.taxRequest) check.subscriptions++;
+            if (it.existing && !it.taxRequest && !it.reverify) check.subscriptions++;
             changed = true;
             NS.app.save(true);
           }
@@ -2463,7 +2518,7 @@
     const m = emailFor(w, it);
     const local = !it.serverId;
     U.dialog(
-      `<div class="dlg-head"><div><h2>${it.taxRequest ? 'Tax form request email' : 'Invitation email'}</h2><p>${local ? 'Send it from your email app. The portal prepared it with the investor’s link.' : 'The email your integration server sends.'}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      `<div class="dlg-head"><div><h2>${it.taxRequest ? 'Tax form request email' : it.reverify ? 'Re-verification request email' : 'Invitation email'}</h2><p>${local ? 'Send it from your email app. The portal prepared it with the investor’s link.' : 'The email your integration server sends.'}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <div class="dlg-body inv8-email">
         <dl class="inv8-meta">
           <div><dt>From</dt><dd>${h(m.fromName)}${local ? ' <span class="cs-hint">(your own address, from your email app)</span>' : ''}</dd></div>
@@ -2519,6 +2574,57 @@
     if (res.emailStatus === 'manual') return showEmail(out.invitation.id);
     if (res.emailStatus === 'failed') return U.toast(`The tax form request for ${inv.title} could not be sent: ${res.error}`);
     U.toast(res.emailStatus === 'outbox' ? `Tax form request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Tax form request emailed to ${inv.contact}.`);
+  };
+  // Plan 08-09 (D-04, C-06): "Ask to re-verify" on the Investors page (console.js shows it for an active investor whose
+  // verification by a third party is missing, lapsed or about to lapse while an offering needs one). Its dialog names the
+  // investor and what the link holds; "Send request" makes the request, or sends an open one again.
+  function reverifyDialog(w, inv) {
+    const I = IV();
+    const a = I ? I.peek(inv).accreditation : {};
+    const third = a.status === 'verified' && !(I && I.selfCertified(a));
+    const now = !third ? 'No accreditation verification by a third party is on file.' : a.expiresAt && a.expiresAt < today() ? `Their accreditation verification expired on ${date(a.expiresAt)}.` : a.expiresAt ? `Their accreditation verification is valid until ${date(a.expiresAt)}.` : '';
+    const open = openReverifyRequest(w, inv);
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Ask to re-verify</h2><p>${h(inv.contact)}${inv.title && inv.title !== inv.contact ? ` for ${h(inv.title)}` : ''}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body inv8-reverify">
+        ${now ? `<p>${h(now)}</p>` : ''}
+        <p>${h(inv.contact)} gets a link that holds the accreditation step only. A Rule 506(c) subscription needs a current verification.</p>
+        ${open ? '<p class="cs-hint">A request is already open: sending it again gives a new link, and the earlier one stops working.</p>' : ''}
+        <div class="cs-row cs-row-end inv8-actions"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="reverify-send" data-id="${h(inv.id)}">Send request</button></div>
+      </div>`,
+      'dlg-reverify'
+    );
+  }
+  NS.actions['reverify-request'] = (el) => {
+    if (!E.diy) return;
+    if (!NS.app.can('operate')) return U.toast('Only your team can ask investors to verify their accreditation.');
+    const w = W();
+    const inv = invOf(w, el.getAttribute('data-id'));
+    if (inv) reverifyDialog(w, inv);
+  };
+  NS.actions['reverify-send'] = async (el) => {
+    if (!E.diy) return;
+    if (!NS.app.can('operate')) return U.toast('Only your team can ask investors to verify their accreditation.');
+    const w = W();
+    const inv = invOf(w, el.getAttribute('data-id'));
+    if (!inv || asking[inv.id]) return;
+    asking[inv.id] = true;
+    el.disabled = true;
+    let out = null;
+    try {
+      out = await requestReverify(w, inv);
+    } catch (e) {
+      U.toast(String((e && e.message) || e));
+    } finally {
+      delete asking[inv.id];
+    }
+    NS.app.render();
+    if (!out) return U.closeDialog();
+    const res = out.res || {};
+    if (res.emailStatus === 'manual') return showEmail(out.invitation.id);
+    U.closeDialog();
+    if (res.emailStatus === 'failed') return U.toast(`The re-verification request for ${inv.title} could not be sent: ${res.error}`);
+    U.toast(res.emailStatus === 'outbox' ? `Re-verification request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Re-verification request emailed to ${inv.contact}.`);
   };
   NS.actions['inv8-copy'] = (el) => {
     const it = itById(el);
@@ -2686,7 +2792,7 @@
         const activity = [[unsent(it) ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
         return `<tr data-invitation="${h(it.id)}">
           <th scope="row"><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.email)}</span></th>
-          <td data-label="Offering">${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
+          <td data-label="Offering">${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : it.reverify ? 'Re-verification only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
           <td data-label="Progress">${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
           <td class="inv8-activity" data-label="Activity">${activity}</td>
           <td data-label="Email">${em}${it.resendError && OPEN.concat(['expired']).indexOf(it.status) >= 0 ? `<span class="sub cs-error-text inv8-refused">${h(it.resendError)}</span>` : ''}</td>
@@ -2905,6 +3011,8 @@
     accreditationRequired,
     requestTax,
     openTaxRequest,
+    requestReverify,
+    openReverifyRequest,
     taxFormFor,
     forInvestor,
     activationLabel,

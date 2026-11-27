@@ -173,6 +173,18 @@
    */
   const taxAskButton = (i) =>
     E.diy && NS.invitations && NS.invitations.requestTax && NS.inviteFlow && NS.app.can('operate') && i.onboarding.status === 'complete' && !NS.inviteFlow.taxOnFile(i) ? `<button class="cs-btn cs-btn-small" type="button" data-action="tax-request" data-id="${h(i.id)}">Request tax form</button>` : '';
+  // Plan 08-09 (D-04, C-06): "Ask to re-verify" only where it can matter: an offering raising needs verified accreditation
+  // (Rule 506(c), or the firm's rules) and the investor's verification by a third party is missing, lapsed or lapses within
+  // 14 days (self-serve edition, staff who may invite).
+  const reverifyDue = (i) => {
+    const I = NS.integrations;
+    if (!I || !W().offerings.some((o) => o.status === 'Raising' && I.needsAccreditation(W(), i, o))) return false;
+    const a = I.peek(i).accreditation;
+    const soon = new Date(Date.parse(NS.dates.today() + 'T00:00:00Z') + 14 * 864e5).toISOString().slice(0, 10);
+    return !(a.status === 'verified' && !I.selfCertified(a) && (!a.expiresAt || a.expiresAt > soon));
+  };
+  const reverifyButton = (i) =>
+    E.diy && NS.invitations && NS.invitations.requestReverify && NS.app.can('operate') && i.onboarding.status === 'complete' && reverifyDue(i) ? `<button class="cs-btn cs-btn-small" type="button" data-action="reverify-request" data-id="${h(i.id)}">Ask to re-verify</button>` : '';
   function taxState(w, inv) {
     const tc = inv.taxCert;
     // plan 06-21 (D-01, T-06-45): a form completed elsewhere and uploaded by the investor, with a download of that file when
@@ -856,7 +868,7 @@
             <td data-label="Paid by">${payLabel(i)}</td>
             <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done
-                ? `${taxAskButton(i)}<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
+                ? `${taxAskButton(i)}${reverifyButton(i)}<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
                 : `<button class="cs-btn cs-btn-small" type="button" data-action="invite-preview" data-id="${h(i.id)}">Invitation</button><button class="cs-btn cs-btn-small" type="button" data-action="remind" data-id="${h(i.id)}">Send reminder</button>`
             }</td>
           </tr>`;

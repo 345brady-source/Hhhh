@@ -476,6 +476,7 @@ export function invitationMessage({ firm, investor, offering, invitation, link, 
   if (invitation.existing && offering && offering.name) return subscribeMessage({ firm, name, offering, invitation, link, expiresAt });
   if (invitation.existing && invitation.access) return accessMessage({ firm, name, invitation, link, expiresAt });
   if (invitation.existing && invitation.taxRequest) return taxRequestMessage({ firm, name, investor, invitation, link, expiresAt });
+  if (invitation.existing && invitation.reverify) return reverifyMessage({ firm, name, investor, invitation, link, expiresAt });
   const subject = offering && offering.name ? `${offering.name}: complete your investor onboarding` : `Complete your investor onboarding with ${firm.name}`;
   const rows = [];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
@@ -526,6 +527,20 @@ function taxRequestMessage({ firm, name, investor, invitation, link, expiresAt, 
   });
 }
 
+/** Plan 08-09 (D-04, C-06): an investor already on file asked to verify their accredited investor status again: that step only. */
+function reverifyMessage({ firm, name, investor, invitation, link, expiresAt, again }) {
+  return compose(firm, `${again ? 'Reminder: ' : ''}${firm.name}: verify your accredited investor status`, {
+    greeting: `Dear ${name},`,
+    paras: [
+      again ? `Here is a new link to verify your accredited investor status for ${firm.name}. Any earlier link we sent no longer works.` : `${firm.name} asks you to verify your accredited investor status again.`,
+      'The link below opens the accreditation step only: you verify your status online. Nothing else is asked.'
+    ],
+    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
+    button: { label: 'Verify your accreditation', href: link },
+    after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
+  });
+}
+
 /**
  * Plan 06-38: the co-investor of an account on file asked to sign that account's subscription agreement: their own link,
  * which opens the agreement with only their places to sign. investor.contact is the co-investor, investor.title the account.
@@ -568,6 +583,7 @@ export function resendMessage({ firm, investor, offering, invitation, link, expi
   if (invitation.existing && invitation.coSign && !(offering && offering.name)) return coSignMessage({ firm, name, investor, invitation, link, expiresAt, again: true });
   if (invitation.existing && invitation.access && !(offering && offering.name)) return accessMessage({ firm, name, invitation, link, expiresAt, again: true });
   if (invitation.existing && invitation.taxRequest && !(offering && offering.name)) return taxRequestMessage({ firm, name, investor, invitation, link, expiresAt, again: true });
+  if (invitation.existing && invitation.reverify && !(offering && offering.name)) return reverifyMessage({ firm, name, investor, invitation, link, expiresAt, again: true });
   if (invitation.existing && offering && offering.name) {
     return compose(firm, `Reminder: ${offering.name}: your subscription`, {
       greeting: `Dear ${name},`,
@@ -597,7 +613,7 @@ export function resendMessage({ firm, investor, offering, invitation, link, expi
  * on its own) before the date, or the investor's paperwork is gone. For an investor already on file (existing) it is their
  * subscription that waits: the console keeps the record it holds and adds only what the link collected.
  */
-export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing, taxRequest, coSign }) {
+export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing, taxRequest, reverify, coSign }) {
   const who = investor.contact || investor.title || 'An investor';
   const rows = [['Investor', who], ['Email', investor.email]];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
@@ -619,6 +635,15 @@ export function reminderMessage({ firm, investor, offering, consoleUrl, complete
       rows,
       button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
       after: [`Open the console before ${longDate(deleteOn)}: it adds the form as soon as it opens.`, 'After that date the form is deleted from the integration server to protect it, and the investor would have to complete it again.']
+    });
+  }
+  // Plan 08-09: a re-verification request's result waiting to be imported.
+  if (existing && reverify) {
+    return compose(firm, `Waiting in your console: ${who}’s re-verification`, {
+      paras: [`${who} finished your request to verify their accreditation again on ${longDate(completedAt)}, but the console has not added the result to your records yet.`],
+      rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [`Open the console before ${longDate(deleteOn)}: it adds the result as soon as it opens.`, 'After that date the result is deleted from the integration server to protect it, and the investor would have to verify again.']
     });
   }
   if (existing) {
@@ -672,6 +697,15 @@ export function notificationMessage({ firm, investor, offering, summary, console
     const back = summary.taxState === 'signed' || summary.taxState === 'uploaded';
     return compose(firm, back ? `${who} returned their ${form}` : summary.taxState === 'not signed' ? `${who} finished your tax form request without signing` : `${who} finished your tax form request without a form`, {
       paras: [`${who} went through your request for their ${form} on ${longDate(completedAt)}.`],
+      rows: summary.rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [summary.next, 'Nothing else in their investor record changes.']
+    });
+  }
+  // Plan 08-09: a re-verification request: the accreditation result it brought; nothing else in the record changes.
+  if (summary && summary.reverify) {
+    return compose(firm, summary.reverified ? `${who} verified their accreditation again` : `${who} finished your re-verification request`, {
+      paras: [`${who} went through your request to verify their accreditation again on ${longDate(completedAt)}.`],
       rows: summary.rows,
       button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
       after: [summary.next, 'Nothing else in their investor record changes.']

@@ -577,6 +577,13 @@ export function summarize(sub, snap, checks) {
     const back = taxState === 'signed' || taxState === 'uploaded';
     return { rows: r, next: back ? 'Next: the console adds the form to the investor’s record the next time it is open.' : 'Next: ask the investor for their tax form again if you still need it.', identity: '', aml: '', accreditation: '', agreement: '', existing: true, taxRequest: true, taxState, taxForm, requested: false };
   }
+  // Plan 08-09: a re-verification request: the accreditation result it brought, nothing else.
+  if (existing && snap.invitation.reverify && !offering) {
+    const result = label(c.accreditation, 'Not verified again');
+    const r = [['Investor', snap.investor.contact], ['Email', snap.investor.email], ['Accredited investor', result]];
+    const got = c.accreditation.status !== 'not_started';
+    return { rows: r, next: got ? 'Next: the console adds the result to the investor’s record the next time it is open.' : 'Next: ask the investor to verify their accreditation again if you still need it.', identity: '', aml: '', accreditation: result, agreement: '', existing: true, reverify: true, reverified: c.accreditation.status === 'verified' && !c.accreditation.unconfirmed, requested: false };
+  }
   if (existing && /^(Not started|Not required)$/.test(accreditation)) accreditation = 'On file';
   if (existing) rows.push(['Accredited investor', accreditation], ['Subscription agreement', agreement]);
   else rows.push(['Identity', identity], ['Sanctions screening', aml], ['Accredited investor', accreditation], ['Subscription agreement', agreement]);
@@ -846,7 +853,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
           out.reminders++;
           const snap = unseal(rec, 'snapshot');
           if (snap && snap.notifyEmail) {
-            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing), taxRequest: !!(snap.invitation && snap.invitation.taxRequest), coSign: !!(snap.invitation && snap.invitation.coSign) });
+            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing), taxRequest: !!(snap.invitation && snap.invitation.taxRequest), reverify: !!(snap.invitation && snap.invitation.reverify), coSign: !!(snap.invitation && snap.invitation.coSign) });
             const rid = rec.id;
             if (!(snap.invitation && snap.invitation.access && !snap.offering)) mailer
               .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
@@ -1084,7 +1091,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       firm: snap.firm,
       investor: snap.investor,
       offering: snap.offering ? Object.assign({}, snap.offering, { documents }) : null,
-      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, snap.invitation.taxRequest ? { taxRequest: true } : {}, snap.invitation.includeTax ? { includeTax: true } : {}, snap.invitation.coSign ? { coSign: true, envelopeId: snap.invitation.envelopeId } : {}, { expiresAt: rec.expiresAt }),
+      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, snap.invitation.taxRequest ? { taxRequest: true } : {}, snap.invitation.includeTax ? { includeTax: true } : {}, snap.invitation.reverify ? { reverify: true } : {}, snap.invitation.coSign ? { coSign: true, envelopeId: snap.invitation.envelopeId } : {}, { expiresAt: rec.expiresAt }),
       verification: snap.verification || {},
       esign
     };
@@ -1269,8 +1276,12 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const asked = obj(body.invitation) || {};
     const wantsPackage = asked.package === true && asked.access !== true && asked.taxRequest !== true && !invitation.coSign;
     const clientId = typeof asked.clientId === 'string' ? asked.clientId : '';
+    // Plan 08-09 (D-04, C-06): a re-verification request is for an investor on file with no offering, no tax-form request and no portal link.
+    if (asked.reverify === true && invitation.existing && !offering && !invitation.taxRequest && !invitation.access && !invitation.coSign) invitation.reverify = true;
     // Plan 06-38: no verification runs on a co-investor sign-in, so its snapshot holds none.
     const verification = invitation.coSign ? {} : cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
+    // Plan 08-09 (T-08-26): a re-verification link runs the accreditation check only, whatever else the firm's settings use.
+    if (invitation.reverify && obj(verification.use)) verification.use = Array.isArray(verification.use.accreditation) ? { accreditation: verification.use.accreditation } : {};
     const { esign, pdf } = cleanEsign(body.esign);
     // Plan 06-38: the agreement the co-investor signs is the one the snapshot carries, with its current copy (the work copy
     // holding the investor's signature).
