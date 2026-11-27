@@ -708,7 +708,7 @@ kind: step
 title: Accreditation
 anchor: Accredited investor verification
 
-This step is named "Accredited investor verification" when the offering needs a verification. Choose "Verify my accreditation" and follow the check; "Accreditation check" shows the result. It can be shown by income, net worth, a letter from a CPA, attorney or adviser, or an existing verification. Tick the box confirming the information is accurate and choose "Continue".
+This step is named "Accredited investor verification" when the offering needs a verification. Choose "Verify my accreditation" and follow the check; "Accreditation check" shows the result. It can be shown by income, net worth, a letter from a CPA, attorney or adviser, or an existing verification. Tick the box confirming the information is accurate and choose "Continue". Whether a person qualifies is for the investor's own adviser or the firm, not this help.
 
 ## invite/status
 audience: investor
@@ -717,7 +717,7 @@ title: Investor status
 anchor: Investor status
 anchor: Benefit plans
 
-It asks whether the investor is an accredited investor, "Yes" or "No", and may ask more depending on the answer. Under "Benefit plans" it asks whether the investor is a benefit plan investor, with three kinds of "Yes" and "No". Answer and choose "Continue".
+It asks whether the investor is an accredited investor, "Yes" or "No", and may ask more depending on the answer. Under "Benefit plans" it asks whether the investor is a benefit plan investor, with three kinds of "Yes" and "No". Answer and choose "Continue". Whether a person or an account qualifies is for the investor's own adviser or the firm, not this help.
 
 ## invite/tax
 audience: investor
@@ -732,7 +732,7 @@ The step names the tax form, filled in from the earlier answers.
 
 When the taxpayer number is not yet known, the step asks for it ("Social Security number" or "Employer identification number"): nine digits, with or without dashes or spaces. It may be left empty, but fewer than nine digits shows "Enter all nine digits, or leave this empty." On the form for foreign investors, a U.S. taxpayer number is optional and also nine digits, and "Foreign tax identifying number" is the number as the country of residence issued it.
 
-"Change your answers" goes back to correct what the form was filled from. Beside "Already have a completed form?", "Upload it instead" takes a form already completed. Beside "Not a U.S. person for tax purposes?", "Use the form for foreign investors" changes to that form.
+"Change your answers" goes back to correct what the form was filled from. Beside "Already have a completed form?", "Upload it instead" takes a form already completed. Beside "Not a U.S. person for tax purposes?", "Use the form for foreign investors" changes to that form. Which form or tax status applies is for the firm or the investor's own tax adviser, not this help.
 
 ## invite/payment
 audience: investor
