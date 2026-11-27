@@ -2,7 +2,7 @@
 phase: 16-nacha-ach-and-the-zero-cost-money-path
 plan: 07
 subsystem: payments (NACHA / ACH, international wires)
-status: paused
+status: complete
 tags: [ach, nacha, prenote, wire, iban, bic, redemption, payee-holds, d-04]
 requires: [16-01 (nextBankingDay holiday rule), 16-02 (NS.achRecord file records), 16-04 (line.ach shape), 16-05 (pre-note entries in the builder)]
 provides: [NS.achRecord payee rules: checkOf, setCheck, markNew, confirmChange, prenotesOn, prenotesDue, prenoteEntries, prenotesSent, fileEntries, redemptionPayees, bicValid, ibanValid, wireDetails, wireMasked, wiresDue, markWireSent, wireCsv, lineStatus]
@@ -20,76 +20,54 @@ decisions:
   - "wiresDue and markWireSent take only runs with stored lines recorded or dated on or after the day the wire details were saved"
   - "setCheck cuts runs of 5+ digits in a typed reason to 'ending NNNN'"
 metrics:
-  completed: not yet (paused 2026-11-27 before the gate finished)
+  completed: 2026-11-27
 actuals:
   tokens: 19300
   tasks: 2
-  commits: 6
+  commits: 7
 plan_head_before: 5e80342879682afe5ca8d25266ce501e8a5c9d32
-plan_head_after: dc036b9
+plan_head_after: 60f78a9
 ---
 
 # Phase 16 Plan 07: payee states and holds Summary
 
-## Paused (owner's indefinite pause, 2026-11-27)
+## Gate (resumed after the pause): GATE_EXIT=0
 
-**The plan is not done.** gate16.sh has not finished, so there is no GATE_EXIT.
+The owner's pause ended, and I resumed on 60f78a9. That commit holds the same code as dc036b9 plus this SUMMARY, so every step ran again.
 
-**What is done:**
-- All nine cases of the payees check pass on dc036b9: `PAYEES: PASS (cases run: 9)`, 126 PASS lines.
-- The eighteen functions are built in assets/js/achrecord.js.
-- FILE RECORD (6), MOBILE SYNC (3) and NACHA BUILD (11) pass on this tree.
-- Everything is committed and pushed to wip/16-07. Nothing is uncommitted. The server/node_modules link is removed.
+- Gate: gate16.sh, GATE_OUT = scratchpad exec-16-07, base 5e80342. No GATE16_PHASES were set.
+- Result: 80 `GATE ok` lines and no `GATE FAIL`.
+- Server tests: `GATE ok   server tests 605 = base 605 + 0 declared`.
+- Required lines, all present: `GATE ok   PAYEES`, `GATE ok   FILE RECORD`, `GATE ok   ACH LEAK`, `GATE ok   MOBILE SYNC`.
+- The Task 2 verify printed VERIFY2_OK.
+- The gate deleted its base tree, screenshots and page captures. I made the server/node_modules link myself, and I removed it.
 
-**Gate state:**
-- Run 1 was on 80f94c1. I stopped it myself after the reader step to fix two lineStatus bugs (see "Failures first").
-- Run 2 was on dc036b9, into the same folder. The coordinator asked me to stop it for the pause, and I did; it had not finished. Its lines so far:
-  ```
-  GATE ok   independent reader achcli v1.69.1
-  ```
-- Inside the reference step, these had passed when it was stopped:
-  ```
-  GATE ok   server tests # fail 0
-  GATE ok   server tests 605
-  GATE ok   STATUS MATH (13)
-  GATE ok   FORM MAPS (3)
-  GATE ok   FORMS FLOW (34)
-  GATE ok   STATUS FLOW (26)
-  GATE ok   SERVER MODE (15)
-  GATE ok   TWO PERSONS
-  GATE ok   MEASURE
-  GATE ok   owner's folder: index.txt and four signed PDFs
-  GATE ok   EMAIL DIALOG (3)
-  GATE ok   AGREEMENT NAME
-  GATE ok   TAX REQUEST LEAVE (5)
-  GATE ok   WAYS OUT (7)
-  GATE ok   NO NETWORK (3)
-  GATE ok   EMBED DATA (3)
-  GATE ok   SAFARI FINISH (6)
-  GATE ok   BANK STEP TYPING (2)
-  GATE ok   HELP CHAT (10)
-  GATE ok   REAL FIRM (9)
-  GATE ok   SIGNING DOCUMENTS (8)
-  ```
-- Not reached:
-  - the rest of the reference step;
-  - gate16's own server count line (base 605, declared +0);
-  - phase 10, 11 and 16 checks (PAYEES, FILE RECORD, ACH LEAK, MOBILE SYNC and the rest).
-- I deleted the gate's base tree, screenshots, owner folder and page captures to free disk. The step outputs (*.txt) are still in scratchpad exec-16-07/gate/.
+The gate's last 15 lines, verbatim:
+```
+GATE ok   POSTING
+GATE ok   SAMPLES BOOKS
+GATE ok   STATEMENTS
+GATE ok   WORKBOOK
+GATE ok   ACH FLOW
+GATE ok   ACH LEAK
+GATE ok   FILE RECORD
+GATE ok   HOLIDAYS
+GATE ok   MOBILE SYNC
+GATE ok   NACHA BUILD
+GATE ok   PAYEES
+GATE ok   POSTING RETURNS
+GATE ok   INDEPENDENT READER
+GATE ok   RETURNS READ
+GATE_EXIT=0
+```
 
-**Exact next step to resume:**
-1. In a worktree at wip/16-07 (head dc036b9), run `ln -s /home/user/Hhhh/server/node_modules server/node_modules`.
-2. Check that `/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/exec-16-07/base-commit.txt` still holds 5e80342879682afe5ca8d25266ce501e8a5c9d32.
-3. In the background (timeout 7200000), run the Task 2 verify into the same folder: `rm -f $O/gate.txt $O/all.txt; node $P/checks/payees.js > $O/all.txt; GATE_OUT=$O bash $P/checks/gate16.sh > $O/gate.txt 2>&1`. Then require:
-   - GATE_EXIT=0;
-   - `^GATE ok +PAYEES`, `^GATE ok +FILE RECORD`, `^GATE ok +ACH LEAK` and `^GATE ok +MOBILE SYNC`.
-   - Steps that passed under the same key are kept. HEAD, the base commit and the command line are unchanged, so the reference steps above should show "(kept …)".
-4. Paste the gate's last 15 lines here and set status: complete.
-5. Remove the link, then commit and push.
+Earlier runs, which never finished: run 1 on 80f94c1, stopped by me to fix lineStatus; run 2 on dc036b9, stopped for the owner's pause partway through the reference step, with no FAIL up to then.
+
+**Nothing here is ready for launch until the owner has checked it on the screens that use it** (16-09, 16-10, 16-12).
 
 ## Failures first
 
-- **The gate has not passed.** It has not finished (see Paused).
+- **The gate failed to finish twice before it passed.** Run 1 was stopped by me to fix lineStatus, and run 2 for the owner's pause. Run 3 ended GATE_EXIT=0.
 - **After the first green run, a self-review found two wrong payment lines. Both are fixed, RED first.**
   - lineStatus said "Paid by ACH to the checking account ending 0006" for an investor held out of the run's sent file, so no money had moved. It now says "Not paid yet" (status 'held').
   - A wire payee's payment from before their wire details existed said "Paid by check". It now says "Paid", because how it was paid is not on record.
@@ -141,7 +119,7 @@ PAYEES: PASS (cases run: 9)
 ```
 Other checks run on this tree: `FILE RECORD: PASS (cases run: 6)`, `MOBILE SYNC: PASS (cases run: 3)`, `NACHA BUILD: PASS (cases run: 11)`.
 
-GATE_EXIT: none yet (paused).
+GATE_EXIT=0 (run 3, on 60f78a9).
 
 ## The states and holds, as the screens will show them (for the owner to read)
 
@@ -282,7 +260,6 @@ None. The functions are complete. No screen calls them yet; that is 16-09, 16-10
 
 ## Open items
 
-- **The gate has to be rerun** (see Paused).
 - **The owner's check** (nothing is ready before it):
   - the sentences above;
   - Pellbrook's 10 accounts that need pre-notes;
@@ -301,4 +278,4 @@ None. The functions are complete. No screen calls them yet; that is 16-09, 16-10
 - 5bf8aab test(16-07): RED lineStatus said 'Paid by ACH' for a line held out of its file
 - dc036b9 fix(16-07): lineStatus reads 'Not paid yet' for a line held out of its sent file
 
-## Self-Check: PASSED (files and commits); the gate is not yet run to the end
+## Self-Check: PASSED (files, commits, GATE_EXIT=0)
