@@ -28,7 +28,6 @@
   const COL = (h, t) => ({ h, t: t || 'text' });
   const slug = (s) => String(s).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
   const money = (c) => (NS.audit && NS.audit.money ? NS.audit.money(c) : String(c));
-  const clone = (x) => JSON.parse(JSON.stringify(x));
 
   /* ---------- Schedule L (Form 1065), in the form's order ---------- */
   // [line, description, side]: a asset, l liability, c capital; the two totals are worked out.
@@ -49,6 +48,19 @@
     ['20', 'Other liabilities', 'l'],
     ['21', 'Partners’ capital accounts', 'c'],
     ['22', 'Total liabilities and capital', 'tl']
+  ];
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  /** [account, Form 8825 (Rev. December 2025) line] for rental real estate, in the form's line order. */
+  const F8825 = [
+    ['4020', '2a'],
+    ['5300', '7'],
+    ['5200', '8'],
+    ['5100', '9'],
+    ['5320', '10'],
+    ['5310', '11'],
+    ['5330', '12'],
+    ['5340', '17'],
+    ['5390', '17']
   ];
   const SIDE = {};
   SCHED_L.forEach((x) => (SIDE[x[0]] = x[2]));
@@ -141,6 +153,225 @@
         )
       : null;
 
+    const generated = typeof NS.audit.generated === 'function' && NS.audit.generated(o);
+    const fb = (ws.books && ws.books.funds && ws.books.funds[o.id]) || {};
+    const holdings = (Array.isArray(fb.holdings) ? fb.holdings : []).filter((h) => h && h.id);
+    const hname = {};
+    holdings.forEach((h) => (hname[h.id] = h.name || h.id));
+    const titleOf = (id) => {
+      const i = (ws.investors || []).find((x) => x && x.id === id);
+      return i ? i.title || i.contact || id : id;
+    };
+
+    /* Income and expenses by month */
+    const KIND = { income: 'Income', expense: 'Expense', gain: 'Gain' };
+    const typeOf = (code) => (accts[code] ? accts[code].type : '');
+    const ieCodes = Array.from(new Set(yearLines.filter((l) => KIND[typeOf(l.code)]).map((l) => l.code))).sort();
+    const ieNet = new Array(13).fill(0);
+    const ieRows = ieCodes.map((code) => {
+      const sign = typeOf(code) === 'expense' ? 1 : -1;
+      const m = new Array(12).fill(0);
+      yearLines.forEach((l) => l.code === code && (m[Number(l.date.slice(5, 7)) - 1] += sign * l.cents));
+      const vals = m.concat([m.reduce((s, c) => s + c, 0)]);
+      vals.forEach((c, k) => (ieNet[k] += sign === 1 ? -c : c));
+      return [code, accts[code].name, KIND[typeOf(code)]].concat(vals);
+    });
+    const ie = sheet('ie', 'Income and expenses by month', 'Book basis: each income, expense and gain account with activity in the year, by month: income and gains as earned (a loss is negative), expenses as incurred. The total row is book net income.', [COL('Account'), COL('Account name'), COL('Kind')].concat(MONTHS.map((m) => COL(m, 'money')), [COL('Total', 'money')]), ieRows, ['', 'Book net income', ''].concat(ieNet));
+
+    /* Rental real estate by property (Form 8825 lines) */
+    const props = generated ? [] : holdings.filter((h) => h.kind === 'property');
+    const isProp = {};
+    props.forEach((h) => (isProp[h.id] = true));
+    let f8825 = null;
+    if (props.length) {
+      const NONE = 'Not assigned to a property';
+      const rows = [];
+      props.map((h) => h.id).concat([null]).forEach((hid) => {
+        F8825.forEach(([code, line]) => {
+          if (!accts[code]) return;
+          const c = sumOf(yearLines, (l) => l.code === code && (hid ? l.holding === hid : !isProp[l.holding]));
+          if (c) rows.push([hid ? hname[hid] : NONE, line, code, accts[code].name, accts[code].type === 'income' ? -c : c]);
+        });
+      });
+      f8825 = sheet('f8825', 'Rental real estate by property', 'Book basis: the year’s rental income and expenses recorded on each property, by Form 8825 (Rev. December 2025) line; lines recorded without a property are listed under ‘Not assigned to a property’. Depreciation is not in the books; the preparer works it out from the property and depreciation inputs.', [COL('Property'), COL('Form 8825 line'), COL('Account'), COL('Account name'), COL('Amount', 'money')], rows);
+    }
+
+    /* Ownership and changes */
+    const months = (P.L && Array.isArray(P.L.months) && P.L.months) || [];
+    const shareAt = (id, date) => {
+      const m = months.find((x) => x.key === String(date).slice(0, 7));
+      if (!m || !m.rows || !m.rows[id]) return null;
+      const all = Object.keys(m.rows).reduce((s, k) => s + Math.max(0, m.rows[k].end || 0), 0);
+      return all > 0 ? Math.max(0, m.rows[id].end || 0) / all : 0;
+    };
+    const ORDER = { Commitment: 0, 'Opening capital': 1, Contribution: 2, Distribution: 3, Redemption: 4 };
+    const ev = [];
+    (ws.investors || []).forEach((i) =>
+      (i.positions || []).forEach((p) => {
+        // A position's commitment is whole dollars (operations.js commitOf multiplies it by 100).
+        if (p && p.offeringId === o.id && Number(p.commitment) > 0 && typeof p.date === 'string' && p.date >= from && p.date <= to) ev.push([p.date, i.id, titleOf(i.id), 'Commitment', Math.round(Number(p.commitment) * 100)]);
+      })
+    );
+    yearLines.forEach((l) => {
+      if (!l.partner) return;
+      if (l.code === '3000') ev.push([l.date, l.partner, titleOf(l.partner), 'Contribution', -l.cents]);
+      else if (l.code === '3100') ev.push([l.date, l.partner, titleOf(l.partner), l.src.indexOf('req:') === 0 ? 'Redemption' : 'Distribution', l.cents]);
+      else if (l.code === '3900') ev.push([l.date, l.partner, titleOf(l.partner), 'Opening capital', -l.cents]);
+    });
+    ev.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : ORDER[a[3]] - ORDER[b[3]] || (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)));
+    const own = sheet('own', 'Ownership and changes', 'Each commitment and each contribution, distribution and redemption in the year, with its date; ownership after is the partner’s share of limited partners’ capital at that month’s end.', [COL('Date', 'date'), COL('Investor ID'), COL('Investor'), COL('Event'), COL('Amount', 'money'), COL('Ownership after', 'pct')], ev.map((r) => r.concat([shareAt(r[1], r[0])])));
+
+    /* Investor tax details (C-04: last four digits only) */
+    const WH = NS.withholding;
+    if (!WH || typeof WH.w8 !== 'function') throw new Error('The withholding module (withholding.js) is not loaded; the package reads each W-8’s validity from it.');
+    if (!NS.inviteFlow || typeof NS.inviteFlow.taxOnFile !== 'function') throw new Error('The rule for a tax form on file (onboarding.js) is not loaded.');
+    const TAX = 'Investor tax details';
+    const four = (v) => (/^\d{4}$/.test(String(v == null ? '' : v)) ? String(v) : '');
+    const taxRows = P.inv
+      .map((a) => a.investor)
+      .slice()
+      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      .map((i) => {
+        const id = i.id;
+        const name = i.title || i.contact || id;
+        const address = String(i.address || '').trim() || (miss(TAX, id, 'address'), TBC);
+        const as = (NS.ENTITY_TYPES && NS.ENTITY_TYPES[i.type] && NS.ENTITY_TYPES[i.type].label) || (miss(TAX, id, 'investing as'), TBC);
+        const ira = i.type === 'ira' ? 'Yes' : 'No';
+        const form = String(i.taxForm || '');
+        if (!form) {
+          miss(TAX, id, 'tax form');
+          return [id, name, address, as, '', ira, 'Limited', TBC, '', '', '', '', '', '', '', ''];
+        }
+        const c = i.taxCert && typeof i.taxCert === 'object' ? i.taxCert : {};
+        const w = WH.w8(i, to);
+        const isW8 = /^W-8/.test(form);
+        const onFile = NS.inviteFlow.taxOnFile(i);
+        let formCell = form;
+        if (!onFile) {
+          formCell = c.signed === false ? `${form} (not signed)` : `${form} (signed copy not received)`;
+          miss(TAX, id, 'signed tax form');
+        }
+        const signed = c.signed === true ? 'Yes' : c.signed === false ? 'No' : 'Not recorded';
+        const usf = w.foreign ? 'Foreign' : form === 'W-9' ? 'U.S.' : (miss(TAX, id, 'U.S. or foreign'), TBC);
+        const ch3 = form === 'W-8BEN-E' ? c.chapter3 || (miss(TAX, id, 'chapter 3 status'), TBC) : '';
+        const tin = w.foreign ? '' : four(c.tinLast4) || four(i.tinLast4) || (miss(TAX, id, 'taxpayer number'), TBC);
+        const ftin = isW8 ? four(c.ftinLast4) || (c.noFtin ? 'Not required' : (miss(TAX, id, 'foreign taxpayer number'), TBC)) : '';
+        const backup = form === 'W-9' ? (c.backupWithholding === true ? 'Yes' : c.backupWithholding === false ? 'No' : 'Not recorded') : '';
+        const treaty = form === 'W-8BEN' ? String(c.treatyCountry || '') : '';
+        let until = '';
+        if (isW8 && w.validUntil) until = w.valid ? w.validUntil : `${w.validUntil} (expired by ${to})`;
+        if (isW8 && w.signed && !w.valid) miss(TAX, id, `a current ${form}`);
+        return [id, name, address, as, usf, ira, 'Limited', formCell, c.revision || 'Not recorded', signed, ch3, tin, ftin, backup, treaty, until];
+      });
+    const tax = sheet('tax', TAX, 'From each partner’s W-9 or W-8 on record. Taxpayer numbers are shown by their last four digits only; signed forms are included only when the sponsor chooses to include them.', ['Investor ID', 'Name', 'Address', 'Investing as', 'U.S. or foreign', 'Retirement plan', 'Partner type', 'Form on file', 'Form revision', 'Signed', 'Chapter 3 status', 'Taxpayer number ending', 'Foreign taxpayer number ending', 'Backup withholding', 'Treaty country', 'W-8 valid until'].map((h) => COL(h)), taxRows);
+
+    /* Distributions by type */
+    const KINDS = WH.KINDS || {};
+    const paid = NS.data && typeof NS.data.paidLines === 'function' ? NS.data.paidLines(ws, { offeringId: o.id, from, to }) : [];
+    const byType = [];
+    const distRows = paid.map(({ run, line }) => {
+      const gross = line.grossCents;
+      const net = Number.isSafeInteger(line.netCents) ? line.netCents : gross;
+      const kinds = Array.from(new Set((line.withheld || []).map((x) => (KINDS[x.kind] ? KINDS[x.kind].label : String(x.kind || '')))));
+      let t = byType.find((x) => x[0] === run.type);
+      if (!t) byType.push((t = [run.type, 0, 0, 0]));
+      t[1] += gross;
+      t[2] += gross - net;
+      t[3] += net;
+      return [run.date, line.investorId, titleOf(line.investorId), run.type, gross, gross - net, net, kinds.join('; ')];
+    });
+    byType.forEach((t) => distRows.push(['', '', 'All investors', t[0], t[1], t[2], t[3], '']));
+    const dist = sheet('dist', 'Distributions by type', 'Each distribution paid in the year to each partner: the gross amount, the tax withheld and the amount paid; then each type’s totals for all investors.', [COL('Date', 'date'), COL('Investor ID'), COL('Investor'), COL('Type'), COL('Gross', 'money'), COL('Tax withheld', 'money'), COL('Paid', 'money'), COL('Withholding kind')], distRows);
+
+    /* Distributions through the waterfall */
+    const gpRuns = (ws.runs || [])
+      .filter((r) => r && r.offeringId === o.id && !r.cancelled && r.gp > 0 && typeof r.date === 'string' && r.date >= from && r.date <= to && NS.data.runPaid(r))
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    const wfRows = gpRuns.map((r) => [r.date, r.id, Number.isSafeInteger(r.gross) ? r.gross : r.total + r.gp, r.total, r.gp]);
+    const wfSum = (k) => wfRows.reduce((s, r) => s + r[k], 0);
+    const waterfall = sheet('waterfall', 'Distributions through the waterfall', wfRows.length ? 'Each distribution in the year that paid the general partner a share: the gross amount, what went to the investors and what went to the general partner.' : 'No distribution in the year paid the general partner a share.', [COL('Date', 'date'), COL('Distribution ID'), COL('Gross', 'money'), COL('To investors', 'money'), COL('To the general partner', 'money')], wfRows, ['', 'Total', wfSum(2), wfSum(3), wfSum(4)]);
+
+    /* Property and depreciation inputs */
+    const PROP = 'Property and depreciation inputs';
+    const COST = { 1100: 1, 1400: 1, 1410: 1 };
+    let property = null;
+    const propCols = [COL('Property'), COL('Address'), COL('Placed in service', 'date'), COL('Land', 'money'), COL('Building', 'money'), COL('Cost in the books', 'money'), COL('Additions in the year', 'money'), COL('Mortgage balance at year end', 'money'), COL('Interest paid in the year', 'money')];
+    if (props.length) {
+      const rows = props.map((h) => {
+        const name = hname[h.id];
+        const address = String(h.address || '').trim() || (miss(PROP, name, 'address'), TBC);
+        const placed = h.placed || (miss(PROP, name, 'placed in service'), TBC);
+        const none = !(h.landCents > 0) && !(h.buildingCents > 0);
+        if (none) miss(PROP, name, 'land'), miss(PROP, name, 'building');
+        const on = (l) => l.holding === h.id;
+        return [
+          name,
+          address,
+          placed,
+          none ? TBC : h.landCents || 0,
+          none ? TBC : h.buildingCents || 0,
+          sumOf(toLines, (l) => on(l) && COST[l.code]),
+          sumOf(yearLines, (l) => on(l) && COST[l.code] && l.cents > 0),
+          -sumOf(toLines, (l) => on(l) && l.code === '2500'),
+          sumOf(yearLines, (l) => on(l) && l.code === '5200')
+        ];
+      });
+      property = sheet('property', PROP, 'For each property the fund holds: what the sponsor entered (address, placed-in-service date, the split of cost between land and building) and, from the books, its cost, the year’s additions, the mortgage on it at year end and the interest paid on it in the year. Property is carried at cost; depreciation is the preparer’s.', propCols, rows);
+    } else if (generated && P.S && P.S.key === 'realestate') {
+      // A sample real estate fund: the Audit page's generated properties; what the generator does not give is to be confirmed.
+      const rows = ((P.hold && P.hold.rows) || []).map((r) => {
+        const name = r.name;
+        const address = (r.h && r.h.location) || (miss(PROP, name, 'address'), TBC);
+        miss(PROP, name, 'placed in service');
+        miss(PROP, name, 'land');
+        miss(PROP, name, 'building');
+        miss(PROP, name, 'additions in the year');
+        miss(PROP, name, 'interest paid in the year');
+        return [name, address, TBC, TBC, TBC, r.cost, TBC, r.debt || 0, TBC];
+      });
+      property = sheet('property', PROP, 'For each property: its cost and the mortgage on it at year end; the placed-in-service date, the split between land and building, the year’s additions and the interest paid are to be confirmed. Property is carried at cost; depreciation is the preparer’s.', propCols, rows);
+    }
+
+    /* Investments */
+    const INV = 'Investments';
+    const NOINV = 'Not assigned to an investment';
+    const invRows = [];
+    if (generated) {
+      ((P.hold && P.hold.rows) || []).forEach((r) => invRows.push([r.name, 'Held at year end', to, r.cost, null, null, r.fv]));
+    } else {
+      const marked = (hid) => (Array.isArray(fb.marks) ? fb.marks : []).some((m) => m && m.holding === hid && typeof m.date === 'string' && m.date <= to) || toLines.some((l) => l.holding === hid && l.src.indexOf('mark:') === 0);
+      holdings
+        .map((h) => h.id)
+        .concat([''])
+        .forEach((hid) => {
+          const name = hid ? hname[hid] : NOINV;
+          const byEntry = new Map();
+          yearLines.forEach((l) => {
+            if (l.holding !== hid || !(COST[l.code] || l.code === '6000')) return;
+            const e = byEntry.get(l.id) || { date: l.date, debit: 0, credit: 0, gain: 0 };
+            if (COST[l.code]) {
+              if (l.cents > 0) e.debit += l.cents;
+              else e.credit -= l.cents;
+            } else e.gain -= l.cents;
+            byEntry.set(l.id, e);
+          });
+          Array.from(byEntry.values())
+            .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+            .forEach((e) => {
+              if (e.debit) invRows.push([name, 'Purchase', e.date, e.debit, null, null, null]);
+              if (e.credit) invRows.push([name, 'Sale', e.date, e.credit + e.gain, e.credit, e.gain, null]);
+            });
+          const cost = sumOf(toLines, (l) => l.holding === hid && COST[l.code]);
+          const unreal = sumOf(toLines, (l) => l.holding === hid && l.code === '1150');
+          if (!cost && !unreal) return;
+          const valued = !!hid && (marked(hid) || unreal !== 0);
+          if (!valued) miss(INV, name, 'fair value');
+          invRows.push([name, 'Held at year end', to, cost, null, null, valued ? cost + unreal : 'At cost (no value entered)']);
+        });
+    }
+    const inv = sheet('inv', INV, 'Each purchase and sale of an investment in the year and each investment held at year end. Amount is the price paid for a purchase, the proceeds of a sale and the cost in the books of an investment held at year end; fair value is the last value entered.', [COL('Investment'), COL('Event'), COL('Date', 'date'), COL('Amount', 'money'), COL('Cost given up', 'money'), COL('Realized gain (loss)', 'money'), COL('Fair value', 'money')], invRows);
+
     /* Checks */
     const checks = [];
     const add = (id, title, items) => checks.push({ id, title, status: items.length ? 'exception' : 'pass', items });
@@ -156,10 +387,10 @@
     });
     add('sch_l', 'Schedule L balances at the beginning and end of the year', schl.concat(unplaced));
     const contrib = -activity('3000');
-    const dist = activity('3100') + activity('3300');
+    const distCents = activity('3100') + activity('3300');
     const results = -tb.filter((r) => r.type === 'income' || r.type === 'expense' || r.type === 'gain').reduce((s, r) => s + r.debits - r.credits, 0);
     const capItems = [];
-    if (at.begin['21'] + contrib + results - dist !== at.end['21']) capItems.push(`Beginning capital ${money(at.begin['21'])} + contributions ${money(contrib)} + book net income ${money(results)} - distributions ${money(dist)} = ${money(at.begin['21'] + contrib + results - dist)}, but ending capital (line 21) is ${money(at.end['21'])}.`);
+    if (at.begin['21'] + contrib + results - distCents !== at.end['21']) capItems.push(`Beginning capital ${money(at.begin['21'])} + contributions ${money(contrib)} + book net income ${money(results)} - distributions ${money(distCents)} = ${money(at.begin['21'] + contrib + results - distCents)}, but ending capital (line 21) is ${money(at.end['21'])}.`);
     if (at.end['21'] !== capTotal) capItems.push(`Ending capital (line 21) is ${money(at.end['21'])}; the capital accounts total ${money(capTotal)}.`);
     add('capital', 'Capital rolls forward and agrees to the capital accounts', capItems);
     const ct = typeof B.closedThrough === 'function' ? B.closedThrough(ws, o.id) : '';
@@ -198,8 +429,15 @@
     const coverSheet = sheet('cover', 'Cover', 'Book basis on the accrual method; what this package holds, its checks and what is still open.', [COL('Item'), COL('Value'), COL('Amount', 'money')], cover);
     sheets.push(coverSheet);
     ['tb', 'gl', 'bankrec'].forEach((id) => of(id) && sheets.push(of(id)));
+    sheets.push(ie);
+    if (f8825) sheets.push(f8825);
     sheets.push(bs);
     if (roll) sheets.push(roll);
+    sheets.push(own, tax, dist);
+    ['fees', 'carry'].forEach((id) => of(id) && sheets.push(of(id)));
+    sheets.push(waterfall);
+    if (property) sheets.push(property);
+    sheets.push(inv);
     coverSheet.rows = coverSheet.rows.concat(missing);
     return { sheets, checks };
   }
@@ -223,5 +461,4 @@
   B.package = build;
   B.packageCsv = packageCsv;
   B.packageLineOf = lineOf;
-  void clone;
 })(typeof window !== 'undefined' ? window : globalThis);
