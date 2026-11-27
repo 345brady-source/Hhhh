@@ -577,9 +577,11 @@
   /* ---------- What a payment line reads (AC-11) ---------- */
   /**
    * The one reading of a distribution line's payment state, for the console and the investor portal:
-   * { status: 'scheduled' | 'paid' | 'returned' | 'repaid' | 'cancelled', method: 'ach' | 'wire' | 'check', ending, code,
-   * date, words, wireSent }. run: the run or its id; null when the investor has no line on it. An ACH line names the
-   * account the sent file paid (its last four), or the account on file for a run with no file record.
+   * { status: 'scheduled' | 'paid' | 'held' | 'returned' | 'repaid' | 'cancelled', method: 'ach' | 'wire' | 'check' | '',
+   * ending, code, date, words, wireSent }. run: the run or its id; null when the investor has no line on it. An ACH line
+   * names the account the sent file paid (its last four), or the account on file for a run with no file record; an ACH
+   * payee left out of the run's sent file is 'held' ('Not paid yet'); a wire not marked sent is 'scheduled'; a wire
+   * payee's payment made before its wire details were saved reads 'Paid' with method '' (how it was paid is not on record).
    */
   function lineStatus(ws, run, investorId, today) {
     const r = typeof run === 'string' ? runOf(ws, run) : run;
@@ -588,16 +590,12 @@
     if (!line) return null;
     const t = todayOf(today);
     const inv = (ws.investors || []).find((x) => x.id === investorId) || { id: investorId };
-    const entry = r.id
-      ? files(ws)
-          .filter((x) => x.runId === r.id)
-          .reverse()
-          .map((x) => (x.entries || []).find((e) => e.investorId === investorId && e.kind === 'credit'))
-          .find(Boolean)
-      : null;
+    const sent = r.id ? files(ws).filter((x) => x.runId === r.id).reverse() : [];
+    const entry = sent.map((x) => (x.entries || []).find((e) => e.investorId === investorId && e.kind === 'credit')).find(Boolean);
     let method = 'check';
     let ending = '';
     let savings = false;
+    let held = false;
     if (entry) {
       method = 'ach';
       ending = entry.last4 || '';
@@ -605,10 +603,15 @@
     } else if (line.wire || wireLine(r, inv)) {
       method = 'wire';
       ending = wireMasked(inv).ending;
+    } else if (isWire(inv)) {
+      // paid before the investor's wire details were saved: how it was paid is not on record
+      method = '';
     } else if (achBank(inv)) {
       method = 'ach';
       ending = last4(achBank(inv).account);
       savings = achBank(inv).type === 'savings';
+      // the run's file was sent without this investor (held out of it: fileEntries' reason)
+      held = sent.length > 0;
     }
     const out = { status: 'paid', method, ending, code: '', date: r.date, words: '', wireSent: line.wire || null };
     const a = line.ach && typeof line.ach === 'object' ? line.ach : null;
@@ -620,7 +623,9 @@
       if (!line.wire) return Object.assign(out, { status: 'scheduled', words: `To be paid by wire to the account ending ${ending}` });
       return Object.assign(out, { date: line.wire.sentOn, words: `Paid by wire to the account ending ${ending}` });
     }
+    if (held) return Object.assign(out, { status: 'held', words: 'Not paid yet' });
     if (method === 'ach') return Object.assign(out, { words: `Paid by ACH to the ${savings ? 'savings' : 'checking'} account ending ${ending}` });
+    if (!method) return Object.assign(out, { words: 'Paid' });
     return Object.assign(out, { words: 'Paid by check' });
   }
 
