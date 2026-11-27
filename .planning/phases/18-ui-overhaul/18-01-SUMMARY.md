@@ -85,3 +85,13 @@ GATE FAIL SAME SCREENS
   same-screens.js: the last line was:       SAME SCREENS: FAIL (parts run: 11) - console-phone, managed-desktop, managed-phone, investor-desktop, investor-phone, flows-desktop, flows-phone, dialogs-desktop, dialogs-phone
 GATE_EXIT=1
 ```
+
+## Task 3 RED (O/red-3.txt: every part written, the DIALOGS table emptied; commit a16dffc; the dialogs parts only)
+
+```
+FAIL dialogs-desktop the DIALOGS table names every call site: 0 rows for 34 call sites :: {"without":[{"file":"coinvestor.js","calls":6,"rows":0,"lines":[122,130,270,295,306,355]},{"file":"console.js","calls":3,"rows":0,"lines":[1047,1505,1677]},...
+FAIL dialogs-desktop call sites without a row: 34 :: ["coinvestor.js: 6 calls, 0 rows","console.js: 3 calls, 0 rows","diy.js: 1 calls, 0 rows","esign.js: 11 calls, 0 rows","help.js: 1 calls, 0 rows",...
+FAIL dialogs-phone the DIALOGS table names every call site: 0 rows for 34 call sites :: ...
+FAIL dialogs-phone call sites without a row: 34 :: ...
+SAME SCREENS: FAIL (parts run: 2) - dialogs-desktop, dialogs-phone
+```
