@@ -127,12 +127,13 @@ Branch claude/refract-reskin holds every merged result; server tests 605/605 on 
 ### Merged and checked on the merged tree (since the last state line)
 12-09 (walkthrough; REPORTS FLOW, DELIVER FLOW in the reference gate), phone-table fix, 13-03, 13-04, 13-07, 13-12, 16-02, two check-timing fixes (SERVER MODE, MONITORING). Phase 07 verified (gaps_found: HELP-06 paid unseen run, owner said "Not now").
 
-### In flight at the pause (each saved on its own wip branch; each SUMMARY has a "Paused" section with the next step)
-- wip/16-07 — payee states and holds (re-check additions in 16-CONTEXT bind it). Next: finish/rerun gate16 into scratchpad exec-16-07, merge, merged-tree reruns.
-- wip/15-14 — account emails and resets (wave 3 additions; empty-issuer fix; W3; firm name to unsub.urls). Next: gate15, merge.
-- wip/13-08 — e-sign and portal emails ("Decision during 13-08" binds it). Next: finish decisions, gate13 GATE13_PHASES="08 10", merge.
-- wip/small-fixes-c — word scan, empty chart sentence, failed-part copies (DECISIONS.md with plan-check additions). Next: gate12, merge.
-- Phase 17 plans — planner was writing; see .planning/phases/17-crm-connection/ (finished plans committed; 17-PLANNING-PAUSED.md if any unfinished). Next: finish plans, gsd-plan-checker, record additions; build after phase 16.
+### In flight at the pause (each saved and pushed on its own wip branch; each SUMMARY opens with a "Paused" section giving the exact resume steps)
+- wip/16-07 head 60f78a9 — payee states and holds. PAYEES PASS (9) on dc036b9; FILE RECORD 6, MOBILE SYNC 3, NACHA BUILD 11 pass; gate16 stopped in the reference step (21 ok, 0 FAIL). Resume: rerun the Task 2 verify into scratchpad exec-16-07 (base-commit 5e80342); need GATE_EXIT=0 with PAYEES, FILE RECORD, ACH LEAK, MOBILE SYNC ok.
+- wip/15-14 head bee3031 — account emails and resets, empty-issuer fix, W3, firm name to unsub.urls; server 616 = 601 + 15 (deviation: +15 not +13; four other plans' tests changed one line each, marked "C-16 (15-14)"). Gate stopped (36 ok, 0 FAIL). Resume: scratchpad exec-15-14/verify3.sh in the background; need GATE_EXIT=0 and `server tests 616 = base 601 + 15 declared`.
+- wip/13-08 head c4564c6 — e-sign and portal emails; all three "Decision during 13-08" items built; PORTAL MAIL PASS (9); server 606. FAILURE FIRST: gate stopped at 36 ok, 1 FAIL — CO-INVESTOR SERVER part cosign-forged (after a void the expected audit line was second on the page; possibly 13-08's void change). Resume: run co-investor-server.js --only cosign-forged alone twice; fix RED first if 13-08 caused it; then gate13 GATE13_PHASES="08 10" into exec-13-08.
+- wip/small-fixes-c head 7ef64e0 — all three fixes done, red first; gate12 stopped at 61 ok, 0 FAIL. SUMMARY written by the orchestrator (harness refused the executor's write). Owner wording question: two near-identical "no distributions" sentences in the Q4 statement. Resume: gate12 into exec-sfc.
+- Phase 17 — no plan written; outline of 17-01..17-07 in .planning/phases/17-crm-connection/17-PLANNING-PAUSED.md (3a2b6d9). Resume: gsd-planner from the outline (measure the base server count; CSV export needs requirement CRM-18), then gsd-plan-checker.
+- Merge order when resuming: small-fixes-c, 16-07, 15-14, 13-08 (each needs its gate finished first; branches are based on older commits, so expect merges and rerun the merged-tree checks each time).
 
 ### Next in order after those merge
 1. own-fonts quick plan (checked; DECISIONS binding): starts after small-fixes-c and 13-09 have merged (13-09's re-check Start line).
