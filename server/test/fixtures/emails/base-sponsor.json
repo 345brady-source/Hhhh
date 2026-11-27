@@ -1,0 +1,942 @@
+{
+ "base": "e87b658070a52ee78055d9fcce0fe9d3ef1d6e72",
+ "sponsor_notification": {
+  "onboarding": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": {
+     "id": "hr-fund-ii",
+     "name": "Harbor Ridge Fund II",
+     "currency": "USD"
+    },
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Investing as",
+       "Individual"
+      ],
+      [
+       "Offering",
+       "Harbor Ridge Fund II"
+      ],
+      [
+       "Commitment",
+       "$250,000"
+      ],
+      [
+       "Identity",
+       "Verified"
+      ],
+      [
+       "Sanctions screening",
+       "Clear"
+      ],
+      [
+       "Accredited investor",
+       "Verified"
+      ],
+      [
+       "Subscription agreement",
+       "Signed by the investor; waiting for your countersignature"
+      ]
+     ],
+     "next": "Next: countersign the subscription agreement in the console."
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita finished onboarding for Harbor Ridge Fund II",
+   "text": "Shah, Anita completed every onboarding step on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nInvesting as: Individual\nOffering: Harbor Ridge Fund II\nCommitment: $250,000\nIdentity: Verified\nSanctions screening: Clear\nAccredited investor: Verified\nSubscription agreement: Signed by the investor; waiting for your countersignature\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: countersign the subscription agreement in the console.\n\nTheir details, verification results, documents and signed agreement are added to your investor records the next time the console is open.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "onboarding-account": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Investing as",
+       "Individual"
+      ],
+      [
+       "Commitment",
+       "Not set"
+      ],
+      [
+       "Identity",
+       "Verified"
+      ],
+      [
+       "Sanctions screening",
+       "Clear"
+      ],
+      [
+       "Accredited investor",
+       "Not required"
+      ],
+      [
+       "Subscription agreement",
+       "No subscription submitted"
+      ]
+     ],
+     "next": "Next: invite them to an offering when one is open."
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita finished onboarding",
+   "text": "Shah, Anita completed every onboarding step on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nInvesting as: Individual\nCommitment: Not set\nIdentity: Verified\nSanctions screening: Clear\nAccredited investor: Not required\nSubscription agreement: No subscription submitted\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: invite them to an offering when one is open.\n\nTheir details, verification results, documents and signed agreement are added to your investor records the next time the console is open.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "subscription": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": {
+     "id": "hr-fund-ii",
+     "name": "Harbor Ridge Fund II",
+     "currency": "USD"
+    },
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Offering",
+       "Harbor Ridge Fund II"
+      ],
+      [
+       "Commitment",
+       "$250,000"
+      ],
+      [
+       "Accredited investor",
+       "On file"
+      ],
+      [
+       "Subscription agreement",
+       "Signed by the investor; waiting for your countersignature"
+      ]
+     ],
+     "next": "Next: countersign the subscription agreement in the console.",
+     "existing": true,
+     "requested": true
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita finished their subscription to Harbor Ridge Fund II",
+   "text": "Shah, Anita completed the subscription steps on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nOffering: Harbor Ridge Fund II\nCommitment: $250,000\nAccredited investor: On file\nSubscription agreement: Signed by the investor; waiting for your countersignature\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: countersign the subscription agreement in the console.\n\nTheir subscription, signed agreement and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "subscription-tax": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": {
+     "id": "hr-fund-ii",
+     "name": "Harbor Ridge Fund II",
+     "currency": "USD"
+    },
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Offering",
+       "Harbor Ridge Fund II"
+      ],
+      [
+       "Commitment",
+       "$250,000"
+      ],
+      [
+       "Accredited investor",
+       "On file"
+      ],
+      [
+       "Subscription agreement",
+       "Signed by the investor; waiting for your countersignature"
+      ],
+      [
+       "Tax form",
+       "Form W-9, signed"
+      ]
+     ],
+     "next": "Next: countersign the subscription agreement in the console.",
+     "existing": true,
+     "includeTax": true,
+     "requested": true
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita finished their subscription to Harbor Ridge Fund II",
+   "text": "Shah, Anita completed the subscription steps on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nOffering: Harbor Ridge Fund II\nCommitment: $250,000\nAccredited investor: On file\nSubscription agreement: Signed by the investor; waiting for your countersignature\nTax form: Form W-9, signed\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: countersign the subscription agreement in the console.\n\nTheir subscription, signed agreement, tax form and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "none": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": {
+     "id": "hr-fund-ii",
+     "name": "Harbor Ridge Fund II",
+     "currency": "USD"
+    },
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Offering",
+       "Harbor Ridge Fund II"
+      ],
+      [
+       "Commitment",
+       "$250,000"
+      ],
+      [
+       "Accredited investor",
+       "On file"
+      ],
+      [
+       "Subscription agreement",
+       "No subscription submitted"
+      ]
+     ],
+     "next": "Next: nothing to do unless the offering opens again.",
+     "existing": true,
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita: no subscription to Harbor Ridge Fund II",
+   "text": "Shah, Anita went through your invitation on November 10, 2026, but no subscription was submitted: the offering was no longer accepting subscriptions when they reached that step.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nOffering: Harbor Ridge Fund II\nCommitment: $250,000\nAccredited investor: On file\nSubscription agreement: No subscription submitted\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: nothing to do unless the offering opens again.\n\nNothing is added to their investor record; the details you already hold for them stay as they are.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "access": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ]
+     ],
+     "next": "Nothing to do: their record stays as you hold it.",
+     "existing": true,
+     "access": true,
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita opened their investor portal",
+   "text": "Shah, Anita used the portal link you sent and created their login on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNothing to do: their record stays as you hold it.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "coSign-signed": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Ravi",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "ravi@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Co-investor signature",
+       "Signed"
+      ]
+     ],
+     "next": "Next: countersign the subscription agreement in the console.",
+     "existing": true,
+     "coSign": true,
+     "coSigned": true,
+     "account": "Anita Shah",
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Ravi signed the subscription agreement for Anita Shah",
+   "text": "Shah, Ravi, co-investor on Anita Shah, went through your request to sign the subscription agreement on November 10, 2026.\n\nCo-investor signature: Signed\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: countersign the subscription agreement in the console.\n\nNothing else in the account’s investor record changes.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "coSign-unsigned": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Ravi",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "ravi@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Co-investor signature",
+       "Not signed"
+      ]
+     ],
+     "next": "Next: ask the co-investor to sign.",
+     "existing": true,
+     "coSign": true,
+     "coSigned": false,
+     "account": "Anita Shah",
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Ravi did not sign the subscription agreement for Anita Shah",
+   "text": "Shah, Ravi, co-investor on Anita Shah, went through your request to sign the subscription agreement on November 10, 2026.\n\nCo-investor signature: Not signed\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: ask the co-investor to sign.\n\nNothing else in the account’s investor record changes.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "taxRequest-signed": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Tax form",
+       "Form W-9, signed"
+      ]
+     ],
+     "next": "Next: the console adds the form to the investor’s record the next time it is open.",
+     "existing": true,
+     "taxRequest": true,
+     "taxState": "signed",
+     "taxForm": "W-9",
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita returned their Form W-9",
+   "text": "Shah, Anita went through your request for their Form W-9 on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nTax form: Form W-9, signed\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: the console adds the form to the investor’s record the next time it is open.\n\nNothing else in their investor record changes.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "taxRequest-notsigned": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Tax form",
+       "Form W-9, not signed"
+      ]
+     ],
+     "next": "Next: ask the investor for their tax form again if you still need it.",
+     "existing": true,
+     "taxRequest": true,
+     "taxState": "not signed",
+     "taxForm": "W-9",
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita finished your tax form request without signing",
+   "text": "Shah, Anita went through your request for their Form W-9 on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nTax form: Form W-9, not signed\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: ask the investor for their tax form again if you still need it.\n\nNothing else in their investor record changes.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "taxRequest-none": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Tax form",
+       "Not returned"
+      ]
+     ],
+     "next": "Next: ask the investor for their tax form again if you still need it.",
+     "existing": true,
+     "taxRequest": true,
+     "taxState": "not returned",
+     "taxForm": "W-9",
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita finished your tax form request without a form",
+   "text": "Shah, Anita went through your request for their Form W-9 on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nTax form: Not returned\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: ask the investor for their tax form again if you still need it.\n\nNothing else in their investor record changes.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "reverify-reverified": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Accredited investor",
+       "Verified"
+      ]
+     ],
+     "next": "Next: the console adds the result to the investor’s record the next time it is open.",
+     "existing": true,
+     "reverify": true,
+     "reverified": true,
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita verified their accreditation again",
+   "text": "Shah, Anita went through your request to verify their accreditation again on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nAccredited investor: Verified\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: the console adds the result to the investor’s record the next time it is open.\n\nNothing else in their investor record changes.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "reverify-finished": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "summary": {
+     "rows": [
+      [
+       "Investor",
+       "Shah, Anita"
+      ],
+      [
+       "Email",
+       "anita@investor.example"
+      ],
+      [
+       "Accredited investor",
+       "Not verified again"
+      ]
+     ],
+     "next": "Next: ask the investor to verify their accreditation again if you still need it.",
+     "existing": true,
+     "reverify": true,
+     "reverified": false,
+     "requested": false
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z"
+   },
+   "subject": "Shah, Anita finished your re-verification request",
+   "text": "Shah, Anita went through your request to verify their accreditation again on November 10, 2026.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nAccredited investor: Not verified again\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nNext: ask the investor to verify their accreditation again if you still need it.\n\nNothing else in their investor record changes.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  }
+ },
+ "submission_reminder": {
+  "onboarding": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": {
+     "id": "hr-fund-ii",
+     "name": "Harbor Ridge Fund II",
+     "currency": "USD"
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z",
+    "deleteOn": "2026-12-10T12:00:00.000Z",
+    "existing": false,
+    "taxRequest": false,
+    "reverify": false,
+    "coSign": false
+   },
+   "subject": "Waiting in your console: Shah, Anita’s onboarding",
+   "text": "Shah, Anita finished onboarding on November 10, 2026, but the console has not added them to your investor records yet.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nOffering: Harbor Ridge Fund II\nFinished: November 10, 2026\nDeleted on: December 10, 2026\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nOpen the console before December 10, 2026: it adds the investor, their verification results, documents and signed agreement as soon as it opens.\n\nAfter that date their submitted details and signed documents are deleted from the integration server to protect them, and the investor would have to complete onboarding again.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "subscription": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": {
+     "id": "hr-fund-ii",
+     "name": "Harbor Ridge Fund II",
+     "currency": "USD"
+    },
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z",
+    "deleteOn": "2026-12-10T12:00:00.000Z",
+    "existing": true,
+    "taxRequest": false,
+    "reverify": false,
+    "coSign": false
+   },
+   "subject": "Waiting in your console: Shah, Anita’s subscription",
+   "text": "Shah, Anita finished their subscription to Harbor Ridge Fund II on November 10, 2026, but the console has not added it to your records yet.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nOffering: Harbor Ridge Fund II\nFinished: November 10, 2026\nDeleted on: December 10, 2026\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nOpen the console before December 10, 2026: it adds the subscription, the signed agreement and any new accreditation result as soon as it opens.\n\nAfter that date the submitted subscription and signed documents are deleted from the integration server to protect them, and the investor would have to submit their subscription again.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "taxRequest": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z",
+    "deleteOn": "2026-12-10T12:00:00.000Z",
+    "existing": true,
+    "taxRequest": true,
+    "reverify": false,
+    "coSign": false
+   },
+   "subject": "Waiting in your console: Shah, Anita’s tax form",
+   "text": "Shah, Anita finished your request for their Form W-9 on November 10, 2026, but the console has not added it to your records yet.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nFinished: November 10, 2026\nDeleted on: December 10, 2026\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nOpen the console before December 10, 2026: it adds the form as soon as it opens.\n\nAfter that date the form is deleted from the integration server to protect it, and the investor would have to complete it again.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "reverify": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Anita",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "anita@investor.example"
+    },
+    "offering": null,
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z",
+    "deleteOn": "2026-12-10T12:00:00.000Z",
+    "existing": true,
+    "taxRequest": false,
+    "reverify": true,
+    "coSign": false
+   },
+   "subject": "Waiting in your console: Shah, Anita’s re-verification",
+   "text": "Shah, Anita finished your request to verify their accreditation again on November 10, 2026, but the console has not added the result to your records yet.\n\nInvestor: Shah, Anita\nEmail: anita@investor.example\nFinished: November 10, 2026\nDeleted on: December 10, 2026\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nOpen the console before December 10, 2026: it adds the result as soon as it opens.\n\nAfter that date the result is deleted from the integration server to protect it, and the investor would have to verify again.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  },
+  "coSign": {
+   "input": {
+    "firm": {
+     "name": "Harbor Ridge Capital",
+     "shortName": "Harbor Ridge",
+     "legalName": "Harbor Ridge Capital Management LLC",
+     "supportTeam": "Investor Relations",
+     "supportEmail": "ir@harborridge.example",
+     "supportPhone": "+1 212 555 0100",
+     "colors": {
+      "primary": "#123456",
+      "accent": "#1F7A8C"
+     },
+     "logo": "",
+     "portalName": "Harbor Ridge Investor Portal",
+     "disclaimer": "This message is not an offer to sell securities."
+    },
+    "investor": {
+     "id": "HRC-0101",
+     "contact": "Shah, Ravi",
+     "title": "Anita Shah",
+     "type": "individual",
+     "email": "ravi@investor.example"
+    },
+    "offering": null,
+    "consoleUrl": "https://portal.example/portal.html#console-investors",
+    "completedAt": "2026-11-10T12:00:00.000Z",
+    "deleteOn": "2026-12-10T12:00:00.000Z",
+    "existing": true,
+    "taxRequest": false,
+    "reverify": false,
+    "coSign": true
+   },
+   "subject": "Waiting in your console: Shah, Ravi’s signature for Anita Shah",
+   "text": "Shah, Ravi went through your request to sign the subscription agreement for Anita Shah as co-investor on November 10, 2026, but the console has not added it to your records yet.\n\nInvestor: Shah, Ravi\nEmail: ravi@investor.example\nFinished: November 10, 2026\nDeleted on: December 10, 2026\n\nOpen the console:\nhttps://portal.example/portal.html#console-investors\n\nOpen the console before December 10, 2026: it adds the co-investor’s signature as soon as it opens.\n\nAfter that date the signed copy is deleted from the integration server to protect it, and the co-investor would have to sign again.\n\n--\nHarbor Ridge Capital Management LLC\n\nThis message is not an offer to sell securities."
+  }
+ }
+}
