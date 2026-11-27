@@ -1,5 +1,5 @@
 ---
-status: verifying
+status: awaiting_human_verify
 trigger: "Report preview tables with 4+ columns squeeze text columns to 27-36 px at 390 px phone frame; words wrap one or two letters per line (143 broken words across five previews); Holdings and Net performance overflow the preview box (343-544 px in a 308 px box); Holdings header cut off at '% of net as'. Found by plan 12-09 walkthrough (walk12.js), 12-WALKTHROUGH.md Failures item 1."
 created: 2026-11-27T00:00:00Z
 updated: 2026-11-27T00:00:00Z
@@ -9,7 +9,7 @@ updated: 2026-11-27T00:00:00Z
 
 bug_class: Bohrbug (deterministic: same counts every run, base probe reproduced the walk's 60/22/40 exactly)
 hypothesis: CONFIRMED - `.rb-doc { overflow-wrap: anywhere }` (assets/css/reports.css:38) is inherited by every preview table cell; `anywhere` counts a break between any two letters when the browser sizes a column's narrowest width, so the auto table layout squeezes text columns to one letter (27-36 px) and gives the room to the nowrap number columns. Contributing: a hyphenated word ('Single-name') splits at its hyphen when its column sits at its narrowest width.
-next_action: apply fix in reports.css (+ hyphen span in reports-ui.js tableHTML), run probe phone+desktop, pixel-diff desktop, then walk12 and the listed checks
+next_action: owner check on a phone (see Resolution); sweep rerun on the final tree pending (reports-sweep-final.txt)
 
 reasoning_checkpoint:
   hypothesis: "Text columns of 4+ column preview tables collapse to one letter on the phone because .rb-doc's inherited overflow-wrap: anywhere makes each text cell's min-content one glyph; with number cells nowrap, the auto table layout at 308 px gives text columns their min-content."
@@ -138,9 +138,30 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
   found: line 38, not 41 as first written here and in the fix commit e75171e's message.
   implication: correction recorded; the file and rule named in e75171e are right, the line number there is off by 3.
 
+- timestamp: 2026-11-27T18:20:00Z
+  checked: mutant (root rule removed, phone rules kept) in scratch copy, `REPORTS FLOW --only open-phone,preview-pdf` (rf-mutant-root.txt, 211 s)
+  found: `REPORTS FLOW: FAIL (parts run: 2) - open-phone, preview-pdf`: at 390 px 0 words broken (the mutant would have survived the word check alone, as predicted) but 118 cells with overflow-wrap not normal -> FAIL; at 1280 px 'loose' cells -> FAIL.
+  implication: the fix-site mutant is now killed in the reference gate's REPORTS FLOW.
+
+- timestamp: 2026-11-27T18:25:00Z
+  checked: GREEN REPORTS FLOW on the final tree with the invariant (reports-flow-final2.txt, 270 s)
+  found: `REPORTS FLOW: PASS (parts run: 8)`; open-phone: 0 broken, 0 cells not normal; Totals, Net performance, Holdings held in place, no figure cut; preview-pdf 1280 px: 5 tables fit, none fixed.
+  implication: GREEN.
+
 ## Resolution
 
-root_cause: "assets/css/reports.css:38 `.rb-doc { overflow-wrap: anywhere }` is inherited by the preview's table cells; `anywhere` (unlike break-word) counts a break between any two letters in a cell's narrowest (min-content) width, so the automatic table layout at the phone's 308 px squeezed text columns to one letter (27-36 px) and gave the width to the nowrap number columns; tables whose number columns alone exceeded 308 px also overflowed (343-544 px). Contributing (AND): a hyphenated word ('Single-name') breaks at its hyphen whenever its column sits at its narrowest width."
-fix: "reports.css: `.rb-tbl th, .rb-tbl td { overflow-wrap: normal }` (all widths) and `.rb-nw { white-space: nowrap }`; phone only (max-width 640px) for tables of 4+ columns: the table box is a size container with its own stacking context and a right-edge shade while columns remain; caption sticky at left 0, 100cqw wide; text cells min-width 8em; first column sticky at left 0, white, 1 px divider. reports-ui.js tableHTML: words with a hyphen, dash or slash in text cells wrapped in span.rb-nw (text unchanged)."
-verification: "(pending walk12 and the listed checks)"
-files_changed: [assets/css/reports.css, assets/js/reports-ui.js]
+root_cause: "assets/css/reports.css:38 (base b8d8613) `.rb-doc { ... overflow-wrap: anywhere }` is inherited by every preview table cell. `anywhere` (unlike break-word) counts a break between any two letters in a cell's narrowest (min-content) width, so the automatic table layout at the phone's 308 px box squeezed text columns to one letter (27-36 px) and gave the width to the number columns, which never wrap; tables whose number columns alone were wider than 308 px overflowed as well (343-544 px). Contributing (AND): a hyphenated word ('Single-name') splits at its hyphen whenever its column sits at its narrowest width."
+fix: "reports.css: `.rb-tbl th, .rb-tbl td { overflow-wrap: normal }` and `.rb-tbl .rb-nw { white-space: nowrap }` at every width; phone only (max-width 640px) and only for tables of 4 or more columns (`:has(th:nth-child(4))`): the table box is an inline-size container with its own stacking context and a right-edge shade while columns remain (white end, background-attachment local, covers it at the end); caption sticky at left 0, 100cqw wide; text cells min-width 8em; first column sticky at left 0, white, 1 px divider. reports-ui.js tableHTML: in text cells, words with a hyphen, dash or slash are wrapped in span.rb-nw (the text itself is unchanged)."
+verification: |
+  - RED walk12 (base, 12-09 run): WALK12: FAIL (steps run: 28) - kb-open, kb-preview, ar-letter, ar-preview-pdf, pb-letter, fa-statement, fa-holdings (239 PASS, 8 FAIL)
+  - GREEN walk12 (walk12-final.txt): WALK12: FAIL (steps run: 28) - kb-open, ar-letter, pb-letter (249 PASS, 3 FAIL, all W5 font requests; 0 broken words in all 5 previews; 5 new held-in-place checks PASS; 0 earlier passes lost)
+  - REPORTS FLOW: PASS (parts run: 8) (reports-flow-final2.txt, with the new assertions)
+  - New assertions RED on base product files: REPORTS FLOW: FAIL (parts run: 2) - open-phone (rf-red-base.txt); fix-site mutant killed: REPORTS FLOW: FAIL (parts run: 2) - open-phone, preview-pdf (rf-mutant-root.txt)
+  - DELIVER FLOW: PASS (parts run: 8); REPORTS SWEEP: PASS (parts run: 4); REPORT FIXES: PASS (parts run: 5); PHONE LAYOUT: PASS (parts run: 8); SCREEN EDGES: PASS (parts run: 5)
+  - server tests: 567/567 before and after (base count is 567, not 584)
+  - desktop 1280: every table/column measurement identical; 17 of 19 screenshots pixel-identical, 2 differ in 46 sub-pixel anti-aliasing pixels (one 11x7 px patch in PB Holdings 'Single-name and basket swaps, net unrealized', max grey difference 59/255)
+  - phone: 2- and 3-column tables pixel-identical to before (8 of 8)
+  - PDFs (reports-pdf.js unchanged): multi-column tables on pages 2-3 whole and readable
+  guardrail_verdict: accepted (self-verified); owner check pending
+oracle_type: specified (the owner's rule: every word whole on one line; figures never cut) + derived (computed overflow-wrap of every cell is normal; desktop measurements equal to base)
+files_changed: [assets/css/reports.css, assets/js/reports-ui.js, .planning/phases/12-report-builder/checks/reports-flow.js, .planning/phases/12-report-builder/checks/walk12.js]
