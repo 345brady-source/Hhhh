@@ -25,6 +25,12 @@
   const KIND = (k) => ((TD() && TD().KINDS[k]) || {}).label || k;
   const day = (iso) => (iso ? U.date(String(iso).slice(0, 10), 'long') : '');
   const stamp = () => new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const pad2 = (n) => String(n).padStart(2, '0');
+  /** The calendar day, here, of a moment the server gives ('' when it is not one): as NS.dates.today reads today. */
+  function localDay(at) {
+    const d = new Date(String(at || ''));
+    return Number.isNaN(d.getTime()) ? '' : `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
 
   /* ---------- the console's side ---------- */
   const serverOf = (ws) => {
@@ -66,6 +72,38 @@
     for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
     return btoa(s);
   }
+  /**
+   * What the server is sent for the message (and seals): the title, the available-until day, the firm's name and tax
+   * contact, the investor's name and address. Kept on doc.tax.link.mail so a resend's log entry has the server's words.
+   */
+  function mailOf(ws, doc, inv) {
+    const t = doc.tax;
+    return {
+      title: `${KIND(t.kind)} ${t.year}`,
+      availableUntil: t.availableUntil || TD().availableUntil(t.kind, t.year, NS.dates.today()),
+      firm: ws.tenant.name || ws.tenant.shortName,
+      contact: Object.assign({}, TD().ensure(ws).contact),
+      name: inv.contact || inv.title,
+      to: inv.email
+    };
+  }
+  /**
+   * EM-08: one workspace sent-log entry (NS.emails.log, ws.mailLog) for the message the server sent, with the server's
+   * status: the same render the server makes (emails.js tax_notice, link variant, or tax_consent when consent is not yet
+   * in effect), its personal link replaced by '[personal link]'. The caller saves.
+   */
+  function logMail(ws, investorId, m, link, status, consentNeeded) {
+    const E = NS.emails;
+    if (!E || !E.log || !E.render || !m || !link) return null;
+    try {
+      const kind = consentNeeded ? 'tax_consent' : 'tax_notice';
+      const r = E.render(kind, { variant: 'link', firm: { name: m.firm }, investor: { name: m.name }, doc: { title: m.title, availableUntil: m.availableUntil }, link, contact: m.contact });
+      return E.log(ws, { kind, subject: r.subject, to: m.to, investorId, status: E.STATUSES.indexOf(status) >= 0 ? status : 'failed', text: r.text, link });
+    } catch (e) {
+      if (window.console) console.error(e);
+      return null;
+    }
+  }
   /** Send one delivered (or waiting) document to the server; the result is kept on doc.tax.link. */
   async function send(ws, doc) {
     const t = doc.tax;
@@ -85,25 +123,27 @@
       const blob = await NS.ops.files.get(doc.id);
       if (!blob) throw new Error('This browser no longer has the document’s file.');
       const u8 = new Uint8Array(await blob.arrayBuffer());
-      const contact = Object.assign({}, TD().ensure(ws).contact);
+      const m = mailOf(ws, doc, inv);
       const C = TD().CONSENT;
+      const consentNeeded = !TD().inEffect(inv);
       const r = await api(ws, 'POST', '/v1/taxdocs', {
         workspace: ws.tenant.id,
         docId: doc.id,
         kind: t.kind,
         year: t.year,
-        title: `${KIND(t.kind)} ${t.year}`,
+        title: m.title,
         fileName: doc.fileName,
         pdf: b64(u8),
         sha256: NS.audit.sha256(u8),
-        availableUntil: t.availableUntil || TD().availableUntil(t.kind, t.year, NS.dates.today()),
-        investor: { id: inv.id, name: inv.contact || inv.title, email: inv.email, last4 },
-        firm: { name: ws.tenant.name || ws.tenant.shortName, contact },
-        consent: { inEffect: TD().inEffect(inv), version: C.version, lines: C.lines(contact).map((l) => l.text) },
+        availableUntil: m.availableUntil,
+        investor: { id: inv.id, name: m.name, email: m.to, last4 },
+        firm: { name: m.firm, contact: m.contact },
+        consent: { inEffect: !consentNeeded, version: C.version, lines: C.lines(m.contact).map((l) => l.text) },
         portalUrl: portalPage(),
         sendEmail: true
       });
-      t.link = { linkId: r.id, status: 'sent', emailStatus: r.emailStatus, emailError: r.emailError || '', consentNeeded: !TD().inEffect(inv), at: stamp() };
+      t.link = { linkId: r.id, status: 'sent', emailStatus: r.emailStatus, emailError: r.emailError || '', consentNeeded, at: stamp(), mail: m };
+      logMail(ws, inv.id, m, r.link, r.emailStatus, consentNeeded);
     } catch (e) {
       t.link = { linkId: '', status: 'failed', emailStatus: '', emailError: (e && e.message) || 'The link could not be sent.', at: stamp() };
     }
@@ -123,6 +163,8 @@
     if (l.status === 'withdrawn') return line('Link withdrawn: it no longer opens.');
     if (l.status === 'expired') return line('Link ended with the access period.');
     if (l.status === 'locked') return line('Link locked after five wrong tries.', btn('txl-resend', 'Resend', doc));
+    // a new link to the same address would not be sent (the address bounced for good), so there is no Resend here
+    if (l.emailStatus === 'bounced') return line(doc.tax.notice && doc.tax.notice.bounced ? `The email with the link came back on ${day(doc.tax.notice.bounced)}: send it on paper.` : 'The email with the link came back: send it on paper.');
     if (l.emailStatus === 'failed') return line(`The email with the link could not be sent: ${l.emailError || 'the mail server refused it.'}`, btn('txl-resend', 'Resend', doc));
     const n = (doc.tax.opens || {}).count || 0;
     if (l.status === 'opened' && n) return line(n === 1 ? 'Opened once on their device.' : `Opened ${n} times on their device.`);
@@ -168,6 +210,19 @@
             }
           }
         }
+        // Rev. Proc. 2012-17 section 7.02: the server's notice came back for good (a permanent bounce the mail provider
+        // signed). The notice is marked as came back on that day, once, as the sponsor marks it by hand (plan 10-06's own
+        // record), which starts the 30 days for paper and puts the document on the Send on paper list.
+        const t = doc.tax;
+        const back = x.emailStatus === 'bounced' ? localDay(x.bouncedAt) : '';
+        if (back && t.state === 'delivered' && t.notice && !t.notice.bounced && !t.paper) {
+          try {
+            TD().bounced(ws, doc.id, back);
+            changed = true;
+          } catch (e) {
+            if (window.console) console.error(e);
+          }
+        }
       });
       if (changed) NS.app.save(true);
       return changed;
@@ -198,6 +253,8 @@
     if (!l || !l.linkId) return send(ws, doc);
     const r = await api(ws, 'POST', `/v1/taxdocs/${encodeURIComponent(l.linkId)}/resend`, { portalUrl: portalPage(), sendEmail: true });
     Object.assign(l, { status: r.status || 'sent', emailStatus: r.emailStatus, emailError: r.emailError || '', at: stamp() });
+    const inv = investorOf(ws, (doc.investors || [])[0]);
+    if (inv) logMail(ws, inv.id, l.mail || mailOf(ws, doc, inv), r.link, r.emailStatus, !!l.consentNeeded && !l.consentAt);
     NS.app.save(true);
     return l;
   }

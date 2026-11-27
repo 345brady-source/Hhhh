@@ -10,8 +10,15 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readRaw, parseJson, send } from './http.mjs';
 import { id } from './crypto.mjs';
+import { createRequire } from 'node:module';
 import { openVault } from './vault.mjs';
 import { createMailer, validAddress } from './mail.mjs';
+import { createMailLog } from './maillog.mjs';
+
+// The notice and the consent request are written by assets/js/emails.js (kinds tax_notice and tax_consent, plan 13-07),
+// the one template set the console's notice uses too.
+const emails = createRequire(import.meta.url)('../../assets/js/emails.js');
+const NOTICE_SUBJECT = 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE';
 
 const KB = 1024;
 const MB = 1024 * KB;
@@ -49,6 +56,8 @@ function parseObject(raw) {
 export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = () => Date.now(), mailTls, vault: givenVault, mailer: givenMailer }) {
   const vault = givenVault || openVault(env);
   const mailer = givenMailer || createMailer({ env, store, vault, now, tls: mailTls });
+  // The sent log (13-03) the mailer writes to: read here for the notice's delivery events (a bounce, section 7.02).
+  const mailLog = createMailLog({ store, vault, env, now });
   const iso = (ms = now()) => new Date(ms).toISOString();
   const today = () => iso().slice(0, 10);
 
@@ -85,40 +94,17 @@ export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = 
   const newToken = () => randomBytes(32).toString('base64url');
 
   /* ---------- the messages (no taxpayer number in any of them) ---------- */
-  const longDay = (day) => {
-    const d = new Date(`${day}T12:00:00Z`);
-    return Number.isNaN(d.getTime()) ? day : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-  };
-  const esc = (s) => String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  const contactLine = (c) => `${c.name || ''}, ${c.address || ''}, telephone ${c.phone || ''}, email ${c.email || ''}`;
+  /** What emails.js is given: the firm's name, the investor's name, the title, the available-until day, the link, the contact. */
+  const taxData = (rec, s, url) => ({ variant: 'link', firm: { name: s.firm.name }, investor: { name: s.investor.name }, doc: { title: rec.title, availableUntil: rec.availableUntil }, link: url, contact: s.firm.contact });
+  const asMail = (r, url) => ({ subject: r.subject, text: r.text, html: r.html, inline: r.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })), link: url });
   /** The notice of section 7.01: the required words, in capital letters, as the subject; how to open, save and print. */
-  function noticeMessage(rec, s, url) {
-    const firm = s.firm.name;
-    const paras = [
-      `${firm} has posted a tax document for you: ${rec.title}.`,
-      `To open it on any device, use this link: ${url}`,
-      `You will be asked for the last four digits of the tax number you gave ${firm}. Once the document is open, use Save to keep a copy, and print the saved file.`,
-      `It stays available until ${longDay(rec.availableUntil)}.`,
-      `Questions: ${contactLine(s.firm.contact)}.`
-    ];
-    return { subject: 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE', text: paras.join('\n\n'), html: htmlOf(paras, url) };
-  }
-  const htmlOf = (paras, url) => paras.map((p) => `<p>${esc(p).replace(esc(url), `<a href="${esc(url)}">${esc(url)}</a>`)}</p>`).join('');
+  const noticeMessage = (rec, s, url) => asMail(emails.render('tax_notice', taxData(rec, s, url)), url);
   /** Without consent in effect the first message asks for it (Rev. Proc. 2012-17 section 4.01); it is not the notice. */
-  function consentMessage(rec, s, url) {
-    const firm = s.firm.name;
-    const paras = [
-      `${firm} has a tax document for you: ${rec.title}. It can be delivered to you electronically only with your consent.`,
-      `To read how electronic delivery works and give your consent, use this link on any device: ${url}`,
-      `You will be asked for the last four digits of the tax number you gave ${firm}. Once you consent, the document opens there; use Save to keep a copy, and print the saved file.`,
-      'If you do not consent, the document will be sent to you on paper.',
-      `Questions: ${contactLine(s.firm.contact)}.`
-    ];
-    return { subject: 'Your consent to receive tax documents electronically', text: paras.join('\n\n'), html: htmlOf(paras, url) };
-  }
+  const consentMessage = (rec, s, url) => asMail(emails.render('tax_consent', taxData(rec, s, url)), url);
   const firstMessage = (rec, s, url) => (rec.consentNeeded && !rec.consent ? consentMessage(rec, s, url) : noticeMessage(rec, s, url));
   async function mail(rec, s, msg) {
-    const r = await mailer.send(Object.assign({ kind: 'taxdoc', invitationId: rec.id, workspace: rec.workspace, fromName: s.firm.name, replyTo: s.firm.contact.email, to: s.investor.email, toName: s.investor.name }, msg));
+    // refId and investorId go in the sent log; link is replaced there by '[personal link]' (13-03).
+    const r = await mailer.send(Object.assign({ kind: 'taxdoc', refId: rec.id, investorId: rec.investorId, workspace: rec.workspace, fromName: s.firm.name, replyTo: s.firm.contact.email, to: s.investor.email, toName: s.investor.name }, msg));
     return { emailStatus: r.emailStatus, emailError: r.error || '' };
   }
 
@@ -157,7 +143,23 @@ export function createTaxDocs({ env, store, publicUrl, returnTo, limited, now = 
   }
 
   /** What the console's list shows: never the file, the digits, the token, the name or the email. */
-  const listView = (rec) => ({ id: rec.id, docId: rec.docId, investorId: rec.investorId, status: rec.status, opens: rec.opens, consent: rec.consent || null, emailStatus: rec.emailStatus || '', availableUntil: rec.availableUntil });
+  const listView = (rec) => {
+    const out = { id: rec.id, docId: rec.docId, investorId: rec.investorId, status: rec.status, opens: rec.opens, consent: rec.consent || null, emailStatus: rec.emailStatus || '', availableUntil: rec.availableUntil };
+    const at = bouncedAt(rec);
+    return at ? Object.assign(out, { emailStatus: 'bounced', bouncedAt: at }) : out;
+  };
+  /**
+   * When the document's latest notice came back for good, else ''. Only a permanent bounce the provider signed sets an
+   * entry's status to bounced (lib/maillog.mjs); a transient one, a consent request or an earlier notice followed by a
+   * later one that went out changes nothing (Rev. Proc. 2012-17 section 7.02 starts the 30 days for paper on this date).
+   */
+  function bouncedAt(rec) {
+    if (!vault.allowed) return '';
+    const last = mailLog.list(rec.workspace, { refId: rec.id, limit: 100 }).filter((e) => e.kind === 'taxdoc' && e.subject === NOTICE_SUBJECT)[0];
+    if (!last || last.status !== 'bounced') return '';
+    const ev = (last.events || []).filter((e) => e.type === 'bounced' && e.permanent).pop();
+    return ev ? ev.at : '';
+  }
 
   async function create(req, res, auth) {
     const body = parseObject(await readRaw(req, TAXDOC_LIMITS.create));

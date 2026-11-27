@@ -695,17 +695,31 @@
     return doc;
   }
 
-  /** The notice of section 7.01: the required words as its subject; how to open and print; the firm's contact. */
+  /**
+   * The email templates (assets/js/emails.js): the page's NS.emails, or under Node the file beside this one, so every
+   * context that loads this file renders the same words. null when neither is there.
+   */
+  function emailsLib() {
+    if (NS && NS.emails) return NS.emails;
+    if (typeof module !== 'undefined' && module && module.exports && typeof require === 'function') return require('./emails.js');
+    return null;
+  }
+  /**
+   * The notice of section 7.01 the sponsor copies or sends from their own email: emails.js tax_notice (portal variant),
+   * the required words as its subject; how to open and print; the firm's contact, only the parts it has (plan 13-07).
+   */
   function notice(ws, doc) {
+    const E = emailsLib() || refuse('The email templates are not loaded.');
     const t = doc.tax;
-    const c = ensure(ws).contact;
-    const body = [
-      `A tax document is available for you in the investor portal: ${KINDS[t.kind].label} for ${t.year}${t.replaces ? ', which replaces the one posted earlier' : ''}.`,
-      'To open it, sign in, go to Documents and tap it. Use Download to save or print it.',
-      t.availableUntil ? `It stays available in the portal until ${t.availableUntil}.` : '',
-      `Questions: ${c.name}, ${c.address}, telephone ${c.phone}, email ${c.email}.`
-    ].filter(Boolean);
-    return { subject: NOTICE_SUBJECT, body: body.join('\n\n') };
+    const inv = investorOf(ws, (doc.investors || [])[0]);
+    const r = E.render('tax_notice', {
+      variant: 'portal',
+      firm: E.firmFromTenant(ws.tenant),
+      investor: { name: inv ? inv.contact || inv.title : '' },
+      doc: { label: KINDS[t.kind].label, year: t.year, replaces: !!t.replaces, availableUntil: t.availableUntil },
+      contact: Object.assign({}, ensure(ws).contact)
+    });
+    return { subject: NOTICE_SUBJECT, body: r.text };
   }
 
   /**
