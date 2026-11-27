@@ -13,6 +13,9 @@ import { createServer } from '../index.mjs';
 import { openStore } from '../lib/store.mjs';
 import { emailHash } from '../lib/maillog.mjs';
 import { stripLinkTokens } from './helpers.mjs';
+import { createRequire } from 'node:module';
+
+const { BANNED } = createRequire(import.meta.url)('../../assets/js/emails.js');
 
 const T0 = Date.parse('2026-11-10T12:00:00Z');
 const DAY = 864e5;
@@ -99,7 +102,9 @@ test('onboarding and subscription', async () => {
     assert.ok(m.text.includes('on November 10, 2026'), m.text);
     assert.deepEqual(Array.from(new Set(webLinks(m.text))), [PORTAL], 'one link, the portal address');
     assert.deepEqual(Array.from(new Set(webLinks(m.html.replace(/href="mailto:[^"]*"/g, '')))), [PORTAL]);
-    assert.ok(!/carrow|powered by|refract|\bbasic\b/i.test(stripLinkTokens(`${m.subject}\n${m.text}\n${m.html}`)), 'white label');
+    // White label: none of emails.js BANNED, nor the model maker's two names (emails-guard.test.mjs MODEL_NAMES).
+    const all = stripLinkTokens(`${m.subject}\n${m.text}\n${m.html}`);
+    for (const re of BANNED.concat([/anthropic/i, /claude/i])) assert.ok(!re.test(all), `white label: ${re}`);
     const entry = (await log(h.base)).find((e) => e.kind === 'confirmation');
     assert.deepEqual([entry.status, entry.refId, entry.investorId], ['outbox', r.id, ANITA.id], 'logged');
 
