@@ -85,3 +85,19 @@ says "Dear investor" or starts a line "Reminder: ".
 - .planning/phases/06-*/checks/co-investor-server.js:535: ``text.indexOf(`Dear ${F.coName}`)`` -> ``text.indexOf(`Dear ${F.coFirst},`)`` (wave-1 B1, re-check W5)
 
 Every existing test file keeps its number of tests.
+
+### Task 3 RED (SCRATCH/exec-13-01/red-3.txt)
+```
+ok 1 - patterns: screen() refuses taxpayer numbers, long numbers and passwords with one sentence each; the first three are the help desk’s
+ok 2 - no sensitive data in any render: no pattern in what is sent, no field for one in the data, the note screened
+ok 3 - banned words: no platform, vendor or library name, and never the plain-tier word, in any variant or in the headers
+not ok 4 - links: only the investor’s own link and the firm’s support address; redactLink and log() keep no link
+  error: 'ir@harborridge.example&cc=x'
+# tests 4
+# pass 3
+# fail 1
+```
+The failure was real: a support address ending '&cc=x' was turned into a mailto link (it could add recipients). Fixed in
+a2fe5fe (emails.js now uses the server's address rule). Tests 1 to 3 passed at RED: PATTERNS, screen(), BANNED and the
+sample data were written in Task 1 and Task 2 to these rules; they fail on the base tree (no emails.js).
+After the fix: emails-guard 4/4, emails-render 8/8.
