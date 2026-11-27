@@ -1,0 +1,3 @@
+# Written by make-fixtures.js (plan 16-06): name, bytes, SHA-256 of each fixture. Regenerate: node make-fixtures.js
+dist-ppd.ach 960 7948e4282b521abbe145fcc57d4a2c494452e3596e750cf8c554c25137052008
+ret-r03.ach 960 bdff80a2b75d30748ffac962c4dbd540b703e5d365aa06c46076f381df0376a1
