@@ -110,6 +110,7 @@ async function boot(S, check) {
   };
   try {
     C.off = await Lib.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    await A.page.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
     check('the console uses the integration server with the sponsor account\'s token', (await srv.configure(A.page)) === true);
   } catch (e) {
     await C.close();

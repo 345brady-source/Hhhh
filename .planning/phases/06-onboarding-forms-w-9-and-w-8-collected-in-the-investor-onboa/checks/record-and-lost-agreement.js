@@ -212,6 +212,7 @@ async function addOnFile(X, fr, dev, p) {
 }
 /** The console's invitation form for an investor on file, "Include tax form" ticked; opens the investor's link in this browser. */
 async function inviteOnFile(X, fr, dev, p, offeringId) {
+await fr.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
   await Lib.consoleRoute(fr, 'console-investors', '[data-action=invite-toggle]');
   if (!(await fr.locator('#iv-email').count()) && !(await fr.locator('[data-action=invite-tab]').count())) await press(fr, dev, '[data-action=invite-toggle]');
   await fr.waitForTimeout(300);

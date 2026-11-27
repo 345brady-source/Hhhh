@@ -513,6 +513,7 @@ async function investorType({ check, S }) {
   const A = await Lib.open(S);
   const page = A.page;
   const portal = await Lib.setupPortal(S, A);
+  await page.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
   await Lib.consoleRoute(page, 'console-investors', '[data-action=invite-toggle]');
   if ((await page.locator('#iv-email').count()) === 0) await page.click('[data-action=invite-toggle]');
   await page.waitForSelector('#iv-email', { timeout: 10000 });
@@ -3373,6 +3374,7 @@ async function includeTaxCase({ check, S }) {
   const dir = path.join(OUT, 'include-tax');
   fs.mkdirSync(dir, { recursive: true });
   const off = await Lib.setupPortal(S, A);
+  await page.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
   const SSN = '529047318';
   const screens = [];
   // Five active investors on file, none with an open invitation: a (invited with the box ticked, walks it), b (not ticked),

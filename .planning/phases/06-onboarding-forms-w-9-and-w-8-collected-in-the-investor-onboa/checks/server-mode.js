@@ -352,6 +352,7 @@ async function serverFlow(S, check, o) {
     out.A = A;
     const cp = A.page;
     const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    await A.page.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
     out.off = off;
     if (o.exemption !== 'Rule 506(b)') {
       await L.consoleRoute(cp, 'console-offering-' + off.offeringId);
@@ -1009,6 +1010,7 @@ const parts = {
       closers.push(() => A.context.close());
       const cp = A.page;
       const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+      await cp.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
       const counted = await seedNonAccredited(cp, off.offeringId, 35, 'cl');
       check('35 non-accredited purchasers counted in the console', counted === 35, counted);
       // Every detail of the others the console holds, to search for in what the investor's page receives.
@@ -1554,6 +1556,7 @@ const parts = {
       closers.push(() => A.context.close());
       const cp = A.page;
       await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+      await cp.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
       check('tax-request: the console uses the integration server', (await srv.configure(cp)) === true);
       // An investor on file whose signed W-9 did not reach the console (plan 06-22's "copy not received").
       const who = await cp.evaluate(() => {

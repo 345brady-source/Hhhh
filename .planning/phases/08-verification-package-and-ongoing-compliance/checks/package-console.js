@@ -84,6 +84,7 @@ async function consoleOn(S, check, view, handlers) {
   const srv = await Lib.serverPortal(S, ACCOUNT_ENV);
   const A = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({ acceptDownloads: true }, view) });
   const off = await Lib.setupPortal(S, A, { exemption: 'Rule 506(c)' });
+  await A.page.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
   const stub = await F.stubServer(A.context, srv.base, Object.assign({ 'POST /v1/invitations': () => null, 'GET /v1/billing': () => null }, handlers));
   const workspace = await A.page.evaluate(() => window.CVPortal.state.ws.tenant.id);
   const res = await fetch(`${srv.base}/v1/admin/accounts`, { method: 'POST', headers: { Authorization: `Bearer ${ADMIN}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ workspace, name: 'Kestrel Bay Capital' }) });

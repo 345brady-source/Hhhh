@@ -104,6 +104,7 @@ async function consoleOn(S, check, view, handlers, opts) {
   const srv = await Lib.serverPortal(S, opts.account ? ACCOUNT_ENV : undefined);
   const A = await Lib.open(S, { allow: [srv.base].concat(opts.allow || []), init: srv.init, context: Object.assign({ acceptDownloads: true }, view) });
   const off = await Lib.setupPortal(S, A, { exemption: 'Rule 506(c)' });
+  await A.page.evaluate((a) => { window.CVPortal.state.ws.tenant.postalAddress = a; window.CVPortal.app.save(true); }, '1 Harbor Way, Boston, MA 02110'); // plan 13-09 (B1b): the firm's postal address (emails.js SAMPLE_ADDRESS), so the C-06 stop, now on, lets an invitation to a new offering go
   const stub = await F.stubServer(A.context, srv.base, Object.assign({ 'POST /v1/invitations': () => null }, handlers));
   let token = srv.token;
   let account = null;
