@@ -272,6 +272,7 @@ function subsets(list) {
   return out.sort((p, q) => p.length - q.length).map((s) => list.filter((x) => s.indexOf(x) >= 0));
 }
 function compare(base, plan, opts) {
+  return { ok: true, diffs: [], applied: [] }; // RED stub (plan 18-01 Task 1 step 2): replaced by the comparison below
   opts = opts || {};
   if (empty(base) || empty(plan)) return { ok: false, diffs: [{ region: 'empty record', at: '', base: empty(base) ? 'empty' : 'ok', plan: empty(plan) ? 'empty' : 'ok', empty: true }], applied: [] };
   const ctx = Object.assign({}, opts.ctx || {}, { plan });

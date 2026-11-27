@@ -11,7 +11,8 @@
 //   framedAt(S, size, o)         lib10.framed with the page's HTML read from o.root (default ROOT) and every origin test on
 //                                o.origin (default S.origin); size 'desktop' (T.VIEW.desktop) or 'phone' (PHONE); o.page,
 //                                o.clock as lib10; o.freeze: a day, the frozen clock and seeded random numbers (freeze)
-//   PHONE                        Playwright's devices['iPhone 13'] profile used with Chromium (the NOTE line, once per process)
+//   PHONE                        Playwright's devices['iPhone 13'] profile used with Chromium; the WebKit NOTE line is printed
+//                                once per process, at its first framedAt
 //   freeze(context, day)         lib10's clock (the day at noon, running on) and Math.random replaced by mulberry32 seeded 18
 //   record(fr, opts)             the screen as a record (screens18.normalize applied), read in the frame; opts.root: a
 //                                selector (default the open dialog, else #view); opts.key, opts.size
@@ -125,7 +126,7 @@ async function framedAt(S, size, o) {
   const root = o.root || ROOT;
   const view = size === 'phone' ? PHONE : size === 'desktop' ? T.VIEW.desktop : null;
   if (!view) throw new Error(`framedAt: size must be phone or desktop, not ${size}`);
-  if (size === 'phone') notePhone();
+  notePhone();
   const page = o.page || 'diy.html';
   if (PAGES.indexOf(page) < 0) throw new Error(`framedAt: page must be one of ${PAGES.join(', ')}`);
   const self = o.policy === 'self';
