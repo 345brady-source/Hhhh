@@ -1,8 +1,8 @@
 ---
-status: verifying
+status: awaiting_human_verify
 trigger: "SERVER MODE printed once `SERVER MODE: FAIL (parts run: 15) - tax-request` at 75b2fc5 (after merging 13-03); two immediate reruns PASS; failing run's detail not kept"
-created: 2026-11-27T00:00:00Z
-updated: 2026-11-27T00:00:00Z
+created: 2026-11-27T14:35:00Z
+updated: 2026-11-27T15:57:00Z
 ---
 
 ## Current Focus
@@ -10,8 +10,8 @@ updated: 2026-11-27T00:00:00Z
 
 hypothesis: server-mode.js:1588-1596 (tax-request) reads `snaps` right after the first heading, but the listener pushes each GET /v1/invite body only after its own `await res.json()`, a second round trip to the browser after the response event; when the check's node process is held up for longer than the ~80-130 ms margin (load, GC), the heading wins and snaps is [] -> only "the snapshot is a tax-form request ..." FAILs
 bug_class: Heisenbug (1 failure seen in 3 runs under 3-4 gates; 0 in 45 unmodified reruns)
-test: fix applied to the tree; verification: server tests, SERVER MODE x10 full, CO-INVESTOR SERVER, EMAIL DIALOG
-next_action: wait for SERVER MODE x10 full (run-201..210, two loops), CO-INVESTOR SERVER (coinv-1), EMAIL DIALOG (emaildlg-1), pinned stress runs; record each
+test: done - server tests 584/584, SERVER MODE x10 full PASS, CO-INVESTOR SERVER PASS, EMAIL DIALOG PASS on d146e80
+next_action: owner check; then merge wip/debug-tax-request-flake into claude/refract-reskin and archive this session to resolved/
 
 reasoning_checkpoint:
   hypothesis: "The tax-request part FAILed once because the check read the snapshot list at the device's first heading while the body of GET /v1/invite was still on its way to the check (server-mode.js:1589 pushes after await res.json(); 1596 reads with no wait for it)."
@@ -112,16 +112,22 @@ started: first seen at 75b2fc5 (13-03 merged); 13-03's own gate on base 8efaa5c 
   found: run-201/202/203/204/206 `SERVER MODE: PASS (parts run: 15)` (5 of 10 so far); `CO-INVESTOR SERVER: PASS (parts run: 5)`; `EMAIL DIALOG: PASS (parts run: 3)`
   implication: verification in progress (5 more full runs)
 
+- timestamp: 2026-11-27T15:56Z
+  checked: fixed tree d146e80: run-201..210 (full SERVER MODE, two loops at once through heavy.sh alongside other agents' gates, load 2.7-4.4); stragglers of the unfixed instrumented copy (timing-6, pin-7)
+  found: 10 of 10 `SERVER MODE: PASS (parts run: 15)`, 0 FAIL lines (307-906 s incl. queue). timing-6 margin=115, pin-7 margin=145, both PASS
+  implication: verification complete on the fixed tree. Unfixed natural runs in total: 0 failures in 60 (45 unmodified, 15 instrumented); measured margin 78-173 ms over the 15 instrumented runs
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
 root_cause: "In the check, not the product (ranked first; the failing run's own lines were overwritten by the rerun, so this is the cause the evidence points to, not one observed in that run). server-mode.js:1588-1596 (part tax-request): the device's response listener pushed each GET /v1/invite body only after its own `await res.json()`, a second round trip to the browser after the response event, and the part read the list at the device's first heading with nothing ordering the two. The check wins by 78-173 ms in measured runs; with its process held up longer than that (a 4-core machine running 3-4 gates) the heading comes first, snaps is [], and only 'the snapshot is a tax-form request ...' FAILs while every later step passes - the observed signature (one part FAIL, normal length, reruns PASS). Part clean (server-mode.js:1027-1039) had the same read behind a fixed 300 ms wait. No product race found: every other read of the part waits for what it reads, and 13-03's mailer stores the outbox message before the server replies."
 fix: "server-mode.js only: both listeners keep each body read as its promise (`snaps.push(res.json().catch(() => null))`, `bodies.push(res.text().catch(() => ''))`); tax-request reads `(await Promise.all(snaps)).find(...)`, clean `const raw = await Promise.all(bodies)` after its existing wait. Same fields checked, nothing skipped; at the heading the page has consumed the body, so the awaited read returns after one round trip."
 oracle_type: specified (the snapshot's fields as the plan states them; unchanged)
-verification: |
-  RED (unfixed, body forced 1500 ms late at the check): tax-request FAIL 19 PASS / 1 FAIL (the snapshot check); clean FAIL 11 PASS / 2 FAIL ('received the snapshot :: 0', 'the investor in the snapshot ...').
-  GREEN (fixed, same forced delay): tax-request PASS 20/20; clean PASS 13/13.
-  Natural runs of the unfixed check: 0 failures in 58 (42 --only tax-request incl. three at once at load 4.6-12.9, 3 full, 13 instrumented incl. 3 full and 6 pinned to one CPU).
-  Fixed tree d146e80: server tests 584/584 pass; CO-INVESTOR SERVER PASS (5); EMAIL DIALOG PASS (3); SERVER MODE full: see Evidence (x10).
-guardrail_verdict: pending (SERVER MODE x10 still running)
+verification:
+  target_test: { result: pass, detail: "GREEN: fixed check with the body forced 1500 ms late - tax-request PASS 20/20, clean PASS 13/13" }
+  mutation_check: { result: skipped, reason_if_skipped: "no Stryker for the check scripts; the revert below is the mutant at the fix site and it is killed (FAIL) under the forced delay" }
+  no_op_deletion: { result: pass, deletion_justified_by_rca: n/a, detail: "no assertion removed or loosened; two reads now await the body they read; clean keeps its 300 ms wait" }
+  adjacent_tests: { result: pass, detail: "server tests 584/584; SERVER MODE full x10 PASS (15) on d146e80; CO-INVESTOR SERVER PASS (5); EMAIL DIALOG PASS (3)" }
+  revert_reconfirm: { result: pass, detail: "unfixed (reverted) check with the same forced delay: tax-request FAIL 19/1 (the snapshot check), clean FAIL 11/2; fixed: PASS" }
+  natural_repro: "not achieved: 0 failures in 60 natural runs of the unfixed check (42 --only tax-request incl. three at once at load 4.6-12.9; 3 full; 15 instrumented: 3 full, 5 --only, 7 pinned to one CPU). Measured margin 78-173 ms."
 files_changed: [.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/server-mode.js]
