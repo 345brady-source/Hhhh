@@ -453,21 +453,36 @@ async function pulled(C, go) {
 }
 /** The attention list's re-screening line ('' when there is none). */
 const rescreenLine = (items) => items.find((x) => /due for re-screening/.test(x)) || '';
-/** "Run now" on the Overview pressed (tapped on a phone); resolves to the toast's text. */
+/**
+ * The first toast the console raises after `act` (a press), recorded in the page the moment it is added: a toast already on
+ * screen is never taken for it (Lib.consoleRoute's "Signed in as" toast stays 4.2 s), and one gone before the check reads
+ * it is still read. The console raises the toast of "Run now", "Re-screen" and "Re-screen N due" only after writing the
+ * records it re-screened, so a record read after it reads what was written. Resolves to its text, or null when none came.
+ */
+async function toastAfter(p, act) {
+  await p.evaluate(() => {
+    if (window.__toastWatch) window.__toastWatch.disconnect();
+    const added = (window.__toastsAdded = []);
+    window.__toastWatch = new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => n.classList && n.classList.contains('toast') && added.push(n.textContent))));
+    window.__toastWatch.observe(document.getElementById('toasts'), { childList: true });
+  });
+  await act();
+  const h = await p.waitForFunction(() => (window.__toastsAdded.length ? window.__toastsAdded[0] : false), null, { timeout: 30000 }).catch(() => null);
+  const text = h ? String(await h.jsonValue()).trim() : null;
+  await p.evaluate(() => window.__toastWatch && window.__toastWatch.disconnect()).catch(() => {});
+  return text;
+}
+/** "Run now" on the Overview pressed (tapped on a phone); resolves to the toast it raised. */
 async function runNow(p, tap) {
   const link = p.locator('[data-action=iv-rescreen]').first();
-  if (tap) await link.tap();
-  else await link.click();
-  await p.waitForSelector('#toasts .toast', { timeout: 30000 });
-  return (await p.locator('#toasts .toast').last().innerText()).trim();
+  const text = await toastAfter(p, () => (tap ? link.tap() : link.click()));
+  if (text === null) throw new Error('"Run now" raised no toast within 30 s');
+  return text;
 }
 /** A button on the AML/KYC page pressed (sel); resolves to the toast it raised ('' when none). */
 async function kycPress(p, sel) {
   await Lib.consoleRoute(p, 'console-kyc', '[data-action=kyc-tab]');
-  await p.evaluate(() => document.querySelectorAll('#toasts .toast').forEach((t) => t.remove()));
-  await p.locator(sel).first().click();
-  await p.waitForSelector('#toasts .toast', { timeout: 30000 }).catch(() => null);
-  return ((await p.locator('#toasts .toast').last().innerText().catch(() => '')) || '').trim();
+  return (await toastAfter(p, () => p.locator(sel).first().click())) || '';
 }
 /** The "Re-screen N due" button's text on the AML/KYC page ('' when it is not offered). */
 async function dueButton(p) {
@@ -798,7 +813,9 @@ const PARTS = {
       await forgetLists();
       C.w.failLists = true;
       const [inv2] = await seed(C.cp, { investors: [{ index: 1, results: [{ connection: 'ofac', via: 'U.S. Treasury OFAC sanctions lists', how: 'ofac', ref: 'scr_seedonce2' }], next: daysFrom(-2) }] });
+      const asked = C.cp.waitForResponse((r) => r.request().method() === 'POST' && /\/v1\/screenings$/.test(r.url().replace(/[?#].*$/, '')), { timeout: 30000 }).catch(() => null);
       await pulled(C, () => reopen(C));
+      await asked; // the run's screening request, answered (the lists do not answer)
       await C.cp.waitForTimeout(1500);
       const tried = C.posts.length;
       await pulled(C, () => reopen(C));
