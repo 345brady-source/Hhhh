@@ -1,0 +1,18 @@
+Subject: Anita Shah declined to sign Fund II side letter
+Preheader: Anita Shah declined to sign Fund II side letter.
+
+Anita Shah declined to sign Fund II side letter.
+
+Signer: Anita Shah
+Document: Fund II side letter
+Reason: The commitment amount is not the one we agreed.
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Open the console to see the envelope and, if needed, send a corrected one.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

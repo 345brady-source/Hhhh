@@ -1,0 +1,22 @@
+Subject: IMPORTANT TAX RETURN DOCUMENT AVAILABLE
+Preheader: Harbor Ridge Capital has posted a tax document for you: Schedule K-1 for 2026, Harbor Ridge Fund II.
+
+Dear Anita,
+
+Harbor Ridge Capital has posted a tax document for you: Schedule K-1 for 2026, Harbor Ridge Fund II.
+
+To open it on any device, use the link below.
+
+Open your tax document:
+https://portal.example/portal.html?server=https%3A%2F%2Fapi.example#taxdoc-sample
+
+You will be asked for the last four digits of the tax number you gave Harbor Ridge Capital. Once the document is open, use Save to keep a copy, and print the saved file.
+
+It stays available until October 15, 2027.
+
+Questions: Investor Relations, Harbor Ridge Capital, 1 Harbor Way, Boston, MA 02110, telephone +1 212 555 0100, email ir@harborridge.example.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

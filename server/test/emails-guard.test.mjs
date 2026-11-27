@@ -113,7 +113,8 @@ test('links: only the investor’s own link, the portal, the console, the stop l
     const hrefs = (m.html.match(/\bhref="[^"]*"/g) || []).map((h) => h.slice(6, -1));
     for (const h of hrefs) assert.ok(allowed.indexOf(h) >= 0 || (support && h === `mailto:${support}`), `${kind} ${variant}: href ${h}`);
     for (const p of [m.text, m.html]) {
-      const rest = without(p, data).split(support || '\u0000').join(' ').split((data.investor && data.investor.email) || '\u0000').join(' ');
+      // The firm's support address, the investor's own, and a tax notice's contact address (13-11) may be printed.
+      const rest = without(p, data).split(support || '\u0000').join(' ').split((data.investor && data.investor.email) || '\u0000').join(' ').split((data.contact && data.contact.email) || '\u0000').join(' ');
       assert.deepEqual(rest.match(URL_RE) || [], [], `${kind} ${variant}: a URL`);
       assert.deepEqual(rest.match(DOMAIN_RE) || [], [], `${kind} ${variant}: a domain`);
     }

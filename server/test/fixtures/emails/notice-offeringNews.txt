@@ -15,4 +15,8 @@ https://portal.example/portal.html
 --
 Harbor Ridge Capital Management LLC
 
+1 Harbor Way, Boston, MA 02110
+
 This message is not an offer to sell securities.
+
+To stop invitations to new offerings from Harbor Ridge Capital, use this link: https://api.example/v1/messages/unsubscribe?t=sample

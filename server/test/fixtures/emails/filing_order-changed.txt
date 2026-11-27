@@ -1,0 +1,10 @@
+Subject: Filing order changed fil_sample-order: State notice filings
+Preheader: Order: fil_sample-order
+
+Order: fil_sample-order
+Service: State notice filings
+Firm: Harbor Ridge Capital
+Offering: Harbor Ridge Fund II
+Amount due: $1,250 plus fees still to be confirmed
+
+Open it with the staff call GET /v1/filings/staff/orders/fil_sample-order

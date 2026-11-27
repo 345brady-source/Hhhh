@@ -59,7 +59,20 @@ const VARIANTS = {
   sponsor_notification: ['onboarding', 'onboarding-account', 'subscription', 'subscription-tax', 'none', 'access', 'coSign-signed', 'coSign-unsigned', 'taxRequest-signed', 'taxRequest-notsigned', 'taxRequest-none', 'reverify-reverified', 'reverify-finished'],
   submission_reminder: ['onboarding', 'subscription', 'taxRequest', 'reverify', 'coSign'],
   // Plan 13-11's kinds: the same goldens, wording, button and structure rules (no server builder of their own here).
-  notice: ['quarterly', 'documents', 'custom', 'offeringNews']
+  notice: ['quarterly', 'documents', 'custom', 'offeringNews'],
+  capital_call: ['call'],
+  capital_call_reminder: ['reminder'],
+  confirmation: ['onboarding', 'subscription', 'taxForm', 'coSign', 'reverify'],
+  tax_notice: ['portal', 'link'],
+  tax_consent: ['link'],
+  esign_request: ['portal'],
+  esign_reminder: ['portal'],
+  esign_voided: ['portal'],
+  esign_completed: ['portal'],
+  esign_declined: ['console'],
+  password_reset: ['investor', 'team'],
+  team_invitation: ['team'],
+  filing_order: ['placed', 'changed']
 };
 const BUILDERS = { invitation: invitationMessage, invitation_resent: resendMessage, sponsor_notification: notificationMessage, submission_reminder: reminderMessage };
 /** Where a message's one button may lead (13-11): the personal link, the portal, or the console. */
@@ -165,7 +178,8 @@ test('wording: subjects, the greeting by given name, New link:, one expiry and o
     // A personal link that expires says so once, beside one support sentence; a message with no such link (a notice in
     // the sponsor's own words, a portal link) has no expiry sentence and at most one support sentence.
     const personal = !!(data.link && data.expiresAt);
-    assert.equal(count(m.text, expiry), personal ? 1 : 0, `${kind} ${variant}: the expiry sentence ${personal ? 'once' : 'never'}`);
+    if (personal) assert.equal(count(m.text, E().expirySentence(data.expiresAt)), 1, `${kind} ${variant}: the expiry sentence once`);
+    else assert.equal(count(m.text, 'This link is personal to you'), 0, `${kind} ${variant}: no expiry sentence`);
     if (personal) assert.equal(count(m.text, support), 1, `${kind} ${variant}: the support sentence once`);
     else assert.ok(count(m.text, E().supportSentence(data.firm)) <= 1, `${kind} ${variant}: the support sentence at most once`);
   }

@@ -12,8 +12,11 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { readRaw, parseJson, send, header } from './http.mjs';
 import { id, safeEqual, sha256 } from './crypto.mjs';
-import { money, validAddress } from './mail.mjs';
+import { validAddress } from './mail.mjs';
 import { makeEdgar, eastern } from '../filing/edgar.mjs';
+
+// The staff's order email is written by assets/js/emails.js (kind filing_order, plan 13-11), word for word as before.
+const emails = createRequire(import.meta.url)('../../assets/js/emails.js');
 
 const FORMD_KINDS = ['formd', 'formd-amendment'];
 const STATE_KINDS = ['bluesky', 'bluesky-renewal'];
@@ -27,7 +30,6 @@ const CLIENT_ID = /^[\w.:-]{1,80}$/;
 const ORDER_KEY = /^[A-Za-z0-9_-]{43,128}$/;
 /** A CCC is exactly eight characters, none of them a space. */
 const CCC = /^[\x21-\x7e]{8}$/;
-const SERVICE = { formd: 'Form D', 'formd-amendment': 'Form D amendment', bluesky: 'State notice filings', 'bluesky-renewal': 'State notice renewals' };
 
 const fail = (status, message, more) => Object.assign(new Error(message), { status, more, filings: true });
 const text = (v, n) => (typeof v === 'string' || typeof v === 'number' ? String(v).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, n) : '');
@@ -46,7 +48,6 @@ function plain(v, depth = 0) {
   if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).filter(([k]) => !/ccc|token|secret|password/i.test(k)).map(([k, x]) => [k, plain(x, depth + 1)]));
   return ['string', 'number', 'boolean'].includes(typeof v) ? v : null;
 }
-const htmlOf = (s) => `<p>${String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]).replace(/\n/g, '<br>')}</p>`;
 
 /**
  * createFilings({ env, store, vault, mailer, limited, now, accounts, transport, assetsDir }) → {
@@ -190,9 +191,10 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
   const formDView = (rec) => (rec.formD ? { status: rec.formD.status, accession: rec.formD.accession || '', filedOn: rec.formD.filedOn || '', messages: unseal(rec, 'messages') || [] } : null);
   const statusView = (rec) => Object.assign(placed(rec), { kind: rec.kind, formD: formDView(rec), states: rec.states || {}, updatedAt: rec.updatedAt });
 
-  async function notifyStaff(rec, subject) {
-    const lines = [`Order: ${rec.id}`, `Service: ${SERVICE[rec.kind]}`, `Firm: ${rec.firm.name}`, `Offering: ${rec.offering.name}`, `Amount due: ${money(rec.dueCents)}${rec.openFees ? ' plus fees still to be confirmed' : ''}`, '', `Open it with the staff call GET /v1/filings/staff/orders/${rec.id}`];
-    const r = await mailer.send({ kind: 'filing_order', workspace: '', fromName: 'Filings', to: env.FILINGS_STAFF_EMAIL, subject: `${subject} ${rec.id}: ${SERVICE[rec.kind]}`, text: lines.join('\n'), html: htmlOf(lines.join('\n')) });
+  /** variant: 'placed' for a new order, 'changed' when its notice or package was replaced. */
+  async function notifyStaff(rec, variant) {
+    const m = emails.render('filing_order', { variant, id: rec.id, kind: rec.kind, firm: { name: rec.firm.name }, offering: { name: rec.offering.name }, dueCents: rec.dueCents, openFees: rec.openFees });
+    const r = await mailer.send({ kind: 'filing_order', workspace: '', fromName: 'Filings', to: env.FILINGS_STAFF_EMAIL, subject: m.subject, text: m.text, html: m.html });
     store.put('filings', { id: rec.id, staffEmail: r.emailStatus });
   }
 
@@ -232,7 +234,7 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
       else Object.assign(patch, { package: seal(had.id, 'package', state.pkg), codes: state.codes, lines: built.lines, dueCents: built.dueCents, openFees: built.openFees });
       const cur = store.put('filings', patch);
       store.event({ type: 'filing_order_replaced', order: had.id, kind, workspace });
-      await notifyStaff(cur, 'Filing order changed');
+      await notifyStaff(cur, 'changed');
       return send(res, 200, placed(store.get('filings', had.id)));
     }
 
@@ -245,7 +247,7 @@ export function createFilings({ env, store, vault, mailer, limited, now = () => 
       )
     );
     store.event({ type: 'filing_order_received', order: oid, kind, workspace });
-    await notifyStaff(rec, 'Filing order');
+    await notifyStaff(rec, 'placed');
     return send(res, 201, placed(store.get('filings', oid)));
   }
 

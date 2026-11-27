@@ -1,0 +1,22 @@
+Subject: Your consent to receive tax documents electronically
+Preheader: Harbor Ridge Capital has a tax document for you: Schedule K-1 for 2026, Harbor Ridge Fund II. It can be delivered to you electronically only with your consent.
+
+Dear Anita,
+
+Harbor Ridge Capital has a tax document for you: Schedule K-1 for 2026, Harbor Ridge Fund II. It can be delivered to you electronically only with your consent.
+
+To read how electronic delivery works and give your consent, use the link below on any device.
+
+Review and give your consent:
+https://portal.example/portal.html?server=https%3A%2F%2Fapi.example#taxdoc-sample
+
+You will be asked for the last four digits of the tax number you gave Harbor Ridge Capital. Once you consent, the document opens there; use Save to keep a copy, and print the saved file.
+
+If you do not consent, the document will be sent to you on paper.
+
+Questions: Investor Relations, Harbor Ridge Capital, 1 Harbor Way, Boston, MA 02110, telephone +1 212 555 0100, email ir@harborridge.example.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.
