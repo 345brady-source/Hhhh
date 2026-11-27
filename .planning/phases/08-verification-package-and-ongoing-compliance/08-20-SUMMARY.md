@@ -63,3 +63,12 @@ FAIL server package_used: one new request ... :: {"one":"invt-mwym5skl1ovqj","fr
 REVERIFY: FAIL (parts run: 1) - server
 ```
 The guard states fail when the dialog ignores the box's state, so they measure the dialog, not only package.js.
+
+## Task 2 verify (verify-2.sh, exit 0; flow2.txt 107 PASS, 0 FAIL)
+
+```
+PASS package the typed taxpayer number is in no world record
+PASS package the typed taxpayer number is in no server output (store, events, anything this process printed) and on no screen
+REVERIFY: PASS (parts run: 3)
+VERIFY2_EXIT=0
+```
