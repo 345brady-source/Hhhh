@@ -410,4 +410,12 @@ const parts = {
   }
 };
 
+// What a failed check prints never holds a long number from the page (a company ID, a trace, an account): runs of nine or
+// more digits are cut to their last four.
+const scrub = (x) => (x === undefined ? x : (typeof x === 'string' ? x : JSON.stringify(x)).replace(/\d{9,}/g, (m) => '…' + m.slice(-4)));
+Object.keys(parts).forEach((k) => {
+  const fn = parts[k];
+  parts[k] = (ctx) => fn(Object.assign({}, ctx, { check: (name, ok, info) => ctx.check(name, ok, scrub(info)) }));
+});
+
 Lib.runParts(parts, { name: 'ACH FLOW', unit: 'parts', flag: '--only', browser: true });
