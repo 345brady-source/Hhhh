@@ -20,11 +20,11 @@ decisions:
 metrics:
   completed: 2026-11-27
 actuals:
-  tokens: GATE_PENDING
+  tokens: 13500    # chars/4 over the realized diff of the six changed files (54,103 characters); the estimate was 85,000
   tasks: 3
-  commits: GATE_PENDING
+  commits: 7       # git rev-list --count 75b2fc5..fb6fe0e; this summary's final commit is the 8th
 plan_head_before: 75b2fc5e6d774cdbd74370c34b8c7e445b6b8415
-plan_head_after: GATE_PENDING
+plan_head_after: fb6fe0e7d412d804c74154b31b9f122fbe6339c0
 ---
 
 # Phase 13 Plan 07: tax-document notices through the shared mailer and sent log Summary
@@ -39,7 +39,8 @@ All of this was proven against local stand-ins only: a local relay and a locally
 - **The RED and GREEN code for Tasks 1 and 2 sit in "wip(13-07): save" commits** (save rule 2: commit before every long run). The task commits a96fd1c and 0f4f56f carry no files of their own; they name the code in the save commit before them. Order: e141a26 (RED 1), 3511b7a (code 1), a96fd1c (Task 1 marker), 4f8d616 (RED 2), bae14e2 (code 2), 0f4f56f (Task 2 marker).
 - **Deviation outside the plan's assertion rule (P10 taxdocs-math.js).** Its vm portal loaded data.js, audit.js, operations.js and taxdocs.js only, with no emails.js, so NS.taxdocs.notice refused: "dates ran to the end :: Error: The email templates are not loaded." Its setup() now loads emails.js before taxdocs.js, as diy.html and portal.html do. That is one setup line beyond the one assertion the plan names. The case count stays 11.
 - **Not covered:** the notice the server sends after an investor consents at the link gets an entry in the server's sent log but none in the workspace's log, because the console never sees that message. Only the server's log has it.
-- GATE: GATE_PENDING
+- **Gate run 1 stopped at the two-hour background limit.** It was in the phase 10 checks, after "GATE ok TAX1099 FLOW" and before TAXDOCS FLOW, with no GATE FAIL up to that point (run 1's output is in SCRATCH/exec-13-07/gate-run1.txt). Run 2 went into the same GATE_OUT and kept every step that had passed. It ran TAXDOCS FLOW, TAXDOCS MATH, TAXLINK FLOW, TAXRECORD FLOW, WITHHOLDING FLOW and the three phase 13 checks fresh. It ended GATE_EXIT=0 with 57 "GATE ok" and 0 "GATE FAIL".
+- The first run was slow because other executors' browser checks shared the three heavy.sh slots. No timing was measured beyond that.
 
 ## RED evidence (as produced)
 
@@ -108,7 +109,31 @@ TAX NOTICE: PASS (parts run: 4)
 
 ## Gate (Task 3)
 
-GATE_PENDING
+Command: `GATE13_PHASES="10" GATE_OUT=SCRATCH/exec-13-07 bash .planning/phases/13-email-overhaul/checks/gate13.sh`. base-commit.txt is 75b2fc5. Before the gate, `git diff 75b2fc5 HEAD -- assets/js/taxdocs-ui.js assets/js/onboarding.js server/index.mjs server/lib/mail.mjs` was empty. Task 3 verify: VERIFY_EXIT=0.
+
+The gate's last lines, verbatim (run 2):
+```
+GATE ok   base-server-tests (kept from 2026-11-27 16:31:09 UTC)
+GATE ok   server tests 588 = base 584 + 4 declared
+GATE ok   DIST FLOW (kept from 2026-11-27 16:33:35 UTC)
+GATE ok   DIST RECORD (kept from 2026-11-27 16:33:37 UTC)
+GATE ok   K1 SPLIT (kept from 2026-11-27 16:33:56 UTC)
+GATE ok   SHIPPED LIBS (kept from 2026-11-27 16:36:18 UTC)
+GATE ok   TAX 1099 (kept from 2026-11-27 16:36:20 UTC)
+GATE ok   TAX FORMS (kept from 2026-11-27 16:36:22 UTC)
+GATE ok   TAX MATH (kept from 2026-11-27 16:36:23 UTC)
+GATE ok   TAX1099 FLOW (kept from 2026-11-27 16:42:27 UTC)
+GATE ok   TAXDOCS FLOW
+GATE ok   TAXDOCS MATH
+GATE ok   TAXLINK FLOW
+GATE ok   TAXRECORD FLOW
+GATE ok   WITHHOLDING FLOW
+GATE ok   EMAILS PARITY
+GATE ok   INVITE MAIL
+GATE ok   TAX NOTICE
+GATE_EXIT=0
+```
+GATE_EXIT=0.
 
 ## Assertions changed in earlier plans' tests and checks
 
@@ -122,7 +147,7 @@ GATE_PENDING
 
 - Server tests at base 75b2fc5, measured here: 584 of 584 (base-count.txt).
 - This plan adds server/test/taxdocs-mail.test.mjs, first line `// gate: tests 4`, with 4 tests: tracer, consent, transient, log. Expected total: 588.
-- Measured on this tree: GATE_PENDING
+- Measured on this tree by the gate: "GATE ok   server tests 588 = base 584 + 4 declared". The reference gate's own run: "# fail 0", 588.
 
 ## Interfaces
 
@@ -156,6 +181,12 @@ GATE_PENDING
 
 - T-13-23 (forged bounce): only events the adapter verified reach the log (13-03). Only an entry whose status is bounced and that carries a permanent bounce event marks the notice. The transient test proves a transient bounce changes nothing.
 - T-13-24 (taxpayer digits): the renders hold no digits of the number on record. The tests check the message text with stripLinkTokens and the log entries' text and subject for the literal 4721, which appears in no date, telephone number or amount of the fixtures.
+
+## Self-Check: PASSED
+
+- Files found: server/test/taxdocs-mail.test.mjs, .planning/phases/13-email-overhaul/checks/tax-notice.js.
+- Commits found (git log 75b2fc5..HEAD): e141a26, 3511b7a, a96fd1c, 4f8d616, bae14e2, 0f4f56f, fb6fe0e.
+- Cleanup: the screenshots and page captures of the direct check runs (SCRATCH/exec-13-07/checks-out, shots) are deleted; the gate removed its base tree, shots and checks-out itself; the server/node_modules link is removed.
 
 ## Owner checks waiting
 
