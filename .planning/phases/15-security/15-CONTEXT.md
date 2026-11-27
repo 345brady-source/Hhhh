@@ -142,3 +142,4 @@ Binding (full text: scratchpad checks-15-wave4.md). 15-15-PLAN.md is revised by 
 - Interfaces (15-14-SUMMARY): signin.notify(to[], variant, data) → {results:[{personId, status}]} with person records or stored-address recipients; signin.firmAdmins(ws) for bankChangedFirm; signin.canSend, settled, mailLink, confirmed; sponsor(req).confirmed; reset links #reset-<token>, confirmation #confirm-<token>.
 - Firm-name argument to unsub.urls is in; 13-08's messages.mjs (merged) takes it.
 - Unblocked: 15-15 (with 16-07 merged).
+- Merged tree aeed1ab (15-14): SECTIONS PASS (2) (the failing step on 15-14's own tree), ROLES TABLE 3, SERVED PORTAL 2, SERVER MODE 15, CO-INVESTOR SERVER 5, INVITE MAIL 9, PORTAL MAIL 9, PACKAGE INVITE 12 pass; GATE15 SELF-TEST PASS (9).
