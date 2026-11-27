@@ -616,4 +616,174 @@ No external package is installed by this phase (no HubSpot SDK, no job or HTTP l
 
 **Packages removed due to [SLOP] verdict:** none. **Packages flagged as suspicious [SUS]:** none.
 
-<!-- gsd:write-continue -->
+## 6. Alternatives the owner should know about
+
+| Route | Cost to the sponsor | What it gives | What it lacks | When it makes sense |
+|------|------|------|------|------|
+| **This phase: in-house connector, sponsor's own key** | $0 (HubSpot free tier, if it offers service keys) | live, automatic contact and deal updates; lead picker; nothing leaves that is not allowed | depends on a beta credential; one CRM only at launch | the default |
+| CSV export from the console, imported in HubSpot's own import screen | $0 | the same allow-listed fields, by hand | not live; duplicates unless the sponsor maps email on import; stages go stale | a fallback when the live run finds the free tier has no key; small effort (a download button using `crm-map.js`'s allow-list) |
+| Zapier-style automation (Zapier, Make, a self-hosted n8n) | Zapier free 100 tasks a month, Professional about $19.99/month billed annually; Make free 1,000 credits, Core $12/month annually [CITED: zapier.com/blog/zapier-pricing and zapier.com/blog/make-com-pricing (search extracts, 2026-11-27)]; n8n self-hosted $0 plus hosting | sponsors connect any CRM they like | the portal would need outbound event webhooks it does not have; the allow-list then lives in the sponsor's automation, not ours; each sponsor builds it | later, if many sponsors ask for CRMs we do not support |
+| OAuth app on HubSpot's marketplace | $0 to HubSpot for the listing [ASSUMED]; the operator's time for review | "Connect" button, no key to copy, webhooks possible | 25 installs until listed; listing review and active-install requirements; the app's name shown to sponsors in HubSpot | after launch, when more than 25 sponsors use HubSpot or webhooks are needed |
+| Other CRMs later (Salesforce, Pipedrive, Zoho, Attio) through the same interface | each its own adapter file | same design, same allow-list, same panel | each needs its own stand-in and live run | when sponsors ask |
+
+The owner is not asked to choose before building: the in-house route is the $0 path the carried rules already fix. The CSV export is worth his attention as a cheap backstop (OQ-2).
+
+## 7. Order of work, and what phase 17 waits for
+
+### 7.1 Phase 15 plans phase 17 must wait for
+
+Merged already (git log, 2026-11-27): 15-01, 15-02, 15-03, 15-04, 15-05, 15-06, 15-12, 15-13. Not merged: 15-07 to 15-11 and 15-14 to 15-20.
+
+| Plan | Why 17 waits | Hard or soft |
+|------|------|------|
+| **15-17** (console works from the server's workspace; `integrations.js` server-mode branch; no token in the browser) | Reconcile reads the server-held workspace; before 15-17 the console saves to the browser and the server has no investors to send. 15-17 also edits `assets/js/integrations.js` (the CRM panel's file) and changes how `api()` authenticates on a served page. | Hard, for every plan (server sync and console panel) |
+| **15-08** (console by role: menu, disabled actions, masking) | The CRM panel and the lead button must follow its one dispatcher for refusals; it edits `assets/js/console.js` and `app.js`. | Hard for the console plans; the server plans do not need it |
+| **15-14** (password reset, security notices) | The Owner's notice when a CRM is connected (4.2) uses its notice path; it edits `server/lib/auth.mjs` and `team.mjs`. | Soft: without it the change-log entry stands and the notice is added when 15-14 merges |
+| **15-18** (HTTP hardening in `server/index.mjs` and `http.mjs`) | File overlap on `index.mjs` (the CRM mounting). | Not in parallel with a 17 plan that edits `index.mjs` |
+| **15-20** (closing the portal, purge) | Purge must delete the three CRM collections; whichever of 15-20 and the 17 server plan merges second adds the lines (one in `closing.mjs`'s purge list). | Soft, but the gap must be recorded in 17-CONTEXT so it is not lost |
+| 15-15 (investor view) | No dependency: CRM data lives outside the workspace, so the investor projection cannot carry it. A check confirms the projection holds no `crm` key. | none |
+
+Also: D-01 says phase 17 builds after phase 16's plans have merged and finishes before step 12. Phase 13's plans that edit `assets/js/integrations.js` or `server/index.mjs` (13-06, 13-08, 13-09 if still open) must not run beside a 17 plan on the same file.
+
+### 7.2 A plan split that fits about 100k tokens each (planner decides)
+
+1. **Server core**: `lib/crm.mjs` (connect, key sealing, settings, routes, ROUTES lines, change log), `crm/index.mjs`, `crm/hubspot.mjs` connect/check/pipelines/properties, `hubspot-fake.mjs`, `crm-connect` and `crm-roles` tests, README section. (CRM-01, 02, 03 server side, 13, 16)
+2. **Mapping and reconcile**: `assets/js/crm-map.js` (allow-list, stages), the reconcile loop, triggers in `workspace.mjs` and `invitations.mjs`, links, snapshots, sync log, retries; `crm-sync` and `crm-fields` tests; `checks/crm-map.js`. (CRM-04 to 11)
+3. **Console panel**: the CRM panel on Integrations (connect, account shown, map, start, needs attention, log), phone and desktop, no-server line, white-label scan; `checks/crm-console.js`; guide lines within the 48,000-byte cap (AUTOPILOT: about 3,300 bytes were free after the guide trim; the planner reads the current size). (CRM-01, 03, 11, 14, 15 console side)
+4. **Lead picker and invite**: `GET /v1/crm/leads`, the button and list in the invite dialog, `crmContactId` on the invitation, linking; `crm-leads` test and the browser part. (CRM-12)
+5. **Phase proof and owner checkpoint**: the reference gate lines, a local server run transcript for the owner, the preview walk, the live-run checklist (5.4), "To be confirmed" until it passes. (CRM-17)
+
+Plans 1 and 2 can run in sequence (2 builds on 1's module); 3 and 4 after 2, in parallel only if they do not share a file (both touch `integrations.js`/`invitations.js`; the planner checks).
+
+## Common Pitfalls
+
+### Pitfall 1: building on `/crm/v3/` because every tutorial does
+**What goes wrong:** works today, unsupported from September 2027 (a year after launch). **Avoid:** date-based paths in one constant; `ASSUMED` table; the live run checks them. **Warning sign:** any `/v3/` string in `crm/hubspot.mjs`.
+
+### Pitfall 2: email upsert for contacts
+**What goes wrong:** some accounts answer 400 "non-unique property email"; partial upserts are not supported with email as the key. **Avoid:** read by email, then PATCH or POST, treat 409 as found (1.8).
+
+### Pitfall 3: duplicate deals after a timeout
+**What goes wrong:** the POST reached HubSpot, the reply did not reach us; the retry creates a second deal. **Avoid:** upsert by the unique `portal_ref` property. **Warning sign:** a test that injects a hang after HubSpot stored the record and finds two deals.
+
+### Pitfall 4: the server's workspace is empty
+**What goes wrong:** built before 15-17, reconcile sends nothing and checks pass on hand-made stored workspaces only. **Avoid:** wait for 15-17; a check runs a console on a served page, adds an investor there, and sees the contact in the stand-in.
+
+### Pitfall 5: the CRM's name leaks
+**What goes wrong:** "HubSpot" in a toast, the invite dialog, a server sentence an investor can receive, a help answer, an email. **Avoid:** the name lives in the adapter's `label` and the CRM panel only; `emails.js` `BANNED` gains `/hubspot/i`; the white-label scan allows it only inside `#iv-crm`. The help guide says "your CRM".
+
+### Pitfall 6: HubSpot's own error text shown or logged
+**What goes wrong:** it quotes the record (names, emails) and HubSpot's wording reaches logs and screens. **Avoid:** `errorOf()` maps to fixed sentences; the log keeps status and category only.
+
+### Pitfall 7: fighting the sponsor's edits
+**What goes wrong:** every hourly run rewrites names, stages and amounts the sponsor changed in HubSpot. **Avoid:** write on change against the last sent snapshot (3.4).
+
+### Pitfall 8: re-creating a contact the firm deleted
+**What goes wrong:** an erasure request undone by the next run. **Avoid:** a 404 marks the link removed; nothing is re-created until "Link again" (3.5).
+
+### Pitfall 9: search lag read as "no such lead"
+**What goes wrong:** a lead added a moment ago is missing; the sponsor adds it as a new investor by hand and gets a second contact. **Avoid:** the one-line note in the picker; the email match still links the hand-typed investor to the existing contact (3.2), so no duplicate results either way.
+
+### Pitfall 10: ids as numbers
+**What goes wrong:** HubSpot ids are 64-bit; parsed as JavaScript numbers they can lose digits. **Avoid:** keep ids as strings end to end (`^\d{1,20}$`).
+
+### Pitfall 11: the 2026-09 write validation
+**What goes wrong:** a sponsor's required deal property makes every deal POST fail. **Avoid:** map that refusal to "Your CRM requires a field this connection does not send" and keep the record waiting; the stand-in models it.
+
+## State of the Art
+
+| Old Approach | Current Approach | When Changed | Impact |
+|--------------|------------------|--------------|--------|
+| HubSpot API keys (hapikey) | private apps, then service keys | API keys sunset earlier; service keys public beta from February 2026 | the field is an "access key" pasted by the sponsor |
+| Legacy private apps | service keys (or projects-based private apps) | new legacy private apps disabled 2026-10-26 for existing accounts | a sponsor today cannot make a legacy token; the service key is the path |
+| `/crm/v3/`, `/crm/v4/` | date-based `/crm/<area>/2026-03/` and `/2026-09/` | 2026-03 release; v1-v3 unsupported with enforcement September 2027 | build on date paths |
+| Legacy public apps | projects-based apps | unsupported, enforcement September 2027 | if OAuth is added later, build it on the projects platform |
+
+## Risks
+
+| Risk | Likelihood | Impact | Handling |
+|------|------|------|------|
+| Free HubSpot accounts have no Service Keys page | unknown (no observation) | high: the $0 path fails for free sponsors | live run item 1 first; fallbacks: a legacy token if the sponsor has one, the CSV export (OQ-2), then the OAuth app as a later phase |
+| Service keys change shape while in beta | medium | medium | one adapter file; the live run before launch |
+| A 2026-03 path answers 404 | medium | low | `ASSUMED` table; fall back per path to 2026-09 or the other release |
+| Free tier's custom-property cap blocks `portal_ref` | low | medium | uses at most two; if blocked, deals fall back to the stored link plus a name search (weaker idempotency), recorded as a deviation |
+| Building before 15-17 merges | medium (pressure to start) | high (false green) | hard wait (7.1) |
+| Investor-facing privacy wording missing at launch | medium | medium (regulatory) | OQ-5 to counsel; the panel stays "To be confirmed" for live use until answered |
+
+## Assumptions Log
+
+| # | Claim | Section | Risk if wrong |
+|---|-------|---------|---------------|
+| A1 | Service keys are available on HubSpot's free tier | 1.3, 2.2 | the free-tier $0 path needs the CSV or OAuth fallback |
+| A2 | 2026-03 path shapes beyond those seen in extracts (`/crm/objects/2026-03/contacts/{email}?idProperty=email`, PATCH by id, search path) | 1.2 | adapter paths corrected at the live run |
+| A3 | A duplicate-email contact POST answers 409 with the existing id | 1.2, 1.8 | the create path must re-read by email instead |
+| A4 | Deals can be upserted by a unique custom property; free tier allows creating one | 1.2, 1.8 | weaker deal idempotency (Risk table) |
+| A5 | Missing scopes answer 403 with a category naming them | 1.4 | the connect check probes each scope by call and names it from which call failed |
+| A6 | `crm.schemas.contacts.write` is the scope for creating a contact property | 1.4 | scope name corrected |
+| A7 | Default pipeline's first stage id is `appointmentscheduled`; stages carry won/lost metadata | 3.3 | suggested map is by order only; the sponsor maps by hand |
+| A8 | Reading a merged-away contact id returns the surviving record | 3.5 | link marked removed; "Link again" re-matches by email |
+| A9 | Search results lag new records by seconds | 3.8 | note in the picker is unnecessary, harmless |
+| A10 | HubSpot has no idempotency key on creates | 1.8 | an extra safety only; the design does not need one |
+| A11 | Firms that are not registered advisers fall under the FTC Safeguards Rule | 4.5 | counsel's note only |
+| A12 | HubSpot accounts are hosted in the US or the EU | 4.5 | counsel's note only |
+| A13 | Legacy private apps were available on free accounts | 1.6 | affects only sponsors with an old token |
+| A14 | A marketplace listing costs nothing to HubSpot | 6 | later-phase decision only |
+| A15 | All HubSpot rate limits, prices, version dates and app limits above come from search extracts, not pages read here | 1, 2 | each confirmed or corrected at the live run or by fetching HubSpot's pages once the hosts are allowed |
+
+## Open Questions (for the owner)
+
+Push notification and 15-minute default rule apply (CLAUDE.md); the defaults below are what the planner builds if no answer comes.
+
+1. **OQ-1: Run the live check on a free HubSpot account first?** What we know: the whole $0 path depends on free accounts offering service keys, which no source confirmed. Default: yes; the owner (or a sponsor he trusts) makes a free HubSpot account, creates a service key and runs CRM-17 before any sponsor is told the connection works.
+2. **OQ-2: Add a CSV export of the same fields as a backstop?** Cost: small (one button, the same allow-list). Default: no in this phase; added only if OQ-1 finds free accounts have no key.
+3. **OQ-3: Send the investor's offering-email opt-out to the CRM as a contact property?** It protects the sponsor from emailing an investor who opted out, and costs one extra scope and one custom property. HubSpot's own "unsubscribe from all" is not used (no undo, broader than the investor's choice). Default: yes, the property; counsel to confirm CAN-SPAM handling.
+4. **OQ-4: Which HubSpot contacts count as leads in the picker?** Default: lifecycle stage Lead only, with text search. Alternative: any contact not yet an investor.
+5. **OQ-5: The investor-facing privacy sentence** (the firm may keep contact details and investment status in its customer relationship tools, no vendor named). Default: the panel says live use is "To be confirmed with counsel" and the sentence is not added by the portal until counsel writes it.
+6. **OQ-6: Co-investors and joint accounts.** Default: only the main investor becomes a contact; co-investors are not sent.
+7. **OQ-7: Owner security notice on connect.** Default: yes, through 15-14's notice path once merged; until then the change-log entry only.
+
+## Sources
+
+HubSpot hosts were blocked in this session (DNS refused); everything below from HubSpot was seen as search-engine extracts on 2026-11-27.
+
+### Primary (HubSpot's own pages, via search extracts; LOW-MEDIUM)
+- developers.hubspot.com/docs/methods/check-daily-api-usage: rate limits per plan
+- developers.hubspot.com/changelog/increasing-our-api-limits: add-on limits
+- developers.hubspot.com/changelog/crm-search-api-rate-limit-increase: search 5/s, 200 per page, no headers
+- developers.hubspot.com/changelog/introducing-date-based-api-versioning; developers.hubspot.com/docs/api-reference/2026-03/overview; developers.hubspot.com/blog/a-developers-guide-to-hubspots-date-based-api-versioning: versions
+- developers.hubspot.com/changelog/fall-2026-spotlight; developers.hubspot.com/changelog/crm-api-write-validation-enforcement: 2026-09, write validation, service keys beta
+- developers.hubspot.com/changelog/legacy-apis-and-legacy-apps-whats-going-unsupported-and-when: September 2027
+- developers.hubspot.com/changelog/legacy-private-app-creation-sunset: 2026-09-28 / 2026-10-26
+- developers.hubspot.com/docs/apps/developer-platform/build-apps/authentication/account-service-keys; developers.hubspot.com/changelog/service-keys: service keys
+- developers.hubspot.com/docs/apps/developer-platform/build-apps/migrate-an-app/migrate-an-existing-private-app: CLI static-auth app
+- developers.hubspot.com/docs/apps/developer-platform/build-apps/manage-apps-in-hubspot; developers.hubspot.com/changelog/new-marketplace-distribution-app-install-limits: 25 installs, 10 private
+- developers.hubspot.com/docs/apps/developer-platform/build-apps/authentication/request-validation: webhook signature v3
+- developers.hubspot.com/docs/api-reference/latest/crm/objects/contacts/batch/upsert-contacts.md and /2026-03/...: upsert by email
+- developers.hubspot.com/docs/api-reference/latest/crm/objects/deals/guide.md; /legacy/crm/objects/deals/guide; /latest/crm/pipelines/get-pipelines.md; /2026-03/crm/pipelines/guide; /2026-03/crm/associations/associate-records/guide; /2026-03/crm/understanding-the-crm: records, scopes, paths
+- developers.hubspot.com/docs/api-reference/2026-03/communication-preferences/guide: unsubscribe-all
+- knowledge.hubspot.com/object-settings/set-up-and-customize-pipelines: pipelines per tier
+- hubspot.com/pricing/suite, hubspot.com/pricing/suite/starter: prices
+- policy.hubspot.com/trust-safety; developers.hubspot.com/sensitive-data: prohibited sensitive data
+
+### Secondary
+- sec.gov/files/rules/final/2024/regulation-s-p-small-entity-compliance-guide.pdf (search extract): Regulation S-P dates
+- community.hubspot.com threads on email upsert (111755, 107092) and date-based versioning (147831): developer reports
+
+### Tertiary (third party, LOW)
+- hookdeck.com/webhooks/hubspot/verify: timestamp in milliseconds
+- trellus.ai, sybill.ai, docket.io: Sales Hub prices
+- zapier.com/blog/zapier-pricing, zapier.com/blog/make-com-pricing: automation prices
+
+### Codebase (read this session; HIGH)
+- `server/providers/index.mjs`, `server/lib/roles.mjs`, `assets/js/roles.js`, `server/lib/workspace.mjs`, `server/lib/vault.mjs`, `server/lib/filings.mjs`, `server/lib/messages.mjs`, `server/lib/maillog.mjs`, `server/lib/request.mjs`, `server/lib/crypto.mjs`, `server/plugins/idcheck.mjs`, `server/index.mjs` (webhooks, mounting), `server/test/ses-fake.mjs`, `server/README.md`, `assets/js/integrations.js`, `assets/js/invitations.js`, `assets/js/data.js`, `assets/js/console.js`, `assets/js/operations.js`, `.planning/phases/15-security/15-*-PLAN.md` headers, `15-06-SUMMARY.md`, `.planning/phases/13-email-overhaul/checks/email-sending.js`, `lib13.js`
+
+## Metadata
+
+**Confidence breakdown:**
+- Design (sync shape, storage, routes, roles): MEDIUM-HIGH: built on code read this session and existing patterns.
+- HubSpot API facts: LOW-MEDIUM: HubSpot's own pages, but only as search extracts; the live run settles them.
+- Prices: LOW-MEDIUM: extracts and third-party pages; not product-critical.
+- Pitfalls: MEDIUM.
+
+**Research date:** 2026-11-27
+**Valid until:** about 2026-12-27 for HubSpot facts (fast-moving: service keys in beta, versions twice a year); the design holds longer.
