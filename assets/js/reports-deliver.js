@@ -115,7 +115,10 @@
           last = now;
           g.done = x.done;
           g.total = x.total;
-          refresh();
+          // only the progress line changes, in place, so 'Stop' stays where it is and can be tapped while files are made
+          const line = document.querySelector('[data-rd=progress]');
+          if (line) line.textContent = `Made ${g.done} of ${g.total}`;
+          else refresh();
         }
       })
       .then(
