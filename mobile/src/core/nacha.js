@@ -18,6 +18,8 @@
   'use strict';
 
   const D = () => NS.dates;
+  /* The SEC types these payments use: PPD for individuals, joint accounts and trusts, CCD for entities and IRA custodians. */
+  const SEC_TYPES = Object.freeze(['PPD', 'CCD']);
 
   /*
    * Federal Reserve holidays on which ACH does not settle, worked out by rule for any year: the eleven holidays the
@@ -156,11 +158,14 @@
     const valid = [];
     opts.entries.forEach((e) => {
       const acct = String(e.account || '').replace(/\s/g, '');
+      const sec = String(e.sec == null ? '' : e.sec).trim().toUpperCase();
       if (!abaValid(e.routing)) excluded.push({ entry: e, reason: 'Routing number fails the ABA check digit' });
       else if (!acct || acct.length > 17) excluded.push({ entry: e, reason: 'Account number is missing or longer than 17 characters' });
+      else if (!sec) excluded.push({ entry: e, reason: 'No SEC type' });
+      else if (SEC_TYPES.indexOf(sec) < 0) excluded.push({ entry: e, reason: `SEC type ${sec} is not one these payments use` });
       else if (!(e.cents > 0)) excluded.push({ entry: e, reason: 'Amount is zero' });
       else if (e.cents > 9999999999) excluded.push({ entry: e, reason: 'Amount exceeds the 10-digit entry limit' });
-      else valid.push(Object.assign({}, e, { account: acct }));
+      else valid.push(Object.assign({}, e, { account: acct, sec }));
     });
 
     const lines = [];
@@ -169,13 +174,14 @@
         (opts.modifier || 'A') + '094' + '10' + '1' + alpha(origin.destinationName, 23) + alpha(origin.originName, 23) + alpha('', 8)
     );
 
+    const listed = [];
     let trace = 0;
     let fileHash = 0;
     let fileDebit = 0;
     let fileCredit = 0;
     let fileEntries = 0;
     const batches = [];
-    ['PPD', 'CCD'].forEach((sec) => {
+    SEC_TYPES.forEach((sec) => {
       const group = valid.filter((e) => e.sec === sec);
       if (!group.length) return;
       const batchNo = batches.length + 1;
@@ -190,12 +196,16 @@
       const addEntry = (code, routing, account, cents, id, name) => {
         trace += 1;
         const r = String(routing).replace(/\D/g, '');
-        lines.push('6' + code + r.slice(0, 8) + r.slice(8, 9) + alpha(account, 17) + num(cents, 10) + alpha(id, 15) + alpha(name, 22) + '  ' + '0' + odfi8 + num(trace, 7));
+        const tr = odfi8 + num(trace, 7);
+        lines.push('6' + code + r.slice(0, 8) + r.slice(8, 9) + alpha(account, 17) + num(cents, 10) + alpha(id, 15) + alpha(name, 22) + '  ' + '0' + tr);
         hash += Number(r.slice(0, 8));
         count += 1;
+        return tr;
       };
       group.forEach((e) => {
-        addEntry(e.accountType === 'savings' ? '32' : '22', e.routing, e.account, e.cents, e.id, e.name);
+        const code = e.accountType === 'savings' ? '32' : '22';
+        const tr = addEntry(code, e.routing, e.account, e.cents, e.id, e.name);
+        listed.push({ id: e.id, ref: e.ref, trace: tr, cents: e.cents, code, kind: 'credit', sec, batch: batchNo });
         credit += e.cents;
       });
       if (opts.balanced && opts.offset) {
@@ -233,6 +243,7 @@
       batches,
       excluded,
       checks,
+      entries: listed,
       totals: { batches: batches.length, blocks, entries: fileEntries, hash: fileHash % 1e10, credit: fileCredit, debit: fileDebit, records: lines.length },
       created
     };

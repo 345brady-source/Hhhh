@@ -30,3 +30,11 @@ NACHA BUILD: FAIL (cases run: 2) - sec
 
 At the start commit the entry with no SEC type and the WEB entry vanished from the file with no reason, and the totals
 check turned red without saying why.
+
+## Task 1 verify (GREEN, `--case sec,reader`; plan's automated verify exit 0)
+
+```
+NACHA BUILD: PASS (cases run: 2)
+VERIFY=0
+```
+(all 15 check lines PASS, among them "sec ... left out with \"No SEC type\"" and "reader sec: no red check, and the independent reader passes it"). Tracer re-run: same result; expanding.
