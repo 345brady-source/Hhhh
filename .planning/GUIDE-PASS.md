@@ -10,7 +10,7 @@ The guide trim is merged (sponsor guide 44,641 of 48,000 bytes on 2026-11-27). L
 - `8. "Mark reconciled" at a statement date once the difference is $0.00.`
 
 ## From other plans' SUMMARYs (copy the exact lines from each "Guide lines for the guide pass" section when it merges)
-- 08-09 (reverify), about 240 bytes: 08-09-SUMMARY.md
+- 08-09 (211 bytes): `## console-investors`: `"Ask to re-verify", then "Send request", asks the investor to verify again.`; `## invite/accreditation`: `A re-verification link holds this step and the done screen only.`; `## investments`: `"Verify your accreditation" opens the firm's re-verification request.`
 - 12-08 (178 bytes), at the end of the report builder entry: `In a report, choose who it is for, then "Generate". Type your name and "Deliver": each investor finds it in Documents. "Tell investors" fills in a notice on Notices; you send it.`
 - 16-05 (four lines): 16-05-SUMMARY.md
 - 16-06: 16-06-SUMMARY.md ("Guide lines for the guide pass")
