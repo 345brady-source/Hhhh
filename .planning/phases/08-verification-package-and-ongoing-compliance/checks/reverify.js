@@ -16,7 +16,15 @@
 //           own browser context opens the link (two steps) and verifies; the console imports; the record shows the new
 //           verification, the two entries, a re-verification notice and row; Approve is allowed; one POST /v1/invitations;
 //           the taxpayer number Lib.walk types reaches no store, call or screen (the scan proven on a planted copy)
-//   NODE_PATH=$(npm root -g) node reverify.js [--only local,server]
+//   leave   D-30: the investor, signed in to the portal, is offered "Verify your accreditation"; Back on the request's first
+//           step returns to the portal, which still offers it; leaving changes nothing on the record; opening it again
+//           resumes the same request; an expired or a cancelled request is not offered
+//   button  "Ask to re-verify" shows for an active investor whose verification by a third party is missing, lapsed or lapses
+//           within 14 days while an offering raising needs verified accreditation; not for a current verification more than
+//           14 days from lapsing, a firm with only Rule 506(b) offerings and the default rule, an investor not yet active, a
+//           team role that may not invite, or the managed edition (index.html); asking again while the request is open
+//           makes no second request (local), and in server mode resends it with no new POST /v1/invitations
+//   NODE_PATH=$(npm root -g) node reverify.js [--only local,server,leave,button]
 // The last line is "REVERIFY: PASS (parts run: N)" or "REVERIFY: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -379,6 +387,202 @@ const parts = {
       F.leakFree(check, 'every screen and email of this part', seen.join('\n'));
     } finally {
       for (const c of closers) await Promise.resolve().then(c).catch(() => {});
+    }
+  },
+
+  async leave({ check, S }) {
+    const A = await Lib.open(S, { context: Object.assign({ acceptDownloads: true }, F.VIEW.desktop) });
+    const p = A.page;
+    const seen = [];
+    try {
+      const x = await lapsedInvestor(S, A);
+      const r = await row(p, x.email);
+      await r.locator('[data-action="reverify-request"]').first().click();
+      await p.waitForSelector('#dlg[open] [data-action="reverify-send"]', { timeout: 10000 });
+      await p.click('#dlg [data-action="reverify-send"]');
+      await p.waitForSelector('#dlg[open] .inv8-email', { timeout: 15000 });
+      await p.click('#dlg .dlg-head [data-action="close-dialog"]');
+      const record = () =>
+        p.evaluate((id) => {
+          const ws = window.CVPortal.state.ws;
+          const i = ws.investors.find((y) => y.id === id);
+          return JSON.stringify({ verify: i.verify, accreditation: i.accreditation, positions: i.positions, kyc: i.kyc, requests: (ws.requests || []).filter((q) => q.investorId === id) });
+        }, x.id);
+      const before = await record();
+      const itId = await p.evaluate((id) => (window.CVPortal.state.ws.invitations || []).filter((y) => y.investorId === id).pop().id, x.id);
+
+      // Signed in as the investor: the portal offers the open request.
+      await p.evaluate((id) => (window.CVPortal.state.viewer = id), x.id);
+      await p.selectOption('#demo-role', 'investor');
+      await p.waitForFunction(() => location.hash === '#overview');
+      const offer = async () => {
+        for (const hash of ['overview', 'investments']) {
+          await p.evaluate((h) => (location.hash = h), hash);
+          await p.waitForTimeout(400);
+          const l = p.locator('a', { hasText: 'Verify your accreditation' }).first();
+          if (await l.count()) return { link: l, text: await p.locator('.ivf-invited').first().innerText().catch(() => '') };
+        }
+        return null;
+      };
+      const o1 = await offer();
+      check('the portal offers the open request: "<firm> asked you to verify your accreditation again." with "Verify your accreditation"', !!o1 && o1.text.indexOf('asked you to verify your accreditation again.') >= 0, o1 && o1.text);
+      if (!o1) return;
+      seen.push(o1.text);
+      await o1.link.click();
+      await p.waitForSelector('.ivf-form', { timeout: 20000 });
+      await p.waitForTimeout(300);
+      const s1 = await flowState(p, itId);
+      const back = p.locator('.ivf-form .ob-actions >> text="Back"').first();
+      check('the request opens on step 1 of 2 with Back beside Continue', /^Step 1 of 2/.test(s1.count) && (await back.count()) === 1, s1.count);
+      seen.push(s1.text);
+      if (!(await back.count())) return;
+      await back.click();
+      await p.waitForFunction(() => location.hash === '#overview', null, { timeout: 10000 });
+      check('Back on the first step returns to the investor\'s portal', (await p.evaluate(() => location.hash)) === '#overview');
+      const o2 = await offer();
+      check('the portal still offers "Verify your accreditation" after leaving', !!o2);
+      check('leaving changed nothing on the record', (await record()) === before);
+      if (!o2) return;
+      await o2.link.click();
+      await p.waitForSelector('.ivf-form', { timeout: 20000 });
+      await p.waitForTimeout(300);
+      const s2 = await flowState(p, itId);
+      const count = await p.evaluate((id) => (window.CVPortal.state.ws.invitations || []).filter((y) => y.investorId === id).length, x.id);
+      check('opening it again resumes the same request where it was (step 1 of 2, no new invitation)', /^Step 1 of 2/.test(s2.count) && JSON.stringify(s2.steps) === JSON.stringify(['accreditation', 'done']) && count === 1, { count: s2.count, invitations: count });
+      await p.locator('.ivf-form .ob-actions >> text="Back"').first().click();
+      await p.waitForFunction(() => location.hash === '#overview', null, { timeout: 10000 });
+
+      // An expired or a cancelled request is not offered.
+      for (const [what, patch] of [['expired', { expiresAt: new Date(Date.now() - DAY).toISOString() }], ['cancelled', { status: 'cancelled' }]]) {
+        const keep = await p.evaluate(({ itId, patch }) => {
+          const it = window.CVPortal.state.ws.invitations.find((y) => y.id === itId);
+          const was = { expiresAt: it.expiresAt, status: it.status };
+          Object.assign(it, patch);
+          window.CVPortal.app.render();
+          return was;
+        }, { itId, patch });
+        check(`a${what === 'expired' ? 'n' : ''} ${what} request is not offered`, (await offer()) === null);
+        await p.evaluate(({ itId, keep }) => Object.assign(window.CVPortal.state.ws.invitations.find((y) => y.id === itId), keep), { itId, keep });
+      }
+      seen.push(await F.noRawError(check, p, 'the portal after leaving', A.errors));
+      F.leakFree(check, 'every screen of this part', seen.join('\n'));
+    } finally {
+      await A.context.close().catch(() => {});
+    }
+  },
+
+  async button({ check, S }) {
+    const shown = async (p, email) => (await (await row(p, email)).locator('[data-action="reverify-request"]').count()) === 1;
+    const A = await Lib.open(S, { context: Object.assign({ acceptDownloads: true }, F.VIEW.desktop) });
+    const p = A.page;
+    try {
+      // Self-serve edition, an active investor, a Rule 506(c) offering raising: by the verification's date.
+      const base = await lapsedInvestor(S, A);
+      check('shown: the verification lapsed yesterday', await shown(p, base.email));
+      const set = (o) =>
+        p.evaluate(({ id, o, DAY }) => {
+          const NS = window.CVPortal;
+          const ws = NS.state.ws;
+          const i = ws.investors.find((y) => y.id === id);
+          if (o.until !== undefined) {
+            const a = i.verify.accreditation;
+            if (o.until === null) i.verify.accreditation = { status: 'not_started' };
+            else Object.assign(a, { status: 'verified', connection: 'sandbox', via: 'Sandbox', how: 'sandbox', expiresAt: new Date(Date.now() + o.until * DAY).toISOString().slice(0, 10) });
+          }
+          if (o.exemption) ws.offerings.forEach((f) => (f.structure = Object.assign({}, f.structure, { exemption: o.exemption })));
+          if (o.status) i.onboarding = Object.assign({}, i.onboarding, { status: o.status });
+          NS.app.save(true);
+          NS.app.render();
+        }, { id: base.id, o, DAY });
+      await set({ until: null });
+      check('shown: no verification by a third party on file', await shown(p, base.email));
+      await set({ until: 10 });
+      check('shown: the verification lapses within 14 days (in 10)', await shown(p, base.email));
+      await set({ until: 14 });
+      check('shown: the verification lapses in exactly 14 days', await shown(p, base.email));
+      await set({ until: 30 });
+      check('not shown: a current verification more than 14 days from lapsing (30)', !(await shown(p, base.email)));
+      await set({ until: -1, exemption: 'Rule 506(b)' });
+      check('not shown: a lapsed verification where every offering is Rule 506(b) and the rule is the default', !(await shown(p, base.email)));
+      await set({ exemption: 'Rule 506(c)', status: 'in_progress' });
+      check('not shown: an investor not yet active', !(await shown(p, base.email)));
+      await set({ status: 'complete' });
+      check('shown again: active, lapsed, a Rule 506(c) offering raising', await shown(p, base.email));
+      // A team role that may not invite (the console's own permission, NS.app.can('operate')).
+      await p.evaluate(() => {
+        const app = window.CVPortal.app;
+        app.__can = app.can;
+        app.can = (what, role) => (what === 'operate' ? false : app.__can(what, role));
+        app.render();
+      });
+      check('not shown: a team role that may not invite', !(await shown(p, base.email)));
+      await p.evaluate(() => {
+        const app = window.CVPortal.app;
+        app.can = app.__can;
+        app.render();
+      });
+
+      // Asking twice while the request is open: the same request, no second one.
+      const ask = async () => {
+        const r = await row(p, base.email);
+        await r.locator('[data-action="reverify-request"]').first().click();
+        await p.waitForSelector('#dlg[open] [data-action="reverify-send"]', { timeout: 10000 });
+        const text = await p.locator('#dlg').innerText();
+        await p.click('#dlg [data-action="reverify-send"]');
+        await p.waitForSelector('#dlg[open] .inv8-email', { timeout: 15000 });
+        await p.click('#dlg .dlg-head [data-action="close-dialog"]');
+        return text;
+      };
+      await ask();
+      const again = await ask();
+      const twice = await p.evaluate((id) => {
+        const ws = window.CVPortal.state.ws;
+        return { invitations: (ws.invitations || []).filter((y) => y.investorId === id && y.reverify).length, asked: (ws.audit || []).filter((e) => e.record === id && e.action === 'Accreditation re-verification requested').length };
+      }, base.id);
+      check('asking again while the request is open says so and makes no second request (one invitation, one entry)', /A request is already open/.test(again) && twice.invitations === 1 && twice.asked === 1, twice);
+      await F.noRawError(check, p, 'the Investors page', A.errors);
+    } finally {
+      await A.context.close().catch(() => {});
+    }
+
+    // Server mode: asking again resends the same request; no new POST /v1/invitations.
+    const srv = await Lib.serverPortal(S, {});
+    const B = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({ acceptDownloads: true }, F.VIEW.desktop) });
+    try {
+      const p = B.page;
+      const calls = [];
+      p.on('request', (rq) => rq.method() === 'POST' && /\/v1\/invitations(\/[^/]+\/resend)?$/.test(rq.url().replace(/[?#].*$/, '')) && calls.push(rq.url().replace(/^.*\/v1\//, '/v1/').replace(/ivt_[\w-]+/, ':id')));
+      const x = await lapsedInvestor(S, B);
+      await srv.configure(p);
+      for (let k = 0; k < 2; k++) {
+        const r = await row(p, x.email);
+        await r.locator('[data-action="reverify-request"]').first().click();
+        await p.waitForSelector('#dlg[open] [data-action="reverify-send"]', { timeout: 10000 });
+        await p.click('#dlg [data-action="reverify-send"]');
+        await p.waitForFunction(() => !document.getElementById('dlg').open, null, { timeout: 30000 });
+        await p.waitForTimeout(300);
+      }
+      const held = srv.server.store.list('invitations').filter((y) => y.investorId === x.id).length;
+      check('server mode, asked twice: one POST /v1/invitations, then a resend of the same request; the server holds one', JSON.stringify(calls) === JSON.stringify(['/v1/invitations', '/v1/invitations/:id/resend']) && held === 1, { calls, held });
+      await F.noRawError(check, p, 'the Investors page, server mode', B.errors);
+    } finally {
+      await B.context.close().catch(() => {});
+      await srv.close().catch(() => {});
+    }
+
+    // The managed edition (index.html) has no such button.
+    const M = await Lib.open(S, { context: F.VIEW.desktop });
+    try {
+      const p = M.page;
+      await p.goto(`${S.origin}/index.html`);
+      await p.evaluate(() => Object.keys(localStorage).forEach((k) => localStorage.removeItem(k)));
+      await p.goto(`${S.origin}/index.html`);
+      await p.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
+      await Lib.consoleRoute(p, 'console-investors', '.cs-tbl');
+      const m = await p.evaluate(() => ({ edition: window.CVPortal.EDITION.id, rows: document.querySelectorAll('table.cs-tbl tbody tr').length, buttons: document.querySelectorAll('[data-action="reverify-request"]').length }));
+      check('not shown in the managed edition (index.html): its Investors page lists investors and offers no "Ask to re-verify"', m.edition === 'managed' && m.rows > 0 && m.buttons === 0, m);
+    } finally {
+      await M.context.close().catch(() => {});
     }
   }
 };
