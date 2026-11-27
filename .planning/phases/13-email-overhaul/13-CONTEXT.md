@@ -72,3 +72,4 @@ Binding on the executors (full text with each fix: scratchpad checks-13-wave2.md
 - Seen once, not 13-01's: server/test/auth-gate.test.mjs "operator" failed in one full run because a random id matched its `/pw|.../` scan (6 reruns pass). Same random-text class as scan-tokens; queued.
 - Owner's read of the wording at 13-10 (sponsor messages name the investor as the console holds the name, e.g. "Shah, Anita").
 - Wave 2 can start: 13-11 now; 13-03 now (15-05 merged); 13-05 after 11-16 merges.
+- Combined merged tree af0b7b9 (15-05 + 13-01 + 15-04): EMAIL DIALOG 3, CO-INVESTOR SERVER 5, SERVER MODE 15 pass; GATE13 SELF-TEST PASS (8); server tests 544/544.
