@@ -108,3 +108,8 @@ started: since 06-39; seen in 08-17's gate, 11-13's gate run 3, exec-15-02 run 1
   checked: fixed check, part cosign-forged 20 times in a row in one heavy.sh slot (one browser, each run its own integration server and contexts, as parts run in the check), 01:02:14-01:12:11 UTC, load average 4.7-5.2 on 4 cores, 18 heavy.sh commands of other agents queued for the other slots (scratchpad coflaky/after-load/, runN.sh after-load 20)
   found: COUNTS after-load: pass=20 fail=0 of 20; "CO-INVESTOR SERVER: PASS (parts run: 20)"; every run 13 checks.
   implication: 20 consecutive passes under shared-slot load.
+
+- timestamp: 2026-11-27T01:16Z
+  checked: the whole fixed check through heavy.sh, GATE_FRESH=1, 01:12:47-01:15:40 UTC, load average 5.0-5.9 (scratchpad coflaky/whole/coserver.txt)
+  found: "CO-INVESTOR SERVER: PASS (parts run: 5)", 128 PASS lines, 0 FAIL; the list of check names is identical, line for line, to the passing pre-fix run in 11-13's gate (exec-11-13/gate/coserver.txt, also 128).
+  implication: every part passes; no assertion was dropped or renamed.
