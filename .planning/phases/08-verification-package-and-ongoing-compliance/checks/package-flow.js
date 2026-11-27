@@ -586,6 +586,7 @@ const FLOWS = {
       const got = await downloadLetter(p, false);
       check('"Download letter" saves exactly one file', got.files.length === 1, got.files.map((f) => f.name));
       check('the saved file is the third party\'s letter (its SHA-256 equals the stand-in\'s PDF)', got.files.length === 1 && got.files[0].sha === sha(C.srv.accredit.LETTER), got.files.map((f) => ({ name: f.name, same: f.sha === sha(C.srv.accredit.LETTER) })));
+      check('the saved file carries the server\'s file name ("verification-letter.pdf", exposed to the console\'s origin)', got.files.length === 1 && got.files[0].name === 'verification-letter.pdf', got.files.map((f) => f.name));
       check('the server fetched the letter from the provider once', C.srv.accredit.control.calls.filter((c) => c.kind === 'evidence').length === 1, C.srv.accredit.control.calls.map((c) => c.kind));
       check('no failure sentence after the download', got.toasts.indexOf(LETTER_FAIL) < 0, got.toasts);
       const kycText = await Lib.screenText(p);
