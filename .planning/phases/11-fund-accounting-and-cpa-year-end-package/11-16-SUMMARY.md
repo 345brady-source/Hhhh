@@ -20,15 +20,15 @@ affects: [11-17, 16-02]
 actuals:
   tokens: 21000   # chars/4 over the added lines of the hand-written files (84,108 chars); generated help files left out
   tasks: 3
-  commits: 9      # git rev-list --count ad252a5..HEAD before this summary's commit
+  commits: 11     # git rev-list --count ad252a5..HEAD before this summary update's commit
 plan_head_before: ad252a59831d05ce8abaaeb52c71252be485395b
-plan_head_after: ea64e33
+plan_head_after: acbd6da
 tech-stack:
   added: []
   patterns: [package files written in the browser from the same sheet objects the screen shows; scripts loaded on demand from beside books-pkg.js]
 key-files:
   created: [.planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/package-files.js, .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/package-flow.js]
-  modified: [assets/js/books-pkg.js, assets/js/console.js, diy.html, portal.html, server/help/guide.md, server/lib/help-guide.mjs, .planning/tools/preview/help-data.js]
+  modified: [assets/js/books-pkg.js, assets/js/console.js, diy.html, portal.html, server/help/guide.md, server/lib/help-guide.mjs, .planning/tools/preview/help-data.js, .planning/phases/11-fund-accounting-and-cpa-year-end-package/checks/audit-flow.js]
 key-decisions:
   - "B1: withholding.js loads on demand (NS.esignKit.loadScript, from beside books-pkg.js) when the panel first draws and again before a download; no extra script line on the pages, because phase 10's checks answer withholding.js 404 on diy.html"
   - "PDF Producer and Creator are set to the firm's legal name by reopening the writer's bytes (filesout.js would set the footer text there)"
@@ -45,11 +45,10 @@ One click on the Audit page now gives the fund's CPA a single zip: a README, a w
 
 ## Failures first
 
-- **Gate: `GATE_EXIT=1`.** The only failure is `GATE FAIL AUDIT FLOW` (plan 11-12's check), part managed: `FAIL managed index.html and console.js (the menu) have no change since the base commit ad252a5 :: {"base":"ad252a59831d05ce8abaaeb52c71252be485395b","page":0,"console":1}`. That assertion fails any plan that changes console.js at all. This plan must add exactly one line to console.js (the plan's own verify requires it): the auditPanels hook in the Audit view. The menu (NAV, NAV_SECTIONS) is not touched. Every other part of AUDIT FLOW passed, and 71 other gate steps passed.
-  - I did not change audit-flow.js. It is outside this plan's files, and the permission checker refused my attempt to narrow the assertion to the menu lines. **The orchestrator has to decide**, either:
-    - narrow the assertion in audit-flow.js to `git diff -U0 <base> HEAD -- assets/js/console.js` lines matching `\bNAV(_SECTIONS)?\b` (index.html stays byte-checked), or
-    - accept the AUDIT FLOW managed failure for this plan.
-  - After either one, the gate needs one more run.
+- **Gate run 2: `GATE_EXIT=1`.** Its only failure was `GATE FAIL AUDIT FLOW` (plan 11-12's check), part managed: `FAIL managed index.html and console.js (the menu) have no change since the base commit ad252a5 :: {"base":"ad252a59831d05ce8abaaeb52c71252be485395b","page":0,"console":1}`. That assertion failed any change to console.js; this plan must add exactly one line there (the auditPanels hook), and the menu is untouched. My own attempt to narrow it was refused by the permission checker, so I reported it.
+  - **Orchestrator decision during 11-16** (11-CONTEXT, d0012a9): narrow the assertion; audit-flow.js joined this plan's scope for that change only. Done in acbd6da: index.html stays byte-checked; console.js passes when no added or removed line of `git diff -U0 <base> HEAD -- assets/js/console.js` (headers excluded) matches `/\bNAV(_SECTIONS)?\b/`; check text "the menu (NAV, NAV_SECTIONS lines of console.js)"; header comment updated.
+  - Proof both ways (`node audit-flow.js --menu-selftest ad252a5 <scratch>`, real git diffs): `PASS menu-selftest RED: a console.js copy with one NAV_SECTIONS line added is reported :: ["+  NAV_SECTIONS.find((g) => g[0] === 'Report')[1].push('console-x');"]` and `PASS menu-selftest GREEN: this tree against ad252a5 changes 1 line of console.js, none of the menu`. The old assertion's RED on this tree is the run 2 failure above. In the browser: `PASS managed index.html and the menu (NAV, NAV_SECTIONS lines of console.js) have no change since the base commit ad252a5` / `AUDIT FLOW: PASS (parts run: 1)`.
+  - **Gate run 3** (same GATE_OUT; the commit changed HEAD, so every step ran again, none kept): **`GATE_EXIT=0`**, 67 GATE ok lines, no GATE FAIL, EMAIL DIALOG (3) passed, server tests 472 = base 472.
 - **Gate, run 1** stopped at the 2-hour background limit, while the reference gate's steps were waiting on browser slots that other agents held. The reference gate had passed (GATE_EXIT=0 inside it) and server tests were 472 = 472. Run 2 resumed into the same folder (33 steps kept, EMAIL DIALOG among them) and finished with the result above. The interrupted run left its server/node_modules link behind; I removed it by hand. It was never staged.
 - **Check faults I found and fixed in my own checks:**
   1. The managed part of package-flow.js ran the leak search. That search flags "Carrow & Vale" on Carrow & Vale's own managed page, so the part now runs way out and quiet only, as books-flow.js does.
@@ -76,7 +75,7 @@ One click on the Audit page now gives the fund's CPA a single zip: a README, a w
 - help-guide server tests: `# pass 9`, `# fail 0`; all server tests in the gate: `# tests 472`, `# pass 472`, `# fail 0`
 - Guide: GUIDE.sponsor 44,641 bytes before, 44,766 after: **+125** (cap 160)
 
-## Gate (GATE_OUT=SCRATCH/exec-11-16, base-commit ad252a5), run 2, last lines verbatim
+## Gate (GATE_OUT=SCRATCH/exec-11-16, base-commit ad252a5), run 2 (before the AUDIT FLOW decision), last lines verbatim
 
 ```
 GATE ok   base-server-tests (kept from 2026-11-27 08:05:03 UTC)
@@ -120,6 +119,48 @@ GATE_EXIT=1
 ```
 
 (71 GATE ok lines, 1 GATE FAIL; `GATE ok   EMAIL DIALOG (3) (kept from 2026-11-27 07:09:43 UTC)`; the base tree was removed by the gate; server/node_modules removed.)
+
+## Gate run 3 (after the decision), last lines verbatim
+
+```
+GATE ok   server tests 472 = base 472 + 0 declared
+GATE ok   DIST FLOW
+GATE ok   DIST RECORD
+GATE ok   K1 SPLIT
+GATE ok   SHIPPED LIBS
+GATE ok   TAX 1099
+GATE ok   TAX FORMS
+GATE ok   TAX MATH
+GATE ok   TAX1099 FLOW
+GATE ok   TAXDOCS FLOW
+GATE ok   TAXDOCS MATH
+GATE ok   TAXLINK FLOW
+GATE ok   TAXRECORD FLOW
+GATE ok   WITHHOLDING FLOW
+GATE ok   AUDIT FLOW
+GATE ok   AUDIT SAME
+GATE ok   BANK FILES
+GATE ok   BANK FLOW
+GATE ok   BANK REC
+GATE ok   BOOKS CORE
+GATE ok   BOOKS FLOW
+GATE ok   BUSINESS DAYS
+GATE ok   ENGINE BOOKS
+GATE ok   HOLDINGS
+GATE ok   NEW SCHEDULES
+GATE ok   NO ONBOARDING
+GATE ok   PACKAGE FILES
+GATE ok   PACKAGE FLOW
+GATE ok   PACKAGE
+GATE ok   PDF OUT
+GATE ok   POSTING
+GATE ok   SAMPLES BOOKS
+GATE ok   STATEMENTS
+GATE ok   WORKBOOK
+GATE_EXIT=0
+```
+
+(67 GATE ok lines, 0 kept, no GATE FAIL; base tree and server/node_modules absent afterwards. Run 2 printed 71 because a resumed run also prints the kept sub-steps base-server-tests, record-base/plan and signing-base/plan.)
 
 ## What was built
 
@@ -219,8 +260,10 @@ Screens are in SCRATCH/exec-11-16/shots with index.txt (5 screenshots: the panel
 - ffb6ef1 feat(11-16): the Year-end package panel on the Audit page: year, signed-forms tick, download, every sheet viewable
 - c7e6e2d test(11-16): button-phone accepts withholding.js already on the page from the page's own address
 - ea64e33 wip(11-16): save
+- a54638a docs(11-16): summary (gate run 2)
+- acbd6da test(11-16): AUDIT FLOW managed checks the menu lines of console.js (NAV, NAV_SECTIONS), not every line
 
 ## Self-Check
 
 - FOUND assets/js/books-pkg.js, checks/package-files.js, checks/package-flow.js; every commit above is in HEAD; server/node_modules absent; base tree removed.
-- Self-Check: PASSED for the files and commits. The plan's done criterion (GATE_EXIT=0) is NOT met; the cause is above.
+- Self-Check: PASSED. The done criterion is met on gate run 3 (GATE_EXIT=0); the owner has not checked anything yet.
