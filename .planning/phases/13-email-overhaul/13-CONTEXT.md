@@ -101,3 +101,4 @@ Binding on the executors (full text: scratchpad checks-13-wave3.md).
 - I5 (13-09): 'sponsor' audience kinds go under "To your team"; the preview is drawn from the body's inner content keeping its inline background.
 - Start: 13-04 after 13-03, 13-05, 13-11 merge (shares index.mjs, invitations.mjs, roles.mjs with 13-03 and 15-06). 13-07 after 13-03 and 13-05. 13-09 after 13-03 and 13-05, and not beside 16-02 (console.js, diy.html, portal.html). 13-12 after 13-03 and 13-05.
 - Addition for 13-03 (binding, from W4): maillog.mjs's status set includes 'unsubscribed'.
+- Merged tree 8100e81: FILINGS SERVER 7, EMAIL DIALOG 3, SERVER MODE 15 pass; GATE13 SELF-TEST PASS (8).
