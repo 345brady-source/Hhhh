@@ -86,6 +86,11 @@ started: seen in the gates of 10-11, 11-15, 14-01, 11-14 (twice).
   found: fixed check, part phone 3 times, RATE=6, outside the queue, load average 3.6-6.3 (scratchpad emflaky/rate6-fixed3/): COUNTS frame520px pass=3 of 3, framefull pass=3 of 3. Looks at scrollTop 0, 113, 225, 337, 450, 555, 667, 779, 884, 945, 945: 94-113px per stroke in every view; the scroll events show each stroke's last event inside the drag (e.g. 113 at 5124, next event 5519 at the next stroke): no momentum after the lift, even when touchMoves reached the page bunched (22-30px jumps).
   implication: travel per look is now the finger's travel, independent of timing, under every part's slack (234px at the smallest). Falsification test passed so far; next the 20-run proof.
 
+- timestamp: 2026-11-27T05:56Z
+  checked: the proof pair, side by side in the same minutes (two browsers at once, outside the queue, RATE=6 on every page), part phone 20 times each, 05:48:04-05:55:31 UTC, load average 6.2 rising to 16.3 on 4 cores (scratchpad emflaky/rate6-unfixed20/, emflaky/rate6-fixed20/)
+  found: UNFIXED (frozen copy, sha256 6408d7a9...): COUNTS frame520px pass=16 fail=4 of 20; framefull 20 of 20. The four failures: "(8 of 11)" looks 0 440 964 964; "(4 of 11)" looks 0 964 964 (one stroke carried the body from the top to the end: the 4-of-11 signature of the gates); "(10 of 11) :: [p: The link below takes you through]" looks 0 141 423 704 817 945 945; "(4 of 11)" again, looks 0 962 964. Largest travel between two looks: 964px. FIXED: COUNTS frame520px pass=20 fail=0 of 20; framefull pass=20 fail=0 of 20; no FAIL line at all; "EMAIL DIALOG: PASS (parts run: 20)". Every stroke 75-113px (largest travel between two looks 113px over all 40 views); the new "came to rest" line PASS in all 40 views.
+  implication: GREEN under the condition that fails the old check (4 of 20 here, 7 of 33 over all unfixed RATE=6 runs, all three saved signatures reproduced: 10, 7/8 and 4 of 11): the fixed check passes 20 of 20, with every look at most 113px from the previous one, under the 234px the tallest part needs.
+
 ## Resolution
 
 root_cause:
