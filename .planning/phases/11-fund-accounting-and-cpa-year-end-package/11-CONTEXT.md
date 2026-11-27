@@ -185,3 +185,7 @@
 - W5 (seating): fund A's two mark: entries are posted directly and holding fa-x exists (books-flow.js seat(), filtered to drop src bank:), so the trial balance equals the research one.
 - W6 (16-04): the decision form asks for an Investor on 2000 too (returned distributions [1000 +][2000 - investor]).
 - I: fund.exceptions (strays, closed, unbalanced) is books-level, not 11-15's; a small Accounting-page plan lists and resolves them. The marker is in bank-flow.js from Task 1; resumed-gate greps are prefix greps (kept-from suffix passes). Keep the CSV layout form in one function (16-11 follows it). The check asserts no NS.EDITION.product, 'Powered by' or 'basic' in the section, diy and managed.
+
+## Orchestrator decisions on 11-15 (2026-11-27)
+- B3 choice: an opening reconciled balance. When a fund's first imported statement starts after its books begin, the Bank section asks for the reconciled bank balance at that statement's start date; it is stored with who entered it and when (change log), and outstanding items before that date are matched against it. Until it is entered, the difference shows "To be confirmed: opening balance at <date>", never $0.00. Why: it never hides an entry made before the first statement, and it is what a CPA checks.
+- fund.exceptions (strays, closed-month changes, unbalanced months) is not 11-15's: a small Accounting-page plan after 11-16 lists and resolves them.
