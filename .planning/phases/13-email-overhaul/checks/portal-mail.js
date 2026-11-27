@@ -316,7 +316,12 @@ const parts = {
 
       // Send
       let before = (await toasts(page)).length;
-      await page.evaluate((id) => window.CVPortal.esign.send(window.CVPortal.state.ws, id), e1.id);
+      // The envelope as send() leaves it, read in the same turn (before the server can answer)
+      const atSend = await page.evaluate((id) => {
+        const NS = window.CVPortal;
+        NS.esign.send(NS.state.ws, id);
+        return JSON.stringify(NS.state.ws.envelopes.find((x) => x.id === id).events.map((e) => [e.actor, e.action, e.detail]));
+      }, e1.id);
       let toast = await nextToast(page, before);
       let msgs = await outboxBy('esign_request');
       const want = (kind, title) => [a, b].map((x) => [x.email, subjectOf(kind, x.name, title)]).sort();
@@ -335,8 +340,11 @@ const parts = {
       const sum = (n) => T.emails().summary({ total: n, outbox: n }, true);
       check(`Send: the toast is summary()'s connected sentence ("${sum(2)}")`, toast === sum(2), toast);
       let env = await envelopeOf(page, e1.id);
-      const waiting = env.events.filter((e) => e.action === 'Email waiting to send').map((e) => e.detail);
-      check('Send: the envelope history says each email waits on the server (its outbox), not that it was sent', waiting.length === 2 && !env.events.some((e) => e.action === 'Email sent'), env.events.map((e) => e.action));
+      check('Send: the envelope does not change once the server answers (its history is what send() left)', JSON.stringify(env.events.map((e) => [e.actor, e.action, e.detail])) === atSend, { atSend: JSON.parse(atSend).map((x) => x[1]), now: env.events.map((e) => e.action) });
+      const handed = env.events.filter((e) => e.action === 'Email handed to the integration server').map((e) => e.detail);
+      check('Send: the envelope history says each email was handed to the integration server, never that it was sent', handed.length === 2 && !env.events.some((e) => e.action === 'Email sent'), env.events.map((e) => e.action));
+      const sentLog = (await mailLog(page)).filter((e) => e.kind === 'esign_request').map((e) => [e.to, e.status]).sort();
+      check("Send: the sent log keeps the server's answer for each signer (outbox)", JSON.stringify(sentLog) === JSON.stringify([[a.email, 'outbox'], [b.email, 'outbox']].sort()), sentLog);
 
       // Remind
       before = (await toasts(page)).length;
@@ -362,8 +370,14 @@ const parts = {
       await page.evaluate((id) => window.CVPortal.esign.send(window.CVPortal.state.ws, id), e2.id);
       await nextToast(page, 0);
       before = (await toasts(page)).length;
-      await page.evaluate((id) => window.CVPortal.esign.void(window.CVPortal.state.ws, id, 'Sent by mistake'), e2.id);
+      const atVoid = await page.evaluate((id) => {
+        const NS = window.CVPortal;
+        NS.esign.void(NS.state.ws, id, 'Sent by mistake');
+        return JSON.stringify(NS.state.ws.envelopes.find((x) => x.id === id).events.map((e) => [e.actor, e.action, e.detail]));
+      }, e2.id);
       toast = await nextToast(page, before);
+      const v2 = await envelopeOf(page, e2.id);
+      check('Void: the envelope does not change once the server answers (CO-INVESTOR SERVER cosign-forged compares it)', JSON.stringify(v2.events.map((e) => [e.actor, e.action, e.detail])) === atVoid, { atVoid: JSON.parse(atVoid).map((x) => x[1]), now: v2.events.map((e) => e.action) });
       msgs = await outboxBy('esign_voided');
       check('Void: one withdrawn notice, to the signer who had it, subject as emails.js renders esign_voided', msgs.length === 1 && msgs[0].to === a.email && msgs[0].subject === subjectOf('esign_voided', a.name, e2.title), got(msgs));
       check('Void: the toast starts "Envelope voided." and is summary()\'s connected sentence after it', toast === `Envelope voided. ${sum(1)}`, toast);
