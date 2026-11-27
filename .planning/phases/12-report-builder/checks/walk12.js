@@ -6,7 +6,8 @@
 // Every step takes one screenshot with a description (P6_SHOTS: index.txt, and walk12-index.txt in step order), and
 // checks its screen: the policy refused nothing, no new script error, no request left the page's own origin (counted
 // from the first request of the walk, printed), no vendor, model or library name and never the forbidden word on
-// screen, and a way out of the view on screen. Every Generate prints its measured time.
+// screen, and a way out of the view on screen. Every Generate prints its measured time. The preview steps also check the
+// preview's tables as the phone draws them: no word broken across lines (a column too narrow for its words).
 //   node checks/walk12.js [--only step,step]   (steps depend on the steps before them)
 // Last line: "WALK12: PASS (steps run: N)" or "WALK12: FAIL (steps run: N) - <failed steps>".
 'use strict';
@@ -381,6 +382,42 @@ async function seatFundA() {
   return id;
 }
 
+/**
+ * The preview's tables as the phone draws them: every word of a table cell broken across lines (a column too narrow
+ * for its words), printed with the table and the cell's width. The check fails when there is any.
+ */
+async function layout(check, what) {
+  const r = await W.fr.evaluate(() => {
+    const out = { broken: [], tables: [] };
+    document.querySelectorAll('#rb-preview table').forEach((t) => {
+      const cap = (t.querySelector('caption') || { innerText: '' }).innerText.trim();
+      const cols = t.rows[0] ? t.rows[0].cells.length : 0;
+      const par = t.parentElement;
+      out.tables.push(`${cap} (${cols} columns, ${Math.round(t.getBoundingClientRect().width)} px, its box ${par.clientWidth} px${par.scrollWidth > par.clientWidth + 1 ? `, scrolls sideways to ${par.scrollWidth} px` : ''})`);
+      t.querySelectorAll('th, td').forEach((c) => {
+        const w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT);
+        let n;
+        while ((n = w.nextNode())) {
+          const re = /\S+/g;
+          let m;
+          while ((m = re.exec(n.textContent))) {
+            const rg = document.createRange();
+            rg.setStart(n, m.index);
+            rg.setEnd(n, m.index + m[0].length);
+            const lines = new Set(Array.from(rg.getClientRects()).map((x) => Math.round(x.top))).size;
+            if (lines > 1) out.broken.push(`${cap}: '${m[0]}' on ${lines} lines (column ${Math.round(c.getBoundingClientRect().width)} px wide)`);
+          }
+        }
+      });
+    });
+    return out;
+  });
+  console.log(`preview tables, ${what}: ${r.tables.join('; ')}`);
+  r.broken.forEach((b) => console.log(`BROKEN WORD ${what}: ${b}`));
+  const tables = Array.from(new Set(r.broken.map((b) => b.split(':')[0])));
+  check(`on the phone, no word in the preview's tables is broken across lines (${r.broken.length} broken${tables.length ? ', in ' + tables.join(', ') : ''})`, r.broken.length === 0, r.broken.slice(0, 6));
+}
+
 /* ---------- the steps ---------- */
 const steps = {
   /** The phone frame, Kestrel Bay as admin, Reports, tab 'Investor reports'. */
@@ -544,6 +581,7 @@ const steps = {
   async 'kb-preview'({ check }) {
     if (!needs(check)) return;
     const st = await preview();
+    await layout(check, 'kb-preview');
     const who = await W.fr.evaluate(() => {
       const NS = window.CVPortal;
       const id = document.querySelector('#rb-as').value;
@@ -799,6 +837,7 @@ const steps = {
   async 'ar-preview-pdf'({ check }) {
     if (!needs(check) || !W.ar.tid) return check('the Ashwell Ridge report is open', false, 'none');
     const st = await preview();
+    await layout(check, 'ar-preview-pdf');
     check('the preview is ready (no error, See the PDF on)', st.errors.length === 0 && st.pdf === true, st.errors);
     const n = await seePdf();
     check('See the PDF draws the pages inside the panel', n >= 1, n);
@@ -827,6 +866,7 @@ const steps = {
     W.pb.tid = r.id;
     check(`'Start from' offers '${OPEN}' on Pellbrook`, r.starts.indexOf(OPEN) >= 0, r.starts);
     const st = await preview();
+    await layout(check, 'pb-letter');
     const monthly = await W.fr.evaluate(() => {
       const t = Array.from(document.querySelectorAll('#rb-preview table')).find((x) => (x.querySelector('caption') || { innerText: '' }).innerText.trim() === 'Monthly net return');
       return t ? Array.from(t.tBodies[0].rows).map((r) => Array.from(r.cells).map((c) => c.innerText.trim())) : null;
@@ -991,6 +1031,7 @@ const steps = {
     });
     check('the period is 2026-10-01 to 2026-12-31 and the preview is for FA-1001', spec.from === '2026-10-01' && spec.to === '2026-12-31' && spec.preset === 'q' && spec.as === 'FA-1001', spec);
     const st = await preview();
+    await layout(check, 'fa-statement');
     const want = ['$334,000.00', `${MINUS}$6,000.00`, '$20,000.00', `${MINUS}$3,000.00`, '$345,000.00', 'Preliminary: the books are not closed for this period.'];
     const missing = want.filter((x) => st.text.indexOf(x) < 0);
     check(`the preview shows ${want.join(', ')}`, missing.length === 0, { missing, text: st.text.slice(0, 600) });
@@ -1042,6 +1083,7 @@ const steps = {
     check('the journal holds Portfolio Co X at $490,000.00, cost $400,000.00', journal.fv === 49000000 && journal.cost === 40000000, journal);
     check("the engine's holdings equal the journal: Portfolio Co X $490,000.00 at cost $400,000.00", !!eng && eng.length === 1 && eng[0].name === 'Portfolio Co X' && eng[0].fv === 49000000 && eng[0].cost === 40000000, eng);
     const st = await preview();
+    await layout(check, 'fa-holdings');
     const row = await fr.evaluate(() => {
       const t = Array.from(document.querySelectorAll('#rb-preview table')).find((x) => (x.querySelector('caption') || { innerText: '' }).innerText.trim() === 'Holdings');
       return t ? Array.from(t.tBodies[0].rows).map((r) => Array.from(r.cells).map((c) => c.innerText.trim())) : null;
