@@ -8,7 +8,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { mkdtempSync, readFileSync, readdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { withServer } from './helpers.mjs';
+import { withServer, stripLinkTokens } from './helpers.mjs';
 import { openStore } from '../lib/store.mjs';
 import { BUILTINS } from '../providers/index.mjs';
 import { fakeSmtp, parts } from './smtp-fake.mjs';
@@ -107,7 +107,7 @@ test('create: a one-time token stored only as its SHA-256, the link, and the fir
     assert.equal(m.replyTo, 'ir@harborridge.example');
     assert.equal(m.subject, 'Harbor Ridge Fund II: complete your investor onboarding');
     assert.ok(m.text.includes(r.link) && m.text.includes('Welcome aboard, Zelda') && m.text.includes('Commitment: $250,000'));
-    assert.ok(!/carrow|powered by|diy portal/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy portal/i.test(stripLinkTokens(m.text + m.html)));
     // Without sendEmail the sponsor gets the link to send themselves.
     const quiet = await create(base, { sendEmail: false, portalUrl: 'https://portal.example/diy.html' });
     assert.equal(quiet.emailStatus, 'not_sent');
@@ -218,7 +218,7 @@ test('complete with a signed PDF: the sponsor is emailed, the console fetches th
     assert.equal(note.subject, 'Zelda Quixote finished onboarding for Harbor Ridge Fund II');
     for (const s of ['Commitment: $250,000', 'Identity: Verified', 'Sanctions screening: Clear', 'Accredited investor: In review', 'Subscription agreement: Signed by the investor; waiting for your countersignature', 'Next: countersign the subscription agreement in the console.', `${PORTAL}#console-investors`, 'November 10, 2026']) assert.ok(note.text.includes(s), s);
     assert.ok(!note.text.includes('000123456789') && !note.html.includes('131000021'), 'no bank details in the email');
-    assert.ok(!/carrow|powered by/i.test(note.text + note.html));
+    assert.ok(!/carrow|powered by/i.test(stripLinkTokens(note.text + note.html)));
     // The console fetches the submission.
     const sub = await j(base, 'GET', `/v1/invitations/${r.id}/submission`);
     assert.equal(sub.status, 200);

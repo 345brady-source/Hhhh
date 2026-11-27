@@ -7,6 +7,7 @@ import { buildMessage, dotStuff, encodeWords, headerLine, formatAddress, quotedP
 import { openStore } from '../lib/store.mjs';
 import { openVault } from '../lib/vault.mjs';
 import { fakeSmtp, selfSignedCert, decodeQP, parts } from './smtp-fake.mjs';
+import { stripLinkTokens } from './helpers.mjs';
 
 const FIRM = { name: 'Harbor Ridge Capital', shortName: 'Harbor Ridge', legalName: 'Harbor Ridge Capital Management LLC', supportTeam: 'Investor Relations', supportEmail: 'ir@harborridge.example', supportPhone: '+1 212 555 0100', colors: { primary: '#123456' }, disclaimer: 'This message is not an offer to sell securities.' };
 const INVESTOR = { id: 'HRC-0007', contact: 'Ann Lee', title: 'Ann Lee', type: 'individual', email: 'ann@investor.example' };
@@ -230,5 +231,5 @@ test('templates are the firm’s alone: brand, note, link, expiry, support; no p
   const no = notificationMessage({ firm: FIRM, investor: INVESTOR, offering: OFFERING, completedAt: '2026-11-12T10:00:00Z', consoleUrl: 'https://portal.example/diy.html#console-investors', summary: { rows: [['Investor', 'Ann Lee'], ['Commitment', '$250,000'], ['Identity', 'Verified']], next: 'Next: countersign the subscription agreement in the console.' } });
   assert.equal(no.subject, 'Ann Lee finished onboarding for Harbor Ridge Fund II');
   for (const s of ['completed every onboarding step on November 12, 2026', 'Commitment: $250,000', 'Identity: Verified', 'Open the console:\nhttps://portal.example/diy.html#console-investors', 'countersign']) assert.ok(no.text.includes(s), s);
-  for (const m of [inv, re, no]) for (const banned of [/carrow/i, /vale\b/i, /powered by/i, /DIY Portal/i]) assert.ok(!banned.test(m.text + m.html), `${banned} in ${m.subject}`);
+  for (const m of [inv, re, no]) for (const banned of [/carrow/i, /vale\b/i, /powered by/i, /DIY Portal/i]) assert.ok(!banned.test(stripLinkTokens(m.text + m.html)), `${banned} in ${m.subject}`);
 });

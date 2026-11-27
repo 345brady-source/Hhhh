@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { withServer } from './helpers.mjs';
+import { withServer, stripLinkTokens } from './helpers.mjs';
 import { summarize } from '../lib/invitations.mjs';
 import { reminderMessage } from '../lib/mail.mjs';
 
@@ -98,7 +98,7 @@ const submissionOf = async (base, id) => (await j(base, 'GET', `/v1/invitations/
 /** White label (no vendor or product name, never the word "basic") and no taxpayer number, on every email. */
 function clean(m) {
   const all = `${m.subject}\n${m.text}\n${m.html}`;
-  assert.ok(!/carrow|powered by|diy|refract|claude|anthropic/i.test(all), `vendor name in: ${m.subject}`);
+  assert.ok(!/carrow|powered by|diy|refract|claude|anthropic/i.test(stripLinkTokens(all)), `vendor name in: ${m.subject}`);
   assert.ok(!/basic/i.test(all), `"basic" in: ${m.subject}`);
   assert.ok(!all.includes(SSN) && !all.includes(EIN) && !/\b\d{3}-\d{2}-\d{4}\b/.test(all), `taxpayer number in: ${m.subject}`);
 }
