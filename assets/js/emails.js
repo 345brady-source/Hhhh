@@ -27,8 +27,10 @@
   const esc = (s) => str(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const oneLine = (s) => str(s).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
   const hex = (c) => (/^#[0-9a-f]{6}$/i.test(str(c)) ? c : /^#[0-9a-f]{3}$/i.test(str(c)) ? `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}` : '');
-  const EMAIL = /^[^\s@<>()[\]"',;:]+@[^\s@<>()[\]"',;:]+\.[^\s@<>()[\]"',;:]+$/;
-  const isEmail = (s) => EMAIL.test(str(s));
+  // A plain address (server/lib/mail.mjs ADDRESS, without '&' and '?' in the local part): a support address that is not
+  // one is never printed or linked, so it cannot carry extra recipients or a subject into a mailto link.
+  const EMAIL = /^[A-Za-z0-9.!#$%'*+/=^_`{|}~-]{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
+  const isEmail = (s) => str(s).length <= 254 && EMAIL.test(str(s));
 
   function money(cents, currency) {
     const n = Math.round(Number(cents) || 0) / 100;
