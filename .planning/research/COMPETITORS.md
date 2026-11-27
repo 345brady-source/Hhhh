@@ -59,4 +59,105 @@ Sources: `.planning/PROJECT.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS
 | CRM, fundraising pipeline, email marketing | Not built, not planned | Not in the roadmap. The data room's soft commitments (Phase 14) are the nearest piece |
 | Collecting capital by ACH debit, or holding money in the platform | Not built, not planned (by design) | Phase 16's goal: no paid provider, and the firm never holds funds |
 
+## 2. Competitors in detail
+
+Every line was seen on 2026-11-27 in web-search extracts of the page named; I could not open the pages themselves (see the header). "Possibly outdated" marks evidence the source itself dates to more than 12 months before 2026-11-27. "Not found" means the searches did not turn it up, not that the product lacks it.
+
+### 2.1 Juniper Square — the market leader, mid-size and institutional GPs
+
+- **Who it is for:** real-estate and private-fund GPs from emerging managers to institutions. Tiers scale with investor equity; the top tier is described as for firms "over $500M in Investor Equity" (G2, https://www.g2.com/products/juniper-square/pricing).
+- **Price:** not published; quote only, priced by equity under management. The figure seen most often, "starting at $18,000 per year" (Capterra https://www.capterra.com/p/171269/Juniper-Square/pricing/, GetApp https://www.getapp.com/all-software/a/juniper-square/), is described by Agora as what Juniper Square "used to advertise", with the entry tier for firms under $50M in equity (https://agorareal.com/compare/juniper-square-pricing/). G2's pricing data was last updated 2019-01-16: **possibly outdated**. A 2026 review calls pricing "quote-only" and the $18,000 figure "historical" (https://www.peony.ink/blog/juniper-square-review).
+- **Per-use charges (vendor rate card, rev. 2024-02-01, possibly outdated):** $0.50 per ACH started through its payments; e-signatures: the first 1,000 envelopes free (an older version says 1,000 DocuSign envelopes per annual service period), then $5 per extra envelope (https://www.junipersquare.com/terms-and-policies/rate-card, https://www.junipersquare.com/terms-and-policies/rate-card-v20230517).
+- **Set-up fee:** not found.
+- **Capabilities:** investor portal, CRM, subscription documents with e-signature, ACH and wire distributions "within Juniper Square", capital balances per investment, fund accounting and fund administration services, and an AI layer (JunieAI) (https://junipersquare.com/pricing, https://www.junipersquare.com/administration, https://www.junipersquare.com/platform/junie-ai).
+- **White-label:** branded portal; own domain not confirmed by any source found.
+- **ACH model:** payments inside the platform, charged per ACH.
+
+### 2.2 InvestNext — syndicators and small-to-mid funds, the closest published price ladder
+
+- **Who it is for:** real-estate syndicators and fund managers; All-In-One "up to $10 million Funds Under Management"; larger firms get custom pricing.
+- **Price (vendor page via search, https://www.investnext.com/pricing):** All-In-One "starts at $499 per month, paid annually, up to $10 million". The Fundraising tier is **conflicting**: one extract says "flat rate of $299 per month", another "30 Days Free and then $99 per month". Firm tier about $699/mo for $10M-$500M (third-party: https://zoftwarehub.com/en-ae/products/investnext/pricing, https://us.fitgap.com/products/024438/investnext). TrustRadius shows "$55 per month, does not include set up fee" and ITQlick "$499/month" (https://www.trustradius.com/products/investnext/pricing, https://www.itqlick.com/investnext/pricing); both look stale.
+- **Set-up fee:** yes. "An initial data migration and onboarding fee, which is determined based on your tier and the specific services you select"; amount not published (https://www.investnext.com/pricing).
+- **Per-use charges:** "0.03% + 25¢ per individual payment transacted (capped at $25)" (third-party: https://rentalrealestate.com/tools/investnext/). ACH fees waived on the top Institution tier (pricing page).
+- **Capabilities:** white-label investor portal; **custom investor portal domain as a paid add-on**, price not disclosed; integrated e-signatures in document management and commitments; ACH in and out up to $1M per transaction; a waterfall builder that calculates and pays distributions ("No third-party payment processors. No NACHA file uploads."); upload one .zip of K-1s, matched and delivered automatically (https://www.investnext.com/platform/distributions/, https://www.investnext.com/?p=706, https://www.investnext.com/?p=4178).
+- **ACH model:** money moved inside the platform, priced per payment.
+
+### 2.3 Agora — real-estate GPs, priced by equity under management
+
+- **Who it is for:** real-estate investment managers; pricing "based on equity under management and/or project count" (https://www.itechguides.com/products/agora/).
+- **Price:** Essential "starts from $749/month" on the official pricing page (https://agorareal.com/pricing/); Capterra and Software Advice show $749 flat per month (https://www.capterra.com/p/247616/Agora/pricing/). An Agora landing page and SourceForge show "Pay as you grow" from $599/month (https://lp.agorareal.com/cmp_sh, https://sourceforge.net/software/product/Agora-Real-Estate) — likely older. Pro and Enterprise prices are not published. Itechguides says it is billed yearly, paid quarterly.
+- **Set-up fee:** not found; Enterprise includes "white-glove onboarding".
+- **Capabilities:** investor portal, CRM, fundraising suite, integrated payments (Essential); data room and email marketing (Pro); e-sign on every document, with subscriptions using auto-generated signature fields; accreditation and KYC/AML inside the subscription flow; ACH, wire or check in, ACH out; fund administration co-sourced through partners (fund accounting, capital accounts, financial statements, K-1 delivery) (https://agorareal.com/ach-payments, https://agorareal.com/real-estate-investor-portal/, https://agorareal.com/fund-administration-services/, https://agorareal.com/investor-accreditation/).
+- **White-label:** yes, "white-label branding on your domain".
+- **ACH model:** inside the platform; ACH fees waived on Pro and Enterprise. Agora's own estimate of outside fund administration minimums: $50K-$150K per year (https://agorareal.com/gp-hub/fund-admin-vs-software/; a competitor's claim).
+
+### 2.4 Covercy — investment management with its own bank accounts
+
+- **Who it is for:** commercial real-estate sponsors; priced per legal entity.
+- **Price (vendor page via search, https://www.covercy.com/pricing):** Fundraising Starter $498 per month, or $249 per entity per month (CRM, investor portal, fundraising, distributions, reporting, funds and capital calls). US banking tiers $79-$799 per month (https://www.covercy.com/products/us-banking/). Older third-party figures: Standard $480 and Professional $688 (Capterra https://www.capterra.com/p/173106/Covercy/pricing/); $398 starting (Software Advice, GetApp) — older. 14-day free trial. Fund administration is quoted.
+- **Set-up fee:** not found.
+- **Capabilities:** e-signed NDAs and subscription documents with GP countersignature; distributions by ACH (1-3 business days), wire, check or SWIFT; multi-tier and custom waterfalls, promote allocations, share classes; K-1 matching and K-1 preparation support (https://covercy.com/product/distributions/). A G2 listing names Dropbox Sign as the e-sign integration.
+- **White-label:** "white-labeled, secure portal"; own domain not found.
+- **ACH model:** its own banking product. Covercy is "not a bank"; banking is through Thread Bank, Member FDIC, on Unit (https://www.unit.co/case-study/covercy).
+
+### 2.5 Cash Flow Portal — low-cost syndication software with its own banking
+
+- **Who it is for:** new and established real-estate GPs (syndications and funds).
+- **Price:** the vendor's pricing page shows CRM "Core $0/mo billed yearly, up to 1,500 contacts" and "Marketing Pro $199/mo billed yearly" (https://www.cashflowportal.com/pricing?tab=crm). The syndication/fund suite price did not appear in any extract (https://www.cashflowportal.com/pricing?tab=funds). Third-party: "starting at $99.00 per month" (SaaSworthy https://www.saasworthy.com/product/cash-flow-portal/pricing, last updated January 2022: **possibly outdated**; Capterra https://www.capterra.com/p/227758/Cash-Flow-Portal/pricing "$99, usage based"); one review says plans start at $699/month (https://www.gappsy.com/tools/cash-flow-portal/). **The real suite price is unknown.**
+- **Capabilities:** distributions by ACH or check with waterfalls, hurdles and preferred returns; next-day ACH distributions; e-sign templates pre-filled, a digitized SEC questionnaire and W-9; accreditation through a Parallel Markets integration; 506(b) and 506(c); feeder-fund add-on (https://www.cashflowportal.com/features/real-estate-investor-portal, https://www.cashflowportal.com/products/banking).
+- **White-label:** "Our portal, your brand"; set-up includes "selecting a custom URL, uploading your logo". Whether that is a fully own domain is not confirmed.
+- **ACH model:** its own banking; "a financial technology platform and not a bank"; FDIC coverage up to $250K per deal entity.
+
+### 2.6 SponsorCloud (formerly SyndicationPro) — syndicators
+
+- **Who it is for:** real-estate sponsors and syndicators. SyndicationPro has been renamed SponsorCloud (https://www.sponsorcloud.io/, https://www.gappsy.com/tools/syndicationpro/, updated 2026-08-15).
+- **Price:** not published; "based on Equity Under Management (EUM)" (Gappsy); quote-based (https://www.spotsaas.com/product/sponsor-cloud/pricing). Subscribed.fyi gives "$95-600 / Month" and calls it "only an estimated pricing range" (https://subscribed.fyi/syndicationpro/reviews/) — **unverified**.
+- **Per-use charges:** accreditation letter through Parallel Markets $59, renewal $59 (https://help.sponsorcloud.io/investor-platform/how-to-verify-an-investors-accreditation-in-sponsorcloud).
+- **Capabilities:** onboarding with e-signatures and 506(c) accreditation checks; white-label investor portal; ACH and check distributions inside the platform (press release https://www.prweb.com/releases/syndicationpro-disrupts-investor-distributions-and-leads-the-way-for-digital-transformation-with-ach-812800525.html, undated in the extract); multi-tier waterfalls with unlimited investor classes (https://www.sponsorcloud.io/platform/investment-distribution-software).
+- **Set-up fee:** not found.
+
+### 2.7 AppFolio Investment Manager — sponsors who already use AppFolio for property management
+
+- **Price:** not published by the vendor. Third-party listings: about $650/month (GetApp) or $700/month (Software Advice, Capterra Ireland); Core plan $650/month, Premier custom (https://www.capterra.com/p/186948/AppFolio-Investment-Management/pricing/, https://agorareal.com/compare/appfolio-investment-management-pricing/ — a competitor's page).
+- **Capabilities:** built-in e-signatures for subscription agreements, operating agreements and PPMs "without the need for any third-party tools"; ACH contributions and distributions; waterfall calculations; custom-branded portal; integration with AppFolio Property Manager for property accounting (https://appfolio.com/investment-manager/investment-management, https://www.appfolio.com/investment-manager).
+- **Set-up fee, per-investor charges:** not found.
+
+### 2.8 Yardi Investment Suite / Investment Manager — large and institutional real-estate managers
+
+- **Price:** "pricing will depend on the needs of your business" (https://www.yardi.com/market/investment-management/). Capterra shows "$749.00 per user, per month" for Yardi Investment Manager but also "contact vendor" (https://www.capterra.com/p/248341/Yardi-Investment-Manager/) — unconfirmed. Investment Accounting is quoted by number of entities and AUM (https://zoftwarehub.com/en-bh/products/yardi-investment-accounting/pricing).
+- **Capabilities:** subscription agreements through e-signature, capital calls, waterfall distributions, branded portal and CRM, statements and tax documents in the portal (https://www.yardi.com/product/investment-manager, https://www.yardi.com/blog/yardi-investment-suite/). ACH and own domain: not confirmed.
+
+### 2.9 RealPage Investment Management (RealPage IMS)
+
+- **Price:** "Starting at $1,000.00 per month" (Software Advice https://www.softwareadvice.com/investment-management/investor-management-services-profile/, Capterra https://capterra.com/p/169850/IMS-Platform/). G2's page was last updated 2020-03-03: **possibly outdated** (https://g2.com/products/realpage-ims/pricing). Quote required.
+- **Capabilities found:** investor portal with positions, distribution history and performance metrics. E-sign, ACH and white-label: not confirmed.
+
+### 2.10 Avestor — funds and syndications, mid-market
+
+- **Price:** Scalable $600/month, Pro $1,500/month (GetApp https://www.getapp.com/finance-accounting-software/a/avestor); also "$24,000 per year" flat (Capterra https://www.capterra.com/p/10024787/Avestor/). InvestNext says Avestor "starts at $700/month" plus extra costs for administration services (a competitor's claim, https://www.investnext.com/landing/investnext-vs-avestor/).
+- **Capabilities:** not researched in detail.
+
+### 2.11 Carta (fund administration and LP portal) and Vauban
+
+- **Who it is for:** venture and private-equity funds, not real-estate syndications. Vauban now operates as part of Carta (https://carta.com/blog/category/vauban/).
+- **Price:** fund administration is quote-based (VC Beast benchmark, July 2026, https://vcbeast.com/fund-admin-pricing-benchmark). Reported ranges: $20,000-$30,000 a year for most emerging managers (https://teel.substack.com/p/the-emerging-vc-stack-angellist-vs) and $25,000-$50,000 a year for sub-$100M Fund I and II (https://valueaddvc.com/blog/vc-fund-administration-in-2026-the-best-fund-admins-and-what-they-cost). Both are secondhand; no Carta document was found.
+- **Relevance:** a fund-administration competitor to the managed edition more than to the self-serve portal.
+
+### 2.12 Allocations — SPVs and funds, including real estate
+
+- **Price (vendor's own pages):** Standard SPV $9,950 one-time; Premium SPV $19,500 one-time (real estate included, up to 50 investors, extra closes $2,000 each); Fund plan $19,500 a year; $100 per investor above the included count; K-1 preparation is an add-on (https://www.allocations.com/spv-pricing, https://www.allocations.com/insights/how-spv-pricing-works-on-allocations). The pages conflict on some figures.
+- **Relevance:** an administration-plus-portal bundle per vehicle; it competes with the managed edition.
+
+### 2.13 Altvia — private-equity and venture CRM and LP portal
+
+- **Price:** "$1,800.00 per year" starting price on directories (Software Advice, GetApp https://www.getapp.com/financial-crm-software/a/aim); otherwise quote through the vendor. Probably not the portal's full price. Weak relevance to syndicators.
+
+### 2.14 Others checked and found not to be direct competitors
+
+- **Passthrough** (the "Passthru" in the brief): investor-onboarding and subscription-document workflow sold to fund administrators and law firms. Its FAQ says it connects to any LP portal and will not build one (https://www.passthrough.com/faqs). No price published.
+- **Dealpath:** acquisitions pipeline and deal management, not an investor portal. Pricing not published; Capterra's "$0.01" is a placeholder (https://www.capterra.com/p/164485/Dealpath/).
+- **Sydecar:** SPVs, but its FAQ says it "does not currently support real estate" (https://sydecar.io/faq). Price for reference: 2% of capital raised, $2,500-$12,500, plus a $2,000 regulatory fee.
+- **Groundbreaker:** real-estate investor management; no real price published (Capterra's "$0.01 per user per year" is a placeholder, https://capterra.com/p/183376/GroundBreaker/).
+- **Market range overall:** "investor portal software for real estate sponsors ranges from $150-$3,000+/month depending on features and scale" (GowerCrowd, https://gowercrowd.com/real-estate-syndication/investor-portal-comparison, undated in the extract).
+
 <!-- gsd:write-continue -->
