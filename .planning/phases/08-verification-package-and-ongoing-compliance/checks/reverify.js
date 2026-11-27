@@ -578,7 +578,11 @@ const parts = {
       await p.evaluate(() => Object.keys(localStorage).forEach((k) => localStorage.removeItem(k)));
       await p.goto(`${S.origin}/index.html`);
       await p.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
-      await Lib.consoleRoute(p, 'console-investors', '.cs-tbl');
+      // The managed edition's staff role (its demo control has no "admin"): the Investors page as the firm's team sees it.
+      if (await p.locator('#demo-role').count()) await p.selectOption('#demo-role', 'staff');
+      await p.evaluate(() => (location.hash = '#console-investors'));
+      await p.waitForSelector('table.cs-tbl tbody tr', { timeout: 20000 });
+      await p.waitForTimeout(300);
       const m = await p.evaluate(() => ({ edition: window.CVPortal.EDITION.id, rows: document.querySelectorAll('table.cs-tbl tbody tr').length, buttons: document.querySelectorAll('[data-action="reverify-request"]').length }));
       check('not shown in the managed edition (index.html): its Investors page lists investors and offers no "Ask to re-verify"', m.edition === 'managed' && m.rows > 0 && m.buttons === 0, m);
     } finally {
