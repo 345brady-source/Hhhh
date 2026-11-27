@@ -82,3 +82,10 @@ REVERIFY: FAIL (parts run: 2) - button
 The 14-day window and the "an offering raising needs verified accreditation" rule were left out of Task 1 on purpose so
 that this part could fail first; they are Task 3's code. Part leave passed on Task 2's code (13 PASS): Back, the portal's
 offer and the resume were built in Task 1. It is kept as a guard and proven by a mutation (below).
+
+Mutation for part leave (a copy of 52dbb86 with the portal's offer line removed from onboarding.js; red3-mut.txt):
+```
+FAIL leave the portal offers the open request: "<firm> asked you to verify your accreditation again." with "Verify your accreditation" :: null
+REVERIFY: FAIL (parts run: 1) - leave
+```
+Task 3 GREEN (parts leave and button on the Task 3 code): `REVERIFY: PASS (parts run: 2)`, 29 PASS.
