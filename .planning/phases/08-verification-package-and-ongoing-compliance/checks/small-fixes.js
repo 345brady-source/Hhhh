@@ -73,6 +73,13 @@ const parts = {
       const pick = await p.evaluate(() => {
         const NS = window.CVPortal;
         const w = NS.state.ws;
+        // The sample's funds may be fully called today: one holder of a closed-end fund then commits $100,000 more.
+        if (!NS.ops.callable(w).length) {
+          const o2 = w.offerings.find((o) => !(o.exit && o.exit.basis === 'exited') && w.investors.some((i) => i.positions.some((x) => x.offeringId === o.id)) && NS.ops.callable({ offerings: [o], investors: w.investors.map((i) => Object.assign({}, i, { positions: i.positions.map((x) => (x.offeringId === o.id ? Object.assign({}, x, { commitment: Number(x.amount) + 100000 }) : x)) })), calls: [] }).length);
+          const holder = o2 && w.investors.find((i) => i.positions.some((x) => x.offeringId === o2.id));
+          const pos = holder && holder.positions.find((x) => x.offeringId === o2.id);
+          if (pos) pos.commitment = Number(pos.amount) + 100000;
+        }
         const off = NS.ops.callable(w)[0];
         if (!off) return null;
         off.structure = Object.assign({}, off.structure, { callNoticeDays: -5 });
