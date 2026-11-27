@@ -80,4 +80,9 @@ raw email is asserted to match, so the test holds its own RED witness); controls
 lower-case path word with a year, short path words, subject, vendor host inside another query value) all still fail;
 text outside links is unchanged and 500 fresh `randomBytes(32)` invite tokens never survive. Alone: 3 pass, 0 fail.
 
+## Full server suite (`cd server && node --test`)
+
+- Start tree 9815af5 (full `git archive` copy in the scratchpad, same node_modules): `# tests 506  # pass 506  # fail 0`
+- After the fix: `# tests 509  # pass 509  # fail 0` (44.5 s wall) = 506 + the 3 tests of scan-tokens.test.mjs.
+
 <!-- gsd:write-continue -->
