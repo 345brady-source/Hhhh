@@ -25,6 +25,10 @@
 //             connection on, "Run now" re-screens them through it alone (one list read, no call to the package provider
 //             or the sponsor's own connector, the package result kept); with none, they are left out of "Run now" and
 //             nothing is called; no error text on the Overview or the AML/KYC page in either
+//   kyc-buttons  (08-CONTEXT "After 08-08") the AML/KYC page's "Re-screen" and "Re-screen N due" follow "Run now"'s
+//             package rule: with the free Treasury connection on, a package investor is re-screened through it alone (never
+//             the sponsor's own connector, never the package provider, the package result kept); with none, "Re-screen" calls
+//             nothing and says why in one sentence, and "Re-screen N due" leaves them out of its count
 //   auto-free (C-06) the firm screens with the free Treasury connection and its own connector: a due investor is
 //             re-screened through the Treasury connection alone when the console loads, with no click: one change-log entry
 //             "Re-screened automatically", the next date moved by the firm's interval, the own connector's result kept and
@@ -35,7 +39,7 @@
 //   preview-desktop, preview-phone  the owner's preview (framed, connect-src none, no server) at 1280x800 and at 390x844
 //             with touch, an investor due for re-screening: the frame refuses a fetch; nothing runs by itself; no refused
 //             connection is recorded; no raw error; "Run now" re-screens with the firm's sandbox connection as before
-//   NODE_PATH=$(npm root -g) node monitoring.js [--only alert,hold-only,monitored-not-due,package-not-run,auto-free,once,preview-desktop,preview-phone]
+//   NODE_PATH=$(npm root -g) node monitoring.js [--only alert,hold-only,monitored-not-due,package-not-run,kyc-buttons,auto-free,once,preview-desktop,preview-phone]
 // The last line is "MONITORING: PASS (parts run: N)" or "MONITORING: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -457,6 +461,22 @@ async function runNow(p, tap) {
   await p.waitForSelector('#toasts .toast', { timeout: 30000 });
   return (await p.locator('#toasts .toast').last().innerText()).trim();
 }
+/** A button on the AML/KYC page pressed (sel); resolves to the toast it raised ('' when none). */
+async function kycPress(p, sel) {
+  await Lib.consoleRoute(p, 'console-kyc', '[data-action=kyc-tab]');
+  await p.evaluate(() => document.querySelectorAll('#toasts .toast').forEach((t) => t.remove()));
+  await p.locator(sel).first().click();
+  await p.waitForSelector('#toasts .toast', { timeout: 30000 }).catch(() => null);
+  return ((await p.locator('#toasts .toast').last().innerText().catch(() => '')) || '').trim();
+}
+/** The "Re-screen N due" button's text on the AML/KYC page ('' when it is not offered). */
+async function dueButton(p) {
+  await Lib.consoleRoute(p, 'console-kyc', '[data-action=kyc-tab]');
+  const b = p.locator('[data-action=kyc-screen-due]');
+  return (await b.count()) ? (await b.first().innerText()).trim() : '';
+}
+/** The console's sentence when a package investor cannot be re-screened (no free Treasury connection on). */
+const NO_FREE = (title) => `${title} was screened through the verification package, so only the free U.S. Treasury connection can re-screen them; turn it on on the Integrations page.`;
 /** Lines that read as an error, on the console's Overview attention list and the AML/KYC page. */
 const ERROR_RE = /error|could not|failed|not set up|answered \d|integration server/i;
 async function errorLines(p) {
@@ -651,6 +671,53 @@ const PARTS = {
       check('nothing was called for the package investor: no list read, no screening asked of the server, no package provider call', C.w.listReads() === 1 && C.posts.length === 1 && C.w.packageCalls() === 0, { reads: C.w.listReads(), posts: C.posts, calls: C.w.packageCalls() });
       errorsAfter = await errorLines(C.cp);
       check('still no error text on the Overview or the AML/KYC page', errorsAfter.filter((l) => errorsBefore.indexOf(l) < 0).length === 0, errorsAfter.filter((l) => errorsBefore.indexOf(l) < 0));
+      worldClean(check, C);
+      check('no script error in the console', C.A.errors.length === 0, C.A.errors);
+    } finally {
+      await C.close();
+    }
+  },
+
+  /** 08-CONTEXT "After 08-08": "Re-screen" and "Re-screen N due" on the AML/KYC page follow the package rule of "Run now". */
+  async 'kyc-buttons'({ check, S }) {
+    const C = await boot(S, check);
+    try {
+      await pulled(C, () => reopen(C)); // the console's own pass at load has run; what follows is the person's click
+      const pkg = (ref) => [{ connection: 'package-id', via: 'Identity check', how: 'server', ref, monitoring: false }];
+      // A: the free Treasury connection and the sponsor's own connector on; "Re-screen" on a due package investor's row.
+      const [pk] = await seed(C.cp, { use: ['ofac', 'own-screen'], own: true, investors: [{ index: 0, results: pkg('scr_seedpackage'), next: daysFrom(-1) }] });
+      let reads = C.w.listReads();
+      let posts = C.posts.length;
+      let toast = await kycPress(C.cp, `[data-action=kyc-screen][data-id="${pk.id}"]`);
+      const r = await record(C.cp, pk.id);
+      check('"Re-screen" re-screens the package investor through the Treasury connection alone: one list read, one screening asked of the server, for the Treasury lists', C.w.listReads() - reads === 1 && JSON.stringify(C.posts.slice(posts)) === JSON.stringify(['ofac']), { reads: C.w.listReads() - reads, posts: C.posts.slice(posts), toast });
+      check('"Re-screen": the package result is kept, the Treasury result added, the next date moved', r.results.length === 2 && r.results[0].ref === 'scr_seedpackage' && r.results[1].connection === 'ofac' && r.results[1].status === 'clear' && r.nextScreen === daysFrom(30), r);
+      check('"Re-screen" says the investor was screened', /^.+ screened: no matches\.$/.test(toast), toast);
+      // B: "Re-screen N due" with a second due package investor.
+      const [pk2] = await seed(C.cp, { investors: [{ index: 1, results: pkg('scr_seedpackage2'), next: daysFrom(-1) }] });
+      posts = C.posts.length;
+      toast = await kycPress(C.cp, '[data-action=kyc-screen-due]');
+      const r2 = await record(C.cp, pk2.id);
+      check('"Re-screen N due" never asks the sponsor\'s own connector', C.posts.slice(posts).indexOf(OWN) < 0, { posts: C.posts.slice(posts), toast });
+      check('"Re-screen N due": the package investor through the Treasury connection, the package result kept', r2.results.length === 2 && r2.results[0].ref === 'scr_seedpackage2' && r2.results[1].connection === 'ofac' && r2.nextScreen === daysFrom(30), r2);
+      check('the package provider was never called', C.w.packageCalls() === 0, C.w.calls.map((c) => c.kind));
+      // C: no Treasury connection (the sponsor's own connector only).
+      await useAml(C.cp, ['own-screen']);
+      const [pk3] = await seed(C.cp, { investors: [{ index: 2, results: pkg('scr_seedpackage3'), next: daysFrom(-1) }] });
+      const before3 = JSON.stringify((await record(C.cp, pk3.id)).results);
+      reads = C.w.listReads();
+      posts = C.posts.length;
+      toast = await kycPress(C.cp, `[data-action=kyc-screen][data-id="${pk3.id}"]`);
+      const r3 = await record(C.cp, pk3.id);
+      check('with no Treasury connection, "Re-screen" calls nothing for the package investor and keeps the record', C.posts.length === posts && C.w.listReads() === reads && C.w.packageCalls() === 0 && JSON.stringify(r3.results) === before3 && r3.nextScreen === daysFrom(-1), { posts: C.posts.slice(posts), same: JSON.stringify(r3.results) === before3, next: r3.nextScreen });
+      check('and says why in one sentence', toast === NO_FREE(pk3.title), toast);
+      const others = await C.cp.evaluate((id) => {
+        const NS = window.CVPortal;
+        const O = NS.ops;
+        return NS.state.ws.investors.filter((i) => i.id !== id && O.kycLabel(O.kycOf(i)).key === 'due').length;
+      }, pk3.id);
+      const btn = await dueButton(C.cp);
+      check('"Re-screen N due" leaves the package investor out of its count', btn === (others ? `Re-screen ${others} due` : ''), { btn, others });
       worldClean(check, C);
       check('no script error in the console', C.A.errors.length === 0, C.A.errors);
     } finally {
