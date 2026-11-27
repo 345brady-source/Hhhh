@@ -36,3 +36,16 @@ Owner instruction (2026-11-20, verbatim): "work around whatever bullshit you thi
 
 ## From phase 16 (2026-11-27)
 - 13-01-PLAN.md:174 and 13-06-PLAN.md:115 use a real bank routing number (ending 0021) as test data. Executors use its never-issued image instead (prefix 13, same last seven digits, as 16-03 swapped it in server/test/invitations.test.mjs); ACH LEAK must keep passing.
+
+## Plan-check additions, 13-01 re-check (checked 2026-11-27 against a4e2a54; 3 blockers fixed here, 7 warnings). Executors apply these with their plan. Findings: scratchpad checks-13-01-recheck.md.
+- B1 (Task 3): .planning/phases/13-email-overhaul/checks/gate13.sh joins 13-01's files. Before `cp "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"` add gate14.sh's rule: a different base commit than GATE_OUT/gate/base-commit.txt sets `export GATE_FRESH=1` and prints "GATE note: base commit changed; every step runs again". `--self-test` still ends PASS (8).
+- B2 (Task 2 RED): build base-sponsor.json from `git show $BASE:server/lib/mail.mjs > $O/base/lib/mail.mjs` and `git show $BASE:server/lib/crypto.mjs > $O/base/lib/crypto.mjs` (mail.mjs imports ./crypto.mjs); never from the working tree.
+- B3: test 1 of the guard file uses '131000021', never '021000021' (as "From phase 16").
+- W1 (Task 3 verify): starts `rm -f $O/gate.txt;`; `G=$P/checks/gate13.sh; [ -f $G ] || exit 1;` before the gate (no gate10 fallback).
+- W2: GATE13_PHASES="08 09 10" (08's reverify.js reads the server's reverify email).
+- W3: Task 1 verify adds `[ "$(cat $O/base-count.txt)" -ge 478 ] || exit 1;`. From a4e2a54: 478 -> 486 (Task 2) -> 490 (Task 3).
+- W4 (08-09 variants): invitation and invitation_resent gain reverify (resend subject 'New link: <Firm>: verify your accredited investor status'; text keeps "verify your accredited investor status again", button "Verify your accreditation"); submission_reminder = onboarding, subscription, taxRequest, reverify, coSign; sponsor_notification includes reverify-reverified and reverify-finished; base-sponsor.json and test 3 hold every one.
+- W5 (assertions; line numbers stale, find by grep): invitations-reverify.test.mjs:150 'Reminder: Harbor Ridge Capital: verify your accredited investor status' -> 'New link: Harbor Ridge Capital: verify your accredited investor status'; co-investor-server.js:535 `Dear ${F.coName}` -> `Dear ${F.coFirst},` (wave-1 B1 moved).
+- W6 (Task 3 verify): also `node .planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/ach-leak.js --case checks > $O/ach.txt 2>&1 && grep -q '^ACH LEAK: PASS' $O/ach.txt`.
+- W7: EM-01 here covers the four builders and reverifyMessage; taxdocs.mjs messages move in 13-07; filing_order and package_alert are staff-only and stay out.
+- Start: now, with these. No running build edits 13-01's files; no guide line (any goes to GUIDE-PASS.md).
