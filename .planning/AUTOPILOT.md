@@ -149,3 +149,8 @@ iPhone checks (steps 1, 7 and every merged screen); HELP-06 paid unseen run (fre
 
 ### Not kept across a container reset (scratchpad only, all regenerable)
 Gate outputs and owner screenshots under the session scratchpad (rerun the checks to regenerate), the help unseen set (rewrite), merged-tree rerun folders.
+
+## State 2026-11-27 ~20:45: pause lifted for phase 18 (owner)
+- Merged since the pause: 16-07 (gate16 GATE_EXIT=0; merged-tree checks pass) and small-fixes-c (gate12 GATE_EXIT=0; merged tree 606/606; the first run's one failed part was a LibreOffice conversion killed by the 2-hour limit, kept by fix 3 as evidence).
+- Still finishing: 15-14 and 13-08 gates. Phase 18: UI-SPEC approved (owner D-17, checker APPROVED), planner writing plans; build waits for 15-14 and 13-08.
+- Owner wording question open: two "no distributions" sentences in the Q4 statement.
