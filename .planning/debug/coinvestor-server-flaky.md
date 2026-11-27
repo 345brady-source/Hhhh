@@ -103,3 +103,8 @@ started: since 06-39; seen in 08-17's gate, 11-13's gate run 3, exec-15-02 run 1
   checked: fixed check under the E2 fault (DELAY_DELETE_MS=400), part cosign-forged 3 times in one slot under load (scratchpad coflaky/e2-fixed/, runN.sh)
   found: COUNTS e2-fixed: pass=3 fail=0 of 3; "CO-INVESTOR SERVER: PASS (parts run: 3)". Trace run 1: the forged import's held DELETE lands +17.06 s, its cancel +17.07 s, and only then replay #1's put (+17.11 s); replay #1's check GETs the submission and DELETEs it (lands +18.74 s), then replay #2's put (+18.80 s).
   implication: the run that failed every time before the fix (same fault) passes; each replay now starts after the previous check ended. Falsification test of the reasoning checkpoint passed.
+
+- timestamp: 2026-11-27T01:12Z
+  checked: fixed check, part cosign-forged 20 times in a row in one heavy.sh slot (one browser, each run its own integration server and contexts, as parts run in the check), 01:02:14-01:12:11 UTC, load average 4.7-5.2 on 4 cores, 18 heavy.sh commands of other agents queued for the other slots (scratchpad coflaky/after-load/, runN.sh after-load 20)
+  found: COUNTS after-load: pass=20 fail=0 of 20; "CO-INVESTOR SERVER: PASS (parts run: 20)"; every run 13 checks.
+  implication: 20 consecutive passes under shared-slot load.
