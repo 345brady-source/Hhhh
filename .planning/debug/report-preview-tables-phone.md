@@ -1,5 +1,5 @@
 ---
-status: fixing
+status: verifying
 trigger: "Report preview tables with 4+ columns squeeze text columns to 27-36 px at 390 px phone frame; words wrap one or two letters per line (143 broken words across five previews); Holdings and Net performance overflow the preview box (343-544 px in a 308 px box); Holdings header cut off at '% of net as'. Found by plan 12-09 walkthrough (walk12.js), 12-WALKTHROUGH.md Failures item 1."
 created: 2026-11-27T00:00:00Z
 updated: 2026-11-27T00:00:00Z
@@ -83,9 +83,24 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
   found: caption stays at x 0, 308 px wide, in every scrolled table; first column stays; 0 broken words. Screens h3-phone-kb-pe-t3.png (Holdings: names on 3 lines, whole words) and h3-phone-kb-pe-t2-scrolled.png (Net performance scrolled: Investment column and title in place, Net IRR/TVPI/DPI/RVPI whole).
   implication: chosen design: sideways scroll in the table's own box, first column and title fixed, text columns 8em minimum, phone only, 4+ columns only; root rule at all widths.
 
+- timestamp: 2026-11-27T15:40:00Z
+  checked: fix applied in files (reports.css root rule + phone rules scoped to 4+ columns; reports-ui.js tableHTML wraps hyphen/dash/slash words in span.rb-nw), probe after2 phone + desktop vs clean before runs
+  found: phone: broken words 60->0 (KB PE), 3->0 (KB statement), 22->0 (AR RE), 40->0 (PB open-ended); first column and title stay at x 0 when scrolled to the end; 0 numbers cut (no .num with scrollWidth>clientWidth); 2- and 3-column tables pixel-identical to before (8 of 8 shots). Desktop 1280: every table/column measurement identical; 17 of 19 screenshots pixel-identical; PB Holdings differs in 46 pixels in one 11x7 px patch (max grey difference 59/255) inside 'Single-name and basket swaps, net unrealized': sub-pixel anti-aliasing because the span starts a new text run; columns, lines and positions unchanged.
+  implication: GREEN on the probe; desktop look unchanged (sub-pixel only, reported plainly).
+
+- timestamp: 2026-11-27T15:45:00Z
+  checked: first phone screens after the fix (after-phone-kb-pe-t2.png): Net performance at scroll 0
+  found: three columns fill the 308 px box exactly; nothing showed that five more columns are to the right.
+  implication: added a right-edge shade (white end with background-attachment: local covers it at the end) on 4+ column table boxes, phone only: h4/after2 shots show the shade at scroll 0 and none at the end.
+
+- timestamp: 2026-11-27T15:46:00Z
+  checked: Totals scrolled to its end (after-phone-ar-re-t3-scrolled.png)
+  found: the table is 46 px wider than its box; at the far right the Gross column slides under the fixed first column (reads ')0.00'); at scroll 0 every Gross figure is whole.
+  implication: inherent to a fixed first column (every figure can be read whole at some scroll position; none is truncated by the layout). Reported as a trade-off, not hidden.
+
 ## Resolution
 
-root_cause:
-fix:
-verification:
-files_changed: []
+root_cause: "assets/css/reports.css:41 `.rb-doc { overflow-wrap: anywhere }` is inherited by the preview's table cells; `anywhere` (unlike break-word) counts a break between any two letters in a cell's narrowest (min-content) width, so the automatic table layout at the phone's 308 px squeezed text columns to one letter (27-36 px) and gave the width to the nowrap number columns; tables whose number columns alone exceeded 308 px also overflowed (343-544 px). Contributing (AND): a hyphenated word ('Single-name') breaks at its hyphen whenever its column sits at its narrowest width."
+fix: "reports.css: `.rb-tbl th, .rb-tbl td { overflow-wrap: normal }` (all widths) and `.rb-nw { white-space: nowrap }`; phone only (max-width 640px) for tables of 4+ columns: the table box is a size container with its own stacking context and a right-edge shade while columns remain; caption sticky at left 0, 100cqw wide; text cells min-width 8em; first column sticky at left 0, white, 1 px divider. reports-ui.js tableHTML: words with a hyphen, dash or slash in text cells wrapped in span.rb-nw (text unchanged)."
+verification: "(pending walk12 and the listed checks)"
+files_changed: [assets/css/reports.css, assets/js/reports-ui.js]
