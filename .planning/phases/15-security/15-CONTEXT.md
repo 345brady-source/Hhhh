@@ -97,3 +97,10 @@ Binding on the executors (full text: scratchpad checks-15-wave3.md).
 - For phase 16: payment-release routes add team lines with permission 'pay'. For 13-03: its routes add lines (13 wave 2 B1).
 - Open: sign-up collects no phone, so the README's Owner-reset procedure calls a number already held for the firm; 15-04's /v1/auth/* routes are covered by the public prefix line with role checks in auth.mjs; 15-04 merges second and reruns the suite (expected 521 + 11 = 532).
 - Merged-tree reruns of server-backed browser checks and the gate15 self-test: running.
+
+## After 15-04 (merged 2026-11-27, after 13-01)
+- Gate GATE_EXIT=0 on run 2 (run 1 hit the 2-hour limit at 36 ok, 0 FAIL). Plan tree 513 = 502 + 11. Merged tree 544 of 544 (after 15-05 521, 13-01 +12 = 533, 15-04 +11).
+- Wave 2 checks applied: B2 (email lookup keys from DATA_KEY then each comma entry of DATA_KEY_PREVIOUS; 'X,A' and ' X , A ' tested); W3 (invite/login refuses foreign-Origin or non-JSON posts 403 with no Set-Cookie).
+- Deviations: deny by default on /v1/auth/ for half-done sign-ins (401 'stage'); confirm ends every session; two-step/off ends others; the fresh window counts from the password; invite/login has its own per-address limit, answers 201; people records carry `invitationId`; a malformed code is 400 and not counted.
+- Open: POST /v1/auth/password is 404 until 15-14; with PORTAL_ORIGIN set a served portal cannot call invite/login until 15-18; an invitation made with the shared token for a workspace with no record gives an investor sign-in with no firm rule and an empty issuer (for 15-06/15-14 to close). Four guide lines in 15-04-SUMMARY for GUIDE-PASS once the screens exist.
+- Wave 3 can start: 15-06 now (fresh pull; 13-03/13-04/14-08 not running). 15-14 after 13-11 and 13-03.

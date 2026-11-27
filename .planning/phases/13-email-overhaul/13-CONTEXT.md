@@ -63,3 +63,12 @@ Binding on the executors (full text with each fix: scratchpad checks-13-wave2.md
 - W5 (13-11 Task 2): at least one golden per new kind, besides the 55 total.
 - W6 (13-03, 13-11 Task 1): `[ "$(cat $O/base-count.txt)" -ge 518 ] || exit 1;` (measured base, 506 now plus 13-01's).
 - Start: 13-03 after 13-01 and 15-05 merge; 13-05 after 13-01, 08-20 and 11-16 merge; 13-11 after 13-01 merges (09-08 not running).
+
+## After 13-01 (merged 323fae3, 2026-11-27)
+- Gate13 GATE_EXIT=0 (GATE13_PHASES="08 09 10"); plan tree 490 = 478 + 12. Merged tree 533 of 533; one conflict in server/test/mail.test.mjs resolved by keeping both (13-01's BANNED + model names, scanned through stripLinkTokens).
+- Interface change for later plans: emails.js's BANNED no longer holds the model maker's two names (no line of assets/js may spell them); tests that check renders add them on the test side (MODEL_NAMES in emails-guard.test.mjs).
+- emails.js uses the server's address rule for the support mailto (an address ending `&cc=x` no longer becomes a link).
+- 37 variants with .txt and .html goldens; sponsor messages byte-identical to the base builders.
+- Seen once, not 13-01's: server/test/auth-gate.test.mjs "operator" failed in one full run because a random id matched its `/pw|.../` scan (6 reruns pass). Same random-text class as scan-tokens; queued.
+- Owner's read of the wording at 13-10 (sponsor messages name the investor as the console holds the name, e.g. "Shah, Anita").
+- Wave 2 can start: 13-11 now; 13-03 now (15-05 merged); 13-05 after 11-16 merges.

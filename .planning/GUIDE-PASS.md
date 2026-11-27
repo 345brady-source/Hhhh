@@ -25,3 +25,6 @@ The guide trim is merged (sponsor guide 44,641 of 48,000 bytes on 2026-11-27). L
 
 ## 15-05 (merged e703292)
 - Proposed guide lines: see .planning/phases/15-security/15-05-SUMMARY.md (no guide bytes written).
+
+## 15-04 (merged)
+- Four proposed guide lines in .planning/phases/15-security/15-04-SUMMARY.md, for when the screens exist.
