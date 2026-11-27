@@ -1,5 +1,5 @@
 ---
-status: investigating
+status: fixing
 trigger: "Report preview tables with 4+ columns squeeze text columns to 27-36 px at 390 px phone frame; words wrap one or two letters per line (143 broken words across five previews); Holdings and Net performance overflow the preview box (343-544 px in a 308 px box); Holdings header cut off at '% of net as'. Found by plan 12-09 walkthrough (walk12.js), 12-WALKTHROUGH.md Failures item 1."
 created: 2026-11-27T00:00:00Z
 updated: 2026-11-27T00:00:00Z
@@ -7,10 +7,25 @@ updated: 2026-11-27T00:00:00Z
 
 ## Current Focus
 
-hypothesis: (forming) `.rb-doc { overflow-wrap: anywhere }` (assets/css/reports.css:41) is inherited by every preview table cell; `anywhere` (unlike `break-word`) adds soft-wrap opportunities to the min-content size, so the auto table layout can shrink text columns to one glyph while `.num` cells keep `white-space: nowrap` full width.
-test: read walk12 assertions; measure min-content of text cells in a check browser with/without overflow-wrap: anywhere on the table
-expecting: with `overflow-wrap: normal` on .rb-tbl cells the text columns keep word width
-next_action: read walk12.js broken-word / table-width assertions, measure base counts (server tests, walk12 RED)
+bug_class: Bohrbug (deterministic: same counts every run, base probe reproduced the walk's 60/22/40 exactly)
+hypothesis: CONFIRMED - `.rb-doc { overflow-wrap: anywhere }` (assets/css/reports.css:41) is inherited by every preview table cell; `anywhere` counts a break between any two letters when the browser sizes a column's narrowest width, so the auto table layout squeezes text columns to one letter (27-36 px) and gives the room to the nowrap number columns. Contributing: a hyphenated word ('Single-name') splits at its hyphen when its column sits at its narrowest width.
+next_action: apply fix in reports.css (+ hyphen span in reports-ui.js tableHTML), run probe phone+desktop, pixel-diff desktop, then walk12 and the listed checks
+
+reasoning_checkpoint:
+  hypothesis: "Text columns of 4+ column preview tables collapse to one letter on the phone because .rb-doc's inherited overflow-wrap: anywhere makes each text cell's min-content one glyph; with number cells nowrap, the auto table layout at 308 px gives text columns their min-content."
+  confirming_evidence:
+    - "Base probe at 390x844 reproduces the walk: 60 (KB), 22 (AR), 40 (PB) broken words, text columns 27-36 px, numbers 49-111 px."
+    - "Injecting only `.rb-tbl th, .rb-tbl td { overflow-wrap: normal }` via CSSOM (no other change) takes the counts to 0, 0, 1 and text columns to their longest word (58-104 px)."
+    - "The one remaining split is 'Single-name' at its hyphen (a break opportunity that exists regardless of overflow-wrap) in a 75 px column; a phone min-width of 8em on text cells makes it 0."
+  falsification_test: "If overflow-wrap: normal on the cells had left words split mid-letter, or if the counts had not moved, the cause would be elsewhere (e.g. table-layout or width rules). They went 125 -> 1, and the 1 is a hyphen break, not a mid-letter break."
+  fix_rationale: "Removing the inherited anywhere from table cells restores each column's true narrowest width (its longest word), which is exactly what the scroll box (.tbl-scroll, overflow-x: auto) was built to handle; the phone-only rules for 4+ column tables (title and first column fixed while scrolling, text columns 8em) make the scrolled table readable, and the hyphen span guarantees hyphenated words stay whole for any sponsor's data."
+  blind_spots: "Real WebKit (iPhone Safari) not installed - Chromium stand-in only; sticky table cells with collapsed borders are supported in Safari 15+ but not seen here. Fund A previews are covered by the walk, not the probe. Very long hyphenated or unspaced names would widen the fixed first column."
+  candidate_causes:
+    - "code (CSS): inherited overflow-wrap: anywhere on .rb-doc reaches th/td - CONFIRMED"
+    - "data: hyphenated words (Single-name) in a column at its narrowest width - CONFIRMED contributing (1 of 125)"
+    - "code (markup): tableHTML missing a scroll wrapper - ELIMINATED (wrapper present, scrolls)"
+    - "environment: phone frame width/zoom differs from 390 - ELIMINATED (frame checked 390x844; box 308 px = 390 - page and doc padding)"
+  and_gate: "yes, partly: the mid-letter breaks need only the inherited anywhere (single cause); the hyphen split needs a hyphenated word AND a column at its narrowest width. root_cause is the set of the two."
 
 ## Symptoms
 
