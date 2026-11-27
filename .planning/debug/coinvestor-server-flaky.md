@@ -1,17 +1,34 @@
 ---
-status: investigating
+status: verifying
 trigger: "CO-INVESTOR SERVER (5) (06-39's check) fails part cosign-forged about 1 run in 5 when several gates share the browser slots, and passes when rerun unchanged. Seen in 08-17's gate and 11-13's gate run 3 (one cosign-forged assertion failed after a fixed 2500 ms wait)."
 created: 2026-11-27T00:00:00Z
-updated: 2026-11-27T00:00:00Z
+updated: 2026-11-27T01:20:00Z
 start_commit: 63d6bdf
+bug_class: Bohrbug once the ordering is fixed (deterministic with the DELETE held); Heisenbug as seen (ordering decided by process scheduling under load)
 ---
 
 ## Current Focus
 
-hypothesis: (H1) cosign-forged's replay() clicks the console's "Check now" and reads the console's state after a fixed 2500 ms (checks/co-investor-server.js:747); under load the check-now's import of the replayed submission has not finished by then, so said1 is empty; the still-running first check then finishes after the void and writes the "no longer out for signature" line, so said2 has 1 line instead of 2.
-test: read the product's Check now path (busy guard, what it does per submission) to rule out a product race; then reproduce under heavy.sh load / CDP CPU throttling and count.
-expecting: failures only in the two replay assertions, with said1 = [] (late), never with forged values accepted.
-next_action: read the console's inv8-check handler and the co-investor import path (esign.js / portal) to see if a click during a running check is dropped or queued.
+hypothesis: CONFIRMED (H2). In the check, not the product: cosign-forged stores its replayed submission while the previous Check now (the forged import) is still running; that check's DELETE of the forged submission lands after the store and removes the replay, so replay #1 has nothing to process.
+test: fixed check under the same fault injection (DELETE held 400 ms), then 20 runs under shared-slot load, then the whole check, then server tests.
+expecting: PASS every time; the fault-injected run that failed before passes.
+next_action: run coflaky/batch.sh e2-fixed (2 runs, DELAY_DELETE_MS=400) and record; then the 20-run load batch.
+
+reasoning_checkpoint:
+  hypothesis: "replay #1 fails because consoleChecks() resolves when the co-investor's signer reads signed, which is inside coMerge, before that same check's DELETE /v1/invitations/:id/submission; replay() then writes the submission into the server store; when the DELETE reaches the server after the write, it removes the replay, so replay #1's Check now finds no submission (said1 = []) and replay #2's is the only one processed (said2 = [voided line])"
+  confirming_evidence:
+    - "E2: holding the console's DELETE 400 ms reproduces the failure deterministically, with FAIL lines identical to the real failure in exec-15-02/coserver-run1.txt"
+    - "E2 trace: replay #1's put at +16.43 s sits between the forged import's DELETE sent (+16.41 s) and landed (+16.82 s); replay #1's own check makes no submission GET"
+    - "unloaded trace run0: the same put came 10 ms after that DELETE was sent: the margin is a few ms, so process scheduling under load decides the order"
+  falsification_test: "if the fixed check (replay stored only after the previous check's toast) still fails under the held DELETE, or fails under load with said1 = [], H2 is wrong or incomplete"
+  fix_rationale: "checkNow() waits for the end of the check the press started (the console's own toast, written after the check's DELETEs and saves), so the replay is stored only after the forged import's DELETE has landed, and each replay is read only after its own check ended; the fixed 2500 ms guess is gone"
+  blind_spots: "a Check now press that joins a check the 60 s poll started before the submission was stored would end without processing it; ruled out for the replays (awaiting() is false after the co-investor import, so the poll does not check), still possible in principle for the first co-investor import (same exposure as before the fix, 60 s period, ~tens of ms window); the remaining 200/300/500 ms waits follow synchronous handlers (pacing, not stand-ins for an async result)"
+  candidate_causes:
+    - "code (check): replay overlaps the previous check (confirmed)"
+    - "code (check): fixed 2500 ms read too early under load (H1; same fix removes it; needs ~80x slowdown alone)"
+    - "code (product): a real race where a forged cosign is accepted or the result depends on timing (eliminated: server refuses a second completion; importSignature judges by current state; forged values never taken in any failing output)"
+    - "environment: browser slots shared, starved network process reorders the DELETE against the node-side store write (the trigger, not a cause to fix)"
+  and_gate: "yes: the failure needs both the check's overlap (code) AND scheduling that delivers the DELETE after the store (environment/load); removing the overlap removes the failure regardless of load"
 
 ## Symptoms
 
@@ -71,3 +88,8 @@ started: since 06-39; seen in 08-17's gate, 11-13's gate run 3, exec-15-02 run 1
   checked: side finding, not the flake: invitations.js coMerge (829-853) with esign.js applySignature (1329-1386)
   found: coMerge captures coS = env.signers.find(...) BEFORE importSignature; applySignature works on a deep copy and ends with Object.assign(env, next), replacing env.signers with new objects, so `si.signedAt = coS.signedAt` reads the stale object (undefined). coSweep then sees !si.signedAt and cancels the finished sign-in ("the agreement no longer waits for the co-investor"): the trace shows a POST .../cancel right after every successful co-investor import (run0 +15.53 s, e2 +16.84 s); the server answers 409 (completed) and the console logs "Co-investor sign-in cancelled: ... had already ended on the server".
   implication: a separate product defect (a misleading audit line and cancelledAt on a signed sign-in). It does not cause this flake (no timing dependence; the replays are judged by importSignature's own checks). Reported, not fixed here (outside this task's lines).
+
+- timestamp: 2026-11-27T01:15Z
+  checked: the fix, commit 6e3da17 (checks/co-investor-server.js only)
+  found: new checkNow(cp, ms): closes the dialog, goes to Investors, notes the toasts so far (a MutationObserver on #toasts), presses Check now, waits up to 30 s for the toast the inv8-check action shows once its check has ended ("Checked. Nothing new." / "... added to the portal." / "Could not check: ..."); { finished, toast }. consoleChecks = checkNow + "co-investor's signer signed"; replay = store.put + checkNow + consoleState; both replay assertions also require check.finished, and their details carry the check's outcome. Other waits that stood in for an async result: saveCo 800 ms -> the co-save form gave way; removeCo 800 ms + 1500 ms -> the console logged the server's answer to its cancel; co-investor device 800 ms after done -> invite.sentAt (the confirmed send); countersign 900 ms -> .es-sign-console open. Left: 200/300/500 ms waits after synchronous handlers (typing, a press that may open the adopt dialog, the agreement image, Requests tab/approve), each followed by a condition wait or a synchronous read.
+  implication: no assertion changed or loosened; two got stricter (the check must have ended).
