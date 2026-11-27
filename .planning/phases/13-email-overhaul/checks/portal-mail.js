@@ -1,5 +1,5 @@
 // gate: browser
-// last "PORTAL MAIL: PASS (parts run: 8)"
+// last "PORTAL MAIL: PASS (parts run: 9)"
 // Plan 13-08 (EM-09 to EM-14, C-02 to C-05, C-09, C-12): the e-sign notices, the Team and password toasts, the investor's
 // email choices and the page an unsubscribe link opens, in the self-serve edition; the managed edition unchanged.
 //   esign-server          1280x800, the real integration server in this process (serverConsole): an envelope sent to two
@@ -25,6 +25,10 @@
 //   managed-same          index.html: the e-sign hint and the send, remind and void toasts, the Team page, the sign-in
 //                         page's forgot toast and the Account page are byte-identical to the base tree's
 //   nonet                 every no-server moment above, once more: zero requests and zero policy refusals
+//   server-words          with a server (decision during 13-08): the Account page shows no "Invitations to new
+//                         offerings" switch but the line about the email's own link, and its Email section claims nothing
+//                         the server does not do; the void dialog, the review dialog and the Team page hint say only what
+//                         happens with a server
 // WebKit is not a part here (it is not installed on this machine): one NOTE line says so; the owner's iPhone check covers
 // Safari.
 // The last line is "PORTAL MAIL: PASS (parts run: N)" or "PORTAL MAIL: FAIL (parts run: N) - <failed parts>".
@@ -214,6 +218,29 @@ const SWITCHES = ['New documents', 'Quarterly reports', 'Invitations to new offe
 const STOP = 'Stop invitations to new offerings';
 const DONE = 'Done. Invitations to new offerings will no longer be emailed to you.';
 const ONLY = 'This link works only from the email you received.';
+const TEAM_HINT_SIM = 'They get an email to set a password and turn on two-step sign-in (simulated in this demo).';
+const TEAM_HINT_SERVER = 'The invitation is saved here; it is emailed once sign-in accounts are connected.';
+const VOID_LABEL_SERVER = 'Reason (shown to signers in their portal)';
+const MSG_LABEL_SERVER = 'Message (shown on the signing page)';
+const OFFER_LINE = 'To stop invitations to new offerings, use the link at the bottom of any such email.';
+/** The Team page's hint under "Send invitation". */
+const teamHint = async (p) => {
+  await p.evaluate(() => (location.hash = '#console-team'));
+  await p.waitForSelector('form[data-form=team-invite]', { timeout: 20000 });
+  return p.evaluate(() => Array.from(document.querySelectorAll('form[data-form=team-invite] .cs-hint')).map((x) => x.textContent.trim()).join('\n'));
+};
+/** A dialog opened by an action on an envelope, read back (its field labels and hint lines), then closed. */
+async function dialogWords(p, action, envId) {
+  await p.evaluate(({ action, id }) => window.CVPortal.actions[action]({ getAttribute: () => id }), { action, id: envId });
+  await p.waitForSelector('#dlg[open]', { timeout: 10000 });
+  const out = await p.evaluate(() => ({
+    labels: Array.from(document.querySelectorAll('#dlg label > span, #dlg .cs-field > span')).map((x) => x.textContent.trim()),
+    fields: Array.from(document.querySelectorAll('#dlg input, #dlg textarea')).map((x) => x.name || x.id),
+    text: document.getElementById('dlg').innerText
+  }));
+  await p.evaluate(() => window.CVPortal.ui.closeDialog());
+  return out;
+}
 const forgotWant = (team) => `Password reset email ${SIM()}. If you cannot sign in, contact ${team}.`;
 
 /** Invite a team member on the Team page (and press Resend on that row); resolves to [invite toast, resend toast]. */
@@ -402,6 +429,8 @@ const parts = {
       const [inv, again] = await teamToasts(fr, 'rosa.delgado@kestrel.example');
       check(`no server: inviting says "${TEAM_SIM('rosa.delgado@kestrel.example')}"`, inv === TEAM_SIM('rosa.delgado@kestrel.example'), inv);
       check('no server: Resend invite says the same', again === TEAM_SIM('rosa.delgado@kestrel.example'), again);
+      const hint = await teamHint(fr);
+      check(`no server: the Team page hint says "${TEAM_HINT_SIM}"`, hint === TEAM_HINT_SIM, hint);
       await L10.quiet(check, A, fr);
     } finally {
       await A.context.close();
@@ -609,6 +638,44 @@ const parts = {
     } finally {
       await srv.close();
       if (base.made) require('fs').rmSync(base.dir, { recursive: true, force: true });
+    }
+  },
+
+  'server-words': async ({ check, S }) => {
+    const sc = await T.serverConsole(S, { context: DESKTOP });
+    try {
+      const page = sc.page;
+      check('the console is connected to the server', !!sc.on, sc.on);
+      const hint = await teamHint(page);
+      check(`with a server: the Team page hint says "${TEAM_HINT_SERVER}"`, hint === TEAM_HINT_SERVER, hint);
+      const [a, b] = await twoInvestors(page);
+      const e = await makeEnvelope(page, { title: 'Side letter for Fund II', signers: [a.id, b.id] });
+      const review = await dialogWords(page, 'es-review', e.id);
+      check('with a server: the review dialog has no "Email subject" field (the server\'s notice has its own subject)', review.labels.indexOf('Email subject') < 0 && review.fields.indexOf('subject') < 0, review.labels);
+      check(`with a server: the message is labelled "${MSG_LABEL_SERVER}", never "shown in the email"`, review.labels.indexOf(MSG_LABEL_SERVER) >= 0 && review.text.indexOf('shown in the email') < 0, review.labels);
+      await watchToasts(page);
+      await page.evaluate((id) => {
+        const NS = window.CVPortal;
+        NS.state.ws.envelopes.find((x) => x.id === id).message = 'Please sign by Friday.';
+        NS.forms['es-send']({ getAttribute: () => id, subject: undefined, message: { value: 'Please sign by Friday.' } });
+      }, e.id);
+      const sent = await nextToast(page, 0);
+      check('with a server: Send from the review dialog (no subject field) still sends', /server’s outbox|Emailed to/.test(sent), sent);
+      const v = await dialogWords(page, 'es-void', e.id);
+      check(`with a server: the void reason is labelled "${VOID_LABEL_SERVER}", never "sent to signers"`, v.labels.indexOf(VOID_LABEL_SERVER) >= 0 && v.text.indexOf('sent to signers') < 0, v.labels);
+      // The investor's Account page with a server: no offering switch, the line about the email's own link instead.
+      await L10.sample(page, { role: 'investor', investor: a.id });
+      await page.evaluate(() => (location.hash = '#account'));
+      await page.waitForSelector('#view section.sec', { timeout: 20000 });
+      await page.waitForTimeout(300);
+      const sec = await emailSection(page);
+      check('with a server: the Email section shows only "New documents" and "Quarterly reports" (the console honours both)', !!sec && JSON.stringify(sec.switches.map((x) => x.label)) === JSON.stringify(SWITCHES.slice(0, 2)), sec && sec.switches);
+      check('with a server: no "Invitations to new offerings" switch', (await page.locator('#view input[data-k=offering]').count()) === 0);
+      check(`with a server: the line "${OFFER_LINE}"`, !!sec && sec.lines.indexOf(OFFER_LINE) >= 0, sec && sec.lines);
+      check('the Email section says nothing else (its lines are that line and the always-emailed line)', !!sec && JSON.stringify(sec.lines.slice().sort()) === JSON.stringify([OFFER_LINE, ALWAYS].sort()), sec && sec.lines);
+      check('no page errors', sc.A.errors.length === 0, sc.A.errors);
+    } finally {
+      await sc.close();
     }
   },
 
