@@ -1,0 +1,21 @@
+# Phase 18: UI overhaul — context
+
+## Owner's request (verbatim, 2026-11-27)
+"ok use gsd and ui/ux pro max to overhaul the ui, dont change any of the processes or underlying functions, feel free to relocate things like instead of a help button for that chat bot have a serach bar that says ask me anything in the top right corner like most websites, so completely overhaul the UI, it should not take to long, again you are not changing anything about the portal other than how it looks and its layout, also consolidate the offerings and offering intake pages, have the site look like a wall st investment bank, very classy, very regal, carrow and vale is a financial service firm that learned saas not the other way around like the rest of the market"
+
+## Owner decisions
+- D-01: GSD process and the UI/UX Pro Max skill (installed at .agents/skills/ui-ux-pro-max, linked in .claude/skills) drive the design.
+- D-02: change only how it looks and its layout. No process, flow, rule, calculation, data, server behaviour or underlying function changes. Every existing check keeps testing the same behaviour; a check may change only where a control moved or a page merged, and never loosens what it proves.
+- D-03: completely overhaul the look, everywhere: sponsor console (both editions), investor portal, onboarding, e-signature screens, report builder, sign-in, every dialog.
+- D-04: the help assistant's entry becomes a search field in the top-right corner reading "Ask me anything" (like most websites), opening the same assistant with the same rules, limits and fail-soft behaviour.
+- D-05: consolidate the Offerings and Offering intake pages into one page (same functions, one place).
+- D-06: the look of a Wall Street investment bank: very classy, very regal. Carrow & Vale is a financial-services firm that learned SaaS, not a SaaS company that learned finance; the design should feel like the former.
+- D-07 (answer 2026-11-27): investors and sponsors must not see Carrow & Vale; the regal look is what investors and sponsors see and feel while using the portal. The white-label rule stands: the investor portal and everything investors receive carry the sponsor's own logo and brand on the regal frame; no Carrow & Vale and no vendor, model or library name anywhere sponsors or investors look (the ID-check provider's own page and the sponsor's CRM panel excepted, as before).
+- D-08 (answer 2026-11-27): the four paused plans (13-08, 15-14, 16-07, small-fixes-c) finish and merge first; design research, UI-SPEC and planning run in parallel; building starts on top of them.
+
+## Carried rules
+- The own-fonts quick plan (fonts served from the portal's own origin, all subsets) is in the queue; the new type choices must be served the same way (no outside font host) — the UI-SPEC names fonts with their licences and the planner folds them into own-fonts or this phase.
+- Phone (390x844 touch) and desktop (1280) both first-class; the owner checks on his iPhone; Chromium iPhone profile with a NOTE (WebKit not installed).
+- Accessibility floors from UI/UX Pro Max (contrast 4.5:1, focus rings, 44px touch targets, reduced motion).
+- Never the owner's forbidden word; no taxpayer or bank numbers on any new screen text or fixture.
+- Nothing is called ready before the owner has checked it.

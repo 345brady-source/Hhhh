@@ -538,3 +538,10 @@ Plans:
 **Depends on:** Phase 13 (sending and the sent log), Phase 15 (roles, server-held data), Phase 16 (built after it, owner's decision)
 **Plans:** to be planned
 
+### Phase 18: UI overhaul (the regal look)
+
+**Goal:** Every screen (sponsor console in both editions, investor portal, onboarding, e-signature, report builder, sign-in, dialogs) gets one new design: the classy, regal look of a Wall Street investment bank, from a firm that is financial services first. Layout may move (the help assistant becomes an "Ask me anything" search field top right; Offerings and Offering intake become one page); no process, rule, data or function changes; white label kept (sponsor's brand on the regal frame, never Carrow & Vale). Nothing is called ready before the owner has checked it.
+**Requirements**: defined in 18-UI-SPEC.md and 18-RESEARCH.md
+**Depends on:** 13-08, 15-14, 16-07, small-fixes-c merged first (owner D-08); own-fonts (fonts served from the portal's own origin)
+**Plans:** to be planned
+
