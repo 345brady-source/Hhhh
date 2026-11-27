@@ -13,5 +13,5 @@ The guide trim is merged (sponsor guide 44,641 of 48,000 bytes on 2026-11-27). L
 - 08-09 (reverify), about 240 bytes: 08-09-SUMMARY.md
 - 12-08 (178 bytes), at the end of the report builder entry: `In a report, choose who it is for, then "Generate". Type your name and "Deliver": each investor finds it in Documents. "Tell investors" fills in a notice on Notices; you send it.`
 - 16-05 (four lines): 16-05-SUMMARY.md
-- 16-06: 16-06-SUMMARY.md
+- 16-06: 16-06-SUMMARY.md ("Guide lines for the guide pass")
 - Co-investor "Signed <date>" state on the Investors row (guide lines 121, 123 never mention it): write one line from the coMerge fix (AUTOPILOT 2026-11-27).
