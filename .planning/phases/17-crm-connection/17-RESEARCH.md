@@ -488,4 +488,132 @@ Note for the firm (one line on the panel and in the guide): people with access t
 | HubSpot reply with markup shown in the console | Tampering (XSS) | lead names and emails drawn as text (`h()`); a check plants markup in the stand-in |
 | Account token used to read leads | Elevation | `tokens: false` on every CRM line |
 
+## 5. Testing without a real account
+
+### 5.1 The local stand-in: `server/test/hubspot-fake.mjs`
+
+Built like `server/test/ses-fake.mjs` (an HTTPS server on 127.0.0.1 with a self-signed certificate from `smtp-fake.mjs`'s `selfSignedCert()`, first line `// gate: tests 1`), and used by server tests and browser checks alike. It answers the calls in 1.2 with the shapes in the adapter's `ASSUMED` table, and keeps state a test can read and set:
+
+| Part | Behaviour |
+|------|-----------|
+| `keys` | Map key → `{ account: { id, domain }, scopes: [...] }`; an unknown key answers 401; a call outside the key's scopes answers 403 with a missing-scopes category |
+| `contacts`, `deals`, `properties`, `associations` | in-memory records with string ids from a counter starting at a never-real value; one contact per email (case-insensitive); POST with a taken email answers 409 with the existing id in the message |
+| `pipelines` | the default deal pipeline with seven stages (ids and labels as the extract-era default; the test may replace them) |
+| `search` | lifecycle-stage and text filters; an optional `lagMs` so a just-created contact is not listed yet |
+| `fail` | `{ code, method?, path?, times?, retryAfter? }`: 429 with `Retry-After`, 500, 502, a hang past the timeout, or a connection reset |
+| `requests` | every request with method, path, headers (Authorization redacted to its last 4 characters) and body, so a test can assert what was sent and what was never sent |
+| `validation` | optional required deal properties, to model 2026-09 write validation |
+| `markup` | lead names containing `<img src=x onerror=...>` for the console's draw-as-text check |
+
+Fixture people use `example.com` / `.example` addresses and never-issued phone numbers (555-01xx); amounts are round; no real HubSpot account id.
+
+### 5.2 Server tests (node --test, no network)
+
+`createServer({ crm: { base: 'https://127.0.0.1:<port>', ca } , fetch })`: the test-only override (4.1). The stand-in's CA is passed through the same route `mailCtx` uses today for the SES stand-in.
+
+### 5.3 Browser checks
+
+Like `.planning/phases/13-email-overhaul/checks/email-sending.js`: the real server in the check's process, the stand-in behind it, the self-serve console connected to it, at 1280x800 and at 390x844 with touch; plus the no-server sandboxed frame (zero requests, zero policy refusals) and the managed edition unchanged. The white-label scan allows "HubSpot" only inside the CRM panel of the Integrations page (D-02) and nowhere else: investor portal, every email kind (`emails.js` `BANNED` gains `/hubspot/i`), help guide text, the invitation dialog, toasts, and server sentences an investor can receive.
+
+### 5.4 What only a live run with the sponsor's own account can prove (owner checkpoint, CRM-17)
+
+1. Whether a **free** HubSpot account has Settings > Integrations > Service Keys, and the exact steps and scope names a sponsor clicks (for the guide and the panel's one-line instruction).
+2. Every path and reply shape in the adapter's `ASSUMED` table, on the API version chosen (2026-03 or 2026-09).
+3. How a missing scope, a revoked key, a duplicate email (409 body) and a deleted record look.
+4. That creating a unique deal property and upserting deals by it works on the free tier, and how many custom properties the free tier allows.
+5. Default pipeline stage ids and their won/lost metadata; that associations by the default call show the contact on the deal in HubSpot's own screen.
+6. That the lead search finds a lead created in HubSpot's screen, and how long it takes to appear.
+7. That a full first sync of a small test list stays inside the burst limit and that `Retry-After` arrives on 429.
+8. Seen in HubSpot's own screens: the contact, the deal, its amount and stage moving as the test investor goes Invited → Started → Signed → Accredited → Funded; no field outside the allow-list on the contact or deal.
+
+The live run uses a test investor with `example.com`-style data the owner types, never a real investor, and the key is pasted by the owner into his own server, never given to an agent (AUTOPILOT: no agent is given an API key). Until it passes, the panel shows "Live connection: To be confirmed", as the mail panel shows "Live sending: To be confirmed".
+
+<phase_requirements>
+## Phase Requirements
+
+| ID | Description (testable) | Research Support |
+|----|-------------|------------------|
+| CRM-01 | An Owner or Admin signed in within 10 minutes connects a CRM by pasting an access key on the Integrations page; the server checks the account and scopes against the CRM, names any missing scope in one sentence, creates the two properties if absent, seals and stores the key, and writes "CRM connected" (account id only) to the change log; Staff, Read-only and Accountant are refused with their sentences; a stale sign-in answers 401 `code 'fresh'`. | 1.3, 1.4, 3.9, 4.2 |
+| CRM-02 | The key never appears in any reply, the store file or blobs in clear, the change log, the sync log, the sent log, `/health`, console output or an error; a server without `DATA_KEY` refuses to store it. Disconnect deletes it at once. | 3.10, 4.1 |
+| CRM-03 | The sponsor picks one of the account's deal pipelines and maps Invited, Started, Signed, Accredited, Funded and Cancelled to its stages (a suggested map is offered; any may be left blank); nothing is sent until the map is saved and syncing started. | 3.3 |
+| CRM-04 | Each investor becomes or matches one contact by email (trimmed, case-insensitive): linked contacts are updated, found ones linked, missing ones created; a 409 on create links the existing contact; retries, restarts and two runs at once never create a second contact for one email. | 1.8, 3.2 |
+| CRM-05 | Each investor's commitment to an offering becomes exactly one deal (upsert by the opaque portal reference), with the deal name, amount, pipeline and mapped stage, associated with the contact. | 1.8, 3.3 |
+| CRM-06 | When an investor moves to a new portal stage (from the console's save or the server's invitation record, whether or not a console is open), the deal moves to the mapped stage on the next run (within a minute of the change, hourly at the latest); an unmapped stage moves nothing; stages never move backwards except to the Cancelled mapping. | 3.1, 3.3 |
+| CRM-07 | Only the allow-listed fields leave the portal: a test investor holding taxpayer numbers, bank and routing numbers, ID documents, accreditation evidence, address, date of birth, tax form, KYC results and notes produces CRM requests whose bodies contain none of those values. | 3.4 |
+| CRM-08 | Direction of truth: nothing from the CRM is written into any investor record; portal-owned fields are written only when the portal's value changes (an edit made in the CRM survives until then); an existing CRM phone is never blanked; CRM-only fields are never read or written. | 3.4, 3.5 |
+| CRM-09 | An investor's offering-email choice is never changed by anything from the CRM (a re-subscribed CRM contact leaves the portal's choice off); by default the choice is written to the contact's opt-out property (OQ-3). | 3.6 |
+| CRM-10 | A contact or deal deleted in the CRM is marked "Removed in your CRM" and not re-created until the sponsor chooses "Link again"; removing an investor or cancelling an invitation moves the deal to the Cancelled mapping; the portal never deletes a CRM record; disconnect keeps links until "Forget", and the portal's closing purge (15-20) deletes key, links, snapshots and log. | 3.5, 3.10 |
+| CRM-11 | Failed writes are retried with backoff (429 honours `Retry-After`; 5xx, timeouts and resets back off); 401 or a missing scope stops the runs and shows "Needs attention" with a fixed sentence; every attempt leaves one sync-log entry (field names, outcome, HTTP status; person-naming parts sealed; kept `CRM_LOG_DAYS`); the log is shown to roles with 'personal' only; no CRM error text is shown or stored. | 3.7 |
+| CRM-12 | From the invite dialog a person with 'personal' lists the CRM's leads not yet investors (text search), chooses one, and the dialog is filled with its name and email; sending needs 'operate' as today; the new investor's contact is linked to that lead (no second contact) and a deal is created at the Invited stage. | 3.8 |
+| CRM-13 | Every CRM route has a ROUTES line with the permission in 3.9 and `tokens: false`; an account token or the shared token is refused once the firm has people; another workspace's CRM data answers 404; the route walk test passes. | 3.9, 4.4 |
+| CRM-14 | White label: the CRM's name appears only in the CRM panel of the sponsor's Integrations page; never in the investor portal, any email, help answers or guide text, the invite dialog, toasts, or any sentence an investor or prospect can receive. The forbidden word appears nowhere. | D-02, 5.3 |
+| CRM-15 | Without a server (the owner's iPhone preview, the sandboxed frame), the CRM panel is one line and the lead button does not appear; zero requests and zero policy refusals; with a server, the panel and the lead list work at 390x844 with touch and at 1280x800 with a way out on screen and no horizontal overflow; lead names with markup are drawn as text. | Project constraints, 5.3 |
+| CRM-16 | The HubSpot adapter is one file behind the CRM interface (Pattern 1) with every unconfirmed path and shape in its `ASSUMED` table, and the server README gains a "CRM" section (how a sponsor makes the key, the scopes, what is sent and never sent, the log). | Pattern 1, 1.1 |
+| CRM-17 | Owner checkpoint: a live run with the sponsor's own HubSpot account (free tier first) resolves every item of 5.4; until it passes, the panel says "Live connection: To be confirmed". | 5.4 |
+</phase_requirements>
+
+## Validation Architecture
+
+### Test framework
+| Property | Value |
+|----------|-------|
+| Framework | `node --test` (Node 22.23.4 here; `server/package.json` `"engines": { "node": ">=18" }`), Playwright from the global install for browser checks |
+| Config file | none (each `server/test/*.test.mjs` is one gate test file with a `// gate: tests N` first line) |
+| Quick run command | `cd server && node --test test/crm-*.test.mjs` |
+| Full suite command | `cd server && npm test`, then the phase gate (`gate17.sh`, modelled on `.planning/phases/13-email-overhaul/checks/gate13.sh`) and the reference gate `.planning/checks/gate-reference.sh` |
+
+### Phase requirements to tests
+| Req ID | Behaviour | Test type | Automated command | File exists? |
+|--------|-----------|-----------|-------------------|-------------|
+| CRM-01 | connect, scopes sentence, properties created, change log, role and fresh refusals | server | `node --test test/crm-connect.test.mjs` | Wave 0 |
+| CRM-02 | key grep over replies, store, blobs, console | server | `node --test test/crm-connect.test.mjs` | Wave 0 |
+| CRM-03 | pipelines read, map saved, nothing sent before start | server | `node --test test/crm-sync.test.mjs` | Wave 0 |
+| CRM-04 | email match, link, 409, concurrent runs, restart | server | `node --test test/crm-sync.test.mjs` | Wave 0 |
+| CRM-05 | one deal per investor and offering, association | server | `node --test test/crm-sync.test.mjs` | Wave 0 |
+| CRM-06 | stage moves on save and on invitation change, unmapped, no backwards | server + Node check on `crm-map.js` | `node --test test/crm-sync.test.mjs`; `node checks/crm-map.js` | Wave 0 |
+| CRM-07 | planted sensitive fields absent from every request body | server | `node --test test/crm-fields.test.mjs` | Wave 0 |
+| CRM-08 | nothing written back; write-on-change; phone never blanked | server | `node --test test/crm-fields.test.mjs` | Wave 0 |
+| CRM-09 | mailprefs untouched by any CRM path; opt-out property set | server | `node --test test/crm-fields.test.mjs` | Wave 0 |
+| CRM-10 | 404 handling, Link again, cancel mapping, forget, purge | server | `node --test test/crm-sync.test.mjs` (purge part after 15-20) | Wave 0 |
+| CRM-11 | 429 Retry-After, 5xx backoff, 401 stop, log entries sealed, roles on log | server | `node --test test/crm-sync.test.mjs` | Wave 0 |
+| CRM-12 | lead list, lag, markup, invite linking | server + browser | `node --test test/crm-leads.test.mjs`; `node checks/crm-console.js --only leads` | Wave 0 |
+| CRM-13 | route lines, tokens refused, cross-workspace 404 | server | `node --test test/crm-roles.test.mjs` plus the existing roles-table walk | Wave 0 |
+| CRM-14 | white-label scan | browser + Node | `node checks/crm-console.js --only white-label` | Wave 0 |
+| CRM-15 | no-server line, phone and desktop, ways out | browser | `node checks/crm-console.js --only noserver,phone,desktop` | Wave 0 |
+| CRM-16 | adapter shape, README section | Node | `node checks/crm-map.js --only adapter` | Wave 0 |
+| CRM-17 | live account | manual (owner) | checklist in 5.4 | — |
+
+### Sampling rate
+- Per task commit: the task's own test file.
+- Per wave merge: `cd server && npm test` plus `gate17.sh`.
+- Phase gate: the reference gate green on the merged tree before `/gsd-verify-work`; then the owner's live run.
+
+### Wave 0 gaps
+- [ ] `server/test/hubspot-fake.mjs`: the stand-in (5.1)
+- [ ] `server/test/crm-connect.test.mjs`, `crm-sync.test.mjs`, `crm-fields.test.mjs`, `crm-roles.test.mjs`, `crm-leads.test.mjs`
+- [ ] `.planning/phases/17-crm-connection/checks/crm-map.js` (Node), `crm-console.js` (browser), `gate17.sh`
+- [ ] No framework install needed.
+
+## Environment Availability
+
+| Dependency | Required by | Available | Version | Fallback |
+|------------|------------|-----------|---------|----------|
+| Node | server and checks | yes | v22.23.4 | — |
+| Playwright (global) | browser checks | yes (`npm root -g` lists `playwright`) | not probed | — |
+| The shared browser queue | browser checks | yes (`SCRATCH/exec-011/heavy.sh` exists) | — | — |
+| HubSpot API (`api.hubapi.com`) | only the owner's live run | not reachable from this session (HubSpot hosts do not resolve here) | — | the local stand-in for every check; the live run happens on the owner's server |
+| Disk | builds and checks | 9.1 GB free on `/` (2026-11-27) | — | keep outputs small (AUTOPILOT) |
+
+**Missing dependencies with no fallback:** none for building and checking. The live run needs the owner's HubSpot account and a server that can reach `api.hubapi.com`.
+
+## Package Legitimacy Audit
+
+No external package is installed by this phase (no HubSpot SDK, no job or HTTP library: Don't Hand-Roll explains why). `server/package.json` keeps its single dependency.
+
+| Package | Registry | Age | Downloads | Source Repo | Verdict | Disposition |
+|---------|----------|-----|-----------|-------------|---------|-------------|
+| (none) | — | — | — | — | — | — |
+
+**Packages removed due to [SLOP] verdict:** none. **Packages flagged as suspicious [SUS]:** none.
+
 <!-- gsd:write-continue -->
