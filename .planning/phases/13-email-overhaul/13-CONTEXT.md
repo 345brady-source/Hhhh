@@ -186,3 +186,11 @@ Both plans:
 - W5: scans via lib13.noVendor after stripLinkTokens with message, investor and envelope ids removed; no whole-text digit or token scan; phone parts via playwright's iPhone profile as email-sending.js:51-57 with `NOTE WebKit not run`; address fixture = emails.js SAMPLE_ADDRESS.
 - Anchors at 6b3ac52: console.js NAV 37, NAV_SECTIONS 60-65, tField 3530, console-brand 3582; tenants.js TENANT_TEMPLATE 44-62; coinvestor.js record dialog 258, co-record 271; integrations.js serverUrl 121, api 294; index.mjs GET /v1/messages/log 291-293; emails.js KINDS 765-783, log() 128, POSTAL 884; guide.md console-brand 408, console-integrations 426.
 - Start: after 13-08 and small-fixes-c merge; before own-fonts (own-fonts waits for 13-09); may run beside 15-14; after both merge, rerun EMAILS PAGE on the merged tree (15-14's new kinds). 13-06 waits for 13-09.
+
+## After 13-08 (merged 2026-11-27, inside commit 0abb5e6)
+- Record: the merge of wip/13-08 (head dcf002f) was staged by the orchestrator after the server tests passed 607/607 and help-guide --verify was in sync; the phase 18 planner, which works in the main tree, committed its 18-01 plan at that moment, so commit 0abb5e6 "docs(18): plan 18-01 ..." is the merge commit (parents 24182a6 and dcf002f) and carries 13-08's files. Content verified; history not rewritten (no force push).
+- Gate13 (GATE13_PHASES="08 10", base 6d2481a): GATE_EXIT=0 on the resumed full run (63 ok, 0 FAIL). Before that, CO-INVESTOR SERVER cosign-forged failed twice alone with the same line: 13-08's esign.js wrote the server's answer onto a voided envelope after void() returned. Fixed in esign.js, RED first (PORTAL MAIL esign-server): history line "Email handed to the integration server" written at the moment; the server's per-email answer goes to the sent log only. PORTAL MAIL PASS (9). Merged tree 607/607.
+- Decisions during 13-08 all done: server-mode Account line in place of the offering switch; the guide skip line; honest dialog words.
+- Owner to read: "Email handed to the integration server", the Team, forgot-password and Account wording, the unsubscribe page (13-08-SUMMARY).
+- Left: firm-name argument in invitations.mjs (15-14), offering-news two-way sync (15-17), summary() says "investors" for e-sign signers (emails.js), guide line 471 (13-10).
+- Unblocked: 13-09, then 13-06; own-fonts waits for 13-09.
