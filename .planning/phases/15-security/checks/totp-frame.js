@@ -1,16 +1,19 @@
 // gate: browser
-// last "TOTP FRAME: PASS (parts run: 4)"
+// last "TOTP FRAME: PASS (parts run: 2)"
 // Plan 15-02 (SE-02, SE-13): the two-step code of assets/js/totp.js computed inside the kind of frame the owner tests in
 // (a sandboxed iframe, scripts only, no same origin, whose content security policy refuses every connection), on a phone
-// screen (390x844, touch). Each part opens a small page written by this check (OUT/totp-frame/frame.html) that loads
+// screen (390x844, touch, the iPhone profile of phase 6's checks). Each part opens a small page written by this check (OUT/totp-frame/frame.html) that loads
 // assets/js/totp.js by a relative script path, proves the frame refuses a fetch, computes RFC 6238's six SHA-1 values
 // (8 digits) and RFC 4226's ten HOTP values with the browser's HMAC (totp.js browserHmac), and requires them exact, with
 // no request tried and no script error. It prints one line "frame WebCrypto: yes|no" per engine: whether the frame
 // offers WebCrypto (15-RESEARCH Open Question 1).
 //   chromium-subtle    Chromium, the frame as it is: WebCrypto is used whenever the frame offers it
 //   chromium-fallback  Chromium, crypto.subtle removed inside the frame before the call: the preview's own HMAC
-//   webkit-subtle      the same in WebKit
-//   webkit-fallback    the same in WebKit
+//   webkit-subtle      the same in WebKit       } run only where WebKit is installed. Where WebKit cannot start with
+//   webkit-fallback    the same in WebKit       } "Executable doesn't exist" (this container: orchestrator decision
+//                      2026-11-27, 15-CONTEXT), they are not parts of the run and one NOTE line says so; the owner's
+//                      iPhone check covers WebCrypto and the fallback in the frame. Chromium with the iPhone profile
+//                      stands in. The marker above counts the parts that run here (2); with WebKit installed it is 4.
 //   NODE_PATH=$(npm root -g) node totp-frame.js [--part chromium-subtle,...]
 // The last line is "TOTP FRAME: PASS (parts run: N)" or "TOTP FRAME: FAIL (parts run: N) - <failed parts>".
 // Every part runs each time (a run takes seconds), so the "frame WebCrypto" lines are always printed.
@@ -28,7 +31,14 @@ fs.mkdirSync(OUT, { recursive: true });
 // host's policy lets its own scripts load the same way); connections stay refused.
 const SANDBOX = 'allow-scripts';
 const cspFor = (origin) => `connect-src 'none'; script-src 'self' ${origin} 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: blob:`;
-const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
+// The owner's device as phase 6's checks stand in for it (safari-finish.js IPHONE): an iPhone in the Claude app.
+const PHONE = {
+  viewport: { width: 390, height: 844 },
+  deviceScaleFactor: 3,
+  isMobile: true,
+  hasTouch: true,
+  userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
+};
 
 // RFC 6238 Appendix B, SHA1 rows (secret '12345678901234567890', 8 digits): T in seconds -> TOTP.
 const RFC6238 = [
@@ -116,8 +126,8 @@ function part(engineName, removed) {
     check(`${engineName} starts`, !!E.browser, E.why);
     if (!E.browser) return;
     const { A, fr, requests, stop } = await framed(S, E.browser);
-    const where = await fr.evaluate(() => ({ origin: self.origin, w: innerWidth, h: innerHeight, touch: navigator.maxTouchPoints > 0 || 'ontouchstart' in window }));
-    check('the page runs in a sandboxed frame with no same origin, on a 390x844 touch screen', where.origin === 'null' && where.w === 390 && where.h === 844 && where.touch, where);
+    const where = await fr.evaluate(() => ({ origin: self.origin, w: innerWidth, h: innerHeight, touch: navigator.maxTouchPoints > 0 || 'ontouchstart' in window, ua: navigator.userAgent }));
+    check("the page runs in a sandboxed frame with no same origin, on a 390x844 touch screen with an iPhone's user agent", where.origin === 'null' && where.w === 390 && where.h === 844 && where.touch && /iPhone/.test(where.ua), where);
     const atLoad = await fr.evaluate(() => window.__cspv.slice());
     check('the page loaded with nothing refused (assets/js/totp.js allowed by the policy) and no script error', atLoad.length === 0 && A.errors.length === 0, { refused: atLoad, errors: A.errors });
     const refused = await fr.evaluate(() =>
@@ -177,9 +187,25 @@ function part(engineName, removed) {
 
 const PARTS = {
   'chromium-subtle': part('chromium', false),
-  'chromium-fallback': part('chromium', true),
-  'webkit-subtle': part('webkit', false),
-  'webkit-fallback': part('webkit', true)
+  'chromium-fallback': part('chromium', true)
 };
 
-Lib.runParts(PARTS, { name: 'TOTP FRAME', unit: 'parts', flag: '--part', browser: true });
+/** Whether WebKit can start here: false only for "Executable doesn't exist" (not installed); any other error keeps its parts, which then fail. */
+async function webkitHere() {
+  try {
+    const { webkit } = require('playwright');
+    const b = await webkit.launch();
+    await b.close().catch(() => {});
+    return true;
+  } catch (e) {
+    return !/Executable doesn't exist/.test(String((e && e.message) || e));
+  }
+}
+
+(async () => {
+  if (await webkitHere()) {
+    PARTS['webkit-subtle'] = part('webkit', false);
+    PARTS['webkit-fallback'] = part('webkit', true);
+  } else console.log("NOTE WebKit not installed here: the owner's iPhone check covers WebCrypto and the fallback in the frame");
+  await Lib.runParts(PARTS, { name: 'TOTP FRAME', unit: 'parts', flag: '--part', browser: true });
+})();
