@@ -42,9 +42,9 @@ estimate:
 actuals:
   tokens: 23000
   tasks: 2
-  commits: COMMITS_TBD
+  commits: 6   # measured base..HEAD before this final SUMMARY commit, which makes 7
 plan_head_before: 00c32a762b9d115b6bdfebfeb7f56b925e6866e6
-plan_head_after: HEAD_TBD
+plan_head_after: 7dd7ba3293e801b5b0365c8fdb5f41ecbaabb372
 ---
 
 # Phase 16 Plan 06: the return and notification-of-change reader - Summary
@@ -144,3 +144,148 @@ VERIFY2_EXIT=0
 BANK FILES (phase 11, shares bankfiles.js, which this plan only reads): `BANK FILES: PASS (cases run: 12)`.
 
 bad-93.ach (plan-check B1, a note, no assertion): the independent reader reads it as valid (it pads the 93-character file control record), as 16-01 measured; the portal's own reader refuses it with "Line 6 has 93 characters; a NACHA file has 94 on every line." (case refusals).
+
+W1 (reproducible fixtures): case fixtures runs make-fixtures.js --out into a temporary folder and requires all nine fixtures and MANIFEST.txt byte-equal. 16-05 had not merged into claude/refract-reskin when this ran (origin at 00c32a7), so no regeneration was needed.
+
+## Full gate
+
+`GATE_SERVER_TESTS=456 GATE_OUT=O bash P/checks/gate16.sh`, base-commit.txt = 00c32a762b9d115b6bdfebfeb7f56b925e6866e6, run in the background.
+
+Failure first: run 1 (O/gate-full-1.txt) was stopped at the 2-hour background limit inside the reference gate. In it, MEASURE failed: walkC took 944 s and its entity walk gave "0 PASS, 0 FAIL, RESULT: FAIL" (no result at all; the individual walk passed 17 of 17). Disk was 8.4-8.5 GB free throughout (df -h /: 79%), so not the disk; the machine was running several other agents' gates and browser checks at the same time. No page loads achreturns.js, so this plan's files cannot reach that walk. Also my fault: I committed a SUMMARY save while run 1 ran, so the gate printed "the tree changed while step server ran" and did not keep two steps; nothing was committed during run 2.
+
+Run 2 (O/gate-full-2.txt), into the same folder: the kept steps were reused, MEASURE ran again and passed, every other step ran to its end. Every GATE line of run 2:
+```
+GATE ok   independent reader achcli v1.69.1
+GATE ok   server tests # fail 0
+GATE ok   STATUS MATH (13)
+GATE ok   FORM MAPS (3)
+GATE ok   FORMS FLOW (34) (kept from 2026-11-27 02:24:42 UTC)
+GATE ok   STATUS FLOW (26) (kept from 2026-11-27 02:30:48 UTC)
+GATE ok   SERVER MODE (15) (kept from 2026-11-27 02:36:12 UTC)
+GATE ok   TWO PERSONS (kept from 2026-11-27 02:36:31 UTC)
+GATE ok   MEASURE
+GATE ok   owner's folder: index.txt and four signed PDFs
+GATE ok   EMAIL DIALOG (3) (kept from 2026-11-27 03:06:25 UTC)
+GATE ok   AGREEMENT NAME (kept from 2026-11-27 03:07:06 UTC)
+GATE ok   TAX REQUEST LEAVE (5) (kept from 2026-11-27 03:07:44 UTC)
+GATE ok   WAYS OUT (7) (kept from 2026-11-27 03:09:26 UTC)
+GATE ok   NO NETWORK (3) (kept from 2026-11-27 03:09:50 UTC)
+GATE ok   EMBED DATA (3) (kept from 2026-11-27 03:09:50 UTC)
+GATE ok   SAFARI FINISH (6) (kept from 2026-11-27 03:18:13 UTC)
+GATE ok   BANK STEP TYPING (2) (kept from 2026-11-27 03:18:29 UTC)
+GATE ok   HELP CHAT (10) (kept from 2026-11-27 03:23:12 UTC)
+GATE ok   REAL FIRM (9)
+GATE ok   SIGNING DOCUMENTS (8)
+GATE ok   PHONE LAYOUT (8)
+GATE ok   RECORD AND LOST AGREEMENT (7)
+GATE ok   SCREEN EDGES (5)
+GATE ok   WALK3 FIXES (9)
+GATE ok   TITLES AND EDITOR (4)
+GATE ok   PRESS AND CO-INVESTOR (10)
+GATE ok   CO-INVESTOR SERVER (5)
+GATE ok   HELP PREVIEW (6)
+GATE ok   base is an ancestor of HEAD and HEAD moved
+GATE ok   signing: base and plan each have PASS lines
+GATE ok   signing: no FAIL the base lacks
+GATE ok   record: base and plan each have PASS lines
+GATE ok   record: no FAIL the base lacks
+GATE ok   server tests 456 = base 456 + 0 declared
+GATE ok   DIST FLOW
+GATE ok   DIST RECORD
+GATE ok   K1 SPLIT
+GATE ok   SHIPPED LIBS
+GATE ok   TAX 1099
+GATE ok   TAX FORMS
+GATE ok   TAX MATH
+GATE ok   TAX1099 FLOW
+GATE ok   TAXDOCS FLOW
+GATE ok   TAXDOCS MATH
+GATE ok   TAXLINK FLOW
+GATE ok   TAXRECORD FLOW
+GATE ok   WITHHOLDING FLOW
+GATE ok   AUDIT FLOW
+GATE ok   AUDIT SAME
+GATE ok   BANK FILES
+GATE ok   BANK REC
+GATE ok   BOOKS CORE
+GATE ok   BOOKS FLOW
+GATE ok   BUSINESS DAYS
+GATE ok   ENGINE BOOKS
+GATE ok   HOLDINGS
+GATE ok   NEW SCHEDULES
+GATE ok   NO ONBOARDING
+GATE ok   PDF OUT
+GATE ok   POSTING
+GATE ok   SAMPLES BOOKS
+GATE ok   STATEMENTS
+GATE ok   WORKBOOK
+GATE ok   ACH LEAK
+GATE ok   HOLIDAYS
+GATE ok   MOBILE SYNC
+GATE ok   INDEPENDENT READER
+GATE ok   RETURNS READ
+GATE_EXIT=0
+```
+GATE_EXIT=0. Cleanup: the base tree and shots were removed by the gate; the server/node_modules link run 1 left and the check output folder were removed by hand.
+
+## The Item shape as built (16-08 relies on it)
+
+```
+Item = { kind: 'return' | 'noc', code, action, originalTrace, individualId, name, cents, effective, companyId, sec,
+         txCode, accountLast4, rdfi8, date, words, source: 'nacha' | 'csv' | 'hand', line,
+         corrected (noc only: { account?, routing?, type?, holder?, id?, problem? }),
+         runId, requestId (hand only) }
+```
+- NACHA: effective, companyId and sec from the batch header (70-75, 41-50, 51-53); txCode, accountLast4 (last four of 13-29), cents, individualId, name from the entry; originalTrace from the addenda (7-21); rdfi8 the addenda's original receiving bank (28-35), else the entry's (4-11); date the file header's creation date (24-29); line the entry record's line number.
+- CSV: effective, companyId, sec, txCode, accountLast4 and rdfi8 are null (a report carries none of them); date is the row's date; originalTrace '' when the report has no trace column; line is the row's line (header = 1).
+- Hand: as CSV, plus runId and requestId as given; line null.
+- action for returns: the classes of 16-RESEARCH 3.4, or 'unknown'. For changes: 'change' (C01-C07), 'shown' (C09, C13), 'wire' (C14), 'ignored' (C61-C69, which come out as items rather than being dropped), 'unknown'.
+- parse(...) gives { kind: 'nacha', items, fileDate } or { kind: 'csv', items, skipped }.
+
+## Deviations from Plan
+
+1. [Rule 1 - Bug] Semicolon CSV amounts. Found in Task 2 GREEN: phase 11's csvRows splits at commas in every mode, so returns-b.csv's '$1,250.00' became two cells. achreturns.js holds commas aside while csvRows splits a semicolon file (phase 11's own semicolon rule: first line has semicolons and no comma or tab) and puts them back in each cell. Quotes, the byte-order mark and line breaks are still handled by csvRows. File: assets/js/achreturns.js. Commit 097e3ea.
+2. [Rule 1 - Bug, found by the check] lib16.leaks() read a trace as an account: R16's words end "...this account." and the item's next field was originalTrace's 15 digits. The item's field order now puts words after the number fields. No check was relaxed. Commit 097e3ea.
+3. by-hand case: 1.5 cents gives the same sentence as -1 cents ("Enter the amount as a whole number of cents, 0 or more."). The case requires the plan's three refusals and "no investor" to each have their own sentence.
+4. NOC_CODES carry an action (the interfaces block lists title, words, fields) so 16-08 and 16-11 need no code list of their own. C61-C69 are in the table with action 'ignored'.
+5. corrected() also gives a problem sentence when a field the code corrects is missing ('The corrected data is missing the account number.') or when an account is not 1-17 letters, digits or hyphens. The plan named only the check-digit problem. A change with a problem is never offered as good.
+6. Fixture choices the plan left open: entries 1 and 2 are checking and entry 3 is savings, so ret-r03's return code is 21 as the plan says and mixed's R16 is a savings return (31). The returned pre-note's original has its own trace (sequence 0000011) and effective date 2026-11-24, so it cannot be mistaken for the first payment. Return entries keep the copied entry's receiving bank and take a new trace under the sponsor's bank, with the batch header unchanged (the pinned reader requires the trace's first 8 digits to equal the batch header's originating bank).
+7. RETURN_CODES titles are those of the pinned open-source reader's table except two: R62 "Return of Erroneous or Reversing Debit" (the table has "Debt", a typo) and R15 "Beneficiary or bank account holder (other than representative payee) deceased" (the table's title stops at "holder"; its description supplies the rest).
+8. White label: the source comments of achreturns.js do not name the outside project, as bankfiles.js does not; they point to 16-RESEARCH.
+9. STATE.md, ROADMAP.md and REQUIREMENTS.md are not updated here: the orchestrator's prompt limits this plan to its files_modified and says not to merge; the orchestrator updates them at merge.
+
+## Known Stubs
+
+None. The CSV header words are a guess the sponsor confirms. The bank's own export is "To be confirmed" for 16-14. That is the plan's design, not a stub.
+
+## Threat Flags
+
+None beyond the plan's threat model: no network, no storage, and no page loads the file yet. T-16-20: limits are checked before parsing, the layout is fixed, there is no eval or DOM parser (case refusals). T-16-21: items keep the last four only, and the corrected number lives only in item.corrected (case privacy). T-16-22: a bad check digit is marked as a problem (cases noc, mixed). T-16-23: the portal's own credit file is refused as 'holds no returns' (case refusals).
+
+## Open items
+
+- Phase 11's statement reader (bankfiles.js csvRows) also splits semicolon statements at commas, so a semicolon statement with '1,250.00' or a European '1.250,00' amount is misread or refused there. Not changed here because bankfiles.js is not this plan's file. For 11-17 or whichever plan next edits bankfiles.js.
+- CSV and hand items have no effective date. 16-08's second matching path (individual id + amount + effective date) must match a CSV row without a trace on id and amount (and the report's date), or ask.
+- The owner's bank export (masked) is still owed. 16-14 adds its layout and header words.
+- If 16-05 merges first and changes the builder's bytes, rerun make-fixtures.js and commit the new fixtures and MANIFEST. Case fixtures fails until then, by design.
+
+## Guide lines for the guide pass
+
+- Returns from your bank: upload the returns file (NACHA) or the returns report (CSV) your bank gives you, or enter one return by hand on the payment.
+- A PDF report cannot be read. Download the CSV or the NACHA file from your bank instead, or enter the return by hand.
+- For a CSV report, check which column holds the date, the return or change code, the investor ID, the amount, the original trace and the corrected data before the portal reads it.
+- A notification of change does not send money back: the payment was made. It gives corrected bank details for you to confirm.
+- Account numbers are shown by their last four digits only.
+
+## Commits
+
+- 2525d5e test(16-06): RED for the return reader (generator, dist-ppd, ret-r03, cases return and fixtures)
+- 1a1c59c feat(16-06): read NACHA return files back to the entry they return
+- 94243e0 test(16-06): RED for changes, CSV reports, by hand, refusals, code tables and privacy
+- 097e3ea feat(16-06): changes, CSV reports, by hand and the change code table
+- 6966368, 7dd7ba3 wip(16-06): save (SUMMARY only)
+- this SUMMARY's final commit
+
+## Self-Check: PASSED
+
+All 13 created files exist (achreturns.js, returns-read.js, make-fixtures.js, MANIFEST.txt and the 9 fixtures). The 6 commits above are on HEAD (git log 00c32a7..HEAD). server/node_modules link removed; nothing untracked.
