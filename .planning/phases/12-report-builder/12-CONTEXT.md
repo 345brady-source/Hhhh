@@ -89,3 +89,11 @@ Binding on the executor (full text: scratchpad checks-12-09.md).
 - Step count, orchestrator's choice: the truth drops the fixed "36"; Task 3 verifies the reference gate's step lines are exactly the base tree's count + 2, both measured.
 - I3: Task 3 also greps `^GATE ok +REPORT FIXES`.
 - Start: now (e06c721 or later). 12-09 merges its two gate-reference.sh lines before 16-13, 13-10, 14-11, 15-11 edit that file. After 15-06 and 13-05 merge, gate12 is rerun into the same folder before the owner's iPhone check.
+
+## After 12-09 (merged b8d8613)
+
+- Gate GATE_EXIT=0 (80 ok); reference gate now holds REPORTS FLOW (8) and DELIVER FLOW (8); REPORTS SWEEP PASS (4); GATE12 SELF-TEST PASS (9).
+- WALK12: FAIL (steps run: 28), 239 checks pass, 8 fail, from two product faults:
+  1. Preview tables with 4+ columns break words letter by letter at 390 px. Sent to a GSD debugger (slug report-preview-tables-phone), RED = walk12.js.
+  2. Outside font host (W5). Decision (orchestrator, 2026-11-27): this is not a report-builder fault. The pages (index/portal/diy.html), brand.js, signature.js (typed-signature faces), the page policy in server/lib/pages.mjs and its test, the preview tool and several checks all name the font host. The fix is to serve every font from the portal's own origin ($0; the fonts are under the SIL Open Font License), which also stops investors' addresses going to an outside host and lets the preview and offline use show the real fonts. Because it touches the pages and pages.mjs, it is planned as its own quick task (planner + plan-check + executor) after 16-02 and 13-03 merge. walk12's kb-open, ar-letter and pb-letter stay red on W5 until then.
+- Open for the owner: NOI table never seen on screen (Ashwell Ridge sample has no property lines); PDF multi-column tables past page 1 not looked at (the debugger is asked to look); iPhone check.
