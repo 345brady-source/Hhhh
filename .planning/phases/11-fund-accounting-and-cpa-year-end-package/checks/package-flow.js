@@ -211,9 +211,12 @@ const parts = {
     const stem = D ? D.name.replace(/_year_end_package\.zip$/, '') : '';
     check(`its bytes are a zip holding 4 + ${titles.length} files: README, workbook, PDF, one CSV per sheet, manifest`, !!D && D.zip === 'PK\u0003\u0004' && !!D.names && S_(D.names) === S_(filesWanted(stem, titles)), D && { names: D.names, err: D.err });
     check('the workbook and the PDF in it are not empty; no forms/ entry', !!D && !!D.get(`${stem}_year_end.xlsx`) && D.get(`${stem}_year_end.pdf`).slice(0, 5).toString('latin1') === '%PDF-' && !D.names.some((n) => /^forms\//.test(n)), D && D.names);
+    // Asked for while this part ran, or already on the page (taxdocs-ui.js loads withholding.js itself for the console).
+    const onPage = await fr.evaluate(() => Array.from(document.scripts).map((x) => x.src).filter(Boolean));
     const libs = A.libs.slice();
     const need = ['js/withholding.js', 'js/filesout.js', 'vendor/pdfwrite/write.js', 'vendor/pdfwrite/fonts.js', 'vendor/textfont/text-regular.js'];
-    check("withholding.js, filesout.js, the PDF writer, its font embedder and the font came from the page's own address", need.every((n) => libs.some((u) => u === `${S.origin}/assets/${n}`)) && libs.every((u) => u.indexOf(S.origin + '/') === 0), libs);
+    const from = need.map((n) => [n, libs.concat(onPage).filter((u) => new URL(u).pathname === `/assets/${n}`)]);
+    check("withholding.js, filesout.js, the PDF writer, its font embedder and the font came from the page's own address", from.every(([, us]) => us.length > 0 && us.every((u) => u.indexOf(S.origin + '/') === 0)) && libs.every((u) => u.indexOf(S.origin + '/') === 0), from);
     const cspv = await fr.evaluate(() => (window.__cspv || []).slice());
     check('the policy refused nothing while the package was written', cspv.length === 0, cspv);
     const last = await lastLog(fr);
