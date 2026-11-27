@@ -19,3 +19,13 @@ One FAIL, the check's own read: the console keeps the server's word on the packa
 the check looked for `package === true`. Fixed in the check (`!!y.package`). Found while reading that code: invitations.js
 `create` kept a package only when the invite form's box (identity or full tier) allowed it, never asking about the reverify
 tier; fixed in the same line (a re-verification asks the dialog's own box).
+
+## Task 1 verify (verify-1.sh, exit 0, after the fix)
+
+```
+PASS package the typed taxpayer number is in no world record
+PASS package the typed taxpayer number is in no server output (store, events, anything this process printed) and on no screen
+REVERIFY: PASS (parts run: 1)
+VERIFY1_EXIT=0
+```
+Tracer gate: the verify re-ran end to end on the fixed code and passed; expanding.
