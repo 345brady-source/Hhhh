@@ -132,6 +132,14 @@ started: seen during plan 13-04's gate (base ef87afa area)
     preview-desktop / preview-phone: 843-845 runNow (fixed); 836-839 negative, no server
   implication: beyond runNow, two more reads of the same kind: pulled()'s callers that seed right after it (package-not-run 644, kyc-buttons 685) and once's `tried` (803). Forced RED/GREEN for both are running (FORCE_PULL_HOLD=3000: the page applies the pull 3 s after it arrived; FORCE_POST_DELAY=5000: the console's run sends its screening 5 s late)
 
+- timestamp: 2026-11-27T17:25Z
+  checked: forced runs (force.sh; copies by mkforce.py: an init script wraps the console page's own fetch): red-post = unfixed check (ef87afa) FORCE_POST_DELAY=5000 --only once; green-post = fixed tree, same; green-hold = final fixed tree (instrumented by mkinst.py) FORCE_HOLD_MS=1500 --only package-not-run
+  found: |
+    red-post   | MONITORING: FAIL (parts run: 1) - once | 9 PASS 1 FAIL: FAIL once a run that got no answer was tried once for that due date and writes nothing :: {"tried":1,"posts":1,"next":"2026-11-25"}
+    green-post | MONITORING: PASS (parts run: 1) | 10 PASS 0 FAIL
+    green-hold | MONITORING: PASS (parts run: 1) | 17 PASS 0 FAIL; TIMING pnr-A atClick=[3 sign-in toasts] resultAfterClick=1556 readAfterClick=1566 margin=10
+  implication: once's `tried` read was racing the run's screening request (RED with it 5 s late); the fixed part waits for it and checks the same count. The final fixed runNow waits for the result toast under the 1.5 s hold.
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
