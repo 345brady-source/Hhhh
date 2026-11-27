@@ -223,3 +223,11 @@
 
 ## Decision during 11-16 (orchestrator, 2026-11-27)
 - AUDIT FLOW part `managed` (11-12's check) asserted that console.js had no change at all since the base commit. Its purpose, stated in the check, is that the menu is unchanged. 11-16 must add one hook line to the Audit view in console.js, so the assertion is narrowed: index.html stays byte-checked; console.js passes when no added or removed diff line matches `\bNAV(_SECTIONS)?\b`. 11-16's executor makes this edit in wip/11-16 and reruns its gate.
+
+## After 11-16 (merged 2026-11-27)
+- Gate GATE_EXIT=0 on run 3 (67 GATE ok, 0 FAIL) after the AUDIT FLOW narrowing (acbd6da: index.html byte-checked; console.js fails only on added/removed NAV/NAV_SECTIONS lines; `--menu-selftest` proves RED and GREEN on real diffs). Plan tree 472 = 472; merged tree 544/544; help-guide.mjs and help-data.js in sync.
+- Guide bytes: GUIDE.sponsor 44,641 -> 44,766 (+125; cap 160).
+- C-04: the never-issued numbers 000-65-1234 / 000651234 appear only in forms/FA-1001_W-9.pdf and only with the tick.
+- Deviations (11-16-SUMMARY): trial balance "556,500.00" are the debit and credit balances (the tab's Debits/Credits columns are the year's activity, 1,000,000.00 each); the PDF's Producer/Creator are set to the firm's name; the guide anchor is in a comment on the one console.js hook line; withholding.js loads on demand.
+- Open: owner's iPhone check (the preview saves the zip; "View" on three sheets; screenshots in scratchpad exec-11-16/shots); Excel and Numbers opening the workbook and the formats are for the CPA read in 11-17.
+- Unblocked by this merge: 13-05 (diy.html, portal.html, invitations.js) and 16-02 (console.js, pages).
