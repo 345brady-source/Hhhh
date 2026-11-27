@@ -23,3 +23,6 @@ portal-documents: a report opens or downloads only when it is exactly the file o
 1. Chromium only; owner's iPhone check in 12-09.
 2. Report document with nothing kept: lost sentence, not remade.
 3. The remade file is composed again on Download after View (not timed).
+
+## On the merged tree (e06c721)
+REPORT FIXES 5, DELIVER FLOW 8, SIGNING DOCUMENTS 8, REAL FIRM 9, RECORD AND LOST AGREEMENT 7: all pass. Server tests 555/555.
