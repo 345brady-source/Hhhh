@@ -266,6 +266,15 @@ const cases = {
     R.BB.addAccount(R.ws, R.oid, { name: 'Reserve' });
     const r4 = rowsOf(NS.audit.build(R.ws, R.o, '2026-01-01', '2026-12-31'), 'bankrec');
     check("a second account with no last four digits and no reconciliation adds 'Reserve', 'Not reconciled through 2026-12-31'", J(r4) === J(want.concat([['Reserve', 'Not reconciled through 2026-12-31', '', '', null]])), r4);
+    // The books hold 500.00 deposited 2026-01-05, before the first statement line (2026-01-15), that the bank never shows:
+    // with the opening balance entered as 0.00 the before-opening figure is that 500.00, and it is described.
+    const P = fundAThroughBank(NS);
+    NS.books.post(P.ws, P.oid, { date: '2026-01-05', memo: 'Deposit not in the bank', src: 'man:pre-open', lines: [['1000', 50000], ['2100', -50000]] }, ACTOR);
+    P.BB.setOpening(P.ws, P.oid, P.acct.id, 0, ACTOR);
+    P.BB.markReconciled(P.ws, P.oid, P.acct.id, '2026-12-31', 3500000, ACTOR);
+    const r5 = rowsOf(NS.audit.build(P.ws, P.o, '2026-01-01', '2026-12-31'), 'bankrec');
+    const pre = r5.filter((r) => r[1] === 'Outstanding item' && r[4] === 50000);
+    check("the before-opening figure of 50,000 reads 'Before the opening balance on January 15, 2026: in the books, not yet in the bank'", pre.length === 1 && pre[0][3] === 'Before the opening balance on January 15, 2026: in the books, not yet in the bank', r5);
   },
 
   /** Financial highlights: fund A's three rows; a fund with no capital says what is missing, never NaN, Infinity or 0. */

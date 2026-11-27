@@ -1459,7 +1459,9 @@
       if (!rec) return br.push([name, `Not reconciled through ${P.to}`, '', '', null]);
       const os = Array.isArray(rec.outstanding) ? rec.outstanding : [];
       br.push([name, 'Statement balance', rec.asOf, '', rec.statementCents]);
-      os.forEach((x) => br.push([name, 'Outstanding item', dateOf(x[0]), memoOf(x[0]), x[2]]));
+      // The one item with no entry is the cash the books hold before the opening balance that the bank has not shown.
+      const before = `Before the opening balance${rec.opening && rec.opening.date ? ` on ${dateLong(rec.opening.date)}` : ''}: in the books, not yet in the bank`;
+      os.forEach((x) => br.push([name, 'Outstanding item', dateOf(x[0]), x[0] ? memoOf(x[0]) : before, x[2]]));
       br.push([name, 'Book balance', rec.asOf, '', rec.bookCents]);
       br.push([name, 'Difference', rec.asOf, '', rec.statementCents - rec.bookCents + os.reduce((s, x) => s + x[2], 0)]);
     });
