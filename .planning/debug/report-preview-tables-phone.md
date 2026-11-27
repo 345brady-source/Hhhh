@@ -9,7 +9,7 @@ updated: 2026-11-27T00:00:00Z
 
 bug_class: Bohrbug (deterministic: same counts every run, base probe reproduced the walk's 60/22/40 exactly)
 hypothesis: CONFIRMED - `.rb-doc { overflow-wrap: anywhere }` (assets/css/reports.css:38) is inherited by every preview table cell; `anywhere` counts a break between any two letters when the browser sizes a column's narrowest width, so the auto table layout squeezes text columns to one letter (27-36 px) and gives the room to the nowrap number columns. Contributing: a hyphenated word ('Single-name') splits at its hyphen when its column sits at its narrowest width.
-next_action: owner check on a phone (see Resolution); sweep rerun on the final tree pending (reports-sweep-final.txt)
+next_action: owner check on a phone (see Resolution). Sweep rerun on the final tree: REPORTS SWEEP: PASS (parts run: 4) (reports-sweep-final.txt)
 
 reasoning_checkpoint:
   hypothesis: "Text columns of 4+ column preview tables collapse to one letter on the phone because .rb-doc's inherited overflow-wrap: anywhere makes each text cell's min-content one glyph; with number cells nowrap, the auto table layout at 308 px gives text columns their min-content."
