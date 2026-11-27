@@ -109,3 +109,4 @@ Binding on the executors (full text: scratchpad checks-13-wave3.md).
 - For 13-03 (running): cleanFirm keeps postalAddress. For later: the form can read 13-11's render `needs` instead of its own rule.
 - Found: invitations.js line 3 comment contains the forbidden word (since before 56c300d; not on screen). Queued for the next small fix.
 - Unblocked: 16-02 (pages), 13-07/13-12 (after 13-03), 13-09 (after 13-03, not beside 16-02).
+- Merged tree 38a85ea (with 13-11's emails.js): EMAILS PARITY 3, INVITE MAIL 9, EMAIL DIALOG 3, PRESS AND CO-INVESTOR 10, CO-INVESTOR SERVER 5, SERVER MODE 15, PACKAGE INVITE 12 pass.
