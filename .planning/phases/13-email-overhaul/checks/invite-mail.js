@@ -76,8 +76,9 @@ async function inviteForm(fr, o) {
     await fr.selectOption('#iv-off', o.offeringId);
     await fr.waitForTimeout(300);
   }
-  if (o.amount) await fr.fill('#iv-amt', String(o.amount));
-  if (o.note) await fr.fill('#iv-note', o.note);
+  // what an earlier attempt typed stays in the form: each field is set to this invitation's value (or emptied)
+  if (await fr.locator('#iv-amt:visible:enabled').count()) await fr.fill('#iv-amt', o.amount ? String(o.amount) : '');
+  if (await fr.locator('#iv-note:visible').count()) await fr.fill('#iv-note', o.note || '');
   await L10.press(fr, '.inv8-form[data-form="invite-one"] button[type=submit]');
   await fr.waitForTimeout(700);
 }
