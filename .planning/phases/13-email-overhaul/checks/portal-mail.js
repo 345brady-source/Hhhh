@@ -573,7 +573,6 @@ const parts = {
           await watchToasts(page);
           const out = {};
           const [a, b] = await twoInvestors(page);
-          // fixed ids, so both trees read the same words
           const e1 = await makeEnvelope(page, { title: 'Side letter for Fund II', signers: [a.id, b.id] });
           out.hint = await reviewHint(page, e1.id);
           let n = (await toasts(page)).length;
