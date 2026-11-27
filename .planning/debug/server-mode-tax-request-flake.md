@@ -60,6 +60,11 @@ started: first seen at 75b2fc5 (13-03 merged); 13-03's own gate on base 8efaa5c 
   found: the same pattern in part clean of the same check, covered only by a fixed 300 ms guess
   implication: fix both reads in server-mode.js the same way (keep each body read as its promise; await at the read). The other files' reads are late and are left alone.
 
+- timestamp: 2026-11-27T14:55Z
+  checked: unmodified `--only tax-request` runs 1-14, 16-43 (42 runs, three loops at once, heavy.sh shared with other agents' forms-flow / status-flow / report checks, load 4.6-12.9); instrumented copy, full 15-part run tfull-1
+  found: 42 of 42 PASS. tfull-1 PASS (parts run: 15), `TIMING h1=380 snapsAtH1=1 resp=[264] body=[276] margin=104 lagMaxMs=13 heapMB=108`: in a full run the check had the body 12 ms after the response event and 104 ms before it saw the heading; worst event-loop delay 13 ms, heap 108 MB after 13 parts
+  implication: the check wins the race by ~100 ms in a normal full run; it loses when its process is held up for longer than that between the response event and the heading (a GC pause or CPU starvation in a 4-core machine running 3-4 gates). Next: runs pinned to one CPU (taskset; the check and its own browser share it, no code delay) to stress the order without code changes.
+
 ## Resolution
 
 root_cause:
