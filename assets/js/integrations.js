@@ -1074,6 +1074,7 @@
    */
   function resume(ws) {
     if (!active(ws) || !serverUrl(ws)) return;
+    if (settleMonitored(ws)) setTimeout(() => W() === ws && NS.app.render(), 0); // local bookkeeping only: no connection
     ws.investors.forEach((inv) => watch(ws, inv, true));
     ongoing(ws);
   }
@@ -1107,7 +1108,7 @@
     pulling.at = Date.now();
     clearTimeout(pulling.timer);
     pulling.busy = (async () => {
-      let changed = settleMonitored(ws);
+      let changed = false;
       try {
         changed = (await pullChanged(ws)) || changed;
       } catch (e) {
