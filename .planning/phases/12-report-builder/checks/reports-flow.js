@@ -167,7 +167,9 @@ async function sizes(fr, selector) {
 }
 /**
  * The preview's tables as the frame draws them: for each, its title, columns, width and its box's width; the words of its
- * cells broken across lines (a column too narrow for its words); the figures cut (a .num cell narrower than its text);
+ * cells broken across lines (a column too narrow for its words); the cells that may break inside a word (overflow-wrap
+ * not normal: the cause of the phone fault, anywhere lets a table squeeze a column to one letter); the figures cut (a .num
+ * cell narrower than its text);
  * whether its first column is fixed; and, when it is wider than its box, where its title and the first cell of each row
  * are once the box is scrolled to its end (0 = still at the box's left edge). The box is scrolled back afterwards.
  */
@@ -191,6 +193,7 @@ async function tableLayout(fr) {
           }
         }
       });
+      const loose = Array.from(t.querySelectorAll('th, td')).filter((c) => getComputedStyle(c).overflowWrap !== 'normal').length;
       const cut = Array.from(t.querySelectorAll('.num')).filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => c.innerText.trim());
       const wide = box.scrollWidth > box.clientWidth + 1;
       let held = null;
@@ -207,6 +210,7 @@ async function tableLayout(fr) {
         box: box.clientWidth,
         wide,
         broken,
+        loose,
         cut,
         fixed: !!t.rows[0] && getComputedStyle(t.rows[0].cells[0]).position === 'sticky',
         held
@@ -270,7 +274,8 @@ const parts = {
     const L = await tableLayout(fr);
     console.log(`preview tables on the phone: ${tablesLine(L)}`);
     const broken = [].concat(...L.map((x) => x.broken.map((b) => `${x.title}: '${b}'`)));
-    check(`on the phone, no word in the preview's tables is broken across lines (${broken.length} broken)`, L.length >= 3 && broken.length === 0, broken.slice(0, 6));
+    const loose = L.reduce((n, x) => n + x.loose, 0);
+    check(`on the phone, no word in the preview's tables is broken across lines (${broken.length} broken) and every cell breaks only between words (overflow-wrap normal; ${loose} cells not)`, L.length >= 3 && broken.length === 0 && loose === 0, broken.slice(0, 6));
     const wide = L.filter((x) => x.wide);
     const cut = [].concat(...L.map((x) => x.cut.map((c) => `${x.title}: ${c}`)));
     check(`on the phone, each table wider than its box keeps its title and first column in place when scrolled to its end, and no figure is cut (${wide.map((x) => x.title).join(', ') || 'none wide'})`, wide.length >= 1 && wide.every(heldInPlace) && cut.length === 0, { held: wide.map((x) => [x.title, x.held]), cut });
@@ -562,8 +567,8 @@ const parts = {
     // the desktop look the phone fix must leave alone: every table fits its box, words whole, no column fixed
     const L = await tableLayout(fr);
     console.log(`preview tables at 1280 px: ${tablesLine(L)}`);
-    const off = L.filter((x) => x.wide || x.fixed || x.broken.length || x.cut.length).map((x) => ({ title: x.title, wide: x.wide, fixed: x.fixed, broken: x.broken.slice(0, 3), cut: x.cut.slice(0, 3) }));
-    check(`at 1280 px every preview table fits its box (none scrolls sideways), with no word broken, no figure cut and no fixed column (${L.length} tables)`, L.length >= 4 && off.length === 0, off);
+    const off = L.filter((x) => x.wide || x.fixed || x.broken.length || x.loose || x.cut.length).map((x) => ({ title: x.title, wide: x.wide, fixed: x.fixed, broken: x.broken.slice(0, 3), loose: x.loose, cut: x.cut.slice(0, 3) }));
+    check(`at 1280 px every preview table fits its box (none scrolls sideways), with no word broken (every cell breaks only between words), no figure cut and no fixed column (${L.length} tables)`, L.length >= 4 && off.length === 0, off);
     const model = await fr.evaluate((fund) => {
       const NS = window.CVPortal;
       const w = NS.state.ws;
