@@ -229,4 +229,75 @@ Assumptions: one sponsor user; 60 investors; one 506(c) offering a year with 30 
 
 What this shows: on software alone, a small sponsor pays roughly $3,000-$12,700 a year to the competitors or the separate tools. At $100/mo our list price is $1,200, the lowest of any full set found. But the competitors' prices buy things we do not have yet: hosted team data, money movement, CRM, and track record (section 5).
 
+## 5. Recommended price, with the reasoning
+
+### 5.1 Where a $99-$100 price sits
+
+- **Published or evidenced prices for a full set** (portal, e-sign, distributions, documents) start at about $499/mo (InvestNext All-In-One, Covercy Starter $498) and go up to $749/mo (Agora Essential), about $650-700/mo (AppFolio), $1,000/mo (RealPage, possibly outdated) and $18,000/yr or more (Juniper Square, historical).
+- **Cheaper entry tiers** exist only for fundraising or CRM: InvestNext Fundraising $99 or $299/mo, Cash Flow Portal Marketing Pro $199/mo, Cash Flow Portal CRM Core $0.
+- At $99-$100/mo our list price sits **at the very bottom of the market**: level with the cheapest fundraising-only tiers, and about one-fifth of the cheapest all-in-one tiers. No competitor found offers e-signature, tax documents, fund accounting and Form D at that price.
+
+### 5.2 Real differentiators (BUILT capabilities only)
+
+All are BUILT AND MERGED and none is owner-checked. They may be shown to sponsors only after the owner has checked them.
+
+1. **One flat price with e-signature included and no envelope fee.** Juniper Square charges $5 per envelope after 1,000; DocuSign is $25-$45 per user per month on its own.
+2. **A $0 payment path with no money transmitter.** Distribution files go straight to the sponsor's own bank, so money never sits with a vendor. Juniper Square charges $0.50 per ACH, InvestNext a per-payment fee, and Covercy charges $79-$799/mo for banking.
+3. **Compliance inside onboarding.** The official W-9, W-8BEN and W-8BEN-E are filled and e-signed; the 506(b) count of 35, the Reg A Tier 2 10% limit and the ERISA 25% test are built in. None of this appeared in any competitor material found.
+4. **Investor tax work most portals leave to the CPA or administrator:** K-1 split, match and delivery under the IRS consent rules; 1099-INT and 1099-DIV with the IRS IRIS file; backup and foreign withholding.
+5. **Double-entry fund accounting and a CPA year-end package** at the portal's price. Elsewhere this is an administration tier or a separate module.
+6. **A Form D builder with due dates, and filing orders.** No competitor found offers this.
+7. **A report builder** for statements, letters and notices.
+8. **Full white-label on the sponsor's own domain with no vendor name anywhere, and a server the sponsor can run itself.** InvestNext charges extra for its own domain.
+
+### 5.3 BUILDING or PLANNED (cannot be sold yet)
+
+Automatic field placement on any agreement (measured 65-96%, 3 of 4 under the bar). Email from the sponsor's domain. Messaging and the data room (logic only, no screens). Security: sign-in screens, the console by role, password reset, server-held workspace. ACH upgrades: pre-notes, wires, returns. Live KYC, screening and accreditation providers, and real card charges. The EDGAR API filing route. The state fee table.
+
+### 5.4 What competitors have that we lack
+
+1. **Hosted, central data for a team.** Today the data lives in the browser unless the sponsor runs the server; plan 15-17 is open. This is the largest gap. A sponsor who loses the browser data, or works from two devices, is exposed. All the major competitors are hosted services.
+2. **Money movement.** Competitors collect capital by ACH (InvestNext, Agora, AppFolio) and pay out without a file upload ("No NACHA file uploads", InvestNext). Ours makes the sponsor upload a file to its bank, and capital calls go by wire. Our $0 cost is real, but it is also a convenience gap, and the sponsor needs its bank's ACH origination service (bank fees not researched).
+3. **CRM, fundraising pipeline and email marketing** (Juniper Square, Agora, Covercy, Cash Flow Portal, Yardi).
+4. **Proven integrations** for accreditation and KYC (Parallel Markets at Cash Flow Portal and SponsorCloud). Ours are stand-ins until 08-03 and 08-12 run.
+5. **Track record, support teams and security attestations.** Competitors' attestations were not checked in this research. Ours has no SOC 2, and Phase 15 says to claim none.
+6. **E-sign evidence that stands up on its own.** The README lists signer identity checks, server-side IP capture and a server seal on the certificate as missing before production.
+
+### 5.5 How the free year for 40 sponsors and the funnel purpose change the price
+
+- **The price only starts in month 13.** What matters now is (a) whether the 40 sponsors use the portal for real offerings during the free year, and (b) whether the BUILDING items, above all server-held data and sign-in, are owner-checked before anyone is billed. A price on a product that keeps data only in a browser will meet resistance at any level.
+- **The portal is a funnel to fund administration.** The managed edition's fee is where the money is: outside administrators charge $19,500 to $150,000 a year (section 4.1). So the portal should be priced to lower the barrier to entry, not to maximise per-seat revenue. That argues for staying at or near $99, not moving to the $499-$749 market band, even though the BUILT scope is wider than many of those tiers.
+- **A price that is too low can signal a toy.** At $99 with everything included, sponsors may doubt it. The answer is the owner-checked proof on real documents (CLAUDE.md), not a higher price.
+- **The free year costs the owner real money for paid parts:** server hosting and the model calls for the help bot and intake. Those costs were not measured in this research. The verification package and filings are already charged per use, so they do not add to that cost.
+
+### 5.6 Pricing options
+
+**Option A — Flat $100/mo, everything included (the owner's current plan)**
+- For: simplest to explain; the lowest full-set price in the market; nothing to meter; fits the funnel.
+- Against: a sponsor with 1,000 investors pays the same as one with 20, and server and email costs grow with investors; no upgrade step other than the managed edition.
+
+**Option B — Two tiers by investor count, plus per-use add-ons (recommended)**
+- Starter $99/mo: up to 100 investors, unlimited offerings, everything BUILT included (e-sign, NACHA files, tax documents, fund accounting, reports, Form D builder).
+- Growth $249/mo: more than 100 investors.
+- Annual prepay: 12 months for the price of 10 (common in the market; Agora and InvestNext bill yearly).
+- Per-use items kept at the server's current prices: verification package $19 or $99 per investor, Form D order $100, amendment $50, state notices $100 plus state fees at cost.
+- Portal fee waived for sponsors who take the managed fund administration.
+- For: still the cheapest full set; earns more where costs are higher; investor count is already in the product, so nothing new needs measuring; easy to check.
+- Against: one more thing to explain; the 100 limit is a judgement, not a measured figure; a sponsor near the limit may resent the jump.
+- Why investor count and not AUM: InvestNext, Agora and SponsorCloud price by equity under management, but a self-serve product cannot verify AUM without asking for it, and sponsors read AUM pricing as a tax on growth. Investor count is visible, honest and matches where our costs come from.
+
+**Option C — Low base plus per-investor fee**
+- $49/mo plus $1 per active investor per month.
+- For: tracks cost and value closely.
+- Against: harder to predict; sponsors see a meter on every investor they add, which works against the funnel; Allocations-style per-investor charges are disliked in syndication forums (not researched in depth here).
+
+**Recommendation: Option B,** with the 40 founding sponsors kept at $99 flat at any investor count for 24 months after their free year, which honours the offer. Charge nothing in month 13 until server-held data, sign-in and email from the sponsor's domain are merged and owner-checked. If they are not, extend the free period rather than bill for an unfinished product.
+
+### 5.7 Uncertainty, stated plainly
+
+- Most competitor prices are not published. The figures here come from search extracts of vendor pages and from review sites, several of them dated 2019-2024. None of the vendor pages could be opened directly in this session.
+- Nobody has asked sponsors what they would pay. The 40 free sponsors are the cheapest way to find out: ask at month 9 whether they would pay $99 or $249, and record the answers.
+- Our hosting, model and email costs per sponsor were not measured, so the margin at $99 is unknown.
+- The recommendation assumes the BUILDING items are owner-checked before billing starts. If they are not, the right price is $0.
+
 <!-- gsd:write-continue -->
