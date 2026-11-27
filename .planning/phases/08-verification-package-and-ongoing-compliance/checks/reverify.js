@@ -75,6 +75,10 @@ async function lapsedInvestor(S, A, opts) {
       ws.invitations = (ws.invitations || []).filter((x) => x.investorId !== a.id);
       const o = ws.offerings.find((x) => x.id === off.offeringId);
       const r = NS.ops.submitSubscription(ws, a, o, { cents: Math.round((Number(o.minimum) || 50000) * 100), signature: a.contact });
+      // Signed on paper and recorded as such: no agreement waits for a signature, so only the verification decides Approve.
+      if (r.envelopeId) ws.envelopes = (ws.envelopes || []).filter((e) => e.id !== r.envelopeId);
+      delete r.envelopeId;
+      r.signedAt = at(-1);
       NS.integrations.syncKyc(ws, a);
       NS.app.save(true);
       return { id: a.id, email: a.email, contact: a.contact, title: a.title, reqId: r.id, firm: ws.tenant.name, until, offeringId: o.id };
@@ -92,14 +96,16 @@ async function approve(p, reqId) {
   await Lib.consoleRoute(p, 'console-requests', `[data-action=req-approve][data-id="${reqId}"]`);
   await p.evaluate(() => (document.getElementById('toasts').innerHTML = ''));
   await p.click(`[data-action=req-approve][data-id="${reqId}"]`);
-  const toast = await toastLike(p, 'not fully verified|Subscription approved');
+  const toast = await toastLike(p, 'not fully verified|Subscription approved|not signed');
   return p.evaluate(
     ({ reqId, toast }) => {
       const ws = window.CVPortal.state.ws;
       const r = (ws.requests || []).find((x) => x.id === reqId) || {};
-      return { toast, status: r.status, overridden: (ws.audit || []).filter((e) => e.action === 'Subscription approved without full verification').length };
+      const inv = ws.investors.find((y) => y.id === r.investorId);
+      const o = ws.offerings.find((y) => y.id === r.offeringId);
+      return { toast, status: r.status, overridden: (ws.audit || []).filter((e) => e.action === 'Subscription approved without full verification').length, gate: inv && o ? (window.CVPortal.integrations.subscribeGate(ws, inv, o) || {}).reason || '' : '(none)' };
     },
-    { reqId, toast }
+    { reqId, toast: toast || (await toasts(p)).join(' | ') }
   );
 }
 
@@ -198,9 +204,15 @@ const parts = {
       await p.screenshot({ path: path.join(SHOTS, 'local-done.png') });
       seen.push(done);
 
+      // The simulated check answers a moment after it starts (a real provider may take days): the console reads the result
+      // once it is in, on the Investors page.
+      await p.waitForFunction((id) => { const NS = window.CVPortal; return NS.integrations.peek(NS.state.ws.investors.find((y) => y.id === id)).accreditation.status === 'verified'; }, x.id, { timeout: 15000 });
+      await row(p, x.email);
+
       // The console: the new verification with its valid-until date; the two entries.
       const want = iso(Date.now() + 90 * DAY);
-      await Lib.consoleRoute(p, 'console-kyc', '.cs-panel-head h2');
+      await Lib.consoleRoute(p, 'console-kyc', '[data-action=kyc-tab]');
+      await p.click('[data-action=kyc-tab][data-t=all]');
       await p.evaluate((id) => {
         window.CVPortal.state.ui.kycOpen = id;
         window.CVPortal.app.render();
@@ -213,11 +225,17 @@ const parts = {
         return { text: document.body.innerText, expiresAt: a.expiresAt, status: a.status, shown: NS.ui.date(want) };
       }, { id: x.id, want });
       const line = kyc.text.split('\n').find((l) => /^Accreditation: verified/.test(l.trim())) || '';
+      if (!line) console.log('NOTE kyc text: ' + kyc.text.replace(/\s+/g, ' ').slice(0, 1500));
       check(`the console shows the accreditation verified, valid until ${want} (the firm's 90 days)`, kyc.status === 'verified' && kyc.expiresAt === want && line.indexOf(`valid until ${kyc.shown}`) >= 0, { line, expiresAt: kyc.expiresAt });
       seen.push(line);
       const asked2 = await entries(p, x.id, 'Accreditation re-verification requested');
       const done2 = await entries(p, x.id, 'Accreditation re-verified');
-      check('one "Accreditation re-verification requested" and one "Accreditation re-verified" in the change log', asked2.length === 1 && done2.length === 1, { asked2, done2 });
+      const why = await p.evaluate(({ id, itId }) => {
+        const ws = window.CVPortal.state.ws;
+        const it = (ws.invitations || []).find((y) => y.id === itId) || {};
+        return { actions: (ws.audit || []).filter((e) => e.record === id).map((e) => e.action), it: { status: it.status, sentAt: it.sentAt, completedAt: it.completedAt }, acc: window.CVPortal.integrations.peek(ws.investors.find((y) => y.id === id)).accreditation };
+      }, { id: x.id, itId: it[0].id });
+      check('one "Accreditation re-verification requested" and one "Accreditation re-verified" in the change log', asked2.length === 1 && done2.length === 1, { asked2, done2, why });
 
       // After: Approve is allowed (no override, no second click).
       const after = await approve(p, x.reqId);

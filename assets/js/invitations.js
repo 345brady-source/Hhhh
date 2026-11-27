@@ -139,6 +139,8 @@
         changed = true;
       }
     });
+    // Plan 08-09: a re-verification request finished while its check was still waiting: its entry is written once the result is in.
+    list(ws).forEach((it) => it.reverify && it.status === 'completed' && !it.reverifiedAt && reverified(ws, it) && (changed = true));
     return changed;
   }
   function linkFor(ws, it) {
@@ -394,15 +396,17 @@
   /**
    * Plan 08-09: a re-verification request finished (local mode) or was imported (server mode). Its accreditation result is
    * capped by the firm's validity days as every verification is (capAccreditation), and a verified, current result made
-   * after the request was sent is logged once as "Accreditation re-verified". Answers whether it was.
+   * after the request was sent is logged once as "Accreditation re-verified" (a result that arrives after the request
+   * finished: refresh, on the console's Investors page). Answers whether it was logged now.
    */
   function reverified(ws, it) {
     const inv = invOf(ws, it.investorId);
     const I = IV();
     const a = inv && I && I.recorded && I.recorded(inv) ? inv.verify.accreditation : null;
-    if (!freshAcc(a, it) || a.status !== 'verified' || I.selfCertified(a)) return false;
+    if (it.reverifiedAt || !freshAcc(a, it) || a.status !== 'verified' || I.selfCertified(a)) return false;
     capAccreditation(ws, inv, a);
     if (!I.accreditationValid(ws, inv)) return false;
+    it.reverifiedAt = nowIso();
     audit(ws, 'Accreditation re-verified', `${inv.title}: ${a.via || 'verified'}${a.method ? `, ${a.method}` : ''}; valid until ${date(a.expiresAt)}`, '', inv.id);
     return true;
   }
