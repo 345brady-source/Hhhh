@@ -1,8 +1,8 @@
 ---
-status: investigating
+status: verifying
 trigger: "During plan 13-04's gate (several other gates running on 4 cores), phase 08's check monitoring.js ended `MONITORING: FAIL (parts run: 9) - package-not-run` with exactly two failing lines: `\"Run now\" re-screened them :: Signed in as admin of Kestrel Bay` and `the package result is kept as it was, the Treasury result is added, the next date moved`. In the same part \"one list read, one screening asked of the server, for the Treasury lists\" passed. The part alone passed twice afterwards; a rerun of the gate passed."
 created: 2026-11-27T16:00:00Z
-updated: 2026-11-27T16:00:00Z
+updated: 2026-11-27T17:27:00Z
 ---
 
 ## Current Focus
@@ -12,7 +12,7 @@ hypothesis: H1 - runNow (monitoring.js:457-463) waits for ANY toast; the sign-in
 bug_class: Heisenbug (timing race in the check; 1 failure seen under load, part alone PASS twice)
 test: instrumented scratch copy recording the toasts present at the click and at the read, and the ms from click to the result toast; then force the server's POST /v1/screenings answer 1500 ms late and look for the same two FAIL lines
 expecting: sign-in toast present at every click (so the wait never waits); natural margin small; with the forced delay exactly the two FAIL lines
-next_action: finish the 24 unmodified runs, then copy the verified fix (debug-monitoring/monitoring-fixed.js, made by mkfix.py) into the tree, commit, and run MONITORING full x10 (two loops through heavy.sh) and the server tests
+next_action: wait for MONITORING full x10 on ca59fff (loop.sh final 1-5, 6-10; summary-final.txt) and the forced GREEN reruns on the final file (final-hold, final-post in summary-force.txt); then server tests on ca59fff, remove the node_modules link, hand back
 
 reasoning_checkpoint:
   hypothesis: "package-not-run FAILed because runNow (monitoring.js:457-463) takes any toast on screen as the answer of 'Run now': the 'Signed in as admin of Kestrel Bay' toast Lib.consoleRoute raises (lib.js:480 -> app.js:783, 4.2 s on screen) inside attention() (648) is still there at the click, so waitForSelector returns at once and .last() and the record (651) are read before the in-process server has answered POST /v1/screenings."
@@ -41,6 +41,10 @@ started: seen during plan 13-04's gate (base ef87afa area)
 
 ## Eliminated
 <!-- APPEND only -->
+
+- hypothesis: "pulled() (monitoring.js:446-453) can return before the console has applied its GET /v1/checks/changed answer, so a part that seeds right after it (package-not-run 644, kyc-buttons 685) could be re-screened by the console's own pass, and the negative reads after it (hold-only, auto-free, once) could look too early"
+  evidence: "Forced with FORCE_PULL_HOLD=3000 (the page holds the answer 3 s after it arrived, before reading its body): the unfixed check PASSes package-not-run and kyc-buttons (red-pull: 32 PASS 0 FAIL), and a probe (probe-pull) shows pulled() itself took 4398 ms and returned with the console's pulledAt already equal to the answer's now: Playwright's response body read finishes only once the page has read the body, and the console applies the answer in the same step, so the old pulled() is already ordered after the console's apply. The pulled() change (a wait on server.pulledAt) was reverted before the final commit; the 7 full runs made with it (summary-green-pre-revert.txt, all PASS) are not counted."
+  timestamp: 2026-11-27T17:24Z
 
 ## Evidence
 <!-- APPEND only -->
@@ -132,13 +136,18 @@ started: seen during plan 13-04's gate (base ef87afa area)
     preview-desktop / preview-phone: 843-845 runNow (fixed); 836-839 negative, no server
   implication: beyond runNow, two more reads of the same kind: pulled()'s callers that seed right after it (package-not-run 644, kyc-buttons 685) and once's `tried` (803). Forced RED/GREEN for both are running (FORCE_PULL_HOLD=3000: the page applies the pull 3 s after it arrived; FORCE_POST_DELAY=5000: the console's run sends its screening 5 s late)
 
-- timestamp: 2026-11-27T17:25Z
+- timestamp: 2026-11-27T17:14Z
   checked: forced runs (force.sh; copies by mkforce.py: an init script wraps the console page's own fetch): red-post = unfixed check (ef87afa) FORCE_POST_DELAY=5000 --only once; green-post = fixed tree, same; green-hold = final fixed tree (instrumented by mkinst.py) FORCE_HOLD_MS=1500 --only package-not-run
   found: |
     red-post   | MONITORING: FAIL (parts run: 1) - once | 9 PASS 1 FAIL: FAIL once a run that got no answer was tried once for that due date and writes nothing :: {"tried":1,"posts":1,"next":"2026-11-25"}
     green-post | MONITORING: PASS (parts run: 1) | 10 PASS 0 FAIL
     green-hold | MONITORING: PASS (parts run: 1) | 17 PASS 0 FAIL; TIMING pnr-A atClick=[3 sign-in toasts] resultAfterClick=1556 readAfterClick=1566 margin=10
   implication: once's `tried` read was racing the run's screening request (RED with it 5 s late); the fixed part waits for it and checks the same count. The final fixed runNow waits for the result toast under the 1.5 s hold.
+
+- timestamp: 2026-11-27T17:26Z
+  checked: final fix committed ca59fff (monitoring.js only, against ef87afa: toastAfter + runNow + kycPress, and once's wait for the run's POST /v1/screenings answer; pulled() as at ef87afa); MONITORING full x10 restarted on it (loop.sh final 1-5 and 6-10, two at a time through heavy.sh), forced GREEN rerun queued on the final file
+  found: (in progress)
+  implication: verification counts only runs on ca59fff
 
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
