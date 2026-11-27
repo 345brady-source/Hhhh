@@ -142,7 +142,7 @@ test('kinds', async () => {
         const want = rendered(msg, x);
         if (isCall) assert.equal(want.subject, CALLS[kind]);
         else assert.ok(want.subject.startsWith('Harbor Ridge Capital: ') && want.subject.includes('Fund II side letter'), want.subject);
-        assert.ok(m.data.includes(`\r\nSubject: ${want.subject}\r\n`), `${kind}: the kind's subject`);
+        assert.ok(m.data.replace(/\r\n[ \t]+/g, ' ').includes(`\r\nSubject: ${want.subject}\r\n`), `${kind}: the kind's subject`);
         const p = parts(m.data);
         assert.equal(lf(p.text), want.text, `${kind}: the console preview’s text`);
         assert.deepEqual(Array.from(new Set(webLinks(p.text))), [PORTAL], `${kind}: one link, the portal address`);
@@ -238,10 +238,10 @@ test('workspaces', async () => {
     const acct = async (workspace, name) => (await call(h.base, 'POST', '/v1/admin/accounts', { bearer: ADMIN, body: { workspace, name } })).body;
     const a = await acct(WS, 'Harbor Ridge Capital');
     const b = await acct('ws-beta', 'Beta Funds');
-    // An account's call naming another workspace acts on its own (held: its own domain is not set up yet).
+    // An account's call naming another workspace acts on its own (no SMTP here: the outbox, under its own workspace).
     const r = await call(h.base, 'POST', '/v1/messages', { bearer: a.token, body: notice({ workspace: 'ws-beta' }) });
     assert.equal(r.status, 200, r.text);
-    assert.deepEqual(r.body.results.map((x) => x.emailStatus), ['held', 'held']);
+    assert.deepEqual(r.body.results.map((x) => x.emailStatus), ['outbox', 'outbox']);
     assert.equal((await call(h.base, 'GET', '/v1/messages/log', { bearer: a.token })).body.entries.length, 2);
     assert.equal((await call(h.base, 'GET', '/v1/messages/log', { bearer: b.token })).body.entries.length, 0, 'nothing logged under the other workspace');
     assert.equal((await call(h.base, 'GET', '/v1/outbox', { bearer: b.token })).body.messages.length, 0);
@@ -256,7 +256,7 @@ test('workspaces', async () => {
     assert.deepEqual(theirs.body.preferences.map((x) => x.investorId), ['BF-0001']);
 
     // A signed-in person whose role lacks operate is refused the call (B1); reading the choices needs view only.
-    const origin = 'http://127.0.0.1';
+    const origin = PUBLIC; // the server's own origin (lib/auth.mjs's browser-write rule)
     const pw = randomBytes(12).toString('base64url');
     const up = await call(h.base, 'POST', '/v1/auth/signup', { bearer: '', origin, body: { firm: 'Cedar Point Partners', name: 'Pat Owner', email: 'pat@cedarpoint.example', password: pw } });
     assert.equal(up.status, 201, up.text);

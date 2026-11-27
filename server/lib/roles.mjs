@@ -65,6 +65,7 @@ export const ROUTES = Object.freeze([
   other('GET', { path: '/disclosure.html' }, 'public', 'with SERVE_PORTAL=1 the disclosure page, when its file exists'),
   other('GET', { prefix: '/assets' }, 'public', 'with SERVE_PORTAL=1 the files under assets/ listed at start-up, by extension'),
   other('POST', { path: '/v1/mail/events' }, 'public', 'delivery events from the mail provider, each signature-checked by the mail adapter (plan 13-03)'),
+  other('*', { prefix: '/unsubscribe' }, 'public', 'one-click unsubscribe: an HMAC-signed token, the same answer for every token; a GET changes nothing (plan 13-04)'),
 
   /* --- invitations (lib/invitations.mjs) --- */
   team('GET', { path: '/v1/invitations' }, 'view', true),

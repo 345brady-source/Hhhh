@@ -32,6 +32,7 @@
  *   GET/PUT /v1/mail/sender, POST /v1/mail/sender/check  the address a workspace's messages go from (lib/senders.mjs)
  *   GET  /v1/messages/log         the workspace's sealed sent log (lib/maillog.mjs)
  *   POST /v1/messages             notices, capital calls and e-sign notices to up to 500 investors (lib/messages.mjs)
+ *   GET  /v1/messages/preferences who turned offering news off; POST /unsubscribe/<token> the one-click address
  *   POST /v1/mail/events          delivery events from the mail provider, signature-checked by its adapter (server/mailers/)
  *   POST /v1/admin/accounts       the operator makes a sponsor account with its own token (ADMIN_TOKEN; lib/accounts.mjs)
  *   GET  /v1/admin/accounts       the accounts; POST /v1/admin/accounts/:id/token replaces an account's token
@@ -190,12 +191,13 @@ export function createServer(opts = {}) {
   // Help shares that cap too, and has its own daily cap (lib/help.mjs).
   const help = opts.help || createHelp({ env, fetch: opts.fetch, budget: intake.budget || undefined, now });
 
-  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, mailCtx: opts.mailCtx });
+  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, mailCtx: opts.mailCtx, firmRecord: (ws) => storedTenant(ws) });
   // The mail adapter MAIL_PROVIDER names (server/mailers/): delivery events are its to verify. Its own, larger rate limit:
   // the provider sends one event per message from a few addresses.
   const mailAdapter = mailAdapterOf(env);
   const mailCtx = () => Object.assign({ env, now }, opts.mailCtx || {});
   const eventsLimited = rateLimiter(Object.assign({}, env, { RATE_LIMIT_PER_MIN: env.MAIL_EVENTS_PER_MIN === undefined ? 600 : env.MAIL_EVENTS_PER_MIN }));
+  const unsubLimited = rateLimiter(Object.assign({}, env, { RATE_LIMIT_PER_MIN: env.MAIL_EVENTS_PER_MIN === undefined ? 600 : env.MAIL_EVENTS_PER_MIN })); // one-click unsubscribes (plan 13-04)
   const accounts = createAccounts({ store, now });
   // The server change log (lib/auditlog.mjs, SE-08): sign-ins reach it through lib/auth.mjs's log(), refusals and the team's
   // changes from here and lib/team.mjs. The person is always the session's (or the fixed Server actor), never the request's.
@@ -215,6 +217,15 @@ export function createServer(opts = {}) {
   const guards = createGuards({ signin, store, now }); // the route table's checks (lib/roles.mjs, plan 15-05)
   const team = createTeam({ store, signin, audit: auditLog, now, env }); // the firm's people, roles and invitations (plan 15-05)
   const workspaces = createWorkspaces({ env, store, vault: invites.vault, now, audit: auditLog, signin }); // the firm's workspace, sealed, by role (plan 15-06)
+  /** The firm record the workspace keeps on this server (lib/workspace.mjs, server mode), or null (C-06, plan 13-04). */
+  function storedTenant(ws) {
+    try {
+      const w = ws ? workspaces.get(ws) : null;
+      return w && w.ws && w.ws.tenant && typeof w.ws.tenant === 'object' ? w.ws.tenant : null;
+    } catch {
+      return null;
+    }
+  }
   const pages = opts.pages || createPages({ env, now }); // the portal's own pages and security.txt from this server (plan 15-13, mounted by 15-06)
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
@@ -933,6 +944,13 @@ export function createServer(opts = {}) {
       const list = Array.isArray(events) ? events : [];
       for (const ev of list) invites.mailLog.event(ev);
       return send(res, 200, { received: list.length });
+    }
+
+    // One-click unsubscribe from possibly commercial mail (plan 13-04, EM-11): no token of the firm's, before the sponsor
+    // gate; the mail provider posts it from a few addresses, so it has the delivery events' larger per-client limit.
+    if (path === '/unsubscribe' || path.startsWith('/unsubscribe/')) {
+      if (unsubLimited(req)) return send(res, 429, { error: 'Too many requests' });
+      return messages.unsubscribe(req, res, path);
     }
 
     // Results pushed by a provider or the sponsor's own automation (for "link" checks, or any provider
