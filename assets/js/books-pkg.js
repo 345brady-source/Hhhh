@@ -452,7 +452,10 @@
     if (property) sheets.push(property);
     sheets.push(inv);
     coverSheet.rows = coverSheet.rows.concat(missing);
-    return { sheets, checks };
+    const out = { sheets, checks };
+    // The Audit page's build for the year, for the files (plan 11-16): not enumerable, so the result reads as before.
+    Object.defineProperty(out, 'build', { value: A, enumerable: false });
+    return out;
   }
 
   /**
@@ -471,7 +474,363 @@
     return lines.join('\r\n') + '\r\n';
   }
 
+  /* ---------- The files (plan 11-16) ---------- */
+  const enc = (s) => new TextEncoder().encode(s);
+  /** A CSV cell for one line of text: quoted, and never read as a formula. */
+  const csvLine = (s) => {
+    let t = String(s);
+    if (/^[=+\-@\t\r]/.test(t)) t = "'" + t;
+    return '"' + t.replace(/"/g, '""') + '"';
+  };
+  const reEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  /** The kind of a stored form file from its first bytes: 'pdf', 'png', 'jpg', or '' for anything else. */
+  function kindOf(b) {
+    if (b.length > 4 && b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46 && b[4] === 0x2d) return 'pdf';
+    if (b.length > 7 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'png';
+    if (b.length > 2 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'jpg';
+    return '';
+  }
+  /**
+   * Where an investor's signed tax form is stored, by the rule onboarding.js uses when it sends the form to the console:
+   * a form signed in the portal is the completed 'tax' envelope's signed copy (`<envelope id>-signed`); an uploaded form is
+   * the file its record names under the investor's own tax- name. { form, id } ('' when no stored copy is named), or null
+   * when the investor has no signed W-9 or W-8.
+   */
+  function signedFormOf(ws, i) {
+    const tc = i.taxCert && typeof i.taxCert === 'object' ? i.taxCert : {};
+    const form = String(tc.form || i.taxForm || '');
+    if (!/^W-(9|8)/.test(form) || (tc.signed !== true && tc.uploaded !== true)) return null;
+    if (tc.uploaded === true) return { form, id: typeof tc.fileId === 'string' && new RegExp(`^tax-${reEsc(i.id)}-[a-z0-9]+$`).test(tc.fileId) ? tc.fileId : '' };
+    const e = tc.envelopeId ? (ws.envelopes || []).find((x) => x && x.id === tc.envelopeId && x.kind === 'tax' && x.status === 'completed' && x.signedDocId === `${x.id}-signed` && (x.signers || []).some((s) => s && s.investorId === i.id && !s.co)) : null;
+    return { form, id: e ? e.signedDocId : '' };
+  }
+  /** A stored file's bytes, or null when this device does not hold it. */
+  async function storedBytes(id) {
+    if (!id || !NS.ops || !NS.ops.files || typeof NS.ops.files.get !== 'function') return null;
+    let b = null;
+    try {
+      b = await NS.ops.files.get(id);
+    } catch (e) {
+      return null;
+    }
+    if (!b) return null;
+    if (ArrayBuffer.isView(b)) return new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+    if (typeof b.arrayBuffer === 'function') return new Uint8Array(await b.arrayBuffer());
+    return null;
+  }
+
+  /**
+   * The year-end package as one zip, written in the browser with nothing fetched:
+   *   NS.books.packageFiles(ws, o, year, { includeForms, actor, now, today, kit }) → Promise<{ name, bytes, hash, files }>
+   * Files, in order: 00_README.txt; '<Firm>_<Fund>_<year>_year_end.xlsx' (every sheet, NS.files.workbook);
+   * '<Firm>_<Fund>_<year>_year_end.pdf' (the cover, the statements, trial balance, capital roll-forward and checks,
+   * NS.files.pdf); 'csv/<NN>_<Title>.csv' for each sheet (NS.books.packageCsv, headed by one line naming fund, year and
+   * sheet); with includeForms, 'forms/<investor id>_<form>.<pdf|png|jpg>' for each investor of the fund whose signed W-9 or
+   * W-8 this device holds (C-04: the only files with a full taxpayer number, and only by the sponsor's tick); then
+   * MANIFEST.sha256. The export is written to the change log with the zip's SHA-256.
+   */
+  async function packageFiles(ws, o, year, opts) {
+    opts = opts || {};
+    const F = NS.files;
+    if (!F || typeof F.workbook !== 'function' || typeof F.pdf !== 'function') throw new Error('The file writers (filesout.js) are not loaded.');
+    const y = Number(year);
+    const who = typeof opts.actor === 'string' ? opts.actor : opts.actor && typeof opts.actor.by === 'string' ? opts.actor.by : '';
+    const now = opts.now ? new Date(opts.now) : new Date();
+    const K = build(ws, o, y, { today: opts.today || NS.dates.today(), actor: who });
+    const A = K.build;
+    const sheets = K.sheets;
+    const cover = sheets[0];
+    const t = ws.tenant || {};
+    const firm = t.legalName || t.name || t.shortName || '';
+    const fund = o.name || o.id;
+    const stem = `${slug(t.shortName || t.name || 'Firm')}_${slug(o.shortName || o.name || o.id)}_${y}`;
+
+    // Signed tax forms, only when ticked for this download.
+    const forms = [];
+    const absent = [];
+    if (opts.includeForms) {
+      const ids = (A.P.inv || []).map((a) => a.investor.id);
+      const invs = (ws.investors || []).filter((i) => ids.indexOf(i.id) >= 0).sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      for (const i of invs) {
+        const s = signedFormOf(ws, i);
+        if (!s) continue;
+        const bytes = await storedBytes(s.id);
+        const kind = bytes ? kindOf(bytes) : '';
+        if (kind) forms.push({ name: `forms/${String(i.id).replace(/[^A-Za-z0-9-]+/g, '_')}_${String(s.form).replace(/[^A-Za-z0-9-]+/g, '')}.${kind}`, data: bytes });
+        else absent.push(`Signed form not on this device: ${i.id} ${s.form}`);
+      }
+    }
+    const at = cover.rows.findIndex((r) => r[0] === 'Signed tax forms included');
+    if (at >= 0) {
+      cover.rows[at] = ['Signed tax forms included', forms.length ? 'Yes' : opts.includeForms ? 'No (none stored on this device)' : 'No', null];
+      cover.rows.splice(at + 1, 0, ...absent.map((x) => [x, 'Not included', null]));
+    }
+    const coverOf = (label) => (cover.rows.find((r) => r[0] === label) || [])[1] || '';
+
+    // The workbook, its tab names and the CSVs.
+    const when = now;
+    const used = new Set();
+    const tabs = sheets.map((s) => F.sheetName(s.title, used));
+    const xlsxName = `${stem}_year_end.xlsx`;
+    const pdfName = `${stem}_year_end.pdf`;
+    const lead = `${fund}, tax year ${y}. `;
+    const csvs = sheets.map((s, k) => {
+      const desc = String(s.desc || '').indexOf(lead) === 0 ? String(s.desc).slice(lead.length) : String(s.desc || '');
+      const body = packageCsv(s).replace(/^\uFEFF/, '');
+      return { name: `csv/${String(k + 1).padStart(2, '0')}_${slug(s.title)}.csv`, data: enc('\uFEFF' + csvLine(`${fund}, ${y}: ${s.title}. ${desc}`) + '\r\n' + body), sheet: s };
+    });
+
+    // The PDF: the cover, the statements, the trial balance, the roll-forward and the checks.
+    const of = (id) => A.list.find((s) => s.id === id) || null;
+    const byId = (id) => sheets.find((s) => s.id === id) || null;
+    // The trial balance's debit balances and credit balances at the year end (its ending-balance column, column 8).
+    const tbTie = () => {
+      const s = byId('tb');
+      if (!s) return '';
+      const ends = s.rows.map((r) => (typeof r[7] === 'number' ? r[7] : 0));
+      return `Debit balances ${money(ends.filter((v) => v > 0).reduce((a, v) => a + v, 0))}; credit balances ${money(-ends.filter((v) => v < 0).reduce((a, v) => a + v, 0))}.`;
+    };
+    const checkSheet = {
+      id: 'pchecks',
+      title: 'Package checks',
+      desc: 'How the sheets tie, checked when this package was written.',
+      cols: [COL('Check'), COL('Result'), COL('Detail')],
+      rows: K.checks.map((c) => [c.title, c.status === 'pass' ? 'Pass' : 'Exception', c.items.join(' | ') || (c.id === 'tb_zero' ? tbTie() : '')]),
+      total: null,
+      currency: cover.currency
+    };
+    const pdfSheets = [cover, of('al'), of('ops'), of('chg'), of('cf'), of('soi'), byId('tb'), byId('roll'), checkSheet].filter(Boolean);
+    let pdfBytes = await F.pdf({ title: `${fund} year-end package ${y}`, subtitle: `${firm ? firm + '. ' : ''}Book basis on the accrual method. Unaudited.`, sheets: pdfSheets, footer: `${fund}, ${y}, book basis`, when: when.toISOString() }, opts.kit);
+    // Producer and Creator name the firm (white label), not the footer.
+    const kit = opts.kit || {};
+    const PL = kit.PDFLib || (NS.esignKit && NS.esignKit.writer ? await NS.esignKit.writer() : null);
+    if (PL && firm) {
+      const d = await PL.PDFDocument.load(pdfBytes, { updateMetadata: false });
+      d.setProducer(firm);
+      d.setCreator(firm);
+      d.setModificationDate(when);
+      pdfBytes = await d.save();
+    }
+
+    // The README.
+    const rows = (s) => `${s.rows.length} row${s.rows.length === 1 ? '' : 's'}`;
+    const files = [{ name: xlsxName, data: F.workbook(sheets, { when }) }, { name: pdfName, data: pdfBytes }].concat(csvs).concat(forms);
+    const pad = (s) => (s.length < 52 ? s + ' '.repeat(52 - s.length) : s + '  ');
+    const lines = [
+      fund,
+      `Year-end package for the ${y} tax year`,
+      '',
+      `Fund:           ${fund}`,
+      `Tax year:       ${y} (January 1 to December 31)`,
+      `Prepared by:    ${coverOf('Prepared by')}`,
+      `Prepared at:    ${now.toISOString().replace(/\.\d{3}Z$/, '').replace('T', ' ')} UTC`,
+      `Currency:       ${cover.currency || 'USD'}`,
+      `Books closed through: ${coverOf('Books closed through')}`,
+      '',
+      'Book basis on the accrual method. Nothing here is a tax-basis or K-1 figure; the preparer decides tax treatment.',
+      `Signed tax forms included: ${coverOf('Signed tax forms included')}`,
+      ...absent,
+      '',
+      'CONTENTS',
+      `${pad('00_README.txt')}This file`,
+      `${pad(xlsxName)}Workbook: every sheet below, one tab each`,
+      `${pad(pdfName)}PDF: cover, statements, trial balance, capital roll-forward and checks`,
+      ...csvs.map((c) => `${pad(c.name)}${c.sheet.title} (${rows(c.sheet)})`),
+      ...forms.map((f) => `${pad(f.name)}Signed tax form, included because the sponsor chose to include signed forms`),
+      `${pad('MANIFEST.sha256')}SHA-256 checksum of every file above`,
+      '',
+      'WORKBOOK TABS (a tab name is at most 31 characters)',
+      ...sheets.map((s, k) => `${pad(tabs[k])}${s.title}`),
+      '',
+      'HOW THE SHEETS TIE',
+      '- The trial balance sums to zero.',
+      '- Schedule L line 14 (total assets) equals line 22 (total liabilities and capital).',
+      '- The capital roll-forward’s totals equal the changes in partners’ capital.',
+      '- The statement of cash flows’ change equals the change in cash.',
+      '',
+      'CHECKS',
+      ...K.checks.map((c) => `[${c.status === 'pass' ? 'PASS' : 'OPEN'}] ${c.title}${c.items.length ? `: ${c.items.join(' ')}` : c.id === 'tb_zero' && tbTie() ? `: ${tbTie()}` : ''}`),
+      '',
+      'VERIFYING THE FILES',
+      'On macOS or Linux, run:  shasum -a 256 -c MANIFEST.sha256',
+      'On Windows PowerShell:   Get-FileHash <file> -Algorithm SHA256',
+      '',
+      'Prepared from the portal’s records. Unaudited.'
+    ];
+    files.unshift({ name: '00_README.txt', data: enc(lines.join('\r\n') + '\r\n') });
+    const S256 = NS.audit.sha256;
+    files.push({ name: 'MANIFEST.sha256', data: enc(files.map((f) => `${S256(f.data)}  ${f.name}`).join('\n') + '\n') });
+    const bytes = NS.audit.zip(files.map((f) => ({ name: f.name, data: f.data })), when);
+    const hash = S256(bytes);
+    const name = `${stem}_year_end_package.zip`;
+    NS.audit.log(ws, Object.assign({ action: 'Year-end package exported', fund: o.id, record: name, detail: `${files.length} files; signed tax forms ${forms.length ? `included (${forms.length})` : 'not included'}; SHA-256 ${hash}` }, who ? { actor: who } : {}));
+    return { name, bytes, hash, files: files.map((f) => ({ name: f.name, size: f.data.length })) };
+  }
+
+  /* ---------- The panel on the Audit page (plan 11-16) ---------- */
+  // Drawn through NS.runHooks('auditPanels', ws) in the console's Audit view, for the fund that page has chosen, only for
+  // an owner of a self-serve firm. withholding.js (the package reads each W-8's validity from it) and filesout.js (the
+  // workbook and PDF writers) are loaded from beside this file when first needed, with the portal's own script loader.
+  const doc = root.document;
+  const HERE = (doc && doc.currentScript && doc.currentScript.src) || '';
+  const besideMe = (name) => {
+    try {
+      return HERE ? new URL(name, HERE).href : new URL(`assets/js/${name}`, doc.baseURI).href;
+    } catch (e) {
+      return '';
+    }
+  };
+  const whReady = () => !!(NS.withholding && typeof NS.withholding.w8 === 'function');
+  const filesReady = () => !!(NS.files && typeof NS.files.workbook === 'function' && typeof NS.files.pdf === 'function');
+  function need(name, ready) {
+    if (ready()) return Promise.resolve();
+    const E = NS.esignKit;
+    if (!E || typeof E.loadScript !== 'function') return Promise.reject(new Error('this page cannot load the files it needs'));
+    return E.loadScript(besideMe(name), ready).then(() => {
+      if (!ready()) throw new Error(`${name} did not load`);
+    });
+  }
+  const wh = { loading: false, err: '' };
+  function loadWithholding() {
+    if (wh.loading || wh.err) return;
+    wh.loading = true;
+    need('withholding.js', whReady).then(
+      () => {
+        wh.loading = false;
+        if (NS.state && NS.state.route === 'console-audit' && NS.app) NS.app.render();
+      },
+      (e) => {
+        wh.loading = false;
+        wh.err = `The package could not be prepared on this page: ${(e && e.message) || e}.`;
+        if (NS.state && NS.state.route === 'console-audit' && NS.app) NS.app.render();
+      }
+    );
+  }
+  const esc = (s) => (NS.ui && NS.ui.h ? NS.ui.h(s) : String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]));
+  const allowed = () => !!(NS.EDITION && NS.EDITION.diy && NS.app && typeof NS.app.can === 'function' && NS.app.can('configure'));
+  /** The panel's own state for the fund the Audit page shows: year, tick, the sheet in view, busy, the last error. */
+  function yeState(o) {
+    const u = NS.state.ui;
+    if (!u.ye || u.ye.fund !== o.id) u.ye = { fund: o.id, year: '', forms: false, view: -1, busy: false, err: '' };
+    return u.ye;
+  }
+  /** The years the fund's journal has a live entry in, newest first. */
+  function yearsOf(ws, o) {
+    const ys = new Set();
+    liveLines(ws, o, '', '').forEach((l) => /^\d{4}-/.test(l.date) && ys.add(l.date.slice(0, 4)));
+    return Array.from(ys).sort().reverse();
+  }
+  // The package for the panel's list and views is built once per fund, year and state of the records.
+  const cache = { key: '', ws: null, pkg: null };
+  function pkgFor(ws, o, year) {
+    const f = ws.books && ws.books.funds && ws.books.funds[o.id];
+    const key = [o.id, year, f && Array.isArray(f.journal) ? f.journal.length : 0, Array.isArray(ws.audit) ? ws.audit.length : 0, (ws.investors || []).length, (ws.envelopes || []).length, NS.dates.today()].join('|');
+    if (cache.ws !== ws || cache.key !== key) {
+      const pkg = build(ws, o, year, { today: NS.dates.today() });
+      cache.ws = ws;
+      cache.key = key;
+      cache.pkg = pkg;
+    }
+    return cache.pkg;
+  }
+  /** A sheet as the Audit page's preview tables it, at most `limit` rows; a text cell in a money column reads as text. */
+  function sheetTable(s, limit) {
+    const A = NS.audit;
+    const NUM = ['money', 'pct', 'ratio', 'price', 'int', 'qty'];
+    const num = (c) => NUM.indexOf(c.t) >= 0;
+    const show = (c, v) => (typeof v === 'string' && c.t !== 'text' && c.t !== 'date' ? v : A.display(c, v));
+    const cell = (c, v) => `<td${num(c) ? ' class="num"' : ''}>${esc(show(c, v))}</td>`;
+    const body = s.rows.slice(0, limit).map((r) => `<tr>${s.cols.map((c, i) => cell(c, r[i])).join('')}</tr>`).join('');
+    const total = s.total ? `<tfoot><tr>${s.cols.map((c, i) => cell(c, s.total[i])).join('')}</tr></tfoot>` : '';
+    return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact aud-tbl"><thead><tr>${s.cols.map((c) => `<th scope="col"${num(c) ? ' class="num"' : ''}>${esc(c.h)}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${s.cols.length}" class="cs-muted">No rows for this year.</td></tr>`}</tbody>${total}</table></div>${s.rows.length > limit ? `<p class="cs-hint">Showing ${limit} of ${s.rows.length} rows. The file has every row.</p>` : ''}`;
+  }
+  function panelHTML(ws) {
+    if (!ws || !allowed() || !NS.state || !NS.state.ui) return '';
+    const a = NS.state.ui.aud;
+    const o = a && (ws.offerings || []).find((x) => x.id === a.offering);
+    if (!o) return '';
+    const st = yeState(o);
+    const wrap = (body) =>
+      `<section class="cs-panel ye" id="ye-panel" data-fund="${esc(o.id)}"><div class="cs-panel-head"><h2>Year-end package</h2></div><p class="cs-muted ye-line">Everything the fund’s CPA needs for the return, as a workbook and a PDF.</p>${body}</section>`;
+    const years = yearsOf(ws, o);
+    if (!years.length) return wrap('<p class="cs-hint">The books hold no entries for this fund yet.</p>');
+    if (years.indexOf(st.year) < 0) {
+      const now = NS.dates.today().slice(0, 4);
+      st.year = years.find((y) => y < now) || years[0];
+      st.view = -1;
+    }
+    if (!whReady()) {
+      loadWithholding();
+      return wrap(wh.err ? `<p class="cs-error" role="alert">${esc(wh.err)}</p>` : '<p class="cs-hint" role="status">Loading…</p>');
+    }
+    let pkg;
+    try {
+      pkg = pkgFor(ws, o, Number(st.year));
+    } catch (e) {
+      return wrap(`<p class="cs-error" role="alert">The package could not be prepared: ${esc((e && e.message) || e)}</p>`);
+    }
+    const icon = NS.ui && NS.ui.icon ? NS.ui.icon('download') : '';
+    const shown = st.view >= 0 && pkg.sheets[st.view] ? pkg.sheets[st.view] : null;
+    return wrap(
+      `<div class="cs-grid cs-grid-3">
+        <label class="cs-field" for="ye-year"><span>Year</span><select id="ye-year" data-bind="ye:year">${years.map((y) => `<option value="${y}"${y === st.year ? ' selected' : ''}>${y}</option>`).join('')}</select></label>
+        <label class="cs-check cs-wide" for="ye-forms"><input id="ye-forms" type="checkbox" data-bind="ye:forms"${st.forms ? ' checked' : ''}>Include signed W-9 and W-8 forms</label>
+      </div>
+      <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ye-dl"${st.busy ? ' disabled aria-busy="true"' : ''}>${icon}Download year-end package</button></div>
+      ${st.err ? `<p class="cs-error" role="alert">${esc(st.err)}</p>` : ''}
+      <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact ye-sheets"><thead><tr><th scope="col">Sheet</th><th scope="col"><span class="sr-only">View</span></th></tr></thead><tbody>${pkg.sheets
+        .map((s, k) => `<tr class="ye-sheet" data-k="${k}"><td class="ye-title">${esc(s.title)}</td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="ye-view" data-k="${k}" aria-pressed="${st.view === k}">View</button></td></tr>`)
+        .join('')}</tbody></table></div>
+      ${shown ? `<div class="ye-view" id="ye-view" data-k="${st.view}"><h3>${esc(shown.title)}</h3><p class="cs-muted aud-desc">${esc(shown.desc)}</p>${sheetTable(shown, 60)}</div>` : ''}`
+    );
+  }
+  if (NS.hooks) (NS.hooks.auditPanels = NS.hooks.auditPanels || []).push(panelHTML);
+  if (NS.binders)
+    NS.binders.ye = (p, v) => {
+      const st = NS.state && NS.state.ui && NS.state.ui.ye;
+      if (!st) return;
+      if (p === 'year') {
+        st.year = String(v);
+        st.view = -1;
+        st.err = '';
+        NS.app.render();
+      } else if (p === 'forms') st.forms = v === true;
+    };
+  if (NS.actions) {
+    NS.actions['ye-view'] = (el) => {
+      const st = NS.state && NS.state.ui && NS.state.ui.ye;
+      const k = Number(el.getAttribute('data-k'));
+      if (!st || !Number.isInteger(k) || k < 0) return;
+      st.view = k;
+      NS.app.render();
+      const v = doc && doc.getElementById('ye-view');
+      if (v && v.scrollIntoView) v.scrollIntoView({ block: 'start' });
+    };
+    NS.actions['ye-dl'] = async () => {
+      const ws = NS.state && NS.state.ws;
+      const a = NS.state && NS.state.ui && NS.state.ui.aud;
+      const st = NS.state && NS.state.ui && NS.state.ui.ye;
+      const o = ws && a && (ws.offerings || []).find((x) => x.id === a.offering);
+      if (!o || !st || st.fund !== o.id || st.busy || !allowed()) return;
+      st.busy = true;
+      st.err = '';
+      NS.app.render();
+      try {
+        await need('withholding.js', whReady);
+        await need('filesout.js', filesReady);
+        const pkg = await packageFiles(ws, o, Number(st.year), { includeForms: st.forms === true, actor: NS.app.actor ? NS.app.actor() : '' });
+        await NS.ui.download(pkg.name, pkg.bytes, { mime: 'application/zip' });
+      } catch (e) {
+        st.err = `The package could not be written: ${(e && e.message) || e}`;
+      }
+      st.busy = false;
+      NS.app.render();
+    };
+  }
+
   B.package = build;
   B.packageCsv = packageCsv;
+  B.packageFiles = packageFiles;
+  B.signedFormOf = signedFormOf;
   B.packageLineOf = lineOf;
 })(typeof window !== 'undefined' ? window : globalThis);

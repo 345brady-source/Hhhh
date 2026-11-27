@@ -9,7 +9,8 @@
 //   sample-desktop  Kestrel Bay's kb-fund-ii (a sample fund, clock 2026-11-19): the trial balance's debits equal its
 //                   credits and are not zero; the general ledger shows the hint that the CSV has every row
 //   managed         index.html as staff: the Audit page's heading, the five new tabs, no Accounting entry in the menu, and
-//                   index.html and console.js unchanged since the plan's base commit
+//                   index.html and the menu (NAV, NAV_SECTIONS lines of console.js) unchanged since the plan's base
+//                   commit (11-CONTEXT "Decision during 11-16": a later plan's line elsewhere in console.js is allowed)
 //   NODE_PATH=$(npm root -g) node audit-flow.js [--only part1,part2]
 // The last line is "AUDIT FLOW: PASS (parts run: N)" or "AUDIT FLOW: FAIL (parts run: N) - <failed parts>". The two
 // marker lines above are read by the phase gate.
@@ -45,6 +46,37 @@ const J = (x) => JSON.stringify(x);
 const fixture = () => JSON.parse(JSON.stringify(require('./fixtures/fund-a.js')));
 
 /** The commit the plan started from: the gate's copy, then GATE_OUT's, then this plan's output folder. */
+/** The added or removed lines of a `git diff -U0` (not the +++/--- headers) that touch the menu: NAV or NAV_SECTIONS. */
+function menuChanges(diff) {
+  return String(diff || '')
+    .split('\n')
+    .filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l) && /\bNAV(_SECTIONS)?\b/.test(l));
+}
+if (process.argv.includes('--menu-selftest')) {
+  // RED/GREEN proof of the menu test on real git diffs (11-CONTEXT "Decision during 11-16"):
+  //   node audit-flow.js --menu-selftest <base commit> <scratch folder>
+  // GREEN: this tree's console.js against the base (11-16's one hook line). RED: a scratch copy of console.js with one
+  // NAV_SECTIONS line added, diffed against the tree's own file with git diff --no-index.
+  const i = process.argv.indexOf('--menu-selftest');
+  const base = process.argv[i + 1];
+  const dir = process.argv[i + 2];
+  const git = (args) => spawnSync('git', args, { cwd: Lib.ROOT, encoding: 'utf8' });
+  const green = git(['diff', '-U0', base, 'HEAD', '--', 'assets/js/console.js']);
+  const src = fs.readFileSync(path.join(Lib.ROOT, 'assets/js/console.js'), 'utf8');
+  fs.mkdirSync(dir, { recursive: true });
+  const copy = path.join(dir, 'console-nav.js');
+  const at = src.indexOf('\n', src.indexOf('NAV_SECTIONS'));
+  fs.writeFileSync(copy, src.slice(0, at + 1) + "  NAV_SECTIONS.find((g) => g[0] === 'Report')[1].push('console-x');\n" + src.slice(at + 1));
+  const red = git(['diff', '--no-index', '-U0', path.join(Lib.ROOT, 'assets/js/console.js'), copy]);
+  fs.rmSync(copy, { force: true });
+  const r = menuChanges(red.stdout);
+  const g = menuChanges(green.stdout);
+  const gAdded = String(green.stdout || '').split('\n').filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l));
+  console.log(`${r.length === 1 ? 'PASS' : 'FAIL'} menu-selftest RED: a console.js copy with one NAV_SECTIONS line added is reported :: ${JSON.stringify(r)}`);
+  console.log(`${green.status === 0 && gAdded.length === 1 && g.length === 0 ? 'PASS' : 'FAIL'} menu-selftest GREEN: this tree against ${String(base).slice(0, 7)} changes ${gAdded.length} line of console.js, none of the menu :: ${JSON.stringify(gAdded.map((l) => l.trim().slice(0, 60)))}`);
+  process.exit(r.length === 1 && green.status === 0 && gAdded.length === 1 && g.length === 0 ? 0 : 1);
+}
+
 function baseCommit() {
   const at = [
     process.env.P11_ROOT ? path.join(process.env.P11_ROOT, '..', 'base-commit.txt') : '',
@@ -220,8 +252,9 @@ const parts = {
     const base = baseCommit();
     const g = (args) => spawnSync('git', args, { cwd: Lib.ROOT, encoding: 'utf8' });
     const page = g(['diff', '--quiet', base, 'HEAD', '--', 'index.html']);
-    const menuFile = g(['diff', '--quiet', base, 'HEAD', '--', 'assets/js/console.js']);
-    check(`index.html and console.js (the menu) have no change since the base commit ${base.slice(0, 7)}`, !!base && page.status === 0 && menuFile.status === 0, { base, page: page.status, console: menuFile.status });
+    const menuFile = g(['diff', '-U0', base, 'HEAD', '--', 'assets/js/console.js']);
+    const menuLines = menuChanges(menuFile.stdout);
+    check(`index.html and the menu (NAV, NAV_SECTIONS lines of console.js) have no change since the base commit ${base.slice(0, 7)}`, !!base && page.status === 0 && menuFile.status === 0 && menuLines.length === 0, { base, page: page.status, console: menuFile.status, menu: menuLines });
     await A.page.screenshot({ path: path.join(OUT, 'desktop-managed.png'), fullPage: true });
     // the managed edition is Carrow & Vale's own console, so its name is on screen by design; any other name is not
     const text = await fr.evaluate(() => document.body.innerText);
