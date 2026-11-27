@@ -16,13 +16,13 @@ menu: Overview, at the top
 anchor: Needs attention
 anchor: Recent distributions
 
-The console's first page. The menu on every console page: Overview and Notifications at the top, then four groups, Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents, Accounting), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu lacks Offering intake, Portal and brand, Integrations and Team (admin only), so a team member asks an admin.
+The console's first page. Every console page's menu: Overview and Notifications at the top, then four groups, Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents, Accounting), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu lacks Offering intake, Portal and brand, Integrations and Team (admin only), so a team member asks an admin.
 
 Overview shows:
 - "Setup": a new portal's checklist. "Start" or "Review" beside an item opens its page; "Remove" takes it off the list.
 - Four totals: active offerings, investors, capital raised and amount distributed in the last 12 months.
 - "Funds": each fund's net assets, investors, contributed and distributed, with a link to "Audit schedules".
-- "Needs attention": what waits, such as unfinished activations, envelopes to countersign, requests to approve and screening matches to review; a line opens the page that handles it.
+- "Needs attention": what waits, such as unfinished activations, envelopes to countersign, requests to approve and screening matches to review; a line opens the page handling it.
 - "Recent distributions", with "All distributions".
 
 ## console-notifications
@@ -55,7 +55,7 @@ To add an offering:
 1. Choose "Add offering": a new offering is created and its page opens.
 2. Fill in "Offering details" and the page's other sections.
 
-Or "Set up from documents" opens Offering intake, where the portal fills in an offering from its documents. Offerings are set up by an admin; a team member sees them read-only.
+Or "Set up from documents" opens Offering intake to fill in an offering from its documents. Offerings are set up by an admin; a team member sees them read-only.
 
 ## console-offering
 audience: sponsor
@@ -90,7 +90,7 @@ menu: Raise, then Offering intake
 anchor: Offering intake
 anchor: Read documents
 
-Admin only; a team member asks an admin. The portal reads a fund's offering documents and sets up the offering from them, showing every term for review, with the passage it came from, before anything changes.
+Admin only; a team member asks an admin. The portal reads a fund's offering documents and sets up the offering, showing every term with the passage it came from for review before anything changes.
 
 1. Under "Documents", upload the private placement memorandum, partnership or operating agreement, subscription documents or a term sheet (PDF, Word or text), or use "Or paste the summary of terms". A scanned PDF with no text layer needs OCR first.
 2. Under "Apply to", choose "A new offering" or the offering to update.
@@ -110,7 +110,7 @@ Every investor with their type, amount invested, activation and how they are pai
 To invite an investor:
 1. Choose "Invite an investor" at the top.
 2. Stay on "One investor" and fill in "First name", "Last name" and "Email".
-3. Check "Investor type": it decides the tax form the investor is shown; the investor can correct it in onboarding.
+3. Check "Investor type": it decides the tax form shown, and the investor can correct it in onboarding.
 4. Optional: "More options (optional)" sets the account name, offering, commitment or a personal note. With no offering, the investor only sets up their account.
 5. Choose "Send invitation".
 
@@ -155,7 +155,7 @@ anchor: Recipients
 anchor: Review and send
 anchor: Save as template
 
-One envelope: a document, its signers and its status.
+One envelope: its document, signers and status.
 - "Recipients": each signer's order, role, status and when they viewed and signed.
 - "Details": status, file, signing order and the dates sent and completed.
 - "Document": the Show pages button previews the pages with each signer's fields and what is filled so far.
@@ -359,7 +359,7 @@ Identity verification, sanctions and PEP screening and accredited investor check
 - The four totals: Cleared, Needs review, Re-screening due, and In progress or not started.
 - Filter the table with "Needs attention" or "All investors".
 - "Review match" beside an investor opens a potential screening match for the team to decide.
-- "Re-screen" beside an investor runs the screening again; the button at the top re-screens every investor whose re-screening is due.
+- "Re-screen" beside an investor runs the screening again; the button at the top re-screens every investor due for it.
 - "Download letter" in an investor's details saves the accreditation letter the reviewer sent; it shows only while the portal is connected to its integration server.
 
 ## console-aml
@@ -398,8 +398,8 @@ Each offering under Rule 506(b) or Rule 506(c), with what is due for its Form D 
 - "Silence" turns a reminder off: it stays, greyed, with its date, but is no longer counted; "Turn back on" restores it. "Silence all" and "Turn all back on" do the same for all the offering's reminders.
 - "I filed this myself" records a Form D the firm filed, with its date and, if known, the accession number. "Filed" beside a state records its notice; "Record all as filed" records all the offering's state notices with one date.
 - "Options" under an offering: "First sale" confirms another first sale date, "Offering ended" records the date it ended, "Recorded as filed" lists what the firm recorded, each with "Remove", and "Not filing for this offering" turns its reminders off until "Turn reminders back on".
-- "Form D" under an offering opens its notice by item, pre-filled from the offering and its subscriptions: total offering amount, minimum investment, amount sold, number of investors and of non-accredited investors, and date of first sale. Each pre-filled value names its source ("From the offering", "From the subscriptions"); a value you change is kept. "Review" shows the whole notice and, under "To fix before it can be signed off", what EDGAR would refuse, each with "Go to it". An admin signs off with name and title under the SEC's Terms of Submission; "Sign off" records an order: $100 for a Form D, $50 for an amendment; the page says "Sending it to be filed needs the portal connected to its server." "Make changes" starts a new draft from a signed notice. Once a notice is filed, "Start an amendment" begins one from it, or from the file or text of a notice filed elsewhere.
-- "EDGAR access" under an offering tracks an issuer with no EDGAR account through seven steps: each person's own sign-in, Form ID on the SEC dashboard, the printout signed before a notary, the upload, the CIK, the delegation to the filing agent and its acceptance. "Done" marks a step with its date; "Undo" takes it back. "Open the answer sheet" lays out the Form ID answers part by part, each with "Copy", to enter on the SEC dashboard yourself: the portal files no Form ID and never asks for a password, tax number or Social Security number. "The issuer already has a CIK" records the CIK and the name as EDGAR shows it, skipping the application steps; the CIK and name fill the Form D notice. "Ready to file" shows once the delegation is accepted.
+- "Form D" under an offering opens its notice by item, pre-filled (total offering amount, minimum investment, amount sold, number of investors and of non-accredited investors, date of first sale), each value marked "From the offering" or "From the subscriptions"; a value you change is kept. "Review" shows the whole notice and, under "To fix before it can be signed off", what EDGAR would refuse, each with "Go to it". An admin signs off with name and title under the SEC's Terms of Submission; "Sign off" records an order: $100 for a Form D, $50 for an amendment; the page says "Sending it to be filed needs the portal connected to its server." "Make changes" starts a new draft from a signed notice. Once a notice is filed, "Start an amendment" begins one from it, or from the file or text of a notice filed elsewhere.
+- "EDGAR access" under an offering tracks an issuer with no EDGAR account through seven steps: each person's own sign-in, Form ID on the SEC dashboard, the printout signed before a notary, the upload, the CIK, the delegation to the filing agent and its acceptance. "Done" marks a step with its date; "Undo" takes it back. "Open the answer sheet" lays out the Form ID answers part by part, each with "Copy", to enter on the SEC dashboard yourself: the portal files no Form ID and never asks for a password, tax number or Social Security number. "The issuer already has a CIK" records the CIK and the name as EDGAR shows it, skipping the application steps; both fill the Form D notice. "Ready to file" shows once the delegation is accepted.
 - "State filings" under an offering ticks each state where its investors live, with its first sale date; untick a state, or add one with "Add a state". Investors with no state on file are counted in one line and tick none. An investor in a U.S. territory other than Puerto Rico gets a state notice reminder, but a territory cannot be ordered. State notices are filed from the filed Form D; with none on record, enter its date and accession number. Every state fee and the filing system fee shows "To be confirmed" until confirmed. An admin's "Order state filings" records one order: $100 for any number of states, plus the state fees once confirmed. "Record result" enters a state's filing date, filing ID, fee paid and renewal date; "Order renewal" records a $50 renewal order.
 - An order shows its lines, the amount due and its status; an admin cancels a recorded order with "Cancel order".
 
@@ -445,7 +445,7 @@ menu: Settings, then ACH origination
 anchor: Bank details used to build NACHA files for distributions.
 anchor: Paying entity by offering
 
-The bank details used to build NACHA files for distributions, copied from the bank's ACH origination agreement. The page says "Ready to generate files" when the details are complete.
+The bank details used to build NACHA files for distributions, copied from the bank's ACH origination agreement. The page says "Ready to generate files" once they are complete.
 - "Originating bank (ODFI)": "Bank name" and "Routing number".
 - "File header": "Immediate destination routing" (usually the same as the ODFI routing number), "Immediate destination name", "Immediate origin" (assigned by the bank) and "Immediate origin name".
 - "Batch defaults": "Company name" (shown on investors' bank statements), "Company ID" and "Entry description".
@@ -494,11 +494,11 @@ anchor: Capital calls due
 anchor: Recent documents
 
 The first page after signing in. The menu has Home, Investments, Distributions, Documents, Updates and Account, and "Sign out"; the firm's contact details are at the bottom of every page. Home shows the account's name and number, then:
-- "Capital calls due": calls waiting for payment, when there are any.
+- "Capital calls due": calls awaiting payment, if any.
 - "Portfolio": the amounts contributed, committed and distributed, and the current value (unaudited).
 - "Investments": each investment with the amount invested, distributions, value and time to exit. "All investments" opens Investments.
 - "Latest updates" and "Recent documents", with "All updates" and "All documents".
-- "Your requests": requests made and their status, when there are any.
+- "Your requests": requests made and their status, if any.
 
 A notice at the top, for example that new documents are available, has "View documents" and "Dismiss".
 
@@ -554,7 +554,7 @@ menu: Documents
 anchor: Reports, tax documents, statements and agreements for your account
 anchor: Offering documents
 
-Reports, tax documents, statements and agreements for the account. Documents the firm publishes appear here.
+Reports, tax documents, statements and agreements for the account, including what the firm publishes.
 
 To open or download a document:
 1. Open Documents in the menu.
@@ -586,10 +586,9 @@ anchor: Tax and accreditation
 anchor: Update bank account
 anchor: Sign-in and delivery
 
-The account's details.
 - "Investor": account title, type, primary contact, email, phone and mailing address, not editable here: to change them, contact the firm's team named there.
 - "Distribution payments": the payment method and the bank account on file; to change the account, choose "Update bank account", enter the new one and choose "Save bank account".
-- "Tax and accreditation": the tax form on file, the last digits of the taxpayer ID and the accreditation on file. When a verification has expired, "Verify again" starts a new one.
+- "Tax and accreditation": the tax form, the last digits of the taxpayer ID and the accreditation on file. When a verification has expired, "Verify again" starts a new one.
 - "Sign-in and delivery": electronic delivery, two-step verification and the date the account was activated.
 - "Appearance": "Light", "Dark" or "Match this device". The choice is saved in this browser.
 
@@ -609,7 +608,7 @@ title: Subscribe
 anchor: Continue your subscription
 anchor: Subscription documents signed
 
-For subscribing to an offering: it shows the offering and one button: "Continue your subscription" goes to the offering's documents and the subscription agreement; "Continue account setup" shows instead while the account setup is not finished, since the subscription is its last step. After signing, the page says "Subscription documents signed". No money is due at signing: the firm reviews the subscription, and a notice with the amount and wire instructions follows when money is due.
+For subscribing to an offering. It shows the offering and one button: "Continue your subscription" goes to the offering's documents and the subscription agreement; "Continue account setup" shows instead while the account setup is not finished, since the subscription is its last step. After signing, the page says "Subscription documents signed". No money is due at signing: the firm reviews the subscription, and a notice with the amount and wire instructions follows when money is due.
 
 ## sign
 audience: investor
@@ -689,7 +688,6 @@ title: Investor information
 anchor: Investing as
 anchor: Country of mailing address
 
-Details of the investor.
 1. Choose "Investing as": an individual, a joint account, a trust, a company or an IRA. The fields below change with the choice.
 2. Enter the legal name as on the government ID, the "Country of mailing address", the address and the "Phone". A joint account asks for "Your first name", "Your last name", "Second owner’s first name", "Second owner’s last name" and "How you hold the account".
 3. For a person, enter the "Date of birth" and "Citizenship". A trust, company or IRA is asked for its own details instead.
@@ -787,7 +785,7 @@ title: Update bank account
 anchor: Update bank account
 anchor: Save bank account
 
-The page for changing the bank account distributions are paid to. "Update bank account" on the Account page opens it; its one step is Distribution payments. "Cancel" leaves without a change.
+Changes the bank account distributions are paid to. "Update bank account" on the Account page opens it; its one step is Distribution payments. "Cancel" leaves without a change.
 
 ## onboarding/payment
 audience: investor
