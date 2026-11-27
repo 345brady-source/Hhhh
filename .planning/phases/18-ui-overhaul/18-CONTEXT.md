@@ -31,3 +31,11 @@
 - D-16: "also move the ask me anything bar to the same row as the documents and other tabs but on the right side of them on the investor side of the portal" — on the investor portal the Ask me anything field sits in the tab row, right of the tabs (Home, Investments, Distributions, Documents, Updates, Account); the console keeps it in its top bar.
 - D-17: "ok this is good" — the combined mockups (mockups/combined/: A's layout and fonts, B's colours, complete panels with an underlay, the investor Ask me anything in the tab row) and the 24 marks are approved as the direction; the full UI-SPEC is written on it.
 - C-01 (orchestrator, 2026-11-27): the spec's open questions C6 (the type pair "Brygada & Ysabeau" offered as the new standard in Portal and brand) and C7 (the 24 mark names shown in the logo picker) are accepted as necessary consequences of D-10 and D-14; the owner may override.
+
+## UI-SPEC check (gsd-ui-checker at 0f35900, 2026-11-27): APPROVED with flags; binding on the planner
+- Flags 1 and 2 (spacing values 12/20/40/56/80px outside the standard set; three weights 400/500/600 and the 12px and 32px exception sizes) are accepted under D-17: they are the owner-approved mockups' values. The menu count badge's 700 weight (c.css:117) moves to 600, or the spec states it; the planner picks and says which.
+- The dialog count is 34 `U.dialog(` calls, not 37: build the dialog list from `grep -o "U.dialog(" assets/js/*.js`.
+- PHONE LAYOUT's desktop comparison: the single DESKTOP_EXPECTED entry must list what it still asserts for every screen (element present, text identical, reachable, still works) and show the owner the before/after diff, as SCREEN EDGES does; it must not switch the comparison off.
+- "Sign out" becomes a link (§6.2): every check or walk that selects it as a button is listed and updated.
+- The names listed as must-stay are real (.cs-help, .pt-foot-help, .cs-nav-group, .cs-nav-label, .cs-nav-count, .cs-main, .pt-head, .pt-nav, .pt-menu, .pt-foot, #ik-files, help-open); help-chat.js:422's footer "Help" assertion moves to exactly one `.help-entry` named "Ask me anything".
+- UI Considerations section written from the state-coverage probe (56 considerations over 10 surfaces, auto-resolved as today's behaviour restyled).
