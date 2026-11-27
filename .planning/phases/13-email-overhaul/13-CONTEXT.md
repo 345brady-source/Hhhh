@@ -194,3 +194,4 @@ Both plans:
 - Owner to read: "Email handed to the integration server", the Team, forgot-password and Account wording, the unsubscribe page (13-08-SUMMARY).
 - Left: firm-name argument in invitations.mjs (15-14), offering-news two-way sync (15-17), summary() says "investors" for e-sign signers (emails.js), guide line 471 (13-10).
 - Unblocked: 13-09, then 13-06; own-fonts waits for 13-09.
+- Merged tree 3f8e3d1 (13-08): PORTAL MAIL 9, CO-INVESTOR SERVER 5, SERVER MODE 15, SIGNING DOCUMENTS 8, EMAIL SENDING 7, INVITE MAIL 9, HELP CHAT 10 pass.
