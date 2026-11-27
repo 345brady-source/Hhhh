@@ -364,6 +364,10 @@
   function uncategorize(ws, offeringId, lineId, who) {
     who = who || {};
     const bl = lineOf(ws, offeringId, lineId);
+    // Its entry already reversed (from Entries, say): nothing is left to undo, and nothing changes.
+    const src = 'bank:' + bl.id;
+    const undone = !B.live(peek(ws, offeringId), src) && journalOf(ws, offeringId).some((e) => e && e.src === src);
+    if (undone) throw new Error('This decision is already undone; its entry has been reversed.');
     if (!bl.entry) throw new Error('This statement line has not been decided.');
     const r = B.reverse(ws, offeringId, bl.entry, { by: who.by, at: who.at });
     bl.entry = null;

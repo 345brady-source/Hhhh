@@ -134,14 +134,14 @@
 
   /**
    * Rows of cells, split as assets/js/invitations.js csvRows splits a pasted list (copied here: that one is private):
-   * commas or tabs, or semicolons when the first line has neither; quotes, with "" for a quote; a byte-order mark
-   * dropped; cells trimmed; an empty line is an empty row.
+   * commas or tabs, or semicolons alone when the first line has neither (so '$1,250.00' stays one cell); quotes, with
+   * "" for a quote; a byte-order mark dropped; cells trimmed; an empty line is an empty row.
    */
   function csvRows(text) {
     const s = String(text || '').replace(/^﻿/, '');
     const head = s.split(/\r?\n/, 1)[0] || '';
     const semi = !/[,\t]/.test(head) && head.indexOf(';') >= 0;
-    const sep = (c) => c === ',' || c === '\t' || (semi && c === ';');
+    const sep = semi ? (c) => c === ';' : (c) => c === ',' || c === '\t';
     const rows = [];
     let row = [];
     let cur = '';

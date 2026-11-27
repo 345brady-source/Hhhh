@@ -135,6 +135,12 @@ const cases = {
     const n = B.csvGuess(nohead);
     check('a file with no header row: header false, date 0, text 1, amount 2, balance 3', n.header === false && n.date === 0 && n.text === 1 && n.amount === 2 && n.balance === 3, n);
     check('and its first row is read as a line', B.parse(nohead, { kind: 'csv', map: n }).lines.length === 2);
+    // A semicolon statement (the first line has semicolons and no comma or tab) keeps an amount with commas whole.
+    const semi = 'Date;Description;Amount;Balance\n01/15/2026;WIRE IN, FA-1001;$1,250.00;$1,250.00\n01/20/2026;BANK FEE;-15.00;$1,235.00\n';
+    check("csvRows: '01/15/2026;WIRE IN, FA-1001;$1,250.00;$1,250.00' is four cells, commas kept", same(B.csvRows(semi)[1], ['01/15/2026', 'WIRE IN, FA-1001', '$1,250.00', '$1,250.00']), B.csvRows(semi)[1]);
+    const sg = B.csvGuess(semi);
+    const sp = refusal(() => B.parse(semi, { kind: 'csv', map: sg })) || B.parse(semi, { kind: 'csv', map: sg });
+    check('and the semicolon statement reads to 125,000 and -1,500 with the closing balance 123,500', typeof sp === 'object' && same(sp.lines.map((l) => [l.date, l.cents, l.text]), [['2026-01-15', 125000, 'WIRE IN, FA-1001'], ['2026-01-20', -1500, 'BANK FEE']]) && sp.closingCents === 123500, typeof sp === 'object' ? { lines: sp.lines.map(plain), closing: sp.closingCents, map: sg } : { refused: sp, map: sg });
     refused(check, B, 'a map pointing the amount at the description column', read('fund-a-signed.csv'), { kind: 'csv', map: { date: 0, text: 1, amount: 1, header: true, order: 'mdy', outNegative: true } }, 'amount');
     refused(check, B, 'a map pointing the date at the amount column', read('fund-a-signed.csv'), { kind: 'csv', map: { date: 2, text: 1, amount: 2, header: true, order: 'mdy', outNegative: true } }, 'date');
   },

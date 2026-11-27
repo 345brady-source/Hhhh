@@ -1211,7 +1211,7 @@
       const ex = (Array.isArray(fb.exceptions) ? fb.exceptions : []).filter(Boolean);
       const closedChanges = ex.filter((x) => x.kind === 'closed').length;
       if (closedChanges) items.push(`${closedChanges} changes to records inside a closed period are not applied.`);
-      const unposted = ex.filter((x) => x.kind === 'amount' || x.kind === 'mismatch' || x.kind === 'overpaid').length;
+      const unposted = ex.filter((x) => x.kind === 'amount' || x.kind === 'mismatch' || x.kind === 'overpaid' || x.kind === 'date').length;
       if (unposted) items.push(`${unposted} records could not be posted to the books as recorded.`);
       add('books', 'Books recorded for the period', !items.length, items.length ? 'The statements show only what is recorded; each line names an input that is missing.' : `Every bank account is reconciled through ${dateLong(P.to)}, every bank line is decided, each investment has a value in the period and the fee terms are set.`, items);
     }
@@ -1459,7 +1459,9 @@
       if (!rec) return br.push([name, `Not reconciled through ${P.to}`, '', '', null]);
       const os = Array.isArray(rec.outstanding) ? rec.outstanding : [];
       br.push([name, 'Statement balance', rec.asOf, '', rec.statementCents]);
-      os.forEach((x) => br.push([name, 'Outstanding item', dateOf(x[0]), memoOf(x[0]), x[2]]));
+      // The one item with no entry is the cash the books hold before the opening balance that the bank has not shown.
+      const before = `Before the opening balance${rec.opening && rec.opening.date ? ` on ${dateLong(rec.opening.date)}` : ''}: in the books, not yet in the bank`;
+      os.forEach((x) => br.push([name, 'Outstanding item', dateOf(x[0]), x[0] ? memoOf(x[0]) : before, x[2]]));
       br.push([name, 'Book balance', rec.asOf, '', rec.bookCents]);
       br.push([name, 'Difference', rec.asOf, '', rec.statementCents - rec.bookCents + os.reduce((s, x) => s + x[2], 0)]);
     });

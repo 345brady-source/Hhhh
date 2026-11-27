@@ -255,6 +255,8 @@
     const f = fund(ws, offeringId);
     const stored = { id: nextId(f), date, memo: entry.memo, src: entry.src, lines: entry.lines, at: who.at || new Date().toISOString(), by: who.by || '', rev: entryId };
     f.journal.push(stored);
+    // An entry posted from a statement line (books-bank.js), reversed from anywhere: the line may be decided again.
+    if (String(e.src || '').indexOf('bank:') === 0) f.bank.lines.forEach((l) => l && l.entry === entryId && (l.entry = null));
     return clone(stored);
   }
 

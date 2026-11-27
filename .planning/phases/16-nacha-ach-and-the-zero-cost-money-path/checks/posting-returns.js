@@ -239,6 +239,15 @@ const cases = {
     lineOf(E.ws, RUN, WHO).ach.repaid.on = '23/12/2026';
     const rE = NSe.books.sync(E.ws, { today: TODAY });
     check("a second payment whose day is not a real date: the return stays posted, the second payment's entry is left and the record listed", !!live(NSe, E.ws, E.oid, src) && !!live(NSe, E.ws, E.oid, `repaid:${RUN}:${WHO}`) && rE.posted === 0 && rE.reversed === 0 && J(exceptionsOf(E.ws, E.oid)) === J([{ src: `repaid:${RUN}:${WHO}`, kind: 'date', value: '23/12/2026' }]), { rE, ex: exceptionsOf(E.ws, E.oid) });
+    // The Audit page's 'books' check counts a 'date' refusal among the records that could not be posted.
+    const unposted = (N, X) => {
+      const c = N.audit.checks(X.ws, N.audit.period(X.ws, X.o, '2026-01-01', '2026-12-31'), { verify: N.audit.verify(X.ws) }).find((x) => x.id === 'books');
+      return c ? c.items.filter((t) => /could not be posted/.test(t)) : null;
+    };
+    const uD = unposted(NSd, D);
+    check("the Audit page's books check names the refused return: '1 records could not be posted to the books as recorded.'", J(uD) === J(['1 records could not be posted to the books as recorded.']), uD);
+    const uE = unposted(NSe, E);
+    check("the Audit page's books check names the refused second payment: '1 records could not be posted to the books as recorded.'", J(uE) === J(['1 records could not be posted to the books as recorded.']), uE);
     const wb = fundB();
     wb.requests[0].ach = returned('2027-01-06', 199999);
     NS.books.sync(wb, { today: TODAY });
