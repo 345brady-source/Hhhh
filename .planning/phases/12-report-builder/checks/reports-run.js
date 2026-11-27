@@ -252,6 +252,13 @@ const cases = {
     check("the store lost it: source 'remade' with the same hash", b && b.source === 'remade' && NS.audit.sha256(b.bytes) === f1.sha256, b && (b.error || b.source));
     check('the remade file is byte-identical to the one made', !!(b && b.bytes) && Buffer.compare(Buffer.from(b.bytes), original) === 0, b && b.bytes && b.bytes.length);
     check('remaking it recorded nothing and kept nothing', ws.reports.runs.length === 1 && !store.m.has(f1.id));
+    // a kept file that is not the one on record (another firm's file under the same id, or a changed byte) is remade
+    // from the run, never refused while it can be remade, and the kept bytes are left as they are (quick task 2026-11-27)
+    store.m.get(f2.id).bytes[100] ^= 1;
+    const wrongKept = Buffer.from(store.m.get(f2.id).bytes);
+    const d0 = await NS.reportsRun.fileBytes(ws, run.id, f2.id, { kit, store });
+    check("one byte of a kept file changed: source 'remade' with the recorded hash", d0 && d0.source === 'remade' && NS.audit.sha256(d0.bytes) === f2.sha256, d0 && (d0.error || d0.source));
+    check('the kept bytes are left as they were (nothing kept over them)', Buffer.compare(Buffer.from(store.m.get(f2.id).bytes), wrongKept) === 0);
     const endOf = () => NS.reportsData.statement(ws, 'FA-1001', oid, Q4.from, Q4.to).period.end;
     const endBefore = endOf();
     NS.books.post(ws, oid, { date: '2026-11-30', memo: 'Legal fees', src: 'bank:fa-run-1', lines: [['5100', 100000], ['1000', -100000]] }, { by: BY, at: '2027-01-20T13:00:00.000Z' });
@@ -259,9 +266,8 @@ const cases = {
     check("a balanced entry dated 2026-11-30 changes FA-1001's quarter-end capital", endOf() !== endBefore, { before: endBefore, after: endOf() });
     const c = await NS.reportsRun.fileBytes(ws, run.id, f1.id, { kit, store });
     check('after the figures changed: the plain sentence, no bytes', c && !c.bytes && c.error === 'The original file is not kept on this device, and the figures or the firm’s details have changed since it was made.', c && (c.error || c.source));
-    store.m.get(f2.id).bytes[100] ^= 1;
     const d = await NS.reportsRun.fileBytes(ws, run.id, f2.id, { kit, store });
-    check("one byte of a kept file changed: 'The kept file does not match its record.'", d && !d.bytes && d.error === 'The kept file does not match its record.', d && (d.error || d.source));
+    check('a changed kept file after the figures changed: the plain sentence, no bytes', d && !d.bytes && d.error === 'The original file is not kept on this device, and the figures or the firm’s details have changed since it was made.', d && (d.error || d.source));
     const e = await NS.reportsRun.fileBytes(ws, run.id, 'rf-x-9', { kit, store });
     check('an unknown file gives a plain sentence, no bytes', e && !e.bytes && typeof e.error === 'string' && e.error.length > 0, e);
     const all = [c, d, e].map((x) => (x && x.error) || '').join(' ');

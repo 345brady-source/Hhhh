@@ -306,6 +306,17 @@ const cases = {
     R.deliver(ws, p.id, { by: BY, at: AT });
     const q = R.noticeDraft(ws, p.id);
     check("a performance run gives kind 'documents' with docName its title", q.kind === 'documents' && q.docName === 'Performance report' && q.subject === NS.NOTICE_TEMPLATES.documents.subject && J(q.investors) === J(['FA-1001']), q);
+    // every file of a run withdrawn: no draft at all, never one for every investor (quick task 2026-11-27-report-fixes)
+    const w = generated(NS, ws, [['FA-1001'], ['FA-1002']], { seed: 7 }).run;
+    R.deliver(ws, w.id, { by: BY, at: AT });
+    R.withdraw(ws, w.files[0].id, { by: BY, why: 'Wrong period', at: AT });
+    const one = R.noticeDraft(ws, w.id);
+    check('one file of two withdrawn: the draft holds only the other investor', J(one.investors) === J(['FA-1002']), one.investors);
+    R.withdraw(ws, w.files[1].id, { by: BY, why: 'Wrong period', at: AT });
+    const notices = J(ws.notices);
+    const all = thrown(() => R.noticeDraft(ws, w.id));
+    check("every file withdrawn: refused with 'Every file of this report is withdrawn; there is no one to tell.'", all === 'Every file of this report is withdrawn; there is no one to tell.', all);
+    check('and no notice is written', J(ws.notices) === notices);
   },
 
   archive: ({ check }) => {
@@ -331,6 +342,8 @@ const cases = {
     bad[5] ^= 1;
     check('verifyFile is false for one changed byte', R.verifyFile(ws, a.run.id, f.id, bad) === false);
     check('verifyFile is false for an unknown file', R.verifyFile(ws, a.run.id, 'rf-x', bytes) === false);
+    // the browser's file store is shared by every portal in it: a file id names its firm (quick task 2026-11-27-report-fixes)
+    check(`file ids carry the firm's id: rf-${ws.tenant.id}-<run>-<file>`, [a, b].every((x) => x.run.files.every((g, k) => g.id === `rf-${ws.tenant.id}-${String(x.run.id).replace(/^rr-/, '')}-${k + 1}`)), [a, b].map((x) => x.run.files.map((g) => g.id)));
     const gen = ws.audit.filter((e) => e.action === 'Report generated');
     check("each run is logged 'Report generated' with the template name and version", gen.length === 2 && /template Before, version 3/.test(gen[0].detail) && /1 file for 1 investor/.test(gen[0].detail), gen.map((e) => e.detail));
     check('the change log verifies', NS.audit.verify(ws).ok === true);
