@@ -15,7 +15,9 @@
 //                         no copy of the agreement. The console imports: its envelope has the co-investor signed with their
 //                         consent and signature, its work copy is new (SHA-256 recorded) and carries the co-investor's name
 //                         and still the investor's values, the firm has the notification, the account investor's record is
-//                         unchanged; the firm countersigns from Requests and the envelope reads completed.
+//                         unchanged, the investors row says "Signed <date>" and the console sends no cancel for the sign-in
+//                         the co-investor finished (no "sign-in cancelled" audit line); the firm countersigns from Requests
+//                         and the envelope reads completed.
 //   cosign-phone          the co-investor's device at 390x844 with touch and an iOS user agent: the same path from the link
 //                         to done, and the console takes the signature in.
 //   cosign-later          a co-investor added after the investor's signed copy was imported gets the server sign-in at
@@ -631,6 +633,15 @@ function cosign(dev, full) {
       check('the console’s new work copy carries the co-investor’s name and still the investor’s taxpayer number (the console’s copy is the record)', coTxt.indexOf(R.typedName || F.coName) >= 0 && coTxt.indexOf(SSN) >= 0, coTxt.slice(-300));
       const left = (await F.srv.rows()).find((x) => x.id === si.serverId);
       check('the console deleted the co-investor’s submission on the server after importing it', !!left && left.hasSubmission === false && left.status === 'completed', left);
+      // The console records that the co-investor signed, and ends nothing that already ended (debug comerge-cosigner-signed).
+      const done = (after.co && after.co.signIn) || {};
+      await investorsPage(F.cp, F.who.id);
+      const signedRow = await rowOf(F.cp, F.who.id);
+      const coNameRe = F.coName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const signedRe = new RegExp('Co-investor: ' + coNameRe + ' · Signed [A-Z][a-z]{2} \\d{1,2}, \\d{4}');
+      check('after the import the investors row says the co-investor signed ("Signed <date>"), and the sign-in record has when they signed', signedRe.test(signedRow) && !!done.signedAt && !!after.env.co && done.signedAt === after.env.co.signedAt, { row: signedRow, signedAt: done.signedAt || '', signer: after.env.co && after.env.co.signedAt });
+      const cancels = F.A.net.allowed.filter((x) => x === `POST ${F.srv.base}/v1/invitations/${encodeURIComponent(si.serverId)}/cancel`);
+      check('the console sends no cancel for the sign-in the co-investor finished, and the audit has no "sign-in cancelled" line', cancels.length === 0 && !done.cancelledAt && !after.audit.some((x) => /^Co-investor sign-in cancelled:/.test(x)), { cancels, cancelledAt: done.cancelledAt || '', audit: after.audit.filter((x) => /^Co-investor sign-in/.test(x)) });
       await L.consoleRoute(F.cp, 'console-envelope-' + after.env.id, '.cs-panel-head h2').catch(() => {});
       await F.A.page.screenshot({ path: path.join(OUT, `${tag}-co-envelope.png`), fullPage: true });
       row = await rowOf(F.cp, F.who.id).catch(() => '');

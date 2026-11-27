@@ -72,6 +72,13 @@
     c.signIn = { token, link: `${portalPage()}?tenant=${encodeURIComponent(ws.tenant.id)}#co-${token}`, createdAt: new Date(now).toISOString(), expiresAt: new Date(now + SIGN_IN_DAYS * DAY).toISOString(), sentAt: '', openedAt: '' };
     return c.signIn;
   }
+  /** When the co-investor last signed one of the account's agreements, once none waits for them ('' otherwise). */
+  function coSignedAt(inv) {
+    const ws = W();
+    if (!taskOf(ws, inv).signed) return '';
+    const mine = (ws.envelopes || []).filter((e) => e.status === 'sent' || e.status === 'completed').map((e) => e.signers.find((s) => s.co && s.investorId === inv.id));
+    return mine.filter((s) => s && s.status === 'signed' && s.signedAt).map((s) => String(s.signedAt)).sort().pop() || '';
+  }
   /** What the firm sees about the sign-in, in the investors row and the Account window ('' in the managed edition). */
   function signInText(inv) {
     const si = E.diy ? signInOf(inv) : null;
@@ -87,6 +94,9 @@
       return `Sign-in is emailed once ${inv.contact || inv.title} has signed`;
     }
     if (si.serverId) return si.sentAt ? `Sign-in emailed ${day(si.sentAt)}` : `Sign-in is emailed once ${inv.contact || inv.title} has signed`;
+    // The co-investor signed what waited for them on the account (the server's sign-in says the same).
+    const signed = coSignedAt(inv);
+    if (signed) return `Signed ${day(signed)}`;
     if (expired(si) && !si.openedAt) return 'Sign-in link expired';
     return si.sentAt ? `Sign-in sent ${day(si.sentAt)}` : 'Sign-in link ready to send';
   }

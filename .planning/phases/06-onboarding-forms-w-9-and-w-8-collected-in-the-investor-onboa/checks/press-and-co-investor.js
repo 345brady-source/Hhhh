@@ -30,7 +30,8 @@
 //                      (To, Subject, text, link, Copy link, Open in your email app, Mark as sent, Open the co-investor's
 //                      link), nothing saying an email was sent, the investors row and the Account window before and after
 //                      Mark as sent, "Sign-in link" reopening the dialog; the link signs the co-investor in to only their
-//                      own places, they sign, the firm is notified, countersigns from Requests and the envelope completes.
+//                      own places, they sign, the firm is notified, the investors row says "Signed <date>" (as with the
+//                      integration server), the firm countersigns from Requests and the envelope completes.
 //                      Then a changed email gives a new link and the old one no longer works; after Remove the new one no
 //                      longer works; a made-up one is not found.
 //   co-managed         1280x800, the managed edition: adding a co-investor behaves as before (same toast, no sign-in
@@ -757,6 +758,11 @@ function coLink(dev) {
     env = await envOf(fr, inv.investorId);
     const note = await fr.evaluate((n) => (window.CVPortal.state.ws.notifications || []).some((x) => x.title === `${n} signed the subscription agreement as co-investor`), coName);
     check('the co-investor signs, and the firm has the notification that they signed as co-investor', !!env.co && env.co.status === 'signed' && note, { co: env.co, note });
+    // The row says the co-investor signed, as it does with the integration server (debug comerge-cosigner-signed).
+    await investorsPage(fr, inv.investorId);
+    row = await rowOf(fr, inv.investorId);
+    const coNameRe = coName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    check('once the co-investor signed, the investors row says "Signed <date>" (as with the integration server)', new RegExp('Co-investor: ' + coNameRe + ' · Signed [A-Z][a-z]{2} \\d{1,2}, \\d{4}').test(row), { row });
 
     // The firm countersigns from Requests.
     await Lib.consoleRoute(fr, 'console-requests', '[data-action=req-tab][data-t=all]');
