@@ -91,11 +91,16 @@ export function quotedPrintable(str) {
 const base64Lines = (buf) => (Buffer.from(buf).toString('base64').match(/.{1,76}/g) || []).join('\r\n');
 const boundary = () => `=_${randomBytes(12).toString('hex')}`;
 
+const MESSAGE_ID = /^[0-9a-f]{32}@[\w.-]{1,253}$/;
+/** A new Message-ID (without its angle brackets) in the sending domain: the sent log matches delivery events by it. */
+export const newMessageId = (domain) => `${randomBytes(16).toString('hex')}@${String(domain || 'localhost').replace(/[^\w.-]/g, '') || 'localhost'}`;
+
 /**
  * Build a complete message (CRLF line ends). msg: { from: { name, address }, to: { name, address },
  * replyTo, subject, text, html, inline: [{ cid, contentType, data: Buffer }], date: Date, domain,
- * headers: { Name: value } }. Text and HTML go in multipart/alternative; inline images (a logo)
- * wrap it in multipart/related.
+ * headers: { Name: value }, messageId }. messageId (newMessageId's form) is the caller's, so it can be logged; one is
+ * made when it is missing. Text and HTML go in multipart/alternative; inline images (a logo) wrap it in
+ * multipart/related.
  */
 export function buildMessage(msg) {
   const date = msg.date || new Date();
@@ -107,7 +112,7 @@ export function buildMessage(msg) {
   ];
   if (msg.replyTo && validAddress(msg.replyTo)) lines.push(`Reply-To: <${msg.replyTo}>`);
   lines.push(headerLine('Subject', msg.subject));
-  lines.push(`Message-ID: <${randomBytes(16).toString('hex')}@${domain}>`);
+  lines.push(`Message-ID: <${MESSAGE_ID.test(String(msg.messageId || '')) ? msg.messageId : newMessageId(domain)}>`);
   for (const [k, v] of Object.entries(msg.headers || {})) if (/^[A-Za-z][\w-]{0,60}$/.test(k)) lines.push(headerLine(k, v));
   lines.push('MIME-Version: 1.0');
   const alt = boundary();
@@ -350,54 +355,176 @@ export function smtpConfig(env) {
   };
 }
 
+/** The relay's id for an accepted message, from its reply to DATA ("250 Ok <id>", "... queued as <id>"), or ''. */
+export const relayIdOf = (response) => {
+  const m = /\b(?:Ok|OK|queued as)\s+<?([\w.@-]+)>?/.exec(String(response || ''));
+  return m ? m[1] : '';
+};
+
+/** The sentences the mailer answers with (the console shows them as they are). */
+export const MAIL_SAYS = Object.freeze({
+  notReady: 'Email sending from your domain is not set up yet.',
+  attachments: 'Emails never carry attachments.',
+  bounced: 'Earlier email to this address bounced, so nothing more is sent to it.',
+  complained: 'This person reported your email as unwanted, so no more of these are sent to them.'
+});
+// The record field a released message's new status is written to, for the invitations' own messages.
+const STATUS_FIELD = { invitation: 'emailStatus', invitation_resent: 'emailStatus', sponsor_notification: 'notifyStatus', submission_reminder: 'reminderStatus' };
+const LOGO = (x) => x && x.data && /^image\/(png|jpeg|gif)$/.test(x.contentType);
+
 /**
- * The server's mailer. send({ kind, invitationId, workspace, fromName, replyTo, to, toName, subject,
- * text, html, inline }) → { emailStatus: 'sent' | 'outbox' | 'failed', error? }. Without SMTP_HOST,
- * messages are sealed into the outbox (readable at GET /v1/outbox) instead of being sent.
+ * The server's mailer. createMailer({ env, store, vault, now, tls, senders, log }) → { configured, send, outbox, purge,
+ * release }.
+ * send({ kind, invitationId, refId, investorId, workspace, fromName, replyTo, to, toName, subject, text, html, inline,
+ *        headers, link, optional, commercial, attachments }) →
+ *   { emailStatus: 'sent' | 'outbox' | 'held' | 'failed' | 'suppressed', error?, logId? }
+ *   - Never an attachment (C-12): a message with any is refused; the only inline part kept is the firm's logo.
+ *   - The sender (EM-06, C-11): a workspace's message goes From the firm's name at the workspace's own ready address
+ *     (senders, lib/senders.mjs). On a server with sponsor accounts (a signed-up firm has one) a workspace whose domain is
+ *     not ready has its message held: kept sealed in the outbox, never sent from another domain. A single-sponsor server
+ *     (neither) uses MAIL_FROM as before; staff mail (workspace '') always uses MAIL_FROM.
+ *   - Suppression (EM-07): an address that bounced for good gets nothing; an address that complained about a workspace
+ *     gets no optional or possibly commercial mail from it.
+ *   - Without SMTP_HOST, messages are sealed into the outbox (readable at GET /v1/outbox) instead of being sent.
+ *   - With log (lib/maillog.mjs) every message leaves one sent-log entry, whatever became of it (logId).
+ * release(workspace) → { released, failed, suppressed }: once the workspace's domain is ready, its held messages younger
+ *   than OUTBOX_DAYS go out from its address.
  */
-export function createMailer({ env, store, vault, now = () => Date.now(), tls: tlsOpts } = {}) {
+export function createMailer({ env, store, vault, now = () => Date.now(), tls: tlsOpts, senders = null, log = null } = {}) {
   const cfg = smtpConfig(env);
   if (cfg && tlsOpts) cfg.tls = tlsOpts;
   const days = Number(env.OUTBOX_DAYS);
   const OUTBOX_DAYS = env.OUTBOX_DAYS !== undefined && env.OUTBOX_DAYS !== '' && Number.isFinite(days) && days >= 1 && days <= 365 ? days : 30;
+  const iso = () => new Date(now()).toISOString();
+  const refOf = (m) => m.refId || m.invitationId || '';
+  /** One sent-log entry for the message ('' when the mailer has no log). */
+  const logged = (m, status, extra = {}) => (log ? log.add(Object.assign({ workspace: m.workspace || '', kind: m.kind || '', refId: refOf(m), investorId: m.investorId || '', status, to: m.to, toName: m.toName || '', subject: m.subject, text: m.text, link: m.link }, extra)) : '');
+  const answer = (emailStatus, logId, error) => Object.assign({ emailStatus }, error ? { error } : {}, logId ? { logId } : {});
+  /** A server with sponsor accounts (a firm that signs up gets one too, lib/auth.mjs). */
+  const sponsors = () => store.list('accounts').length > 0;
+  /** { address } to send from, or { held: true } when the workspace's own domain is not ready. */
+  function senderFor(m) {
+    const ws = m.workspace || '';
+    if (!ws) return { address: env.MAIL_FROM };
+    const s = senders ? senders.get(ws) : null;
+    if (s && s.status === 'ready' && validAddress(s.address)) return { address: s.address };
+    return sponsors() ? { held: true } : { address: env.MAIL_FROM };
+  }
+  /** Suppressed for this message: the sentence, or ''. */
+  function stopped(m) {
+    if (!log) return '';
+    if (log.suppressed(m.to)) return MAIL_SAYS.bounced;
+    if ((m.optional || m.commercial) && log.optionalOff(m.workspace || '', m.to)) return MAIL_SAYS.complained;
+    return '';
+  }
+  /** Over SMTP from `from` → { ok, messageId, relayId, error }. */
+  async function deliver(from, m, replyTo) {
+    const messageId = newMessageId(from.split('@')[1]);
+    const data = buildMessage({ from: { name: m.fromName, address: from }, to: { name: m.toName, address: m.to }, replyTo, subject: m.subject, text: m.text, html: m.html, inline: m.inline, date: new Date(now()), headers: m.headers, messageId });
+    try {
+      const r = await smtpSend(cfg, { from, to: [m.to], data });
+      return { ok: true, messageId, relayId: relayIdOf(r.response) };
+    } catch (e) {
+      // Mail servers often quote the recipient in a refusal; the store keeps no addresses in plain text.
+      const error = redactAddresses(e.message).slice(0, 300);
+      store.event({ type: 'email_failed', kind: m.kind || '', invitationId: m.invitationId || '', error });
+      return { ok: false, messageId, relayId: '', error };
+    }
+  }
+  /** A released or dropped held message: its invitation's status follows. */
+  function follow(x, status) {
+    const field = STATUS_FIELD[x.kind];
+    if (!field || !x.invitationId || !store.get('invitations', x.invitationId)) return;
+    store.put('invitations', Object.assign({ id: x.invitationId, [field]: status }, field === 'emailStatus' ? { emailError: '' } : {}));
+  }
+
   return {
     configured: !!cfg,
-    async send(m) {
+    async send(m0) {
+      const m = Object.assign({}, m0, { inline: (m0.inline || []).filter(LOGO).slice(0, 1) });
       const replyTo = validAddress(m.replyTo) ? m.replyTo : validAddress(env.MAIL_REPLY_TO) ? env.MAIL_REPLY_TO : '';
-      if (!validAddress(m.to)) return { emailStatus: 'failed', error: 'The recipient’s email address is not valid' };
+      if (m0.attachments && !(Array.isArray(m0.attachments) && m0.attachments.length === 0)) return answer('failed', logged(m, 'failed', { error: MAIL_SAYS.attachments }), MAIL_SAYS.attachments);
+      if (!validAddress(m.to)) return answer('failed', logged(m, 'failed', { to: '' }), 'The recipient’s email address is not valid');
+      const stop = stopped(m);
+      if (stop) return answer('suppressed', logged(m, 'suppressed', { error: stop }), stop);
+      const who = senderFor(m);
       if (!cfg) {
-        const from = validAddress(env.MAIL_FROM) ? env.MAIL_FROM : '';
-        const rec = { id: id('msg'), at: new Date(now()).toISOString(), kind: m.kind || '', invitationId: m.invitationId || '', workspace: m.workspace || '' };
+        const from = who.address && validAddress(who.address) ? who.address : validAddress(env.MAIL_FROM) ? env.MAIL_FROM : '';
+        const rec = { id: id('msg'), at: iso(), kind: m.kind || '', invitationId: m.invitationId || '', workspace: m.workspace || '' };
         rec.box = vault.seal({ from: from ? formatAddress(m.fromName, from) : oneLine(m.fromName), to: m.to, toName: m.toName || '', replyTo, subject: m.subject, text: m.text, html: m.html }, `outbox:${rec.id}`);
+        const logId = logged(m, 'outbox');
+        if (logId) rec.logId = logId;
         store.put('outbox', rec);
-        return { emailStatus: 'outbox' };
+        return answer('outbox', logId);
       }
-      if (!validAddress(env.MAIL_FROM)) return { emailStatus: 'failed', error: 'Set MAIL_FROM on the integration server (the address messages are sent from)' };
-      const data = buildMessage({ from: { name: m.fromName, address: env.MAIL_FROM }, to: { name: m.toName, address: m.to }, replyTo, subject: m.subject, text: m.text, html: m.html, inline: m.inline, date: new Date(now()), headers: m.headers });
-      try {
-        await smtpSend(cfg, { from: env.MAIL_FROM, to: [m.to], data });
-        return { emailStatus: 'sent' };
-      } catch (e) {
-        // Mail servers often quote the recipient in a refusal; the store keeps no addresses in plain text.
-        const error = redactAddresses(e.message).slice(0, 300);
-        store.event({ type: 'email_failed', kind: m.kind || '', invitationId: m.invitationId || '', error });
-        return { emailStatus: 'failed', error };
+      if (who.held) {
+        // C-11: kept sealed in the outbox exactly as an outbox message is (and purged after OUTBOX_DAYS like one) until the
+        // workspace's domain is ready; never sent from another domain.
+        const rec = { id: id('msg'), at: iso(), kind: m.kind || '', invitationId: m.invitationId || '', workspace: m.workspace || '', held: true, reason: 'sender_not_ready' };
+        rec.box = vault.seal({ from: oneLine(m.fromName), to: m.to, toName: m.toName || '', replyTo, subject: m.subject, text: m.text, html: m.html }, `outbox:${rec.id}`);
+        rec.rel = vault.seal({ fromName: m.fromName || '', headers: m.headers || {}, inline: m.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, base64: Buffer.from(x.data).toString('base64') })), optional: !!m.optional, commercial: !!m.commercial, investorId: m.investorId || '' }, `outbox:${rec.id}:rel`);
+        const logId = logged(m, 'held', { error: MAIL_SAYS.notReady });
+        if (logId) rec.logId = logId;
+        store.put('outbox', rec);
+        return answer('held', logId, MAIL_SAYS.notReady);
       }
+      if (!validAddress(who.address)) {
+        const error = 'Set MAIL_FROM on the integration server (the address messages are sent from)';
+        return answer('failed', logged(m, 'failed', { error }), error);
+      }
+      const r = await deliver(who.address, m, replyTo);
+      if (!r.ok) return answer('failed', logged(m, 'failed', { error: r.error, messageId: r.messageId }), r.error);
+      return answer('sent', logged(m, 'sent', { messageId: r.messageId, relayId: r.relayId }));
     },
-    /** Outbox messages, newest first, optionally for one workspace or invitation. */
+    /** Outbox messages (held ones marked held), newest first, optionally for one workspace or invitation. */
     outbox({ workspace, invitationId } = {}) {
       return store
         .list('outbox')
         .filter((x) => (!workspace || x.workspace === workspace) && (!invitationId || x.invitationId === invitationId))
         .sort((a, b) => (a.at < b.at ? 1 : -1))
         .slice(0, 200)
-        .map((x) => Object.assign({ id: x.id, at: x.at, kind: x.kind, invitationId: x.invitationId, workspace: x.workspace }, vault.open(x.box, `outbox:${x.id}`)));
+        .map((x) => Object.assign({ id: x.id, at: x.at, kind: x.kind, invitationId: x.invitationId, workspace: x.workspace }, x.held ? { held: true } : {}, vault.open(x.box, `outbox:${x.id}`)));
     },
-    /** Drop outbox messages older than OUTBOX_DAYS (they carry live links). */
+    /** Drop outbox messages (held ones too) older than OUTBOX_DAYS (they carry live links). */
     purge(nowMs = now()) {
       let n = 0;
       for (const x of store.list('outbox')) if (Date.parse(x.at) + OUTBOX_DAYS * 864e5 < nowMs) n += store.remove('outbox', x.id) ? 1 : 0;
       return n;
+    },
+    /** The workspace's held messages, sent from its own address now that its domain is ready (oldest first). */
+    async release(workspace) {
+      const out = { released: 0, failed: 0, suppressed: 0 };
+      const s = cfg && senders && workspace ? senders.get(workspace) : null;
+      if (!s || s.status !== 'ready' || !validAddress(s.address)) return out;
+      const held = store
+        .list('outbox')
+        .filter((x) => x.held && x.workspace === workspace && Date.parse(x.at) + OUTBOX_DAYS * 864e5 >= now())
+        .sort((a, b) => (a.at < b.at ? -1 : 1));
+      for (const x of held) {
+        const b = vault.open(x.box, `outbox:${x.id}`) || {};
+        const rel = (x.rel && vault.open(x.rel, `outbox:${x.id}:rel`)) || {};
+        const m = { kind: x.kind, invitationId: x.invitationId, workspace, fromName: rel.fromName, to: b.to, toName: b.toName, subject: b.subject, text: b.text, html: b.html, headers: rel.headers, optional: rel.optional, commercial: rel.commercial, inline: (rel.inline || []).map((i) => ({ cid: i.cid, contentType: i.contentType, data: Buffer.from(i.base64, 'base64') })) };
+        const stop = stopped(m);
+        if (stop) {
+          store.remove('outbox', x.id);
+          if (log && x.logId) log.update(x.logId, { status: 'suppressed', error: stop });
+          follow(x, 'suppressed');
+          out.suppressed++;
+          continue;
+        }
+        const r = await deliver(s.address, m, b.replyTo);
+        if (!r.ok) {
+          // Still held: tried again at the next check that finds the domain ready.
+          if (log && x.logId) log.update(x.logId, { error: r.error });
+          out.failed++;
+          continue;
+        }
+        store.remove('outbox', x.id);
+        if (log && x.logId) log.update(x.logId, { status: 'sent', messageId: r.messageId, relayId: r.relayId, error: '' });
+        follow(x, 'sent');
+        out.released++;
+      }
+      return out;
     }
   };
 }
@@ -408,7 +535,7 @@ export function createMailer({ env, store, vault, now = () => Date.now(), tls: t
 // (plan 13-01, EM-01); the builders below hand it the same data and turn its inline parts into Buffers.
 import { createRequire } from 'node:module';
 const emails = createRequire(import.meta.url)('../../assets/js/emails.js');
-const delivered = (r) => ({ subject: r.subject, preheader: r.preheader, text: r.text, html: r.html, inline: r.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })) });
+const delivered = (r) => ({ subject: r.subject, preheader: r.preheader, text: r.text, html: r.html, inline: r.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })), commercial: !!r.commercial }); // commercial: the mailer's complaint rule (13-03)
 
 export const money = (cents, currency) => emails.money(cents, currency);
 export const longDate = (iso) => emails.longDate(iso);

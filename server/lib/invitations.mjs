@@ -13,6 +13,12 @@ import { id } from './crypto.mjs';
 import { openVault } from './vault.mjs';
 import { REFUSALS } from './roles.mjs';
 import { createMailer, validAddress, invitationMessage, resendMessage, notificationMessage, reminderMessage, money } from './mail.mjs';
+import { createMailLog } from './maillog.mjs';
+import { createSenders } from './senders.mjs';
+import { createRequire } from 'node:module';
+
+// The shared patterns a message may never carry (assets/js/emails.js screen, plan 13-01): a note that matches is refused.
+const { screen } = createRequire(import.meta.url)('../../assets/js/emails.js');
 
 const DAY = 864e5;
 const KB = 1024;
@@ -99,8 +105,20 @@ function cleanFirm(x) {
     logo,
     portalName: clip(f.portalName, 120),
     disclaimer: clip(f.disclaimer, 4000),
+    postalAddress: postal(f.postalAddress),
     onboarding: cleanJson(f.onboarding, 32 * KB, 'firm.onboarding') || {}
   };
+}
+/** The firm's postal address (the footer of possibly commercial mail, C-06): at most 4 lines and 300 characters. */
+function postal(x) {
+  if (typeof x !== 'string') return '';
+  const lines = x
+    .replace(/\r\n?/g, '\n')
+    .split('\n')
+    .map((l) => l.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim())
+    .filter(Boolean)
+    .slice(0, 4);
+  return clip(lines.join('\n'), 300);
 }
 const TAX_TYPES = ['us-individual', 'us-entity', 'foreign-individual', 'foreign-entity'];
 function cleanInvestor(x) {
@@ -609,7 +627,7 @@ export function summarize(sub, snap, checks) {
 /* ---------- The routes ---------- */
 
 /**
- * createInvitations({ env, store, publicUrl, returnTo, limited, now, mailTls }) → {
+ * createInvitations({ env, store, publicUrl, returnTo, limited, now, mailTls, mailCtx }) → {
  *   investorPath(method, path)  true for the calls an invitation token may make,
  *   authenticate(req, token)    the invitation record, or throws 401 / 410,
  *   investor(req, res, path, rec)   GET /v1/invite, PUT /v1/invite/progress, POST /v1/invite/complete,
@@ -619,9 +637,12 @@ export function summarize(sub, snap, checks) {
  *   stop()
  * }
  */
-export function createInvitations({ env, store, publicUrl, returnTo, limited, now = () => Date.now(), mailTls }) {
+export function createInvitations({ env, store, publicUrl, returnTo, limited, now = () => Date.now(), mailTls, mailCtx }) {
   const vault = openVault(env);
-  const mailer = createMailer({ env, store, vault, now, tls: mailTls });
+  // Each workspace's own sender and the sealed sent log (plan 13-03): the mailer sends as the sponsor and logs every message.
+  const senders = createSenders({ store, vault, env, now, ctx: mailCtx || {} });
+  const mailLog = createMailLog({ store, vault, env, now });
+  const mailer = createMailer({ env, store, vault, now, tls: mailTls, senders, log: mailLog });
   const INVITE_DAYS = numIn(env.INVITE_DAYS, 30, 1, 365);
   const KEEP_DAYS = numIn(env.SUBMISSION_DAYS, 30, 1, 365);
   const iso = (ms = now()) => new Date(ms).toISOString();
@@ -858,7 +879,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
             const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing), taxRequest: !!(snap.invitation && snap.invitation.taxRequest), reverify: !!(snap.invitation && snap.invitation.reverify), coSign: !!(snap.invitation && snap.invitation.coSign) });
             const rid = rec.id;
             if (!(snap.invitation && snap.invitation.access && !snap.offering)) mailer
-              .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
+              .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, investorId: snap.investor.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
               .then((r) => store.get('invitations', rid) && store.put('invitations', { id: rid, reminderStatus: r.emailStatus }))
               .catch((e) => store.event({ type: 'email_failed', kind: 'submission_reminder', invitationId: rid, error: String((e && e.message) || e).slice(0, 200) }));
           }
@@ -880,6 +901,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       }
     }
     out.outbox = mailer.purge(nowMs);
+    out.maillog = mailLog.purge(nowMs);
     return out;
   }
   const maybePurge = () => {
@@ -1180,7 +1202,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       if (snap.notifyEmail) {
         const summary = summarize(sub, snap, checks);
         const msg = notificationMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, summary, consoleUrl: snap.consoleUrl, completedAt });
-        const r = await mailer.send(Object.assign({ kind: 'sponsor_notification', invitationId: rec.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg));
+        const r = await mailer.send(Object.assign({ kind: 'sponsor_notification', invitationId: rec.id, investorId: snap.investor.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg));
         notifyStatus = r.emailStatus;
       }
       store.put('invitations', { id: rec.id, notifyStatus });
@@ -1240,7 +1262,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const started = !!rec.stepKey;
     const build = kind === 'resend' ? resendMessage : invitationMessage;
     const msg = build({ firm: snap.firm, investor: snap.investor, offering: snap.offering, invitation: snap.invitation, link: url, expiresAt: rec.expiresAt, started });
-    const r = await mailer.send(Object.assign({ kind: kind === 'resend' ? 'invitation_resent' : 'invitation', invitationId: rec.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.investor.email, toName: snap.investor.contact }, msg));
+    const r = await mailer.send(Object.assign({ kind: kind === 'resend' ? 'invitation_resent' : 'invitation', invitationId: rec.id, refId: rec.id, investorId: snap.investor.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.investor.email, toName: snap.investor.contact, link: url }, msg));
     return { link: url, emailStatus: r.emailStatus, emailError: r.error || '' };
   }
 
@@ -1254,6 +1276,9 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const inv = cleanInvestor(body.investor);
     const { offering, files } = cleanOffering(body.offering);
     const invitation = cleanInvitation(body.invitation, now(), INVITE_DAYS);
+    // EM-04, C-12: a note carrying a taxpayer number, a long number or a password is refused before anything is stored.
+    const bad = invitation.note ? screen(invitation.note) : null;
+    if (bad) throw fail(422, bad.reason);
     // Plan 06-38: a co-investor sign-in is for an account on file and one agreement already sent (no offering). It carries
     // the account's name and the co-investor's name and email only: no amount, no status flags or tax details of the account
     // investor, and none of the other kinds of link (access, tax-form request, included tax form, verification package).
@@ -1466,6 +1491,8 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     sponsor,
     purge,
     mailer,
+    senders,
+    mailLog,
     vault,
     usePackages,
     stop: () => clearInterval(timer)
