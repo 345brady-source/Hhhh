@@ -38,7 +38,7 @@
   /* ---------- the parts: the report modules, loaded from beside this file ---------- */
   const HERE = (document.currentScript && document.currentScript.src) || '';
   // Only files that are shipped. Plan 12-08 adds 'reports-templates.js', 'reports-run.js' and 'reports-deliver.js'.
-  const PARTS = Object.freeze(['reports-data.js', 'reports.js', 'reports-pdf.js', 'reports-record.js']);
+  const PARTS = Object.freeze(['reports-data.js', 'reports.js', 'reports-pdf.js', 'reports-record.js', 'reports-templates.js', 'reports-run.js', 'reports-deliver.js']);
   const load = { settled: false, failed: false };
   const extra = {};
   const near = (name) => (HERE ? new URL(name, HERE).href : new URL(`assets/js/${name}`, document.baseURI).href);
