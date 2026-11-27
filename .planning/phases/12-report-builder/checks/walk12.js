@@ -50,14 +50,20 @@ const slug = (s) =>
     .replace(/^-+|-+$/g, '');
 
 /* ---------- the walk's shared state ---------- */
-const W = { A: null, fr: null, S: null, off: [], err0: 0, shots: [], step: '', kb: {}, ar: {}, pb: {}, fa: {} };
+const W = { A: null, fr: null, S: null, off: [], offAt: 0, err0: 0, shots: [], step: '', kb: {}, ar: {}, pb: {}, fa: {} };
 
 /** One screenshot of the phone screen as it is, with its description (copied to the owner's folder by lib.js). */
 async function shot(name, what, scrollTo) {
-  if (scrollTo) await W.fr.evaluate((sel) => {
-    const el = document.querySelector(sel);
-    if (el) el.scrollIntoView({ block: 'start' });
-  }, scrollTo).catch(() => {});
+  if (scrollTo)
+    await W.fr
+      .evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (!el) return;
+        el.scrollIntoView({ block: 'start' });
+        // the editor's bar ('Back to reports' and the title) stays at the top: show what is under it
+        window.scrollBy(0, -120);
+      }, scrollTo)
+      .catch(() => {});
   await W.fr.waitForTimeout(250);
   Lib.describeShots([[name, what]]);
   await W.A.page.screenshot({ path: path.join(OUT(), name) });
@@ -81,8 +87,9 @@ async function screen(check, o) {
   const errs = W.A.errors.slice(W.err0);
   W.err0 = W.A.errors.length;
   check('no new script error in the browser', errs.length === 0, errs);
-  console.log(`requests outside the page's origin since the walk began: ${W.off.length}`);
-  check(`no request left the page's own origin (${W.off.length})`, W.off.length === 0, W.off.slice(0, 5));
+  const mine = W.off.slice(W.offAt);
+  console.log(`requests outside the page's origin: ${mine.length} in step ${W.step}, ${W.off.length} since the walk began`);
+  check(`no request left the page's own origin in this step (${mine.length})`, mine.length === 0, mine.slice(0, 5));
   await T.leak(check, fr);
   if (o.dialog) {
     const ok = await fr.evaluate(() => {
@@ -413,7 +420,7 @@ const steps = {
     await screen(check);
   },
 
-  /** One section off (Fees and expenses), one moved up (Performance). */
+  /** One section off (Fees and expenses), one moved up (Holdings, above Performance). */
   async 'kb-sections'({ check }) {
     if (!needs(check)) return;
     const st0 = await preview();
@@ -421,17 +428,19 @@ const steps = {
     await switchTo('fees', false);
     const st1 = await preview();
     check("'Fees and expenses' turned off: no fees table and no fees line in the preview", st1.titles.indexOf('Fees and expenses') < 0 && !/No fees or expenses in this period\./.test(st1.text), st1.titles);
-    const before = W.kb.order0;
-    const k = before.indexOf('performance');
-    await T.press(W.fr, '.rb-sec[data-key=performance] [data-action=rb-move][data-dir=up]');
+    const before = await W.fr.evaluate(() => Array.from(document.querySelectorAll('.rb-sec')).map((x) => x.getAttribute('data-key')));
+    const k = before.indexOf('holdings');
+    console.log(`sections before the move: ${before.join(', ')}`);
+    await T.press(W.fr, '.rb-sec[data-key=holdings] [data-action=rb-move][data-dir=up]');
     await W.fr.waitForTimeout(250);
     const after = await W.fr.evaluate(() => Array.from(document.querySelectorAll('.rb-sec')).map((x) => x.getAttribute('data-key')));
-    check(`'Move up' on Performance puts it before '${before[k - 1]}' in the editor`, after.indexOf('performance') === k - 1 && after[k] === before[k - 1], { before, after });
+    check(`'Move up' on Holdings puts it before '${before[k - 1]}' in the editor`, k > 0 && after.indexOf('holdings') === k - 1 && after[k] === before[k - 1], { before, after });
     const st2 = await preview();
-    const at = (st, s) => st.text.indexOf(s);
-    check("the preview shows 'Net performance' earlier than before the move", at(st2, 'Net performance') >= 0 && at(st2, 'Net performance') < at(st1, 'Net performance'), { before: at(st1, 'Net performance'), after: at(st2, 'Net performance') });
+    const t1 = st1.titles;
+    const t2 = st2.titles;
+    check("the preview's 'Holdings' table now comes before 'Net performance' (it came after)", t1.indexOf('Holdings') > t1.indexOf('Net performance') && t1.indexOf('Net performance') >= 0 && t2.indexOf('Holdings') >= 0 && t2.indexOf('Holdings') < t2.indexOf('Net performance'), { before: t1, after: t2 });
     W.kb.order1 = after;
-    await shot('03-sections.png', "'Fees and expenses' switched off and 'Performance' moved up one place (Move up), on the phone", '.rb-sec[data-key=performance]');
+    await shot('03-sections.png', "'Fees and expenses' switched off and 'Holdings' moved up one place (Move up), on the phone", '.rb-sec[data-key=holdings]');
     await screen(check);
   },
 
@@ -750,46 +759,311 @@ const steps = {
   /** Ashwell Ridge: 'Quarterly letter: real estate' for Cedar Row, photos on the asset pages, NOI where the journal has it. */
   async 'ar-letter'({ check }) {
     if (!needs(check)) return;
-    check('step written', false, 'not written yet');
+    const fr = W.fr;
+    await firm(AR);
+    const r = await newReport('quarterly', RE, 'Q4 2026 Cedar Row letter', AR_FUND, 'fund');
+    W.ar.tid = r.id;
+    check(`'Start from' offers '${RE}' on Ashwell Ridge`, r.starts.indexOf(RE) >= 0, r.starts);
+    const want = await fr.evaluate((fund) => (window.CVPortal.state.ws.offerings.find((o) => o.id === fund).holdings || []).map((h) => ({ id: h.id || '', name: h.name })), AR_FUND);
+    const L = await assetRows();
+    check(`Asset updates lists Cedar Row's ${want.length} properties, each under '${AR_FUND}-<slug of its name>', and never '${NO_HOLDING}'`, !L.none && want.length > 0 && L.rows.length === want.length && L.rows.every((x, k) => x.id === `${AR_FUND}-${slug(want[k].name)}`), { rows: L.rows, want });
+    const buf = W.kb.jpeg || (await jpeg(800, 600));
+    const added = [];
+    for (const row of L.rows.slice(0, 3)) {
+      const ids = await holdingPhoto(row.id, buf, `${slug(row.name)}.jpg`);
+      if (ids && ids.length) added.push(row);
+    }
+    check(`a photo is kept on each of the first ${Math.min(3, L.rows.length)} properties`, added.length === Math.min(3, L.rows.length) && added.length > 0, added.map((x) => x.id));
+    W.ar.photos = added.length;
+    const noi = await fr.evaluate(({ fund, ids }) => {
+      const NS = window.CVPortal;
+      const w = NS.state.ws;
+      return ids.map((id) => ({ id, n: NS.reportsData.noi(w, fund, id, '2026-10-01', '2026-12-31') }));
+    }, { fund: AR_FUND, ids: L.rows.map((x) => x.id) });
+    const withNoi = noi.filter((x) => x.n);
+    console.log(`NOI: ${withNoi.length} of ${noi.length} Cedar Row properties have property income or expense lines in the journal for Q4 2026`);
+    W.ar.noi = withNoi.length;
+    W.ar.noiTotal = noi.length;
+    const st = await preview();
+    check(`the preview shows the ${added.length} photos, each property's page named`, st.photos === added.length && added.every((x) => st.text.indexOf(x.name) >= 0), { photos: st.photos });
+    const noiTables = st.titles.filter((t) => t === 'Net operating income').length;
+    check(`the preview has a 'Net operating income' table for each property with journal lines (${withNoi.length})`, noiTables === withNoi.length, { noiTables, withNoi: withNoi.map((x) => x.id) });
+    check('no error stands in the preview', st.errors.length === 0, st.errors);
+    await shot('17-ar-assets.png', `Ashwell Ridge, '${RE}' for Cedar Row: Asset updates with a photo on ${added.length} properties`, '.rb-sec[data-key=assets]');
+    await screen(check);
   },
-  /** Ashwell Ridge: the preview and the PDF. */
+
+  /** Ashwell Ridge: the preview's asset pages and the PDF. */
   async 'ar-preview-pdf'({ check }) {
-    if (!needs(check)) return;
-    check('step written', false, 'not written yet');
+    if (!needs(check) || !W.ar.tid) return check('the Ashwell Ridge report is open', false, 'none');
+    const st = await preview();
+    check('the preview is ready (no error, See the PDF on)', st.errors.length === 0 && st.pdf === true, st.errors);
+    const n = await seePdf();
+    check('See the PDF draws the pages inside the panel', n >= 1, n);
+    await shot('18-ar-pdf.png', `Ashwell Ridge's Cedar Row letter drawn as a PDF in the page (${n} pages)`, '#rb-pdfpanel');
+    await closePdf();
+    const P = await downloadPdf('ar-letter.pdf');
+    check("'Download PDF' gives a PDF", !!P, P && P.name);
+    if (P) {
+      const photos = P.images.filter((x) => x.width === 800 && x.height === 600 && x.enc === 'jpeg').length;
+      check(`the PDF holds the ${W.ar.photos} photos as JPEG images`, photos === W.ar.photos, P.images);
+      const flat = P.text.replace(/\s+/g, ' ');
+      const noiN = (flat.match(/Net operating income/g) || []).length;
+      check(`the PDF has the 'Net operating income' tables the preview has (${W.ar.noi})`, W.ar.noi === 0 ? noiN === 0 : noiN >= W.ar.noi, noiN);
+      const lk = L12.leak(P.text + '\n' + J(P.info));
+      check('no vendor, library or model name, never audited or the forbidden word in the PDF text and properties', lk.ok, lk.hits.slice(0, 5));
+      console.log(`downloaded: ${P.name}, ${P.bytes.length} bytes, ${P.info.Pages} pages, ${photos} photos`);
+    }
+    await screen(check);
   },
+
   /** Pellbrook: 'Quarterly letter: open-ended fund' for pb-long-short: monthly net returns, 'Distributions and redemptions'. */
   async 'pb-letter'({ check }) {
     if (!needs(check)) return;
-    check('step written', false, 'not written yet');
+    await firm(PB);
+    const r = await newReport('quarterly', OPEN, 'Q4 2026 Long/Short letter', PB_FUND, 'fund');
+    W.pb.tid = r.id;
+    check(`'Start from' offers '${OPEN}' on Pellbrook`, r.starts.indexOf(OPEN) >= 0, r.starts);
+    const st = await preview();
+    const monthly = await W.fr.evaluate(() => {
+      const t = Array.from(document.querySelectorAll('#rb-preview table')).find((x) => (x.querySelector('caption') || { innerText: '' }).innerText.trim() === 'Monthly net return');
+      return t ? Array.from(t.tBodies[0].rows).map((r) => Array.from(r.cells).map((c) => c.innerText.trim())) : null;
+    });
+    check("the preview has the table 'Monthly net return' with a row for each month of the quarter", !!monthly && monthly.length >= 3, monthly);
+    check("the preview shows 'Distributions and redemptions'", st.text.indexOf('Distributions and redemptions') >= 0, st.titles);
+    check('no error stands in the preview', st.errors.length === 0, st.errors);
+    W.pb.monthly = monthly;
+    console.log(`Pellbrook monthly net return rows: ${J(monthly)}`);
+    await shot('19-pb-preview.png', `Pellbrook, '${OPEN}' for its long/short fund: the monthly net returns in the preview`, '#rb-preview table');
+    await screen(check);
   },
-  /** Pellbrook: generate and deliver in the same browser as Kestrel Bay. */
+
+  /** Pellbrook: the PDF drawn in the page and downloaded. */
+  async 'pb-pdf'({ check }) {
+    if (!needs(check) || !W.pb.tid) return check('the Pellbrook report is open', false, 'none');
+    const n = await seePdf();
+    check('See the PDF draws the pages inside the panel', n >= 1, n);
+    await shot('20-pb-pdf.png', `Pellbrook's open-ended fund letter drawn as a PDF in the page (${n} pages)`, '#rb-pdfpanel');
+    await closePdf();
+    const P = await downloadPdf('pb-letter.pdf');
+    check("'Download PDF' gives a PDF", !!P, P && P.name);
+    if (P) {
+      const flat = P.text.replace(/\s+/g, ' ');
+      check("the PDF holds 'Monthly net return' and 'Distributions and redemptions'", flat.indexOf('Monthly net return') >= 0 && flat.indexOf('Distributions and redemptions') >= 0, flat.slice(0, 300));
+      const months = (W.pb.monthly || []).map((r) => r[1]).filter(Boolean);
+      check(`every monthly net return of the preview is in the PDF (${months.join(', ')})`, months.length >= 3 && months.every((m) => flat.indexOf(m) >= 0), months);
+      const lk = L12.leak(P.text + '\n' + J(P.info));
+      check('no vendor, library or model name, never audited or the forbidden word in the PDF text and properties', lk.ok, lk.hits.slice(0, 5));
+    }
+    await screen(check);
+  },
+
+  /** Pellbrook: Save, Generate for every investor in the fund and Deliver, in the same browser as Kestrel Bay. */
   async 'pb-generate'({ check }) {
-    if (!needs(check)) return;
-    check('step written', false, 'not written yet');
+    if (!needs(check) || !W.pb.tid) return check('the Pellbrook report is open', false, 'none');
+    const v = await save();
+    check("'Save' shows version 2", v === 'Version 2', v);
+    const hs = await D.holders(W.fr, PB_FUND);
+    const g = await generate();
+    W.pb.time = timeLine(`Pellbrook, '${OPEN}', ${PB_FUND}, every investor in the fund`, g);
+    check(`the run ends 'Made ${hs.length} of ${hs.length}'`, hs.length > 0 && g.text === `Made ${hs.length} of ${hs.length}`, g.text);
+    const run = await newestRun();
+    W.pb.run = run;
+    const d = await deliverRun(run.id, 'Pat Admin');
+    check("the run reads 'Delivered by Pat Admin'", d.by === 'Pat Admin' && d.text.indexOf('Delivered by Pat Admin') >= 0, d.text.slice(0, 200));
+    await shot('21-pb-deliver.png', `Pellbrook: ${g.text} and delivered by Pat Admin (${g.ms} ms in the page for ${g.files} files)`, `.rd-run[data-id="${run.id}"]`);
+    await screen(check);
   },
-  /** Two firms in one browser: file ids carry the firm; each first holder sees the record's bytes. */
+
+  /** Two firms in one browser: every report file id carries its firm, none shared; Pellbrook's first holder sees the record's bytes. */
   async 'two-firms'({ check }) {
-    if (!needs(check)) return;
-    check('step written', false, 'not written yet');
+    if (!needs(check) || !W.pb.run || !W.kb.run) return check('both firms delivered a run', false, { kb: !!W.kb.run, pb: !!W.pb.run });
+    const fr = W.fr;
+    const ids = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const of = (id) => {
+        const w = NS.workspace.load(id);
+        return (w.docs || []).filter((d) => d.report).map((d) => d.id);
+      };
+      return { kb: of('kestrel-bay'), pb: of('pellbrook') };
+    });
+    check(`every Kestrel Bay report document id starts 'rf-kestrel-bay-' (${ids.kb.length})`, ids.kb.length > 0 && ids.kb.every((x) => /^rf-kestrel-bay-/.test(x)), ids.kb.filter((x) => !/^rf-kestrel-bay-/.test(x)));
+    check(`every Pellbrook report document id starts 'rf-pellbrook-' (${ids.pb.length})`, ids.pb.length > 0 && ids.pb.every((x) => /^rf-pellbrook-/.test(x)), ids.pb.filter((x) => !/^rf-pellbrook-/.test(x)));
+    check('no report document id is shared by the two firms', !ids.kb.some((x) => ids.pb.indexOf(x) >= 0), ids.kb.filter((x) => ids.pb.indexOf(x) >= 0));
+    const first = W.pb.run.files[0];
+    const rows = await documentsAs(first.inv[0]);
+    check("Pellbrook's first holder's Documents list the report", rows.some((r) => r.id === first.id), rows.slice(0, 5));
+    const doc = await fr.evaluate((id) => (window.CVPortal.state.ws.docs.find((d) => d.id === id) || {}).sha256 || '', first.id);
+    const v = await viewDoc(first.id);
+    check("Pellbrook's first holder sees bytes whose SHA-256 equals doc.sha256, drawn in the page", v.viewed.length === 1 && v.viewed[0] === doc && doc === first.sha256 && v.pages >= 1, { viewed: v.viewed, doc, pages: v.pages });
+    await shot('22-pb-investor.png', `As ${first.inv[0]}, Pellbrook's first holder: the report opened, byte-identical to the record, in the same browser as Kestrel Bay`);
+    await screen(check, { dialog: true });
+    await closeDialog();
   },
-  /** A kept file replaced by the other firm's bytes: never shown; remade to the record; the not-kept sentence without the remake. */
+
+  /** Back in Kestrel Bay: its first holder still sees Kestrel Bay's bytes, after Pellbrook generated in the same browser. */
+  async 'two-firms-kb'({ check }) {
+    if (!needs(check) || !W.kb.run || !W.pb.run) return check('both runs', false, 'none');
+    await firm(KB);
+    const first = W.kb.run.files[0];
+    const rows = await documentsAs(first.inv[0]);
+    check("Kestrel Bay's first holder's Documents list the report", rows.some((r) => r.id === first.id), rows.slice(0, 5));
+    const doc = await W.fr.evaluate((id) => (window.CVPortal.state.ws.docs.find((d) => d.id === id) || {}).sha256 || '', first.id);
+    const v = await viewDoc(first.id);
+    check("Kestrel Bay's first holder sees bytes whose SHA-256 equals doc.sha256 (never Pellbrook's)", v.viewed.length === 1 && v.viewed[0] === doc && doc === first.sha256 && v.pages >= 1 && !W.pb.run.files.some((f) => f.sha256 === v.viewed[0]), { viewed: v.viewed, doc, pages: v.pages });
+    await shot('23-kb-investor-again.png', `As ${first.inv[0]} of Kestrel Bay, after Pellbrook generated in the same browser: still Kestrel Bay's own file`);
+    await screen(check, { dialog: true });
+    await closeDialog();
+  },
+
+  /** Test setup only: one Kestrel Bay kept file overwritten with Pellbrook's bytes. Those bytes are never shown; the file is remade to the record. */
   async 'hash-check'({ check }) {
-    if (!needs(check)) return;
-    check('step written', false, 'not written yet');
+    if (!needs(check) || !W.kb.run || !W.pb.run) return check('both runs', false, 'none');
+    const fr = W.fr;
+    const target = W.kb.run.files[1];
+    const theirs = W.pb.run.files[0];
+    const planted = await fr.evaluate(async ({ id, from }) => {
+      const NS = window.CVPortal;
+      const b = await NS.ops.files.get(from);
+      const bytes = new Uint8Array(await b.arrayBuffer());
+      await NS.ops.files.put(id, new Blob([bytes], { type: 'application/pdf' }));
+      const k = await NS.ops.files.get(id);
+      return NS.audit.sha256(new Uint8Array(await k.arrayBuffer()));
+    }, { id: target.id, from: theirs.id });
+    check("test setup: the kept file of a Kestrel Bay holder now holds Pellbrook's bytes", planted === theirs.sha256 && planted !== target.sha256, { planted, theirs: theirs.sha256, record: target.sha256 });
+    await documentsAs(target.inv[0]);
+    const v = await viewDoc(target.id);
+    check("opening it never shows Pellbrook's bytes", v.viewed.indexOf(theirs.sha256) < 0, v.viewed);
+    check('opening it shows the file remade, its SHA-256 equal to the record, drawn in the page', v.viewed.length === 1 && v.viewed[0] === target.sha256 && v.pages >= 1, { viewed: v.viewed, record: target.sha256, pages: v.pages, text: v.text.slice(0, 160) });
+    W.kb.planted = { target, theirs };
+    await shot('24-hash-remade.png', `As ${target.inv[0]}: the kept file had been overwritten with another firm's bytes (test setup); the portal shows the file remade, equal to the record`);
+    await screen(check, { dialog: true });
+    await closeDialog();
+    const kept = await fr.evaluate(async (id) => {
+      const x = await window.CVPortal.ops.files.get(id);
+      return x ? window.CVPortal.audit.sha256(new Uint8Array(await x.arrayBuffer())) : '';
+    }, target.id);
+    check('opening it writes nothing over the kept bytes', kept === theirs.sha256, kept);
   },
-  /** Fund A: 'Capital account statement' for FA-1001, Q4 2026: the hand-worked figures in the preview and the PDF. */
+
+  /** The same file where the remake is not loaded on the page: the not-kept sentence, never the bytes. */
+  async 'hash-not-kept'({ check }) {
+    if (!needs(check) || !W.kb.planted) return check('the planted file of the step before', false, 'none');
+    const { target, theirs } = W.kb.planted;
+    await W.fr.evaluate(() => {
+      window.__run = window.CVPortal.reportsRun;
+      delete window.CVPortal.reportsRun;
+    });
+    const v = await viewDoc(target.id);
+    check(`without the remake on the page, the viewer says '${NOT_KEPT}' and shows no bytes`, !v.viewed.length && !v.pages && v.text === NOT_KEPT, { viewed: v.viewed, text: v.text.slice(0, 200) });
+    check("Pellbrook's bytes are never shown", v.viewed.indexOf(theirs.sha256) < 0, v.viewed);
+    await shot('25-hash-not-kept.png', `The same file where the remake cannot run: '${NOT_KEPT}' and nothing else`);
+    await screen(check, { dialog: true });
+    await closeDialog();
+    await W.fr.evaluate(() => {
+      window.CVPortal.reportsRun = window.__run;
+      delete window.__run;
+    });
+  },
+
+  /** Fund A seated as its own firm: 'Capital account statement' for FA-1001, Q4 2026: the hand-worked figures in the preview. */
   async 'fa-statement'({ check }) {
     if (!needs(check)) return;
-    check('step written', false, 'not written yet');
+    const fr = W.fr;
+    await role('admin');
+    const id = await seatFundA();
+    const t = await fr.evaluate(() => ({ id: window.CVPortal.state.ws.tenant.id, sample: !!window.CVPortal.state.ws.tenant.sample, name: window.CVPortal.state.ws.tenant.legalName }));
+    check("fund A is seated as its own firm with no sample flag ('Fund A Sponsor Management, LLC')", t.id === id && !t.sample && t.name === 'Fund A Sponsor Management, LLC', t);
+    const r = await newReport('statement', 'Capital account statement', 'Q4 2026 statement', 'fund-a', 'fund', 'q');
+    W.fa.tid = r.id;
+    if (await fr.locator('#rb-as').count()) {
+      await fr.selectOption('#rb-as', 'FA-1001');
+      await fr.waitForTimeout(250);
+    }
+    const spec = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const w = NS.state.ws;
+      const o = w.offerings.find((x) => x.id === 'fund-a');
+      const q = NS.audit.presets(w, o).find((p) => p.id === 'q');
+      return { from: q.from, to: q.to, preset: (document.querySelector('#rb-period') || { value: '' }).value, as: (document.querySelector('#rb-as') || { value: '' }).value };
+    });
+    check('the period is 2026-10-01 to 2026-12-31 and the preview is for FA-1001', spec.from === '2026-10-01' && spec.to === '2026-12-31' && spec.preset === 'q' && spec.as === 'FA-1001', spec);
+    const st = await preview();
+    const want = ['$334,000.00', `${MINUS}$6,000.00`, '$20,000.00', `${MINUS}$3,000.00`, '$345,000.00', 'Preliminary: the books are not closed for this period.'];
+    const missing = want.filter((x) => st.text.indexOf(x) < 0);
+    check(`the preview shows ${want.join(', ')}`, missing.length === 0, { missing, text: st.text.slice(0, 600) });
+    check('the preview is prepared for Investor One and names no other investor', st.text.indexOf('Prepared for Investor One') >= 0 && st.text.indexOf('Investor Two') < 0, st.text.slice(0, 300));
+    W.fa.want = want;
+    await shot('26-fa-statement.png', "Fund A (a real fund, hand-worked figures), 'Capital account statement' for FA-1001, Q4 2026: beginning $334,000.00, distributions −$6,000.00, gain $20,000.00, fees −$3,000.00, ending $345,000.00", '#rb-preview table');
+    await screen(check);
   },
-  /** Fund A: 'Performance and holdings summary' for 2026: the engine's holdings against the journal's Portfolio Co X. */
+
+  /** Fund A: the same statement as a PDF, drawn and downloaded. */
+  async 'fa-pdf'({ check }) {
+    if (!needs(check) || !W.fa.tid) return check('the fund A statement is open', false, 'none');
+    const n = await seePdf();
+    check('See the PDF draws the pages inside the panel', n >= 1, n);
+    await shot('27-fa-pdf.png', `Fund A's statement for FA-1001 drawn as a PDF in the page (${n} pages)`, '#rb-pdfpanel');
+    await closePdf();
+    const P = await downloadPdf('fa-statement.pdf');
+    check("'Download PDF' gives a PDF", !!P, P && P.name);
+    if (P) {
+      const flat = P.text.replace(/\s+/g, ' ');
+      const missing = W.fa.want.filter((x) => flat.indexOf(x) < 0);
+      check(`the PDF shows ${W.fa.want.join(', ')}`, missing.length === 0, missing);
+      check("Producer and Creator are 'Fund A Sponsor Management, LLC'", P.info.Producer === 'Fund A Sponsor Management, LLC' && P.info.Creator === 'Fund A Sponsor Management, LLC', { Producer: P.info.Producer, Creator: P.info.Creator });
+      const lk = L12.leak(P.text + '\n' + J(P.info));
+      check('no vendor, library or model name, never audited or the forbidden word in the PDF text and properties', lk.ok, lk.hits.slice(0, 5));
+    }
+    await screen(check);
+  },
+
+  /** Fund A: 'Performance and holdings summary' for 2026: the engine's holdings equal the journal's Portfolio Co X. */
   async 'fa-holdings'({ check }) {
     if (!needs(check)) return;
-    check('step written', false, 'not written yet');
+    const fr = W.fr;
+    await newReport('performance', 'Performance and holdings summary', '2026 summary', 'fund-a', 'fund', 'fy');
+    if (await fr.locator('#rb-as').count()) {
+      await fr.selectOption('#rb-as', 'FA-1001');
+      await fr.waitForTimeout(250);
+    }
+    const per = await fr.evaluate(() => (document.querySelector('#rb-period') ? document.querySelector('#rb-period').selectedOptions[0].innerText.trim() : ''));
+    check(`the period is the year 2026 ('${per}')`, /2026/.test(per), per);
+    const eng = await engineHoldings('fund-a', '2026-12-31');
+    const journal = await fr.evaluate(() => {
+      const NS = window.CVPortal;
+      const lines = NS.books.entries(NS.state.ws, 'fund-a', { from: '2026-01-01', to: '2026-12-31', holding: 'fa-x' });
+      const sum = (code) => lines.filter((l) => l.code === code).reduce((s, l) => s + l.cents, 0);
+      return { cost: sum('1100'), fv: sum('1100') + sum('1150') };
+    });
+    console.log(`fund A holdings: engine ${J(eng)}; journal Portfolio Co X fair value ${journal.fv}, cost ${journal.cost} (cents)`);
+    check('the journal holds Portfolio Co X at $490,000.00, cost $400,000.00', journal.fv === 49000000 && journal.cost === 40000000, journal);
+    check("the engine's holdings equal the journal: Portfolio Co X $490,000.00 at cost $400,000.00", !!eng && eng.length === 1 && eng[0].name === 'Portfolio Co X' && eng[0].fv === 49000000 && eng[0].cost === 40000000, eng);
+    const st = await preview();
+    const row = await fr.evaluate(() => {
+      const t = Array.from(document.querySelectorAll('#rb-preview table')).find((x) => (x.querySelector('caption') || { innerText: '' }).innerText.trim() === 'Holdings');
+      return t ? Array.from(t.tBodies[0].rows).map((r) => Array.from(r.cells).map((c) => c.innerText.trim())) : null;
+    });
+    check("the preview's Holdings table shows Portfolio Co X at $490,000.00, cost $400,000.00", !!row && row.length === 1 && row[0][0] === 'Portfolio Co X' && row[0].indexOf('$490,000.00') >= 0 && row[0].indexOf('$400,000.00') >= 0, row);
+    check('no error stands in the preview', st.errors.length === 0, st.errors);
+    W.fa.holdings = { eng, journal, row };
+    await shot('28-fa-holdings.png', "Fund A, 'Performance and holdings summary' for 2026: Holdings shows Portfolio Co X at $490,000.00, cost $400,000.00, as the journal holds it", '#rb-preview table');
+    await screen(check);
   }
 };
 
+/** Each step knows its name, and counts errors and outside requests from its own start. */
+const walk = {};
+Object.keys(steps).forEach((k) => {
+  walk[k] = (ctx) => {
+    W.step = k;
+    W.offAt = W.off.length;
+    W.err0 = W.A ? W.A.errors.length : 0;
+    return steps[k](ctx);
+  };
+});
+
 if (require.main === module) {
-  Lib.runParts(steps, { name: 'WALK12', unit: 'steps', flag: '--only', browser: true });
+  Lib.runParts(walk, { name: 'WALK12', unit: 'steps', flag: '--only', browser: true });
 }
 module.exports = { steps };
