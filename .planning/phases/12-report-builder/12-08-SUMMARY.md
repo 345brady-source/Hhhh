@@ -52,3 +52,22 @@ FAIL managed-taxdocs opening the tax document counts in its tax.opens (taxdocs-i
 FAIL managed-taxdocs a report opened in the same session counts in its report block only :: {"tax":2,"taxReport":false,"rep":1,"reports":1,"taxLog":2,"repLog":1}
 DELIVER FLOW: FAIL (parts run: 1) - managed-taxdocs
 ```
+
+### Task 1 verify (the plan's command, from SCRATCH/exec-12-08/tools/verify-12.sh; VERIFY-1 EXIT=0)
+```
+PASS investor-phone no vendor, model or library name and no forbidden word on screen
+PASS investor-phone a way out of the view is on screen at the top, the middle and the end of the page
+DELIVER FLOW: PASS (parts run: 2)
+```
+
+### Task 2 verify (the plan's command, same script; VERIFY-2 EXIT=0; 115 PASS lines, 0 FAIL)
+First run failed (VERIFY-2 EXIT=1): `FAIL speed-phone ran to the end :: locator.tap: Timeout 10000ms exceeded.` The page was
+drawn again after every file, so 'Stop' was replaced before a tap could land. Fixed in c44e546 (only the progress line
+changes in place while files are made). Rerun:
+```
+speed: 23 reports, 1962 ms, 85 ms per report
+PASS speed-phone 'Stop' after the second file ends 'Stopped after k of 23' with 2 <= k < 23
+PASS speed-phone the stopped run is in the archive with k files (7), stopped
+PASS speed-phone a way out of the view is on screen at the top, the middle and the end of the page
+DELIVER FLOW: PASS (parts run: 7)
+```
