@@ -6,6 +6,8 @@
 // answering the recorded fixtures; the U.S. Treasury list files are answered here from stand-in lists (as
 // server/test/core.test.mjs answers them); monitoring alerts are signed here as server/test/idcheck.test.mjs signs them. No
 // provider is called, no key exists, and any call that would leave this machine is refused and kept.
+// Every part that uses the server first shows that the console asks a server whose address is only saved nothing by itself,
+// then confirms it with "Check connection" on the Integrations page, as the sponsor does when connecting it.
 //   alert     1280x800: a package investor is brought into the console cleared (as package-flow.js part identity does);
 //             a signed new-hit alert reaches the server; the console is opened again; with no click the investor reads
 //             "Needs review" on the AML/KYC page, the details name the hit's listed name, the Overview's attention list
@@ -194,7 +196,11 @@ async function boot(S, check, opts) {
     window.__clicks = 0;
     document.addEventListener('click', (e) => e.isTrusted && window.__clicks++, true);
   });
-  const C = { S, w, srv, A, cp: A.page, investors: [], posts: [], closers: [() => A.context.close()] };
+  const C = { S, w, srv, A, cp: A.page, investors: [], posts: [], pulls: 0, closers: [() => A.context.close()] };
+  // Every time the console asks the server which checks changed.
+  A.page.on('request', (req) => {
+    if (/\/v1\/checks\/changed\?/.test(req.url())) C.pulls++;
+  });
   // Every screening the console asks the server for, by the connector it names (nothing else from the body is kept).
   A.page.on('request', (req) => {
     if (req.method() !== 'POST' || !/\/v1\/screenings$/.test(req.url().replace(/[?#].*$/, ''))) return;
@@ -213,6 +219,18 @@ async function boot(S, check, opts) {
   try {
     C.off = await Lib.setupPortal(S, A, { exemption: opts.exemption || 'Rule 506(b)' });
     check('the console uses the integration server with the sponsor account\'s token', (await srv.configure(A.page)) === true);
+    // An address only saved (never checked on the Integrations page) is never asked anything by the console itself.
+    await reopen(C);
+    await A.page.waitForTimeout(1500);
+    check('with the server\'s address only saved, the console asks it nothing by itself', C.pulls === 0, C.pulls);
+    // The sponsor confirms the server as the Integrations page asks: "Check connection".
+    await Lib.consoleRoute(A.page, 'console-integrations', '[data-action=iv-check]');
+    await A.page.click('[data-action=iv-check]');
+    const ok = await A.page
+      .waitForFunction(() => /^Connected/.test(window.CVPortal.integrations.ensure(window.CVPortal.state.ws).server.status || ''), null, { timeout: 20000 })
+      .then(() => true)
+      .catch(() => false);
+    check('"Check connection" on the Integrations page confirms the server', ok, await A.page.evaluate(() => window.CVPortal.integrations.ensure(window.CVPortal.state.ws).server.status));
   } catch (e) {
     await C.close();
     throw e;

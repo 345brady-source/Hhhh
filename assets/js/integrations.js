@@ -1084,12 +1084,22 @@
   const BEGINNING = '1970-01-01T00:00:00.000Z';
   const ms = (s) => Date.parse(String(s || '')) || 0;
   /**
+   * The server the sponsor confirmed with "Check connection" on the Integrations page (it answered, at this address): the
+   * only one the console asks anything of by itself. An address that is only saved (never checked, or not reachable when
+   * checked), and every address in the owner's preview, is never asked. Settings checked before plan 08-08 kept only the
+   * status line, which then stands for the address saved.
+   */
+  const confirmed = (ws) => {
+    const s = ensure(ws).server;
+    return !!serverUrl(ws) && (s.confirmed === undefined ? /^Connected/.test(String(s.status || '')) : s.confirmed === serverUrl(ws));
+  };
+  /**
    * At console load and at most every ten minutes after (one run at a time): the changed checks. Only in the sponsor's
    * console with a server connected; an invitation's device never asks. Nothing it does shows an error: a pull that fails
    * asks again from the same time next time.
    */
   function ongoing(ws) {
-    if (!ws || ws.invite || !active(ws) || !serverUrl(ws)) return null;
+    if (!ws || ws.invite || !active(ws) || !serverUrl(ws) || !confirmed(ws)) return null;
     if (pulling.busy) return pulling.busy;
     const key = `${ws.tenant.id}|${serverUrl(ws)}`;
     if (pulling.key === key && Date.now() - pulling.at < PULL_MS) return null;
@@ -1404,8 +1414,10 @@
       s.connectors = list;
       const ready = list.filter((x) => x.configured).length;
       s.status = `Connected: ${list.length} connector${list.length === 1 ? '' : 's'}, ${ready} ready${note}`;
+      s.confirmed = serverUrl(ws); // the console's own pulls and free re-screens use this server (plan 08-08)
     } catch (e) {
       s.status = `Not reachable (${e.message})`;
+      s.confirmed = '';
     }
     s.checkedAt = nowIso();
     st.checking = false;
