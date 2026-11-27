@@ -16,7 +16,9 @@
 # 5. Phase 12's checks: every .js file in this folder: "// gate: none" is skipped; any other carries "// gate: node" or
 #    "// gate: browser" and, on a later line, // last "<the exact last line of a full run>". It is run, its output kept
 #    in GATE_OUT/gate/<name>.txt, and its last line must equal the quoted line. A file with no marker fails the gate, and
-#    so does a run in which no phase 12 check ran.
+#    so does a run in which no phase 12 check ran. A check whose label (the text before ":" of its last line) the
+#    reference gate passed in this run ("GATE ok   <label> (n)", or its kept form) is not run again: it prints
+#    "GATE ok   <label> (run in the reference gate)".
 #    Steps 3 to 5 run each check with P11_ROOT, P10_BASE and P12_BASE set to GATE_OUT/gate/base-tree (the base tree,
 #    extracted from the base commit), P10_ROOT unset, P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots;
 #    browser checks go through heavy.sh.
@@ -26,7 +28,7 @@
 # The last line is GATE_EXIT=0 or GATE_EXIT=1 (or the phase-12-only form). Once it is known, the base tree, the
 # screenshots, the checks' page captures and PDFs (checks-out, the owner's folder), the reference copy and a
 # server/node_modules link the gate made are removed.
-# --self-test proves the gate can fail, on stand-ins and with none of the long steps: "GATE12 SELF-TEST: PASS (8)".
+# --self-test proves the gate can fail, on stand-ins and with none of the long steps: "GATE12 SELF-TEST: PASS (9)".
 #
 # The GATE12_* variables below are for the self-test's stand-ins only. They are read only together with
 # GATE12_STANDIN=1, and a stand-in run that passes ends "GATE_EXIT=0 (stand-in)", never the passing line of a real gate.
@@ -56,6 +58,7 @@ if [ "$GATE12_STANDIN" = 1 ]; then
   COUNTS="$GATE12_COUNTS"
 fi
 ONLY=0
+REF_RAN=0
 FAIL=0
 LINKED=0
 G=
@@ -141,6 +144,18 @@ self_test() {
     note "a phase-12-only run" 0 only
     sed 's/^/    /' "$T/onlyfail.txt"
   fi
+  # dedupe: a reference that passed 'STAND IN (1)' in this run; the phase 12 stand-in labelled STAND IN fails if it is run,
+  # so it must be reported 'run in the reference gate' and never run again.
+  sed 's/^echo "GATE FAIL server tests 197"$/echo "GATE ok   STAND IN (1)"; echo "GATE FAIL server tests 197"/' "$T/ref-good.sh" > "$T/ref-dedupe.sh"
+  mkdir -p "$T/dedupe"
+  printf '%s\n' '// gate: node' '// last "STAND IN: PASS (cases run: 1)"' 'console.log("FAIL run again although the reference gate passed it");' 'console.log("STAND IN: FAIL (cases run: 1)");' 'process.exit(1);' > "$T/dedupe/stand-in.js"
+  run dedupe "$T/ref-dedupe.sh" "$T/dedupe" "197 197 0"
+  N=$((N + 1))
+  if grep -q '^GATE ok   STAND IN (run in the reference gate)$' "$T/dedupe.txt" && ! grep -q '^GATE FAIL' "$T/dedupe.txt" && [ "$(tail -n 1 "$T/dedupe.txt")" = 'GATE_EXIT=0 (stand-in)' ] && [ ! -s "$T/out-dedupe/gate/stand-in.txt" ]; then
+    note "a phase 12 check the reference gate passed in this run is reported 'run in the reference gate' and not run again" 1 dedupe
+  else
+    note "a phase 12 check the reference gate passed in this run" 0 dedupe
+  fi
   rm -rf "$T"
   if [ -z "$BADS" ]; then echo "GATE12 SELF-TEST: PASS ($N)"; exit 0; fi
   echo "GATE12 SELF-TEST: FAIL -$BADS"
@@ -158,6 +173,7 @@ reference() {
   fi
   CDL="cd $(quote "$ROOT") || exit 9" OL="O=$(quote "$G")" awk '/^cd .+ \|\| exit [0-9]+$/ { print ENVIRON["CDL"]; next } /^O=/ { print ENVIRON["OL"]; next } { print }' "$REF" > "$G/reference-run.sh"
   bash "$G/reference-run.sh" > "$G/reference.txt" 2>&1
+  REF_RAN=1
   # Its GATE lines and its counts, without its own server test count (step 2) and without its GATE_EXIT line.
   grep -E '^(GATE (ok|FAIL)|NEW FAIL|signing: |record: |# (tests|pass|fail) )' "$G/reference.txt" | grep -vE '^GATE (ok|FAIL) +server tests [0-9]+( \(kept from [^)]*\))?$'
   if grep -E '^GATE FAIL' "$G/reference.txt" | grep -qvE '^GATE FAIL +server tests [0-9]+( \(kept from [^)]*\))?$'; then FAIL=1; fi
@@ -207,6 +223,12 @@ base_tree() {
 }
 
 # ---------- 3, 4 and 5. the phase 10, 11 and 12 checks ----------
+# The reference gate's output in this run holds "GATE ok   <label> (n)", or its kept form "... (n) (kept from <time>)".
+ref_passed() {
+  local re
+  re=$(printf '%s' "$1" | sed 's/[][\.*^$(){}?+|/]/\\&/g')
+  grep -qE "^GATE ok +$re \([0-9]+\)( \(kept from [^)]*\))?$" "$G/reference.txt" 2>/dev/null
+}
 run_checks() { # folder, prefix of the output files; sets RAN
   GN=$(npm root -g 2>/dev/null)
   BASEC=$(cat "$GATE_OUT/base-commit.txt")
@@ -222,6 +244,11 @@ run_checks() { # folder, prefix of the output files; sets RAN
       continue
     fi
     RAN=$((RAN + 1))
+    # A phase 12 check whose label the reference gate passed in this run is reported, not run again.
+    if [ -z "$2" ] && [ "$REF_RAN" = 1 ] && ref_passed "${LAST%%:*}"; then
+      ok "${LAST%%:*} (run in the reference gate)"
+      continue
+    fi
     OUTF="$G/$2$NAME.txt"
     if [ "$KIND" = browser ]; then
       gate_step "check-$2$NAME" "$OUTF" --base "$BASEC" -- env -u P10_ROOT NODE_PATH="$GN" P11_ROOT="$G/base-tree" P10_BASE="$G/base-tree" P12_BASE="$G/base-tree" P6_OUT="$G/checks-out" P6_SHOTS="$G/shots" bash "$S/exec-011/heavy.sh" node "$f"

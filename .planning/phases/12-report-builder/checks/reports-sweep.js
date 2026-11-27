@@ -12,7 +12,9 @@
 //            the PDF panel; Generate while it runs; the archive with a run open; Send on paper; the withdraw form) and of
 //            an investor's Documents with a report open pass leak.
 //   sources  (Node) every string literal (template text included) of assets/js/reports*.js and every rule of
-//            assets/css/reports.css pass leak. Comments and identifiers are shown to no one and are not counted.
+//            assets/css/reports.css pass leak. Comments and identifiers are shown to no one and are not counted; a string
+//            that is exactly the name of a report script in assets/js (the parts loader's list: 'reports-pdf.js' holds
+//            'pdf.js') is a file the page loads, shown to no one: it is printed and set aside.
 //   managed  (browser, 1280x800) index.html as staff (Reports) and as an investor (Documents) asks for no
 //            assets/js/reports* file, shows no 'Investor reports' and no error.
 //   node checks/reports-sweep.js [--only part,part] [--plant]
@@ -341,7 +343,7 @@ const parts = {
       await fr.fill('#rb-name', `Sweep ${ty}`);
       await T.press(fr, '[data-action=rb-create]');
       await fr.waitForSelector('.rb-edit', { timeout: 10000 });
-      await fr.selectOption('#rb-fund', 'kb-fund-ii');
+      if (await fr.locator('#rb-fund').count()) await fr.selectOption('#rb-fund', 'kb-fund-ii');
       await fr.waitForTimeout(200);
       await take(`the editor, ${ty} (${start})`);
       const keys = await fr.evaluate(() => Array.from(document.querySelectorAll('[data-action=rb-sec]')).map((b) => b.getAttribute('data-key')));
@@ -420,6 +422,8 @@ const parts = {
   async sources({ check }) {
     const dir = path.join(L12.ROOT, 'assets/js');
     const files = fs.readdirSync(dir).filter((f) => /^reports.*\.js$/.test(f)).sort();
+    const scripts = new Set(fs.readdirSync(dir).filter((f) => /\.js$/.test(f)));
+    const names = [];
     const hits = [];
     let n = 0;
     const broke = [];
@@ -432,13 +436,20 @@ const parts = {
         return;
       }
       n += lits.length;
-      lits.forEach((x) => hits.push(...scan(`assets/js/${f}:${x.line}`, unescape(x.s))));
+      lits.forEach((x) => {
+        const s = unescape(x.s);
+        // a script's own file name, as the parts loader asks for it: a file the page loads, shown to no one
+        if (scripts.has(s)) return names.push(`assets/js/${f}:${x.line} '${s}'`);
+        hits.push(...scan(`assets/js/${f}:${x.line}`, s));
+      });
     });
     check(`every report script reads to its end as strings, comments and code (${files.length}: ${files.join(', ')})`, files.length >= 8 && broke.length === 0, broke);
     const css = fs.readFileSync(path.join(L12.ROOT, 'assets/css/reports.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     const rules = css.split('}').map((r) => r.trim()).filter(Boolean);
     rules.forEach((r, k) => hits.push(...scan(`assets/css/reports.css rule ${k + 1}`, r)));
     console.log(`sources: ${n} string literals in ${files.length} scripts, ${rules.length} CSS rules`);
+    console.log(`set aside, a script file name the parts loader asks for (a file the page loads; shown to no one): ${names.length ? names.join(', ') : 'none'}`);
+    check('only script file names that exist in assets/js are set aside, the report modules themselves', names.every((x) => /'reports[a-z-]*\.js'$/.test(x)), names);
     check(`the scripts hold string literals and the style sheet rules (${n}, ${rules.length})`, n > 500 && rules.length > 20, { n, rules: rules.length });
     report(check, 'no vendor, library or model name, never the forbidden word, audited or ILPA compliant, no gross performance in any shipped string or CSS rule', hits);
   },
