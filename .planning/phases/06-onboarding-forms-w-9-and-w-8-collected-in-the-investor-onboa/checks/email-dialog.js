@@ -92,7 +92,40 @@ async function inViewNow(f) {
   }, TARGETS);
 }
 
-/** Scroll the dialog as a person does, from its top to its end, and note every target seen whole along the way. */
+// The dialog body has stopped moving: its scrollTop the same over 5 animation frames in a row. A look is taken only then,
+// never at a guessed time: under load the scroll a stroke started can still be running 250 ms after the finger lifted.
+// Bounded: { rested: false } when it is still moving after REST_MS.
+const REST_MS = 5000;
+async function atRest(f) {
+  return f.evaluate(
+    (ms) =>
+      new Promise((done) => {
+        const b = document.querySelector('#dlg .dlg-body');
+        const t0 = performance.now();
+        let last = b.scrollTop;
+        let same = 0;
+        const tick = () => {
+          const st = b.scrollTop;
+          same = st === last ? same + 1 : 0;
+          last = st;
+          const waited = Math.round(performance.now() - t0);
+          if (same >= 5) return done({ rested: true, waited, scrollTop: Math.round(st) });
+          if (waited > ms) return done({ rested: false, waited, scrollTop: Math.round(st) });
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+    REST_MS
+  );
+}
+
+/**
+ * Scroll the dialog as a person does, from its top to its end, and note every target seen whole along the way. Each
+ * finger stroke drags the dialog 120px and holds still a moment before lifting, as a reader does, so the browser adds no
+ * momentum of its own: how far a stroke carries the dialog does not depend on how fast the machine delivers the touch
+ * events (under load a flick-like stroke carried it 330-518px between two looks and skipped parts that were whole in
+ * between). After every stroke or wheel notch the dialog must come to rest before it is looked at.
+ */
 async function readThrough(A, view) {
   const { page, f, top } = A;
   const n = await f.evaluate((T) => eval(T).length, TARGETS);
@@ -106,21 +139,29 @@ async function readThrough(A, view) {
   const y = at.y + Math.round(top);
   let cdp = null;
   if (view.phone) cdp = await page.context().newCDPSession(page);
-  mark(await inViewNow(f));
-  let last = -1;
+  const looks = [];
+  const unrested = [];
+  const look = async () => {
+    const r = await atRest(f);
+    if (!r.rested) unrested.push(r);
+    mark(await inViewNow(f));
+    looks.push(r.scrollTop);
+    return r.scrollTop;
+  };
+  let last = await look();
   for (let i = 0; i < 80; i++) {
     if (cdp) {
-      // A finger dragged up 120px (raw touch events: this headless browser ignores synthesized scroll gestures).
+      // A finger dragged up 120px (raw touch events: this headless browser ignores synthesized scroll gestures), held
+      // still 200 ms, then lifted: the browser sees a finger that stopped, so it starts no momentum scroll.
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
       for (let k = 1; k <= 8; k++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - k * 15 }] });
+      await page.waitForTimeout(200);
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     } else {
       await page.mouse.move(x, y);
       await page.mouse.wheel(0, 120);
     }
-    await page.waitForTimeout(cdp ? 250 : 60);
-    mark(await inViewNow(f));
-    const st = await f.evaluate(() => document.querySelector('#dlg .dlg-body').scrollTop);
+    const st = await look();
     if (st === last) break;
     last = st;
   }
@@ -129,8 +170,27 @@ async function readThrough(A, view) {
     return { scrollTop: Math.round(b.scrollTop), max: b.scrollHeight - b.clientHeight };
   });
   if (cdp) await cdp.detach().catch(() => {});
-  const names = await f.evaluate((T) => eval(T).map((e) => (e ? (e.className || e.tagName.toLowerCase()) + ': ' + e.textContent.replace(/\s+/g, ' ').trim().slice(0, 40) : '(missing)')), TARGETS);
-  return { seen, names, end, missed: names.filter((_, i) => !seen[i]) };
+  // For a part never seen whole: where it sits in the scrolled content and the scrollTop range in which it is whole, so a
+  // failure tells a part taller than the window (or cut by the card) from looks that passed it by.
+  const where = await f.evaluate((T) => {
+    const b = document.querySelector('#dlg .dlg-body');
+    const br = b.getBoundingClientRect();
+    return {
+      window: b.clientHeight,
+      parts: eval(T).map((e) => {
+        if (!e) return { name: '(missing)' };
+        const r = e.getBoundingClientRect();
+        const at = Math.round(r.top - br.top + b.scrollTop);
+        const h = Math.round(r.height);
+        return { name: (e.className || e.tagName.toLowerCase()) + ': ' + e.textContent.replace(/\s+/g, ' ').trim().slice(0, 40), at, h, wholeFrom: at + h - b.clientHeight, wholeTo: at };
+      })
+    };
+  }, TARGETS);
+  const names = where.parts.map((p) => p.name);
+  const why = where.parts
+    .filter((_, i) => !seen[i])
+    .map((p) => (p.h === undefined ? p.name : `${p.name} (${p.h}px tall in a ${where.window}px window; whole at scrollTop ${p.wholeFrom}..${p.wholeTo})`));
+  return { seen, names, end, looks, unrested, why, missed: names.filter((_, i) => !seen[i]) };
 }
 
 const VIEWS = {
@@ -146,8 +206,9 @@ async function dialogReadable(check, A, view, tag, want) {
   check(`${tag}: the email card shows all of its content (card ${g.card.clientH}px tall for ${g.card.scrollH}px of email)`, g.card.scrollH <= g.card.clientH + 1, g.card);
   await A.page.screenshot({ path: path.join(SHOTS, `${tag}-open.png`) });
   const r = await readThrough(A, view);
+  check(`${tag}: the dialog came to rest after every ${view.phone ? 'finger stroke' : 'wheel notch'} before it was looked at (within ${REST_MS / 1000} s each)`, r.unrested.length === 0, { stillMoving: r.unrested, looks: r.looks });
   check(`${tag}: scrolling the dialog (${view.phone ? 'finger' : 'mouse wheel'}) reaches its end (${r.end.scrollTop} of ${r.end.max}px)`, r.end.scrollTop >= r.end.max - 1, r.end);
-  check(`${tag}: every paragraph of the email, its footer and the buttons were seen whole (${r.seen.filter(Boolean).length} of ${r.seen.length})`, r.missed.length === 0, r.missed);
+  check(`${tag}: every paragraph of the email, its footer and the buttons were seen whole (${r.seen.filter(Boolean).length} of ${r.seen.length})`, r.missed.length === 0, { missed: r.why, looks: r.looks });
   await A.page.screenshot({ path: path.join(SHOTS, `${tag}-end.png`) });
   return g;
 }
