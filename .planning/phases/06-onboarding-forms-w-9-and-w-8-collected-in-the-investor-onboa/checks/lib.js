@@ -548,11 +548,38 @@ const screenText = (page) => page.evaluate(() => document.body.innerText);
 const VENDORS = /pdf-lib|pdf\.js|Carrow|\bVale\b|DocuSign|SignNow|Adobe|HelloSign|Dropbox|PandaDoc|Powered by/i; // phase 5 record-check.js
 const VENDOR_RE = /onnx|onnxruntime|microsoft|pytorch|torch|scikit|sklearn|anthropic|claude|\bopus\b|\bsonnet\b|\bhaiku\b/i; // the owner gate
 const WORD_RE = /\bbasic(s|ally)?\b/i;
-/** { ok, hits }: each line of text that names a vendor or uses the forbidden word. */
+/*
+ * The random token parts of links, taken out before the vendor regexes run, so a vendor word a random token holds by
+ * chance ("...iRoNnXN...") is not reported as a leak. Every other character stays, the link's host and path words
+ * included. Taken out, each replaced with "~": the token or path segment after an invite or sign-in link prefix
+ * (#invite-, #room-, #taxdoc-, /invite/, /signin/); the values of token=, t=, sig=, signature= (also after "&amp;");
+ * after the host, any run of 16+ base64url characters mixing capitals, small letters and digits, as a random token
+ * does. The same rules as stripLinkTokens in server/test/helpers.mjs; keep the two the same.
+ */
+const LINK_RE = /\bhttps?:\/\/[^\s"'<>()]+/gi;
+const PREFIX_TOKEN_RE = /([#/](?:invite|sign-?in|room|taxdoc)[-/=])[A-Za-z0-9_-]+/gi;
+const QUERY_TOKEN_RE = /([?&;#](?:token|t|sig|signature)=)[^&;#\s"'<>]*/gi;
+const RANDOM_RUN_RE = /[A-Za-z0-9_-]{16,}/g;
+function stripLinkTokens(text) {
+  return String(text === undefined || text === null ? '' : text).replace(LINK_RE, (url) => {
+    const start = url.indexOf('//') + 2;
+    const at = url.slice(start).search(/[/?#]/);
+    if (at < 0) return url; // only a host: all of it is scanned
+    const cut = start + at;
+    const rest = url
+      .slice(cut)
+      .replace(PREFIX_TOKEN_RE, '$1~')
+      .replace(QUERY_TOKEN_RE, '$1~')
+      .replace(RANDOM_RUN_RE, (run) => (/[A-Z]/.test(run) && /[a-z]/.test(run) && /\d/.test(run) ? '~' : run));
+    return url.slice(0, cut) + rest;
+  });
+}
+/** { ok, hits }: each line of text that names a vendor or uses the forbidden word (vendor names looked for with the
+ *  links' random tokens taken out; the forbidden word over the text as it is). */
 function leakCheck(text) {
   const hits = String(text || '')
     .split('\n')
-    .filter((l) => VENDORS.test(l) || VENDOR_RE.test(l) || WORD_RE.test(l))
+    .filter((l) => VENDORS.test(stripLinkTokens(l)) || VENDOR_RE.test(stripLinkTokens(l)) || WORD_RE.test(l))
     .map((l) => l.trim().slice(0, 160));
   return { ok: hits.length === 0, hits };
 }
@@ -727,4 +754,4 @@ async function runParts(parts, opts) {
   process.exit(failed.length ? 1 : 0);
 }
 
-module.exports = { finishTaxForm, OWNER_SHOTS, describeShots, ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE, freePort, serverPortal, consoleRoute, inviteFromConsole, importFromConsole, finishAgreement };
+module.exports = { finishTaxForm, OWNER_SHOTS, describeShots, ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, stripLinkTokens, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE, freePort, serverPortal, consoleRoute, inviteFromConsole, importFromConsole, finishAgreement };
