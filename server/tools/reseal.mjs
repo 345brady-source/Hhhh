@@ -38,10 +38,14 @@ function candidates(kind, rid, rec, field, leaf) {
   return [...new Set(out)];
 }
 
-/** The email lookup value 15-01 keeps on a people record: HMAC-SHA-256 of the lower-cased NFKC email. */
+/**
+ * The email lookup value 15-01 keeps on a people record, exactly as server/lib/auth.mjs computes it (mac('email',
+ * emailKey(email))): HMAC-SHA-256, under the key derived from DATA_KEY, of "email:" + the NFKC, trimmed, lower-cased
+ * email. Change both together.
+ */
 export function emailIndexFor(keyBytes, email) {
   const k = Buffer.from(hkdfSync('sha256', keyBytes, 'cv-email-index', 'v1', 32));
-  return createHmac('sha256', k).update(String(email).trim().normalize('NFKC').toLowerCase()).digest('hex');
+  return createHmac('sha256', k).update(`email:${String(email).normalize('NFKC').trim().toLowerCase()}`).digest('hex');
 }
 
 function keyBytes(raw) {
