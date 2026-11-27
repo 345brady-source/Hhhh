@@ -2,7 +2,7 @@
 phase: 13-email-overhaul
 plan: 08
 subsystem: email (e-sign notices, honest toasts, investor email choices, unsubscribe page)
-status: partial
+status: complete
 tags: [email, esign, unsubscribe, self-serve, honesty]
 requires: [13-04, 13-11, 13-12]
 provides:
@@ -21,22 +21,81 @@ key-files:
     - assets/js/app.js
     - server/lib/messages.mjs
     - server/test/unsubscribe.test.mjs
+    - server/help/guide.md (one skip line)
 decisions:
   - "I2 rule: a signer with no investor record (the firm's countersigner) or a co-investor keeps today's simulated path, with a simulated sent-log entry, in both modes"
   - "A quiet send (signing inside onboarding) sends no server email, as it shows no toast today"
   - "The unsubscribe page reads the firm's name from the server: the name travels signed inside the token; GET with Accept JSON returns it"
-  - "B2 (investor-credential route) not built: it needs index.mjs to mount it (the stated stop condition) and the browser has no investor server session"
+  - "B2 moved to 15-17 (orchestrator, Decision during 13-08); with a server the Account page shows the email-link line instead of the offering switch"
+  - "An envelope never changes after a moment returns: the history says the email was handed to the integration server; the server's answer is in the sent log"
 metrics:
   completed: 2026-11-27
 actuals:
-  tokens: 18817
-  tasks: 2
-  commits: 7
+  tokens: 27447
+  tasks: 3
+  commits: 15
 plan_head_before: 6d2481af8cf1d9f06d73ea7a14297526af328955
-plan_head_after: see the final commit of this summary
+plan_head_after: the commit that adds this section (one after d32ea99)
 ---
 
 # Phase 13 Plan 08: e-sign notices and portal emails Summary
+
+## Resumed and finished (2026-11-27, after the pause): GATE_EXIT=0
+
+**Failures first.**
+- **CO-INVESTOR SERVER cosign-forged failed twice when run alone (deterministic, not noise), and this plan caused it.** Both alone runs printed the same line as the gate:
+  `FAIL cosign-forged after the firm voided the agreement, the submission changes nothing and the audit line says it is no longer out for signature :: {"said":[... "already signed it; nothing was changed", ... "no longer out for signature (voided); nothing was changed"],"status":"voided","check":{"finished":true,"toast":"Checked. Nothing new."}}`
+  `CO-INVESTOR SERVER: FAIL (parts run: 1) - cosign-forged` (coserver-alone-1.txt and coserver-alone-2.txt)
+  - **Cause:** with a server, esign.js wrote the server's answer onto the envelope's history after the call returned ("Email waiting to send"). So a voided envelope changed after `void()` had returned. The check compares the envelope as voided with the envelope after the submission arrives; the late event made the two differ.
+  - **Fix (esign.js, the check untouched):** the history line is written in the same turn as the moment, "Email handed to the integration server". The server's answer for each message is kept in the sent log only (ws.mailLog, through dispatch). An envelope no longer changes once send, remind, void or Finish has returned.
+  - **RED** (red-4.txt, new checks in PORTAL MAIL esign-server):
+    `FAIL esign-server Send: the envelope does not change once the server answers (its history is what send() left) :: {"atSend":["Sent"],"now":["Sent","Email waiting to send","Email waiting to send"]}`
+    `FAIL esign-server Void: the envelope does not change once the server answers (CO-INVESTOR SERVER cosign-forged compares it) :: {"atVoid":["Sent","Email waiting to send","Voided"],"now":["Sent","Email waiting to send","Voided","Email waiting to send"]}`
+  - **GREEN:** `PORTAL MAIL: PASS (parts run: 1)` (esign-server) and `CO-INVESTOR SERVER: PASS (parts run: 1)` (cosign-forged alone), then `GATE ok   CO-INVESTOR SERVER (5)` in the gate.
+  - **Wording change for the owner:** the e-sign history line with a server is "Email handed to the integration server". It replaces "Email waiting to send" and "Email not sent". The server's own answer (sent, outbox, held, failed, suppressed, unsubscribed) is in the sent log.
+- **The guide prose is still untrue.** server/help/guide.md line 471 (console-team) still says "They get an email to set a password and turn on two-step sign-in." It is 13-10's prose; only the one skip line was allowed.
+- **WebKit was not run.** The phone parts ran in Chromium with the iPhone profile. The owner's iPhone check (13-10) is still owed.
+
+**Gate** (GATE13_PHASES="08 10", GATE_OUT=scratchpad exec-13-08, base 6d2481a): 63 "GATE ok", 0 "GATE FAIL". The run that the pause stopped was replaced by a full rerun into the same folder, because the tree had changed. It includes:
+```
+GATE ok   SIGNING DOCUMENTS (8)
+GATE ok   CO-INVESTOR SERVER (5)
+GATE ok   server tests 606 = base 605 + 1 declared
+GATE ok   TAXLINK FLOW
+GATE ok   PORTAL MAIL
+```
+Last lines, verbatim:
+```
+GATE ok   EMAIL SENDING
+GATE ok   EMAILS PARITY
+GATE ok   INVITE MAIL
+GATE ok   PORTAL MAIL
+GATE ok   TAX NOTICE
+GATE_EXIT=0
+```
+In the gate, PORTAL MAIL ended `PORTAL MAIL: PASS (parts run: 9)`.
+
+**Server tests:** 606 of 606 on this tree (base 605 + 1 declared, unsubscribe.test.mjs 'firm name').
+
+**The orchestrator's three decisions ("Decision during 13-08"): all done, proven by the PORTAL MAIL part server-words and the Team hint check in team-honest.**
+1. **Server-mode line in place of the switch.** With a server, the Account page shows no "Invitations to new offerings" switch. It shows "To stop invitations to new offerings, use the link at the bottom of any such email." The section's only lines are that line and the always-emailed line. With no server, the three switches stay as built. B2 moved to 15-17; index.mjs and roles.mjs were not touched.
+2. **Guide skip line.** One line under `## skip` (52f7681). `build.mjs` regenerated server/lib/help-guide.mjs with no byte change, `--verify` says it is in sync, and the help tests pass 9/9.
+3. **Dialog words (self-serve; managed-same byte-identical).**
+   - Void reason label with a server: "Reason (kept with the envelope, not emailed)".
+   - Review dialog with a server: no "Email subject" field, and "Message (shown on the signing page)".
+   - Team hint without a server: "They get an email to set a password and turn on two-step sign-in (simulated in this demo)."
+   - Team hint with a server: "The invitation is saved here; it is emailed once sign-in accounts are connected."
+   - RED for these: red-3.txt (quoted in the earlier Paused notes). GREEN: portal-2.txt, `PORTAL MAIL: PASS (parts run: 9)`.
+
+**Commits since the pause:** 9554b41 (save: the RED check), 1e8b146 (RED note), e746d15 (save: the esign.js fix), d32ea99 (fix note). Then this summary.
+
+**Open (for others):**
+- 15-14: pass the firm's name as the fifth argument to unsub.urls in invitations.mjs (the coordinator is passing this on).
+- 15-17: the offering-news two-way sync (B2).
+- summary() says "investors" for e-sign signers (emails.js belongs to 15-14).
+- The owner's checks. Nothing here is ready until he has checked it.
+
+The sections below are the record of the first handback and the pause; where they differ from this section, this section is current. In particular, the "Email waiting to send" and "Email not sent" history lines and "PORTAL MAIL 8 parts" are superseded.
 
 ## Paused (owner's indefinite pause, 2026-11-27)
 
