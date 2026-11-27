@@ -114,7 +114,7 @@ To invite an investor:
 4. Optional: "More options (optional)" sets the account name, offering, commitment or a personal note. With no offering, the investor only sets up their account.
 5. Choose "Send invitation".
 
-The investor gets one link for every step. To invite several, choose "Import a list", upload a CSV or Excel file or paste the list, choose "Check list", then send. "Add manually" adds an investor onboarded offline on paper documents as active, with no onboarding link sent.
+The investor gets one link for every step. To invite several, choose "Import a list", upload a CSV or Excel file or paste the list, choose "Check list", then send. "Add manually" adds an investor onboarded offline on paper as active, sending no onboarding link.
 
 "Invitations" tracks each invitation (In progress, Completed, All); ticking "Accept subscriptions automatically once the agreement is countersigned and the investor is verified" turns that on. An invitation whose agreement waits for the firm's signature has "Countersign". In the table, "View portal" shows the portal as that investor sees it; an investor not yet activated has "Invitation" and "Send reminder" instead. With no integration server connected, the firm sends each invitation, prepared with its link, from its own email app.
 
@@ -144,7 +144,7 @@ To send a document for signature:
 5. Choose the "Signing order": "In order" or "Any order".
 6. Choose "Continue to place fields": the envelope's page opens to place the fields and send it.
 
-In Envelopes, "Open" opens an envelope, "Remind" reminds signers who have not signed, "Void" cancels one out for signature, and a completed one has "Signed PDF" and "Certificate". To countersign, open the envelope and choose "Sign as sponsor". "Save as template" on an envelope makes a template.
+In Envelopes, "Open" opens an envelope, "Remind" reminds signers who have not signed, "Void" cancels one out for signature, and a completed one has "Signed PDF" and "Certificate". Open the envelope to countersign ("Sign as sponsor") or make a template ("Save as template").
 
 ## console-envelope
 audience: sponsor
@@ -261,7 +261,7 @@ Under "Publish documents":
 5. Optional: tick "Notify recipients that new documents are in their portal".
 6. Choose "Publish".
 
-"Published" lists every document with its recipients; "Remove" takes one out of the investors' portals. Investors find published documents on their Documents page.
+"Published" lists every document with its recipients; "Remove" takes one out of the investors' portals. Investors see them on their Documents page.
 
 ## console-taxdocs
 audience: sponsor
@@ -341,7 +341,7 @@ anchor: Audit readiness
 Audit-ready records for each fund: financial statements, capital accounts, investor register, capital activity, schedule of investments, fees, performance and a change log.
 
 1. Choose the "Fund" and "Period".
-2. Read "Audit readiness": each check says Pass or lists its exceptions, for example an investor with no tax form on file.
+2. Read "Audit readiness": each check says Pass or lists its exceptions, such as an investor with no tax form on file.
 3. Under "Audit package", "Preview" shows a schedule on the page; each file can be downloaded on its own.
 4. Choose "Download audit package" for one .zip with every schedule as a CSV, a README and a SHA-256 manifest. Every download is recorded in the change log.
 
@@ -370,12 +370,12 @@ menu: Report, then AML program
 anchor: AML program
 anchor: Sanctions records are kept for ten years.
 
-The firm's AML program on record, to show a bank, fund administrator, auditor or investor who asks for it. It has eight sections:
+The firm's AML program on record, to show a bank, fund administrator, auditor or investor who asks. It has eight sections:
 - "Policy": "Statement", "Scope", "Adopted on" and "Approved by".
 - "Responsible person": "Name", "Title" and "Designated on".
 - "Risk assessment": "Investor types, countries and offerings".
 - "Procedures in force": the connections that run each check and the approval rules, filled in from the Integrations page and changed there.
-- "Screening log": every screening and every review of a possible match from the change log, newest first, with date, investor, what happened and who did it.
+- "Screening log": every screening and possible-match review from the change log, newest first, with date, investor, what happened and who did it.
 - "Escalation": "Who is told of a possible match and what is reported".
 - "Training and independent review": "Training" entries and "Independent reviews" entries.
 - "Retention": "Sanctions records are kept for ten years."
@@ -391,10 +391,10 @@ anchor: First Form D notice
 anchor: Silence
 anchor: I filed this myself
 
-Each offering under Rule 506(b) or Rule 506(c), with what is due for its Form D and state notices, each with its date and reason. The number beside Filings in the menu counts what is due or overdue and not silenced. An offering under another exemption, or with none set (it is set in the offering's settings), is not listed. Nothing on the page is required, and the page itself charges and files nothing.
+Each offering under Rule 506(b) or Rule 506(c), with what is due for its Form D and state notices, each with its date and reason. The number beside Filings in the menu counts what is due or overdue and not silenced. An offering under another exemption or none (set in the offering's settings) is not listed. Nothing on the page is required, and the page itself charges and files nothing.
 
 - "First Form D notice" shows once the offering has a first sale, due 15 days after it. "Form D annual amendment" shows once a notice is on record, due one year after the latest one.
-- Each state with a sale shows a state notice with that state's first sale date. Several states show as one row, "State notices", that opens to the states.
+- Each state with a sale shows a state notice with that state's first sale date. Several show as one row, "State notices", that opens to them.
 - "Silence" turns a reminder off: it stays, greyed, with its date, but is no longer counted; "Turn back on" restores it. "Silence all" and "Turn all back on" do the same for all the offering's reminders.
 - "I filed this myself" records a Form D the firm filed, with its date and, if known, the accession number. "Filed" beside a state records its notice; "Record all as filed" records all the offering's state notices with one date.
 - "Options" under an offering: "First sale" confirms another first sale date, "Offering ended" records the date it ended, "Recorded as filed" lists what the firm recorded, each with "Remove", and "Not filing for this offering" turns its reminders off until "Turn reminders back on".
@@ -542,7 +542,7 @@ anchor: Payment history
 
 Every payment received. The line under the heading says how distributions are paid, for example by ACH to the bank account on file (its last four digits). Totals: total received, received this year and scheduled. "Received by year" is a chart. Under "Payment history", filter with "Year" and "Investment"; each row has the payment date, investment, type, amount and status.
 
-To change the bank account distributions are paid to, open Account and choose "Update bank account".
+The bank account is changed on Account with "Update bank account".
 
 A payment with tax withheld also shows "Tax withheld" and "Amount paid", what reached you after it. Total received counts payments before tax withheld, with all the tax withheld on the line under it.
 
@@ -708,7 +708,7 @@ kind: step
 title: Accreditation
 anchor: Accredited investor verification
 
-This step is named "Accredited investor verification" when the offering needs a verification. Choose "Verify my accreditation" and follow the check; "Accreditation check" shows the result. It can be shown by income, net worth, a letter from a CPA, attorney or adviser, or an existing verification. Tick the box confirming the information is accurate and choose "Continue". Whether a person qualifies is for their own adviser or the firm to say.
+This step is named "Accredited investor verification" when the offering needs a verification. Choose "Verify my accreditation" and follow the check; "Accreditation check" shows the result. It can be shown by income, net worth, a letter from a CPA, attorney or adviser, or an existing verification. Tick the box confirming the information is accurate and choose "Continue".
 
 ## invite/status
 audience: investor
@@ -717,7 +717,7 @@ title: Investor status
 anchor: Investor status
 anchor: Benefit plans
 
-The step asks whether the investor is an accredited investor, "Yes" or "No", and may ask more depending on the answer. Under "Benefit plans" it asks whether the investor is a benefit plan investor, with three kinds of "Yes" and "No". Answer and choose "Continue". Whether a person or an account qualifies as any of these is for their own adviser or the firm to say.
+The step asks whether the investor is an accredited investor, "Yes" or "No", and may ask more depending on the answer. Under "Benefit plans" it asks whether the investor is a benefit plan investor, with three kinds of "Yes" and "No". Answer and choose "Continue".
 
 ## invite/tax
 audience: investor
@@ -732,7 +732,7 @@ The step names the tax form, filled in from the earlier answers.
 
 When the taxpayer number is not yet known, the step asks for it ("Social Security number" or "Employer identification number"): nine digits, with or without dashes or spaces. It may be left empty, but fewer than nine digits shows "Enter all nine digits, or leave this empty." On the form for foreign investors, a U.S. taxpayer number is optional and also nine digits, and "Foreign tax identifying number" is the number as the country of residence issued it.
 
-"Change your answers" goes back to correct what the form was filled from. Beside "Already have a completed form?", "Upload it instead" takes a form already completed. Beside "Not a U.S. person for tax purposes?", "Use the form for foreign investors" changes to that form. Which form or tax status applies is for the firm or the investor's own tax adviser to say.
+"Change your answers" goes back to correct what the form was filled from. Beside "Already have a completed form?", "Upload it instead" takes a form already completed. Beside "Not a U.S. person for tax purposes?", "Use the form for foreign investors" changes to that form.
 
 ## invite/payment
 audience: investor
