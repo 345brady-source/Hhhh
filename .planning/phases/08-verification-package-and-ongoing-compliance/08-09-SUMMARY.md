@@ -69,3 +69,16 @@ COUNTS: base 456 + own 6 = 462
 Found after this run and fixed before the commit: part server's own PASS labels printed Lib.walk's taxpayer number (the
 scan's label named the number it looked for), so flow2.txt held it three times. The number is now built in the check and
 never printed; the gate's run of the check is the evidence that no output holds it (scan below, under the gate).
+
+### Task 3 RED, parts leave and button against Task 2's code (52dbb86) (red3.txt)
+
+```
+FAIL button shown: the verification lapses within 14 days (in 10)
+FAIL button shown: the verification lapses in exactly 14 days
+FAIL button not shown: a lapsed verification where every offering is Rule 506(b) and the rule is the default
+FAIL button ran to the end :: page.selectOption: Timeout 30000ms exceeded. (the check's own fault: the managed edition's role control has no "admin"; fixed in the check)
+REVERIFY: FAIL (parts run: 2) - button
+```
+The 14-day window and the "an offering raising needs verified accreditation" rule were left out of Task 1 on purpose so
+that this part could fail first; they are Task 3's code. Part leave passed on Task 2's code (13 PASS): Back, the portal's
+offer and the resume were built in Task 1. It is kept as a guard and proven by a mutation (below).
