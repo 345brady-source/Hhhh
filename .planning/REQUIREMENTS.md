@@ -84,6 +84,17 @@
 - [ ] **LOOK-02**: The investor's signing screens carry only the sponsor firm's brand and follow the portal's design system
 - [ ] **LOOK-03**: Every field box shown on the agreement, for the sponsor, the investor and the firm, has rounded corners and a finished, professional look, and its name tag never covers the agreement's words
 
+### Help Chatbot (Phase 07; defined in 07-RESEARCH.md, verified in 07-VERIFICATION.md)
+
+- [x] **HELP-01**: A person asks a question in the portal and gets an answer through the server's own model connection
+- [x] **HELP-02**: The smallest suitable model is used; a larger one only if the measurement misses
+- [x] **HELP-03**: The guide comes from the real screens, from one source file, is sent as cached context, and the answer knows the page
+- [x] **HELP-04**: Portal questions only; no investment, legal or tax advice; no investor data in or out; a support contact when it cannot answer
+- [x] **HELP-05**: No vendor, model or library name on any screen or in any answer
+- [ ] **HELP-06**: Measured on real, unseen questions before launch, under a small cap, run by the orchestrator on the owner's yes (open: the current guide has not been measured)
+- [x] **HELP-07**: With no server the chat fails soft on a desktop and on a 390-wide phone in a sandboxed frame; nothing mandatory; one lean entry point
+- [x] **HELP-08**: Abuse cannot run up cost: message length, per-session and per-client limits, daily help cap, no tools
+
 ## v2 Requirements
 
 ### Signers
