@@ -323,7 +323,25 @@ const parts = {
       return d.report.opens[inv] ? d.report.opens[inv].count : 0;
     }, { id: first.id, inv: first.inv[0] });
     check('the open is on record once', opens === 1, opens);
-    await T.wayOut(check, fr);
+    const closeAt = [];
+    for (const k of [0, 0.5, 1]) {
+      await fr.evaluate((k) => {
+        const dlg = document.querySelector('#dlg');
+        [dlg].concat(Array.from(dlg.querySelectorAll('*'))).filter((el) => el.scrollHeight > el.clientHeight + 2).forEach((el) => (el.scrollTop = Math.round((el.scrollHeight - el.clientHeight) * k)));
+      }, k);
+      await fr.waitForTimeout(200);
+      closeAt.push(
+        await fr.evaluate(() => {
+          const dlg = document.querySelector('#dlg');
+          const b = dlg.querySelector('[data-action=close-dialog]');
+          const r = b ? b.getBoundingClientRect() : null;
+          if (!r || !r.width || r.top < 0 || r.bottom > innerHeight || r.right > innerWidth) return false;
+          const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+          return !!hit && (hit === b || b.contains(hit));
+        })
+      );
+    }
+    check("the document's Close button is on screen at the top, the middle and the end of the document (its way out)", closeAt.every(Boolean), closeAt);
     await T.press(fr, '#dlg [data-action=close-dialog]');
     await fr.waitForTimeout(200);
     await T.sample(fr, { role: 'admin' });
