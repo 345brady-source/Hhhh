@@ -43,6 +43,7 @@ async function signedUp(base, server, n = 'A') {
   const r = await call(base, 'POST', '/v1/auth/signup', { body: f });
   assert.equal(r.status, 201, r.text);
   promote(server, r.cookie);
+  server.store.put('workspaces', { id: r.body.workspace.id, confirmedAt: new Date().toISOString() }); // C-16 (15-14): the Owner's email confirmed
   return { ws: r.body.workspace.id, cookie: r.cookie, person: r.body.person, firm: f };
 }
 /** A team person made in the workspace, signed in through the route and made full. */
@@ -344,7 +345,9 @@ test('accountant ends', async () => {
   await withServer({ env: { DATA_KEY: key(), PUBLIC_URL: ORIGIN } }, async (base, server) => {
     const owner = await signedUp(base, server);
     const yesterday = isoDay(Date.now() - 86400000);
-    const old = await member(base, server, owner.ws, 'accountant', { endsOn: yesterday });
+    // 15-14 refuses the sign-in itself once the end date has passed; here the date passes while the session is open.
+    const old = await member(base, server, owner.ws, 'accountant', { endsOn: isoDay(Date.now()) });
+    server.signin.people.update(old.id, { endsOn: yesterday });
     const r = await call(base, 'GET', '/v1/audit', { cookie: old.cookie });
     assert.deepEqual([r.status, r.body], [401, { error: `Your access ended on ${plainDay(yesterday)}. Ask the firm to renew it.`, code: 'ended' }]);
     assert.ok(server.store.get('sessions', sha(old.cookie.split('=')[1])).endedAt, 'the session is ended');
