@@ -159,6 +159,16 @@ const clearToasts = (fr) => fr.evaluate(() => {
   const el = document.getElementById('toasts');
   if (el) el.innerHTML = '';
 });
+/** The owner's screenshot: messages cleared and the file section scrolled into view. */
+async function shot(A, fr, name) {
+  await clearToasts(fr);
+  await fr.evaluate(() => {
+    const box = document.getElementById('ds-file');
+    if (box && box.firstElementChild) box.scrollIntoView({ block: 'start' });
+  });
+  await fr.waitForTimeout(300);
+  await A.page.screenshot({ path: path.join(OUT, name) });
+}
 /** Press Record distribution; resolves to the new run. */
 async function pressRecord(fr) {
   const before = await fr.evaluate(() => window.CVPortal.state.ws.runs.map((r) => r.id));
@@ -205,7 +215,7 @@ const parts = {
     check('the History’s "ACH file" shows the record: sent, by whom, file ID, and no file text', /was sent on/.test(s1.text) && s1.text.indexOf(longDay(TODAY)) >= 0 && !!r1 && s1.text.indexOf(r1.name) >= 0 && /File ID A/.test(s1.text) && !s1.fileText && s1.download === 'none', s1.text.slice(0, 300));
     check('each entry shows its account ending and trace', !!r1 && r1.entries.every((e) => s1.text.indexOf(e.trace) >= 0) && last4.every((x) => s1.text.indexOf(x) >= 0), last4.length);
     check('no new file is built for it', await fr.evaluate(() => !window.CVPortal.state.ui.dist.file));
-    await A.page.screenshot({ path: path.join(OUT, 'phone-sent.png') });
+    await shot(A, fr, 'phone-sent.png');
     await noAccounts(check, fr, true, 'the record');
     // Build again: refused with no reason, then built with one
     await T.press(fr, '[data-action=nacha-again]');
@@ -233,7 +243,7 @@ const parts = {
       return f ? { modifier: f.modifier, again: f.again } : null;
     });
     check('with the reason a file with file ID B is built, marked built again, and may be downloaded', !!f2 && f2.modifier === 'B' && f2.again && f2.again.why === REASON && s2.download === 'enabled' && /Built again: The bank rejected the first file/.test(s2.text), { f2, s2: { d: s2.download, t: s2.text.slice(0, 160) } });
-    await A.page.screenshot({ path: path.join(OUT, 'phone-again.png') });
+    await shot(A, fr, 'phone-again.png');
     const d2 = await download(A, fr);
     const l3 = await logs(fr);
     const r2 = l3.ach.filter((x) => x.kind === 'file').slice(-1)[0];
@@ -253,7 +263,7 @@ const parts = {
     await fr.waitForTimeout(300);
     const msg = await toastText(fr);
     check('B4: pressed through the action, nothing leaves and nothing is recorded', (await logs(fr)).ach.length === before && /recorded as paid|Fix the checks/.test(msg), msg);
-    await A.page.screenshot({ path: path.join(OUT, 'phone-paid.png') });
+    await shot(A, fr, 'phone-paid.png');
     await finish(check, A, fr, false);
   },
 
@@ -274,7 +284,7 @@ const parts = {
     const s = await section(fr);
     check('dated 2026-12-25 (a Federal Reserve holiday) the file shows a red check', s.red > 0 && /holiday/i.test(s.text), s.text.slice(0, 300));
     check('Download and Copy are disabled with "Fix the checks marked in red first."', s.download === 'disabled' && s.copy === 'disabled' && s.text.indexOf(RED) >= 0, s);
-    await A.page.screenshot({ path: path.join(OUT, 'desktop-red.png') });
+    await shot(A, fr, 'desktop-red.png');
     const before = await logs(fr);
     let downloads = 0;
     A.page.on('download', () => downloads++);
@@ -314,7 +324,7 @@ const parts = {
     check('the new draft opens with the already-sent sentence', s.text.indexOf(want) >= 0, s.text.slice(0, 300));
     check('its Download and Copy wait for Build again', s.download === 'disabled' && s.copy === 'disabled' && s.again === 'enabled', s);
     check('the preview takes the next free file ID (B) and writes nothing', !!g && g.modifier === 'B', g);
-    await A.page.screenshot({ path: path.join(OUT, 'desktop-resent.png') });
+    await shot(A, fr, 'desktop-resent.png');
     const n = (await logs(fr)).ach.length;
     await clearToasts(fr);
     await fr.evaluate(() => window.CVPortal.actions['nacha-download']());
@@ -355,7 +365,7 @@ const parts = {
     await T.press(fr, '.nl-6');
     await fr.waitForTimeout(300);
     await noAccounts(check, fr, true, 'the preview and its field view');
-    await A.page.screenshot({ path: path.join(OUT, 'phone-team.png') });
+    await shot(A, fr, 'phone-team.png');
     const before = await logs(fr);
     for (const act of ['nacha-download', 'nacha-copy', 'nacha-again']) {
       await clearToasts(fr);
@@ -388,7 +398,7 @@ const parts = {
     await openRun(fr, run && run.id);
     const s = await section(fr);
     check('the History shows the record of the file sent, with Build again, and no second file', /was sent on/.test(s.text) && !!r1 && s.text.indexOf(r1.name) >= 0 && !s.fileText && s.again === 'enabled', s.text.slice(0, 300));
-    await A.page.screenshot({ path: path.join(OUT, 'desktop-managed.png') });
+    await shot(A, fr, 'desktop-managed.png');
     await noAccounts(check, fr, false, 'at the end');
     await T.wayOut(check, fr);
     // the managed edition is Carrow & Vale's own console, so its name is on screen by design; any other name is not
