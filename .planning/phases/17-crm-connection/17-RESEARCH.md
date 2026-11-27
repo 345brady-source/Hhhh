@@ -412,4 +412,80 @@ function dealFields(off, inv, cents, stageId, pipelineId, ref) {
 }
 ```
 
+## 4. Security and privacy
+
+### 4.1 The key
+
+- Stored only sealed (`crm:<workspace>:key`), refused without `DATA_KEY` on every server and in every mode (the filer-code rule). Opened only inside the adapter call; never in a reply, the change log, the sync log, the sent log, `store.event`, `/health`, console output or an error. A test plants a recognisable key and greps every reply body, the store file, the blobs folder and captured console output for it (CRM-02).
+- Replacing the key is a new `PUT /v1/crm/connection`; the old one is overwritten. HubSpot's own rotation (7-day grace) is done by the sponsor in HubSpot, then pasted here.
+- The adapter's base URL is a constant (`https://api.hubapi.com`). Tests point it at the stand-in only through an option passed to `createServer` (as `opts.fetch` and `opts.mailCtx` are), never through an environment variable a deployment could set, so no setting can send a sponsor's key to another host.
+- Redirects are not followed (`redirect: 'manual'`), so a redirect cannot carry the Authorization header elsewhere.
+
+### 4.2 The exfiltration threat, and why connecting needs a fresh sign-in
+
+Connecting a CRM is a way to copy every investor's name, email, phone and commitment to an outside account. A stolen Admin session, or a person about to leave, could connect their own HubSpot and receive the list within minutes. So:
+- Connecting needs 'configure' **and** a sign-in within the last 10 minutes (the same fresh rule as bank changes, `401 code 'fresh'`, `server/lib/workspace.mjs` header).
+- The panel shows which HubSpot account is connected (its account id and domain, from the check) so the firm can recognise it.
+- "CRM connected", "CRM disconnected", "CRM settings changed" and "CRM records forgotten" go to the server change log with the person.
+- The Owner gets a security notice when a CRM is connected or its key replaced, on 15-14's security-notice path when that plan has merged (until then the change-log entry is the record; the plan says which applies).
+- No sync starts until a stage map is saved ("Start syncing"), which is a second deliberate step.
+
+### 4.3 Least scopes
+
+Six scopes (1.4), the last two only to create the two properties. The connect check names any missing scope; it does not ask for more. The sponsor can see and change the key's scopes in HubSpot.
+
+### 4.4 What each role may do
+
+| Role | Integrations CRM panel | Connect, settings, sync now, forget | Sync log | Lead picker | Invite a lead |
+|------|------|------|------|------|------|
+| Owner | yes | yes (fresh sign-in to connect) | yes | yes | yes |
+| Admin | yes | yes (fresh sign-in to connect) | yes | yes | yes |
+| Staff | page hidden | no (403 `Only an Admin or the Owner can change this.`) | yes (from the investor page, if the planner shows it there) | yes | yes |
+| Read-only | page hidden | no | yes | yes | no (403 operate sentence) |
+| Accountant | page hidden | no | no (403 personal sentence) | no | no |
+
+Refusal sentences are `REFUSALS` in `assets/js/roles.js:99-111` (for example `configure: 'Only an Admin or the Owner can change this.'`, `personal: 'Your role does not show investors’ personal details.'`).
+
+Note for the firm (one line on the panel and in the guide): people with access to the firm's HubSpot see the synced fields there, whatever their role in the portal. The portal's masking does not reach the CRM. This is why the field list is short.
+
+### 4.5 Data-processing notes for counsel (not legal advice; counsel to confirm)
+
+1. **Who is who.** The sponsor decides to send investor data to its own CRM; the sponsor is responsible for the data; HubSpot is the sponsor's service provider under the sponsor's own HubSpot agreement and data-processing terms; the integration server transmits on the sponsor's instruction. Nothing is sent to a HubSpot account the operator controls.
+2. **What is sent.** Name, email, phone (if given), offering name, commitment amount, onboarding stage, an opaque portal reference, and (default) the offering-email opt-out flag. Never taxpayer numbers, bank or account numbers, ID documents or accreditation evidence. HubSpot's own policy prohibits storing financial account numbers, wire instructions and government ID numbers such as Social Security and passport numbers outside its Enterprise sensitive-data features [CITED: policy.hubspot.com/trust-safety and developers.hubspot.com/sensitive-data (search extracts, 2026-11-27)]; the field list keeps the sponsor inside that policy.
+3. **Regulation S-P / GLBA.** That someone invested, and how much, is nonpublic personal information for a firm that is covered. For SEC-registered advisers the amended Regulation S-P applies (compliance dates 2025-12-03 for larger entities and 2026-06-03 for smaller ones; service-provider oversight; customer notification of incidents) [CITED: sec.gov/files/rules/final/2024/regulation-s-p-small-entity-compliance-guide.pdf (search extract)]. Whether the 72-hour service-provider notice must be in the contract is disputed between sources (same search). Firms that are not registered advisers may fall under the FTC Safeguards Rule instead [ASSUMED]. Counsel decides what the firm's agreement with HubSpot and its privacy notice need.
+4. **The investor-facing privacy wording.** White label forbids naming the CRM to investors. A generic sentence such as "the firm may keep your name, contact details and investment status in its customer relationship tools" is the shape; counsel writes it. The portal does not add it on its own.
+5. **Erasure and retention.** Deleting an investor in the portal does not delete the HubSpot copy, and the portal never re-creates a contact the firm deleted there (3.5). An erasure request must be handled in both places; the panel's help line says so.
+6. **Opt-outs.** An investor's offering-email opt-out in the portal is the investor's choice and is never changed by the CRM; the firm's own HubSpot emails must honour it (3.6, OQ-3).
+7. **Data location.** HubSpot accounts are hosted in the US or the EU depending on the account [ASSUMED]; the sponsor chose that when it opened its account.
+
+## Security Domain
+
+`security_enforcement: true`, ASVS level 1 (`.planning/config.json`).
+
+### Applicable ASVS categories
+
+| ASVS Category | Applies | Standard Control |
+|---------------|---------|-----------------|
+| V2 Authentication | yes | the server's own sessions (15-01, 15-04); connect needs a fresh sign-in |
+| V3 Session Management | yes | unchanged; CRM routes are people-only (`tokens: false`) |
+| V4 Access Control | yes | ROUTES lines (3.9) and `createGuards`; workspace scoping by the session's workspace, never a query parameter |
+| V5 Input Validation | yes | key format check; settings validated against the pipelines HubSpot returned; lead query length-capped; HubSpot replies treated as untrusted (strings capped, ids `^\d{1,20}$`) |
+| V6 Cryptography | yes | `vault.seal` (AES-256-GCM) for the key, snapshots and log details; no new crypto |
+| V7 Errors and Logging | yes | fixed sentences, never HubSpot's text or the key; change-log entries |
+| V9 Communications | yes | HTTPS only to a constant host; certificate checks on; no redirects followed |
+| V10 Malicious Code / V14 Config | yes | no new dependency |
+
+### Known threat patterns
+
+| Pattern | STRIDE | Standard Mitigation |
+|---------|--------|---------------------|
+| Stolen session connects an outside CRM and copies investors | Information disclosure | configure + fresh sign-in, account shown, change log, Owner notice, explicit "Start syncing" |
+| Key leaks through a reply, log or error | Information disclosure | sealed at rest; `view()` drops it; grep test over replies, store and console |
+| A sensitive field added to investors later is sent | Information disclosure | allow-list builder; planted-field test over every request body |
+| SSRF or key sent to another host | Spoofing / disclosure | constant base URL, test-only override by `createServer` option, `redirect: 'manual'` |
+| CRM data overrides an investor's unsubscribe | Tampering | the CRM module never writes `mailprefs`; test |
+| Another firm's CRM data | Elevation | every collection keyed by the session's workspace; cross-workspace test answers 404 |
+| HubSpot reply with markup shown in the console | Tampering (XSS) | lead names and emails drawn as text (`h()`); a check plants markup in the stand-in |
+| Account token used to read leads | Elevation | `tokens: false` on every CRM line |
+
 <!-- gsd:write-continue -->
