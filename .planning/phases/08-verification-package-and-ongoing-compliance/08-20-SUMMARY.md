@@ -72,3 +72,26 @@ PASS package the typed taxpayer number is in no server output (store, events, an
 REVERIFY: PASS (parts run: 3)
 VERIFY2_EXIT=0
 ```
+
+## Task 3 RED (red3.txt: parts subscribe, phone, preview-desktop, preview-phone against Task 2's code 1f037db, run from an archive of it; 60 PASS)
+
+```
+FAIL subscribe an open re-verification request: the banner shows the reason and "Verify your accreditation", which leads to the request's link :: {"text":"...Subscribe to Kestrel Bay Fund II, L.P.\n\nYour subscription takes you through the documents and the subscription agreement.\n\nContinue your subscription..."}
+FAIL subscribe no open request and no accreditation check the portal can run: the banner shows the reason and "Kestrel Bay will send you a link to verify again.", with no button :: {"text":"..."}
+FAIL phone the subscribe screen on a phone offers "Verify your accreditation" :: {"text":"...Your subscription takes you through the documents and the subscription agreement..."}
+FAIL phone the subscribe banner fits the phone's width (no sideways scroll) :: null
+FAIL phone its link is on screen and can be tapped :: {"ok":false,"why":"not there"}
+FAIL preview-desktop the subscribe screen offers "Verify your accreditation", leading to the request :: {"text":"...The subscription agreement for Kestrel Bay Fund II, L.P. is not available to sign online yet..."}
+FAIL preview-phone the subscribe screen offers "Verify your accreditation", leading to the request :: {"text":"..."}
+FAIL preview-phone the subscribe banner fits the width :: null
+REVERIFY: FAIL (parts run: 4) - subscribe, phone, preview-desktop, preview-phone
+```
+Guards that passed before the code: the firm's own check (the subscribe screen as today, no banner); the phone dialog with
+its box (fits, scrolls to "Send request", closes with its X, Escape and the browser's back) and the investor's phone step
+with Back on screen; the preview's dialog (switched off with package.js's no-server line, cannot be ticked), the sponsor's
+own email, the two steps with the firm's own connection, no refused connection.
+
+Found by the first GREEN run (green3.txt; subscribe and phone passed, the two preview parts failed): the owner's preview
+has no stored agreement for the sample offering, so its subscribe screen is the one saying "The subscription agreement ...
+is not available to sign online yet", and the offer was not on it. The offer now shows on that screen too (a second
+changed line in portal.js; see Deviations).
