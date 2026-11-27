@@ -51,6 +51,26 @@ const CLOCK = '2027-01-20';
 const ROUTE = 'console-books';
 // The bank section's files (plan 11-15), answered 404 in every part.
 const BANK = /\/assets\/js\/(bankfiles|books-bank|books-bank-ui)\.js$/;
+
+/*
+ * 11-CONTEXT "Decision during 16-02": index.html may change after phase 11 (16-02 adds its achrecord.js line), but no
+ * line it has gained since the base may load one of phase 11's own files (books*.js, books.css, bankfiles.js,
+ * filesout.js), so the managed edition still gets none of phase 11. p11Added gives those lines (empty when none).
+ */
+const P11_OWN = /assets\/(js\/(books[\w-]*|bankfiles|filesout)\.js|css\/books\.css)/;
+function p11Added(base, now) {
+  const left = new Map();
+  String(base).split('\n').forEach((l) => left.set(l, (left.get(l) || 0) + 1));
+  return String(now)
+    .split('\n')
+    .filter((l) => {
+      const n = left.get(l) || 0;
+      if (n) left.set(l, n - 1);
+      return !n;
+    })
+    .filter((l) => P11_OWN.test(l))
+    .map((l) => l.trim());
+}
 const J = (x) => JSON.parse(JSON.stringify(x));
 
 Lib.describeShots([
@@ -581,7 +601,8 @@ const parts = {
     check("index.html names none of this plan's files", !/books-ui|books\.css|books-hold/.test(src), (src.match(/[^"]*(books-ui|books\.css|books-hold)[^"]*/) || [''])[0]);
     if (process.env.P11_ROOT) {
       const base = fs.readFileSync(path.join(process.env.P11_ROOT, 'index.html'), 'utf8');
-      check('index.html is byte for byte the base tree\'s', base === src, { base: base.length, now: src.length });
+      const added = p11Added(base, src);
+      check('index.html loads no phase 11 file it did not load in the base tree', added.length === 0, added);
     }
     await T.sample(fr, { role: 'staff' });
     await go(fr, 'console', '.cs-nav');

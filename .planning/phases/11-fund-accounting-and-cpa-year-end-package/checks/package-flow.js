@@ -18,7 +18,8 @@
 //   sample-phone    kb-fund-ii, 2025, at 390x844: the panel lists the package's sheets and the download is a zip
 //   roles           a team member sees no panel; an investor opening #console-audit gets the investor's own page
 //   managed         index.html at 1280x800 as staff: the Audit page's heading; no 'Year-end package' panel; no error;
-//                   index.html names no file of this plan and is unchanged (against the base tree P11_ROOT when given)
+//                   index.html names no file of this plan and loads no phase 11 file it did not load in the base tree
+//                   (P11_ROOT, when given; 11-CONTEXT "Decision during 16-02")
 // Every part: the frame refuses a fetch; quiet, leak and a way out on screen.
 //   NODE_PATH=$(npm root -g) node package-flow.js [--only part1,part2]
 // The last line is "PACKAGE FLOW: PASS (parts run: N)" or "PACKAGE FLOW: FAIL (parts run: N) - <parts>".
@@ -35,6 +36,26 @@ const FA = require('./fixtures/fund-a.js');
 const CLOCK = '2027-01-20';
 const J = (x) => JSON.parse(JSON.stringify(x));
 const S_ = (x) => JSON.stringify(x);
+
+/*
+ * 11-CONTEXT "Decision during 16-02": index.html may change after phase 11 (16-02 adds its achrecord.js line), but no
+ * line it has gained since the base may load one of phase 11's own files (books*.js, books.css, bankfiles.js,
+ * filesout.js), so the managed edition still gets none of phase 11. p11Added gives those lines (empty when none).
+ */
+const P11_OWN = /assets\/(js\/(books[\w-]*|bankfiles|filesout)\.js|css\/books\.css)/;
+function p11Added(base, now) {
+  const left = new Map();
+  String(base).split('\n').forEach((l) => left.set(l, (left.get(l) || 0) + 1));
+  return String(now)
+    .split('\n')
+    .filter((l) => {
+      const n = left.get(l) || 0;
+      if (n) left.set(l, n - 1);
+      return !n;
+    })
+    .filter((l) => P11_OWN.test(l))
+    .map((l) => l.trim());
+}
 const TINS = ['000-65-1234', '000651234'];
 // The files the download needs, which must come from the page's own address (C-02).
 const LIBS = /\/assets\/(js\/withholding\.js|js\/filesout\.js|vendor\/pdfwrite\/write\.js|vendor\/pdfwrite\/fonts\.js|vendor\/textfont\/text-regular\.js)$/;
@@ -357,7 +378,8 @@ const parts = {
     check("index.html names no file of this plan (books-pkg.js, filesout.js)", !/books-pkg|filesout/.test(src), (src.match(/[^"]*(books-pkg|filesout)[^"]*/) || [''])[0]);
     if (process.env.P11_ROOT) {
       const base = fs.readFileSync(path.join(process.env.P11_ROOT, 'index.html'), 'utf8');
-      check("index.html is byte for byte the base tree's", base === src, { base: base.length, now: src.length });
+      const added = p11Added(base, src);
+      check('index.html loads no phase 11 file it did not load in the base tree', added.length === 0, added);
     }
     const g = spawnSync('git', ['status', '--porcelain', '--', 'index.html'], { cwd: Lib.ROOT, encoding: 'utf8' });
     check('git shows no uncommitted change to index.html', g.status === 0 && g.stdout.trim() === '', g.stdout);
