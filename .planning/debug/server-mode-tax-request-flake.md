@@ -102,6 +102,11 @@ started: first seen at 75b2fc5 (13-03 merged); 13-03's own gate on base 8efaa5c 
   found: `# tests 584` `# pass 584` `# fail 0` rc=0 (debug-tax-flake/server-tests.txt)
   implication: server suite unchanged (the fix touches only the check)
 
+- timestamp: 2026-11-27T15:27Z
+  checked: instrumented (unfixed) copy: tfull-3 (full), pin-1..6 (--only tax-request, the check's node process and its browser pinned to CPU 0 with taskset), timing-6; fixed tree: run-201, run-202 (full SERVER MODE), coinv-1 (CO-INVESTOR SERVER)
+  found: tfull-3 PASS (15) margin=173. Pinned: margins 141-172 ms, lagMaxMs 24-41, all PASS (one CPU lets the check run while the page renders, so it widens the margin rather than closing it; stopped after 6). Fixed: run-201 and run-202 `SERVER MODE: PASS (parts run: 15)`, coinv-1 `CO-INVESTOR SERVER: PASS (parts run: 5)`
+  implication: natural runs of the unfixed check: 0 failures in 58 (45 unmodified + 13 instrumented natural). The race needs the check's own process held up >~80 ms while the browser keeps running (other gates' load), which these runs did not reach.
+
 ## Resolution
 
 root_cause:
