@@ -49,3 +49,17 @@ Owner instruction (2026-11-20, verbatim): "work around whatever bullshit you thi
 - W6 (Task 3 verify): also `node .planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/ach-leak.js --case checks > $O/ach.txt 2>&1 && grep -q '^ACH LEAK: PASS' $O/ach.txt`.
 - W7: EM-01 here covers the four builders and reverifyMessage; taxdocs.mjs messages move in 13-07; filing_order and package_alert are staff-only and stay out.
 - Start: now, with these. No running build edits 13-01's files; no guide line (any goes to GUIDE-PASS.md).
+
+## Plan-check additions, wave 2 (13-03, 13-05, 13-11), checked against 392bbbc, 2026-11-27
+Binding on the executors (full text with each fix: scratchpad checks-13-wave2.md).
+- B1 (13-03): starts after 15-05 merges. Adds server/lib/roles.mjs to its files with ROUTES lines: GET /v1/mail/sender 'view'; PUT /v1/mail/sender 'configure'; POST /v1/mail/sender/check 'configure'; GET /v1/messages/log with the permission that already guards personal data; other('POST', '/v1/mail/events', 'public', signature checked by the adapter). A test: a signed-in person whose role lacks configure gets 403 on PUT /v1/mail/sender.
+- B2 (all three): test numbers from never-issued ranges: '000-12-3456' (not '123-45-6789') and '991234567890' (not '000123456789'). Both still match 13-01's patterns.
+- B3 (13-11): adds server/test/emails-render.test.mjs and emails-guard.test.mjs to its files (read 13-01's merged tests first): the expiry rule covers only messages with a personal link; allowed hrefs are link, portalUrl, consoleUrl and unsubscribeUrl; the "Reminder:" subject ban covers invitation and resend subjects only. Test counts unchanged.
+- B4 (13-11 Task 2 verify): use `! grep -l 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE' server/test/fixtures/emails/tax_consent*.txt`.
+- W1 (all three): final gate verify starts `rm -f $O/gate.txt;` and `G=$P/checks/gate13.sh; [ -f $G ] || exit 1;` before `bash $G`.
+- W2 (13-03): server/README.md "## Email" found by grep (not line 352); keep 15-05's `auth.can` check in invitations.mjs.
+- W3 (13-05 tracer): the invite gives a commitment (e.g. cents 25000000) or a postal address, so the outbox is reached.
+- W4 (13-11 test 6): the base staff-email output is built from a base-tree worktree with a FILINGS=1 server, or from lines 193-196 of `git show $BASE:server/lib/filings.mjs`.
+- W5 (13-11 Task 2): at least one golden per new kind, besides the 55 total.
+- W6 (13-03, 13-11 Task 1): `[ "$(cat $O/base-count.txt)" -ge 518 ] || exit 1;` (measured base, 506 now plus 13-01's).
+- Start: 13-03 after 13-01 and 15-05 merge; 13-05 after 13-01, 08-20 and 11-16 merge; 13-11 after 13-01 merges (09-08 not running).
