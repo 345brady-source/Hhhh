@@ -438,9 +438,11 @@ const parts = {
       n += lits.length;
       lits.forEach((x) => {
         const s = unescape(x.s);
-        // a script's own file name, as the parts loader asks for it: a file the page loads, shown to no one
-        if (scripts.has(s)) return names.push(`assets/js/${f}:${x.line} '${s}'`);
-        hits.push(...scan(`assets/js/${f}:${x.line}`, s));
+        const h = scan(`assets/js/${f}:${x.line}`, s);
+        // a script's own file name that the scan matches, as the parts loader asks for it: a file the page loads,
+        // shown to no one
+        if (h.length && scripts.has(s)) return names.push(`assets/js/${f}:${x.line} '${s}'`);
+        hits.push(...h);
       });
     });
     check(`every report script reads to its end as strings, comments and code (${files.length}: ${files.join(', ')})`, files.length >= 8 && broke.length === 0, broke);
@@ -448,8 +450,8 @@ const parts = {
     const rules = css.split('}').map((r) => r.trim()).filter(Boolean);
     rules.forEach((r, k) => hits.push(...scan(`assets/css/reports.css rule ${k + 1}`, r)));
     console.log(`sources: ${n} string literals in ${files.length} scripts, ${rules.length} CSS rules`);
-    console.log(`set aside, a script file name the parts loader asks for (a file the page loads; shown to no one): ${names.length ? names.join(', ') : 'none'}`);
-    check('only script file names that exist in assets/js are set aside, the report modules themselves', names.every((x) => /'reports[a-z-]*\.js'$/.test(x)), names);
+    console.log(`set aside, a script's file name the scan matches, as the parts loader asks for it (a file the page loads; shown to no one): ${names.length ? names.join(', ') : 'none'}`);
+    check(`only report modules' own file names are set aside (${names.length})`, names.every((x) => /'reports[a-z-]*\.js'$/.test(x)), names);
     check(`the scripts hold string literals and the style sheet rules (${n}, ${rules.length})`, n > 500 && rules.length > 20, { n, rules: rules.length });
     report(check, 'no vendor, library or model name, never the forbidden word, audited or ILPA compliant, no gross performance in any shipped string or CSS rule', hits);
   },
