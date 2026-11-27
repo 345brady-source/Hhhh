@@ -434,6 +434,13 @@ test('reseal people sign in', async (t) => {
     const up = await call(base, '/v1/auth/signup', person);
     assert.equal(up.status, 201, up.text);
   });
+  // 15-12's real change log, written under k1.
+  const { createAuditLog } = await import('../lib/auditlog.mjs');
+  const ws = 'harbor-ridge-capital';
+  const log1 = createAuditLog({ store: st, vault: openVault({ DATA_KEY: k1 }) });
+  log1.append({ workspace: ws, person: { id: 'per_1', name: 'Pat Owner' }, action: 'Sent', record: 'inv_1', detail: 'Invitation sent' });
+  log1.append({ workspace: ws, person: { id: 'per_1', name: 'Pat Owner' }, action: 'Signed', record: 'inv_1', detail: 'Agreement signed' });
+  assert.deepEqual(log1.verify(ws), { ok: true, count: 2, brokenAt: 0 });
   st.close();
   const signIn = async (DATA_KEY) => {
     const s = openStore(file);
@@ -452,5 +459,9 @@ test('reseal people sign in', async (t) => {
   st = openStore(file);
   const [p] = st.list('people');
   assert.equal(p.emailIndex, emailIndex(k2, person.email));
+  assert.match(r.out, /^resealed auditlog: 2$/m);
+  const log2 = createAuditLog({ store: st, vault: openVault({ DATA_KEY: k2 }) });
+  assert.deepEqual(log2.verify(ws), { ok: true, count: 2, brokenAt: 0 }, 'the chain still verifies after the reseal');
+  assert.deepEqual(log2.list(ws).map((e) => e.detail), ['Agreement signed', 'Invitation sent'], 'and opens with the new key alone');
   st.close();
 });
