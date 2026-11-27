@@ -1,0 +1,6 @@
+# Orchestrator decisions on the own-fonts plan (2026-11-27), binding on the executor
+
+1. Subsets: keep today's coverage. Every subset the outside host serves today for each family (latin, latin-ext, vietnamese, cyrillic, cyrillic-ext, greek, greek-ext where the package has them) is shipped, with unicode-range in each @font-face so a browser downloads a subset only when the text uses it. Reason: investors' names (foreign investors are in scope, phase 16 D-04) must draw in the firm's face and in every signature face exactly as today; the planner measured +798,936 bytes on disk for all other subsets, and no page downloads them unless needed. The OWN FONTS check's table follows the shipped subsets, and one case draws a Vietnamese name (e.g. "Nguyễn") in a signature face and asserts the face, not a fallback, rendered it.
+2. Fonts used and their weights are exactly the ones the planner listed; nothing is added or dropped.
+3. OWN FONTS goes into the reference gate later, in one pass when no running plan edits gate-reference.sh (recorded in GUIDE-PASS-style queue in AUTOPILOT); the pages test guards the policy meanwhile.
+4. Package source: @fontsource packages at the exact versions and sha512 integrity in the plan, fetched with npm pack --ignore-scripts; only woff2 and licence files copied; no package code runs. Accepted.
