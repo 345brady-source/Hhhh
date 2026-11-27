@@ -204,7 +204,7 @@ const FIXTURES = {
 <p class="m">0O0O 8B8B DQDQ 0000 8888 OOOO DDDD QQQQ o0o0 d0d0 [X] [x] (1) (a)</p>
 <p>The agreement was executed as follows.</p>
 <p>NORTHGATE FUND I GP, LLC</p><p>By: Northgate Capital GP, LLC, its general partner</p><p>Name: Priya Raman</p><p>Title: Managing Partner</p><p>Date: January 5, 2026</p>
-<p>Wire instructions: Bank of Example, ABA 021000021, account 000123456789, reference “Northgate Fund I”.</p>
+<p>Wire instructions: Bank of Example, ABA 131000021, account 000123456789, reference “Northgate Fund I”.</p>
 <p style="font-family:Georgia,serif;font-size:15pt"><b>Good Operators Do Quality Deals: Our Outlook</b></p>
 <p style="font-family:Georgia,serif">Occupancy across the portfolio was 96% at quarter end; debt service coverage was 1.80x. No distributions were deferred. Questions? Call (512) 555-0100.</p></div>`
   },

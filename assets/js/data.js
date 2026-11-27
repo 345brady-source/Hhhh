@@ -93,8 +93,11 @@
     const t = 3 * (d[0] + d[3] + d[6]) + 7 * (d[1] + d[4] + d[7]) + (d[2] + d[5]);
     return String((10 - (t % 10)) % 10);
   }
+  // Sample investors' routing numbers: a valid ABA check digit behind a prefix no routing number can have, so no
+  // sample number is a bank's. The list is the 24 Federal Reserve district prefixes' images (plan 16-03, same order
+  // and length), so every seeded draw, and every other sample value, is what it was.
   function fakeRouting(R) {
-    const district = pick(R, ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32']);
+    const district = pick(R, ['89', '13', '14', '15', '16', '17', '18', '19', '87', '98', '88', '90', '43', '99', '34', '91', '81', '82', '83', '84', '85', '96', '20', '54']);
     const first8 = district + digits(R, 6);
     return first8 + abaCheckDigit(first8);
   }
@@ -207,7 +210,7 @@
         taxCert: { signed: true, source: 'sample' }, // plan 10-07 (C-10)
         edelivery: true,
         onboarding: { status: 'complete', step: 5, invited: '2022-01-10', completed: '2022-01-12' },
-        payment: { method: 'ach', bank: { holder: 'Davis Family Trust', routing: '044003186', account: '48213307', type: 'checking' } },
+        payment: { method: 'ach', bank: { holder: 'Davis Family Trust', routing: '154003186', account: '48213307', type: 'checking' } },
         positions: []
       }
     ];
