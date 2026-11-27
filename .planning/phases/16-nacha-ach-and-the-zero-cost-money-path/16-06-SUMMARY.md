@@ -28,3 +28,48 @@ PASS fixtures every entry of every NACHA fixture is to a never-issued bank (pref
 RETURNS READ: PASS (cases run: 2)
 VERIFY1_EXIT=0
 ```
+
+## Task 2 evidence
+
+RED (O/red-2.txt, commit 94243e0; the ten new cases on the Task 1 reader; stack lines dropped, lines cut to 240 characters):
+```
+FAIL noc ran to the end :: Error: This file holds no returns or notices of change.
+PASS prenote prenote-r03.ach gives one return item, code R03, cents 0
+PASS prenote originalTrace is the pre-note's trace (the originating bank's 8 digits, sequence 0000011)
+PASS prenote effective is the pre-note batch's date (2026-11-24); individualId INV-101; txCode 21
+FAIL mixed three items in file order: return R02 INV-101 125000, return R16 INV-103 41005, noc C02 INV-102 0 :: return:R02:INV-101:125000, return:R16:INV-103:41005
+FAIL mixed their traces are the first, third and second original entries' and their lines increase
+FAIL mixed R02 is 'needs-details', R16 'frozen' (savings return, txCode 31), the C02 batch is COR
+FAIL mixed the C02's corrected routing is 190000033, passes the check digit and has no problem
+PASS csv-a detect() reads returns-a.csv as 'csv'
+FAIL csv-a ran to the end :: TypeError: R.guess is not a function
+FAIL csv-b ran to the end :: TypeError: R.guess is not a function
+FAIL by-hand ran to the end :: TypeError: R.byHand is not a function
+PASS refusals detect() reads report.pdf.txt as 'pdf' (string and bytes)
+PASS refusals report.pdf.txt is refused: This is a PDF. Download the returns report from your bank as a CSV or a NACHA file, or enter the return by hand.
+PASS refusals its bytes are refused the same way
+PASS refusals LIMITS are 2,000,000 bytes and 20,000 lines (the statement reader's)
+PASS refusals a string over LIMITS.bytes: 'This file is larger than 2,000,000 bytes.'
+PASS refusals a string over LIMITS.lines: 'This file has more than 20,000 lines.'
+PASS refusals bad-93.ach: 'Line 6 has 93 characters; a NACHA file has 94 on every line.'
+PASS refusals dist-ppd.ach (the portal's own credits): 'This file holds no returns or notices of change.'
+PASS refusals '' : 'This file is empty.' (also only blanks)
+PASS refusals a string holding a NUL byte: 'This file is not text.'
+PASS refusals bytes that are not UTF-8: 'This file is not text.'
+PASS refusals text that is neither a NACHA file nor a CSV is refused with a sentence
+PASS refusals each refusal is its own plain sentence
+PASS refusals achreturns.js has no fetch, XHR, socket, beacon, DOM parser, eval or dynamic import
+PASS codes RETURN_CODES holds all 46 return codes of 16-RESEARCH 3.4
+PASS codes each has the action class 16-RESEARCH 3.4 gives it
+PASS codes RETURN_CODES holds no other code
+FAIL codes ran to the end :: TypeError: Cannot read properties of undefined (reading 'C01')
+FAIL privacy ran to the end :: Error: This file holds no returns or notices of change.
+PASS selfcheck an unknown --case name exits 1 with a FAIL line
+PASS selfcheck an empty --case list exits 1 with a FAIL line
+RETURNS READ: FAIL (cases run: 10) - noc, mixed, csv-a, csv-b, by-hand, codes, privacy
+```
+At RED, prenote, refusals and selfcheck already pass: the Task 1 reader already read every addenda 99 (a returned pre-note is one) and already held the input refusals (PDF, limits, record length, no returns, empty, not text); selfcheck tests the case runner, not the reader. The other seven fail.
+
+Measured (plan-check info): the pinned reader accepts every synthesized return and change file: noc-c01.ach (a COR batch, addenda 98), prenote-r03.ach and mixed.ach (two batches, one COR) each pass -validate-file and -validate-totals with no message. No fixture had to be changed.
+
+bad-93.ach (plan-check B1, a note, no assertion): the independent reader reads it as valid (it pads the 93-character file control record), as 16-01 measured; the portal's own reader refuses it with "Line 6 has 93 characters; a NACHA file has 94 on every line." (case refusals).

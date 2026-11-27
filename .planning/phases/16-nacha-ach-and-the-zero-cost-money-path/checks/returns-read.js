@@ -188,7 +188,8 @@ const parts = {
     ];
     const msgs = bad.map(([, o]) => thrown(() => R.byHand(o)));
     bad.forEach(([what], i) => check(`${what} is refused with a sentence`, sentence(msgs[i]), msgs[i]));
-    check('each of those refusals has its own sentence', new Set(msgs).size === msgs.length, msgs);
+    const own = [msgs[0], msgs[1], msgs[2], msgs[4]];
+    check('the code, the date, the amount and the investor each have their own sentence (1.5 cents shares the amount\'s)', new Set(own).size === own.length && msgs[3] === msgs[2], msgs);
   },
 
   // Everything the reader cannot read is refused with its own sentence; nothing is read over the network.
