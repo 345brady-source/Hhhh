@@ -352,9 +352,20 @@ const cases = {
     );
     const again = B.categorize(ws, oid, line.id, { kind: 'account', account: '5100' }, ACTOR);
     check('decided again: a new entry under the same src', again && again.id !== first && again.src === 'bank:' + line.id && line.entry === again.id, again);
+    // Reversed from Entries (NS.books.reverse, as books-ui.js's bk-reverse does) instead of with Undo: the line is free.
+    const fromEntries = NS.books.reverse(ws, oid, again.id, ACTOR);
+    check('an entry posted from the line and reversed from Entries frees the line: it is undecided again', fromEntries && fromEntries.rev === again.id && line.entry === null && B.undecided(ws, oid, 'ba-1').map((l) => l.id).join() === line.id, { line, undecided: B.undecided(ws, oid, 'ba-1').map((l) => l.id) });
+    const stale = refused(A, () => B.uncategorize(ws, oid, line.id, ACTOR));
+    check("Undo on that line says in one sentence that it is already undone, and changes nothing", stale.threw && sentence(stale.message) && /already undone/.test(stale.message) && stale.same, stale);
+    line.entry = again.id; // a line left pointing at its reversed entry (stored before this fix)
+    const left = refused(A, () => B.uncategorize(ws, oid, line.id, ACTOR));
+    check("Undo on a line still naming its reversed entry: the same sentence, no second reversal, nothing changes", left.threw && /already undone/.test(left.message) && left.message === stale.message && left.same, left);
+    line.entry = null;
+    const third = B.categorize(ws, oid, line.id, { kind: 'account', account: '5100' }, ACTOR);
+    check('the freed line is decided again: a new entry under the same src', third && third.id !== again.id && third.src === 'bank:' + line.id && line.entry === third.id, third);
     NS.books.close(ws, oid, '2026-12-31', ACTOR);
     const no = refused(A, () => B.uncategorize(ws, oid, line.id, ACTOR));
-    check("after closing through 2026-12-31 the undo is refused (the core's 'closed') and nothing changes", no.threw && no.code === 'closed' && no.same && line.entry === again.id, no);
+    check("after closing through 2026-12-31 the undo is refused (the core's 'closed') and nothing changes", no.threw && no.code === 'closed' && no.same && line.entry === third.id, no);
   },
 
   refusals: ({ check }) => {
