@@ -31,6 +31,8 @@
  *   GET  /v1/outbox               messages kept here when no SMTP server is set (and held ones, waiting for a sponsor's domain)
  *   GET/PUT /v1/mail/sender, POST /v1/mail/sender/check  the address a workspace's messages go from (lib/senders.mjs)
  *   GET  /v1/messages/log         the workspace's sealed sent log (lib/maillog.mjs)
+ *   POST /v1/messages             notices, capital calls and e-sign notices to up to 500 investors (lib/messages.mjs)
+ *   GET  /v1/messages/preferences who turned offering news off; POST /unsubscribe/<token> the one-click address
  *   POST /v1/mail/events          delivery events from the mail provider, signature-checked by its adapter (server/mailers/)
  *   POST /v1/admin/accounts       the operator makes a sponsor account with its own token (ADMIN_TOKEN; lib/accounts.mjs)
  *   GET  /v1/admin/accounts       the accounts; POST /v1/admin/accounts/:id/token replaces an account's token
@@ -61,7 +63,8 @@ import { readRaw, parseJson, send, cors, header } from './lib/http.mjs';
 import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
-import { createInvitations } from './lib/invitations.mjs';
+import { createInvitations, cleanFirm } from './lib/invitations.mjs';
+import { createMessages } from './lib/messages.mjs';
 import { createTaxDocs } from './lib/taxdocs.mjs';
 import { createAccounts } from './lib/accounts.mjs';
 import { createAuth } from './lib/auth.mjs';
@@ -188,12 +191,13 @@ export function createServer(opts = {}) {
   // Help shares that cap too, and has its own daily cap (lib/help.mjs).
   const help = opts.help || createHelp({ env, fetch: opts.fetch, budget: intake.budget || undefined, now });
 
-  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, mailCtx: opts.mailCtx });
+  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, mailCtx: opts.mailCtx, firmRecord: (ws) => storedTenant(ws) });
   // The mail adapter MAIL_PROVIDER names (server/mailers/): delivery events are its to verify. Its own, larger rate limit:
   // the provider sends one event per message from a few addresses.
   const mailAdapter = mailAdapterOf(env);
   const mailCtx = () => Object.assign({ env, now }, opts.mailCtx || {});
   const eventsLimited = rateLimiter(Object.assign({}, env, { RATE_LIMIT_PER_MIN: env.MAIL_EVENTS_PER_MIN === undefined ? 600 : env.MAIL_EVENTS_PER_MIN }));
+  const unsubLimited = rateLimiter(Object.assign({}, env, { RATE_LIMIT_PER_MIN: env.MAIL_EVENTS_PER_MIN === undefined ? 600 : env.MAIL_EVENTS_PER_MIN })); // one-click unsubscribes (plan 13-04)
   const accounts = createAccounts({ store, now });
   // The server change log (lib/auditlog.mjs, SE-08): sign-ins reach it through lib/auth.mjs's log(), refusals and the team's
   // changes from here and lib/team.mjs. The person is always the session's (or the fixed Server actor), never the request's.
@@ -213,9 +217,19 @@ export function createServer(opts = {}) {
   const guards = createGuards({ signin, store, now }); // the route table's checks (lib/roles.mjs, plan 15-05)
   const team = createTeam({ store, signin, audit: auditLog, now, env }); // the firm's people, roles and invitations (plan 15-05)
   const workspaces = createWorkspaces({ env, store, vault: invites.vault, now, audit: auditLog, signin }); // the firm's workspace, sealed, by role (plan 15-06)
+  /** The firm record the workspace keeps on this server (lib/workspace.mjs, server mode), or null (C-06, plan 13-04). */
+  function storedTenant(ws) {
+    try {
+      const w = ws ? workspaces.get(ws) : null;
+      return w && w.ws && w.ws.tenant && typeof w.ws.tenant === 'object' ? w.ws.tenant : null;
+    } catch {
+      return null;
+    }
+  }
   const pages = opts.pages || createPages({ env, now }); // the portal's own pages and security.txt from this server (plan 15-13, mounted by 15-06)
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
+  const messages = createMessages({ env, store, vault: invites.vault, mailer: invites.mailer, log: invites.mailLog, publicUrl, returnTo: (u) => returnTo(u), cleanFirm, limited, now }); // notices, capital calls, e-sign notices (plan 13-04)
   const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
   const pkg = invites.usePackages({ billing, providers: PROVIDERS, identity: env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', accreditation: env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit' }); // the package on invitations (08-05); 08-15 adds its route helpers
   /**
@@ -932,6 +946,13 @@ export function createServer(opts = {}) {
       return send(res, 200, { received: list.length });
     }
 
+    // One-click unsubscribe from possibly commercial mail (plan 13-04, EM-11): no token of the firm's, before the sponsor
+    // gate; the mail provider posts it from a few addresses, so it has the delivery events' larger per-client limit.
+    if (path === '/unsubscribe' || path.startsWith('/unsubscribe/')) {
+      if (unsubLimited(req)) return send(res, 429, { error: 'Too many requests' });
+      return messages.unsubscribe(req, res, path);
+    }
+
     // Results pushed by a provider or the sponsor's own automation (for "link" checks, or any provider
     // that reports outcomes this way). Off unless RESULTS_TOKEN is set; it has its own token, not API_TOKEN.
     if (path === '/v1/results') {
@@ -1031,6 +1052,7 @@ export function createServer(opts = {}) {
     }
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (auth && (path === '/v1/mail/sender' || path === '/v1/mail/sender/check' || path === '/v1/messages/log')) return mailRoutes(req, res, url, auth); // the sender and the sent log (plan 13-03)
+    if (auth && (path === '/v1/messages' || path === '/v1/messages/preferences')) return messages.sponsor(req, res, url, auth); // the firm's notices and its investors' choices (plan 13-04)
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
     if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)
 

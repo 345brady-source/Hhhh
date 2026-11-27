@@ -65,6 +65,7 @@ export const ROUTES = Object.freeze([
   other('GET', { path: '/disclosure.html' }, 'public', 'with SERVE_PORTAL=1 the disclosure page, when its file exists'),
   other('GET', { prefix: '/assets' }, 'public', 'with SERVE_PORTAL=1 the files under assets/ listed at start-up, by extension'),
   other('POST', { path: '/v1/mail/events' }, 'public', 'delivery events from the mail provider, each signature-checked by the mail adapter (plan 13-03)'),
+  other('*', { prefix: '/unsubscribe' }, 'public', 'one-click unsubscribe: an HMAC-signed token, the same answer for every token; a GET changes nothing (plan 13-04)'),
 
   /* --- invitations (lib/invitations.mjs) --- */
   team('GET', { path: '/v1/invitations' }, 'view', true),
@@ -81,6 +82,8 @@ export const ROUTES = Object.freeze([
   team('PUT', { path: '/v1/mail/sender' }, 'configure', true),
   team('POST', { path: '/v1/mail/sender/check' }, 'configure', true),
   team('GET', { path: '/v1/messages/log' }, 'personal', true), // investors' addresses and the texts sent to them
+  team('POST', { path: '/v1/messages' }, 'operate', true), // notices, capital calls and e-sign notices (lib/messages.mjs, plan 13-04)
+  team('GET', { path: '/v1/messages/preferences' }, 'view', true), // who turned offering news off (no address)
 
   /* --- checks, reading and help (index.mjs) --- */
   team('GET', { path: '/v1/connectors' }, 'person', true),

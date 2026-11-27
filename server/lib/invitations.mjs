@@ -15,10 +15,11 @@ import { REFUSALS } from './roles.mjs';
 import { createMailer, validAddress, invitationMessage, resendMessage, notificationMessage, reminderMessage, money } from './mail.mjs';
 import { createMailLog } from './maillog.mjs';
 import { createSenders } from './senders.mjs';
+import { createUnsubscribe, stopHeaders, POSTAL, UNSUBSCRIBED } from './messages.mjs';
 import { createRequire } from 'node:module';
 
 // The shared patterns a message may never carry (assets/js/emails.js screen, plan 13-01): a note that matches is refused.
-const { screen } = createRequire(import.meta.url)('../../assets/js/emails.js');
+const { screen, render } = createRequire(import.meta.url)('../../assets/js/emails.js');
 
 const DAY = 864e5;
 const KB = 1024;
@@ -82,7 +83,7 @@ const fileName = (s, dflt) => clip(String(s || '').replace(/[\\/:*?"<>|\u0000-\u
 
 /* ---------- What the console sends ---------- */
 
-function cleanFirm(x) {
+export function cleanFirm(x) {
   const f = obj(x);
   if (!f || !clip(f.name, 120).trim()) throw fail(400, 'firm.name is required');
   const colors = {};
@@ -627,7 +628,7 @@ export function summarize(sub, snap, checks) {
 /* ---------- The routes ---------- */
 
 /**
- * createInvitations({ env, store, publicUrl, returnTo, limited, now, mailTls, mailCtx }) → {
+ * createInvitations({ env, store, publicUrl, returnTo, limited, now, mailTls, mailCtx, firmRecord }) → {
  *   investorPath(method, path)  true for the calls an invitation token may make,
  *   authenticate(req, token)    the invitation record, or throws 401 / 410,
  *   investor(req, res, path, rec)   GET /v1/invite, PUT /v1/invite/progress, POST /v1/invite/complete,
@@ -637,12 +638,13 @@ export function summarize(sub, snap, checks) {
  *   stop()
  * }
  */
-export function createInvitations({ env, store, publicUrl, returnTo, limited, now = () => Date.now(), mailTls, mailCtx }) {
+export function createInvitations({ env, store, publicUrl, returnTo, limited, now = () => Date.now(), mailTls, mailCtx, firmRecord = () => null }) {
   const vault = openVault(env);
   // Each workspace's own sender and the sealed sent log (plan 13-03): the mailer sends as the sponsor and logs every message.
   const senders = createSenders({ store, vault, env, now, ctx: mailCtx || {} });
   const mailLog = createMailLog({ store, vault, env, now });
   const mailer = createMailer({ env, store, vault, now, tls: mailTls, senders, log: mailLog });
+  const unsub = createUnsubscribe({ store, vault, publicUrl, now }); // one-click unsubscribe and the investors' choices (13-04)
   const INVITE_DAYS = numIn(env.INVITE_DAYS, 30, 1, 365);
   const KEEP_DAYS = numIn(env.SUBMISSION_DAYS, 30, 1, 365);
   const iso = (ms = now()) => new Date(ms).toISOString();
@@ -1206,6 +1208,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         notifyStatus = r.emailStatus;
       }
       store.put('invitations', { id: rec.id, notifyStatus });
+      await confirm(rec, snap, summarize(sub, snap, checks), completedAt);
       return send(res, 200, { ok: true });
     }
     throw fail(404, 'Not found');
@@ -1257,12 +1260,52 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     };
   }
 
+  /**
+   * EM-10, C-09 (13-04): the investor's confirmation, after the sponsor's notification: what the firm received, the portal,
+   * nothing sensitive (emails.js confirmation has no field for a number). Sent only for what was received: a co-investor's
+   * signature only when they signed, a tax form only when one came back, a re-verification only when a result came; a
+   * portal link sends none. To the co-investor for their signature. Logged; a mail failure never fails the completion.
+   */
+  async function confirm(rec, snap, summary, completedAt) {
+    try {
+      const inv = snap.invitation || {};
+      const s = summary || {};
+      let variant = '';
+      if (s.coSign) variant = s.coSigned ? 'coSign' : '';
+      else if (s.access) variant = '';
+      else if (s.taxRequest) variant = s.taxState === 'signed' || s.taxState === 'uploaded' ? 'taxForm' : '';
+      else if (s.reverify) variant = s.accreditation && s.accreditation !== 'Not verified again' ? 'reverify' : '';
+      else variant = snap.offering && s.requested ? 'subscription' : 'onboarding';
+      if (!variant || !validAddress(snap.investor.email)) return;
+      const form = { 'W-8BEN': 'foreign-individual', 'W-8BEN-E': 'foreign-entity', 'W-9': snap.investor.taxType === 'us-entity' ? 'us-entity' : 'us-individual' }[s.taxForm];
+      const investor = { id: snap.investor.id, contact: snap.investor.contact, title: snap.investor.title, taxType: form || snap.investor.taxType };
+      // A co-investor has no portal sign-in of their own: no portal button (13-11).
+      const portalUrl = inv.coSign ? '' : String(snap.portalUrl || '').split('#')[0];
+      const m = render('confirmation', { variant, firm: snap.firm, investor, offering: snap.offering, invitation: {}, portalUrl, completedAt });
+      await mailer.send({ kind: 'confirmation', refId: rec.id, investorId: snap.investor.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.investor.email, toName: snap.investor.contact, subject: m.subject, text: m.text, html: m.html, inline: m.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })), headers: { 'Auto-Submitted': 'auto-generated' } });
+    } catch (e) {
+      store.event({ type: 'email_failed', kind: 'confirmation', invitationId: rec.id, error: String((e && e.message) || e).slice(0, 200) });
+    }
+  }
+
   async function sendInvite(rec, snap, token, kind) {
     const url = link(snap.portalUrl, token);
     const started = !!rec.stepKey;
     const build = kind === 'resend' ? resendMessage : invitationMessage;
     const msg = build({ firm: snap.firm, investor: snap.investor, offering: snap.offering, invitation: snap.invitation, link: url, expiresAt: rec.expiresAt, started });
-    const r = await mailer.send(Object.assign({ kind: kind === 'resend' ? 'invitation_resent' : 'invitation', invitationId: rec.id, refId: rec.id, investorId: snap.investor.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.investor.email, toName: snap.investor.contact, link: url }, msg));
+    const head = { kind: kind === 'resend' ? 'invitation_resent' : 'invitation', invitationId: rec.id, refId: rec.id, investorId: snap.investor.id, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.investor.email, toName: snap.investor.contact, link: url };
+    // EM-11, C-02 (13-04): a possibly commercial invitation is not sent to an address that turned offering news off, and
+    // otherwise carries the one-click address in its headers and the portal page's stop link in its footer.
+    if (msg.commercial && unsub.offeringOff(rec.workspace, snap.investor.email)) {
+      mailLog.add(Object.assign({ status: 'unsubscribed', error: UNSUBSCRIBED, subject: msg.subject, text: msg.text }, head));
+      return { link: url, emailStatus: 'unsubscribed', emailError: '' };
+    }
+    if (msg.commercial) {
+      const stop = unsub.urls(rec.workspace, snap.investor.id, snap.investor.email, snap.portalUrl);
+      const m = render(head.kind, { firm: snap.firm, investor: snap.investor, offering: snap.offering, invitation: snap.invitation, link: url, expiresAt: rec.expiresAt, started, unsubscribeUrl: stop.footer });
+      Object.assign(msg, { text: m.text, html: m.html, headers: stopHeaders(m, stop.header) });
+    }
+    const r = await mailer.send(Object.assign(head, msg));
     return { link: url, emailStatus: r.emailStatus, emailError: r.error || '' };
   }
 
@@ -1323,6 +1366,10 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     // With the shared or open token (the operator's own) nothing is dropped.
     if (auth && auth.account) stripReserved(verification);
 
+    // C-06 (13-04): a possibly commercial invitation this server would email needs the firm's postal address, once the
+    // firm's own record holds that field (13-05's rule in the console; 13-09 adds the setting). Refused before any payment.
+    const own = obj(firmRecord(pin !== null ? pin : clip(body.workspace, 120)));
+    if (body.sendEmail !== false && own && Object.prototype.hasOwnProperty.call(own, 'postalAddress') && render('invitation', { firm, investor: inv, offering, invitation }).needs.includes('postalAddress')) throw fail(422, POSTAL);
     // The package is paid before anything is stored: by a sponsor account only, at the tier this server works out and the
     // price billing holds for it (credit first, then the card). A refusal leaves nothing behind.
     let paid = null;
