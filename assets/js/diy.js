@@ -321,7 +321,7 @@
             <label class="cs-field" for="tm-email"><span>Email</span><input id="tm-email" type="email" data-bind="team:email" value="${h(f.email)}"></label>
             <label class="cs-field" for="tm-role"><span>Role</span><select id="tm-role" data-bind="team:role">${Object.keys(ROLE_INFO).map((r) => `<option value="${r}"${f.role === r ? ' selected' : ''}>${ROLE_INFO[r][0]}</option>`).join('')}</select></label>
             ${f.err ? `<p class="cs-error cs-wide">${h(f.err)}</p>` : ''}
-            <div class="cs-row cs-wide"><button class="cs-btn cs-btn-primary" type="submit">${icon('plus')}Send invitation</button><span class="cs-hint">They get an email to set a password and turn on two-step sign-in.</span></div>
+            <div class="cs-row cs-wide"><button class="cs-btn cs-btn-primary" type="submit">${icon('plus')}Send invitation</button><span class="cs-hint">${teamHint()}</span></div>
           </form>`
         )}
         ${K.panel('Roles', `<dl class="cs-kv ik-kv">${Object.keys(ROLE_INFO).map((r) => `<div><dt>${ROLE_INFO[r][0]}</dt><dd>${h(ROLE_INFO[r][1])}</dd></div>`).join('')}</dl>`)}`,
@@ -334,6 +334,29 @@
     f[path] = v;
     if (path === 'first' || path === 'last') f.name = personName(f);
   };
+  /**
+   * Plan 13-08 (EM-12, C-03): no team invitation is emailed yet (that comes with sign-in accounts on the server), so the
+   * toast never says one was sent: with no server it is simulated; with one, the invitation is kept until then.
+   */
+  function inviteToast(email) {
+    let server = '';
+    try {
+      server = NS.integrations && NS.integrations.serverUrl ? NS.integrations.serverUrl(W()) : '';
+    } catch (e) {
+      server = '';
+    }
+    return server ? `Invitation to ${email} saved; it is emailed once sign-in accounts are connected.` : `Invitation to ${email} ${NS.emails ? NS.emails.SIMULATED : '(simulated in this demo)'}.`;
+  }
+  /** The line under "Send invitation": only what happens in this mode (13-08). */
+  function teamHint() {
+    let server = '';
+    try {
+      server = NS.integrations && NS.integrations.serverUrl ? NS.integrations.serverUrl(W()) : '';
+    } catch (e) {
+      server = '';
+    }
+    return server ? 'The invitation is saved here; it is emailed once sign-in accounts are connected.' : `They get an email to set a password and turn on two-step sign-in ${NS.emails ? NS.emails.SIMULATED : '(simulated in this demo)'}.`;
+  }
   NS.forms['team-invite'] = () => {
     const f = teamState();
     const w = W();
@@ -347,7 +370,7 @@
     S().ui.team = null;
     NS.app.save(true);
     NS.app.render();
-    U.toast(`Invitation sent to ${m.email}`);
+    U.toast(inviteToast(m.email));
   };
   NS.changes['team-role'] = (el) => {
     const w = W();
@@ -366,7 +389,7 @@
   };
   NS.actions['team-resend'] = (el) => {
     const m = team(W()).find((x) => x.id === el.getAttribute('data-id'));
-    if (m) U.toast(`Invitation sent again to ${m.email}`);
+    if (m) U.toast(inviteToast(m.email));
   };
   NS.actions['team-remove'] = (el) => {
     const w = W();

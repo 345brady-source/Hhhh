@@ -28,9 +28,11 @@
 //        or JSON {}) → 200 {} for every token: a valid one turns offering news off for that investor's address in that
 //        workspace at once (recorded with when and how); anything else changes nothing
 //   GET  /unsubscribe/<token> → 200 'Use the link in the email to stop these emails.' and nothing changes (link scanners
-//        and previews open links)
+//        and previews open links); with Accept: application/json → 200 { firm } (plan 13-08): the firm's name the token
+//        carries when this server signed it, else '' (the firm's portal page names the firm before the button)
 //
-// Tokens: base64url(JSON { w: workspace, i: investorId, h: the address's hash }) '.' base64url(HMAC-SHA256(key, that)), the
+// Tokens: base64url(JSON { w: workspace, i: investorId, h: the address's hash, f?: the firm's name (13-08) }) '.'
+// base64url(HMAC-SHA256(key, that)), the
 // key 32 random bytes made once with node:crypto and stored sealed with the vault (store record mailprefs '_key'), so a
 // token signed by another server's key is refused. The signature is compared with safeEqual. The choices are kept per
 // workspace and address hash (lib/maillog.mjs emailHash: no address is stored); events name the workspace only.
@@ -70,9 +72,10 @@ export const stopHeaders = (rendered, header) => Object.assign({}, rendered.head
 
 /**
  * createUnsubscribe({ store, vault, publicUrl, now }) → {
- *   urls(workspace, investorId, email, portalUrl) → { header, footer, token }   header: the server's one-click address;
- *                                                   footer: the firm's portal page (?server=…#unsubscribe-<token>)
- *   verify(token) → { w, i, h } | null
+ *   urls(workspace, investorId, email, portalUrl, firmName?) → { header, footer, token }   header: the server's one-click
+ *                                                   address; footer: the firm's portal page (?server=…#unsubscribe-<token>);
+ *                                                   firmName, when given, travels signed in the token
+ *   verify(token) → { w, i, h, f } | null
  *   record({ w, i, h }, how) → the choice stored
  *   offeringOff(workspace, email) → true once that address turned offering news off in that workspace
  *   list(workspace) → [ { investorId, offering, at, how } ]
@@ -98,13 +101,14 @@ export function createUnsubscribe({ store, vault, publicUrl, now = () => Date.no
   }
   const sign = (payload) => b64(createHmac('sha256', key()).update(payload).digest());
 
-  function token(workspace, investorId, email) {
-    const payload = b64(JSON.stringify({ w: str(workspace), i: str(investorId), h: emailHash(email) }));
+  function token(workspace, investorId, email, firmName) {
+    const f = clip(oneLine(firmName), 120);
+    const payload = b64(JSON.stringify(Object.assign({ w: str(workspace), i: str(investorId), h: emailHash(email) }, f ? { f } : {})));
     return `${payload}.${sign(payload)}`;
   }
   /** Built the way lib/invitations.mjs builds an invitation's link: the portal page, this server, the fragment. */
-  function urls(workspace, investorId, email, portalUrl) {
-    const t = token(workspace, investorId, email);
+  function urls(workspace, investorId, email, portalUrl, firmName) {
+    const t = token(workspace, investorId, email, firmName);
     const u = new URL(str(portalUrl).split('#')[0]);
     u.searchParams.delete('server');
     const base = u.toString();
@@ -131,7 +135,8 @@ export function createUnsubscribe({ store, vault, publicUrl, now = () => Date.no
       return null;
     }
     if (!obj(p) || typeof p.w !== 'string' || !p.w || p.w.length > 120 || !INVESTOR_ID.test(str(p.i)) || !HASH.test(str(p.h))) return null;
-    return { w: p.w, i: p.i, h: p.h };
+    if (p.f !== undefined && (typeof p.f !== 'string' || p.f.length > 120)) return null;
+    return { w: p.w, i: p.i, h: p.h, f: p.f || '' };
   }
   function record(p, how) {
     const at = new Date(now()).toISOString();
@@ -249,7 +254,7 @@ export function createMessages({ env = {}, store, vault, mailer, log, publicUrl,
     const optional = kind === 'notice' && (variant === 'documents' || variant === 'quarterly');
     const results = [];
     for (const r of list) {
-      const stop = commercial ? unsub.urls(workspace, r.investorId, r.email, portalUrl) : null;
+      const stop = commercial ? unsub.urls(workspace, r.investorId, r.email, portalUrl, firm.name) : null;
       const m = renderFor(kind, variant, firm, portalUrl, r, stop ? stop.footer : '');
       const base = { kind, workspace, investorId: r.investorId, refId: '', to: r.email, toName: r.name, subject: m.subject, text: m.text, link: stop ? stop.footer : '' };
       // EM-11: an investor who turned offering news off gets none; the message is logged as not sent.
@@ -292,16 +297,23 @@ export function createMessages({ env = {}, store, vault, mailer, log, publicUrl,
 
   /** /unsubscribe/<token>: before the sponsor gate (no token of the firm's), rate limited by the caller. */
   async function unsubscribe(req, res, path) {
+    const t = path.startsWith('/unsubscribe/') ? path.slice('/unsubscribe/'.length) : '';
+    const valid = () => {
+      try {
+        return vault.allowed ? unsub.verify(t) : null;
+      } catch {
+        return null;
+      }
+    };
+    // The firm's portal page (13-08) asks for the firm's name the token carries; nothing changes.
+    if (req.method === 'GET' && /application\/json/i.test(str(req.headers.accept))) {
+      const p = valid();
+      return send(res, 200, { firm: p ? p.f : '' });
+    }
     if (req.method === 'GET' || req.method === 'HEAD') return send(res, 200, GET_SAYS);
     if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
     await readRaw(req, 8 * KB);
-    const t = path.startsWith('/unsubscribe/') ? path.slice('/unsubscribe/'.length) : '';
-    let p = null;
-    try {
-      p = vault.allowed ? unsub.verify(t) : null;
-    } catch {
-      p = null;
-    }
+    const p = valid();
     if (p) unsub.record(p, 'link');
     return send(res, 200, {});
   }

@@ -1,4 +1,4 @@
-// gate: tests 5
+// gate: tests 6
 // One-click unsubscribe (plan 13-04, EM-11, C-02 "To be confirmed with counsel"): every possibly commercial message (offering
 // news, an invitation to a new offering) carries List-Unsubscribe with the server's one-click address and
 // List-Unsubscribe-Post, and its footer link opens the firm's own portal page. A POST to the one-click address turns
@@ -245,6 +245,38 @@ test('nothing stored in plain', async () => {
     const events = JSON.stringify(data.events);
     assert.ok(data.events.some((e) => e.type === 'unsubscribed' && e.workspace === WS), 'the unsubscribe is an event');
     for (const s of [ANITA.investorId, ANITA.email, ANITA.name]) assert.ok(!events.includes(s), `no event holds ${s}`);
+  } finally {
+    await h.close();
+  }
+});
+
+// Plan 13-08 (EM-11, T-13-31): the firm's own portal page names the firm before the investor presses the button. The
+// name travels inside the signed token, so only this server's own messages can put a name on that page; a GET with
+// Accept: application/json reads it and changes nothing, and an altered or unknown token reads no name.
+test('firm name', async () => {
+  const h = await harness();
+  try {
+    const path = await stopPath(h, ANITA.email);
+    const ask = async (p) => {
+      const res = await fetch(h.base + p, { headers: { Accept: 'application/json' } });
+      return { status: res.status, type: res.headers.get('content-type') || '', body: await res.json() };
+    };
+    const good = await ask(path);
+    assert.equal(good.status, 200);
+    assert.ok(good.type.startsWith('application/json'), good.type);
+    assert.deepEqual(good.body, { firm: FIRM.name });
+    assert.deepEqual(await prefs(h), [], 'reading the firm name changes nothing');
+    // The same token with another firm's name put in: its signature no longer matches.
+    const [payload, sig] = path.split('/').pop().split('.');
+    const altered = `${Buffer.from(JSON.stringify(Object.assign(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')), { f: 'Someone Else LLC' }))).toString('base64url')}.${sig}`;
+    for (const t of [altered, 'not-a-token', randomBytes(24).toString('base64url')]) assert.deepEqual((await ask(`/unsubscribe/${t}`)).body, { firm: '' }, t);
+    assert.equal((await call(h.base, 'POST', `/unsubscribe/${altered}`, { bearer: '', body: {} })).text, '{}');
+    assert.deepEqual(await prefs(h), [], 'an altered token turns nothing off');
+    // A plain GET (a link scanner, a preview) still reads the one sentence.
+    assert.equal((await call(h.base, 'GET', path, { bearer: '' })).text, GET_SAYS);
+    // The real token still works.
+    assert.equal((await call(h.base, 'POST', path, { bearer: '', body: {} })).text, '{}');
+    assert.equal((await prefs(h)).length, 1);
   } finally {
     await h.close();
   }

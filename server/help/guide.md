@@ -818,3 +818,4 @@ onboarding/profile: a step of the typed activation; a self-serve investor activa
 onboarding/identity: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
 onboarding/accreditation: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
 onboarding/review: a step of the typed activation; a self-serve investor activates through the invitation flow, so this route only updates a bank account
+unsubscribe: the page an unsubscribe link in an offering email opens; one button to stop invitations to new offerings and a link back to the portal
