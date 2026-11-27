@@ -19,3 +19,33 @@ GREEN (t1.txt, at 6473bfe), plan verify exit 0:
 # fail 0
 ```
 Tracer gate: verify re-run end to end passed; auth.test.mjs + auth-gate.test.mjs 16/16 still pass.
+
+## Task 2
+RED (red-2.txt, at 1706d91):
+```
+ok 1 - set up and sign in
+not ok 2 - replay and window
+  expected: 400
+  actual: 401
+not ok 3 - wrong codes
+  expected: 'Too many wrong codes. Sign in again.'
+  actual: 'That code is not right. Check the time on your phone and try the newest code.'
+not ok 4 - recovery
+  expected: 200
+  actual: 401
+not ok 5 - side doors
+  expected: 401
+  actual: 404
+not ok 6 - investors
+  expected: 401
+  actual: 404
+# tests 6
+# pass 1
+# fail 5
+```
+GREEN (t2.txt, at d7921d2), plan verify exit 0:
+```
+# tests 6
+# pass 6
+# fail 0
+```
