@@ -64,6 +64,8 @@ Lib.describeShots([
 
 /* ---------- the frame ---------- */
 async function reframe(A) {
+  // A reloaded page asks for the parts' files again (plan 11-15 lists the bank section): count only this load's asks.
+  if (A.asked) A.asked.length = 0;
   await A.page.reload();
   const fr = await (await A.page.waitForSelector('#art')).contentFrame();
   await fr.waitForSelector('#app');
