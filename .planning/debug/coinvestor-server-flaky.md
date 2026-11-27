@@ -93,3 +93,8 @@ started: since 06-39; seen in 08-17's gate, 11-13's gate run 3, exec-15-02 run 1
   checked: the fix, commit 6e3da17 (checks/co-investor-server.js only)
   found: new checkNow(cp, ms): closes the dialog, goes to Investors, notes the toasts so far (a MutationObserver on #toasts), presses Check now, waits up to 30 s for the toast the inv8-check action shows once its check has ended ("Checked. Nothing new." / "... added to the portal." / "Could not check: ..."); { finished, toast }. consoleChecks = checkNow + "co-investor's signer signed"; replay = store.put + checkNow + consoleState; both replay assertions also require check.finished, and their details carry the check's outcome. Other waits that stood in for an async result: saveCo 800 ms -> the co-save form gave way; removeCo 800 ms + 1500 ms -> the console logged the server's answer to its cancel; co-investor device 800 ms after done -> invite.sentAt (the confirmed send); countersign 900 ms -> .es-sign-console open. Left: 200/300/500 ms waits after synchronous handlers (typing, a press that may open the adopt dialog, the agreement image, Requests tab/approve), each followed by a condition wait or a synchronous read.
   implication: no assertion changed or loosened; two got stricter (the check must have ended).
+
+- timestamp: 2026-11-27T01:05Z
+  checked: npm --prefix server test on the fixed tree (6e3da17 + debug docs), scratchpad coflaky/server-tests.txt
+  found: "# tests 456", "# pass 456", "# fail 0".
+  implication: server tests unchanged (the fix touches only the check).
