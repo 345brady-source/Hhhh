@@ -105,3 +105,13 @@ Binding on the executors (full text: scratchpad checks-15-wave3.md).
 - Open: POST /v1/auth/password is 404 until 15-14; with PORTAL_ORIGIN set a served portal cannot call invite/login until 15-18; an invitation made with the shared token for a workspace with no record gives an investor sign-in with no firm rule and an empty issuer (for 15-06/15-14 to close). Four guide lines in 15-04-SUMMARY for GUIDE-PASS once the screens exist.
 - Wave 3 can start: 15-06 now (fresh pull; 13-03/13-04/14-08 not running). 15-14 after 13-11 and 13-03.
 - Merged tree e703292: REVERIFY 9, PACKAGE FLOW 10, MONITORING 9, CO-INVESTOR SERVER 5, SERVER MODE 15 pass; GATE15 SELF-TEST PASS (9).
+
+## After 15-06 (merged 2026-11-27)
+- Gate15 GATE_EXIT=0 on the first run (99 GATE ok, 0 FAIL) on 72c7a5e; plan tree 556 = 544 + 12 (workspace.test 9, serve.test 3); merged tree 567/567. SECTIONS PASS (2), SERVED PORTAL PASS (2, Chromium desktop and iPhone profile, NOTE for WebKit); RED with `--plant no-wasm` FAIL.
+- Threat flag (for 15-18 and the owner's WebKit check): the text reader's worker takes no policy from the page (assets/ scripts are served without a CSP header), so removing 'wasm-unsafe-eval' from the page policy does not stop the reader in Chromium; only page-compiled WebAssembly, the header check and the violation count fail.
+- Not closed, for 15-14 (it owns auth.mjs): an invitation made with the shared token for a workspace with no record gives an investor sign-in with no firm rule and an empty issuer; fix in POST /v1/invite/login.
+- Deviations: file blob key `wsf-<ws>-<sha256(id)>`; file names and types sealed; files served as attachments with `default-src 'none'; sandbox` and nosniff; tenant.ach.immediateOrigin, tenant.ach.companyId and offering achOverride.companyId masked; taxpayer field names ein, itin, usTin, e8Owner<n>Tin refused too; workspace routes take people only (no account token, no shared API_TOKEN); no `team` argument, no `purge`; createServer takes opts.pages; public ROUTES lines for security.txt and the served pages.
+- SECTIONS shape for 14-08: one line per top-level key `{ write, read?, grow?, fields?, each?, masked? }`; 14-08 adds inbox and rooms (printed as NOTE today, with mailLog).
+- For 15-17: the first save with bank details needs pay and a sign-in in the last 10 minutes; ws.invite left out of a save; staff importing a submission with a bank account is refused until 15-15's pending flow; DELETE on a file needs JSON from the own origin. For 15-15: server.workspaces.get(id) and put(id, ws, version, person). I7 applied.
+- Nothing is ready for the owner until 15-17 moves the console onto these routes and he has checked it.
+- Unblocked: 13-03 (index.mjs, README, roles.mjs free).
