@@ -1,6 +1,6 @@
 /* Hallmark · shape: app screen · genre: modern-minimal · theme: brand · redesign: polish
  * paper: oklch(97.1% 0.005 255) · accent: oklch(46.6% 0.069 257) · display: Brygada 1918 · body: Ysabeau Office
- * nav: kept (A's grouped menu in B's navy frame) · signature: the ledger (statement tables, double rule under totals) · states: default, hover, focus, active, disabled, current
+ * nav: kept (A's grouped menu in B's navy frame) · signature: the ledger (statement tables, double rule under totals) in complete Refract panels (D-15) · states: default, hover, focus, active, disabled, current
  * axes: cool-white/old-style-serif/steel · posture: restrained · surface: absolute · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V, the composition is direction A kept by the owner (D-13); variety comes from the ledger and the navy frame, not a new shape */
 /* Hallmark · conflict 19 and 63 (Floor) with owner decision D-02 · the portal's own strings keep their "—" (an empty Unfunded cell, console.js:245) and " · " joins (console.js:330, portal.js:727); D-02 forbids changing words or punctuation, so they stay verbatim and are listed for the owner */
@@ -8,6 +8,7 @@
 /* Hallmark · conflict 9 and 67 (Floor) with owner decision D-14 ("keep the font of a") · column heads, menu group names, figure labels and nav links are set in Ysabeau SC, the small-caps cut direction A used; tracking is removed, the words are the portal's own in sentence case */
 /* Hallmark · waive 7b · white panels and table bodies on the cool-white page · direction B's colour scheme is kept exactly (D-13), and its panels are white */
 /* Hallmark · answered F4 · each page has one filled primary: navy on the console, the sponsor's colour on the investor's pages (.pt) */
+/* Hallmark · answered F7 · the panels do not lift on hover: they are reading surfaces, not controls, and only controls move */
 /* Hallmark · waive 3 · the notice keeps a 4px rule in the sponsor's colour on its left edge · it is where the sponsor's colour sits on the investor's page (D-07) */
 
 /*
@@ -35,6 +36,10 @@
   --text-s: 14px; --text-m: 16px; --text-l: 24px; --text-xl: 40px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-14: 56px; --space-16: 64px; --space-20: 80px;
   --container: 1120px; --container-pt: 1160px;
+  /* Refract's panel (D-15), drawn from B's own tokens: a lit top edge, a full hairline box, a shadow tinted with B's steel that falls down and right */
+  --radius-panel: 22px; --radius-inner: 10px;
+  --edge-light: inset 0 1px 0 color-mix(in oklab, var(--color-panel) 92%, transparent);
+  --shadow-panel: 18px 28px 48px -26px color-mix(in oklab, var(--color-steel) 38%, transparent), 2px 3px 6px -2px color-mix(in oklab, var(--color-night) 12%, transparent);
   --dur: 120ms;
 }
 
@@ -59,7 +64,7 @@ a:active { color: var(--color-ink-2); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
 
 /* Buttons: square and quiet, all states */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 40px; padding: 0 var(--space-4); border: 1px solid var(--color-ink); background: transparent; color: var(--color-ink); font: 600 var(--text-s)/1 var(--font-body); text-decoration: none; cursor: pointer; position: relative; transition: background-color var(--dur) ease-out, color var(--dur) ease-out; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 40px; padding: 0 var(--space-4); border: 1px solid var(--color-ink); border-radius: var(--radius-inner); background: transparent; color: var(--color-ink); font: 600 var(--text-s)/1 var(--font-body); text-decoration: none; cursor: pointer; position: relative; transition: background-color var(--dur) ease-out, color var(--dur) ease-out; }
 .btn::after { content: ""; position: absolute; inset: -2px 0; }
 .btn:hover { background: var(--color-band); color: var(--color-ink); }
 .btn:active { background: var(--color-band-2); }
@@ -81,12 +86,12 @@ a:active { color: var(--color-ink-2); }
 .pt .ask { color: var(--color-ink-3); }
 .pt .ask:hover, .pt .ask:active { color: var(--color-ink); }
 .cs .ask:focus-visible, .cs .iconbtn:focus-visible, .rail a:focus-visible { outline-color: var(--color-focus-night); }
-.iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(--color-rule); background: var(--color-panel); color: var(--color-ink-2); position: relative; cursor: pointer; transition: background-color var(--dur) ease-out; }
+.iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(--color-rule); border-radius: var(--radius-inner); background: var(--color-panel); color: var(--color-ink-2); position: relative; cursor: pointer; transition: background-color var(--dur) ease-out; }
 .iconbtn:hover { background: var(--color-band); }
 .iconbtn:active { background: var(--color-band-2); }
 .cs .iconbtn { border-color: var(--color-night-edge); background: transparent; color: var(--color-on-night-2); }
 .cs .iconbtn:hover { background: var(--color-night-2); }
-.iconbtn .count { position: absolute; top: -8px; right: -8px; min-width: 20px; padding: 0 var(--space-1); background: var(--color-bad); color: var(--color-on-bad); font: 600 12px/20px var(--font-body); font-variant-numeric: tabular-nums; text-align: center; }
+.iconbtn .count { position: absolute; top: -8px; right: -8px; min-width: 20px; padding: 0 var(--space-1); border-radius: var(--radius-inner); background: var(--color-bad); color: var(--color-on-bad); font: 600 12px/20px var(--font-body); font-variant-numeric: tabular-nums; text-align: center; }
 .ask-icon { display: none; }
 
 /* ---------- Console: A's composition in B's navy frame ---------- */
@@ -108,13 +113,17 @@ a:active { color: var(--color-ink-2); }
 .rail a:hover { color: var(--color-on-night); background: var(--color-night-2); }
 .rail a:active { background: var(--color-night-edge); }
 .rail a[aria-current="page"] { color: var(--color-on-night); font-weight: 600; background: var(--color-night-2); border-left-color: var(--color-sky); }
-.rail .n { min-width: 24px; padding: 0 var(--space-1); background: var(--color-sky); color: var(--color-night); font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
+.rail .n { min-width: 24px; padding: 0 var(--space-1); border-radius: var(--radius-inner); background: var(--color-sky); color: var(--color-night); font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums; }
 .main { padding: var(--space-12) var(--space-14) var(--space-20); }
 .wrap { max-width: var(--container); margin: 0 auto; min-width: 0; }
 .head { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-6); margin-bottom: var(--space-10); }
 .head p { margin-top: var(--space-3); color: var(--color-ink-2); font: italic 400 var(--text-m)/1.4 var(--font-display); }
 .block { margin-bottom: var(--space-12); min-width: 0; }
-.block-h { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; padding-bottom: var(--space-3); border-bottom: 2px solid var(--color-ink); margin-bottom: var(--space-1); }
+/* One panel style, one level: every content section is a complete box with its own surface over the page; nothing inside it is boxed again */
+.panel { background: var(--color-panel); border: 1px solid var(--color-rule); border-radius: var(--radius-panel); box-shadow: var(--edge-light), var(--shadow-panel); padding: var(--space-6); margin-bottom: var(--space-8); min-width: 0; }
+.panel > :last-child, .panel .agenda > li:last-child, .panel .attn > li:last-child, .panel .docs > li:last-child { margin-bottom: 0; }
+.panel .agenda > li:last-child, .panel .attn > li:last-child, .panel .docs > li:last-child, .panel .ledger tbody tr:last-child td, .panel .ledger tbody tr:last-child th { border-bottom: 0; }
+.block-h { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); flex-wrap: wrap; padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-rule); margin-bottom: var(--space-1); }
 .block-h p { font-size: var(--text-s); color: var(--color-ink-3); }
 
 /* Setup: an agenda with numbers in the serif */
@@ -127,9 +136,13 @@ a:active { color: var(--color-ink-2); }
 .agenda .act { display: flex; gap: var(--space-4); align-items: center; }
 
 /* Highlights: one ruled row of figures that scale to their cell and never touch */
-.hl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 var(--space-12); border-top: 2px solid var(--color-ink); border-bottom: 1px solid var(--color-ink); }
+.hl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 var(--space-12); }
+.hl.panel { padding: 0; margin-bottom: var(--space-8); }
+.panel .hl { margin: var(--space-4) 0 0; border-top: 1px solid var(--color-rule); }
 .hl > div { container-type: inline-size; padding: var(--space-5) var(--space-5) var(--space-4) 0; min-width: 0; }
+.hl.panel > div { padding: var(--space-5) var(--space-6); }
 .hl > div + div { padding-left: var(--space-5); border-left: 1px solid var(--color-rule); }
+.hl.panel > div + div { padding-left: var(--space-6); }
 .hl dd { margin: 0; font: 500 clamp(20px, 14cqi, 40px)/1.05 var(--font-display); font-variant-numeric: lining-nums tabular-nums; white-space: nowrap; }
 .hl dt { margin-top: var(--space-2); font: 500 var(--text-s)/1.3 var(--font-label); color: var(--color-ink-3); }
 .hl .sub { display: block; margin-top: var(--space-1); font-size: var(--text-s); color: var(--color-ink-3); }
@@ -175,7 +188,7 @@ table.ledger { width: 100%; border-collapse: collapse; }
 .acct .asof { font: italic 400 var(--text-m)/1.4 var(--font-display); color: var(--color-ink-2); }
 .cols { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr); gap: var(--space-14); }
 .cols > * { min-width: 0; }
-.notice { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-5); margin-bottom: var(--space-10); background: var(--color-panel); border: 1px solid var(--color-rule); border-left: 4px solid var(--color-brand); }
+.notice { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-6); margin-bottom: var(--space-8); background: var(--color-panel); border: 1px solid var(--color-rule); border-left: 4px solid var(--color-brand); border-radius: var(--radius-panel); box-shadow: var(--edge-light), var(--shadow-panel); }
 .notice time { display: block; font: 500 var(--text-s)/1.3 var(--font-label); color: var(--color-ink-3); }
 .notice strong { font: 500 18px/1.35 var(--font-display); }
 .notice .acts { display: flex; gap: var(--space-5); flex: none; }
@@ -204,13 +217,13 @@ table.ledger { width: 100%; border-collapse: collapse; }
 .hold-bar span { display: block; height: 100%; background: var(--color-brand); }
 .hold small { font-size: var(--text-s); color: var(--color-ink-3); white-space: nowrap; }
 
-.offer { padding: var(--space-6); border: 3px double var(--color-ink); background: var(--color-panel); }
+.offer { padding: var(--space-4) 0 0; }
 .offer h3 { font-size: 22px; line-height: 1.25; }
 .offer dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-3); margin: var(--space-4) 0 var(--space-5); font-size: var(--text-s); }
 .offer dt { color: var(--color-ink-3); }
 .offer dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
-.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--color-ink); border-bottom: 1px solid var(--color-rule); margin: var(--space-4) 0 0; }
-.stats > div { container-type: inline-size; padding: var(--space-3) var(--space-2) var(--space-3) 0; min-width: 0; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--color-rule); margin: var(--space-4) 0 0; }
+.stats > div { container-type: inline-size; padding: var(--space-3) var(--space-2) 0 0; min-width: 0; }
 .stats > div + div { padding-left: var(--space-3); border-left: 1px solid var(--color-rule); }
 .stats dd { margin: 0; font: 500 clamp(18px, 22cqi, 24px)/1.1 var(--font-display); white-space: nowrap; }
 .stats dt { margin-top: var(--space-1); font: 500 13px/1.3 var(--font-label); color: var(--color-ink-3); }
@@ -242,6 +255,11 @@ table.ledger { width: 100%; border-collapse: collapse; }
   .rail a { min-height: 48px; padding: 0 var(--space-3); border-left: 0; border-bottom: 3px solid transparent; white-space: nowrap; }
   .rail a[aria-current="page"] { border-bottom-color: var(--color-sky); }
   .main { padding: var(--space-8) var(--space-4) var(--space-14); }
+  .panel { padding: var(--space-4); border-radius: 16px; }
+  .hl.panel > div { padding: var(--space-4); }
+  .hl.panel > div + div { padding-left: var(--space-4); }
+  .hl.panel > div:nth-child(3) { padding-left: var(--space-4); }
+  .notice { padding: var(--space-4); border-radius: 16px; }
   .head { flex-direction: column; align-items: stretch; margin-bottom: var(--space-8); }
   .agenda li { grid-template-columns: 32px minmax(0, 1fr); }
   .agenda .act { grid-column: 2; }
@@ -253,7 +271,7 @@ table.ledger { width: 100%; border-collapse: collapse; }
   .phone-bar { display: flex; align-items: center; gap: var(--space-2); min-height: 64px; padding: 0 var(--space-4); border-bottom: 3px double var(--color-ink); background: var(--color-panel); }
   .phone-bar .lockup { margin-right: auto; min-width: 0; flex: 1 1 auto; }
   .ask-icon { display: inline-flex; }
-  .menu { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--color-ink); background: transparent; font: 500 var(--text-s)/1 var(--font-label); color: var(--color-ink); cursor: pointer; }
+  .menu { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: 0 var(--space-4); border: 1px solid var(--color-ink); border-radius: var(--radius-inner); background: transparent; font: 500 var(--text-s)/1 var(--font-label); color: var(--color-ink); cursor: pointer; }
   .menu:hover { background: var(--color-band); }
   .menu:active { background: var(--color-band-2); }
   .pw { padding: var(--space-8) var(--space-4) var(--space-14); }
@@ -263,7 +281,9 @@ table.ledger { width: 100%; border-collapse: collapse; }
   /* Phone ledger: each row becomes a statement entry, label and figure joined by a dotted leader */
   .ledger.stack thead { display: none; }
   .ledger.stack, .ledger.stack tbody, .ledger.stack tfoot, .ledger.stack tr, .ledger.stack th, .ledger.stack td { display: block; width: 100%; }
-  .ledger.stack tbody tr { padding: var(--space-4) 0; border-bottom: 1px solid var(--color-ink); }
+  .ledger.stack tbody tr { padding: var(--space-4) 0; border-bottom: 1px solid var(--color-rule); }
+  .panel .ledger.stack tbody tr:last-child { border-bottom: 0; }
+  .panel .ledger.stack tfoot tr { border-top: 1px solid var(--color-ink); }
   .ledger.stack tbody th { padding: 0 0 var(--space-2); border: 0; }
   .ledger.stack td { display: flex; align-items: baseline; gap: var(--space-2); padding: var(--space-1) 0; border: 0; }
   .ledger.stack td::before { content: attr(data-label); font: 500 var(--text-s)/1.3 var(--font-label); color: var(--color-ink-3); white-space: nowrap; }
@@ -279,7 +299,7 @@ table.ledger { width: 100%; border-collapse: collapse; }
 @media (max-width: 640px) { h1 { font-size: 32px; } }
 
 /* Specimen: the Distributions page's column chart (same data), slim columns with their values set above */
-.spec { margin-top: var(--space-6); padding-top: var(--space-6); border-top: 1px dashed var(--color-edge); }
+.spec { margin-top: var(--space-6); }
 .spec-note { font: italic 400 var(--text-s)/1.4 var(--font-display); color: var(--color-ink-3); margin-bottom: var(--space-3); }
 .cols-chart { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); align-items: end; gap: var(--space-2); height: 200px; border-bottom: 1px solid var(--color-ink); padding-top: var(--space-6); }
 .cc { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
