@@ -187,6 +187,102 @@
     addEvent(env, 'System', 'Email sent', `To ${to.name} <${to.email}>: ${subject}`);
   }
   const actorFor = (s) => `${s.name} (${s.co ? 'co-investor' : s.role === 'investor' ? 'investor' : 'countersigner'})`;
+  /*
+   * E-sign emails in the self-serve edition (plan 13-08, EM-09, EM-13, C-04, C-09, C-12); the managed edition keeps its own
+   * words (C-05). With an integration server connected, each investor signer is emailed by it a notice with a link to
+   * their portal (emails.js dispatch, POST /v1/messages): never the document, never a signing link; the envelope history
+   * records what the server answered once it has. With no server every email is simulated: the history's "Email sent" and
+   * a simulated entry in the sent log. The rule for the others (I2): a signer with no investor record (the firm's
+   * countersigner) or a co-investor keeps today's path in both cases (simulated, in the history and the sent log).
+   */
+  const SELF = () => !!(NS.EDITION && NS.EDITION.diy);
+  function mailServer(ws) {
+    try {
+      return SELF() && !!(NS.integrations && NS.integrations.serverUrl && NS.integrations.serverUrl(ws));
+    } catch (e) {
+      return false;
+    }
+  }
+  /** The signer's investor record when the server emails them: an investor signer, not a co-investor, with an address. */
+  function mailedInvestor(ws, s) {
+    if (!ws || !s || s.co || !s.investorId) return null;
+    const inv = (ws.investors || []).find((x) => x.id === s.investorId);
+    return inv && (s.email || inv.email) ? inv : null;
+  }
+  /** on: the server emails this moment (mailServer, and not a quiet send): its investor signers' history waits for it. */
+  const byServer = (ws, s, on) => !!on && !!mailedInvestor(ws, s);
+  const AFTER = { sent: 'Email sent', outbox: 'Email waiting to send', held: 'Email waiting to send' };
+  const NO_SERVER = 'The integration server could not be reached.';
+  /**
+   * The emails of one moment (kind: esign_request, esign_reminder, esign_voided or esign_completed) to these signers,
+   * self-serve only. on: through the server. Resolves to what the sponsor is told of the server's part (summary()'s
+   * sentence, then the simulated sentence for the others), or null with no server. The caller has written the envelope
+   * history for everyone the server does not email.
+   */
+  async function mailSigners(ws, envId, list, kind, on) {
+    const E = NS.emails;
+    if (!SELF() || !E || !E.dispatch) return null;
+    const env0 = envById(ws, envId);
+    const title = env0 ? env0.title : '';
+    const firm = E.firmFromTenant(ws.tenant);
+    const portalUrl = `${location.origin}${location.pathname}`;
+    const data = (s) => ({ signer: { name: s.name }, envelope: { title } });
+    const mine = [];
+    const others = [];
+    const seen = {};
+    (list || []).forEach((s) => {
+      const inv = mailedInvestor(ws, s);
+      if (inv && !seen[inv.id]) {
+        seen[inv.id] = true;
+        mine.push({ s, inv });
+      } else others.push(s);
+    });
+    others.forEach((s) => {
+      try {
+        const m = E.render(kind, Object.assign({ firm, portalUrl }, data(s)));
+        E.log(ws, { kind, subject: m.subject, to: s.email || '', investorId: '', status: 'simulated', text: m.text });
+      } catch (e) {
+        if (window.console) console.error(e);
+      }
+    });
+    let out = null;
+    let error = '';
+    if (mine.length) {
+      const items = mine.map(({ s, inv }) => ({ investorId: inv.id, inv, to: { name: s.name, email: s.email || inv.email }, data: data(s) }));
+      try {
+        out = await E.dispatch({ ws, kind, items, firm, portalUrl, connected: !!on, api: (m, p, b) => NS.integrations.api(ws, m, p, b) });
+      } catch (e) {
+        error = (e && e.status && e.message) || NO_SERVER;
+      }
+    }
+    if (on && mine.length) {
+      const env = envById(ws, envId);
+      mine.forEach(({ s, inv }) => {
+        const m = E.render(kind, Object.assign({ firm, portalUrl }, data(s)));
+        const r = out ? out.results.find((x) => x.investorId === inv.id) : null;
+        const st = r ? r.status : 'failed';
+        if (!out) E.log(ws, { kind, subject: m.subject, to: s.email || inv.email, investorId: inv.id, status: 'failed', text: m.text });
+        if (env) addEvent(env, 'System', AFTER[st] || 'Email not sent', `To ${s.name} <${s.email || inv.email}>: ${m.subject}`);
+      });
+    }
+    NS.app.save(true);
+    if (on && /^console-(envelope|esign)$/.test(S().route)) NS.app.render();
+    if (!on) return null;
+    const said = [];
+    if (mine.length) said.push(out ? E.summary(out.counts, true) : error);
+    if (others.length) said.push(`Email to ${others.map((s) => s.name).join(', ')} ${E.SIMULATED}.`);
+    return said.join(' ');
+  }
+  /** Show the toast once the server has answered (an empty answer shows `lead` alone). */
+  function mailToast(promise, lead) {
+    promise.then(
+      (said) => U.toast(`${lead || ''}${said || ''}`.trim()),
+      (e) => {
+        if (window.console) console.error(e);
+        U.toast(`${lead || ''}${NO_SERVER}`.trim());
+      }
+    );
+  }
   const signerById = (env, id) => env.signers.find((s) => s.id === id) || null;
   /** A place printed for somebody else (a custodian, an adviser): kept on the investor's signer, but nobody's to complete. */
   const isOther = (f) => !!(NS.placement && NS.placement.isOther && NS.placement.isOther(f));
@@ -675,13 +771,13 @@
     });
     return dropped;
   }
-  /** Email the signers whose turn it is and who have not been asked yet. */
-  function notifyTurn(env) {
+  /** Email the signers whose turn it is and who have not been asked yet (ws, on: the server emails the investors, 13-08). */
+  function notifyTurn(env, ws, on) {
     const out = [];
     currentSigners(env).forEach((s) => {
       if (s.status !== 'waiting') return;
       s.status = 'sent';
-      email(env, s, env.subject || `Please sign: ${env.title}`);
+      if (!byServer(ws, s, on)) email(env, s, env.subject || `Please sign: ${env.title}`);
       out.push(s);
     });
     return out;
@@ -702,22 +798,33 @@
     env.sentAt = nowIso();
     env.subject = env.subject || `Please sign: ${env.title}`;
     addEvent(env, staffActor(), 'Sent', `Sent to ${env.signers.map((s) => `${s.name} <${s.email}>`).join(', ')}; ${env.sequential ? 'signing in order' : 'any order'}`);
-    const asked = notifyTurn(env);
+    const quiet = !!(opts && opts.quiet);
+    const on = !quiet && mailServer(ws);
+    const asked = notifyTurn(env, ws, on);
     logChange(ws, 'Envelope sent', env, `${env.signers.length} signer${env.signers.length === 1 ? '' : 's'} (${env.signers.map((s) => s.name).join(', ')}); original SHA-256 ${env.sha256Original}`);
     NS.app.save(true);
-    // Quiet: the signer signs straight away inside the investor onboarding flow, so no toast about the email.
-    if (!(opts && opts.quiet)) U.toast(`Signature request emailed to ${asked.map((s) => s.name).join(', ')} (simulated in this demo).`);
+    // Quiet: the signer signs straight away inside the investor onboarding flow, so no toast about the email (and no other email).
+    if (quiet) return { ok: true, envelope: env };
+    const mailed = mailSigners(ws, env.id, asked, 'esign_request', on);
+    if (on) mailToast(mailed);
+    else U.toast(`Signature request emailed to ${asked.map((s) => s.name).join(', ')} (simulated in this demo).`);
     return { ok: true, envelope: env };
   }
   function remind(ws, envId) {
     const env = envById(ws, envId);
     if (!env || env.status !== 'sent') return;
     const who = currentSigners(env);
-    who.forEach((s) => email(env, s, `Reminder: please sign ${env.title}`));
+    const on = mailServer(ws);
+    who.forEach((s) => {
+      if (!byServer(ws, s, on)) email(env, s, `Reminder: please sign ${env.title}`);
+    });
     addEvent(env, staffActor(), 'Reminder sent', who.map((s) => s.name).join(', '));
     logChange(ws, 'Envelope reminder sent', env, who.map((s) => s.name).join(', '));
     NS.app.save(true);
-    U.toast(`Reminder emailed to ${who.map((s) => s.name).join(', ')} (simulated).`);
+    if (!SELF()) return U.toast(`Reminder emailed to ${who.map((s) => s.name).join(', ')} (simulated).`);
+    const mailed = mailSigners(ws, env.id, who, 'esign_reminder', on);
+    if (on) mailToast(mailed);
+    else U.toast(`Reminder emailed to ${who.map((s) => s.name).join(', ')} (simulated in this demo).`);
   }
   /** opts.quiet: no emails and no message (the investor replaced their own unsigned tax form, onboarding.js); opts.actor. */
   function voidEnvelope(ws, envId, reason, opts) {
@@ -728,10 +835,18 @@
     env.voidedAt = nowIso();
     env.voidReason = reason;
     addEvent(env, opts.actor || staffActor(), 'Voided', reason);
-    if (!opts.quiet) env.signers.filter((s) => s.status !== 'waiting').forEach((s) => email(env, s, `Voided: ${env.title}. ${reason}`));
+    const told = opts.quiet ? [] : env.signers.filter((s) => s.status !== 'waiting');
+    const on = !opts.quiet && mailServer(ws);
+    told.forEach((s) => {
+      if (!byServer(ws, s, on)) email(env, s, `Voided: ${env.title}. ${reason}`);
+    });
     logChange(ws, 'Envelope voided', env, reason, opts.actor);
     NS.app.save(true);
-    if (!opts.quiet) U.toast('Envelope voided. Signers who had received it were notified (simulated).');
+    if (opts.quiet) return;
+    if (!SELF()) return U.toast('Envelope voided. Signers who had received it were notified (simulated).');
+    const mailed = mailSigners(ws, env.id, told, 'esign_voided', on);
+    if (on) mailToast(mailed, 'Envelope voided. ');
+    else U.toast('Envelope voided. Signers who had received it were notified (simulated in this demo).');
   }
   /**
    * Plan 06-34 (walkthrough-2 N1; plan-check B1): a tax form that is no longer the one on record. how 'superseded': a signed
@@ -1328,6 +1443,9 @@
    */
   async function applySignature(env, signer, input) {
     const ws = W();
+    // input.mail: the signing page's own Finish (finishSigning): the server emails this moment's investors (13-08).
+    const on = !!input.mail && mailServer(ws);
+    let asked = [];
     const L = await pdflib();
     // Work on a copy so a failure leaves the envelope unchanged.
     const next = JSON.parse(JSON.stringify(env));
@@ -1364,7 +1482,9 @@
       next.status = 'completed';
       next.completedAt = at;
       addEvent(next, 'System', 'Completed', 'All signers finished; certificate of completion appended', at);
-      next.signers.forEach((s) => email(next, s, `Completed: ${next.title} (signed copy available)`));
+      next.signers.forEach((s) => {
+        if (!byServer(ws, s, on)) email(next, s, `Completed: ${next.title} (signed copy available)`);
+      });
       // The signed pages are saved (and hashed) first; the certificate quotes that hash, then is appended.
       const pagesOut = await pdf.save();
       next.sha256SignedPages = NS.audit.sha256(pagesOut);
@@ -1381,7 +1501,7 @@
       out = await pdf.save();
       next.workDocId = next.id + '-work';
       await files().put(next.workDocId, new Blob([out], { type: 'application/pdf' }));
-      notifyTurn(next);
+      asked = notifyTurn(next, ws, on);
     }
     Object.assign(env, next);
     logChange(ws, 'Document signed', env, `${me.name} (${roleLabel(me).toLowerCase()})`, actor);
@@ -1399,7 +1519,7 @@
       (ws.requests || []).filter((r) => r.envelopeId === env.id && !r.signedAt).forEach((r) => (r.signedAt = at.replace(/\.\d{3}Z$/, 'Z')));
       logChange(ws, 'Envelope completed', env, `${env.signers.length} signer${env.signers.length === 1 ? '' : 's'}; signed pages SHA-256 ${env.sha256SignedPages}; signed PDF SHA-256 ${env.sha256Signed}; published to ${ids.length} investor portal${ids.length === 1 ? '' : 's'}`, actor);
     }
-    return { complete };
+    return { complete, asked: complete ? env.signers.slice() : asked, on };
   }
   /** Other modules react to a signature (the investor onboarding flow moves on by itself); true when one handled it. */
   function runSignedHooks(env, signerId, complete) {
@@ -1418,14 +1538,23 @@
     st.busy = true;
     NS.app.render();
     try {
-      const { complete } = await applySignature(env, signer, { vals: st.vals, adopted: st.adopted });
+      const { complete, asked, on } = await applySignature(env, signer, { vals: st.vals, adopted: st.adopted, mail: true });
       st.busy = false;
       st.finished = true;
       S().ui.esFocus = '.es-done';
       const handled = runSignedHooks(env, signer.id, complete);
       NS.app.save(true);
       NS.app.render();
-      if (!handled) U.toast(complete ? 'Signed. Everyone has signed; the completed copy was emailed to all parties (simulated).' : 'Signed. The next signer was emailed (simulated).');
+      if (!SELF()) {
+        if (!handled) U.toast(complete ? 'Signed. Everyone has signed; the completed copy was emailed to all parties (simulated).' : 'Signed. The next signer was emailed (simulated).');
+        return;
+      }
+      // C-09, C-12: the signed copy is never emailed; it is in each party's portal.
+      const lead = complete ? 'Signed. Everyone has signed, and the signed copy is in each party’s portal. ' : 'Signed. ';
+      const mailed = mailSigners(W(), env.id, asked, complete ? 'esign_completed' : 'esign_request', on);
+      if (handled) return;
+      if (on) mailToast(mailed, lead);
+      else U.toast(complete ? `${lead}Everyone was emailed that it is signed ${NS.emails ? NS.emails.SIMULATED : '(simulated in this demo)'}.` : 'Signed. The next signer was emailed (simulated in this demo).');
     } catch (err) {
       st.busy = false;
       S().ui.esFocus = '.es-finish';
@@ -2376,7 +2505,7 @@
         <label class="cs-field cs-wide" for="es-msg"><span>Message <em>(shown in the email and on the signing page)</em></span><textarea id="es-msg" name="message" rows="4" maxlength="1000">${h(env.message || '')}</textarea></label>
         <div class="cs-field cs-wide"><span>Recipients</span><ul class="es-sel">${list}</ul></div>
       </div>
-      <p class="cs-hint">Emails are simulated in this demo: each one is recorded in the envelope history.</p>
+      ${mailServer(W()) ? '' : '<p class="cs-hint">Emails are simulated in this demo: each one is recorded in the envelope history.</p>'}
       <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Back to editing</button><button class="cs-btn cs-btn-primary" type="submit">Send</button></div></div></form>`,
       'dlg-es'
     );
@@ -2591,7 +2720,7 @@
     const wrap = (inner) => `<div class="es-sign${con ? ' es-sign-console' : ''}${flow ? ' es-sign-flow' : ''}">${back}${head}${inner}</div>`;
     if (st.finished || s.status === 'signed') {
       const complete = env.status === 'completed';
-      return wrap(`<section class="es-card es-done" tabindex="-1" aria-live="polite"><h2>${icon('check')}${con ? 'Countersigned' : 'You signed this document'}</h2><p>${s.signedAt ? `Signed ${h(stamp(s.signedAt))}. ` : ''}${complete ? 'Everyone has signed. The completed document, with its certificate of completion, is saved' + (con ? ' with the envelope.' : ' in your Documents.') : 'We will email you a copy when everyone has signed.'}</p>${complete ? `<div class="es-row"><button class="${btn(true)}" type="button" data-action="es-dl-signed" data-id="${h(env.id)}">${icon('download')}Download signed PDF</button>${con || flow ? '' : `<a class="${btn()}" href="#documents">Go to Documents</a>`}</div>` : ''}</section>`);
+      return wrap(`<section class="es-card es-done" tabindex="-1" aria-live="polite"><h2>${icon('check')}${con ? 'Countersigned' : 'You signed this document'}</h2><p>${s.signedAt ? `Signed ${h(stamp(s.signedAt))}. ` : ''}${complete ? 'Everyone has signed. The completed document, with its certificate of completion, is saved' + (con ? ' with the envelope.' : ' in your Documents.') : SELF() ? `Once everyone has signed, the signed copy ${con ? 'is saved with the envelope.' : 'will be in your Documents.'}` : 'We will email you a copy when everyone has signed.'}</p>${complete ? `<div class="es-row"><button class="${btn(true)}" type="button" data-action="es-dl-signed" data-id="${h(env.id)}">${icon('download')}Download signed PDF</button>${con || flow ? '' : `<a class="${btn()}" href="#documents">Go to Documents</a>`}</div>` : ''}</section>`);
     }
     if (env.status === 'voided') return wrap(`<section class="es-card"><h2>This document was voided</h2><p>${h(t.name)} cancelled this request${env.voidReason ? `: ${h(env.voidReason)}` : '.'} No signature is needed.</p></section>`);
     if (env.status === 'declined' || s.status === 'declined') return wrap(`<section class="es-card"><h2>Signing was declined</h2><p>${s.status === 'declined' ? `You declined to sign${s.declinedReason ? `: “${h(s.declinedReason)}”` : '.'} ${h(t.name)} has been notified.` : 'Another signer declined, so this document will not be completed.'}</p></section>`);
