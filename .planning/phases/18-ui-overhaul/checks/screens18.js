@@ -18,8 +18,10 @@ const path = require('path');
 const L = require('../../06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js');
 
 /* ---------- normalization ---------- */
-// ids made from Date.now() and Math.random() (inv-, off-, env- …): the two trees run at different moments
-const ID_RE = /\b(inv|off|env|tok|ik|run|call|req|doc|tpl|rec|co|tx)-[a-z0-9]{6,}\b/g;
+// ids made from Date.now() and Math.random() (inv-, off-, env- …): the two trees run at different moments. The plan's
+// prefixes, the others the portal's uid() calls use (grep "uid('" and "-' + Date.now()" in assets/js), and any prefix
+// followed by a 13-digit Date.now(); co- only with a digit in it, so "co-investor" and "co-investment" stay words
+const ID_RE = /\b(?:(?:inv|invt|off|env|tok|ik|run|call|req|doc|tpl|rec|tx|tm|fd|ntf|tf|sg|n|mail|dep|aml)-[a-z0-9]{6,}|co-(?=[a-z]*\d)[a-z0-9]{6,}|[a-z]{1,8}-\d{13})\b/g;
 // a route or link that carries a token (invitation, sign-in, room, tax document, co-investor sign-in): the token part -> ~
 const HASH_TOKEN_RE = /([#/](?:invite|sign-?in|room|taxdoc|co)[-/=])[A-Za-z0-9_-]{8,}/gi;
 // the check servers' own address (each tree is served on its own free port): http://127.0.0.1:<port> -> <origin>
