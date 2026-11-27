@@ -30,3 +30,6 @@
   - Right answer, narrow pattern (1): bank account typed twice, the pattern wanted the label "Confirm account number".
 - Total spent: $0.0439 of the $3.72 credit.
 - Next: add the two missing guide entries (co-investor / second holder; taxpayer number format). The held-out set has now been read by the orchestrator, so it no longer measures unseen questions; a fresh unseen set is written before launch to re-measure.
+
+## Owner decision, 2026-11-27
+- Paid unseen-question run (fresh set of 48, cap $1.00): owner answered "Not now". HELP-06 stays open; the fresh set is being written and frozen (outside the repo) so it is ready when the owner says yes. No paid call is made until then.
