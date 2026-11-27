@@ -113,6 +113,46 @@ function fixtures() {
   out['dist-ppd.ach'] = dist.text;
   // ret-r03.ach: the second entry returned R03 (no account or unable to locate the account).
   out['ret-r03.ach'] = backFile([{ header, items: [{ entry: entries[1], cents: 98000, type: '99', code: 'R03' }] }]);
+  // noc-c01.ach: a change batch (SEC COR) for the first entry, $0, C01 with the corrected account account(21).
+  out['noc-c01.ach'] = backFile([{ header, sec: 'COR', items: [{ entry: entries[0], cents: 0, type: '98', code: 'C01', data: L.account(21) }] }]);
+  // prenote-r03.ach: a returned pre-note. Its original is the first entry as a pre-note (transaction code 23, $0) in
+  // a pre-note file of its own, effective 2026-11-24, with its own trace (sequence 11); returned R03.
+  const preHeader = header.slice(0, 53) + pad('PRENOTE', 10) + header.slice(63, 69) + '261124' + header.slice(75);
+  const preEntry = '6' + '23' + entries[0].slice(3, 29) + num(0, 10) + entries[0].slice(39, 79) + ODFI8 + num(11, 7);
+  out['prenote-r03.ach'] = backFile([{ header: preHeader, items: [{ entry: preEntry, cents: 0, type: '99', code: 'R03' }] }]);
+  // mixed.ach: R02 on the first entry and R16 on the third (savings, code 31), then a change batch: C02 on the second
+  // entry with the corrected routing number 190000033 (never issued; passes the check digit).
+  out['mixed.ach'] = backFile([
+    {
+      header,
+      items: [
+        { entry: entries[0], cents: 125000, type: '99', code: 'R02' },
+        { entry: entries[2], cents: 41005, type: '99', code: 'R16' }
+      ]
+    },
+    { header, sec: 'COR', items: [{ entry: entries[1], cents: 0, type: '98', code: 'C02', data: L.NEVER.rdfi[2] }] }
+  ]);
+  // bad-93.ach: ret-r03.ach with one trailing blank removed from one record (the file control record), nothing else.
+  const ret = out['ret-r03.ach'].split(CRLF);
+  const at = ret.findIndex((l) => l[0] === '9' && !/^9{94}$/.test(l));
+  if (at < 0 || ret[at][93] !== ' ') throw new Error('make-fixtures: no file control record ending in a blank');
+  ret[at] = ret[at].slice(0, 93);
+  out['bad-93.ach'] = ret.join(CRLF);
+  // returns-a.csv: a comma report of the returns and the change above (traces of the original entries), CRLF.
+  const trace = (e) => e.slice(79, 94);
+  out['returns-a.csv'] =
+    [
+      'Return Date,Reason Code,Individual ID,Receiver Name,Amount,Original Trace',
+      `12/07/2026,R03,INV-102,INVESTOR TWO,980.00,${trace(entries[1])}`,
+      `12/07/2026,R02,INV-101,INVESTOR ONE,1250,${trace(entries[0])}`,
+      `12/07/2026,R16,INV-103,INVESTOR THREE,410.05,${trace(entries[2])}`,
+      `12/07/2026,C02,INV-102,INVESTOR TWO,0.00,${trace(entries[1])}`
+    ].join(CRLF) + CRLF;
+  // returns-b.csv: a semicolon report with dollar amounts, one change row and a total row (no code: skipped), LF.
+  out['returns-b.csv'] =
+    ['Date;Code;ID Number;Name;Amount ($);Corrected Data', '2026-12-07;R02;INV-101;INVESTOR ONE;$1,250.00;', `12/08/26;C01;INV-102;INVESTOR TWO;$0.00;${L.account(21)}`, 'Total;;;;$1,250.00;'].join('\n') + '\n';
+  // report.pdf.txt: a stand-in for a report saved as PDF: its first bytes are a PDF's, the rest is text (no binary).
+  out['report.pdf.txt'] = ['%PDF-1.4', '% A stand-in for a returns report saved as PDF (text only, so the repository holds no binary).', '1 0 obj', '<< /Type /Catalog >>', 'endobj', '%%EOF'].join('\n') + '\n';
   return out;
 }
 
