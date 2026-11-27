@@ -217,3 +217,6 @@
 - W3 (file list): Task 3 verify asserts `git diff --name-only $(cat $O/base-commit.txt) HEAD`, with 11-16-SUMMARY.md filtered out, is exactly files_modified plus help-data.js.
 - W4 (frame): part button-phone also asserts no policy violation (window.__cspv empty) and that withholding.js, filesout.js, the PDF writer and font came from the page's own origin (C-02).
 - W5 (console.js): keep the one hook line; books-pkg.js creates the list with `(NS.hooks.auditPanels = NS.hooks.auditPanels || []).push(...)`.
+
+## Orchestrator override on 11-16 (2026-11-27)
+- B4's test numbers: '987-65-1234' / '987651234' are not used (a 9xx number with middle digits 65 falls in an issued taxpayer-number range). The stand-in W-9 carries the never-issued '000-65-1234' / '000651234' instead; the C-04 assertions are otherwise as written. 11-16 is building (wip/11-16).
