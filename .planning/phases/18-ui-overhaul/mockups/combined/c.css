@@ -170,13 +170,21 @@ table.ledger { width: 100%; border-collapse: collapse; }
 .util { border-bottom: 1px solid var(--color-rule); }
 .util-in, .mast2-in, .nav-in { max-width: var(--container-pt); margin: 0 auto; padding: 0 var(--space-8); }
 .util-in { min-height: 44px; display: flex; justify-content: flex-end; align-items: center; gap: var(--space-6); font-size: var(--text-s); }
-.util .ask { width: 260px; min-height: 36px; font-size: 15px; }
 .who { white-space: nowrap; color: var(--color-ink-2); display: flex; gap: var(--space-2); }
 .who b { color: var(--color-ink); font-weight: 600; }
 .mast2-in { min-height: 76px; display: flex; align-items: center; justify-content: center; }
 .mast2 .wm b { font-size: 24px; }
 .navrow { border-top: 1px solid var(--color-rule); border-bottom: 3px double var(--color-ink); background: var(--color-panel); }
-.nav-in { display: flex; justify-content: center; gap: var(--space-8); min-height: 48px; }
+.nav-in { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: var(--space-6); min-height: 52px; }
+/* D-16: the tabs keep the centre of the row; "Ask me anything" sits at its right end, on the same row */
+.tabs { grid-column: 2; display: flex; gap: var(--space-6); }
+.nav-in .ask { grid-column: 3; justify-self: end; align-self: center; width: 100%; max-width: 240px; min-height: 36px; font-size: 15px; }
+@media (max-width: 1180px) and (min-width: 901px) {
+  /* Too narrow to centre the tabs beside the field: the tabs move to the left and the field keeps the right end */
+  .nav-in { grid-template-columns: auto minmax(0, 1fr); }
+  .tabs { grid-column: 1; }
+  .nav-in .ask { grid-column: 2; max-width: 220px; }
+}
 .nav-in a { display: flex; align-items: center; font: 500 var(--text-m)/1 var(--font-label); color: var(--color-ink-2); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color var(--dur) ease-out; }
 .nav-in a:hover { color: var(--color-ink); }
 .nav-in a:active { color: var(--color-ink-3); }
