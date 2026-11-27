@@ -102,3 +102,10 @@ Binding on the executors (full text: scratchpad checks-13-wave3.md).
 - Start: 13-04 after 13-03, 13-05, 13-11 merge (shares index.mjs, invitations.mjs, roles.mjs with 13-03 and 15-06). 13-07 after 13-03 and 13-05. 13-09 after 13-03 and 13-05, and not beside 16-02 (console.js, diy.html, portal.html). 13-12 after 13-03 and 13-05.
 - Addition for 13-03 (binding, from W4): maillog.mjs's status set includes 'unsubscribed'.
 - Merged tree 8100e81: FILINGS SERVER 7, EMAIL DIALOG 3, SERVER MODE 15 pass; GATE13 SELF-TEST PASS (8).
+
+## After 13-05 (merged 2026-11-27)
+- Gate13 (GATE13_PHASES="08") GATE_EXIT=0 on the first run (45 GATE ok, 0 FAIL) on base 56c300d, before 13-11 merged; merged tree server tests 567/567; merged-tree browser reruns follow.
+- Deviations: in the self-serve console the co-investor's email opens in the sponsor's own email app (no "simulated" wording; PRESS AND CO-INVESTOR forbids "emailed"/"simulated"), and Mark as sent writes one sent-log entry status manual; the C-06 postal stop applies only when the firm record has a postalAddress field (13-09 adds `postalAddress: ''` to TENANT_TEMPLATE and turns it on: sample tenants or reference checks that invite to an offering with no commitment will then need an address or a commitment); a manual resend keeps the same link and extends it 30 days; snapshot() now sends `access: true` for portal links; held/suppressed/unsubscribed rows say "Waiting to send" or "Not sent".
+- For 13-03 (running): cleanFirm keeps postalAddress. For later: the form can read 13-11's render `needs` instead of its own rule.
+- Found: invitations.js line 3 comment contains the forbidden word (since before 56c300d; not on screen). Queued for the next small fix.
+- Unblocked: 16-02 (pages), 13-07/13-12 (after 13-03), 13-09 (after 13-03, not beside 16-02).

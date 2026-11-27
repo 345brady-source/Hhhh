@@ -37,3 +37,6 @@ The guide trim is merged (sponsor guide 44,641 of 48,000 bytes on 2026-11-27). L
 
 ## 15-06 (merged)
 - Proposed guide lines: see .planning/phases/15-security/15-06-SUMMARY.md.
+
+## 13-05 (merged)
+- Four proposed guide lines in .planning/phases/13-email-overhaul/13-05-SUMMARY.md.
