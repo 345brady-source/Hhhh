@@ -45,3 +45,35 @@ EMAILS PAGE: PASS (parts run: 8)
 console.js changed lines vs base: 2
 MOBILE SYNC: PASS (cases run: 3)
 ```
+
+### B1b: checks that broke once the postal stop was on (batch run on the plan tree, before any check change)
+```
+FORMS FLOW: FAIL (cases run: 34) - investor-type, include-tax
+RECORD AND LOST AGREEMENT: FAIL (parts run: 7) - request-desktop, request-phone, unsigned-twice-desktop, signed-kept-desktop, import-desktop
+WAYS OUT: FAIL (parts run: 7) - short-desktop, short-phone
+CO-INVESTOR SERVER: FAIL (parts run: 5) - cosign-desktop, cosign-phone, cosign-later, cosign-change-remove, cosign-forged
+SERVER MODE: FAIL (parts run: 15) - full, b506, regA, existing, withdraw, signed, repack, clean, tax-w9, tax-unsigned, tax-wipe, tax-upload, tax-w8ben, include-tax
+MONITORING: FAIL (parts run: 9) - alert
+PACKAGE FLOW (08): FAIL (parts run: 10) - identity, refused, start-limit, phone, leak, full, letter-phone
+PACKAGE NAMES: FAIL (parts run: 4) - owners, individual
+PACKAGE CONSOLE: FAIL (parts run: 7) - tier-mismatch, credit-owed, phone
+PACKAGE INVITE: FAIL (parts run: 12) - single, notoffered, account, phone, list
+AUDIT FLOW: FAIL (parts run: 4) - managed   (menu rule, not the postal stop; see Deviations)
+```
+Passed in the same batch with no change: REAL FIRM 9, TITLES AND EDITOR 4, PRESS AND CO-INVESTOR 10, REVERIFY 9,
+SMALL FIXES 2, TAXDOCS FLOW 14, TAXRECORD FLOW 5, PACKAGE FLOW (11) 6, INVITE MAIL 9, EMAIL SENDING 7, PORTAL MAIL 9.
+
+After the setup lines (commit 77a3f25) and the AUDIT FLOW rule (f9fc06a), batch 2 on the plan tree: FORMS FLOW 34, RECORD AND
+LOST AGREEMENT 7, WAYS OUT 7, CO-INVESTOR SERVER 5, SERVER MODE 15, MONITORING 9, PACKAGE FLOW 10, PACKAGE NAMES 4, PACKAGE
+CONSOLE 7, PACKAGE INVITE 12, AUDIT FLOW 4, EMAILS PAGE 8, STATUS FLOW 26, EMAIL DIALOG 3, TAX REQUEST LEAVE 5, SAFARI FINISH 6,
+WALK3 FIXES 9, PHONE LAYOUT 8, SCREEN EDGES 5, SIGNING DOCUMENTS 8 all PASS; HELP PREVIEW FAIL (preview-sponsor, files:
+"help-data.js: STALE"), PASS after make-help-data.mjs (commit after 6e0787c).
+
+### Gate13 run 1 (every phase, HEAD 6e0787c..help-data commit): stopped by me after its first failure
+```
+GATE FAIL HELP CHAT (10)
+FAIL managed each of the three pages loads help.js once, right after coinvestor.js
+```
+Server tests in that run: 607 of 607 (# tests 607, # pass 607, # fail 0). Steps before HELP CHAT passed. Fixed in f29a9c2
+(emails-ui.js now loads right after help.js); HELP CHAT 10, HELP PREVIEW 6, EMAILS PAGE 8 PASS on f29a9c2. The run was stopped
+there rather than left two more hours, because every later step would have to run again on the fixed tree anyway.
