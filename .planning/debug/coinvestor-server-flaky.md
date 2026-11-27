@@ -113,3 +113,8 @@ started: since 06-39; seen in 08-17's gate, 11-13's gate run 3, exec-15-02 run 1
   checked: the whole fixed check through heavy.sh, GATE_FRESH=1, 01:12:47-01:15:40 UTC, load average 5.0-5.9 (scratchpad coflaky/whole/coserver.txt)
   found: "CO-INVESTOR SERVER: PASS (parts run: 5)", 128 PASS lines, 0 FAIL; the list of check names is identical, line for line, to the passing pre-fix run in 11-13's gate (exec-11-13/gate/coserver.txt, also 128).
   implication: every part passes; no assertion was dropped or renamed.
+
+- timestamp: 2026-11-27T01:28Z
+  checked: UNFIXED check (frozen copy coflaky/base/co-investor-server.js, sha256 7b93cf7b...), part cosign-forged 10 times in one slot, 01:23-01:27 UTC, load average 3.6-4.4 (scratchpad coflaky/before-load/); margins measured from the traces for both batches
+  found: COUNTS before-load: pass=10 fail=0 of 10: natural load at that hour did NOT reproduce the failure. But in 6 of the 10 unfixed runs replay #1's store.put came while the forged import's DELETE was still unanswered, 10-20 ms after it left the page (runs 1, 4, 5, 7, 8, 10); they passed only because the server took the DELETE first. In the 20 fixed runs the put always follows the DELETE's answer, 60-140 ms after the DELETE left the page.
+  implication: plain load alone is a weak RED here (the server-side order of two events a few ms apart decides it); the fault-injected run is the reliable RED. Next: unfixed x3 and fixed x20 under the same injected fault, under load.
