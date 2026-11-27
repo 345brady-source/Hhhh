@@ -1304,6 +1304,172 @@
       `<button class="cs-btn" type="button" data-action="iv-conn-add">Add a connection</button>`
     );
   }
+  /* ---------- Console: Email sending (plan 13-12, EM-06, C-01, C-11) ----------
+   * The address the firm's emails go from, the DNS records its domain needs, and an honest status, read from and written
+   * to the integration server (GET/PUT /v1/mail/sender, POST /v1/mail/sender/check, plan 13-03). The server keeps an
+   * email waiting until the domain is Ready, and Check is what releases the waiting ones. Live sending stays "To be
+   * confirmed" until the server reports it (MAIL_LIVE, set by the operator after production access and a real send).
+   * Everything the server says is drawn as text. */
+  const MAIL_WORDS = { not_set_up: 'Not set up', pending: 'Waiting for DNS records', ready: 'Ready' };
+  const MAIL_BADGE = { not_set_up: 'cs-badge-mute', pending: 'cs-badge-warn', ready: 'cs-badge-ok' };
+  function mailState() {
+    const st = pageState();
+    if (!st.mail) st.mail = { url: '', loading: false, data: null, draft: null, error: '', fieldError: '', busy: '', released: 0 };
+    return st.mail;
+  }
+  /** notices@ the firm's own domain (its investor support address's). */
+  const suggestedFrom = (ws) => {
+    const d = String(((ws.tenant || {}).support || {}).email || '').split('@')[1] || '';
+    return d ? `notices@${d}` : '';
+  };
+  const cleanSender = (d) => ({
+    address: String(d.address || ''),
+    status: ['not_set_up', 'pending', 'ready', 'failed'].indexOf(d.status) >= 0 ? d.status : 'pending',
+    detail: String(d.detail || ''),
+    records: (Array.isArray(d.records) ? d.records : []).filter((r) => r && typeof r === 'object').map((r) => ({ type: String(r.type || ''), name: String(r.name || ''), value: String(r.value || '') })),
+    live: d.live === true
+  });
+  /** The server's own sentence; a reply that never came says so plainly. */
+  const mailSaid = (e) => (e && e.status ? e.message : 'The integration server could not be reached.');
+  const onPage = () => S().route === 'console-integrations';
+  async function mailLoad(ws) {
+    const m = mailState();
+    const url = serverUrl(ws);
+    m.url = url;
+    m.loading = true;
+    m.error = '';
+    try {
+      const d = await api(ws, 'GET', `/v1/mail/sender?workspace=${encodeURIComponent(ws.tenant.id)}`);
+      if (m.url !== url) return;
+      m.data = cleanSender(d);
+    } catch (e) {
+      if (m.url !== url) return;
+      m.error = mailSaid(e);
+    }
+    m.loading = false;
+    if (onPage()) NS.app.render();
+  }
+  function mailPanel(ws) {
+    const url = serverUrl(ws);
+    // Without a server: one line, and no request is made.
+    if (!url) return '<section class="cs-panel" id="iv-mail" aria-labelledby="iv-mail-h"><div class="cs-panel-head"><h2 id="iv-mail-h">Email sending</h2></div><p class="cs-hint">Sending from your own domain needs your integration server.</p></section>';
+    const m = mailState();
+    if (m.url !== url && !m.loading) {
+      m.data = null;
+      m.draft = null;
+      m.fieldError = '';
+      m.released = 0;
+      m.url = url;
+      m.loading = true;
+      Promise.resolve().then(() => mailLoad(ws));
+    }
+    const d = m.data;
+    const value = m.draft !== null ? m.draft : d && d.address ? d.address : suggestedFrom(ws);
+    const fe = m.fieldError;
+    const status = !d ? '' : d.status === 'failed' ? d.detail || 'A record does not match; check it was copied exactly.' : MAIL_WORDS[d.status];
+    const rec = (r, i) => {
+      const item = (k, label, v, copy) =>
+        `<div><dt>${label}</dt><dd>${copy ? `<code class="sd-link ms-${k}" id="ms-${k}-${i}">${h(v)}</code><span class="cs-row ms-copy-row"><button class="cs-btn cs-btn-small" type="button" data-action="ms-copy" data-for="ms-${k}-${i}" aria-label="Copy the ${label.toLowerCase()} of record ${i + 1}">Copy</button><span class="cs-hint ms-said" aria-live="polite"></span></span>` : `<span class="ms-${k}">${h(v)}</span>`}</dd></div>`;
+      return `<li class="ms-rec" style="border: 1px solid var(--line); border-radius: var(--r-inner); padding: var(--space-sm) var(--space-md)"><dl class="cs-kv" style="grid-template-columns: minmax(0, 1fr)">${item('type', 'Type', r.type, false)}${item('name', 'Name', r.name, true)}${item('value', 'Value', r.value, true)}</dl></li>`;
+    };
+    const set = !!d && d.status !== 'not_set_up';
+    const body = `<form class="ms-form" data-form="ms-setup" novalidate>
+        <div class="cs-row" style="align-items: flex-end; flex-wrap: wrap">
+          <label class="cs-field" for="ms-from" style="flex: 1 1 16rem; min-width: 0"><span>From address</span><input id="ms-from" type="email" inputmode="email" autocomplete="off" spellcheck="false" value="${h(value)}" data-input="ms-from"${fe ? ' aria-invalid="true" aria-describedby="ms-from-err"' : ''}${m.busy ? ' disabled' : ''}>${fe ? `<span class="cs-error" id="ms-from-err">${h(fe)}</span>` : ''}</label>
+          <button class="cs-btn" type="submit"${m.busy ? ' disabled' : ''}>Set up</button>
+        </div>
+      </form>
+      ${!status ? '' : d.status === 'failed' ? `<p class="cs-error ms-state" id="ms-status" tabindex="-1">${h(status)}</p>` : `<p class="ms-state"><span class="cs-badge ${MAIL_BADGE[d.status]}" id="ms-status" tabindex="-1">${h(status)}</span></p>`}
+      ${m.error ? `<p class="cs-error" id="ms-error" role="alert">${h(m.error)}</p>` : ''}
+      ${d && d.records.length && d.status !== 'ready' ? `<p class="cs-hint">Add these records where your domain's DNS is managed, then choose Check.</p>` : ''}
+      ${d && d.records.length ? `<ul class="cs-list ms-records" style="list-style: none; padding-left: 0; gap: var(--space-md)">${d.records.map(rec).join('')}</ul>` : ''}
+      ${set ? `<div class="cs-row"><button class="cs-btn" type="button" data-action="ms-check"${m.busy ? ' disabled' : ''}>${m.busy === 'check' ? 'Checking…' : 'Check'}</button></div>` : ''}
+      ${d && d.status !== 'ready' ? `<p class="cs-hint ms-until">Until then, emails wait on your integration server and are not sent.</p>${set ? '<p class="cs-hint">Once the status is Ready, Check releases them.</p>' : ''}` : ''}
+      ${m.released > 0 ? `<p class="cs-hint ms-released">${m.released} waiting email${m.released === 1 ? '' : 's'} released for sending.</p>` : ''}
+      ${d && !d.live ? '<p class="cs-hint ms-live">Live sending: To be confirmed</p>' : ''}`;
+    return `<section class="cs-panel" id="iv-mail" aria-labelledby="iv-mail-h"><div class="cs-panel-head"><h2 id="iv-mail-h">Email sending</h2></div>${body}</section>`;
+  }
+  NS.changes['ms-from'] = (el) => {
+    mailState().draft = el.value;
+  };
+  NS.forms['ms-setup'] = async (f) => {
+    const ws = W();
+    const m = mailState();
+    if (m.busy || !serverUrl(ws)) return;
+    const input = f.querySelector('#ms-from');
+    const address = String(input ? input.value : m.draft || '').trim();
+    m.busy = 'setup';
+    m.fieldError = '';
+    m.error = '';
+    NS.app.render();
+    let ok = false;
+    try {
+      const d = await api(ws, 'PUT', '/v1/mail/sender', { workspace: ws.tenant.id, address });
+      m.data = cleanSender(Object.assign({}, m.data || {}, d, { detail: d.detail || '' }));
+      m.draft = null;
+      m.released = 0;
+      ok = true;
+      NS.consoleKit.audit('Email sending address set up', `${m.data.address}: ${MAIL_WORDS[m.data.status] || m.data.status}`);
+      NS.app.save(true);
+    } catch (e) {
+      m.fieldError = mailSaid(e);
+    }
+    m.busy = '';
+    if (!onPage()) return;
+    NS.app.render();
+    const el = document.getElementById(ok ? 'ms-status' : 'ms-from');
+    if (el) el.focus();
+  };
+  NS.actions['ms-check'] = async () => {
+    const ws = W();
+    const m = mailState();
+    if (m.busy || !serverUrl(ws)) return;
+    m.busy = 'check';
+    m.error = '';
+    NS.app.render();
+    try {
+      const d = await api(ws, 'POST', '/v1/mail/sender/check', { workspace: ws.tenant.id });
+      m.data = cleanSender(Object.assign({}, m.data || {}, d));
+      m.released = Math.max(0, Math.round(Number(d.released) || 0));
+      NS.consoleKit.audit('Email sending checked', `${m.data.status === 'failed' ? m.data.detail : MAIL_WORDS[m.data.status]}${m.released ? `; ${m.released} waiting email${m.released === 1 ? '' : 's'} released` : ''}`);
+      NS.app.save(true);
+    } catch (e) {
+      m.error = mailSaid(e);
+    }
+    m.busy = '';
+    if (!onPage()) return;
+    NS.app.render();
+    const el = document.getElementById('ms-status') || document.getElementById('ms-error');
+    if (el) el.focus();
+  };
+  /** Copy a record's name or value; where the clipboard is refused, it is left selected with a short line, no error. */
+  NS.actions['ms-copy'] = (el) => {
+    const target = document.getElementById(el.getAttribute('data-for'));
+    if (!target) return;
+    const value = target.textContent;
+    const said = el.parentElement ? el.parentElement.querySelector('.ms-said') : null;
+    const say = (t) => {
+      if (said) said.textContent = t;
+    };
+    const select = () => {
+      try {
+        const r = document.createRange();
+        r.selectNodeContents(target);
+        const s = window.getSelection();
+        s.removeAllRanges();
+        s.addRange(r);
+      } catch (e) {
+        /* the selection is a help only */
+      }
+      say('Selected: copy it from the menu.');
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(value).then(() => say('Copied'), select);
+      else select();
+    } catch (e) {
+      select();
+    }
+  };
   NS.views['console-integrations'] = {
     mode: 'console',
     edition: 'diy',
@@ -1341,6 +1507,7 @@
           <div class="cs-row iv-check-row"><button class="cs-btn" type="button" data-action="iv-check"${st.checking ? ' disabled' : ''}>${st.checking ? 'Checking…' : 'Check connection'}</button>${c.server.status ? `<span class="cs-hint" id="iv-server-status">${h(c.server.status)}${c.server.checkedAt ? `, ${h(date(c.server.checkedAt.slice(0, 10)))}` : ''}</span>` : ''}</div>
           ${list.length ? `<ul class="cs-list iv-connectors">${list.map((x) => `<li><strong>${h(x.name || x.id)}</strong> <code>${h(x.id)}</code> · ${h(checkList(x.checks))}${x.builtin ? ' · built in' : ''} · ${x.configured ? 'ready' : `<span class="cs-error">missing ${x.missing.map((m) => h(m)).join(', ') || 'settings'}</span>`}</li>`).join('')}</ul>` : ''}`
         )}
+        ${mailPanel(ws)}
         ${activity(ws)}`,
         'console-integrations'
       );
@@ -1624,4 +1791,7 @@
 
   NS.integrations = { NOTE_506C_NEVER, CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, rescreenOne, rescreenable, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
   NS.integrations.roleNames = roleNames;
+  // The console's call to its integration server (plans 13-06, 13-08, 13-09): api(ws, method, path, body) → the JSON answer;
+  // a refusal rejects with the server's own sentence as the message (err.status, err.code, err.server = true).
+  NS.integrations.api = api;
 })(window.CVPortal);
