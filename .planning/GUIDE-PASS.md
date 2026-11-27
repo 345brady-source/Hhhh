@@ -22,3 +22,6 @@ The guide trim is merged (sponsor guide 44,641 of 48,000 bytes on 2026-11-27). L
 
 ## 08-20 (merged)
 - `## investments`: "With no request open, the subscribe page says the firm will send a link." (73 bytes)
+
+## 15-05 (merged e703292)
+- Proposed guide lines: see .planning/phases/15-security/15-05-SUMMARY.md (no guide bytes written).
