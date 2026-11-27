@@ -98,6 +98,16 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
   found: the table is 46 px wider than its box; at the far right the Gross column slides under the fixed first column (reads ')0.00'); at scroll 0 every Gross figure is whole.
   implication: inherent to a fixed first column (every figure can be read whole at some scroll position; none is truncated by the layout). Reported as a trade-off, not hidden.
 
+- timestamp: 2026-11-27T16:00:00Z
+  checked: GREEN walk `node .planning/phases/12-report-builder/checks/walk12.js` (scratchpad/debug-report-tables/walk12.txt, 129 s)
+  found: last line `WALK12: FAIL (steps run: 28) - kb-open, ar-letter, pb-letter`. 244 PASS, 3 FAIL (base 239 PASS, 8 FAIL). The 3 failures are all W5 (fonts.googleapis.com requests: kb-open 2, ar-letter 1, pb-letter 1), the separate queued fault. Broken-word assertion PASS (0 broken) in kb-preview, ar-preview-pdf, pb-letter, fa-statement, fa-holdings. compare-walk.py: 0 base-passing checks lost. Tables now: Holdings 482-527 px and Net performance 578-613 px scroll inside the 308 px box; Distributions 434, Totals 338-354.
+  implication: RED -> GREEN for this fault; kb-preview, ar-preview-pdf, fa-statement, fa-holdings pass fully; pb-letter fails only on W5.
+
+- timestamp: 2026-11-27T16:00:30Z
+  checked: REPORTS FLOW (scratchpad/debug-report-tables/reports-flow.txt, 135 s)
+  found: `REPORTS FLOW: PASS (parts run: 8)` (includes preview-pdf: every preview word in the PDF's words, counted)
+  implication: preview text unchanged by the spans.
+
 ## Resolution
 
 root_cause: "assets/css/reports.css:41 `.rb-doc { overflow-wrap: anywhere }` is inherited by the preview's table cells; `anywhere` (unlike break-word) counts a break between any two letters in a cell's narrowest (min-content) width, so the automatic table layout at the phone's 308 px squeezed text columns to one letter (27-36 px) and gave the width to the nowrap number columns; tables whose number columns alone exceeded 308 px also overflowed (343-544 px). Contributing (AND): a hyphenated word ('Single-name') breaks at its hyphen whenever its column sits at its narrowest width."
