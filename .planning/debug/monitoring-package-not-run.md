@@ -149,12 +149,12 @@ started: seen during plan 13-04's gate (base ef87afa area)
   found: (in progress)
   implication: verification counts only runs on ca59fff
 
-- timestamp: 2026-11-27T17:33Z
+- timestamp: 2026-11-27T17:27Z
   checked: `cd server && node --test` on 765bc10 (= ca59fff + this file; node_modules linked)
   found: `# tests 601` `# pass 601` `# fail 0` rc=0 (debug-monitoring/server-tests-final.txt)
   implication: server suite unchanged on the final tree
 
-- timestamp: 2026-11-27T17:35Z
+- timestamp: 2026-11-27T17:28Z
   checked: instrumented natural runs of the unfixed check complete (summary-inst.txt: inst-1..6, full 9 parts, no forced delay; the instrumentation only records in the page, armed before the click, read after the part's own reads)
   found: |
     inst-1..5 PASS (parts run: 9); inst-6 (start 17:11:14, 125 s, load 3.41 at start) `MONITORING: FAIL (parts run: 9) - package-not-run`, 2 FAIL, NATURAL (no delay forced):
