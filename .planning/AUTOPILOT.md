@@ -120,3 +120,31 @@ State now (2026-11-27): merged since the last state line: 15-05, 13-01, 15-04, r
 - Gap 1: the seven quick tasks of 2026-11-27 (small-fixes-a, small-fixes-b, scan-tokens, auth-gate-scan, report-fixes, portal-report-hash, guide-trim) were built by GSD executors in worktrees from the orchestrator's written task, with no GSD planner and no plan checker. From now on every quick task gets a gsd-planner plan and a gsd-plan-checker pass before an executor builds it (first: the self-hosted fonts fix and the forbidden-word comment fix).
 - Gap 2: the GSD verifier has run only for 01.2, 01.3 and 06. From now on each phase gets its gsd-verifier as soon as its buildable plans are merged, not only at the end. Started: phase 07. Phase 12 after the phone-table fix merges. Phases 08-11 once their owner-input plans are built.
 - Orchestrator-only work (unchanged, stated plainly): merges, conflict resolution (one test line in server/test/mail.test.mjs was combined by the orchestrator), syntax checks, server test and merged-tree reruns, CONTEXT notes and decisions, summaries the harness refused to let agents write.
+
+## PAUSED 2026-11-27 ~19:30 UTC (owner: "start wrapping everything up for an indefinite pause make sure no work can be lost") — resume here
+Branch claude/refract-reskin holds every merged result; server tests 605/605 on it. Nothing is called ready; every owner check below is still owed.
+
+### Merged and checked on the merged tree (since the last state line)
+12-09 (walkthrough; REPORTS FLOW, DELIVER FLOW in the reference gate), phone-table fix, 13-03, 13-04, 13-07, 13-12, 16-02, two check-timing fixes (SERVER MODE, MONITORING). Phase 07 verified (gaps_found: HELP-06 paid unseen run, owner said "Not now").
+
+### In flight at the pause (each saved on its own wip branch; each SUMMARY has a "Paused" section with the next step)
+- wip/16-07 — payee states and holds (re-check additions in 16-CONTEXT bind it). Next: finish/rerun gate16 into scratchpad exec-16-07, merge, merged-tree reruns.
+- wip/15-14 — account emails and resets (wave 3 additions; empty-issuer fix; W3; firm name to unsub.urls). Next: gate15, merge.
+- wip/13-08 — e-sign and portal emails ("Decision during 13-08" binds it). Next: finish decisions, gate13 GATE13_PHASES="08 10", merge.
+- wip/small-fixes-c — word scan, empty chart sentence, failed-part copies (DECISIONS.md with plan-check additions). Next: gate12, merge.
+- Phase 17 plans — planner was writing; see .planning/phases/17-crm-connection/ (finished plans committed; 17-PLANNING-PAUSED.md if any unfinished). Next: finish plans, gsd-plan-checker, record additions; build after phase 16.
+
+### Next in order after those merge
+1. own-fonts quick plan (checked; DECISIONS binding) after small-fixes-c and 13-09 — no: after small-fixes-c; 13-09 first per 13-09's re-check Start line (own-fonts waits for 13-09).
+2. 13-09 (re-check additions binding) after 13-08 and small-fixes-c; then 13-06; then 13-10 (owner's mail account).
+3. 15-15 after 15-14 and 16-07; 15-17 after 13-08 (also carries the offering-news two-way sync and the achLog item); rest of phase 15.
+4. 16-08..16-14; phase 14 remaining plans; phase 17 build.
+5. small-fixes-d: GET /v1/mail/sender `holds` field (13-12 open item), phase 08 small-fixes.js press() timing shape, server/README additions from 13-04, ROADMAP progress rows for phases 2-5.
+6. Phase verifiers as phases complete (12 next after small-fixes-c/own-fonts).
+7. Final (before step 12): full reference gate on the merged tree, preview build, verifier walk, publish to the preview artifact, failures-first report.
+
+### Owner items open
+iPhone checks (steps 1, 7 and every merged screen); HELP-06 paid unseen run (fresh set frozen in scratchpad help-unseen-2, SHA-256 dd00390965e3fcb2ebaf836bcf2850f279d22ee125d95e6ed3af8495b415dc6f — scratchpad can be lost; rewrite the same way if so); inputs behind "To be confirmed" (fee matrix, counsel sentences, filing access, hosting, CPA read, mail account for 13-10, bank's ACH guide and masked return report); competitor prices to re-verify (vendor sites blocked in this session; .planning/research/COMPETITORS.md); pricing decision.
+
+### Not kept across a container reset (scratchpad only, all regenerable)
+Gate outputs and owner screenshots under the session scratchpad (rerun the checks to regenerate), the help unseen set (rewrite), merged-tree rerun folders.
