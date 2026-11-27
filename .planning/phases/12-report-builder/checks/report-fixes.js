@@ -534,6 +534,8 @@ const parts = {
         const at = Array.from(el.querySelectorAll('.rb-note, figure.rb-chart')).find((x) => /distributions/i.test(x.innerText));
         if (at) at.scrollIntoView({ block: 'center' });
       });
+      // the owner's shot: messages that fade by themselves are gone first, so nothing covers the report
+      await fr.waitForFunction(() => !document.querySelector('#toasts > *'), null, { timeout: 12000 }).catch(() => {});
       await fr.waitForTimeout(300);
       await A.page.screenshot({ path: path.join(OUT(), `empty-chart-${preset}.png`) });
       const [dl] = await Promise.all([A.page.waitForEvent('download', { timeout: 90000 }), T.press(fr, '[data-action=rb-dl-pdf]')]).catch(() => [null]);
