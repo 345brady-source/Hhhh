@@ -74,3 +74,17 @@
 - totp-frame.js per the WebKit decision: Chromium parts use phase 6's iPhone profile; "NOTE WebKit not installed here: the owner's iPhone check covers WebCrypto and the fallback in the frame"; marker counts 2 parts here (4 with WebKit). A planted hotp bug is caught by both Chromium parts.
 - Measured note: gate steps are kept per HEAD, so a commit between runs reruns every step.
 - 15-04 and 15-05 start now (their wave 2 additions in this file).
+
+## Plan-check additions, wave 3 (15-06, 15-14), checked against 392bbbc, 2026-11-27
+Binding on the executors (full text: scratchpad checks-15-wave3.md).
+- B1 (15-06 Task 3 verify): start with `rm -f $O/gate.txt;`; add `|| exit 1;` after the `git diff --quiet ... index.html` step, before `mkdir -p $O/gate`.
+- B2 (15-14 Task 3 verify): same; `|| exit 1;` after `git diff --quiet ... server/index.mjs server/lib/mail.mjs`.
+- B3 (15-06): add `.planning/phases/15-security/checks/served-portal.js` (`// gate: browser`) to 15-06's files and Task 3: server with SERVE_PORTAL=1 loads portal.html, opens the e-sign preview, reads one document, 0 securitypolicyviolation events; two parts (Chromium desktop, Chromium with phase 6's iPhone profile); prints "NOTE WebKit not installed here: the owner's iPhone check covers the served portal under the policy (e-sign preview, document read)"; marker `// last "...: PASS (parts run: 2)"`; RED with a planted policy missing 'wasm-unsafe-eval'; Task 3 gate grep adds `^GATE ok +<NAME>`.
+- B4 (D-04, the owner's decision; no plan held it):
+  - (a) 15-14: `notify` takes an explicit recipient list; `bankChanged` goes to the investor's address as stored before the save (also when the same save changes the email); a sponsor variant goes to the Owner and Admins: "<firm>: an investor's bank account was changed, confirm it before paying". Last four digits only. Covered by the kinds and guard tests.
+  - (b) 15-15, before wave 4: "no hold for review" is removed. An account the investor changes is stored as pending; no payment uses it; the pre-note follows phase 16's C-03; it applies only after a person with the pay permission confirms with a fresh sign-in; a test proves a payment run is held until then. The wave 4 plan check checks this.
+- W1 (15-14 Task 2): also run server/test/emails-kinds.test.mjs (13-11) in Task 2's verify.
+- W2 (15-14 frontmatter): requirements [SE-01, SE-02, SE-04, SE-05, SE-14].
+- W3 (15-14), orchestrator's choice: firms signed up before 15-14 (confirmedAt '') are offered the confirmation resend from sign-in and from `me`; a test with such a firm proves it can confirm and then invite.
+- I7 recorded: an Owner or Admin changing an investor's bank account with a fresh sign-in is the firm's own confirmation; phase 16's pre-note rule still applies.
+- Start: 15-06 when 15-04 and 15-05 are merged (fresh pull) and no plan editing server/index.mjs or server/README.md runs (13-03, 13-04, 14-08). 15-14 also after 13-01, 13-11 and 13-03 merge, while no plan edits emails.js or invitations.mjs.
