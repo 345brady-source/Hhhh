@@ -287,6 +287,9 @@ function mixedStore(dir, k1, k2) {
   st.put('outbox', { id: 'out_1', box: s1(...plain['outbox/out_1/box']) });
   plain['inbox/ixm_1/sealed'] = [{ author: 'Avery Testinvestor', body: 'Hello' }, 'inbox:ixm_1:sealed'];
   st.put('inbox', { id: 'ixm_1', sealed: s1(...plain['inbox/ixm_1/sealed']) });
+  d.rooms = d.rooms || {}; // lib/dataroom.mjs (phase 14, merged after planning): `rooms:<id>:sealed`
+  plain['rooms/rm_1/sealed'] = [{ title: 'Harbor Ridge Fund II data room' }, 'rooms:rm_1:sealed'];
+  st.put('rooms', { id: 'rm_1', kind: 'room', sealed: s1(...plain['rooms/rm_1/sealed']) });
   // 15-01's people record: sealed email and name, an email index under a key derived from DATA_KEY.
   d.people = d.people || {};
   plain['people/per_1/email'] = ['Pat@HarborRidge.example', 'person:per_1:email'];
@@ -318,7 +321,7 @@ test('reseal', (t) => {
   const { file, plain, blobs, ws } = mixedStore(dir, k1, k2);
   const r = run(RESEAL, ['--store', file], { DATA_KEY: k3, DATA_KEY_PREVIOUS: `${k1},${k2}` });
   assert.equal(r.status, 0, r.out);
-  for (const line of ['resealed invitations: 2', 'resealed taxdocs: 1', 'resealed verifications: 1', 'resealed filingIssuers: 1', 'resealed filings: 1', 'resealed outbox: 1', 'resealed inbox: 1', 'resealed people: 2', 'resealed auditlog: 2', 'resealed blobs: 2']) assert.match(r.out, new RegExp(`^${line}$`, 'm'), line);
+  for (const line of ['resealed invitations: 2', 'resealed taxdocs: 1', 'resealed verifications: 1', 'resealed filingIssuers: 1', 'resealed filings: 1', 'resealed outbox: 1', 'resealed inbox: 1', 'resealed rooms: 1', 'resealed people: 2', 'resealed auditlog: 2', 'resealed blobs: 2']) assert.match(r.out, new RegExp(`^${line}$`, 'm'), line);
   assert.match(r.out, /^Done\. Remove the old key from DATA_KEY_PREVIOUS once the server has started with this store\.$/m);
   for (const k of [k1, k2, k3]) assert.ok(!r.out.includes(k), 'no key in the output');
   assert.ok(!r.out.includes('Avery') && !r.out.includes('000-12-3456'), 'no sealed value in the output');
