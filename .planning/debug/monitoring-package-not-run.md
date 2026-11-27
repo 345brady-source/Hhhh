@@ -92,6 +92,25 @@ started: seen during plan 13-04's gate (base ef87afa area)
   found: 20 of 20 PASS so far (summary-nat.txt), 18-38 s each (170-195 s incl. queue)
   implication: natural rate at part granularity is low, as with the earlier SERVER MODE flake; the instrumented natural runs will give the margin
 
+- timestamp: 2026-11-27T17:07Z
+  checked: the same 24 unmodified runs, complete (summary-nat.txt)
+  found: 24 of 24 `MONITORING: PASS (parts run: 1)`, 0 FAIL lines, 18-38 s each (78-195 s incl. queue), load 2.3-7.7; heavy.sh's other slots were mostly held by other agents, so the three loops often ran one or two at a time
+  implication: measured natural rate of the unmodified part: 0 in 24 at this load
+
+- timestamp: 2026-11-27T17:08Z
+  checked: fix applied to the tree (7f5450e, monitoring.js only): toastAfter (MutationObserver armed before the press; first toast added after it, read in the page), runNow and kycPress through it; pulled() waits until the console has applied its GET /v1/checks/changed answer (server.pulledAt >= the answer's now) before its existing 800 ms; part once waits for the run's POST /v1/screenings answer before reading `tried`. `cd server && node --test` on that tree (node_modules linked)
+  found: `# tests 601` `# pass 601` `# fail 0` rc=0 (debug-monitoring/server-tests.txt)
+  implication: server suite unchanged (the fix touches only the check)
+
+- timestamp: 2026-11-27T17:08Z
+  checked: instrumented natural runs of the unfixed check (inst/monitoring-red.js, no forced delay, full 9 parts, three loops; inst-N.txt), first lines
+  found: |
+    TIMING mnd   atClick=[2 sign-in toasts] resultAfterClick=80 readAfterClick=112 margin=32
+    TIMING mnd   atClick=[2 sign-in toasts] resultAfterClick=47 readAfterClick=70  margin=23
+    TIMING pnr-A atClick=[3 sign-in toasts] resultAfterClick=99 readAfterClick=133 margin=34
+    TIMING pnr-B atClick=[3 sign-in toasts] resultAfterClick=29 readAfterClick=66  margin=37
+  implication: every "Run now" press so far has sign-in toasts on screen, so the old wait never waits; the result toast beats the read by only 23-37 ms (the earlier SERVER MODE race had 78-173 ms). A hold-up of the check's process (which also runs the server) of a few tens of ms at that moment gives the gate's failure. monitored-not-due and package-not-run's second press have the same exposure.
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
