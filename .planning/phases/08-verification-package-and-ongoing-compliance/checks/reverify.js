@@ -11,7 +11,12 @@
 //           done), no login, profile, identity, tax or payment step, and the request's own line; the investor verifies
 //           through the firm's own connection; the console then shows the new verification with its valid-until date, one
 //           "Accreditation re-verification requested" and one "Accreditation re-verified" entry; Approve is allowed
-//   NODE_PATH=$(npm root -g) node reverify.js [--only local]
+//   server  1280x800, the real integration server in this process (shared token, no mail settings): "Ask to re-verify",
+//           "Send request": the server stores the request (reverify, no offering) and emails it (outbox); the investor's
+//           own browser context opens the link (two steps) and verifies; the console imports; the record shows the new
+//           verification, the two entries, a re-verification notice and row; Approve is allowed; one POST /v1/invitations;
+//           the taxpayer number Lib.walk types (123456789) reaches no store, call or screen (the scan proven on a planted copy)
+//   NODE_PATH=$(npm root -g) node reverify.js [--only local,server]
 // The last line is "REVERIFY: PASS (parts run: N)" or "REVERIFY: FAIL (parts run: N) - <failed parts>".
 const fs = require('fs');
 const path = require('path');
@@ -25,7 +30,9 @@ Lib.describeShots([
   ['local-dialog.png', 'Local mode, 1280x800: the "Ask to re-verify" dialog with the investor\'s name and "Send request".'],
   ['local-email.png', 'Local mode, 1280x800: the request\'s email, prepared with the investor\'s link.'],
   ['local-link.png', 'Local mode, 1280x800: the request\'s link: step 1 of 2, the accreditation step, with the request\'s own line.'],
-  ['local-done.png', 'Local mode, 1280x800: the request\'s done screen after the investor verified.']
+  ['local-done.png', 'Local mode, 1280x800: the request\'s done screen after the investor verified.'],
+  ['server-link.png', 'Server mode, 1280x800: the investor\'s own device opens the request: step 1 of 2, the accreditation step.'],
+  ['server-row.png', 'Server mode, 1280x800: after the import, the request\'s row reads "Re-verification only".']
 ]);
 
 const DAY = 864e5;
@@ -244,6 +251,133 @@ const parts = {
       F.leakFree(check, 'every screen of this part', seen.join('\n'));
     } finally {
       await A.context.close().catch(() => {});
+    }
+  },
+
+  async server({ check, S }) {
+    // Lib.walk's typed taxpayer number (wave-6 W2): never typed here, and the scan below proves it reaches nothing.
+    const TIN = '123456789';
+    const scan = (label, text) => check(`${label}: holds no taxpayer number ${TIN}`, String(text).indexOf(TIN) < 0);
+    const planted = JSON.stringify({ calls: [{ at: 'x', kind: 'accreditation' }], typed: TIN });
+    check('the taxpayer-number scan fails on a planted copy (proven before it is relied on)', planted.indexOf(TIN) >= 0);
+    const srv = await Lib.serverPortal(S, {});
+    const A = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({ acceptDownloads: true }, F.VIEW.desktop) });
+    const p = A.page;
+    const closers = [() => A.context.close(), () => srv.close()];
+    const seen = [];
+    const posts = [];
+    p.on('request', (rq) => rq.method() === 'POST' && /\/v1\/invitations$/.test(rq.url().replace(/[?#].*$/, '')) && posts.push(rq.url()));
+    try {
+      const x = await lapsedInvestor(S, A);
+      const on = await srv.configure(p);
+      check('the console uses the integration server in this process', on === true);
+
+      // The sponsor asks: the real server stores the request and emails it (the outbox: no mail settings here).
+      const r = await row(p, x.email);
+      const btn = r.locator('[data-action="reverify-request"]');
+      check('the investor\'s row offers "Ask to re-verify"', (await btn.count()) === 1);
+      if (!(await btn.count())) return;
+      await btn.first().click();
+      await p.waitForSelector('#dlg[open] [data-action="reverify-send"]', { timeout: 10000 });
+      seen.push(await p.locator('#dlg').innerText());
+      await p.click('#dlg [data-action="reverify-send"]');
+      await p.waitForFunction((id) => {
+        const it = (window.CVPortal.state.ws.invitations || []).filter((y) => y.investorId === id).pop();
+        return !!(it && (it.serverId || it.emailStatus === 'failed'));
+      }, x.id, { timeout: 30000 });
+      const it = await p.evaluate((id) => {
+        const ws = window.CVPortal.state.ws;
+        const y = (ws.invitations || []).filter((z) => z.investorId === id).pop();
+        return { id: y.id, serverId: y.serverId, link: y.link, emailStatus: y.emailStatus, reverify: !!y.reverify, dlg: document.getElementById('dlg').open };
+      }, x.id);
+      check('"Send request" sends the request to the integration server, which keeps it in its outbox; the dialog closes', /^ivt_/.test(it.serverId) && it.emailStatus === 'outbox' && it.reverify && it.dlg === false && it.link.indexOf(`server=${encodeURIComponent(srv.base)}`) > 0, it);
+      const toast = await toastLike(p, 'Re-verification request');
+      check('the sponsor is told where the request went', /^Re-verification request for .* saved in the integration server outbox/.test(toast), toast);
+      seen.push(toast);
+      const rec = it.serverId ? srv.server.store.get('invitations', it.serverId) : null;
+      const snap = rec ? srv.server.invitations.vault.open(rec.snapshot, `${rec.id}:snapshot`) : null;
+      check('the server stored the request: an investor on file, no offering, marked reverify', !!snap && snap.invitation.reverify === true && snap.invitation.existing === true && snap.offering === null, snap && snap.invitation);
+      const mail = it.serverId ? ((await srv.call('GET', `/v1/outbox?invitation=${encodeURIComponent(it.serverId)}`)).body.messages || []) : [];
+      check('the server\'s email asks the investor to verify their accredited investor status again', mail.length === 1 && mail[0].subject === `${x.firm}: verify your accredited investor status` && /verify your accredited investor status again/.test(mail[0].text), mail.map((m) => m.subject));
+      seen.push(mail.map((m) => `${m.subject}\n${m.text}`).join('\n'));
+      if (!it.serverId) return;
+
+      // The investor's own device: the link holds the accreditation step and the done screen.
+      const B = await Lib.open(S, { allow: [srv.base], init: srv.init, context: Object.assign({}, F.VIEW.desktop) });
+      closers.unshift(() => B.context.close());
+      const ip = B.page;
+      let sent = '';
+      ip.on('request', (rq) => rq.method() === 'POST' && /\/v1\/invite\/complete$/.test(rq.url()) && (sent = rq.postData() || ''));
+      await ip.goto(it.link);
+      await ip.waitForSelector('.ivf-form', { timeout: 30000 });
+      await ip.waitForTimeout(300);
+      const s1 = await ip.evaluate(() => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        return { count: (document.querySelector('.ivf-progress .ob-count') || {}).innerText || '', steps: NS.inviteFlow.steps(ws, ws.invitations[0]), text: document.querySelector('.ivf-form').innerText.replace(/\s+/g, ' ') };
+      });
+      const LINE = `${x.firm} asked you to verify your accredited investor status again; this link covers that step only.`;
+      check('the investor\'s device opens on step 1 of 2; the steps are accreditation and done; the request\'s own line', /^Step 1 of 2/.test(s1.count) && JSON.stringify(s1.steps) === JSON.stringify(['accreditation', 'done']) && s1.text.indexOf(LINE) >= 0, { count: s1.count, steps: s1.steps });
+      await ip.screenshot({ path: path.join(SHOTS, 'server-link.png') });
+      seen.push(s1.text);
+      if (JSON.stringify(s1.steps) !== JSON.stringify(['accreditation', 'done'])) return;
+      await ip.click('.ivf-form [data-action="iv-start"][data-kind="accreditation"]');
+      await ip.waitForSelector('#dlg[open] [data-action="iv-sandbox-finish"]', { timeout: 10000 });
+      await ip.click('#dlg [data-action="iv-sandbox-finish"]');
+      await ip.waitForFunction(() => !document.getElementById('dlg').open, null, { timeout: 10000 });
+      await ip.waitForFunction(() => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const inv = ws.investors.find((y) => y.id === ws.invitations[0].investorId);
+        return NS.integrations.peek(inv).accreditation.status === 'verified';
+      }, null, { timeout: 15000 });
+      if (await ip.locator('#ob-accAttest').count()) await ip.check('#ob-accAttest');
+      await ip.click('.ivf-form button[type=submit]');
+      await ip.waitForSelector('.ivf-done', { timeout: 30000 });
+      const done = await ip.locator('.ivf-done').innerText();
+      check('the investor\'s done screen: verified, and the firm will see the result', /Your accreditation is verified/.test(done) && done.indexOf(`${x.firm} will see the result`) >= 0, done);
+      seen.push(done, await F.noRawError(check, ip, 'the investor\'s device', B.errors));
+      const body = sent ? JSON.parse(sent) : {};
+      check('the device sent the accreditation result only: no subscription, agreement or tax form', !!body.investor && !body.request && !body.envelope && !body.taxEnvelope, { request: !!body.request, envelope: !!body.envelope, taxEnvelope: !!body.taxEnvelope });
+      await srv.waitCompleted(it.serverId);
+
+      // The console imports: the new verification, the two entries, a re-verification row.
+      await Lib.importFromConsole(p, it.id);
+      const after = await p.evaluate((id) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const inv = ws.investors.find((y) => y.id === id);
+        const a = NS.integrations.peek(inv).accreditation;
+        return { status: a.status, expiresAt: a.expiresAt, asked: (ws.audit || []).filter((e) => e.record === id && e.action === 'Accreditation re-verification requested').length, done: (ws.audit || []).filter((e) => e.record === id && e.action === 'Accreditation re-verified').length, notes: (ws.notifications || []).filter((n) => n.kind === 'onboarding_completed').map((n) => n.title) };
+      }, x.id);
+      const want = iso(Date.now() + 90 * DAY);
+      check(`the record shows the new verification, valid until ${want}`, after.status === 'verified' && after.expiresAt === want, after);
+      check('one "Accreditation re-verification requested" and one "Accreditation re-verified" entry', after.asked === 1 && after.done === 1, after);
+      check('the console\'s notice reads as a re-verification', after.notes.some((t) => t === `${x.title} finished your re-verification request`), after.notes);
+      await Lib.consoleRoute(p, 'console-investors', '.cs-tbl');
+      await p.evaluate(() => {
+        window.CVPortal.state.ui.inv8Filter = 'all';
+        window.CVPortal.app.render();
+      });
+      await p.waitForTimeout(300);
+      const rowText = await p.locator(`tr[data-invitation="${it.id}"]`).innerText().catch(() => '');
+      check('the request\'s row reads as a re-verification', /Re-verification only/.test(rowText) && !/Account only|Tax form only/.test(rowText), rowText);
+      await p.locator(`tr[data-invitation="${it.id}"]`).scrollIntoViewIfNeeded().catch(() => {});
+      await p.screenshot({ path: path.join(SHOTS, 'server-row.png') });
+      seen.push(rowText);
+      const approved = await approve(p, x.reqId);
+      check('after: Approve is allowed, without the override', /^Subscription approved/.test(approved.toast) && approved.status !== 'pending' && approved.overridden === 0, approved);
+      seen.push(await F.noRawError(check, p, 'the console after the import', A.errors));
+      check('asking once made exactly one POST /v1/invitations', posts.length === 1, posts);
+
+      // W3: the typed taxpayer number reaches no call, no stored record, no email and no screen.
+      const store = JSON.stringify({ invitations: srv.server.store.list('invitations'), outbox: srv.server.store.list('outbox'), verifications: srv.server.store.list('verifications'), screenings: srv.server.store.list('screenings') });
+      scan('the server\'s store and outbox', store);
+      scan('what the device sent', sent);
+      scan('every screen of this part', seen.join('\n'));
+      F.leakFree(check, 'every screen and email of this part', seen.join('\n'));
+    } finally {
+      for (const c of closers) await Promise.resolve().then(c).catch(() => {});
     }
   }
 };
