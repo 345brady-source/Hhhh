@@ -33,3 +33,12 @@ FAIL starters-phone ran to the end :: frame.selectOption: Timeout 30000ms exceed
 FAIL speed-phone ran to the end :: frame.selectOption: Timeout 30000ms exceeded.
 DELIVER FLOW: FAIL (parts run: 5) - notice, withdraw-replace, archive-desktop, starters-phone, speed-phone
 ```
+
+### RED 3 (Task 3's part managed-taxdocs, same tree; SCRATCH/exec-12-08/red-3.txt; exit 1)
+
+```
+PASS managed-taxdocs the frame refuses fetch() (connect-src none is in force)
+FAIL managed-taxdocs ran to the end :: frame.waitForFunction: Timeout 20000ms exceeded.
+DELIVER FLOW: FAIL (parts run: 1) - managed-taxdocs
+```
+(no report can be made without the batch engine, so no report open can be counted beside the tax document's)

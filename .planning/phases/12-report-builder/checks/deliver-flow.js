@@ -96,7 +96,8 @@ async function generate(fr, stopAfter) {
   await T.press(fr, '[data-action=rd-gen]');
   if (stopAfter) {
     await fr.waitForFunction((k) => (window.__rdSeen || []).some((t) => t.indexOf(`Made ${k} of`) === 0), stopAfter, LONG);
-    await T.press(fr, '[data-action=rd-stop]');
+    // the panel is drawn again after every file, so the tap is made on the button as it is at that moment
+    await fr.locator('[data-action=rd-stop]').tap({ timeout: 10000 });
   }
   await fr.waitForFunction(() => {
     const el = document.querySelector('[data-rd=progress]');
