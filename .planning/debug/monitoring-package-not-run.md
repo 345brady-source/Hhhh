@@ -12,7 +12,23 @@ hypothesis: H1 - runNow (monitoring.js:457-463) waits for ANY toast; the sign-in
 bug_class: Heisenbug (timing race in the check; 1 failure seen under load, part alone PASS twice)
 test: instrumented scratch copy recording the toasts present at the click and at the read, and the ms from click to the result toast; then force the server's POST /v1/screenings answer 1500 ms late and look for the same two FAIL lines
 expecting: sign-in toast present at every click (so the wait never waits); natural margin small; with the forced delay exactly the two FAIL lines
-next_action: write scratch copy debug-monitoring/inst/monitoring-inst.js (requires made absolute) with a delay hook on POST /v1/screenings in the in-process server, run --only package-not-run
+next_action: finish the 24 unmodified runs, then copy the verified fix (debug-monitoring/monitoring-fixed.js, made by mkfix.py) into the tree, commit, and run MONITORING full x10 (two loops through heavy.sh) and the server tests
+
+reasoning_checkpoint:
+  hypothesis: "package-not-run FAILed because runNow (monitoring.js:457-463) takes any toast on screen as the answer of 'Run now': the 'Signed in as admin of Kestrel Bay' toast Lib.consoleRoute raises (lib.js:480 -> app.js:783, 4.2 s on screen) inside attention() (648) is still there at the click, so waitForSelector returns at once and .last() and the record (651) are read before the in-process server has answered POST /v1/screenings."
+  confirming_evidence:
+    - "RED: the unfixed check with the server's answer held 1500 ms prints exactly the gate's two FAIL lines (toast text 'Signed in as admin of Kestrel Bay'; the record with only the package result and the old date) while 'one list read, one screening asked of the server' PASSes."
+    - "In every instrumented run three sign-in toasts are on screen at the click (atClick), so the wait never waits; the read is 32 ms after the click."
+    - "Product order checked by reading: the iv-rescreen action raises its toast only after awaiting rescreenDue, which writes the record (integrations.js:1609-1614, 724-735)."
+  falsification_test: "A FAIL of '\"Run now\" re-screened them' with a toast other than a sign-in toast, or with the result toast recorded before the read, or a GREEN failure under the same forced hold, would refute it."
+  fix_rationale: "Read the first toast added AFTER the click, recorded in the page as it is added (MutationObserver armed before the click): a toast already on screen can no longer stand in for it, and since the console raises it only after writing the record, the record read after it is the written one. Same assertions (same regex, same record fields)."
+  blind_spots: "The failing run's own output was overwritten by the gate rerun, so only its two FAIL lines are known (they match RED exactly). Natural reproduction depends on the in-process server being held up > the natural margin (being measured)."
+  candidate_causes:
+    - "code (check): runNow takes a toast already on screen (monitoring.js:461-462) - confirmed by RED"
+    - "code (product): the console shows the result before writing it - eliminated by reading (toast after await rescreenDue)"
+    - "environment: CPU starvation of the check's process, which also hosts the server (the trigger, not a separate cause)"
+    - "data: the seeded investor not due / not package-screened - eliminated: the line before (649) PASSed and the list read happened"
+  and_gate: "yes: the defect (any-toast wait, made blind by consoleRoute's toast) AND a server answer slower than the few CDP round trips between click and read; the second is why it shows only under load"
 
 ## Symptoms
 <!-- Written during gathering, then IMMUTABLE -->
