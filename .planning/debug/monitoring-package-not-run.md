@@ -149,10 +149,22 @@ started: seen during plan 13-04's gate (base ef87afa area)
   found: (in progress)
   implication: verification counts only runs on ca59fff
 
+- timestamp: 2026-11-27T17:33Z
+  checked: `cd server && node --test` on 765bc10 (= ca59fff + this file; node_modules linked)
+  found: `# tests 601` `# pass 601` `# fail 0` rc=0 (debug-monitoring/server-tests-final.txt)
+  implication: server suite unchanged on the final tree
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
-root_cause:
-fix:
+root_cause: "In the check, not the product. monitoring.js:457-463 (ef87afa) runNow waited for any toast (`waitForSelector('#toasts .toast')`) and read the last one. Lib.consoleRoute (phase 6 lib.js:480) selects the demo role on every call, and the console raises 'Signed in as admin of Kestrel Bay' each time (app.js:783), on screen 4.2 s (app.js:66-67). attention() at monitoring.js:648 calls consoleRoute just before the press, so 1-4 sign-in toasts are on screen at every 'Run now' click (16 of 16 presses timed): the wait returned at once and the toast and the record (651) were read 20-70 ms after the click, racing the answer of POST /v1/screenings from the server that runs in the check's own process. The result toast won by only 16-68 ms; under load it lost, giving exactly the gate's two FAIL lines while the list-read line (counted when the request is sent) passed. Product order is sound: the console raises the toast only after rescreenDue has written the record (integrations.js:1609-1614). Same exposure in monitored-not-due (601), package-not-run's second press (667) and preview desktop/phone (843). One more read of the same kind in part once (803): `tried = C.posts.length` read 2.3 s after the reload with nothing waiting for the run's screening request."
+fix: "monitoring.js only (ca59fff): toastAfter(p, act) arms a MutationObserver on #toasts before the press and returns the first toast added after it, read in the page (a toast already on screen is never taken; one gone before the read is still read); runNow uses it (throws when no toast in 30 s, as before) and kycPress uses it (returns '' when none, as before). Part once waits for the answer of the run's POST /v1/screenings before reading `tried`, then the existing 1500 ms. Every assertion is unchanged; nothing skipped; no sleep added."
+oracle_type: specified (the toast text and record fields the plan states; unchanged)
 verification:
-files_changed: []
+  target_test: { result: pass, detail: "forced: screening answer held 1500 ms - unfixed FAIL with the gate's two lines (red-1), fixed PASS 17/17 (green-1, green-hold, final-hold); run's screening sent 5 s late - unfixed FAIL tried=1 (red-post), fixed PASS 10/10 (green-post, final-post)" }
+  mutation_check: { result: skipped, reason_if_skipped: "no mutation tool for the check scripts; the unfixed check (ef87afa) under the same forcing is the mutant at the fix site and it is killed (FAIL)" }
+  no_op_deletion: { result: pass, deletion_justified_by_rca: n/a, detail: "no assertion removed or loosened; kycPress's clearing of old toasts is replaced by reading only toasts added after the press" }
+  adjacent_tests: { result: pending, detail: "server tests 601/601 on the final tree; MONITORING full x10 on ca59fff in progress" }
+  revert_reconfirm: { result: pass, detail: "the unfixed check under each forcing FAILs (red-1, red-post); the fixed one PASSes" }
+  natural_repro: "not achieved: 0 FAIL in 24 unmodified --only package-not-run runs (three loops through heavy.sh, load 2.3-7.7) and 6 instrumented full runs; measured margin 16-68 ms over 16 presses"
+files_changed: [.planning/phases/08-verification-package-and-ongoing-compliance/checks/monitoring.js]
