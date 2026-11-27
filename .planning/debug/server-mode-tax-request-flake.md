@@ -1,17 +1,35 @@
 ---
-status: investigating
+status: fixing
 trigger: "SERVER MODE printed once `SERVER MODE: FAIL (parts run: 15) - tax-request` at 75b2fc5 (after merging 13-03); two immediate reruns PASS; failing run's detail not kept"
 created: 2026-11-27T00:00:00Z
 updated: 2026-11-27T00:00:00Z
 ---
 
 ## Current Focus
+<!-- OVERWRITE on each update - reflects NOW -->
 
-hypothesis: server-mode.js:1596 reads `snaps` right after the first heading, but the listener (1588-1590) pushes each body only after its own `await res.json()`; when the check's node process is late (load, GC pause) the page renders its heading before the body reaches the check and snaps is [] -> "the snapshot is a tax-form request ..." FAILs alone
-bug_class: Heisenbug (observed once in 3 runs; first run under 3-4 concurrent gates) - route: stability/stress runs + timing measurement, no SBFL
-test: (1) 40+ unmodified runs incl. concurrent and full 15-part runs; (2) instrumented copy measuring heading time vs body time (margin), event-loop lag, heap
-expecting: natural margin shrinks under load/full runs; a natural FAIL shows exactly that one line
-next_action: finish loop A (runs 3-15) and timing runs 2-21; then 3 unmodified full runs + 3 instrumented full runs through heavy.sh
+hypothesis: server-mode.js:1588-1596 (tax-request) reads `snaps` right after the first heading, but the listener pushes each GET /v1/invite body only after its own `await res.json()`, a second round trip to the browser after the response event; when the check's node process is held up for longer than the ~80-130 ms margin (load, GC), the heading wins and snaps is [] -> only "the snapshot is a tax-form request ..." FAILs
+bug_class: Heisenbug (1 failure seen in 3 runs under 3-4 gates; 0 in 45 unmodified reruns)
+test: fix applied to the tree; verification: server tests, SERVER MODE x10 full, CO-INVESTOR SERVER, EMAIL DIALOG
+next_action: apply fix/apply.py to the tree's server-mode.js, commit, push; then run the verification set
+
+reasoning_checkpoint:
+  hypothesis: "The tax-request part FAILed once because the check read the snapshot list at the device's first heading while the body of GET /v1/invite was still on its way to the check (server-mode.js:1589 pushes after await res.json(); 1596 reads with no wait for it)."
+  confirming_evidence:
+    - "Forcing the body 1500 ms late at the check gives exactly the observed signature: SERVER MODE FAIL - tax-request, one FAIL line (the snapshot check), the part's normal length, every later step PASS (rg-red-tax)."
+    - "The failing gate run's part stamps show tax-request ran its normal length (tax-w8ben 14:27:59 -> include-tax 14:28:26 = 27 s for both parts, 27-30 s on 7 other trees): an assertion failed and the flow went on; no wait timed out, no early return."
+    - "Measured margin in natural runs is only 78-133 ms (body at the check 10-40 ms after the response event, heading 80-130 ms later); a 100+ ms hold-up of the check's process on a 4-core machine running 3-4 gates is enough."
+    - "Every other read in the part was checked and waits for what it reads (Evidence 14:46)."
+  falsification_test: "A natural failure whose FAIL line is any other check of the part, or a failure of the snapshot check with snapsAtH1=1 in the instrumented copy, would refute it. In 45 unmodified + 7 instrumented natural runs no failure occurred, so the single failure's own line is not available."
+  fix_rationale: "Keep each body read as its promise and await all of them where the snapshot is read: the check then reads the same snapshot fields (taxRequest, offering null, taxPrefill address, no TIN run, no bank words) whatever the timing. At the heading the page has already consumed the body, so the awaited read returns after one round trip; nothing is skipped or loosened."
+  blind_spots: "The failing run's own lines were overwritten by the rerun (lib.js savePart), so it is not proven that this race, and not another one-off, produced that failure. Natural reproduction not achieved at load 2.4-12.9."
+  candidate_causes:
+    - "code (check): snapshot body read races the first heading (server-mode.js:1588-1596) - ranked 1"
+    - "code (check): same race in part clean (server-mode.js:1027-1039), covered by a fixed 300 ms wait - same defect, different part (would have printed '- clean')"
+    - "environment: CPU starvation / GC pause in the check's process (the trigger of the race, not a separate cause)"
+    - "code (product, 13-03): mail held/logged asynchronously -> outbox empty at 1580 - eliminated (mailer.send awaited before the reply; no SMTP_HOST, no accounts -> stored synchronously)"
+    - "data: random token matching the leak scan at 1644 - eliminated (token after #invite- stripped; probability of a vendor word elsewhere ~1e-7)"
+  and_gate: "yes: the defect (unordered read) AND a hold-up of the check's process > ~100 ms at that moment are both needed; the second explains why it showed once under 3-4 gates and never in 45 reruns at lower load"
 
 ## Symptoms
 
@@ -64,6 +82,20 @@ started: first seen at 75b2fc5 (13-03 merged); 13-03's own gate on base 8efaa5c 
   checked: unmodified `--only tax-request` runs 1-14, 16-43 (42 runs, three loops at once, heavy.sh shared with other agents' forms-flow / status-flow / report checks, load 4.6-12.9); instrumented copy, full 15-part run tfull-1
   found: 42 of 42 PASS. tfull-1 PASS (parts run: 15), `TIMING h1=380 snapsAtH1=1 resp=[264] body=[276] margin=104 lagMaxMs=13 heapMB=108`: in a full run the check had the body 12 ms after the response event and 104 ms before it saw the heading; worst event-loop delay 13 ms, heap 108 MB after 13 parts
   implication: the check wins the race by ~100 ms in a normal full run; it loses when its process is held up for longer than that between the response event and the heading (a GC pause or CPU starvation in a 4-core machine running 3-4 gates). Next: runs pinned to one CPU (taskset; the check and its own browser share it, no code delay) to stress the order without code changes.
+
+- timestamp: 2026-11-27T15:14Z
+  checked: 3 unmodified full SERVER MODE runs (run-101..103, all 15 parts, GATE_FRESH=1, heavy.sh, 4 other agents' gates running) and instrumented runs tfull-2 (full), timing-2..5 (--only tax-request)
+  found: run-101/102/103 `SERVER MODE: PASS (parts run: 15)` (316-786 s incl. queue). Instrumented: tfull-2 margin=116 lagMaxMs=18 heapMB=65; timing-2..5 margins 133, 78, 126, 125 ms, lagMaxMs 10-28; in every run respEventsAtH1=1 (the response event had reached the listener before the heading was seen) and snapsAtH1=1
+  implication: no natural failure in 45 unmodified runs (42 --only tax-request incl. three at once, 3 full); measured margin 78-133 ms; the response event always precedes the heading, only the body read after it races
+
+- timestamp: 2026-11-27T15:12Z
+  checked: RED/GREEN with the body forced 1500 ms late at the check (scratch copies: RED = unfixed check with the delay before res.json()/res.text(); GREEN = fixed check with the same delay inside the kept promise), --only each part
+  found: |
+    rg-red-tax (TIMING_BODY_DELAY=1500) | SERVER MODE: FAIL (parts run: 1) - tax-request | 19 PASS, 1 FAIL: FAIL tax-request tax-request: the snapshot is a tax-form request with no offering, carrying the form's pre-fill and no taxpayer ID, bank o...
+    rg-green-tax (TIMING_BODY_DELAY=1500) | SERVER MODE: PASS (parts run: 1) | 20 PASS, 0 FAIL
+    rg-red-clean (TIMING_CLEAN_DELAY=1500) | SERVER MODE: FAIL (parts run: 1) - clean | 11 PASS, 2 FAIL: FAIL clean the investor's page received the snapshot from the server :: 0; FAIL clean the investor in the snapshot is the invited investor alone
+    rg-green-clean (TIMING_CLEAN_DELAY=1500) | SERVER MODE: PASS (parts run: 1) | 13 PASS, 0 FAIL
+  implication: the fix makes both reads independent of when the body reaches the check, and checks the same snapshot fields as before
 
 ## Resolution
 
