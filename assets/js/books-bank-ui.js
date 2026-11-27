@@ -132,7 +132,7 @@
   function fileHTML(ws, o, u, acct, can) {
     if (!can) return '';
     const input = `<label class="cs-field bb-file-label" for="bb-file"><span>Statement file (CSV, OFX, QFX, QBO or BAI2)</span><input id="bb-file" type="file" data-change="bb-file"></label>`;
-    return `${input}${u.result ? `<p class="bb-result" role="status">${h(u.result)}</p>` : ''}${errLine(u, 'file')}`;
+    return `<h3 class="bk-h3">Statements</h3>${input}${u.result ? `<p class="bb-result" role="status">${h(u.result)}</p>` : ''}${errLine(u, 'file')}`;
   }
 
   /** The undecided lines of the account with their candidates, split into suggestions and lines to decide. */
@@ -273,7 +273,7 @@
         ${dd('und', 'Lines not yet decided', `${r.undecided.length} · ${usd(sum(r.undecided))}`)}
         ${dd('diff', 'Difference', diff)}
       </dl>
-      ${outs ? `<ul class="bk-holds bb-outs">${outs}</ul>` : ''}
+      ${outs ? `<p class="bk-sub">Outstanding items</p><ul class="bk-holds bb-outs">${outs}</ul>` : ''}
       ${errLine(u, 'rec')}
       ${can ? `<div class="cs-row"><button type="button" class="cs-btn cs-btn-small cs-btn-primary" data-action="bb-mark"${ok ? '' : ' disabled'}>Mark reconciled</button></div>` : ''}`;
   }

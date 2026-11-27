@@ -72,6 +72,7 @@ async function go(fr, route, sel) {
   await fr.waitForTimeout(300);
 }
 async function shot(A, name, fr, sel) {
+  if (fr) await fr.waitForFunction(() => !document.querySelector('#toasts > *'), null, { timeout: 12000 }).catch(() => {});
   if (fr && sel) {
     await fr.evaluate((s) => {
       const e = document.querySelector(s);
