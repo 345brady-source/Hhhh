@@ -1,0 +1,6 @@
+%PDF-1.4
+% A stand-in for a returns report saved as PDF (text only, so the repository holds no binary).
+1 0 obj
+<< /Type /Catalog >>
+endobj
+%%EOF
