@@ -1,5 +1,5 @@
 // gate: browser
-// last "REPORT FIXES: PASS (parts run: 5)"
+// last "REPORT FIXES: PASS (parts run: 6)"
 // REPORT FIXES (quick task 2026-11-27-report-fixes, before 12-09's owner walk), in the owner's frame (a sandboxed iframe
 // whose policy refuses every connection and loads scripts from the page's own address only), clock 2027-01-20:
 //   tell-withdrawn  (390x844, touch) 'Tell investors' on a report whose every file is withdrawn says so on the report
@@ -17,6 +17,10 @@
 //                   the record, never Pellbrook's bytes; where the remake is not loaded, or its bytes are not the
 //                   record's, the not-kept sentence and nothing else. Old-style ids kept with their own bytes, new ids
 //                   and a document without a report block open as before.
+//   empty-chart-phone (390x844, touch) quick task small-fixes-c: Kestrel Bay's capital account statement for
+//                   Kestrel Bay Fund II, Q4 2026, previewed for its first holder (Davis Family Trust, no distributions
+//                   in the quarter): one plain sentence where 'Your distributions by quarter' was, in the preview and the
+//                   downloaded PDF; the same statement for fiscal year 2026 (distributions paid) still has the chart.
 //   node checks/report-fixes.js [--only part,part]
 'use strict';
 const path = require('path');
@@ -35,6 +39,11 @@ const NONE = 'Every file of this report is withdrawn; there is no one to tell.';
 const OUT = () => L12.work('report-fixes');
 const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
 const J = (x) => JSON.stringify(x);
+
+Lib.describeShots([
+  ['empty-chart-q.png', "Kestrel Bay's capital account statement for Davis Family Trust, Q4 2026, on the phone: no distributions in the quarter, so one sentence stands where the distributions chart was"],
+  ['empty-chart-fy.png', 'The same statement for fiscal year 2026, on the phone: distributions were paid, so the distributions chart is drawn']
+]);
 
 /** Another sample firm in the same frame (the same browser, so the same file store), signed in as admin. */
 async function firm(fr, id) {
@@ -488,6 +497,75 @@ const parts = {
     check('and Asset updates lists the holdings again, the photo still under its holding', !L.none && J(L.rows) === J(ids.fund) && (await fr.locator(`.rb-hold[data-holding="${hid}"] .rb-thumb`).count()) === 1, L);
     await T.quiet(check, A, fr);
     await T.leak(check, fr);
+    await A.context.close();
+  },
+
+  /** Quick small-fixes-c: no distributions in the period, no empty chart: one sentence in the preview and the PDF. */
+  async 'empty-chart-phone'({ check, S }) {
+    const TITLE = 'Your distributions by quarter';
+    const SENTENCE = 'You received no distributions in this period.';
+    const flat = (t) => String(t || '').replace(/\s+/g, ' ');
+    const { A, fr } = await F.open(S, 'phone', check);
+    await F.toTab(fr);
+    await fr.selectOption('#rb-type', 'statement');
+    await fr.waitForTimeout(150);
+    await fr.selectOption('#rb-start', { label: 'Capital account statement' });
+    await fr.fill('#rb-name', 'No distributions this quarter');
+    await T.press(fr, '[data-action=rb-create]');
+    await fr.waitForSelector('.rb-edit', { timeout: 10000 });
+    /** The preview for the fund's first holder in a period preset: what it shows, its charts' titles, the PDF's text. */
+    const look = async (preset) => {
+      await F.previewFor(fr, { fund: FUND, preset, who: 'fund' });
+      const st = await F.previewState(fr);
+      const seen = await fr.evaluate(() => {
+        const pick = (sel) => {
+          const el = document.querySelector(sel);
+          return el && el.selectedOptions[0] ? el.selectedOptions[0].textContent.trim() : '';
+        };
+        const p = document.querySelector('#rb-preview');
+        return {
+          as: pick('#rb-as'),
+          period: pick('#rb-period'),
+          charts: Array.from(p.querySelectorAll('figure.rb-chart')).map((f) => (f.querySelector('figcaption') || { innerText: '' }).innerText.trim()),
+          notes: Array.from(p.querySelectorAll('.rb-note')).map((n) => n.innerText.trim())
+        };
+      });
+      await fr.locator('#rb-preview .rb-doc').evaluate((el) => {
+        const at = Array.from(el.querySelectorAll('.rb-note, figure.rb-chart')).find((x) => /distributions/i.test(x.innerText));
+        if (at) at.scrollIntoView({ block: 'center' });
+      });
+      await fr.waitForTimeout(300);
+      await A.page.screenshot({ path: path.join(OUT(), `empty-chart-${preset}.png`) });
+      const [dl] = await Promise.all([A.page.waitForEvent('download', { timeout: 90000 }), T.press(fr, '[data-action=rb-dl-pdf]')]).catch(() => [null]);
+      let pdf = '';
+      if (dl) {
+        const file = path.join(OUT(), `empty-chart-${preset}.pdf`);
+        await dl.saveAs(file);
+        pdf = require('fs').readFileSync(file).subarray(0, 5).toString() === '%PDF-' ? L12.text(file) : '';
+      }
+      return { st, seen, pdf };
+    };
+    // Q4 2026: no distributions in the quarter
+    const q = await look('q');
+    check('Q4 2026, previewed for the first holder, Davis Family Trust', /Davis Family Trust/.test(q.seen.as) && q.seen.period === 'Q4 2026', { as: q.seen.as, period: q.seen.period });
+    check('the Q4 2026 preview shows no errors', q.st.errors.length === 0, q.st.errors);
+    check(`Q4 2026 preview: '${SENTENCE}' is shown`, q.seen.notes.indexOf(SENTENCE) >= 0 && flat(q.st.text).indexOf(SENTENCE) >= 0, q.seen.notes);
+    check(`Q4 2026 preview: no chart titled '${TITLE}' (no chart at all)`, q.seen.charts.length === 0 && flat(q.st.text).indexOf(TITLE) < 0, q.seen.charts);
+    check('Q4 2026: Download PDF gives a PDF prepared for Davis Family Trust', /Prepared for Davis Family Trust/.test(flat(q.pdf)), flat(q.pdf).slice(0, 200));
+    check(`Q4 2026 PDF: the sentence is there and the chart title '${TITLE}' is not`, flat(q.pdf).indexOf(SENTENCE) >= 0 && flat(q.pdf).indexOf(TITLE) < 0, { sentence: flat(q.pdf).indexOf(SENTENCE), title: flat(q.pdf).indexOf(TITLE) });
+    const lq = L12.leak(q.pdf);
+    check('Q4 2026 PDF: no vendor, model or library name and no forbidden word', !!q.pdf && lq.ok, lq.hits);
+    // fiscal year 2026: distributions were paid, so the chart stays
+    const y = await look('fy');
+    check('fiscal year 2026, previewed for the first holder, Davis Family Trust', /Davis Family Trust/.test(y.seen.as) && y.seen.period === 'Fiscal year 2026', { as: y.seen.as, period: y.seen.period });
+    check('the fiscal year 2026 preview shows no errors', y.st.errors.length === 0, y.st.errors);
+    check(`fiscal year 2026 preview: the chart '${TITLE}' is drawn and the sentence is not shown`, y.seen.charts.indexOf(TITLE) >= 0 && y.seen.notes.indexOf(SENTENCE) < 0 && flat(y.st.text).indexOf(SENTENCE) < 0, { charts: y.seen.charts, notes: y.seen.notes });
+    check('fiscal year 2026 PDF (prepared for Davis Family Trust): the chart title is there and the sentence is not', flat(y.pdf).indexOf(TITLE) >= 0 && flat(y.pdf).indexOf(SENTENCE) < 0 && /Prepared for Davis Family Trust/.test(flat(y.pdf)), { sentence: flat(y.pdf).indexOf(SENTENCE), title: flat(y.pdf).indexOf(TITLE) });
+    const ly = L12.leak(y.pdf);
+    check('fiscal year 2026 PDF: no vendor, model or library name and no forbidden word', !!y.pdf && ly.ok, ly.hits);
+    await T.quiet(check, A, fr);
+    await T.leak(check, fr);
+    await T.wayOut(check, fr);
     await A.context.close();
   },
 
