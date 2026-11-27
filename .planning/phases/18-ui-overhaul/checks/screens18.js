@@ -2,7 +2,7 @@
 // SAME SCREENS' comparison (plan 18-01, D-02): a screen recorded on the base tree and on this tree must be the same, apart
 // from the changes 18-UI-SPEC.md lists, each written here as an exact transform of the base record.
 //   normalize(raw)        a raw record (lib18.readScreen) made comparable: ID_RE matches -> <id>, link tokens -> ~
-//   ID_RE, HASH_TOKEN_RE  the named patterns for the random parts of a screen (ids from Date.now()/Math.random(), and the
+//   ID_RE, HASH_TOKEN_RE, ORIGIN_RE  the named patterns for the random parts of a screen (ids from Date.now()/Math.random(), and the
 //                         tokens of invitation and sign-in links, made by crypto, which the seeded random leaves alone)
 //   RULES                 C1..C7 and M: { id, why, when(base, ctx), apply(base, ctx) -> the expected plan record }
 //   chartsSame(b, p)      §7.11 (CH): each chart's label identical; each note on the plan either a note of the base, a label
@@ -22,9 +22,11 @@ const L = require('../../06-onboarding-forms-w-9-and-w-8-collected-in-the-invest
 const ID_RE = /\b(inv|off|env|tok|ik|run|call|req|doc|tpl|rec|co|tx)-[a-z0-9]{6,}\b/g;
 // a route or link that carries a token (invitation, sign-in, room, tax document, co-investor sign-in): the token part -> ~
 const HASH_TOKEN_RE = /([#/](?:invite|sign-?in|room|taxdoc|co)[-/=])[A-Za-z0-9_-]{8,}/gi;
+// the check servers' own address (each tree is served on its own free port): http://127.0.0.1:<port> -> <origin>
+const ORIGIN_RE = /\bhttps?:\/\/127\.0\.0\.1:\d+/g;
 const DIGITS_RE = /\d{6,}/g;
 const mask = (s) => String(s === undefined || s === null ? '' : s).replace(DIGITS_RE, '[digits]');
-const norm = (s) => L.stripLinkTokens(String(s)).replace(HASH_TOKEN_RE, '$1~').replace(ID_RE, '<id>');
+const norm = (s) => L.stripLinkTokens(String(s).replace(ORIGIN_RE, 'http://origin.example')).replace(HASH_TOKEN_RE, '$1~').replace(ID_RE, '<id>');
 const normAction = (a) => {
   const x = {};
   Object.keys(a).forEach((k) => {
@@ -347,4 +349,4 @@ const DIALOGS = [
   D('esign.js', 2, 1915, 'Void the agreement? (the sponsor\'s envelope page)', ['diy'], 'asAdminEnvelope', [{ route: 'console-envelope-{agrEnv}' }, { press: '[data-action="es-void"]' }])
 ];
 
-module.exports = { normalize, ID_RE, HASH_TOKEN_RE, RULES, compare, diff, chartsSame, line, mask, DIALOGS, MARKS24, MARK_MAP, FONT_LABELS, NEW_FONT, c5, empty, path };
+module.exports = { normalize, ID_RE, HASH_TOKEN_RE, ORIGIN_RE, RULES, compare, diff, chartsSame, line, mask, DIALOGS, MARKS24, MARK_MAP, FONT_LABELS, NEW_FONT, c5, empty, path };
