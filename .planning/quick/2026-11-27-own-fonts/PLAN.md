@@ -87,6 +87,9 @@ updated checks, a green closing gate and walk12.
 - Running at the same time, no file shared with this plan: 13-04 (server/index.mjs, server/lib/invitations.mjs,
   messages.mjs, roles.mjs), 13-07 (taxdocs files), 13-12 (assets/js/integrations.js). This plan does not touch those
   files, .planning/checks/gate-reference.sh, STATE.md, ROADMAP.md or REQUIREMENTS.md.
+- Shared with quick task small-fixes-c (may run before this one): phase 6 checks/lib.js. small-fixes-c changes savePart
+  and runParts (lines ~655-735); this plan changes the JSDELIVR entries (~32-35) and one line of open's route (~162).
+  Start from a commit holding small-fixes-c's merge when it has merged; otherwise the hunks are apart and merge as is.
 - Chromium only (desktop and the 390x844 touch profile). WebKit is not installed and must not be installed.
 - Never open the scratchpad's blind folder. Never write the owner's forbidden word. No full taxpayer or bank number
   anywhere. Save per .planning/SAVE-RULES.md (wip branch `wip/own-fonts`) before every long run.
