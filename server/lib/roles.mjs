@@ -38,6 +38,7 @@ const investor = (method, at) => Object.freeze(Object.assign({ method, who: 'inv
 const other = (method, at, who, reason) => Object.freeze(Object.assign({ method, who, permission: '', tokens: false, reason }, at));
 const INVITATION = S`^\/v1\/invitations\/([^/]+)(?:\/(submission|resend|cancel))?$`;
 const ROOM_ACTION = S`^\/v1\/rooms\/[^/]+\/(nda|documents|prospects|open-link|activity|record)$`;
+export const WORKSPACE_FILE = S`^\/v1\/workspace\/files\/([A-Za-z0-9._-]{1,120})$`;
 
 export const ROUTES = Object.freeze([
   /* --- before the sponsor gate: each has its own check --- */
@@ -110,6 +111,14 @@ export const ROUTES = Object.freeze([
   team('GET', { path: '/v1/audit' }, 'audit', false),
   team('GET', { path: '/v1/audit/verify' }, 'audit', false),
   team('GET', { path: '/v1/audit/export' }, 'audit', false),
+
+  /* --- the firm's workspace (lib/workspace.mjs, plan 15-06): people only (C-09); a save is checked inside, section by
+         section, against lib/workspace.mjs SECTIONS; a signed tax form's file needs 'personal' inside --- */
+  team('GET', { path: '/v1/workspace' }, 'view', false),
+  team('PUT', { path: '/v1/workspace' }, 'view', false),
+  team('GET', { source: WORKSPACE_FILE }, 'view', false),
+  team('PUT', { source: WORKSPACE_FILE }, 'operate', false),
+  team('DELETE', { source: WORKSPACE_FILE }, 'operate', false),
 
   /* --- portal messages and the data room (lib/inbox.mjs, lib/dataroom.mjs; mounted by phase 14's 14-08) --- */
   team('POST', { path: '/v1/inbox/messages' }, 'operate', false),

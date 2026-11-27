@@ -62,6 +62,7 @@ import { createAuth } from './lib/auth.mjs';
 import { createAuditLog, SERVER } from './lib/auditlog.mjs';
 import { createGuards, can } from './lib/roles.mjs';
 import { createTeam } from './lib/team.mjs';
+import { createWorkspaces } from './lib/workspace.mjs';
 import { createBilling } from './lib/billing.mjs';
 import { changedChecks } from './lib/changed.mjs'; // GET /v1/checks/changed (plan 08-08)
 import { createFilings } from './lib/filings.mjs';
@@ -198,6 +199,7 @@ export function createServer(opts = {}) {
   const signin = createAuth({ env, store, vault: invites.vault, now, clientOf: (req) => clientOf(req, env), invites, accounts, audit: changeLog }); // people, passwords and the session cookie (plan 15-01)
   const guards = createGuards({ signin, store, now }); // the route table's checks (lib/roles.mjs, plan 15-05)
   const team = createTeam({ store, signin, audit: auditLog, now, env }); // the firm's people, roles and invitations (plan 15-05)
+  const workspaces = createWorkspaces({ env, store, vault: invites.vault, now, audit: auditLog, signin }); // the firm's workspace, sealed, by role (plan 15-06)
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
   const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
@@ -945,6 +947,14 @@ export function createServer(opts = {}) {
         throw e;
       }
     }
+    if (auth && /^\/v1\/workspace(\/|$)/.test(path)) {
+      try {
+        return await workspaces.handle(req, res, url, auth); // the firm's workspace (lib/workspace.mjs); its refusals reach the change log
+      } catch (e) {
+        if (e.refused) logRefusal(auth, req, path, e.refused);
+        throw e;
+      }
+    }
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
     if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)
@@ -1063,6 +1073,7 @@ export function createServer(opts = {}) {
   server.store = store;
   server.signin = signin;
   server.audit = auditLog;
+  server.workspaces = workspaces;
   server.invitations = invites;
   server.taxdocs = taxdocs;
   server.on('close', () => invites.stop());
