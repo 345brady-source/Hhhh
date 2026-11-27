@@ -35,6 +35,8 @@ const SAY = {
   fields: 'Fill in every field.',
   unauthorized: 'Not authorized',
   notFound: 'Not found',
+  already: 'You already have a sign-in for this portal. Sign in instead.',
+  ownerReset: 'Only the Owner or the operator can reset the Owner’s two-step sign-in.',
   code: 'That code is not right. Check the time on your phone and try the newest code.',
   fresh: 'Enter your password again to do this.',
   codes: 'Too many wrong codes. Sign in again.',
@@ -130,10 +132,13 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     if (k.length !== 32) throw fail(500, 'DATA_KEY must be 32 random bytes, base64-encoded');
     return Buffer.from(hkdfSync('sha256', k, 'cv-email-index', 'v1', 32));
   };
-  let indexKeys = null; // [current, previous]: after DATA_KEY is replaced, people indexed under DATA_KEY_PREVIOUS still sign in
+  // [current, ...previous]: after DATA_KEY is replaced, people indexed under any DATA_KEY_PREVIOUS entry (a comma list,
+  // lib/vault.mjs) still sign in until the re-seal; each key is derived from the key itself, never from a key id.
+  let indexKeys = null;
+  const previousKeys = () => String(env.DATA_KEY_PREVIOUS || '').split(',').map((x) => x.trim()).filter(Boolean);
   function keysOf() {
     if (indexKeys) return indexKeys;
-    if (String(env.DATA_KEY || '').trim()) indexKeys = [derived(env.DATA_KEY)].concat(String(env.DATA_KEY_PREVIOUS || '').trim() ? [derived(env.DATA_KEY_PREVIOUS)] : []);
+    if (String(env.DATA_KEY || '').trim()) indexKeys = [env.DATA_KEY, ...previousKeys()].map(derived);
     else if (env.NODE_ENV === 'test') indexKeys = [Buffer.from(hkdfSync('sha256', Buffer.from('cv-test-only-index-key'), 'cv-email-index', 'v1', 32))];
     else throw fail(500, 'Set DATA_KEY on the integration server so sign-in details are encrypted at rest');
     return indexKeys;
@@ -215,6 +220,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
         twoStep: rec.twoStep || null,
         recovery: [],
         status: rec.status || 'active',
+        invitationId: String(rec.invitationId || ''), // the invitation an investor's sign-in was made from (one per invitation)
         fails: { count: 0, first: 0, waitUntil: 0, lockedUntil: 0, hour: [] },
         createdAt: t,
         endsOn: String(rec.endsOn || '')
@@ -628,6 +634,108 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     return send(res, 200, { ok: true });
   }
 
+  /** POST /v1/auth/confirm-password { password }: the password again, so the session counts as fresh for 10 minutes. */
+  async function confirmPassword(req, res) {
+    requireVault();
+    const s = caller(req);
+    const b = await body(req);
+    if (typeof b.password !== 'string' || !b.password || b.password.length > 1024) return send(res, 400, { error: SAY.fields });
+    const p = store.get('people', s.person.id);
+    const t = now();
+    if (lockOf(p.fails, t)) return send(res, 423, { error: SAY.locked }, { 'Retry-After': String(Math.ceil((lockOf(p.fails, t) - t) / 1000)) });
+    if (waitOf(p.fails, t)) {
+      const n = Math.max(1, Math.ceil((waitOf(p.fails, t) - t) / 1000));
+      return send(res, 429, { error: wait(n) }, { 'Retry-After': String(n) });
+    }
+    if (checking.has(p.emailIndex)) return send(res, 429, { error: wait(1) }, { 'Retry-After': '1' });
+    checking.add(p.emailIndex);
+    let ok = false;
+    try {
+      ok = await password.check(b.password, p.pw);
+    } finally {
+      checking.delete(p.emailIndex);
+    }
+    if (!ok) {
+      const r = failed(store.get('people', p.id).fails, t); // counts towards the waits and the lock like a sign-in
+      people.update(p.id, { fails: r.fails });
+      if (r.locked) {
+        log({ workspace: p.workspace, person: p, action: 'locked' });
+        return send(res, 423, { error: SAY.locked }, { 'Retry-After': String(LOCK_MS / 1000) });
+      }
+      return send(res, 401, { error: SAY.wrong });
+    }
+    people.update(p.id, { fails: NO_FAILS() });
+    store.put('sessions', { id: s.session.id, authAt: iso(now()) });
+    return send(res, 200, { ok: true });
+  }
+
+  /** GET /v1/auth/sessions: the person's live sign-ins, device type and times only. */
+  function sessionsList(req, res) {
+    const s = caller(req);
+    const rows = sessions
+      .list(s.person.id)
+      .sort((a, b) => ms(a.createdAt) - ms(b.createdAt))
+      .map((x) => ({ handle: x.id.slice(0, 12), device: x.device, createdAt: x.createdAt, seenAt: x.seenAt, current: x.id === s.session.id }));
+    return send(res, 200, rows);
+  }
+  /** POST /v1/auth/sessions/end-others: every other sign-in of this person ends. */
+  async function endOthers(req, res) {
+    const s = caller(req);
+    await body(req);
+    const others = sessions.list(s.person.id).filter((x) => x.id !== s.session.id);
+    for (const x of others) sessions.end(x.id);
+    return send(res, 200, { ended: others.length });
+  }
+
+  /** Clears a person's two-step (they set it up again at their next sign-in) and ends their sessions. */
+  function clearTwoStep(target) {
+    people.update(target.id, { twoStep: null, twoStepPending: null, recovery: [] });
+    sessions.endAll(target.id);
+    log({ workspace: target.workspace, person: target, action: 'Two-step sign-in reset' });
+  }
+  /** POST /v1/auth/people/:id/two-step/reset: the firm resets someone's two-step (Owner or Admin; never the Owner's unless the Owner). */
+  async function resetRoute(req, res, pid) {
+    requireVault();
+    const s = caller(req);
+    await body(req);
+    const me = s.person;
+    const target = people.get(pid);
+    if (!target || target.workspace !== me.workspace || me.kind !== 'team') return send(res, 404, { error: SAY.notFound });
+    if (target.kind === 'team') {
+      if (!allows(me.role, 'team')) return send(res, 403, { error: REFUSALS.team });
+      if (target.role === 'owner' && me.role !== 'owner') return send(res, 403, { error: SAY.ownerReset });
+    } else if (!allows(me.role, 'operate')) return send(res, 403, { error: REFUSALS.operate });
+    needFresh(s);
+    clearTwoStep(target);
+    return send(res, 200, { ok: true });
+  }
+
+  /** POST /v1/invite/login { password } with X-Invite-Token: the investor's own sign-in, made from the invitation. */
+  async function inviteLogin(req, res) {
+    requireVault();
+    if (!invites) return send(res, 404, { error: SAY.notFound });
+    if (limits.hit(addressKey(req, 'invite'), SIGNIN_MAX, 15 * MIN)) return send(res, 429, { error: SAY.busy });
+    const rec = invites.authenticate(req, header(req.headers, 'x-invite-token')); // 401 / 410 with the invitation's sentences
+    const b = await body(req);
+    if (typeof b.password !== 'string') return send(res, 400, { error: SAY.fields });
+    const problem = password.problem(b.password, 'investor');
+    if (problem) return send(res, 400, { error: problem });
+    const snap = rec.snapshot ? vault.open(rec.snapshot, `${rec.id}:snapshot`) : null; // sealed as invitations.mjs seals it
+    const inv = snap && snap.investor;
+    if (!inv || typeof inv.email !== 'string' || !inv.email) return send(res, 410, { error: 'This invitation is no longer available.' });
+    // The email and the investor come from the invitation, never from the request (a co-investor's: the co-investor's).
+    const taken = () => store.list('people').some((p) => p.invitationId === rec.id) || people.byEmail(inv.email, rec.workspace).some((p) => p.kind === 'investor');
+    if (taken()) return send(res, 409, { error: SAY.already });
+    const pw = await password.hash(b.password);
+    if (taken()) return send(res, 409, { error: SAY.already }); // a second call that arrived while this one hashed
+    const person = await people.create({ workspace: rec.workspace, kind: 'investor', role: 'investor', investorId: inv.id, co: !!(snap.invitation && snap.invitation.coSign), email: inv.email, name: inv.contact, pw, invitationId: rec.id });
+    const old = cookieOf(req);
+    if (old) sessions.end(sha256(old));
+    const { sid, rec: sess } = sessions.issue(person, stageOf(person), req);
+    log({ workspace: person.workspace, person, action: 'Investor sign-in created' });
+    return send(res, 201, { stage: sess.stage }, { 'Set-Cookie': sessions.cookie(sid) });
+  }
+
   /** POST /v1/auth/firm/investor-two-step { required }: the Owner's rule for the firm's investors (C-03, off by default). */
   async function investorRule(req, res) {
     requireVault();
@@ -654,25 +762,32 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     '/v1/auth/code': ['POST', codeRoute],
     '/v1/auth/recovery-codes': ['POST', recoveryCodes],
     '/v1/auth/two-step/off': ['POST', twoStepOff],
-    '/v1/auth/firm/investor-two-step': ['POST', investorRule]
+    '/v1/auth/firm/investor-two-step': ['POST', investorRule],
+    '/v1/auth/confirm-password': ['POST', confirmPassword],
+    '/v1/auth/sessions': ['GET', sessionsList],
+    '/v1/auth/sessions/end-others': ['POST', endOthers]
   };
+  const RESET = /^\/v1\/auth\/people\/(per_[\w-]{1,64})\/two-step\/reset$/;
   /** The routes a half-done sign-in (or none) may call; every other /v1/auth/ path needs a full session first (Pitfall 1). */
   const OPEN = new Set(['/v1/auth/status', '/v1/auth/signup', '/v1/auth/signin', '/v1/auth/signout', '/v1/auth/me', '/v1/auth/two-step/start', '/v1/auth/two-step/confirm', '/v1/auth/code']);
   /** The /v1/auth/ routes and POST /v1/invite/login; false for any other path. */
   async function handle(req, res, path) {
-    if (req.method === 'POST' && path === '/v1/invite/login') {
-      send(res, 404, { error: SAY.notFound }); // the investor's own account from the invitation token (plan 15-04)
-      return true;
-    }
-    if (!path.startsWith('/v1/auth/')) return false;
+    const login = req.method === 'POST' && path === '/v1/invite/login';
+    if (!login && !path.startsWith('/v1/auth/')) return false;
     try {
       maybePurge();
       if (vault && vault.allowed) standInHash().catch(() => (standIn = null)); // made before the first sign-in, so its first check costs one run too
       // Every write here must come from the portal's own page as JSON, cookie or not: no sign-in or sign-up from another site.
       if (WRITE.includes(req.method) && !sameSiteWrite(req)) throw fail(403, SAY.refused);
+      if (login) {
+        await inviteLogin(req, res);
+        return true;
+      }
       if (!OPEN.has(path)) caller(req); // deny by default: nothing else answers a half-done sign-in
       const r = Object.prototype.hasOwnProperty.call(ROUTES, path) ? ROUTES[path] : null;
-      if (!r) send(res, 404, { error: SAY.notFound });
+      const reset = path.match(RESET);
+      if (reset) await (req.method === 'POST' ? resetRoute(req, res, reset[1]) : send(res, 405, { error: 'Use POST' }));
+      else if (!r) send(res, 404, { error: SAY.notFound });
       else if (req.method !== r[0]) send(res, 405, { error: `Use ${r[0]}` });
       else await r[1](req, res);
     } catch (e) {
@@ -694,6 +809,15 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
         return { id: p.id, name: o.name, email: o.email, kind: p.kind, role: p.role, status: p.status, locked: !!lockOf(p.fails, t), twoStep: !!p.twoStep };
       });
       return send(res, 200, rows);
+    }
+    const r = path.match(/^\/v1\/admin\/people\/([^/]+)\/two-step\/reset$/);
+    if (r) {
+      // The operator's reset, for an Owner who lost both the phone and the recovery codes (README procedure).
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      const p = people.get(r[1]);
+      if (!p) return send(res, 404, { error: SAY.notFound });
+      clearTwoStep(p);
+      return send(res, 200, { ok: true });
     }
     const m = path.match(/^\/v1\/admin\/people\/([^/]+)\/unlock$/);
     if (!m) return send(res, 404, { error: SAY.notFound });
