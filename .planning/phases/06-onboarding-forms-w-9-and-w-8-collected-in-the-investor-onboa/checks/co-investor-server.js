@@ -532,7 +532,7 @@ async function receivedChecks(check, F, st, R) {
   const subject = `${F.tenant.name}: sign the subscription agreement for ${F.who.title}`;
   check('the outbox holds one email for this sign-in, to the co-investor, with the subject "<firm>: sign the subscription agreement for <account>"', mail.length === 1 && !!m && m.subject === subject, mail.map((x) => ({ to: x.to, subject: x.subject, kind: x.kind })));
   const text = m ? m.text : '';
-  check('its text greets the co-investor, asks them to sign as co-investor, has "Review and sign" and the link the console holds', !!m && text.indexOf(`Dear ${F.coName}`) >= 0 && /as co-investor/.test(text) && /Review and sign/.test(m.html || text) && text.indexOf(si.link) >= 0, text.slice(0, 900));
+  check('its text greets the co-investor, asks them to sign as co-investor, has "Review and sign" and the link the console holds', !!m && text.indexOf(`Dear ${F.coFirst},`) >= 0 && /as co-investor/.test(text) && /Review and sign/.test(m.html || text) && text.indexOf(si.link) >= 0, text.slice(0, 900));
   check('the email never carries the investor’s taxpayer number', !!m && !TIN_RE.test(text) && !TIN_RE.test(m.html || ''), text.slice(0, 300));
   const snap = (R && R.snaps.find((x) => x && x.invitation)) || (await openLink(F.srv, si.link)).body || {};
   F.snap = snap;

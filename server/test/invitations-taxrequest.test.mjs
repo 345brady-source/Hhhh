@@ -116,7 +116,7 @@ test('a tax-form request: the flag and the form’s pre-fill reach the link, not
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
-    assert.equal(re.subject, 'Reminder: Harbor Ridge Capital: your Form W-9');
+    assert.equal(re.subject, 'New link: Harbor Ridge Capital: your Form W-9');
     assert.match(re.text, /Any earlier link we sent no longer works/);
   }));
 

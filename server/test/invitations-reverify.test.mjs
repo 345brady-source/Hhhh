@@ -147,7 +147,7 @@ test('reverify email: the invitation, the resend and the reminder ask to verify 
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, again.text);
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
-    assert.equal(re.subject, 'Reminder: Harbor Ridge Capital: verify your accredited investor status');
+    assert.equal(re.subject, 'New link: Harbor Ridge Capital: verify your accredited investor status');
     assert.match(re.text, /Here is a new link to verify your accredited investor status for Harbor Ridge Capital\. Any earlier link we sent no longer works\./);
     assert.ok(!VENDOR.test(re.text + re.html), 'no vendor word in the resend');
 
