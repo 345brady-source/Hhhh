@@ -61,6 +61,7 @@ import { createAccounts } from './lib/accounts.mjs';
 import { createAuth } from './lib/auth.mjs';
 import { createAuditLog, SERVER } from './lib/auditlog.mjs';
 import { createGuards, can } from './lib/roles.mjs';
+import { createTeam } from './lib/team.mjs';
 import { createBilling } from './lib/billing.mjs';
 import { changedChecks } from './lib/changed.mjs'; // GET /v1/checks/changed (plan 08-08)
 import { createFilings } from './lib/filings.mjs';
@@ -196,6 +197,7 @@ export function createServer(opts = {}) {
   };
   const signin = createAuth({ env, store, vault: invites.vault, now, clientOf: (req) => clientOf(req, env), invites, accounts, audit: changeLog }); // people, passwords and the session cookie (plan 15-01)
   const guards = createGuards({ signin, store, now }); // the route table's checks (lib/roles.mjs, plan 15-05)
+  const team = createTeam({ store, signin, audit: auditLog, now, env }); // the firm's people, roles and invitations (plan 15-05)
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
   const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
@@ -915,6 +917,9 @@ export function createServer(opts = {}) {
       return invites.investor(req, res, path, scope);
     }
 
+    // A team or investor invitation's one-time token (lib/team.mjs): its own check, so before the sponsor gate.
+    if (path === '/v1/team/accept') return limited(req) ? send(res, 429, { error: 'Too many requests' }) : team.accept(req, res, url);
+
     // Sponsor accounts (ADMIN_TOKEN): below the invitation token's refusal above, so an investor's link never reaches them.
     if (/^\/v1\/admin(\/|$)/.test(path)) return admin(req, res, path);
     if (/^\/v1\/filings\/staff(\/|$)/.test(path)) return filings.staff(req, res, url);
@@ -932,6 +937,14 @@ export function createServer(opts = {}) {
       if (no) return send(res, no.status, no.status === 401 || no.status === 403 ? { error: no.error, code: no.code } : { error: no.error });
     }
     if (auth && /^\/v1\/audit(\/|$)/.test(path)) return auditRoutes(req, res, url, auth); // the server change log (plan 15-05)
+    if (auth && /^\/v1\/team(\/|$)/.test(path)) {
+      try {
+        return await team.handle(req, res, url, auth); // the team (lib/team.mjs); its own refusals reach the change log too
+      } catch (e) {
+        if (e.refused) logRefusal(auth, req, path, e.refused);
+        throw e;
+      }
+    }
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
     if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)

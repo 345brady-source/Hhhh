@@ -98,6 +98,14 @@ export const ROUTES = Object.freeze([
   team('DELETE', { path: '/v1/billing/card' }, 'account', false),
   team('POST', { path: '/v1/billing/entitlements' }, 'spend', false),
 
+  /* --- the team (lib/team.mjs): each line is the floor; the module asks 'team' for a team person, 'personal' to list
+         investors' sign-ins and 'operate' to invite one --- */
+  team('GET', { path: '/v1/team' }, 'view', false),
+  team('POST', { path: '/v1/team/invite' }, 'operate', false),
+  team('POST', { source: S`^\/v1\/team\/(per_[\w-]{1,64})\/resend$` }, 'operate', false),
+  team('POST', { source: S`^\/v1\/team\/(per_[\w-]{1,64})\/(role|remove|renew)$` }, 'team', false),
+  team('POST', { path: '/v1/team/transfer' }, 'account', false),
+
   /* --- the server change log (index.mjs, lib/auditlog.mjs) --- */
   team('GET', { path: '/v1/audit' }, 'audit', false),
   team('GET', { path: '/v1/audit/verify' }, 'audit', false),
