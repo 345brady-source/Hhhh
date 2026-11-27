@@ -363,6 +363,97 @@ const cases = {
     const inv = sheetOf(K, 'inv');
     const ir = inv ? inv.rows.filter((r) => r[0] === 'Main Street Building') : [];
     check("inv: the property's purchase 2026-01-20 40,000,000 and its year-end row (cost 40,000,000, fair value 49,000,000)", J(ir) === J([['Main Street Building', 'Purchase', '2026-01-20', 40000000, null, null, null], ['Main Street Building', 'Held at year end', '2026-12-31', 40000000, null, null, 49000000]]), ir);
+  },
+
+  /** Task 3 (T15): the return crosswalk on every fund: Schedule L balances, capital rolls forward and ties, net assets tie. */
+  t15: ({ check }) => {
+    const NS = load();
+    const CROSS = ['sch_l', 'capital', 'nav'];
+    const failed = (K) => CROSS.filter((id) => !checkOf(K, id) || checkOf(K, id).status !== 'pass').map((id) => `${id}: ${checkOf(K, id) ? checkOf(K, id).items.join(' | ') : 'missing'}`);
+    ['fund-a', 'fund-c', 'fund-d'].forEach((name) => {
+      const A = name === 'fund-a' ? fundA(NS) : fundWs(NS, name);
+      const K = pkgOf(NS, A);
+      const bad = failed(K);
+      check(`${name} 2026: sch_l, capital and nav pass`, !bad.length, bad);
+      if (name === 'fund-d') {
+        const l21 = rowBy(sheetOf(K, 'bs'), 0, '21');
+        check('fund-d: line 21 at the beginning of 2026 is 105,000,000 (the opening balances)', !!l21 && l21[2] === 105000000, l21);
+        const l14 = rowBy(sheetOf(K, 'bs'), 0, '14');
+        check('fund-d: line 14 at the beginning of 2026 is 105,000,000 (cash 5,000,000 + Portfolio Co Z 100,000,000)', !!l14 && l14[2] === 105000000, l14);
+      }
+    });
+    const NS2 = load('2026-11-19');
+    const funds = [];
+    NS2.TENANTS.filter((t) => t.sample).forEach((t) => {
+      const ws = NS2.ops.ensure(NS2.seedWorkspace(t));
+      ws.offerings.forEach((o) => funds.push({ ws, o }));
+    });
+    check('15 sample funds', funds.length === 15, funds.map((x) => x.o.id));
+    let re = 0;
+    funds.forEach(({ ws, o }) => {
+      const K = NS2.books.package(ws, o, 2025, { today: '2026-11-19', actor: ACTOR.by });
+      const bad = failed(K);
+      check(`${o.id} 2025: sch_l, capital and nav pass`, !bad.length, bad);
+      if (NS2.audit.settings(o).key === 'realestate') {
+        re++;
+        const pr = sheetOf(K, 'property');
+        const rowsOk = !!pr && pr.rows.length > 0 && pr.rows.every((r) => r[2] === 'To be confirmed' && r[3] === 'To be confirmed' && r[4] === 'To be confirmed' && typeof r[5] === 'number');
+        check(`${o.id} (real estate sample): a property sheet from the generated properties, ${pr ? pr.rows.length : 0} rows, placed in service, land and building 'To be confirmed', cost from the books`, rowsOk, pr && pr.rows.slice(0, 2));
+      }
+    });
+    check('the three sample real estate funds were looked at', re === 3, re);
+  },
+
+  /** Task 3 (FA-11): the report builder's read interface returns its documented shapes and changes nothing. */
+  interface: ({ check }) => {
+    const NS = load('2026-11-19');
+    const t = NS.TENANTS.find((x) => x.sample && NS.ops.ensure(NS.seedWorkspace(x)).offerings.some((o) => o.id === 'kb-fund-ii'));
+    const ws = NS.ops.ensure(NS.seedWorkspace(t));
+    const o = ws.offerings.find((x) => x.id === 'kb-fund-ii');
+    NS.books.sync(ws, { today: '2026-11-19' });
+    NS.audit.ensureLog(ws);
+    const before = J(ws);
+    const keys = (x) => Object.keys(x || {}).join(',');
+    const tb = NS.books.trialBalance(ws, o.id, '2025-01-01', '2025-12-31');
+    check('trialBalance rows have exactly code, name, type, line, begin, debits, credits, end', tb.length > 0 && tb.every((r) => keys(r) === 'code,name,type,line,begin,debits,credits,end'), tb[0]);
+    const en = NS.books.entries(ws, o.id, { from: '2025-01-01', to: '2025-12-31' });
+    check('entries rows have exactly id, date, memo, src, code, cents, partner, holding', en.length > 0 && en.every((r) => keys(r) === 'id,date,memo,src,code,cents,partner,holding'), en[0]);
+    const bal = NS.books.balance(ws, o.id, '1000', '2025-12-31');
+    check('balance is a whole number of cents', Number.isSafeInteger(bal), bal);
+    const se = NS.books.series(ws, o.id, '1000', '2025-01-01', '2025-12-31');
+    check('series has one row per month (12) with exactly month and cents', se.length === 12 && se.every((r, i) => keys(r) === 'month,cents' && r.month === `2025-${String(i + 1).padStart(2, '0')}` && Number.isSafeInteger(r.cents)), se.slice(0, 2));
+    const st = NS.books.status(ws, o.id);
+    check('status has exactly start, closedThrough, entries, exceptions', keys(st) === 'start,closedThrough,entries,exceptions', st);
+    const P = NS.audit.period(ws, o, '2025-01-01', '2025-12-31');
+    check('NS.audit.period returns exactly L, o, S, from, to, ms, inv, fund, hold, empty, before', keys(P) === 'L,o,S,from,to,ms,inv,fund,hold,empty,before', keys(P));
+    const B = NS.audit.build(ws, o, '2025-01-01', '2025-12-31');
+    const need = ['id', 'file', 'title', 'desc', 'cols', 'rows', 'total'];
+    check(`build(...).list (${B.list.length}) items each have id, file, title, desc, cols, rows, total`, B.list.length > 0 && B.list.every((s) => need.every((k) => Object.prototype.hasOwnProperty.call(s, k))), B.list.filter((s) => !need.every((k) => Object.prototype.hasOwnProperty.call(s, k))).map((s) => s.id));
+    const caps = P.inv.slice(0, 3).map((a) => NS.ops.capital(ws, a.investor, o, '2025-01-01', '2025-12-31'));
+    check('NS.ops.capital answers for an investor', caps.length > 0 && caps.every((c) => c != null), caps.length);
+    const K = NS.books.package(ws, o, 2025, { today: '2026-11-19', actor: ACTOR.by });
+    const bad = [];
+    K.sheets.forEach((s) => {
+      try {
+        NS.audit.toCsv(s);
+        NS.books.packageCsv(s);
+        need.forEach((k) => Object.prototype.hasOwnProperty.call(s, k) || bad.push(`${s.id} has no ${k}`));
+      } catch (e) {
+        bad.push(`${s.id}: ${e.message}`);
+      }
+    });
+    check(`package(...).sheets (${K.sheets.length}) are schedule objects toCsv and packageCsv accept`, !bad.length && K.sheets.length >= 13, bad);
+    check('JSON.stringify(ws) is identical before and after all of these reads (after one sync made beforehand)', J(ws) === before, J(ws).length + ' vs ' + before.length);
+  },
+
+  /** Task 3: the check itself can fail: an unknown --case name and an empty list each exit 1 with a FAIL line. */
+  selfcheck: ({ check }) => {
+    const { spawnSync } = require('child_process');
+    [['nope', 'an unknown --case name'], ['', 'an empty --case list']].forEach(([arg, what]) => {
+      const r = spawnSync(process.execPath, [__filename, '--case', arg], { encoding: 'utf8', env: Object.assign({}, process.env, { GATE_FRESH: '1' }) });
+      const out = String(r.stdout || '') + String(r.stderr || '');
+      check(`${what} exits 1 with a FAIL line and a failing last line`, r.status === 1 && /^FAIL /m.test(out) && /PACKAGE: FAIL \(cases run: 0\)/.test(out.trim().split('\n').pop()), { status: r.status, out: out.trim().split('\n').slice(-2) });
+    });
   }
 };
 
