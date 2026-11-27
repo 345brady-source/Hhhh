@@ -74,3 +74,4 @@ Owner instruction (2026-11-20, verbatim): "work around whatever bullshit you thi
 ## After report-fixes (merged 2026-11-27)
 - Gate12 GATE_EXIT=0 on 88ede13; merged tree server tests 544/544. See .planning/quick/2026-11-27-report-fixes/SUMMARY.md.
 - Orchestrator decision (work-around rule): the investor Documents viewer gets the hash check now, as a quick task (portal-report-hash): for a doc with a `report` block, the bytes' SHA-256 is compared with doc.sha256 before showing; on a mismatch it remakes through NS.reportsRun.fileBytes where loaded, otherwise shows the not-kept sentence. Reason: one firm's investor must never see another firm's file, and the fix is small. 12-09 starts after it merges.
+- Merged tree d73fffe: REPORT FIXES 3, REPORTS RECORD 10, REPORTS RUN 8, REPORTS XLSX 4, DELIVER FLOW 8, ENGINE BOOKS 8 (with P11_ROOT = d9edb09; the first run had P11_ROOT unset, my command), MOBILE SYNC 3: all pass.
