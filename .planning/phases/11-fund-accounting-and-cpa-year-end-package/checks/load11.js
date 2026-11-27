@@ -1,13 +1,17 @@
 // gate: none
 // The shared Node loader for phase 11's checks (no browser). It runs the portal's own scripts in a fresh vm context:
 //   const { loadPortal, sampleWorkspaces, listedScripts } = require('./load11.js');
-//   const NS = loadPortal(root, { today: '2026-11-19', edition: 'diy' | 'managed', extra: ['books.js'] });
+//   const NS = loadPortal(root, { today: '2026-11-19', edition: 'diy' | 'managed', extra: ['books.js'], books: true });
 //
 // - root: a checkout or an extracted base tree holding diy.html and assets/js (default: this checkout).
 // - The scripts are read at run time from root/diy.html (11-CONTEXT W6): every src="assets/js/..." entry in the page's
 //   order, from edition.js through operations.js (a phase 11 module listed between them is loaded with them), then the
 //   file that defines NS.inviteFlow.taxOnFile if it is not already among them (found by searching root/assets/js),
 //   then opts.extra in the order given. Never a list typed into this file.
+// - books (optional, default off): directly after operations.js, booksScripts(root): every script root/diy.html lists
+//   after operations.js whose source defines NS.books (`NS.books = `) or extends it (`const B = NS.books;` then
+//   `Object.assign(B, ...)` or `B.<name> = `), in the page's order. A page that lists none loads none. Off, the files
+//   are exactly the ones above.
 // - today: Date.now() and new Date() answer that day at 12:00 UTC; new Date(x) with an argument is untouched.
 // - edition: 'diy' sets window.CVPortalEdition = 'selfserve' before the scripts load; 'managed' leaves it unset.
 //   The loaded NS.EDITION.id must be the edition asked for, or loadPortal throws.
@@ -30,13 +34,32 @@ function listedScripts(root) {
   return Array.from(html.matchAll(/<script\b[^>]*\bsrc="assets\/js\/([^"?#]+)"/g)).map((m) => m[1]);
 }
 
+/** True when the source defines NS.books or extends it (assigns onto the object NS.books names). */
+function buildsBooks(src) {
+  if (/\bNS\.books\s*=(?!=)/.test(src)) return true;
+  const m = src.match(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*NS\.books\s*;/);
+  if (!m) return false;
+  const id = m[1].replace(/\$/g, '\\$');
+  return new RegExp(`Object\\.assign\\(\\s*${id}\\s*,|(^|[^\\w$.])${id}\\.[A-Za-z_$][\\w$]*\\s*=(?!=)`, 'm').test(src);
+}
+
+/** The scripts root/diy.html lists after operations.js that build NS.books, in the page's order. */
+function booksScripts(root) {
+  root = path.resolve(root || CHECKOUT);
+  const listed = listedScripts(root);
+  const b = listed.indexOf('operations.js');
+  if (b < 0) throw new Error(`load11: ${path.join(root, 'diy.html')} does not list operations.js`);
+  return listed.slice(b + 1).filter((f) => buildsBooks(fs.readFileSync(path.join(root, 'assets/js', f), 'utf8')));
+}
+
 /** The scripts loadPortal runs for root, in order. */
-function scriptsFor(root, extra) {
+function scriptsFor(root, extra, books) {
   const listed = listedScripts(root);
   const a = listed.indexOf('edition.js');
   const b = listed.indexOf('operations.js');
   if (a < 0 || b < 0 || b < a) throw new Error(`load11: ${path.join(root, 'diy.html')} does not list edition.js before operations.js`);
   const files = listed.slice(a, b + 1);
+  if (books) booksScripts(root).forEach((f) => files.indexOf(f) < 0 && files.push(f));
   const dir = path.join(root, 'assets/js');
   const definer = fs
     .readdirSync(dir)
@@ -101,7 +124,7 @@ function loadPortal(root, opts) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(today || ''))) throw new Error(`load11: today must be 'YYYY-MM-DD' (got ${today})`);
   const edition = opts.edition || 'diy';
   if (edition !== 'diy' && edition !== 'managed') throw new Error(`load11: edition must be 'diy' or 'managed' (got ${edition})`);
-  const files = scriptsFor(root, opts.extra);
+  const files = scriptsFor(root, opts.extra, !!opts.books);
 
   const doc = Object.assign(inertElement(), {
     readyState: 'loading', // app.js then waits for DOMContentLoaded, which never comes: the page itself never starts
@@ -160,7 +183,7 @@ function loadPortal(root, opts) {
   });
   const NS = sb.CVPortal;
   if (!NS || !NS.EDITION || NS.EDITION.id !== edition) throw new Error(`load11: asked for the ${edition} edition, the scripts loaded ${NS && NS.EDITION ? NS.EDITION.id : 'none'}`);
-  Object.defineProperty(NS, '__load11', { value: { root, files, today, edition }, enumerable: false });
+  Object.defineProperty(NS, '__load11', { value: { root, files, today, edition, books: !!opts.books }, enumerable: false });
   return NS;
 }
 
@@ -168,4 +191,4 @@ function sampleWorkspaces(NS) {
   return NS.TENANTS.filter((t) => t.sample).map((t) => NS.ops.ensure(NS.seedWorkspace(t)));
 }
 
-module.exports = { loadPortal, sampleWorkspaces, listedScripts, scriptsFor, CHECKOUT };
+module.exports = { loadPortal, sampleWorkspaces, listedScripts, scriptsFor, booksScripts, buildsBooks, CHECKOUT };
