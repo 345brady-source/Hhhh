@@ -61,3 +61,9 @@
 - W4 (16-05): console.js today does not disable Download/Copy on a red check (16-02 not merged); read it as the tree has it; SUMMARY says so, and the owner check of the builder waits for 16-02.
 - Info: C-02 stepping is 16-02's and C-03 timing 16-07's; guide lines to the SUMMARY only; df -h before 16-05's full gate; the reader's acceptance of return and COR fixtures is unmeasured (fix a fixture, never drop the assertion).
 - Start now: 16-05 yes; 16-06 yes. No file overlap with each other or with 16-04, 08-08, 08-09, 10-11, 11-15, 12-08, 15-01/02/03, audit-same-books or the debugger.
+
+## After 16-04 (merged 2026-11-27)
+- books-post.js posts ret:, repaid:, reqret:, reqrepaid: from return records once (C-07, account 2000 with the investor on the line); sample() leaves return kinds out so sample months stay balanced; returns or second payments with a date that is not a real day are refused as { src, kind: 'date', value }. POSTING RETURNS (10) and POSTING (13) pass on the merged tree. Gate GATE_EXIT=0 on its fourth run (runs 1-3 hit the time limit; run 1 crashed browser steps).
+- Failure to watch: on the merged tree's first server test run 1 of 472 failed; three reruns follow (scratchpad st-run-*.txt); a flaky server test is a debugger task once named.
+- Open: audit.js does not count 'date' refusals on the Audit page; books-bank.js suggests a repaid: check only within 3 business days (16-11 decides); 16-08 must store sample run lines (NS.data.confirmLines) or refuse before applying a return on a sample firm (16-14's walk).
+- AUDIT SAME against the pre-merge tree must run from a separate checkout (P11_ROOT may not be the main checkout itself).
