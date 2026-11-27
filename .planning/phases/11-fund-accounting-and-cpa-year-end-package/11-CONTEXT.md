@@ -189,3 +189,6 @@
 ## Orchestrator decisions on 11-15 (2026-11-27)
 - B3 choice: an opening reconciled balance. When a fund's first imported statement starts after its books begin, the Bank section asks for the reconciled bank balance at that statement's start date; it is stored with who entered it and when (change log), and outstanding items before that date are matched against it. Until it is entered, the difference shows "To be confirmed: opening balance at <date>", never $0.00. Why: it never hides an entry made before the first statement, and it is what a CPA checks.
 - fund.exceptions (strays, closed-month changes, unbalanced months) is not 11-15's: a small Accounting-page plan after 11-16 lists and resolves them.
+
+## After audit-same-books (merged 2026-11-27)
+- AUDIT SAME now loads each side's books scripts and proves a one-cent journal change is reported (quick task summary .planning/quick/2026-11-26-audit-same-books/SUMMARY.md). Against 169b219 (both sides build schedules 20-24) all 1228 schedules and 60 packages agree except the declared moved-notice change. 11-14's start conditions (16-03 and this task merged) are met.
