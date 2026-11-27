@@ -35,7 +35,7 @@ export const SAY = Object.freeze({
 const S = String.raw;
 const team = (method, at, permission, tokens) => Object.freeze(Object.assign({ method, who: 'team', permission, tokens }, at));
 const investor = (method, at) => Object.freeze(Object.assign({ method, who: 'investor', permission: 'portal', tokens: false }, at));
-const other = (who, method, at, reason) => Object.freeze(Object.assign({ method, who, permission: '', tokens: false, reason }, at));
+const other = (method, at, who, reason) => Object.freeze(Object.assign({ method, who, permission: '', tokens: false, reason }, at));
 const INVITATION = S`^\/v1\/invitations\/([^/]+)(?:\/(submission|resend|cancel))?$`;
 const ROOM_ACTION = S`^\/v1\/rooms\/[^/]+\/(nda|documents|prospects|open-link|activity|record)$`;
 
@@ -78,6 +78,9 @@ export const ROUTES = Object.freeze([
   team('GET', { source: S`^\/v1\/verifications\/(ver_[\w-]+)\/evidence\/(\d{1,2})$` }, 'personal', true),
   team('POST', { path: '/v1/screenings' }, 'operate', true),
   team('GET', { source: S`^\/v1\/screenings\/(scr_[\w-]+)$` }, 'personal', true),
+  // the same two routes as lib/invitations.mjs writes them in its invitation-token list
+  team('GET', { source: S`^\/v1\/verifications\/ver_[\w-]+$` }, 'personal', true),
+  team('GET', { source: S`^\/v1\/screenings\/scr_[\w-]+$` }, 'personal', true),
 
   /* --- tax documents (lib/taxdocs.mjs) --- */
   team('GET', { path: '/v1/taxdocs' }, 'view', true),
@@ -116,6 +119,10 @@ export const ROUTES = Object.freeze([
   investor('POST', { path: '/v1/my-inbox/prefs' }),
   investor('GET', { source: S`^\/v1\/my-inbox\/attachments\/[^/]+$` })
 ]);
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+/** 2026-11-26 → November 26, 2026 (the day as the firm wrote it, never shifted by a time zone). */
+export const plainDay = (day) => new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long', day: 'numeric' });
 
 const compiled = new Map();
 const regexOf = (source) => {
@@ -158,10 +165,30 @@ export function createGuards({ signin, store, now = () => Date.now(), routes = R
       const methods = Array.from(new Set(all.map((l) => l.method)));
       return { status: 405, error: `Use ${methods.join(' or ')}`, code: 'method' };
     }
-    if (auth && auth.via === 'session') {
+    if (!auth) return null;
+    if (auth.via === 'session') {
+      const ended = endedOn(auth.person);
+      if (ended !== null) {
+        signin.sessions.end(auth.session.id); // that cookie is dead from here on
+        return { status: 401, error: SAY.ended(plainDay(ended || today())), code: 'ended', permission: 'ended' };
+      }
       for (const l of mine) if (!can(auth, l.permission)) return { status: 403, error: REFUSALS[l.permission] || REFUSALS.never, code: 'role', permission: l.permission, line: l };
+      return null;
     }
+    // C-09: once a firm has people, its account token reaches only the automation routes (lines with tokens true); the
+    // shared API_TOKEN the same once anyone has signed up (or AUTH_REQUIRED=1). A firm with no people keeps today's rule.
+    const closed = auth.account ? hasPeople(auth.account.workspace) : auth.shared ? signin.required() : false;
+    if (closed) for (const l of mine) if (!l.tokens) return { status: 403, error: SAY.person, code: 'person', permission: l.permission, line: l };
     return null;
+  }
+  const today = () => new Date(now()).toISOString().slice(0, 10);
+  /** An active team person in the workspace (an invited or removed one does not close its token). */
+  const hasPeople = (ws) => store.list('people').some((p) => p.workspace === ws && p.kind === 'team' && p.status === 'active');
+  /** null while the person's access runs; else the day it ended ('' when an Accountant has no valid end date). */
+  function endedOn(person) {
+    if (!person || person.role !== 'accountant') return null;
+    const ends = DAY.test(String(person.endsOn || '')) ? person.endsOn : '';
+    return ends && ends >= today() ? null : ends;
   }
 
   /** A full investor session for a route an 'investor' line names; anything else is refused. */
