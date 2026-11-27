@@ -49,3 +49,37 @@ GREEN (t2.txt, at d7921d2), plan verify exit 0:
 # pass 6
 # fail 0
 ```
+
+## Task 3
+RED (red-3.txt, at ec9c31d; "secrets" already passed: its behaviour was built with Task 1):
+```
+not ok 1 - resets
+  expected: 200
+  actual: 404
+not ok 2 - sessions
+  expected: 200
+  actual: 404
+ok 3 - secrets
+not ok 4 - key change
+  expected: 200
+  actual: 401
+not ok 5 - invite login
+  expected: 403
+  actual: 404
+# tests 5
+# pass 1
+# fail 4
+```
+GREEN, full server suite (all.txt, at 71716a2), plan verify (run from a script file) VERIFY3=0:
+```
+# tests 513
+# suites 0
+# pass 513
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 47546.356945
+VERIFY3=0
+```
+513 = base 502 + 11.
