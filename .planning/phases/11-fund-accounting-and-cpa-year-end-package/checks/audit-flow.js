@@ -9,7 +9,8 @@
 //   sample-desktop  Kestrel Bay's kb-fund-ii (a sample fund, clock 2026-11-19): the trial balance's debits equal its
 //                   credits and are not zero; the general ledger shows the hint that the CSV has every row
 //   managed         index.html as staff: the Audit page's heading, the five new tabs, no Accounting entry in the menu, and
-//                   index.html and the menu (NAV, NAV_SECTIONS lines of console.js) unchanged since the plan's base
+//                   index.html loading no phase 11 file it did not load at the plan's base (11-CONTEXT "Decision during
+//                   16-02") and the menu (NAV, NAV_SECTIONS lines of console.js) unchanged since that base
 //                   commit (11-CONTEXT "Decision during 11-16": a later plan's line elsewhere in console.js is allowed)
 //   NODE_PATH=$(npm root -g) node audit-flow.js [--only part1,part2]
 // The last line is "AUDIT FLOW: PASS (parts run: N)" or "AUDIT FLOW: FAIL (parts run: N) - <failed parts>". The two
@@ -20,6 +21,26 @@ const fs = require('fs');
 const { spawnSync } = require('child_process');
 const T = require('../../10-investor-tax-documents-and-withholding/checks/lib10.js');
 const Lib = T.Lib;
+
+/*
+ * 11-CONTEXT "Decision during 16-02": index.html may change after phase 11 (16-02 adds its achrecord.js line), but no
+ * line it has gained since the base may load one of phase 11's own files (books*.js, books.css, bankfiles.js,
+ * filesout.js), so the managed edition still gets none of phase 11. p11Added gives those lines (empty when none).
+ */
+const P11_OWN = /assets\/(js\/(books[\w-]*|bankfiles|filesout)\.js|css\/books\.css)/;
+function p11Added(base, now) {
+  const left = new Map();
+  String(base).split('\n').forEach((l) => left.set(l, (left.get(l) || 0) + 1));
+  return String(now)
+    .split('\n')
+    .filter((l) => {
+      const n = left.get(l) || 0;
+      if (n) left.set(l, n - 1);
+      return !n;
+    })
+    .filter((l) => P11_OWN.test(l))
+    .map((l) => l.trim());
+}
 
 const OUT = path.join(Lib.OUT, 'audit-flow');
 fs.mkdirSync(OUT, { recursive: true });
@@ -251,10 +272,11 @@ const parts = {
     check('the menu has no Accounting entry', menu.length > 0 && menu.indexOf('Accounting') < 0, menu);
     const base = baseCommit();
     const g = (args) => spawnSync('git', args, { cwd: Lib.ROOT, encoding: 'utf8' });
-    const page = g(['diff', '--quiet', base, 'HEAD', '--', 'index.html']);
+    const baseHtml = base ? g(['show', `${base}:index.html`]) : { status: 1, stdout: '' };
+    const added = baseHtml.status === 0 ? p11Added(baseHtml.stdout, fs.readFileSync(path.join(Lib.ROOT, 'index.html'), 'utf8')) : null;
     const menuFile = g(['diff', '-U0', base, 'HEAD', '--', 'assets/js/console.js']);
     const menuLines = menuChanges(menuFile.stdout);
-    check(`index.html and the menu (NAV, NAV_SECTIONS lines of console.js) have no change since the base commit ${base.slice(0, 7)}`, !!base && page.status === 0 && menuFile.status === 0 && menuLines.length === 0, { base, page: page.status, console: menuFile.status, menu: menuLines });
+    check(`index.html loads no phase 11 file it did not load at the base commit ${base.slice(0, 7)}, and the menu (NAV, NAV_SECTIONS lines of console.js) has no change since it`, !!base && !!added && added.length === 0 && menuFile.status === 0 && menuLines.length === 0, { base, page: added, console: menuFile.status, menu: menuLines });
     await A.page.screenshot({ path: path.join(OUT, 'desktop-managed.png'), fullPage: true });
     // the managed edition is Carrow & Vale's own console, so its name is on screen by design; any other name is not
     const text = await fr.evaluate(() => document.body.innerText);

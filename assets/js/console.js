@@ -1135,10 +1135,48 @@
     const ov = (o && o.achOverride) || {};
     return { name: ov.companyName || a.companyName, id: ov.companyId || a.companyId };
   }
+  /*
+   * Payment files (plan 16-02): a file ID modifier is taken only when a file leaves (download or copy) and the file's
+   * record is kept by NS.achRecord; a preview writes nothing. A draft loaded from the History pays for that run whatever is
+   * edited (d.forRun); any other draft for its offering and payment date.
+   */
+  const ACH_MAX = '36 files were made today for this bank, the most one day allows. Build it on the next banking day.';
+  const ACH_ADMIN = 'Only an admin can download or copy a payment file.';
+  const ACH_RED = 'Fix the checks marked in red first.';
+  const AR = () => NS.achRecord;
+  const canPay = () => AR().canPay();
+  const distTarget = (d) => (d.forRun ? { runId: d.forRun } : AR().targetOf({ for: 'distribution', offeringId: d.offeringId, effective: d.date }));
+  /** The sentence that keeps the draft's file from leaving until "Build again" ('' when it may leave). */
+  function fileLock(d) {
+    const f = d.file;
+    if (!f || f.again || f.recorded) return '';
+    if (f.sent) return `A file for this distribution was sent on ${date(AR().sentOn(f.sent))} (${f.sent.name}). A second upload pays every investor twice.`;
+    if (f.paidRun) return `This distribution is recorded as paid on ${date(f.paidRun.date)}. A second upload pays every investor twice.`;
+    return '';
+  }
+  /** Why the draft's file may not be downloaded or copied now ('' when it may). */
+  function releaseWhy(d) {
+    if (!canPay()) return ACH_ADMIN;
+    if (d.file.checks.some((c) => !c.ok)) return ACH_RED;
+    return fileLock(d);
+  }
+  /** A file record line with the account shown by its last four only (what a person without release rights sees). */
+  function maskLine(l) {
+    if (l[0] !== '6') return l;
+    const f = l.slice(12, 29);
+    const t = f.trimEnd();
+    return l.slice(0, 12) + '*'.repeat(Math.max(0, t.length - 4)) + t.slice(-4) + f.slice(t.length) + l.slice(29);
+  }
   function buildFile(d) {
     const t = T();
     const a = t.ach;
     const o = W().offerings.find((x) => x.id === d.offeringId);
+    // the file ID this file would take if it left now; nothing is written until it does
+    const modifier = AR().modifierFor(W(), t, today());
+    if (!modifier) {
+      U.toast(ACH_MAX);
+      return null;
+    }
     // A file built again for a recorded run pays the net amounts stored on it; a line with nothing left to pay has no entry.
     const run = d.fromRun ? W().runs.find((x) => x.id === d.fromRun && Array.isArray(x.lines) && !x.cancelled) : null;
     const rows = run ? NS.data.runRows(W(), run).map((x) => ({ investor: x.investor, cents: x.netCents })) : draftAlloc(d);
@@ -1146,10 +1184,6 @@
       .filter((r) => r.investor.payment && r.investor.payment.method === 'ach' && r.investor.payment.bank && r.cents > 0)
       .map((r) => ({ name: r.investor.payment.bank.holder || r.investor.title, id: r.investor.id, routing: r.investor.payment.bank.routing, account: r.investor.payment.bank.account, accountType: r.investor.payment.bank.type, cents: r.cents, sec: (NS.ENTITY_TYPES[r.investor.type] || { sec: 'PPD' }).sec }));
     if (!run) distNetEntries(d, entries); // plan 10-07: a new draft's file pays each investor the net of the confirmed lines
-    const log = (W().achLog = W().achLog || []);
-    const todayIso = today();
-    const used = log.filter((x) => x.date === todayIso).length;
-    const modifier = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[used % 36];
     const co = companyFor(o);
     const eff = NS.dates.parse(d.date);
     const file = NS.nacha.build({
@@ -1169,23 +1203,62 @@
     file.company = co;
     // what the file pays each investor, compared with the record's net amounts when the distribution is recorded
     file.paid = entries.map((e) => ({ id: e.id, cents: e.cents }));
-    log.push({ date: todayIso, modifier, filename: file.filename });
-    NS.app.save();
+    // what this file pays for, and whether a file for it already left (or it is recorded as paid with no file on record)
+    file.target = distTarget(d);
+    file.sent = AR().sentFor(W(), file.target);
+    file.paidRun = file.sent ? null : AR().paidRun(W(), file.target && file.target.runId);
+    file.again = d.again || null;
     return file;
   }
 
+  /** The History's "ACH file" on a run whose file was sent: its record (the file's text is not kept) and Build again. */
+  function sentSection(rec) {
+    const all = AR().filesOf(W(), { runId: rec.runId });
+    const who = (id) => (W().investors.find((i) => i.id === id) || {}).title || id;
+    const of = rec.again && rec.again.of ? AR().ensure(W()).find((x) => x.id === rec.again.of) : null;
+    const rows = rec.entries
+      .map((e) => `<tr><td data-label="Investor">${h(who(e.investorId))}</td><td class="nowrap" data-label="Account">••${h(e.last4)}</td><td class="num" data-label="Amount">${usdc(e.cents)}</td><td class="nowrap" data-label="Trace"><code>${h(e.trace)}</code></td></tr>`)
+      .join('');
+    return panel(
+      `ACH file <span class="cs-count">${h(rec.name)}</span>`,
+      `<p class="cs-warnbox">A file for this distribution was sent on ${date(AR().sentOn(rec))} (${h(rec.name)}). A second upload pays every investor twice.</p>
+      <div class="cs-row">${canPay() ? '<button class="cs-btn" type="button" data-action="nacha-again">Build again</button>' : `<span class="cs-hint">${ACH_ADMIN}</span>`}</div>
+      <dl class="cs-kv">
+        <div><dt>Sent</dt><dd>${date(AR().sentOn(rec))} by ${h(rec.by)} (${rec.how === 'copy' ? 'copied' : 'downloaded'})</dd></div>
+        <div><dt>File ID</dt><dd>${h(rec.modifier)}</dd></div>
+        <div><dt>Effective date</dt><dd>${date(rec.effective)}</dd></div>
+        <div><dt>Total credits</dt><dd>${usdc(rec.credit)} · ${rec.entries.length} entr${rec.entries.length === 1 ? 'y' : 'ies'}</dd></div>
+        ${rec.again ? `<div><dt>Built again</dt><dd>${h(rec.again.why)}${of ? ` (after ${h(of.name)})` : ''}</dd></div>` : ''}
+      </dl>
+      <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact cs-stack"><thead><tr><th scope="col">Investor</th><th scope="col">Account</th><th scope="col" class="num">Amount</th><th scope="col">Trace</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${all.length > 1 ? `<p class="cs-hint">${all.length} files are on record for this distribution; this is the newest.</p>` : ''}`
+    );
+  }
+
   function fileSection(d) {
+    if (!d.file && d.sentRec) return sentSection(d.sentRec);
     const f = d.file;
     if (!f) return '';
+    const pay = canPay();
+    const red = f.checks.some((c) => !c.ok);
+    const lock = fileLock(d);
+    // a person who may not release the file sees each account by its last four only
+    const shown = pay ? f.lines : f.lines.map(maskLine);
     const checks = f.checks.map((c) => `<li class="${c.ok ? (c.warn ? 'is-warn' : 'is-ok') : 'is-bad'}">${icon(c.ok ? (c.warn ? 'alert' : 'check') : 'x')}<span>${h(c.label)}</span></li>`).join('');
     const batches = f.batches.map((b) => `<div><dt>Batch ${b.number} · ${b.sec}</dt><dd>${b.entries} entries · ${usdc(b.credit)}</dd></div>`).join('');
     const sel = d.line;
-    const lines = f.lines
+    const lines = shown
       .map((l, i) => `<button type="button" class="nl nl-${l[0] === '9' && /^9+$/.test(l) ? 'pad' : l[0]}${sel === i ? ' is-sel' : ''}" data-action="nacha-line" data-i="${i}"><span class="nl-n">${String(i + 1).padStart(2, '0')}</span><span class="nl-t">${h(l)}</span></button>`)
       .join('');
+    const off = red || !!lock ? ' disabled' : '';
+    const why = !pay ? ACH_ADMIN : red ? ACH_RED : '';
+    const buttons = pay
+      ? `<button class="cs-btn cs-btn-primary" type="button" data-action="nacha-download"${off}>${icon('download')}Download file</button><button class="cs-btn" type="button" data-action="nacha-copy"${off}>${icon('copy')}Copy file</button>${lock ? '<button class="cs-btn" type="button" data-action="nacha-again">Build again</button>' : ''}`
+      : '';
+    const sentLine = f.record ? `<p class="cs-hint">Sent ${date(AR().sentOn(f.record))} by ${h(f.record.by)} (file ID ${h(f.record.modifier)}).</p>` : '';
     let breakdown = '';
-    if (sel != null && f.lines[sel]) {
-      const l = f.lines[sel];
+    if (sel != null && shown[sel]) {
+      const l = shown[sel];
       const lay = /^9+$/.test(l) ? null : NS.nacha.LAYOUT[l[0]];
       breakdown = lay
         ? `<table class="cs-tbl cs-tbl-compact nacha-fields"><caption>Record ${sel + 1} fields</caption><thead><tr><th scope="col">Positions</th><th scope="col">Field</th><th scope="col">Value</th></tr></thead><tbody>${lay
@@ -1195,7 +1268,10 @@
     }
     return panel(
       `ACH file <span class="cs-count">${h(f.filename)}</span>`,
-      `<div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="nacha-download">${icon('download')}Download file</button><button class="cs-btn" type="button" data-action="nacha-copy">${icon('copy')}Copy file</button></div>
+      `${lock ? `<p class="cs-warnbox">${h(lock)}</p>` : ''}
+      ${f.again ? `<p class="cs-hint">Built again: ${h(f.again.why)}</p>` : ''}
+      <div class="cs-row">${buttons}${why ? `<span class="cs-hint">${why}</span>` : ''}</div>
+      ${sentLine}
       <div class="nacha-grid">
         <dl class="cs-kv">
           <div><dt>Company</dt><dd>${h(f.company.name)} · ${h(f.company.id)}</dd></div>
@@ -1309,6 +1385,9 @@
     }
     d.file = null;
     d.line = null;
+    // a file built again with a reason, or a sent file's record, belongs to the draft as it was (plan 16-02)
+    d.again = null;
+    d.sentRec = null;
     if (path === 'offeringId') {
       const o = W().offerings.find((x) => x.id === v);
       const m = /([\d.]+)\s*%/.exec((o.distribution || {}).target || '');
@@ -1351,9 +1430,12 @@
   };
   NS.actions['nacha-build'] = () => {
     const d = draft();
-    d.file = buildFile(d);
+    // a preview is not an event: nothing is written until the file leaves (plan 16-02)
+    const file = buildFile(d);
+    if (!file) return;
+    d.file = file;
+    d.sentRec = null;
     d.line = 2;
-    audit('NACHA file generated', `${d.file.filename}: ${d.file.batches.reduce((a, b) => a + b.entries, 0)} entries, ${usdc(d.file.batches.reduce((a, b) => a + b.credit, 0))}, effective ${date(d.date)}`, d.offeringId, d.file.filename);
     NS.app.render();
     const p = document.querySelector('.nacha-wrap');
     if (p) p.scrollIntoView({ block: 'nearest' });
@@ -1365,14 +1447,92 @@
     const b = document.querySelector(`.nl[data-i="${draft().line}"]`);
     if (b) b.focus({ preventScroll: true });
   };
-  NS.actions['nacha-download'] = () => {
-    const f = draft().file;
-    if (f) audit('NACHA file downloaded', f.filename, draft().offeringId, f.filename);
-    if (f) U.download(f.filename, f.text, { hostName: f.filename.replace(/\.ach$/i, '.txt') });
+  /*
+   * Download and Copy (plan 16-02): refused while the person may not release payments, while a check is red, or while a
+   * file for this distribution was already sent and this one is not a "Build again" one. The file ID is taken again
+   * first: when another file took it meanwhile (or the day changed), the file is built once more and drawn again before
+   * it leaves. The record is stored, the change log names the file (never an account), then exactly those bytes leave.
+   * The same file again (already on record) leaves with no new record.
+   */
+  function releaseFile(how) {
+    const d = draft();
+    let f = d.file;
+    if (!f) return;
+    const why = releaseWhy(d);
+    if (why) return U.toast(why);
+    if (!f.recorded) {
+      const mod = AR().modifierFor(W(), T(), today());
+      if (!mod) return U.toast(ACH_MAX);
+      if (mod !== f.modifier || f.created.iso !== today()) {
+        d.again = f.again;
+        f = buildFile(d);
+        if (!f) return;
+        d.file = f;
+        NS.app.render();
+        const still = releaseWhy(d);
+        if (still) return U.toast(still);
+      }
+      let rec;
+      try {
+        rec = AR().recordFile(W(), f, { for: 'distribution', runId: (f.target && f.target.runId) || '', offeringId: d.offeringId, effective: d.date, how, by: NS.app.actor(), at: new Date().toISOString(), again: f.again, tenant: T(), refs: {} });
+      } catch (e) {
+        return U.toast(String((e && e.message) || e));
+      }
+      f.recorded = rec.id;
+      f.record = rec;
+      // the reason given covers this one file; a further file needs its own
+      d.again = null;
+    }
+    const n = f.batches.reduce((a, b) => a + b.entries, 0);
+    audit(
+      how === 'copy' ? 'NACHA file copied' : 'NACHA file downloaded',
+      `${f.filename}: ${n} entr${n === 1 ? 'y' : 'ies'}, ${usdc(f.totals.credit)}, effective ${date(d.date)}, file ID ${f.modifier}${f.again ? `; built again: ${f.again.why}` : ''}`,
+      d.offeringId,
+      f.filename
+    );
+    NS.app.save(true);
+    if (how === 'copy') U.copy(f.text, document.getElementById('nacha-text'));
+    else U.download(f.filename, f.text, { hostName: f.filename.replace(/\.ach$/i, '.txt') });
+    const box = document.getElementById('ds-file');
+    if (box) box.innerHTML = fileSection(d);
+  }
+  NS.actions['nacha-download'] = () => releaseFile('download');
+  NS.actions['nacha-copy'] = () => releaseFile('copy');
+  /* Build again: a second file for a distribution whose file was sent, only with the reason a person gives. */
+  function againDialog(err) {
+    const d = draft();
+    const o = W().offerings.find((x) => x.id === d.offeringId) || {};
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Build the file again</h2><p>${h(o.shortName || d.offeringId)} · ${date(d.date)}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body">
+        <label class="cs-field" for="nacha-again-why"><span>Why is a second file needed?</span><textarea id="nacha-again-why" rows="3" maxlength="300" required autofocus></textarea></label>
+        ${err ? `<p class="cs-error">${h(err)}</p>` : ''}
+        <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="nacha-again-go">Build again</button></div>
+      </div>`,
+      'dlg-email'
+    );
+  }
+  NS.actions['nacha-again'] = () => {
+    if (!canPay()) return U.toast(ACH_ADMIN);
+    againDialog('');
   };
-  NS.actions['nacha-copy'] = () => {
-    const f = draft().file;
-    if (f) U.copy(f.text, document.getElementById('nacha-text'));
+  NS.actions['nacha-again-go'] = () => {
+    if (!canPay()) return U.toast(ACH_ADMIN);
+    const why = String((document.getElementById('nacha-again-why') || {}).value || '').trim();
+    if (!why) return againDialog('Enter the reason a second file is needed.');
+    const d = draft();
+    const prev = d.sentRec || (d.file && d.file.sent) || null;
+    d.again = { why: why.slice(0, 300), of: prev ? prev.id : null };
+    const file = buildFile(d);
+    U.closeDialog();
+    if (!file) return;
+    d.file = file;
+    d.sentRec = null;
+    d.line = 2;
+    NS.app.render();
+    const p = document.querySelector('.nacha-wrap');
+    if (p) p.scrollIntoView({ block: 'nearest' });
+    U.toast(`${file.filename} built again`);
   };
   NS.actions['dist-record'] = () => {
     const d = draft();
@@ -1400,6 +1560,8 @@
       U.toast(String((e && e.message) || e));
       return;
     }
+    // plan 16-02: a file already sent for this draft (kept by offering and payment date) is now this run's file
+    if (!d.forRun) AR().filesOf(W(), distTarget(d)).filter((x) => !x.runId).forEach((x) => AR().attach(W(), x.id, id));
     audit('Distribution recorded', `${d.type}: ${usdc(total)} ${d.date > today() ? 'scheduled for' : 'paid'} ${date(d.date)}${wf ? ` (waterfall: ${usdc(wf.gross)} gross, ${usdc(wf.gp)} to the GP)` : ''}; ${d.file ? d.file.filename : 'no NACHA file'}`, d.offeringId, id);
     NS.app.save(true);
     const o = W().offerings.find((x) => x.id === d.offeringId);
@@ -1410,10 +1572,16 @@
   NS.actions['dist-load'] = (el) => {
     const r = W().runs.find((x) => x.id === el.getAttribute('data-id'));
     if (!r || r.cancelled) return;
-    S().ui.dist = { offeringId: r.offeringId, type: r.type, date: r.date, mode: 'total', rate: '', total: (r.total / 100).toFixed(2), desc: T().ach.entryDescription || 'DISTRIB', file: null, line: null, fromRun: Array.isArray(r.lines) ? r.id : null };
+    // forRun (plan 16-02, 16-CONTEXT B4): the draft pays for this run whatever is edited; fromRun goes once a field is edited
+    S().ui.dist = { offeringId: r.offeringId, type: r.type, date: r.date, mode: 'total', rate: '', total: (r.total / 100).toFixed(2), desc: T().ach.entryDescription || 'DISTRIB', file: null, line: null, fromRun: Array.isArray(r.lines) ? r.id : null, forRun: r.id, again: null, sentRec: null };
+    const sent = AR().sentFor(W(), { runId: r.id });
     const reason = NS.nacha.bankingDayReason(r.date);
-    if (achReady() && !reason) {
-      // Rebuilding a past date is allowed for reference; the checks flag the date.
+    if (sent) {
+      // a file for this run was sent: its record is shown, not a second file
+      S().ui.dist.sentRec = sent;
+    } else if (achReady() && !reason) {
+      // Rebuilding a past date is allowed for reference; the checks flag the date. A run recorded with no file on record
+      // is treated as paid: its file waits for Build again.
       S().ui.dist.file = buildFile(S().ui.dist);
       S().ui.dist.line = 2;
     }

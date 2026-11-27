@@ -102,6 +102,7 @@ export const SECTIONS = Object.freeze({
   coSignInRetired: Object.freeze({ write: 'operate' }),
   coServerRetired: Object.freeze({ write: 'operate' }),
   achLog: Object.freeze({ write: 'pay' }),
+  mailLog: Object.freeze({ write: 'operate' }),
   v: Object.freeze({ write: 'operate' }),
   opsV: Object.freeze({ write: 'operate' }),
   audit: Object.freeze({ write: 'operate', grow: true }),
