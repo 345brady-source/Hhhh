@@ -476,7 +476,7 @@ async function dueButton(p) {
   return (await b.count()) ? (await b.first().innerText()).trim() : '';
 }
 /** The console's sentence when a package investor cannot be re-screened (no free Treasury connection on). */
-const NO_FREE = (title) => `${title} was screened through the verification package, so only the free U.S. Treasury connection can re-screen them; turn it on on the Integrations page.`;
+const NO_FREE = (title) => `${title} was screened through the verification package, so only the free U.S. Treasury connection can re-screen them: turn it on in Integrations.`;
 /** Lines that read as an error, on the console's Overview attention list and the AML/KYC page. */
 const ERROR_RE = /error|could not|failed|not set up|answered \d|integration server/i;
 async function errorLines(p) {

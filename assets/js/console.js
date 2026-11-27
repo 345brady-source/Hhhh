@@ -2504,7 +2504,7 @@
           return `<tr><td data-label="Investor">${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td data-label="Risk">${h(k.risk || '—')}</td><td data-label="Identity verified">${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td data-label="Screening">${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : k.screening === 'pending' ? 'Waiting for results' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap" data-label="Next review">${k.nextReview ? date(k.nextReview) : '—'}</td><td data-label="Beneficial owners">${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td data-label="Status">${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
         })
         .join('');
-      const due = rows0.filter((r) => r.lab.key === 'due');
+      const due = rows0.filter((r) => r.lab.key === 'due' && kycRescreenable(w, r.i));
       if (NS.integrations && NS.integrations.active(w)) NS.integrations.resume(w); // poll open provider checks while this page is open
       return shell(
         `${head('AML/KYC', E.diy ? `Identity verification, sanctions and PEP screening and accredited investor checks run automatically through the connections you plug in: ${h(NS.integrations ? NS.integrations.activeNames(w).join(', ') : 'none yet')} (<a class="cs-link" href="#console-integrations">Integrations</a>). Anything flagged, and any check waiting on your team, waits here.` : 'Identity verification, sanctions and politically exposed person screening, and periodic re-screening for every investor. Potential matches wait here for the compliance officer’s review.', due.length ? `<button class="cs-btn" type="button" data-action="kyc-screen-due">Re-screen ${due.length} due</button>` : '')}
@@ -2548,11 +2548,14 @@
       U.toast('Escalated to the compliance officer.');
     }
   };
-  /** DIY investors are re-screened through every screening connection that is on. */
+  /** "Re-screen N due" leaves out a package investor "Run now" leaves out (no free Treasury connection on). */
+  const kycRescreenable = (w, i) => !(NS.integrations && NS.integrations.active(w) && i.verify && NS.integrations.rescreenable) || NS.integrations.rescreenable(w, i);
+  /** DIY investors are re-screened through every screening connection that is on; one screened through the package as "Run now" does. */
   async function rescreen(inv) {
     const IVN = NS.integrations;
     if (IVN && IVN.active(W()) && inv.verify) {
-      const r = await IVN.screen(W(), inv);
+      const r = await IVN.rescreenOne(W(), inv);
+      if (!r) return null; // a package investor and no free Treasury connection: nothing was called
       IVN.decide(W(), inv);
       NS.app.save(true);
       return r.status === 'clear' ? 'no matches' : r.status === 'potential_match' ? 'a potential match to review' : 'waiting for results from some screening connections';
@@ -2565,11 +2568,11 @@
     if (inv) {
       const res = await rescreen(inv);
       NS.app.render();
-      U.toast(`${inv.title} screened: ${res}.`);
+      U.toast(res ? `${inv.title} screened: ${res}.` : `${inv.title} was screened through the verification package, so only the free U.S. Treasury connection can re-screen them: turn it on in Integrations.`);
     }
   };
   NS.actions['kyc-screen-due'] = async () => {
-    const due = W().investors.filter((i) => OPS().kycLabel(OPS().kycOf(i)).key === 'due');
+    const due = W().investors.filter((i) => OPS().kycLabel(OPS().kycOf(i)).key === 'due' && kycRescreenable(W(), i));
     for (const i of due) await rescreen(i);
     NS.app.render();
     U.toast(`${due.length} investor${due.length === 1 ? '' : 's'} re-screened.`);
