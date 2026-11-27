@@ -1,12 +1,43 @@
 ---
 phase: 15-security
 plan: 14
-status: paused
+status: gate-failed-pre-existing
+plan_head_before: ef87afaff562d58f7b3b414ce57f94b71b709ea0
 ---
 
-# Phase 15 Plan 14: account emails and resets (paused by the owner before the gate finished)
+# Phase 15 Plan 14: account emails and resets
 
-## Paused (2026-11-27, owner's indefinite pause)
+## Gate result after the pause was lifted (read first)
+
+**GATE_EXIT=1.** The full gate (gate15.sh, every phase, GATE_OUT=SCRATCH/exec-15-14, on bee3031) ended with 105
+"GATE ok" lines and one failure:
+```
+GATE FAIL SECTIONS
+  sections.js: the last line should be: SECTIONS: PASS (cases run: 2)
+  sections.js: the last line was:       SECTIONS: FAIL (cases run: 2) - keys
+GATE_EXIT=1
+```
+sections.js (15-06's check; this plan did not touch it) said:
+`FAIL keys every key found (26) has a SECTIONS line :: mailLog (emails.js)`.
+- I ran it alone twice on this tree. Both runs gave the same FAIL line and `SECTIONS: FAIL (cases run: 2) - keys`
+  (exit 1).
+- Control on the base tree ef87afa (git archive): the same FAIL line, exit 1. The failure is not caused by this plan.
+  diy.html loads emails.js, whose log() makes ws.mailLog, and workspace.mjs at the base has no mailLog line.
+- Control on this tree with only server/lib/workspace.mjs taken from origin/claude/refract-reskin (3f8e3d1, where
+  16-02 added `mailLog: Object.freeze({ write: 'operate' })`): `SECTIONS: PASS (cases run: 2)`, exit 0.
+- This plan may not edit workspace.mjs, so it cannot reach GATE_EXIT=0 on its own tree. The merged tree carries the
+  line; the gate must be run on the merged tree.
+
+Every other step passed:
+- reference gate;
+- `GATE ok   server tests 616 = base 601 + 15 declared`;
+- phases 08 to 14 (all checks);
+- ROLES TABLE, SERVED PORTAL and TOTP FRAME.
+
+The pre-gate verify on bee3031 gave `# tests 616`, `# pass 616`, `# fail 0`, `PRE-GATE OK`.
+The base tree, shots and downloads were removed by the gate.
+
+## Paused (2026-11-27, owner's indefinite pause; kept as written then, superseded by the result above)
 
 **Not finished: the done criterion is not met.** The full phase gate (gate15.sh, every phase, as the plan names it) was
 stopped by hand at the coordinator's pause order before it printed GATE_EXIT. No GATE_EXIT exists for this plan. Nothing
