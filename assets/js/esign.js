@@ -2963,8 +2963,8 @@
   });
 
   /* ---------- Console Documents: removing a signed copy from portals keeps the envelope's file ---------- */
-  // The portal listing of a completed envelope shares the envelope's stored file (same id), so the
-  // generic Remove, which deletes a published file, must not run for it.
+  // The portal listing of a completed envelope shares the envelope's stored file (same id): Remove hides
+  // its listing with the envelope's own wording.
   const removeDoc = NS.actions['docs-remove'];
   if (removeDoc)
     NS.actions['docs-remove'] = function (el) {
@@ -2972,11 +2972,13 @@
       const doc = (w.docs || []).find((x) => x.id === el.getAttribute('data-id'));
       const env = doc && doc.envelopeId ? envById(w, doc.envelopeId) : null;
       if (!env || env.signedDocId !== doc.id) return removeDoc.apply(this, arguments);
-      w.docs = w.docs.filter((x) => x !== doc);
-      CK().audit('Document removed', `${doc.title} (${doc.fileName}) removed from investor portals; the envelope keeps its signed copy`, doc.offeringId || '', doc.id);
+      if (doc.hiddenAt) return;
+      // Hidden, never deleted (14-CONTEXT, records rule): the listing stays in the record, investors no longer see it.
+      Object.assign(doc, { hidden: true, hiddenAt: new Date().toISOString(), hiddenBy: NS.app.actor() });
+      CK().audit('Document hidden', `${doc.title} (${doc.fileName}) hidden from investor portals; the envelope keeps its signed copy`, doc.offeringId || '', doc.id);
       NS.app.save(true);
       NS.app.render();
-      U.toast('Removed from investor portals. The envelope still has the signed PDF.');
+      U.toast('Hidden from investor portals. The envelope still has the signed PDF.');
     };
 
   /* ---------- Subscriptions: new subscribers are sent the offering's subscription agreement ---------- */

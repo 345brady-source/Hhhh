@@ -2344,7 +2344,7 @@
         .map((x) => {
           const o = x.offeringId ? offById(x.offeringId) : null;
           const n = OPS().recipientsOf(w, x).length;
-          return `<tr><td class="nowrap" data-label="Date">${date(x.date)}</td><td data-label="Document">${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden ? ', not shown to investors' : ''}` : ''}</span></td><td data-label="Fund">${h(o ? o.shortName || o.name : 'All investors')}</td><td data-label="Recipients">${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td data-label="Type">${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td data-label="SHA-256"><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
+          return `<tr><td class="nowrap" data-label="Date">${date(x.date)}</td><td data-label="Document">${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden && !x.hiddenAt ? ', not shown to investors' : ''}` : ''}${x.hiddenAt ? ` · Hidden from investors ${date(x.hiddenAt.slice(0, 10))}` : ''}</span></td><td data-label="Fund">${h(o ? o.shortName || o.name : 'All investors')}</td><td data-label="Recipients">${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td data-label="Type">${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td data-label="SHA-256"><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num">${x.hiddenAt ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button>`}</td></tr>`;
         })
         .join('');
       return shell(
@@ -2440,11 +2440,13 @@
     const doc = (w.docs || []).find((x) => x.id === el.getAttribute('data-id'));
     if (!doc) return;
     if (doc.tax) return; // a tax document leaves only by the Tax documents page's logged Withdraw (plan 10-04)
-    w.docs = w.docs.filter((x) => x !== doc);
-    OPS().files.del(doc.id).catch(() => {});
-    audit('Document removed', `${doc.title} (${doc.fileName}) removed from investor portals`, doc.offeringId || '', doc.id);
+    if (doc.hiddenAt) return;
+    // Nothing is deleted in the portal (14-CONTEXT, records rule): the document and its file stay; investors no longer see it.
+    Object.assign(doc, { hidden: true, hiddenAt: new Date().toISOString(), hiddenBy: NS.app.actor() });
+    audit('Document hidden', `${doc.title} (${doc.fileName}) hidden from investor portals; the document and its file are kept`, doc.offeringId || '', doc.id);
     NS.app.save(true);
     NS.app.render();
+    U.toast(`${doc.title} hidden from investor portals. It stays in the record.`);
   };
 
   /* ---------- AML / KYC ---------- */
