@@ -285,10 +285,14 @@ const parts = {
           if (!tr) return null;
           tr.scrollIntoView({ block: 'center' });
           const b = tr.getBoundingClientRect();
-          return { text: tr.innerText, left: Math.round(b.left), right: Math.round(b.right), w: innerWidth };
+          const badge = tr.querySelector('td[data-label="Progress"] .cs-badge');
+          const act = tr.querySelector('.inv8-activity');
+          return { text: tr.innerText, badge: badge ? badge.textContent.trim() : '', activity: act ? act.textContent : '', left: Math.round(b.left), right: Math.round(b.right), w: innerWidth };
         }, m.id);
         const want = LINES[m.k](m.email);
         check(`${m.k}: the row says "${want}"`, !!r && r.text.split('\n').some((l) => l.trim() === want), r && r.text);
+        // a bounced email was sent (and came back); the other three never left
+        if (m.k !== 'bounced') check(`${m.k}: nothing on the row says the email was sent (badge "${r && r.badge}", activity "${r && r.activity}")`, !!r && !!r.badge && !/^Sent$/i.test(r.badge) && !/\bSent\b/.test(r.activity), r && { badge: r.badge, activity: r.activity });
         check(`${m.k}: the row fits the 390px screen`, !!r && r.left >= 0 && r.right <= r.w, r && { left: r.left, right: r.right, w: r.w });
       }
       const over = await fr.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
