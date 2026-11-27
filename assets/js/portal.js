@@ -1069,6 +1069,35 @@
       .concat(up)
       .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   }
+  // reports-run.js's not-kept sentence (CHANGED), its first clause: said when the kept bytes are not the report on record
+  // and this page cannot remake it, so whether the figures changed is not known here
+  const NOT_KEPT = 'The original file is not kept on this device.';
+  /**
+   * The file of an uploaded document as the investor is given it: { blob } | { error } | null (nothing kept).
+   * A report (a document with a report block) is given only when the SHA-256 of its bytes equals the document's record.
+   * Kept bytes that are not that file (another firm's, kept under an id made before ids named the firm, or a changed byte)
+   * are never given: the file is remade through NS.reportsRun.fileBytes where this page has it, and given only when the
+   * remade file's SHA-256 equals the record; otherwise the sentence the sponsor's archive says. Other documents: as kept.
+   * Rejects when the browser refuses its file store.
+   */
+  async function fileOf(doc) {
+    const blob = await NS.ops.files.get(doc.id);
+    const rec = (W().docs || []).find((d) => d.id === doc.id);
+    if (!rec || !rec.report || typeof rec.report !== 'object') return blob ? { blob } : null;
+    if (!blob) return null;
+    const sum = (bytes) => (NS.audit && NS.audit.sha256 ? NS.audit.sha256(bytes) : '');
+    const want = String(rec.sha256 || '');
+    if (/^[0-9a-f]{64}$/.test(want) && sum(new Uint8Array(await blob.arrayBuffer())) === want) return { blob };
+    if (!(NS.reportsRun && NS.reportsRun.fileBytes) || !rec.report.run) return { error: NOT_KEPT };
+    let r = null;
+    try {
+      r = await NS.reportsRun.fileBytes(W(), rec.report.run, rec.id);
+    } catch (e) {
+      r = null;
+    }
+    if (r && r.bytes && /^[0-9a-f]{64}$/.test(want) && sum(r.bytes) === want) return { blob: new Blob([r.bytes], { type: 'application/pdf' }) };
+    return { error: (r && r.error) || NOT_KEPT };
+  }
   function openUploaded(doc) {
     U.dialog(
       `<div class="dlg-head"><div><h2>${h(doc.title)}</h2><p>${date(doc.date)} · ${h(doc.fileName)} · ${(doc.size / 1024).toFixed(0)} KB</p>${NS.runHooks('documentOpened', doc)}</div>
@@ -1076,15 +1105,19 @@
       <div class="dlg-body"><p class="empty">Loading…</p></div>`,
       'dlg-doc'
     );
-    NS.ops.files
-      .get(doc.id)
-      .then((blob) => {
+    fileOf(doc)
+      .then((got) => {
         const body = document.querySelector('#dlg .dlg-body');
         if (!body) return;
-        if (!blob) {
+        if (!got) {
           body.innerHTML = `<p class="empty">${h(NS.esign.lostText('this document’s file'))}</p>`;
           return;
         }
+        if (got.error) {
+          body.innerHTML = `<p class="empty">${h(got.error)}</p>`;
+          return;
+        }
+        const blob = got.blob;
         if (/^text\//.test(blob.type) || /\.(txt|md)$/i.test(doc.fileName)) return blob.text().then((t) => (body.innerHTML = `<pre class="doc-text">${h(t)}</pre>`));
         // A PDF is drawn in the page (esign.js viewPdf): the browser's own PDF viewer is refused inside a sandboxed frame.
         if (/pdf/i.test(blob.type) || /\.pdf$/i.test(doc.fileName)) return NS.esign.viewPdf(body, blob, doc.title, true);
@@ -1114,7 +1147,10 @@
   NS.actions['up-download'] = (el) => {
     const doc = (W().docs || []).find((d) => d.id === el.getAttribute('data-id'));
     if (!doc) return;
-    NS.ops.files.get(doc.id).then((blob) => (blob ? U.download(doc.fileName, blob, { mime: doc.type || 'application/octet-stream' }) : U.toast(NS.esign.lostText('this document’s file'))));
+    fileOf(doc).then(
+      (got) => (got && got.blob ? U.download(doc.fileName, got.blob, { mime: doc.type || 'application/octet-stream' }) : U.toast(got && got.error ? got.error : NS.esign.lostText('this document’s file'))),
+      () => U.toast('This browser blocked document storage, so the file cannot be opened here.')
+    );
   };
   NS.actions['open-doc'] = (el) => {
     const v = vm();
