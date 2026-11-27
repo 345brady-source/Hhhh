@@ -115,3 +115,15 @@ Binding on the executors (full text: scratchpad checks-15-wave3.md).
 - For 15-17: the first save with bank details needs pay and a sign-in in the last 10 minutes; ws.invite left out of a save; staff importing a submission with a bank account is refused until 15-15's pending flow; DELETE on a file needs JSON from the own origin. For 15-15: server.workspaces.get(id) and put(id, ws, version, person). I7 applied.
 - Nothing is ready for the owner until 15-17 moves the console onto these routes and he has checked it.
 - Unblocked: 13-03 (index.mjs, README, roles.mjs free).
+
+## Plan-check additions, wave 4 (15-15, 15-17), checked against 8efaa5c, 2026-11-27
+Binding (full text: scratchpad checks-15-wave4.md). 15-15-PLAN.md is revised by the planner to carry B1-B3 and W1-W2 before it starts.
+- B1 (15-15, D-04): an investor's account change (fresh sign-in) stores `payment.bank.check = { state: 'unconfirmed', at, by: 'investor' }` (16-07's three keys; anything the investor sends for the state is ignored). A server confirm action ('pay' + fresh sign-in) moves it to `{ state: 'new', at, by: <person id> }` (same result as 16-07's confirmChange), logged without digits. Notices through 15-14's notify with recipient lists: bankChanged to the investor's address as stored before the save, the sponsor variant to the Owner and every Admin; last four only. Tests: 16-07's fileEntries holds the investor with its reason, pre-notes on and off; Staff 403; Admin without fresh 401 'fresh'; Admin with fresh -> 'new', then the C-03 pre-note applies. depends_on adds 16-07.
+- B2: 15-15 Task 3 starts `rm -f $O/gate.txt $O/view.txt $O/all.txt;` and `... assets/js/portal.js || exit 1; mkdir -p`; 15-17 starts `rm -f $O/gate.txt;` and `... -- index.html server || exit 1; mkdir -p`.
+- B3 (both): routing 190000005 (or 131000021), accounts 991234567 and 997654321, SSN 000-12-3456, EIN 00-1234567.
+- W1 (15-15): index.mjs routes investor sessions for /v1/workspace through guardInvestor before the sponsor gate (one line; with the brand line, within the 2-line cap).
+- W2, orchestrator's choice: a submission with a bank account that Staff imports is stored 'unconfirmed' too (by: 'import'), so only a person with 'pay' and a fresh sign-in makes it payable; 15-15 owns this.
+- W3 (15-17): the password dialog runs on phase 6's Chromium iPhone profile with the "NOTE WebKit not installed here: ..." line; the `// last` count adjusted.
+- W4: page text through stripLinkTokens, storage and JSON by keys with keysDeep; investor ids compared as exact values.
+- W5 (15-17): session.js files.del sends JSON from the page's own origin; the minimization import role has 'pay' and a fresh sign-in.
+- Start: 15-15 after 15-14, 13-03 and 16-07 merge, no plan editing index.mjs, roles.mjs or workspace.mjs running. 15-17 after 13-05 and 13-08 merge, order 13-05 -> 16-02 -> 15-17 (shared pages), with 13-06, 13-09, 13-12, 14-04, 14-12 not running.
