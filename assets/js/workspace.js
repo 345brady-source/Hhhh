@@ -99,6 +99,18 @@
     delete ws.tenant.offerings;
     delete ws.tenant.roster;
     ws.offerings = ws.offerings || [];
+    // A sample firm's seeded holdings carry ids (tenants.js; reports keep photos and wording by holding id). A sample
+    // workspace saved before they did gets each one's id from its seed, matched by fund and name.
+    const seedFirm = isBuiltin(ws.tenant.id) && NS.TENANTS.find((t) => t.id === ws.tenant.id);
+    if (seedFirm)
+      ws.offerings.forEach((o) => {
+        const so = o && (seedFirm.offerings || []).find((x) => x.id === o.id);
+        if (!so || !Array.isArray(o.holdings) || !Array.isArray(so.holdings)) return;
+        o.holdings.forEach((h) => {
+          const s = h && !h.id && so.holdings.find((x) => x.name === h.name);
+          if (s && s.id) h.id = s.id;
+        });
+      });
     ws.investors = ws.investors || [];
     ws.runs = ws.runs || [];
     ws.notices = ws.notices || [];
