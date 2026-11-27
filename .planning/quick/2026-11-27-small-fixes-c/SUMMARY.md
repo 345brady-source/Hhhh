@@ -1,13 +1,26 @@
 ---
 quick: 2026-11-27-small-fixes-c
-status: paused
+status: gate-passed-owner-check-pending
 plan_head_before: a0d4d821490c80028742deba1c5c52832540b8ac
-plan_head_after: 857fd95
+plan_head_after: 7ef64e0
 ---
 # Quick 2026-11-27 small fixes C: summary
-(Written by the orchestrator from the executor's hand-back; the harness refused the executor's own write.)
+(Written by the orchestrator from the executor's hand-back, because the harness refused the executor's own write. Updated by the executor after the resumed gate.)
 
-## Paused (owner's indefinite pause, 2026-11-27)
+## Resumed gate (after the pause was lifted, 2026-11-27): GATE_EXIT=0
+- **The failure is reported first:** during the first gate run, one part of a phase 11 check failed. The part was `libre` in `package-files.js`, a file this plan did not touch. Its lines were kept by this plan's new failed-part copy, at `<exec-sfc>/gate/checks-out.failed-parts/package-files-1cf22559de/libre-78253216.failed-20261127T184106Z-10301.json`. They read: `FAIL libre ran to the end :: Error: LibreOffice exited null`.
+  - Cause: that run started at 16:41 and was killed at its 2-hour background limit at 18:41:06. That is the same second the copy was stamped; the converter died from the kill signal.
+  - It is not a fault in the check. In the resumed run, `package-files.js` ended `PACKAGE FILES: PASS (cases run: 6)`, with all four `PASS libre ...` lines.
+  - It is also the first live proof of fix 3: the lines of a failed part survived the rerun that replaced its main record.
+- **The resumed gate** was run on HEAD 7ef64e0, the same code plus the orchestrator's SUMMARY commit. Because HEAD had moved, no step was kept from the first run; every step ran again.
+  - Result: 80 `GATE ok`, 0 `GATE FAIL`, last line `GATE_EXIT=0`.
+  - Lines from it: `GATE ok   server tests 585 = base 584 + 1 declared`, `GATE ok   HELP CHAT (10)`, `GATE ok   HELP PREVIEW (6)`, `GATE ok   REPORT FIXES`, `GATE ok   REPORTS MODEL`, `GATE ok   REPORTS PDF`, `GATE ok   REPORTS SWEEP`, `GATE ok   REPORTS FLOW (run in the reference gate)`. Every phase 10 and phase 11 check is `GATE ok`.
+- `GATE RESUME SELF-TEST: PASS (18)`, run again on 7ef64e0.
+- The gate removed its own base tree, shots and checks-out. The small failed-part file above was kept as evidence.
+- Not merged. claude/refract-reskin has moved (its server count is now 605 or more), so before merging, rebase or merge-test and expect `server tests <B+1> = base <B> + 1 declared`.
+- Owner check pending: the empty-chart screenshot on his iPhone (`report-fixes.js --only empty-chart-phone` makes it again). Nothing here is ready until the owner has checked it.
+
+## Paused (owner's indefinite pause, 2026-11-27; kept for the record)
 - Closing gate unfinished: gate12.sh stopped after 61 `GATE ok`, 0 `GATE FAIL`, inside phase 11's checks after NO ONBOARDING (background time limit, at the pause). No GATE_EXIT; phase 12's own gate steps did not run.
 - Gate lines so far: `GATE ok   server tests 585 = base 584 + 1 declared`; HELP CHAT (10), HELP PREVIEW (6), SERVER MODE (15), REPORTS FLOW (8); signing and record base against plan ok.
 - Done and pushed on wip/small-fixes-c (head 857fd95): all three fixes, each red first. Nothing uncommitted.
@@ -15,7 +28,7 @@ plan_head_after: 857fd95
 - Owner check pending: the empty-chart screenshot on his iPhone (`report-fixes.js --only empty-chart-phone` makes it again). Nothing here is ready until the owner has checked it.
 
 ## Failures and open items (first)
-- The gate is unfinished (above).
+- The gate was unfinished at the pause. The resumed gate ended GATE_EXIT=0 (see above).
 - Wording for the owner: with no distributions the Q4 statement shows two near-identical sentences — "No distributions were paid in this period." (existing distributions section) and "You received no distributions in this period." (new, in the chart's place). The plan fixed this wording; the owner may want only one.
 
 ## RED outputs
