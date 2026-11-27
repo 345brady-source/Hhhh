@@ -404,6 +404,12 @@ export function createMailer({ env, store, vault, now = () => Date.now(), tls: t
 
 /* ---------- The firm's messages ---------- */
 
+// The wording and layout of every message live in assets/js/emails.js, the one template set the console's previews use too
+// (plan 13-01, EM-01); the builders below hand it the same data and turn its inline parts into Buffers.
+import { createRequire } from 'node:module';
+const emails = createRequire(import.meta.url)('../../assets/js/emails.js');
+const delivered = (r) => ({ subject: r.subject, preheader: r.preheader, text: r.text, html: r.html, inline: r.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })) });
+
 const esc = (s) => String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const hex = (c) => (/^#[0-9a-f]{6}$/i.test(String(c || '')) ? c : /^#[0-9a-f]{3}$/i.test(String(c || '')) ? `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}` : '');
 export function money(cents, currency) {
@@ -467,8 +473,6 @@ ${parts.greeting ? p(parts.greeting) : ''}${(parts.paras || []).map(p).join('')}
   return { subject, text: text.join('\n\n'), html, inline: logo ? [logo] : [] };
 }
 
-const STEPS_SENTENCE = 'The link takes you through everything in one place: creating your login, your investor information, identity verification, accredited investor verification if your investment needs it, tax certification, distribution payments, and the subscription documents to review and sign.';
-
 /** The invitation: who invited them, to what, the note, what they will need, the link and its expiry. */
 export function invitationMessage({ firm, investor, offering, invitation, link, expiresAt }) {
   const name = investor.contact || investor.title || 'investor';
@@ -477,23 +481,7 @@ export function invitationMessage({ firm, investor, offering, invitation, link, 
   if (invitation.existing && invitation.access) return accessMessage({ firm, name, invitation, link, expiresAt });
   if (invitation.existing && invitation.taxRequest) return taxRequestMessage({ firm, name, investor, invitation, link, expiresAt });
   if (invitation.existing && invitation.reverify) return reverifyMessage({ firm, name, investor, invitation, link, expiresAt });
-  const subject = offering && offering.name ? `${offering.name}: complete your investor onboarding` : `Complete your investor onboarding with ${firm.name}`;
-  const rows = [];
-  if (offering && offering.name) rows.push(['Offering', offering.name]);
-  if (invitation.cents) rows.push(['Commitment', money(invitation.cents, offering && offering.currency)]);
-  return compose(firm, subject, {
-    greeting: `Dear ${name},`,
-    paras: [offering && offering.name ? `${firm.name} has invited you to invest in ${offering.name} and to open your investor account.` : `${firm.name} has invited you to open your investor account.`],
-    rows,
-    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
-    button: { label: 'Start your onboarding', href: link },
-    after: [
-      `${STEPS_SENTENCE} It takes about 10 to 15 minutes, and you can stop and pick up where you left off.`,
-      'Please have a government-issued photo ID and your bank details ready.',
-      `This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`,
-      `Questions? Reply to this email or contact ${supportLine(firm)}.`
-    ]
-  });
+  return delivered(emails.render('invitation', { firm, investor, offering, invitation, link, expiresAt }));
 }
 
 /** An investor the firm added from paper documents: a link to open their portal. Nothing to fill in. */
