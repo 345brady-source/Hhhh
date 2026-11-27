@@ -1310,6 +1310,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   }
 
   async function create(req, res, auth) {
+    if (auth && auth.via === 'session' && auth.confirmed === false) throw fail(403, 'Confirm your email address first: use the link we sent when you signed up.'); // C-16 (15-14)
     const body = parseObject(await readRaw(req, INVITE_LIMITS.create));
     const pin = pinned(auth);
     const portalUrl = returnTo(body.portalUrl);

@@ -119,6 +119,7 @@ test('roles', async () => {
     assert.equal((await call(base, 'POST', '/v1/team/invite', { cookie: owner.cookie, body: { kind: 'team', name: 'New Owner', email: 'no@harborridge.example', role: 'owner' } })).status, 400);
     const si = await call(base, 'POST', '/v1/team/invite', { cookie: staff.cookie, body: { kind: 'team', name: 'Lee Staff', email: 'lee@harborridge.example', role: 'team' } });
     assert.deepEqual([si.status, si.body], [403, { error: REFUSALS.team, code: 'role' }]);
+    server.store.put('workspaces', { id: owner.ws, confirmedAt: new Date().toISOString() }); // C-16 (15-14): investors are invited once the Owner's email is confirmed
     const iv = await call(base, 'POST', '/v1/team/invite', { cookie: staff.cookie, body: { kind: 'investor', name: 'Ivy Investor', email: 'ivy@investor.example', investorId: 'HRC-0001' } });
     assert.equal(iv.status, 201, `Staff sends an investor’s access invitation (operate): ${iv.text}`);
     assert.deepEqual([iv.body.person.kind, iv.body.person.investorId, iv.body.person.role], ['investor', 'HRC-0001', 'investor']);

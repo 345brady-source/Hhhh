@@ -101,17 +101,19 @@ test('reset by email', async () => {
   const relay = await fakeSmtp({});
   const c = clock();
   try {
-    await withServer({ env: env(relay), now: c.now }, async (base) => {
+    await withServer({ env: env(relay), now: c.now }, async (base, server) => {
       const o = await ownerWithTwoStep(base, c);
+      if (server.signin.settled) await server.signin.settled(); // the sign-up's and two-step's own notices (Task 3) first
+      const before = relay.messages.length;
       const r = await post(base, '/v1/auth/reset/request', { email: OWNER });
       assert.equal(r.status, 200, r.text);
       assert.deepEqual(r.body, { ok: true, message: SENT });
-      assert.ok(await waitFor(() => relay.messages.length >= 1), 'the reset email reached the stand-in');
-      assert.equal(relay.messages.length, 1);
-      const m = mail(relay.messages[0]);
+      assert.ok(await waitFor(() => relay.messages.length >= before + 1), 'the reset email reached the stand-in');
+      assert.equal(relay.messages.length, before + 1);
+      const m = mail(relay.messages[before]);
       assert.deepEqual(m.to, [OWNER]);
       assert.equal(m.subject, `${FIRM}: reset your password`);
-      const token = resetToken(relay.messages[0]);
+      const token = resetToken(relay.messages[before]);
       assert.ok(token, 'a #reset- link in the text');
 
       const ck = await post(base, '/v1/auth/reset/check', { token });

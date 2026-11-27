@@ -4,7 +4,10 @@
 // a person is removed (sessions ended, email and two-step deleted, the name kept for the change log), an Accountant's
 // access is renewed (90 days by default, at most 365) and the ownership is handed to an Admin who has two-step.
 // Staff, an Admin or the Owner also sends an investor who has no sign-in yet an access invitation (kind investor, bound
-// to the investor's record by investorId); 15-14 emails these links once the server can send.
+// to the investor's record by investorId). Plan 15-14: when the server can send now (signin.canSend), invite and resend
+// email the link (team_invitation for a team person, portal_access for an investor) and answer { sent: true } with no
+// link; otherwise the link is shown once to the sender as before ({ link, sent: false }). An investor is invited only once
+// the firm's Owner has confirmed the email address (C-16).
 //
 //   createTeam({ store, signin, audit, now, env }) → { accept(req, res, url), handle(req, res, url, auth) }
 //     accept   GET/POST /v1/team/accept (before the sponsor gate: the one-time token is its own check)
@@ -16,7 +19,7 @@
 import { randomBytes } from 'node:crypto';
 import { readRaw, parseJson, send, header } from './http.mjs';
 import { sha256 } from './crypto.mjs';
-import { REFUSALS, can, plainDay } from './roles.mjs';
+import { REFUSALS, LABELS, can, plainDay } from './roles.mjs';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const INVITE_MS = 7 * DAY_MS;
@@ -40,6 +43,7 @@ const SAY = {
   accepted: 'This person has already accepted the invitation.',
   newOwner: 'The new Owner must be an Admin who has set up two-step sign-in.',
   person: 'This needs a person signed in.',
+  confirmFirst: 'Confirm your email address first: use the link we sent when you signed up.',
   fresh: 'Enter your password again to do this.',
   refused: 'This request was refused.',
   notFound: 'Not found'
@@ -83,6 +87,16 @@ export function createTeam({ store, signin, audit, now = () => Date.now(), env =
     const token = randomBytes(32).toString('base64url');
     signin.people.update(p.id, { invite: { hash: sha256(token), until: iso(now() + INVITE_MS), by }, invitedAt: iso(now()) });
     return `${publicUrl}/#accept-${token}`;
+  }
+  /** The link emailed when the server can send it now ({ sent: true }, the answer holds no link), else shown once. */
+  function deliver(auth, p) {
+    const kind = p.kind === 'investor' ? 'investor' : 'team';
+    const link = newLink(p, auth.person.id);
+    if (!(typeof signin.canSend === 'function' && signin.canSend(kind, p.workspace))) return { link, sent: false };
+    const expiresAt = signin.people.get(p.id).invite.until;
+    if (kind === 'team') signin.mailLink(p, 'team_invitation', { inviter: nameOf(auth.person), role: LABELS[p.role] || '', link, expiresAt }, link);
+    else signin.mailLink(p, 'portal_access', { link, expiresAt }, link);
+    return { sent: true };
   }
   /** The end date an Accountant asks for, or today + 90 when none is given; null when it is outside today .. today + 365. */
   function endsOnOf(v) {
@@ -170,12 +184,13 @@ export function createTeam({ store, signin, audit, now = () => Date.now(), env =
         rec.investorId = str(b.investorId, 64);
         if (!INVESTOR_ID.test(rec.investorId)) throw fail(400, SAY.fields);
         if (signin.people.list(ws).some((p) => p.kind === 'investor' && p.investorId === rec.investorId && p.status !== 'removed')) throw fail(400, SAY.hasSignIn);
+        if (!signin.confirmed(ws)) throw fail(403, SAY.confirmFirst); // C-16: no investor is invited before the Owner's email is confirmed
       }
       if (signin.people.byEmail(email, ws).some((p) => p.status !== 'removed')) throw fail(400, SAY.onTeam);
       const p = await signin.people.create(rec);
-      const link = newLink(p, auth.person.id);
+      const out = deliver(auth, p);
       log(auth, kind === 'team' ? 'Team member invited' : 'Investor sign-in invited', p, kind === 'team' ? p.role : p.investorId);
-      return send(res, 201, { person: view(signin.people.get(p.id)), link });
+      return send(res, 201, Object.assign({ person: view(signin.people.get(p.id)) }, out));
     }
 
     if (path === '/v1/team/transfer') {
@@ -197,9 +212,9 @@ export function createTeam({ store, signin, audit, now = () => Date.now(), env =
       if (!p || p.status === 'removed') throw fail(404, SAY.notFound);
       need(p.kind === 'team' ? 'team' : 'operate');
       if (p.status !== 'invited') throw fail(400, SAY.accepted);
-      const link = newLink(p, auth.person.id); // the old link stops working
+      const out = deliver(auth, p); // the old link stops working
       log(auth, 'Invitation sent again', p);
-      return send(res, 200, { link });
+      return send(res, 200, out);
     }
 
     const m = path.match(CHANGE);

@@ -119,6 +119,7 @@ test('csrf', async () => {
   await withServer({ env: { DATA_KEY: key(), PUBLIC_URL: ORIGIN } }, async (base, server) => {
     const a = await signup(base, firm('A'));
     promote(server, a.cookie);
+    server.store.put('workspaces', { id: a.body.workspace.id, confirmedAt: new Date().toISOString() }); // C-16 (15-14): the Owner's email confirmed
     const refused = { error: 'This request was refused.' };
     for (const [type, body] of [
       ['application/x-www-form-urlencoded', 'investorId=X'],
@@ -157,6 +158,7 @@ test('csrf', async () => {
     const a = await call(base, 'POST', '/v1/auth/signup', { body: firm('A'), origin: 'https://portal.example' });
     assert.equal(a.status, 201, a.text);
     promote(server, a.cookie);
+    server.store.put('workspaces', { id: a.body.workspace.id, confirmedAt: new Date().toISOString() }); // C-16 (15-14)
     const r = await call(base, 'POST', '/v1/invitations', { cookie: a.cookie, body: {}, origin: 'https://portal.example' });
     assert.ok(![401, 403].includes(r.status), `${r.status} ${r.text}`);
   });
