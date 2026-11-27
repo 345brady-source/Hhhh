@@ -521,7 +521,7 @@ const parts = {
       ML.add({ workspace: WS, kind: 'tax_consent', investorId: id, status: 'sent', to: email, subject: 'Your consent to receive tax documents electronically', text: 'Consent notice' });
       const MARK = '<img src=x onerror="window.__eml=1">Quarterly letter';
       ML.add({ workspace: WS, kind: 'notice', investorId: id, status: 'delivered', to: email, subject: MARK, text: 'A notice' });
-      const server = (await sc.call('GET', `/v1/messages/log?workspace=${WS}&investorId=${encodeURIComponent(id)}`)).body.entries || [];
+      const server = (await sc.srv.call('GET', `/v1/messages/log?workspace=${WS}&investorId=${encodeURIComponent(id)}`)).body.entries || [];
       const local = await page.evaluate((id) => (window.CVPortal.state.ws.mailLog || []).filter((e) => e.investorId === id), id);
       const sInv = server.find((e) => e.kind === 'invitation');
       check('the server kept the invitation (its own sent log) and the console logged it too: one message, two records', !!sInv && local.filter((e) => e.kind === 'invitation').length === 1, { server: server.map((e) => [e.kind, e.status]), local: local.map((e) => [e.kind, e.status]) });
