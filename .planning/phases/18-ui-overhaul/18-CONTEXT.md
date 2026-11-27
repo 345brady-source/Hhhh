@@ -44,3 +44,17 @@
 - C-02: 18-08's one-line change at intake.js:1313 (a reading in progress also refreshes on #console-offerings) is a routing condition needed by the owner's D-05 merge, not reader logic; allowed despite D-33 (no work on the in-house reader), on the condition that no other line of intake.js or the reader changes and the reader checks still pass unchanged.
 - C-03: the UI-SPEC Registry Safety table (exact versions, sha512) plus own-fonts DECISIONS 4 serve as the font package audit; no extra human checkpoint.
 - C-04: screens other phases add after a phase 18 plan merges use phase 18's tokens and classes (recorded in 13/14/15/16 CONTEXT when they are next launched).
+
+## Plan-check additions, 18-09..18-12 (gsd-plan-checker at e1bf3c3; binding; full text scratchpad checks-18-c.md)
+- B1 (18-09): add .planning/phases/07-help-chatbot/checks/help-preview.js (line 365) and .planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/real-firm.js (lines 335, 643, 689) to files_modified; each footer-Help assertion moves to exactly one header `.help-entry` named Ask me anything, and the footer text assertion loses only the word Help; each changed line listed old→new in the SUMMARY; HELP PREVIEW (6) and REAL FIRM pass at the closing gate.
+- B2 (18-12): Task 2 runs SAME SCREENS with P18_BASE_COMMIT=PRE18 and rules C1–C7 and M enabled as a pass/fail check: every difference must match an allowed rule or a commit of another phase found with `git log PRE18..HEAD -- <file>` and listed by hash; any other difference is FAIL and opens a gap-closure plan; verify greps `^SAME SCREENS vs PRE18: PASS`.
+- B3 (18-12 Task 1): verify starts `rm -f $O/walk.txt $O/sloplint.txt;`, then runs walk18.js --only the five parts and sloplint itself, then greps.
+- W1 (18-09/10/11/12): the server-count floor `-ge 605` becomes `-ge 622` (main measured 622).
+- W2 (18-11): Task 3 verify adds `grep -Eq '^GATE ok +CO-INVESTOR SERVER \(5\)'`.
+- W3 (18-11 Task 2): the dialog count N must equal `grep -o 'U\.dialog(' assets/js/*.js | wc -l` at run time and the verify compares the two.
+- W4 (18-10 Task 3): any other phase's check edited for a sideways-scrolling console table is named in files_modified before execution; each changed assertion listed old→new; stacked-block values equal the base values cell by cell.
+- W5 (18-09): askEntry is added only on render paths that call NS.portalFooter today; the invitation part asserts zero `.help-entry` on the join page of a closed offering (diy.js ~190) and the activation head is checked the same way.
+- W6 (18-12): verify asserts zero unwaived REFLEX lines; sloplint also runs on the same four DOMs at 390.
+- I1 (18-12): not while 13-10 edits gate-reference.sh or guide.md; the gate-reference.sh commit is recorded in the walkthrough.
+- I2 (18-11): a class token may be appended to an existing class attribute; nothing else.
+- Start: 18-09 after 18-06, 18-07, 13-08, 13-09 (own-fonts and 13-06 through 18-02); not while 06-14, 08-10, 14-04, 14-07, 15-09, 15-10, 15-16 or 16-10 runs. 18-10 after 18-08 and 18-09; not while 14-04, 15-08, 16-09 or 16-12 runs. 18-11 after 18-09, 18-07, 18-04; not while 06-14, 08-10, 15-09 or 16-10 runs; may run beside 18-10. 18-12 after all eleven, B2 and B3 applied, not while 13-10 edits.
