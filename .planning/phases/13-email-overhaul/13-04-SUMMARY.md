@@ -2,8 +2,16 @@
 phase: 13-email-overhaul
 plan: 04
 subsystem: server email
-status: gate-running
+status: complete
 tags: [email, notices, capital-calls, esign, unsubscribe, can-spam, confirmation]
+completed: 2026-11-27
+gate_exit: 0
+server_tests: "601 = 584 + 17"
+actuals:
+  tokens: 23100   # chars/4 over the server diff 75b2fc5..HEAD (92,457 characters)
+  tasks: 3
+  commits: 10     # git rev-list --count 75b2fc5..HEAD, this summary commit included
+plan_head_after: see the last commit on wip/13-04 (this summary's own commit)
 requires: [13-03, 13-05, 13-11, 15-05, 15-06]
 provides: [POST /v1/messages, GET /v1/messages/preferences, POST/GET /unsubscribe/<token>, createUnsubscribe, investor confirmation email]
 affects: [13-06, 13-08, 13-09, 13-10, 13-12, 15-14]
@@ -25,8 +33,15 @@ for anyone until the owner's live check (13-10); live sending stays "To be confi
 
 ## Failures first
 
-<!-- gate result goes here -->
-
+- **Gate run 1 failed: GATE_EXIT=1**, one step: `GATE FAIL MONITORING (not passed)`, the phase 08 check monitoring.js
+  ending `MONITORING: FAIL (parts run: 9) - package-not-run`. Its two failing lines: `"Run now" re-screened them ::
+  Signed in as admin of Kestrel Bay` (the toast it read was the sign-in toast) and `the package result is kept as it was,
+  the Treasury result is added, the next date moved` (the record was read before the update landed). In the same part
+  `through the Treasury connection only: one list read, one screening asked of the server, for the Treasury lists`
+  passed, so the screening did run. That part touches /v1/screenings only, no route this plan changed. Rerun alone on
+  this tree, twice: `MONITORING: PASS (parts run: 1)` both times. Gate run 2 into the same folder (no file changed between
+  the runs): `GATE ok   MONITORING (9)`, 52 GATE ok, 0 GATE FAIL, `GATE_EXIT=0`. Judged a timing flake under load
+  (other plans' gates were running at the same time); recorded here so it is not hidden.
 - RED runs failed as intended (below). No test of an existing file was changed.
 - One test-side slip found and fixed during GREEN, not a product failure: confirm-mail "nothing sensitive" first looked for
   the substring '3456' (the never-issued number's last four) and matched the firm's colour '#123456' in the HTML. It now
@@ -53,7 +68,69 @@ for anyone until the owner's live check (13-10); live sending stays "To be confi
 
 ## Gate
 
-<!-- gate lines go here -->
+`rm -f $O/gate.txt; G=$P/checks/gate13.sh; [ -f $G ] || exit 1; GATE13_PHASES="08" GATE_OUT=$O bash $G > $O/gate.txt`,
+O = scratchpad/exec-13-04, base-commit.txt 75b2fc5e6d774cdbd74370c34b8c7e445b6b8415 (the start commit).
+Run 1: GATE_EXIT=1 (MONITORING, above). Run 2 (same folder, same tree): GATE_EXIT=0. Task 3 verify: VERIFY3_OK
+(red-3 failing lines, marker `// gate: tests 4`, mail.mjs / maillog.mjs / store.mjs / assets / pages unchanged,
+`GATE ok   server tests`, `GATE ok   SERVER MODE`, `GATE ok   INVITE MAIL`, last line `GATE_EXIT=0`).
+
+Run 2, the last 45 lines verbatim:
+
+```
+GATE ok   NO NETWORK (3) (kept from 2026-11-27 15:58:04 UTC)
+GATE ok   EMBED DATA (3) (kept from 2026-11-27 15:58:05 UTC)
+GATE ok   SAFARI FINISH (6) (kept from 2026-11-27 15:58:46 UTC)
+GATE ok   BANK STEP TYPING (2) (kept from 2026-11-27 15:59:02 UTC)
+GATE ok   HELP CHAT (10) (kept from 2026-11-27 16:00:39 UTC)
+GATE ok   REAL FIRM (9) (kept from 2026-11-27 16:03:16 UTC)
+GATE ok   SIGNING DOCUMENTS (8) (kept from 2026-11-27 16:06:23 UTC)
+GATE ok   PHONE LAYOUT (8) (kept from 2026-11-27 16:11:47 UTC)
+GATE ok   RECORD AND LOST AGREEMENT (7) (kept from 2026-11-27 16:13:59 UTC)
+GATE ok   SCREEN EDGES (5) (kept from 2026-11-27 16:15:46 UTC)
+GATE ok   WALK3 FIXES (9) (kept from 2026-11-27 16:16:12 UTC)
+GATE ok   TITLES AND EDITOR (4) (kept from 2026-11-27 16:17:55 UTC)
+GATE ok   PRESS AND CO-INVESTOR (10) (kept from 2026-11-27 16:20:14 UTC)
+GATE ok   CO-INVESTOR SERVER (5) (kept from 2026-11-27 16:21:28 UTC)
+GATE ok   HELP PREVIEW (6) (kept from 2026-11-27 16:21:43 UTC)
+GATE ok   REPORTS FLOW (8) (kept from 2026-11-27 16:22:39 UTC)
+GATE ok   DELIVER FLOW (8) (kept from 2026-11-27 16:23:54 UTC)
+GATE ok   base is an ancestor of HEAD and HEAD moved
+GATE ok   signing-base (kept from 2026-11-27 16:24:48 UTC)
+GATE ok   signing-plan (kept from 2026-11-27 16:26:38 UTC)
+GATE ok   record-base (kept from 2026-11-27 16:26:53 UTC)
+GATE ok   record-plan (kept from 2026-11-27 16:27:25 UTC)
+GATE ok   signing: base and plan each have PASS lines
+GATE ok   signing: no FAIL the base lacks
+signing: base 75 PASS / 0 FAIL; plan 75 PASS / 0 FAIL
+GATE ok   record: base and plan each have PASS lines
+GATE ok   record: no FAIL the base lacks
+record: base 40 PASS / 0 FAIL; plan 40 PASS / 0 FAIL
+# tests 601
+# pass 601
+# fail 0
+GATE ok   base-server-tests (kept from 2026-11-27 16:28:56 UTC)
+GATE ok   server tests 601 = base 584 + 17 declared
+GATE ok   AML RECORD (7) (kept from 2026-11-27 16:29:30 UTC)
+GATE ok   MONITORING (9)
+GATE ok   PACKAGE CONSOLE (7) (kept from 2026-11-27 16:32:55 UTC)
+GATE ok   PACKAGE FLOW (10) (kept from 2026-11-27 16:36:57 UTC)
+GATE ok   PACKAGE INVITE (12) (kept from 2026-11-27 16:38:53 UTC)
+GATE ok   PACKAGE NAMES (4) (kept from 2026-11-27 16:39:34 UTC)
+GATE ok   PACKAGE PANEL (7) (kept from 2026-11-27 16:40:02 UTC)
+GATE ok   REVERIFY (9) (kept from 2026-11-27 16:41:40 UTC)
+GATE ok   SMALL FIXES (2) (kept from 2026-11-27 16:41:52 UTC)
+GATE ok   EMAILS PARITY (kept from 2026-11-27 16:42:01 UTC)
+GATE ok   INVITE MAIL (kept from 2026-11-27 16:42:44 UTC)
+GATE_EXIT=0
+```
+
+Earlier in the same run (all kept from run 1, which ran them fresh): server tests `# fail 0`, STATUS MATH (13), FORM MAPS
+(3), FORMS FLOW (34), STATUS FLOW (26), SERVER MODE (15), TWO PERSONS, MEASURE, owner's folder, EMAIL DIALOG (3),
+AGREEMENT NAME, TAX REQUEST LEAVE (5), WAYS OUT (7). Base tree, screenshots and check captures were removed by the gate;
+the two monitoring reruns' captures were removed by hand.
+
+Test counts: base 584 (measured on 75b2fc5 in this worktree, and by the gate's base tree); this tree 601 = 584 + 17
+(messages.test.mjs 8, unsubscribe.test.mjs 5, confirm-mail.test.mjs 4); no existing test file changed.
 
 ## Interfaces for later plans (13-06, 13-08, 13-09, 13-12, 15-14)
 
@@ -159,4 +236,25 @@ before); the sent log has it under the invitation's refId. A mail failure or a r
 
 ## Self-Check
 
-<!-- self-check goes here -->
+## Commits (wip/13-04, from 75b2fc5)
+
+- d85a78a test: RED tracer
+- b813a85 feat: POST /v1/messages for notices, mounted, ROUTES lines, cleanFirm exported
+- cedc023 test: RED kinds, screen, postal, limits, workspaces, statuses, bad input, unsubscribe (13 tests)
+- 15c1e7e wip save: the Task 2 code (messages.mjs in full, unsubscribe route, invitations.mjs commercial path)
+- e2fcabf feat (empty): the Task 2 commit message
+- 0978156 test: RED confirmation (4 tests)
+- 44e59ee wip save: the Task 3 code (confirm() in invitations.mjs)
+- 283044a feat: Task 3, the white-label scan through emails.js BANNED (its message names the save commit loosely; the
+  code commit is 44e59ee)
+- e54c2d8 docs: this summary's draft, before the gate
+- this commit: the summary with the gate result
+
+## Self-Check: PASSED
+
+- Files: server/lib/messages.mjs, server/test/messages.test.mjs, server/test/unsubscribe.test.mjs,
+  server/test/confirm-mail.test.mjs exist; server/index.mjs, server/lib/invitations.mjs, server/lib/roles.mjs changed.
+- Every commit above is an ancestor of HEAD on wip/13-04 (checked with git merge-base --is-ancestor).
+- Fixtures: only '000-12-3456' and '991234567890' as taxpayer or account numbers; no real bank number.
+- No guide bytes, no workspace.mjs change, no package installed, no live sending, no account or key.
+- server/node_modules link removed before finishing.
