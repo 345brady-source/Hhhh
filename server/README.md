@@ -575,6 +575,90 @@ Invitations hold investors' personal details, bank details and signed documents,
 - **Scope.** The invitation token reaches only its own investor's onboarding, verifications and screenings (the same investor id in the same workspace). Sponsor routes need `API_TOKEN` or a sponsor account's own token (see Sponsor accounts); invitations require one of the two. A sponsor account's token reaches only its own workspace.
 - **Limits.** Request bodies are capped per route (32 MB to create, 40 MB to complete, 16 KB for small calls) and oversized bodies answer 413. Writes and failed tokens are rate limited.
 
+## Keys and backups
+
+Two keys protect the data, and they are kept apart: `DATA_KEY` seals records and files in the store, `BACKUP_KEY` seals backup archives. A stolen archive opens with neither key alone.
+
+**Making the keys.** Each is 32 random bytes, base64-encoded:
+
+```sh
+openssl rand -base64 32
+# or, without openssl:
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+Put `DATA_KEY` and `BACKUP_KEY` in the host's secret settings (the server's environment file), never in the repository, a backup, a log or an email. `backup.mjs` refuses a `BACKUP_KEY` equal to `DATA_KEY` or to any `DATA_KEY_PREVIOUS` entry (`BACKUP_KEY must be its own key, not DATA_KEY.`).
+
+**Keeping the keys.** Keep an offline copy of each key, away from the server and away from each other: for example `DATA_KEY` in your password manager and on paper in a safe, `BACKUP_KEY` in a second password-manager entry and on a second paper copy kept elsewhere. Without `DATA_KEY` the sealed records cannot be read; without `BACKUP_KEY` the archives cannot be opened. A restore needs both: `BACKUP_KEY` and the `DATA_KEY` that was current when the archive was made.
+
+**Rotating `DATA_KEY`.** Once a year, and at once when someone with access to the server leaves or a leak is suspected:
+
+1. Make a new key. Set it as `DATA_KEY` and put the old key first in `DATA_KEY_PREVIOUS` (a comma-separated list; any older keys still listed stay after it).
+2. Stop the server.
+3. Run `node server/tools/reseal.mjs` (add `--store <file>` when `STORE_FILE` is not set in that shell). It re-seals every sealed field and file with the new key, recomputes people's email lookup values, and prints one line per collection (`resealed invitations: 12`), then `resealed blobs: <n>` and `Done.`. It is all or nothing: if any value cannot be opened it prints `Not re-sealed: <n> value(s) could not be opened (first: <collection>/<id>/<field>). Nothing was changed.` and changes nothing; add the missing old key to `DATA_KEY_PREVIOUS` and run it again. It refuses while a server holds the store: `The server is running on this store (process <pid>); stop it first.`
+4. Start the server and check that an invitation opens.
+5. Remove the old key from `DATA_KEY_PREVIOUS` and restart. The old key now opens nothing on the server. Keep its offline copy only as long as you keep archives made before the rotation (up to 12 months with the pruning below), then destroy it.
+
+A running server holds `<STORE_FILE>.lock` (its process id and start time) and removes it when it stops; a change still waiting to be written reaches the file when the server exits or is stopped (SIGTERM or Ctrl-C). If the server was killed hard and another program now has its old process id, the tools may still refuse: check with `ps -p <pid>` that it is not the server, then delete the lock file.
+
+**Daily backups.** `node server/tools/backup.mjs create --out <dir>` writes one archive, `backup-<YYYYMMDDTHHMMSSZ>.backup`, holding the store file and every file in `<STORE_FILE>.blobs/`, sealed with `BACKUP_KEY` in 1 MiB pieces with a SHA-256 hash of every part. Then `verify <file>` opens every piece and checks every hash: `Backup OK: <records> records, <blobs> blobs, <bytes> bytes, made <time>`, or `Backup FAILED: <reason>` and exit status 1. Run verify after every create. The server does not run backups itself; schedule them with the server's own timer. A script that creates, verifies and prunes, saved as `/srv/portal/backup-daily.sh` (change the paths to yours):
+
+```sh
+#!/bin/sh
+set -e
+cd /srv/portal/server
+node tools/backup.mjs create --out /srv/backups
+node tools/backup.mjs verify "$(ls -1 /srv/backups/backup-*.backup | tail -n 1)"
+node tools/backup.mjs prune --dir /srv/backups --keep 7d,4w,12m
+```
+
+With systemd, two units:
+
+```ini
+# /etc/systemd/system/portal-backup.service
+[Unit]
+Description=Investor portal store backup
+
+[Service]
+Type=oneshot
+User=portal
+EnvironmentFile=/etc/portal-server.env
+ExecStart=/bin/sh /srv/portal/backup-daily.sh
+
+# /etc/systemd/system/portal-backup.timer
+[Unit]
+Description=Daily investor portal store backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+Then `systemctl enable --now portal-backup.timer`; `systemctl list-timers portal-backup.timer` shows the next run and `journalctl -u portal-backup.service` the last one. Or the same with cron (`crontab -e` as the server's user):
+
+```cron
+15 3 * * * set -a; . /etc/portal-server.env; set +a; /bin/sh /srv/portal/backup-daily.sh >> /var/log/portal-backup.log 2>&1
+```
+
+The tools print counts and file names only, never a key or anything the store holds, so their output is safe in a log. The backup reads the store file first, then each file in the blob folder, while the server keeps running. If the server removes a file in between (an invitation deleted at that moment), create stops with `Backup not made: blob <key> was removed while the backup was read (the server was writing). Run create again.` and exit status 1, and leaves no archive; the script above then stops before pruning. Run it again (or wait for the next day's run).
+
+**Pruning.** `prune --dir <dir> --keep 7d,4w,12m` keeps the newest archive of each of the last 7 days, each of the last 4 ISO weeks and each of the last 12 months (by the time in each file name) and deletes the other archives. `--dry-run` lists `would delete <name>` for each and deletes nothing. Files with any other name in the folder are never touched.
+
+**Restore drill.** Do this once after setting up backups, and again every few months:
+
+1. `node server/tools/backup.mjs restore <archive> --to /srv/restore-test`. It writes only into an empty or new folder (`Restore only into an empty folder.` otherwise), and only after the whole archive has opened and every hash has matched; a changed, cut or reordered archive prints `Backup FAILED: <reason>. Nothing was restored.`
+2. Start a second server on the copy, on another port and with the same keys: `STORE_FILE=/srv/restore-test/store.json PORT=8788 node server/index.mjs`.
+3. Open an invitation from that server (its link, or `GET /v1/invitations` with your token) and check that the investor's details and documents open.
+4. Stop it and delete `/srv/restore-test`.
+
+**Copying archives off the server.** An archive on the server is lost with the server, so copy each one elsewhere. The archives are sealed before they leave the server, so whoever stores them sees no data.
+
+- To your own computer, $0: `rsync -a --ignore-existing <user>@<server>:/srv/backups/ ~/portal-backups/` (or `scp`), run daily from your computer.
+- To object storage with a free tier, for example Cloudflare R2 (10 GB-month free each month, then $0.015 per GB-month, no download fees) or Backblaze B2 (first 10 GB free, then $6.95 per TB per 30 days). These prices are from search excerpts at planning time: check the provider's page before relying on it. Upload with the provider's tool or `rclone copy /srv/backups <remote>:<bucket>`, and prune the remote copy on the same rule.
+
 ## Security notes
 
 - Secrets live only in environment variables. Definitions refer to them as `${env.NAME}`; their values are sent only to the provider and are scrubbed from error messages, never returned to the portal and never logged. `settings` from the portal are treated as non-secret plain values.
