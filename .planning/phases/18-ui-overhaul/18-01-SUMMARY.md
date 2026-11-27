@@ -40,3 +40,48 @@ SAME SCREENS: PASS (parts run: 2)
 
 Task 1 verify: every condition held (base-commit, count 622 >= 622, waits empty, red-1 last line, t1 PASS (2), word and
 c1-wrong caught, NOTE line, no product file changed against the start commit).
+
+## Task 2 RED (O/red-2.txt: the new self-test run against gate16's steps, GATE18_* stand-in names read into them)
+
+```
+SELF-TEST FAIL control: the stand-ins pass when nothing is wrong
+SELF-TEST ok   a phase 18 check whose last line differs from its marker
+SELF-TEST ok   a phase 18 check file with no marker
+SELF-TEST FAIL a reference whose folder line is missing
+SELF-TEST ok   a reference that prints one GATE FAIL line
+SELF-TEST ok   a tree whose test count differs from the base plus the markers
+SELF-TEST FAIL a phase 12 check (run without being named) whose last line differs from its marker
+SELF-TEST FAIL GATE18_PHASES naming a phase outside 08 09 10 11
+SELF-TEST FAIL a phase 08 gate check that prints no PASS line
+SELF-TEST FAIL a PHONE LAYOUT desktop comparison whose last line is not PHONE LAYOUT: PASS (parts run: 4)
+SELF-TEST FAIL a phase-18-only run
+GATE18 SELF-TEST: FAIL - control nofolder p12 phases p08 phone only
+```
+
+## Task 2 GREEN (O/self.txt)
+
+```
+SELF-TEST ok   control: the stand-ins pass when nothing is wrong (base tree passed to every check, phases 12..16 always, 08 and 09 as named, the phone comparison against its base; never the line of a real gate)
+SELF-TEST ok   a phase 18 check whose last line differs from its marker
+SELF-TEST ok   a phase 18 check file with no marker
+SELF-TEST ok   a reference whose folder line is missing (and nothing was run)
+SELF-TEST ok   a reference that prints one GATE FAIL line
+SELF-TEST ok   a tree whose test count differs from the base plus the markers
+SELF-TEST ok   a phase 12 check (run without being named) whose last line differs from its marker
+SELF-TEST ok   GATE18_PHASES naming a phase outside 08 09 10 11
+SELF-TEST ok   a phase 08 gate check that prints no PASS line
+SELF-TEST ok   a PHONE LAYOUT desktop comparison whose last line is not PHONE LAYOUT: PASS (parts run: 4)
+SELF-TEST ok   a phase-18-only run ends 'GATE_EXIT=0 (phase 18 checks only)' with no reference step and no server test line, and 'GATE_EXIT=1' when a phase 18 check fails
+GATE18 SELF-TEST: PASS (10)
+```
+
+Task 2 verify: every condition held. `--only-phase18` run before Task 3 wrote the other nine parts (O/only18-t2.txt; a
+FAIL was expected then; it showed the gate extracts the base tree, runs SAME SCREENS with P18_BASE, judges its last line
+and removes the base tree):
+
+```
+GATE FAIL SAME SCREENS
+  same-screens.js: the last line should be: SAME SCREENS: PASS (parts run: 11)
+  same-screens.js: the last line was:       SAME SCREENS: FAIL (parts run: 11) - console-phone, managed-desktop, managed-phone, investor-desktop, investor-phone, flows-desktop, flows-phone, dialogs-desktop, dialogs-phone
+GATE_EXIT=1
+```
