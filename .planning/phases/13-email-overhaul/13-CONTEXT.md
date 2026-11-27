@@ -80,3 +80,24 @@ Binding on the executors (full text with each fix: scratchpad checks-13-wave2.md
 - Deviations: password reset button reads 'Open the reset page' (the text version "Choose a new password:" tripped the password scan); tax notice link and consent emails put the URL in the button and add a greeting and long dates (13-07 checks its tests against these goldens); 'unsubscribed' added to the mail log statuses.
 - Open: List-Unsubscribe headers are rendered but mail.mjs does not pass headers through yet (13-03 or 13-04); co-investor confirmation's 'Open your portal' button: the caller passes no portalUrl when the co-investor has no portal login; owner's read at 13-10; counsel on the commercial classification.
 - Unblocked: 15-14 needs 13-03 too; 14-13 (after 13-01 and 13-11, while no plan edits emails.js; it waits for 15-14 per 15's roadmap line).
+
+## Plan-check additions, wave 3 (13-04, 13-07, 13-09, 13-12), checked against 8100e81, 2026-11-27
+Binding on the executors (full text: scratchpad checks-13-wave3.md).
+- B1 (13-04): add server/lib/roles.mjs (lines only): team('POST',{path:'/v1/messages'},'operate',true); team('GET',{path:'/v1/messages/preferences'},'view',true); the /unsubscribe page outside /v1 rate-limited by 13-04 itself (an other() line if the walk sees it). A test: a role without operate gets 403 on POST /v1/messages (count stays +17).
+- B2, B3: 13-04 and 13-07 depend on 13-03, 13-05 and 13-11.
+- B4 (13-12 api-export): use 13-03's note screen (POST /v1/invitations with a note holding '000-12-3456' answers 422 with screen()'s sentence), not 13-04's route.
+- B5 (13-04, 13-12): fixtures '000-12-3456' and '991234567890'.
+- B6 (13-04): render gets the footer address (portal page `#unsubscribe-<token>`); mailer.send headers = Object.assign({}, r.headers, {'List-Unsubscribe': '<'+header+'>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'}) with the server's POST endpoint; tests read the header from the fake SMTP raw message and the footer from the text and assert they differ.
+- B7 (13-04), orchestrator's choice: the unsubscribe signing key is a random 32-byte secret made once with node:crypto and stored through vault.seal in a store record (no vault.mjs change); "forged" means signed by another server's key.
+- W1 (all four): final gate verify starts `rm -f $O/gate.txt;` and has `G=$P/checks/gate13.sh; [ -f $G ] || exit 1;`.
+- W2 (13-04, 13-07): `[ "$(cat $O/base-count.txt)" -ge <measured base> ] || exit 1;` (555 today, plus 13-03's 17 once merged).
+- W3 (13-07): taxdocs.mjs builds createMailLog({store, vault, env, now}) itself and filters list() by refId (no index.mjs change).
+- W4, orchestrator's choice: 13-03 accepts 'unsubscribed' in maillog.mjs's status set (13-03 has not started; this is binding on it), so 13-04 needs no maillog.mjs edit.
+- W5 (13-04): an invitation is refused 422 for the postal rule only when an email is actually sent and needs includes 'postalAddress'.
+- W6 (13-09): emails-ui.js makes its own fetch to serverUrl(ws) with the console's token (as taxlink.js does), using NS.integrations.api only when present.
+- W7 (13-09): measure GUIDE.sponsor in the Task 3 verify (44,766 of 48,000 now); lines that do not fit go to .planning/GUIDE-PASS.md; the summary reports the size.
+- W8: no whole-text word scan over random content: 13-12 cuts the DKIM record values out before the BANNED scan (or the fakes use a fixed key); 13-04 names its token-shape regex, applied after stripLinkTokens; 13-07 uses a literal last four that appears in no date, phone or amount.
+- W9 (13-09, 13-12): BANNED.concat(MODEL_NAMES) with [/anthropic/i, /claude/i], as emails-guard.test.mjs does.
+- I5 (13-09): 'sponsor' audience kinds go under "To your team"; the preview is drawn from the body's inner content keeping its inline background.
+- Start: 13-04 after 13-03, 13-05, 13-11 merge (shares index.mjs, invitations.mjs, roles.mjs with 13-03 and 15-06). 13-07 after 13-03 and 13-05. 13-09 after 13-03 and 13-05, and not beside 16-02 (console.js, diy.html, portal.html). 13-12 after 13-03 and 13-05.
+- Addition for 13-03 (binding, from W4): maillog.mjs's status set includes 'unsubscribed'.
