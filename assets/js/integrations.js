@@ -734,6 +734,18 @@
     NS.app.save(true);
     return list.length;
   }
+  /**
+   * One investor re-screened by a person on the AML/KYC page, by the rule "Run now" follows (G4): one screened through the
+   * package through the free Treasury connection alone, or not at all when the firm has none (resolves to null, nothing
+   * called); any other through every screening connection on. Resolves to { status } of what was written.
+   */
+  async function rescreenOne(ws, inv) {
+    if (!packageScreened(peek(inv))) return screen(ws, inv);
+    const x = freeConn(ws);
+    if (!x) return null;
+    const r = await rescreenWith(ws, inv, x);
+    return { status: vOf(inv).aml.status, result: r };
+  }
   /** Ask the integration server for the latest status of open checks and screenings. */
   /** Open checks the integration server will answer for. */
   function openRemote(inv) {
@@ -990,12 +1002,14 @@
       NS.app.render();
     } catch (e) {
       if (tab) tab.close();
-      if (e && e.server) {
-        // The server's own sentence, alone (plan 08-07). Nothing the investor can retry (a returned package, the start
-        // limit) also gives the firm's contact. The line stays on the step until the next start.
-        const firm = e.status === 403 || e.status === 409 ? ` Contact ${ws.tenant.support.team} at ${ws.tenant.support.email}.` : '';
-        refusals[`${inv.id}:${kind}`] = `${e.message}${firm && !/[.!?]$/.test(e.message) ? '.' : ''}${firm}`;
-        U.toast(e.message);
+      if ((e && e.server) || x.package) {
+        // The server's own sentence (plan 08-07). Nothing the investor can retry (a returned package, the start limit)
+        // also gives the firm's contact, and so does every failed start of the verification package, whatever the
+        // reason (a lost connection reads the plain sentence, never the raw error). The line stays until the next start.
+        const said = e && e.server ? e.message : 'This check could not start. Please try again later.';
+        const firm = x.package || (e && (e.status === 403 || e.status === 409)) ? ` Contact ${ws.tenant.support.team} at ${ws.tenant.support.email}.` : '';
+        refusals[`${inv.id}:${kind}`] = `${said}${firm && !/[.!?]$/.test(said) ? '.' : ''}${firm}`;
+        U.toast(said);
         NS.app.render();
       } else U.toast(`Could not start the check: ${e.message}`);
     }
@@ -1608,6 +1622,6 @@
     return `<div class="iv-banner" role="status">${icon('alert')}<span>${msg}</span></div>`;
   });
 
-  NS.integrations = { NOTE_506C_NEVER, CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
+  NS.integrations = { NOTE_506C_NEVER, CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, rescreenOne, rescreenable, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
   NS.integrations.roleNames = roleNames;
 })(window.CVPortal);

@@ -2046,7 +2046,10 @@
     return u.calls;
   }
   /** Notice the offering's documents give for capital calls (business days), else the usual 10. */
-  const callDays = (o) => Number(((o && o.structure) || {}).callNoticeDays) || 10;
+  const callDays = (o) => {
+    const n = Number(((o && o.structure) || {}).callNoticeDays);
+    return Number.isInteger(n) && n >= 1 ? n : 10; // a value stored before the field's rule never suggests a past date
+  };
   function callDraft() {
     const c = callState();
     if (!c.draft) {
@@ -2341,7 +2344,7 @@
         .map((x) => {
           const o = x.offeringId ? offById(x.offeringId) : null;
           const n = OPS().recipientsOf(w, x).length;
-          return `<tr><td class="nowrap" data-label="Date">${date(x.date)}</td><td data-label="Document">${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden ? ', not shown to investors' : ''}` : ''}</span></td><td data-label="Fund">${h(o ? o.shortName || o.name : 'All investors')}</td><td data-label="Recipients">${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td data-label="Type">${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td data-label="SHA-256"><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
+          return `<tr><td class="nowrap" data-label="Date">${date(x.date)}</td><td data-label="Document">${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden && !x.hiddenAt ? ', not shown to investors' : ''}` : ''}${x.hiddenAt ? ` · Hidden from investors ${date(x.hiddenAt.slice(0, 10))}` : ''}</span></td><td data-label="Fund">${h(o ? o.shortName || o.name : 'All investors')}</td><td data-label="Recipients">${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td data-label="Type">${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td data-label="SHA-256"><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num">${x.hiddenAt ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button>`}</td></tr>`;
         })
         .join('');
       return shell(
@@ -2437,11 +2440,13 @@
     const doc = (w.docs || []).find((x) => x.id === el.getAttribute('data-id'));
     if (!doc) return;
     if (doc.tax) return; // a tax document leaves only by the Tax documents page's logged Withdraw (plan 10-04)
-    w.docs = w.docs.filter((x) => x !== doc);
-    OPS().files.del(doc.id).catch(() => {});
-    audit('Document removed', `${doc.title} (${doc.fileName}) removed from investor portals`, doc.offeringId || '', doc.id);
+    if (doc.hiddenAt) return;
+    // Nothing is deleted in the portal (14-CONTEXT, records rule): the document and its file stay; investors no longer see it.
+    Object.assign(doc, { hidden: true, hiddenAt: new Date().toISOString(), hiddenBy: NS.app.actor() });
+    audit('Document hidden', `${doc.title} (${doc.fileName}) hidden from investor portals; the document and its file are kept`, doc.offeringId || '', doc.id);
     NS.app.save(true);
     NS.app.render();
+    U.toast(`${doc.title} hidden from investor portals. It stays in the record.`);
   };
 
   /* ---------- AML / KYC ---------- */
@@ -2504,7 +2509,7 @@
           return `<tr><td data-label="Investor">${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td data-label="Risk">${h(k.risk || '—')}</td><td data-label="Identity verified">${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td data-label="Screening">${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : k.screening === 'pending' ? 'Waiting for results' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap" data-label="Next review">${k.nextReview ? date(k.nextReview) : '—'}</td><td data-label="Beneficial owners">${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td data-label="Status">${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
         })
         .join('');
-      const due = rows0.filter((r) => r.lab.key === 'due');
+      const due = rows0.filter((r) => r.lab.key === 'due' && kycRescreenable(w, r.i));
       if (NS.integrations && NS.integrations.active(w)) NS.integrations.resume(w); // poll open provider checks while this page is open
       return shell(
         `${head('AML/KYC', E.diy ? `Identity verification, sanctions and PEP screening and accredited investor checks run automatically through the connections you plug in: ${h(NS.integrations ? NS.integrations.activeNames(w).join(', ') : 'none yet')} (<a class="cs-link" href="#console-integrations">Integrations</a>). Anything flagged, and any check waiting on your team, waits here.` : 'Identity verification, sanctions and politically exposed person screening, and periodic re-screening for every investor. Potential matches wait here for the compliance officer’s review.', due.length ? `<button class="cs-btn" type="button" data-action="kyc-screen-due">Re-screen ${due.length} due</button>` : '')}
@@ -2548,11 +2553,14 @@
       U.toast('Escalated to the compliance officer.');
     }
   };
-  /** DIY investors are re-screened through every screening connection that is on. */
+  /** "Re-screen N due" leaves out a package investor "Run now" leaves out (no free Treasury connection on). */
+  const kycRescreenable = (w, i) => !(NS.integrations && NS.integrations.active(w) && i.verify && NS.integrations.rescreenable) || NS.integrations.rescreenable(w, i);
+  /** DIY investors are re-screened through every screening connection that is on; one screened through the package as "Run now" does. */
   async function rescreen(inv) {
     const IVN = NS.integrations;
     if (IVN && IVN.active(W()) && inv.verify) {
-      const r = await IVN.screen(W(), inv);
+      const r = await IVN.rescreenOne(W(), inv);
+      if (!r) return null; // a package investor and no free Treasury connection: nothing was called
       IVN.decide(W(), inv);
       NS.app.save(true);
       return r.status === 'clear' ? 'no matches' : r.status === 'potential_match' ? 'a potential match to review' : 'waiting for results from some screening connections';
@@ -2565,11 +2573,11 @@
     if (inv) {
       const res = await rescreen(inv);
       NS.app.render();
-      U.toast(`${inv.title} screened: ${res}.`);
+      U.toast(res ? `${inv.title} screened: ${res}.` : `${inv.title} was screened through the verification package, so only the free U.S. Treasury connection can re-screen them: turn it on in Integrations.`);
     }
   };
   NS.actions['kyc-screen-due'] = async () => {
-    const due = W().investors.filter((i) => OPS().kycLabel(OPS().kycOf(i)).key === 'due');
+    const due = W().investors.filter((i) => OPS().kycLabel(OPS().kycOf(i)).key === 'due' && kycRescreenable(W(), i));
     for (const i of due) await rescreen(i);
     NS.app.render();
     U.toast(`${due.length} investor${due.length === 1 ? '' : 's'} re-screened.`);
@@ -2896,6 +2904,7 @@
     const st = ikState();
     if (!st.profile) return;
     if (path === 'offering.name' && el && String(v).trim()) el.removeAttribute('aria-invalid');
+    if (path === 'structure.callNoticeDays' && el && noticeOk(v)) el.removeAttribute('aria-invalid');
     if (path === 'fees.other') v = String(v).split('\n').map((x) => x.trim()).filter(Boolean);
     // A corrected Name corrects the Short name, until the sponsor types a short name of their own (an existing offering's
     // counts as theirs unless it is its Name's own short form). Set in place, so typing in the Name is never interrupted.
@@ -3023,9 +3032,19 @@
     NS.app.render();
     window.scrollTo(0, 0);
   };
+  /** Capital call notice (days): empty, or a whole number of 1 or more. */
+  const noticeOk = (v) => v === '' || v == null || (Number.isInteger(v) && v >= 1);
   NS.actions['ik-apply'] = async () => {
     const st = ikState();
     if (!st.profile || st.busy) return;
+    if (!noticeOk((st.profile.structure || {}).callNoticeDays)) {
+      const f = document.getElementById('ik-structure-callNoticeDays');
+      if (f) {
+        f.setAttribute('aria-invalid', 'true');
+        f.focus();
+      }
+      return U.toast('Enter the capital call notice as a whole number of days, 1 or more.');
+    }
     if (!String(st.profile.offering.name || '').trim()) {
       // The field is marked and takes focus (the mark goes once a name is typed: NS.binders.ik)
       const f = document.getElementById('ik-offering-name');

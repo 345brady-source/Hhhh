@@ -963,8 +963,10 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       if (s) {
         // The check's own dates replace the browser's: when its result arrived and, for a verified accreditation, the day.
         const at = resultAt(s);
-        ['completedAt', 'verifiedAt', 'note', 'recordedBy', 'reportedStatus'].forEach((f) => delete c[f]);
+        ['completedAt', 'verifiedAt', 'note', 'recordedBy', 'reportedStatus', 'evidence'].forEach((f) => delete c[f]);
         Object.assign(c, { status: s.status, remote: true, method: s.method || '', how: s.provider === 'link' ? 'link' : 'server' }, s.expiresAt ? { expiresAt: s.expiresAt } : {}, at ? { completedAt: at } : {}, kind === 'accreditation' && s.status === 'verified' && dayOf(at) ? { verifiedAt: dayOf(at) } : {});
+        // The check's letters (a result that arrived before the import), named only: the console fetches each through this server.
+        if (Array.isArray(s.evidence) && s.evidence.length) c.evidence = s.evidence.map((e) => ({ type: String((e && e.type) || 'document'), label: String((e && e.label) || 'Document') }));
         out[kind] = { status: s.status, confirmed: true };
         continue;
       }

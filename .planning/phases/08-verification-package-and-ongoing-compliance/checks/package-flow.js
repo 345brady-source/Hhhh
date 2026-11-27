@@ -13,7 +13,7 @@
 //             names are screened through the package, one call per name, after the session; the console imports; its
 //             AML/KYC row shows the identity verified and no matches; the investor's browser never called a payment address
 //   refused   the provider refuses the session start (402): the step shows exactly "This check could not start. Please
-//             try again later." with no status number, "answered", "integration server", "Provider" or vendor word, and
+//             try again later." and the firm's contact (any failure, the lost connection too), with no status number, "answered", "integration server", "Provider" or vendor word, and
 //             keeps it (not only a toast) until the next start; "Verify my identity" again works (a new session, then
 //             Verified); the package still reads paid (no credit, no second charge). A returned package (its payment
 //             refunded): a start shows "This check is not part of this invitation" and the firm's contact, the world
@@ -402,12 +402,24 @@ const FLOWS = {
       let text = await Lib.screenText(ip);
       B.screens.push(text);
       check('the provider was asked once and refused (402)', C.w.count('session') === 1 && C.w.sessions.length === 0, C.w.calls.map((c) => c.kind));
-      check(`the step shows exactly "${COULD_NOT_START}"`, pn.refusal.length === 1 && pn.refusal[0] === COULD_NOT_START, pn.refusal);
+      const mine = await firmContact(ip);
+      const refusedLine = withContact(COULD_NOT_START, mine);
+      check(`the step shows exactly "${COULD_NOT_START}" followed by the firm's contact`, !!mine.team && !!mine.email && pn.refusal.length === 1 && pn.refusal[0] === refusedLine, { refusal: pn.refusal, contact: mine });
       check('the tab that opened for the check is closed again (no page to show)', st.opened && st.address === '', st);
       plain(check, 'the refused start', text);
       await ip.waitForTimeout(4600);
       pn = await idPanel(ip);
-      check('the line stays on the step once the toast has gone (not only a toast)', pn.refusal.length === 1 && pn.refusal[0] === COULD_NOT_START && (await ip.locator('#toasts .toast').count()) === 0, pn.refusal);
+      check('the line stays on the step once the toast has gone (not only a toast)', pn.refusal.length === 1 && pn.refusal[0] === refusedLine && (await ip.locator('#toasts .toast').count()) === 0, pn.refusal);
+      // Any other failure (the connection to the server lost): the same plain sentence and the firm's contact, no raw error.
+      const lost = C.w.count('session');
+      await ip.route((u) => u.pathname === '/v1/verifications', (r) => r.abort('failed'), { times: 1 });
+      await startCheck(B, ip, false);
+      pn = await idPanel(ip);
+      text = await Lib.screenText(ip);
+      B.screens.push(text);
+      check('a start whose connection fails shows the same sentence and the firm\'s contact, no session made', pn.refusal.length === 1 && pn.refusal[0] === refusedLine && C.w.count('session') === lost, { refusal: pn.refusal, sessions: C.w.count('session') - lost });
+      check('no raw error for the lost connection on screen ("Failed to fetch", "Could not start the check:")', !/Failed to fetch|Could not start the check:/.test(text), text.match(/.*(Failed to fetch|Could not start the check:).*/g));
+      plain(check, 'the start whose connection failed', text);
       // Retrying works: a new session, then Verified.
       const st2 = await startCheck(B, ip, false);
       pn = await idPanel(ip);
@@ -505,7 +517,7 @@ const FLOWS = {
       B.screens.push(await Lib.screenText(ip));
       await ip.locator('#iv-identity .iv-refused').scrollIntoViewIfNeeded().catch(() => {});
       await ip.screenshot({ path: path.join(SHOTS, 'identity-refusal-phone.png') });
-      check(`a tap on the button reaches the server; the refusal line reads "${COULD_NOT_START}"`, C.w.count('session') === 1 && pn.refusal.length === 1 && pn.refusal[0] === COULD_NOT_START, pn.refusal);
+      check(`a tap on the button reaches the server; the refusal line reads "${COULD_NOT_START}" and the firm's contact`, C.w.count('session') === 1 && pn.refusal.length === 1 && pn.refusal[0] === withContact(COULD_NOT_START, await firmContact(ip)), pn.refusal);
       check('the refusal line fits the width (no sideways scroll)', await fitsWidth(ip, '#iv-identity .iv-refused'), await widths(ip, '#iv-identity .iv-refused'));
       const st = await startCheck(B, ip, true);
       pn = await idPanel(ip);
@@ -574,6 +586,7 @@ const FLOWS = {
       const got = await downloadLetter(p, false);
       check('"Download letter" saves exactly one file', got.files.length === 1, got.files.map((f) => f.name));
       check('the saved file is the third party\'s letter (its SHA-256 equals the stand-in\'s PDF)', got.files.length === 1 && got.files[0].sha === sha(C.srv.accredit.LETTER), got.files.map((f) => ({ name: f.name, same: f.sha === sha(C.srv.accredit.LETTER) })));
+      check('the saved file carries the server\'s file name ("verification-letter.pdf", exposed to the console\'s origin)', got.files.length === 1 && got.files[0].name === 'verification-letter.pdf', got.files.map((f) => f.name));
       check('the server fetched the letter from the provider once', C.srv.accredit.control.calls.filter((c) => c.kind === 'evidence').length === 1, C.srv.accredit.control.calls.map((c) => c.kind));
       check('no failure sentence after the download', got.toasts.indexOf(LETTER_FAIL) < 0, got.toasts);
       const kycText = await Lib.screenText(p);
