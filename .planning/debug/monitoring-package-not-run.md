@@ -1,8 +1,8 @@
 ---
-status: verifying
+status: awaiting_human_verify
 trigger: "During plan 13-04's gate (several other gates running on 4 cores), phase 08's check monitoring.js ended `MONITORING: FAIL (parts run: 9) - package-not-run` with exactly two failing lines: `\"Run now\" re-screened them :: Signed in as admin of Kestrel Bay` and `the package result is kept as it was, the Treasury result is added, the next date moved`. In the same part \"one list read, one screening asked of the server, for the Treasury lists\" passed. The part alone passed twice afterwards; a rerun of the gate passed."
 created: 2026-11-27T16:00:00Z
-updated: 2026-11-27T17:27:00Z
+updated: 2026-11-27T17:49:00Z
 ---
 
 ## Current Focus
@@ -12,7 +12,7 @@ hypothesis: H1 - runNow (monitoring.js:457-463) waits for ANY toast; the sign-in
 bug_class: Heisenbug (timing race in the check; 1 failure seen under load, part alone PASS twice)
 test: instrumented scratch copy recording the toasts present at the click and at the read, and the ms from click to the result toast; then force the server's POST /v1/screenings answer 1500 ms late and look for the same two FAIL lines
 expecting: sign-in toast present at every click (so the wait never waits); natural margin small; with the forced delay exactly the two FAIL lines
-next_action: wait for MONITORING full x10 on ca59fff (loop.sh final 1-5, 6-10; summary-final.txt) and the forced GREEN reruns on the final file (final-hold, final-post in summary-force.txt); then server tests on ca59fff, remove the node_modules link, hand back
+next_action: owner check; then merge wip/debug-monitoring into claude/refract-reskin and archive this session to resolved/
 
 reasoning_checkpoint:
   hypothesis: "package-not-run FAILed because runNow (monitoring.js:457-463) takes any toast on screen as the answer of 'Run now': the 'Signed in as admin of Kestrel Bay' toast Lib.consoleRoute raises (lib.js:480 -> app.js:783, 4.2 s on screen) inside attention() (648) is still there at the click, so waitForSelector returns at once and .last() and the record (651) are read before the in-process server has answered POST /v1/screenings."
@@ -164,6 +164,14 @@ started: seen during plan 13-04's gate (base ef87afa area)
     every other press of that run PASSed (margins mnd 31, pnr-B 51, preview-desktop 32, preview-phone 19 ms)
   implication: the gate's failure reproduced naturally with its exact two lines: the toast and the record were read 30-32 ms after the click, before the result toast existed. Natural rate of the unfixed part measured here: 1 FAIL in 30 runs (0/24 unmodified --only package-not-run + 1/6 instrumented full runs); 16-68 ms margins over 21 timed presses
 
+- timestamp: 2026-11-27T17:48Z
+  checked: final commit ca59fff: MONITORING full x10 (loop.sh final 1-5 and 6-10, two at a time through heavy.sh with other agents' gates, GATE_FRESH=1, own P6_OUT each; summary-final.txt) and the forced GREEN reruns on that file (final-hold: FORCE_HOLD_MS=1500 --only package-not-run; final-post: FORCE_POST_DELAY=5000 --only once)
+  found: |
+    final-1..10: 10 of 10 `MONITORING: PASS (parts run: 9)`, 0 FAIL lines, 123-177 s each (751 s incl. queue), load 1.8-5.5
+    final-hold | MONITORING: PASS (parts run: 1) | 17 PASS 0 FAIL; TIMING pnr-A atClick=[3 sign-in toasts] resultAfterClick=1559 readAfterClick=1573 margin=14
+    final-post | MONITORING: PASS (parts run: 1) | 10 PASS 0 FAIL
+  implication: verification complete on ca59fff
+
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
@@ -174,7 +182,7 @@ verification:
   target_test: { result: pass, detail: "forced: screening answer held 1500 ms - unfixed FAIL with the gate's two lines (red-1), fixed PASS 17/17 (green-1, green-hold, final-hold); run's screening sent 5 s late - unfixed FAIL tried=1 (red-post), fixed PASS 10/10 (green-post, final-post)" }
   mutation_check: { result: skipped, reason_if_skipped: "no mutation tool for the check scripts; the unfixed check (ef87afa) under the same forcing is the mutant at the fix site and it is killed (FAIL)" }
   no_op_deletion: { result: pass, deletion_justified_by_rca: n/a, detail: "no assertion removed or loosened; kycPress's clearing of old toasts is replaced by reading only toasts added after the press" }
-  adjacent_tests: { result: pending, detail: "server tests 601/601 on the final tree; MONITORING full x10 on ca59fff in progress" }
+  adjacent_tests: { result: pass, detail: "server tests 601/601 on the final tree (765bc10 = ca59fff + this file); MONITORING full x10 on ca59fff: 10/10 PASS (parts run: 9), 0 FAIL lines" }
   revert_reconfirm: { result: pass, detail: "the unfixed check under each forcing FAILs (red-1, red-post); the fixed one PASSes" }
   natural_repro: "achieved once: inst-6 (instrumented unfixed check, no forced delay, full run) FAILed package-not-run with the gate's exact two lines; 1 in 30 natural runs of the unfixed part (0/24 unmodified --only package-not-run through heavy.sh at load 2.3-7.7, 1/6 instrumented full runs); measured margin 16-68 ms over 21 presses"
 files_changed: [.planning/phases/08-verification-package-and-ongoing-compliance/checks/monitoring.js]
