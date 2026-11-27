@@ -141,9 +141,9 @@
   }
 
   /**
-   * Text and HTML from the same parts: { greeting, paras, note: { from, text }, rows: [[label, value]], button: { label,
-   * href }, after }. The text keeps the order the server has always written (greeting, paras, note, rows, button, after,
-   * footer), so the sponsor's messages are word for word what they were.
+   * Text and HTML from the same parts: { greeting, paras, note: { from, text }, rows: [[label, value]], before, button:
+   * { label, href }, after }, in that order, then the footer. The sponsor's messages have no greeting and no before, so
+   * their text is word for word what the server has always written.
    */
   function layout(firm, subject, preheader, parts, opts) {
     const o = opts || {};
@@ -166,6 +166,7 @@
     for (const p of parts.paras || []) text.push(p);
     if (parts.note) text.push(`${parts.note.from}:\n${parts.note.text.split('\n').map((l) => `> ${l}`).join('\n')}`);
     if (parts.rows && parts.rows.length) text.push(parts.rows.map(([k, v]) => `${k}: ${oneLine(v)}`).join('\n'));
+    for (const p of parts.before || []) text.push(p);
     if (parts.button) text.push(`${parts.button.label}:\n${parts.button.href}`);
     for (const p of parts.after || []) text.push(p);
     text.push(`--\n${foot.join('\n\n')}`);
@@ -192,48 +193,124 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
       parts.rows && parts.rows.length
         ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 20px;border-collapse:collapse;font-size:15px">${parts.rows.map(([k, v]) => `<tr><td style="padding:7px 12px 7px 0;color:#5b6470;border-bottom:1px solid #eef0f2;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="padding:7px 0;border-bottom:1px solid #eef0f2;font-weight:600">${esc(oneLine(v))}</td></tr>`).join('')}</table>`
         : ''
-    }${button}${(parts.after || []).map(para).join('')}
+    }${(parts.before || []).map(para).join('')}${button}${(parts.after || []).map(para).join('')}
 </td></tr>
 <tr><td style="padding:18px 28px;border-top:1px solid #e2e5e9;font-size:12px;line-height:1.5;color:#5b6470">${foot.map((s) => `<p style="margin:0 0 8px">${esc(s).replace(/\n/g, '<br>')}</p>`).join('')}</td></tr>
 </table></td></tr></table></body></html>`;
     return { subject, preheader, text: text.join('\n\n'), html, inline };
   }
 
-  /* ---------- The investor's messages ---------- */
+  /* ---------- The investor's messages (EM-02) ---------- */
   const noteOf = (firm, invitation) => (invitation && invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: str(invitation.note) } : null);
+  /** The official form a tax-form request is for, by the investor type the sponsor chose. */
+  const taxFormOf = (investor) => ({ 'foreign-individual': 'W-8BEN', 'foreign-entity': 'W-8BEN-E' })[investor && investor.taxType] || 'W-9';
   /** The investor's message: greeting, what is asked, the button, one expiry sentence and one support sentence. */
-  function investorMessage(firm, d, subject, parts) {
+  function investorMessage(firm, d, again, subject, parts) {
     const support = supportSentence(firm);
     const after = (parts.after || []).concat([expirySentence(d.expiresAt), support]);
     const name = (d.investor && (d.investor.contact || d.investor.title)) || '';
-    return layout(firm, subject, parts.preheader || (parts.paras || [])[0] || '', Object.assign({}, parts, { greeting: greeting(name), after, support }), d.opts);
+    const full = `${again ? 'New link: ' : ''}${subject}`;
+    return layout(firm, full, (parts.paras || [])[0] || '', Object.assign({}, parts, { greeting: greeting(name), after, support, note: noteOf(firm, d.invitation) }), d.opts);
   }
+  const again1 = (again, fresh, renewed) => (again ? renewed : fresh);
 
-  /** A new investor: the invitation to invest in an offering, or to set up an investor account. */
-  function newInvestor(firm, d, again) {
-    const off = d.offering && d.offering.name ? d.offering : null;
-    const inv = d.invitation || {};
-    const rows = [];
-    if (off && !again) rows.push(['Offering', off.name]);
-    if (inv.cents) rows.push(['Commitment', money(inv.cents, off && off.currency)]);
-    const subject = `${again ? 'New link: ' : ''}${off ? `${firm.name}: your invitation to invest in ${off.name}` : `${firm.name}: set up your investor account`}`;
-    const paras = again
-      ? [
-          `Here is a new link to complete your investor onboarding with ${firm.name}${off ? ` for ${off.name}` : ''}. Any earlier link we sent no longer works.`,
-          d.started ? 'You can pick up where you left off.' : 'It takes about 10 to 15 minutes. Have a government-issued photo ID and your bank account details ready.'
-        ]
-      : [
-          off ? `${senderLine(firm, inv)} has invited you to invest in ${off.name} and to open your investor account.` : `${senderLine(firm, inv)} has invited you to set up your investor account.`,
-          `The link below takes you through everything in one place, in about 10 to 15 minutes: your login, investor information, identity verification${off ? ', accreditation' : ''}, tax certification, where to send distributions${off ? ', and your subscription documents, which you sign online' : ''}. Your progress is saved, so you can stop and come back.`,
-          'Have a government-issued photo ID and your bank account details ready.'
-        ];
-    return investorMessage(firm, d, subject, {
-      paras,
-      rows,
-      note: noteOf(firm, inv),
-      button: { label: again && d.started ? 'Continue your onboarding' : off ? 'Start your onboarding' : 'Set up your account', href: d.link }
-    });
-  }
+  const INVESTOR = {
+    /** A new investor: the invitation to invest in an offering, or to set up an investor account. */
+    new(firm, d, again) {
+      const off = d.offering && d.offering.name ? d.offering : null;
+      const inv = d.invitation || {};
+      const rows = [];
+      if (off && !again) rows.push(['Offering', off.name]);
+      if (inv.cents) rows.push(['Commitment', money(inv.cents, off && off.currency)]);
+      const steps = ['your login', 'investor information', 'identity verification'].concat(off ? ['accreditation'] : [], ['tax certification', 'where to send distributions'], off ? ['your subscription documents, which you sign online'] : []);
+      return investorMessage(firm, d, again, off ? `${firm.name}: your invitation to invest in ${off.name}` : `${firm.name}: set up your investor account`, {
+        paras: [
+          again
+            ? `Here is a new link to complete your investor onboarding with ${firm.name}${off ? ` for ${off.name}` : ''}. Any earlier link we sent no longer works.`
+            : off
+              ? `${senderLine(firm, inv)} has invited you to invest in ${off.name} and to open your investor account.`
+              : `${senderLine(firm, inv)} has invited you to set up your investor account.`
+        ],
+        rows,
+        before: again
+          ? [d.started ? 'You can pick up where you left off.' : 'It takes about 10 to 15 minutes. Have a government-issued photo ID and your bank account details ready.']
+          : [
+              `The link below takes you through everything in one place, in about 10 to 15 minutes: ${steps.slice(0, -1).join(', ')}, and ${steps[steps.length - 1]}. Your progress is saved, so you can stop and come back.`,
+              'Have a government-issued photo ID and your bank account details ready.'
+            ],
+        button: { label: again && d.started ? 'Continue your onboarding' : off ? 'Start your onboarding' : 'Set up your account', href: d.link }
+      });
+    },
+    /** An investor already on file, invited to subscribe to another offering: no ID or bank details needed. */
+    subscribe(firm, d, again) {
+      const off = d.offering;
+      const inv = d.invitation || {};
+      const rows = again ? [] : [['Offering', off.name]];
+      if (inv.cents) rows.push(['Commitment', money(inv.cents, off.currency)]);
+      return investorMessage(firm, d, again, `${firm.name}: your subscription to ${off.name}`, {
+        paras: [again ? `Here is a new link to your subscription to ${off.name} with ${firm.name}. Any earlier link we sent no longer works.` : `${senderLine(firm, inv)} has invited you to subscribe to ${off.name}.`],
+        rows,
+        before: [
+          again
+            ? d.started
+              ? 'You can pick up where you left off.'
+              : 'It takes about 5 minutes. Your account details are already on file.'
+            : `The link below takes you through your subscription in one place: the offering documents, ${inv.includeTax ? 'your tax form, ' : ''}your commitment and the subscription agreement, which you sign online. Your account details are already on file. It takes about 5 minutes.`
+        ],
+        button: { label: again && d.started ? 'Continue your subscription' : 'Review and subscribe', href: d.link }
+      });
+    },
+    /** An investor the firm added from paper documents: a link to open their portal. Nothing to fill in. */
+    access(firm, d, again) {
+      return investorMessage(firm, d, again, `${firm.name}: your investor portal`, {
+        paras: [
+          again1(again, `${senderLine(firm, d.invitation)} has set up your investor portal.`, `Here is a new link to your investor portal with ${firm.name}. Any earlier link we sent no longer works.`)
+        ],
+        before: [
+          'Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below lets you create your login and opens your portal, where you will find your investments, statements and documents.'
+        ],
+        button: { label: 'Open your portal', href: d.link }
+      });
+    },
+    /** An investor already on file asked to complete their tax form again: that form only, nothing else asked. */
+    taxRequest(firm, d, again) {
+      const form = `Form ${taxFormOf(d.investor)}`;
+      return investorMessage(firm, d, again, `${firm.name}: your ${form}`, {
+        paras: [
+          again1(again, `${senderLine(firm, d.invitation)} asks you to complete your ${form}.`, `Here is a new link to complete your ${form} for ${firm.name}. Any earlier link we sent no longer works.`)
+        ],
+        before: [
+          `The link below opens your ${form}, filled in from the details we hold. You check it and sign it online, or upload a completed form instead. Nothing else is asked.`
+        ],
+        button: { label: 'Complete your tax form', href: d.link }
+      });
+    },
+    /** An investor already on file asked to verify their accredited investor status again: that step only. */
+    reverify(firm, d, again) {
+      return investorMessage(firm, d, again, `${firm.name}: verify your accredited investor status`, {
+        paras: [
+          again1(again, `${senderLine(firm, d.invitation)} asks you to verify your accredited investor status again.`, `Here is a new link to verify your accredited investor status for ${firm.name}. Any earlier link we sent no longer works.`)
+        ],
+        before: [
+          'The link below opens the accreditation step only: you verify your status online. Nothing else is asked.'
+        ],
+        button: { label: 'Verify your accreditation', href: d.link }
+      });
+    },
+    /** The co-investor of an account on file asked to sign that account's agreement (investor.contact the co-investor, investor.title the account). */
+    coSign(firm, d, again) {
+      const account = (d.investor && (d.investor.title || d.investor.contact)) || 'your account';
+      return investorMessage(firm, d, again, `${firm.name}: sign the subscription agreement for ${account}`, {
+        paras: [
+          again1(again, `${senderLine(firm, d.invitation)} asks you to sign the subscription agreement for ${account} as co-investor.`, `Here is a new link to sign the subscription agreement for ${account} as co-investor. Any earlier link we sent no longer works.`)
+        ],
+        before: [
+          'The link below opens the agreement with only your places to sign. Nothing else is asked.'
+        ],
+        button: { label: 'Review and sign', href: d.link }
+      });
+    }
+  };
 
   /** Which message an invitation is, chosen exactly as the server always has (the invitation and its re-sent link differ). */
   function invitationVariant(d, again) {
@@ -254,9 +331,143 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
     if (inv.existing && off) return 'subscribe';
     return 'new';
   }
-  const INVESTOR_BUILDERS = { new: newInvestor };
 
-  /* ---------- Sample data (previews, goldens) ---------- */
+  /* ---------- The sponsor's messages: word for word what the server has always written ---------- */
+  const consoleButton = (d) => (d.consoleUrl ? { label: 'Open the console', href: d.consoleUrl } : null);
+  function sponsorMessage(firm, d, subject, parts) {
+    return layout(firm, subject, (parts.paras || [])[0] || subject, Object.assign({ button: consoleButton(d) }, parts), d.opts);
+  }
+
+  /** To the sponsor: who finished, the offering and commitment, verification and agreement status, and a link to the console. */
+  function notificationVariant(d) {
+    const s = d.summary || {};
+    if (s.access) return 'access';
+    if (s.coSign) return 'coSign';
+    if (s.taxRequest) return 'taxRequest';
+    if (s.reverify) return 'reverify';
+    if (s.existing && s.requested === false) return 'none';
+    return s.existing ? 'subscription' : 'onboarding';
+  }
+  function notification(firm, d, variant) {
+    const investor = d.investor || {};
+    const offering = d.offering;
+    const summary = d.summary;
+    const who = investor.contact || investor.title || 'An investor';
+    const on = longDate(d.completedAt);
+    const off = offering && offering.name ? offering.name : '';
+    if (variant === 'access') {
+      return sponsorMessage(firm, d, `${who} opened their investor portal`, { paras: [`${who} used the portal link you sent and created their login on ${on}.`], rows: summary.rows, after: [summary.next] });
+    }
+    if (variant === 'coSign') {
+      const account = summary.account || investor.title || who;
+      return sponsorMessage(firm, d, summary.coSigned ? `${who} signed the subscription agreement for ${account}` : `${who} did not sign the subscription agreement for ${account}`, {
+        paras: [`${who}, co-investor on ${account}, went through your request to sign the subscription agreement on ${on}.`],
+        rows: summary.rows,
+        after: [summary.next, 'Nothing else in the account’s investor record changes.']
+      });
+    }
+    if (variant === 'taxRequest') {
+      const form = `Form ${summary.taxForm || taxFormOf(investor)}`;
+      const back = summary.taxState === 'signed' || summary.taxState === 'uploaded';
+      return sponsorMessage(firm, d, back ? `${who} returned their ${form}` : summary.taxState === 'not signed' ? `${who} finished your tax form request without signing` : `${who} finished your tax form request without a form`, {
+        paras: [`${who} went through your request for their ${form} on ${on}.`],
+        rows: summary.rows,
+        after: [summary.next, 'Nothing else in their investor record changes.']
+      });
+    }
+    if (variant === 'reverify') {
+      return sponsorMessage(firm, d, summary.reverified ? `${who} verified their accreditation again` : `${who} finished your re-verification request`, {
+        paras: [`${who} went through your request to verify their accreditation again on ${on}.`],
+        rows: summary.rows,
+        after: [summary.next, 'Nothing else in their investor record changes.']
+      });
+    }
+    // An investor on file who reached the end without subscribing (the offering stopped accepting subscriptions first).
+    const none = variant === 'none';
+    const existing = variant === 'subscription' || none;
+    const subject = none ? `${who}: no subscription${off ? ` to ${off}` : ''}` : existing ? `${who} finished their subscription${off ? ` to ${off}` : ''}` : `${who} finished onboarding${off ? ` for ${off}` : ''}`;
+    return sponsorMessage(firm, d, subject, {
+      paras: [
+        none
+          ? `${who} went through your invitation on ${on}, but no subscription was submitted: the offering was no longer accepting subscriptions when they reached that step.`
+          : existing
+            ? `${who} completed the subscription steps on ${on}.`
+            : `${who} completed every onboarding step on ${on}.`
+      ],
+      rows: summary.rows,
+      after: [
+        summary.next,
+        none
+          ? 'Nothing is added to their investor record; the details you already hold for them stay as they are.'
+          : existing
+            ? `Their subscription, signed agreement${summary.includeTax ? ', tax form' : ''} and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.`
+            : 'Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.'
+      ]
+    });
+  }
+
+  /**
+   * To the sponsor, once, before a finished onboarding the console never imported is deleted: open the console (it imports
+   * on its own) before the date, or the investor's paperwork is gone.
+   */
+  function reminderVariant(d) {
+    if (d.existing && d.coSign) return 'coSign';
+    if (d.existing && d.taxRequest) return 'taxRequest';
+    if (d.existing && d.reverify) return 'reverify';
+    return d.existing ? 'subscription' : 'onboarding';
+  }
+  function reminder(firm, d, variant) {
+    const investor = d.investor || {};
+    const offering = d.offering;
+    const who = investor.contact || investor.title || 'An investor';
+    const rows = [['Investor', who], ['Email', investor.email]];
+    if (offering && offering.name) rows.push(['Offering', offering.name]);
+    rows.push(['Finished', longDate(d.completedAt)], ['Deleted on', longDate(d.deleteOn)]);
+    const by = longDate(d.deleteOn);
+    const on = longDate(d.completedAt);
+    if (variant === 'coSign') {
+      const account = investor.title || who;
+      return sponsorMessage(firm, d, `Waiting in your console: ${who}’s signature for ${account}`, {
+        paras: [`${who} went through your request to sign the subscription agreement for ${account} as co-investor on ${on}, but the console has not added it to your records yet.`],
+        rows,
+        after: [`Open the console before ${by}: it adds the co-investor’s signature as soon as it opens.`, 'After that date the signed copy is deleted from the integration server to protect it, and the co-investor would have to sign again.']
+      });
+    }
+    if (variant === 'taxRequest') {
+      return sponsorMessage(firm, d, `Waiting in your console: ${who}’s tax form`, {
+        paras: [`${who} finished your request for their Form ${taxFormOf(investor)} on ${on}, but the console has not added it to your records yet.`],
+        rows,
+        after: [`Open the console before ${by}: it adds the form as soon as it opens.`, 'After that date the form is deleted from the integration server to protect it, and the investor would have to complete it again.']
+      });
+    }
+    if (variant === 'reverify') {
+      return sponsorMessage(firm, d, `Waiting in your console: ${who}’s re-verification`, {
+        paras: [`${who} finished your request to verify their accreditation again on ${on}, but the console has not added the result to your records yet.`],
+        rows,
+        after: [`Open the console before ${by}: it adds the result as soon as it opens.`, 'After that date the result is deleted from the integration server to protect it, and the investor would have to verify again.']
+      });
+    }
+    if (variant === 'subscription') {
+      return sponsorMessage(firm, d, `Waiting in your console: ${who}’s subscription`, {
+        paras: [`${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''} on ${on}, but the console has not added it to your records yet.`],
+        rows,
+        after: [
+          `Open the console before ${by}: it adds the subscription, the signed agreement and any new accreditation result as soon as it opens.`,
+          'After that date the submitted subscription and signed documents are deleted from the integration server to protect them, and the investor would have to submit their subscription again.'
+        ]
+      });
+    }
+    return sponsorMessage(firm, d, `Waiting in your console: ${who}’s onboarding`, {
+      paras: [`${who} finished onboarding on ${on}, but the console has not added them to your investor records yet.`],
+      rows,
+      after: [
+        `Open the console before ${by}: it adds the investor, their verification results, documents and signed agreement as soon as it opens.`,
+        'After that date their submitted details and signed documents are deleted from the integration server to protect them, and the investor would have to complete onboarding again.'
+      ]
+    });
+  }
+
+  /* ---------- Sample data (previews, goldens): fixed dates, never-issued numbers, no personal data ---------- */
   const SAMPLE_FIRM = {
     name: 'Harbor Ridge Capital',
     shortName: 'Harbor Ridge',
@@ -270,19 +481,63 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
     disclaimer: 'This message is not an offer to sell securities.'
   };
   const SAMPLE_LINK = 'https://portal.example/portal.html?server=https%3A%2F%2Fapi.example#invite-sample';
+  const SAMPLE_CONSOLE = 'https://portal.example/portal.html#console-investors';
   const SENT = '2026-11-10T12:00:00.000Z';
   const EXPIRES = '2026-12-10T12:00:00.000Z';
   const ANITA = { id: 'HRC-0101', contact: 'Shah, Anita', title: 'Anita Shah', type: 'individual', email: 'anita@investor.example' };
+  const CO = { id: 'HRC-0101', contact: 'Shah, Ravi', title: 'Anita Shah', type: 'individual', email: 'ravi@investor.example' };
   const FUND = { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II', currency: 'USD' };
   const copy = (x) => JSON.parse(JSON.stringify(x));
+
+  const INVITE = {
+    'new-offering': [ANITA, FUND, { cents: 25000000, note: 'We are glad to have you with us for Fund II.' }],
+    'new-account': [ANITA, null, {}],
+    subscribe: [ANITA, FUND, { existing: true, cents: 10000000, senderName: 'Maria Ortiz' }],
+    'subscribe-tax': [ANITA, FUND, { existing: true, cents: 10000000, includeTax: true }],
+    access: [ANITA, null, { existing: true, access: true }],
+    'taxRequest-w9': [Object.assign({ taxType: 'us-individual' }, ANITA), null, { existing: true, taxRequest: true }],
+    'taxRequest-w8ben': [Object.assign({ taxType: 'foreign-individual' }, ANITA), null, { existing: true, taxRequest: true }],
+    coSign: [CO, null, { existing: true, coSign: true, envelopeId: 'env-sample' }],
+    reverify: [ANITA, null, { existing: true, reverify: true }]
+  };
   function invitationSample(variant) {
-    const base = { firm: copy(SAMPLE_FIRM), investor: copy(ANITA), offering: copy(FUND), invitation: { cents: 25000000, cls: '', note: '', senderName: '' }, link: SAMPLE_LINK, expiresAt: EXPIRES };
-    if (variant === 'new-account') Object.assign(base, { offering: null, invitation: { cents: 0, cls: '', note: '', senderName: '' } });
-    return base;
+    const [investor, offering, inv] = INVITE[variant === 'started' ? 'new-offering' : variant];
+    return { firm: copy(SAMPLE_FIRM), investor: copy(investor), offering: copy(offering), invitation: Object.assign({ cents: 0, cls: '', note: '', senderName: '' }, copy(inv)), link: SAMPLE_LINK, expiresAt: EXPIRES, started: variant === 'started' };
   }
 
+  const who = [['Investor', 'Shah, Anita'], ['Email', 'anita@investor.example']];
+  const NOTIFY = {
+    onboarding: [FUND, { rows: who.concat([['Investing as', 'Individual'], ['Offering', 'Harbor Ridge Fund II'], ['Commitment', '$250,000'], ['Identity', 'Verified'], ['Sanctions screening', 'Clear'], ['Accredited investor', 'Verified'], ['Subscription agreement', 'Signed by the investor; waiting for your countersignature']]), next: 'Next: countersign the subscription agreement in the console.' }],
+    'onboarding-account': [null, { rows: who.concat([['Investing as', 'Individual'], ['Commitment', 'Not set'], ['Identity', 'Verified'], ['Sanctions screening', 'Clear'], ['Accredited investor', 'Not required'], ['Subscription agreement', 'No subscription submitted']]), next: 'Next: invite them to an offering when one is open.' }],
+    subscription: [FUND, { rows: who.concat([['Offering', 'Harbor Ridge Fund II'], ['Commitment', '$250,000'], ['Accredited investor', 'On file'], ['Subscription agreement', 'Signed by the investor; waiting for your countersignature']]), next: 'Next: countersign the subscription agreement in the console.', existing: true, requested: true }],
+    'subscription-tax': [FUND, { rows: who.concat([['Offering', 'Harbor Ridge Fund II'], ['Commitment', '$250,000'], ['Accredited investor', 'On file'], ['Subscription agreement', 'Signed by the investor; waiting for your countersignature'], ['Tax form', 'Form W-9, signed']]), next: 'Next: countersign the subscription agreement in the console.', existing: true, includeTax: true, requested: true }],
+    none: [FUND, { rows: who.concat([['Offering', 'Harbor Ridge Fund II'], ['Commitment', '$250,000'], ['Accredited investor', 'On file'], ['Subscription agreement', 'No subscription submitted']]), next: 'Next: nothing to do unless the offering opens again.', existing: true, requested: false }],
+    access: [null, { rows: who, next: 'Nothing to do: their record stays as you hold it.', existing: true, access: true, requested: false }],
+    'coSign-signed': [null, { rows: [['Co-investor signature', 'Signed']], next: 'Next: countersign the subscription agreement in the console.', existing: true, coSign: true, coSigned: true, account: 'Anita Shah', requested: false }],
+    'coSign-unsigned': [null, { rows: [['Co-investor signature', 'Not signed']], next: 'Next: ask the co-investor to sign.', existing: true, coSign: true, coSigned: false, account: 'Anita Shah', requested: false }],
+    'taxRequest-signed': [null, { rows: who.concat([['Tax form', 'Form W-9, signed']]), next: 'Next: the console adds the form to the investor’s record the next time it is open.', existing: true, taxRequest: true, taxState: 'signed', taxForm: 'W-9', requested: false }],
+    'taxRequest-notsigned': [null, { rows: who.concat([['Tax form', 'Form W-9, not signed']]), next: 'Next: ask the investor for their tax form again if you still need it.', existing: true, taxRequest: true, taxState: 'not signed', taxForm: 'W-9', requested: false }],
+    'taxRequest-none': [null, { rows: who.concat([['Tax form', 'Not returned']]), next: 'Next: ask the investor for their tax form again if you still need it.', existing: true, taxRequest: true, taxState: 'not returned', taxForm: 'W-9', requested: false }],
+    'reverify-reverified': [null, { rows: who.concat([['Accredited investor', 'Verified']]), next: 'Next: the console adds the result to the investor’s record the next time it is open.', existing: true, reverify: true, reverified: true, requested: false }],
+    'reverify-finished': [null, { rows: who.concat([['Accredited investor', 'Not verified again']]), next: 'Next: ask the investor to verify their accreditation again if you still need it.', existing: true, reverify: true, reverified: false, requested: false }]
+  };
+  function notificationSample(variant) {
+    const [offering, summary] = NOTIFY[variant];
+    return { firm: copy(SAMPLE_FIRM), investor: copy(/^coSign/.test(variant) ? CO : ANITA), offering: copy(offering), summary: copy(summary), consoleUrl: SAMPLE_CONSOLE, completedAt: SENT };
+  }
+  const REMIND = { onboarding: [FUND, {}], subscription: [FUND, { existing: true }], taxRequest: [null, { existing: true, taxRequest: true }], reverify: [null, { existing: true, reverify: true }], coSign: [null, { existing: true, coSign: true }] };
+  function reminderSample(variant) {
+    const [offering, flags] = REMIND[variant];
+    return Object.assign({ firm: copy(SAMPLE_FIRM), investor: copy(variant === 'coSign' ? CO : ANITA), offering: copy(offering), consoleUrl: SAMPLE_CONSOLE, completedAt: SENT, deleteOn: EXPIRES, existing: false, taxRequest: false, reverify: false, coSign: false }, flags);
+  }
+
+  const INVITE_VARIANTS = Object.keys(INVITE);
+  /** Every message kind: who receives it, its name in the console, its sample variants. Later plans add kinds here. */
   const KINDS = {
-    invitation: { audience: 'investor', label: 'Invitation', variants: ['new-offering', 'new-account'], sample: invitationSample }
+    invitation: { audience: 'investor', label: 'Invitation', variants: INVITE_VARIANTS, sample: invitationSample },
+    invitation_resent: { audience: 'investor', label: 'New link', variants: INVITE_VARIANTS.concat(['started']), sample: invitationSample },
+    sponsor_notification: { audience: 'sponsor', label: 'Investor finished', variants: Object.keys(NOTIFY), sample: notificationSample },
+    submission_reminder: { audience: 'sponsor', label: 'Waiting in your console', variants: Object.keys(REMIND), sample: reminderSample }
   };
 
   /* ---------- render ---------- */
@@ -294,9 +549,13 @@ ${parts.greeting ? para(parts.greeting) : ''}${(parts.paras || []).map(para).joi
     if (kind === 'invitation' || kind === 'invitation_resent') {
       const again = kind === 'invitation_resent';
       variant = invitationVariant(d, again);
-      const build = INVESTOR_BUILDERS[variant];
-      if (!build) throw new Error(`No message for ${kind} ${variant}`);
-      out = build(firm, d, again);
+      out = INVESTOR[variant](firm, d, again);
+    } else if (kind === 'sponsor_notification') {
+      variant = notificationVariant(d);
+      out = notification(firm, d, variant);
+    } else if (kind === 'submission_reminder') {
+      variant = reminderVariant(d);
+      out = reminder(firm, d, variant);
     } else throw new Error(`Unknown message kind: ${str(kind)}`);
     return { kind, variant, subject: out.subject, preheader: out.preheader, text: out.text, html: out.html, inline: out.inline, commercial: false, headers: {} };
   }

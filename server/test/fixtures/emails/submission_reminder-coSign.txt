@@ -1,0 +1,21 @@
+Subject: Waiting in your console: Shah, Ravi’s signature for Anita Shah
+Preheader: Shah, Ravi went through your request to sign the subscription agreement for Anita Shah as co-investor on November 10, 2026, but the console has not added it to your records yet.
+
+Shah, Ravi went through your request to sign the subscription agreement for Anita Shah as co-investor on November 10, 2026, but the console has not added it to your records yet.
+
+Investor: Shah, Ravi
+Email: ravi@investor.example
+Finished: November 10, 2026
+Deleted on: December 10, 2026
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Open the console before December 10, 2026: it adds the co-investor’s signature as soon as it opens.
+
+After that date the signed copy is deleted from the integration server to protect it, and the co-investor would have to sign again.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

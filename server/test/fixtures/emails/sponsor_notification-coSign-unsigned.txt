@@ -1,0 +1,18 @@
+Subject: Shah, Ravi did not sign the subscription agreement for Anita Shah
+Preheader: Shah, Ravi, co-investor on Anita Shah, went through your request to sign the subscription agreement on November 10, 2026.
+
+Shah, Ravi, co-investor on Anita Shah, went through your request to sign the subscription agreement on November 10, 2026.
+
+Co-investor signature: Not signed
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Next: ask the co-investor to sign.
+
+Nothing else in the account’s investor record changes.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

@@ -1,0 +1,20 @@
+Subject: Shah, Anita finished your tax form request without a form
+Preheader: Shah, Anita went through your request for their Form W-9 on November 10, 2026.
+
+Shah, Anita went through your request for their Form W-9 on November 10, 2026.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+Tax form: Not returned
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Next: ask the investor for their tax form again if you still need it.
+
+Nothing else in their investor record changes.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

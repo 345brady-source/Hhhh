@@ -1,0 +1,25 @@
+Subject: Shah, Anita finished onboarding
+Preheader: Shah, Anita completed every onboarding step on November 10, 2026.
+
+Shah, Anita completed every onboarding step on November 10, 2026.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+Investing as: Individual
+Commitment: Not set
+Identity: Verified
+Sanctions screening: Clear
+Accredited investor: Not required
+Subscription agreement: No subscription submitted
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Next: invite them to an offering when one is open.
+
+Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.
