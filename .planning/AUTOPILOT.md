@@ -135,7 +135,7 @@ Branch claude/refract-reskin holds every merged result; server tests 605/605 on 
 - Phase 17 plans — planner was writing; see .planning/phases/17-crm-connection/ (finished plans committed; 17-PLANNING-PAUSED.md if any unfinished). Next: finish plans, gsd-plan-checker, record additions; build after phase 16.
 
 ### Next in order after those merge
-1. own-fonts quick plan (checked; DECISIONS binding) after small-fixes-c and 13-09 — no: after small-fixes-c; 13-09 first per 13-09's re-check Start line (own-fonts waits for 13-09).
+1. own-fonts quick plan (checked; DECISIONS binding): starts after small-fixes-c and 13-09 have merged (13-09's re-check Start line).
 2. 13-09 (re-check additions binding) after 13-08 and small-fixes-c; then 13-06; then 13-10 (owner's mail account).
 3. 15-15 after 15-14 and 16-07; 15-17 after 13-08 (also carries the offering-news two-way sync and the achLog item); rest of phase 15.
 4. 16-08..16-14; phase 14 remaining plans; phase 17 build.
