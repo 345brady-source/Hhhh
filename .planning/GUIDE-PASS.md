@@ -15,3 +15,7 @@ The guide trim is merged (sponsor guide 44,641 of 48,000 bytes on 2026-11-27). L
 - 16-05 (four lines): 16-05-SUMMARY.md
 - 16-06: 16-06-SUMMARY.md ("Guide lines for the guide pass")
 - Co-investor "Signed <date>" state on the Investors row (guide lines 121, 123 never mention it): write one line from the coMerge fix (AUTOPILOT 2026-11-27).
+
+## small-fixes-a (merged becfd21)
+- Documents: "Remove" hides a document from investors' portals; it stays in the list marked "Hidden from investors", with its file.
+- Offering structure: "Capital call notice (days)" takes a whole number of days, 1 or more.
