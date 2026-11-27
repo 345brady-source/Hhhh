@@ -69,3 +69,9 @@
 - Accepted deviations: a renewed personal link keeps the access's original end date (renewal after end gets 409 "Invite them again"); extra checks (page views bounded by page count; e-sign form matched to its template SHA-256; access re-checked after every upload); the e-sign NDA form white-labelled by the server (its served SHA-256 becomes the version's).
 - 14-08 must: add the data.rooms line to store.mjs; expose X-View-Id and X-Pages through CORS; render room_invite with the payload's firm (postal address); make notify fall back to the room's firm address when a prospect's question has no firm snapshot (otherwise message_received goes to an empty `to`).
 - 14-12 / 14-07: the device takes the e-sign template from GET /v1/room (its SHA-256 may differ from the E-sign page's original after white-labelling).
+
+## After 14-01 (merged 2026-11-27)
+- assets/js/inbox.js (threads, send, read times, hash chain, broadcasts, corrections, attachments, screening, notices, export with README and messages.csv) and gate14.sh (self-test 8; GATE_FRESH=1 on a changed base) merged; INBOX MODEL 11 cases passes on the merged tree; server tests 456. Gate GATE_EXIT=0 on run 3 (run 1: four reference steps failed with the disk at 100%; run 2: time limit).
+- Accepted deviations: a broadcast attachment stored once in the record zip (matches the orchestrator's once-per-send rule); formula-looking CSV cells guarded with a leading '; export compares each attachment's bytes with its SHA-256 and lists mismatches; zip name carries the scope id.
+- Note: phase 13's checks folder holds no .js check yet, so gate14/gate13 print nothing for phase 13 until its plans add checks.
+- The reference gate for the merged 14-01/14-02/14-03/14-05 runs on the merged tree in a separate worktree (scratchpad ref-gate-0127/).
