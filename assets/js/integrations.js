@@ -990,12 +990,14 @@
       NS.app.render();
     } catch (e) {
       if (tab) tab.close();
-      if (e && e.server) {
-        // The server's own sentence, alone (plan 08-07). Nothing the investor can retry (a returned package, the start
-        // limit) also gives the firm's contact. The line stays on the step until the next start.
-        const firm = e.status === 403 || e.status === 409 ? ` Contact ${ws.tenant.support.team} at ${ws.tenant.support.email}.` : '';
-        refusals[`${inv.id}:${kind}`] = `${e.message}${firm && !/[.!?]$/.test(e.message) ? '.' : ''}${firm}`;
-        U.toast(e.message);
+      if ((e && e.server) || x.package) {
+        // The server's own sentence (plan 08-07). Nothing the investor can retry (a returned package, the start limit)
+        // also gives the firm's contact, and so does every failed start of the verification package, whatever the
+        // reason (a lost connection reads the plain sentence, never the raw error). The line stays until the next start.
+        const said = e && e.server ? e.message : 'This check could not start. Please try again later.';
+        const firm = x.package || (e && (e.status === 403 || e.status === 409)) ? ` Contact ${ws.tenant.support.team} at ${ws.tenant.support.email}.` : '';
+        refusals[`${inv.id}:${kind}`] = `${said}${firm && !/[.!?]$/.test(said) ? '.' : ''}${firm}`;
+        U.toast(said);
         NS.app.render();
       } else U.toast(`Could not start the check: ${e.message}`);
     }
