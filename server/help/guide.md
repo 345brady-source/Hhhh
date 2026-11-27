@@ -16,13 +16,13 @@ menu: Overview, at the top
 anchor: Needs attention
 anchor: Recent distributions
 
-The console's first page. Every console page's menu has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents, Accounting), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu has no Offering intake, Portal and brand, Integrations or Team: only an admin opens those four pages, so a team member asks an admin.
+The console's first page. Every console page's menu has Overview and Notifications at the top, then four groups: Raise (Offerings, Offering intake, Investors, E-sign), Operate (Capital calls, Distributions, Requests, Notices, Documents, Tax documents, Accounting), Report (Reports, Audit, AML/KYC, AML program, Filings) and Settings (Portal and brand, Integrations, ACH origination, Team). A team member's menu lacks Offering intake, Portal and brand, Integrations and Team: only an admin opens those four, so a team member asks an admin.
 
 Overview shows:
-- "Setup": a new portal's checklist. "Start" or "Review" beside an item opens its page; "Remove" takes the item off the list.
-- Four totals: active offerings, investors, capital raised and the amount distributed in the last 12 months.
-- "Funds": each fund's net assets, investors, contributed and distributed amounts, with a link to "Audit schedules".
-- "Needs attention": what is waiting, such as investors not done activating, envelopes to countersign, requests to approve and screening matches to review. A line opens the page that handles it.
+- "Setup": a new portal's checklist. "Start" or "Review" beside an item opens its page; "Remove" takes it off the list.
+- Four totals: active offerings, investors, capital raised and amount distributed in the last 12 months.
+- "Funds": each fund's net assets, investors, contributed and distributed, with a link to "Audit schedules".
+- "Needs attention": what is waiting, such as investors not done activating, envelopes to countersign, requests to approve and screening matches to review; a line opens the page that handles it.
 - "Recent distributions", with "All distributions".
 
 ## console-notifications
@@ -33,11 +33,11 @@ menu: Notifications, at the top
 anchor: Investors opening their invitation, finishing onboarding and signing, verifications held for review and subscriptions accepted.
 anchor: Mark all read
 
-Notifications tell the firm when an investor opens their invitation, starts or finishes onboarding or signs, when a verification is held for review and when a subscription is accepted. The number beside Notifications in the menu counts the unread ones.
+Notifications tell the firm when an investor opens their invitation, starts or finishes onboarding or signs, when a verification is held for review and when a subscription is accepted. The number beside Notifications in the menu counts unread ones.
 
 - The bell at the top of the menu shows the latest in a small window; its "All notifications" opens this page.
-- Filter the list with All and Unread.
-- A notification opens the page it is about and is then marked read.
+- Filter with All and Unread.
+- A notification opens the page it is about and is marked read.
 - "Mark all read" marks them all read.
 
 ## console-offerings
@@ -55,7 +55,7 @@ To add an offering:
 1. Choose "Add offering": a new offering is created and its page opens.
 2. Fill in "Offering details" and the page's other sections.
 
-"Set up from documents" opens Offering intake instead, where the portal fills in an offering from its documents. Offerings are set up by an admin; a team member sees them read-only.
+Or "Set up from documents" opens Offering intake, where the portal fills in an offering from its documents. Offerings are set up by an admin; a team member sees them read-only.
 
 ## console-offering
 audience: sponsor
@@ -69,10 +69,10 @@ anchor: Remove offering
 One offering's settings, ending with "What investors see", a preview of the offering as investors see it. Sections:
 - "Offering details": "Offering name", "Short name", "Type", "Status", "Closing date", "One-line description", "Minimum investment ($)" and "Securities exemption".
 - "Investor eligibility" and "Benefit plan investors": counts from investors' own answers, for the firm to judge.
-- "Subscription agreement": "Add the subscription agreement" uploads it once and places the fields investors fill in and sign; every investor invited to the offering then signs it online during onboarding. If it has places for a co-investor, the section says so and names the investors with no co-investor on their account. "Edit fields", "Replace the PDF" and "Remove" change it.
+- "Subscription agreement": "Add the subscription agreement" uploads it once and places the fields investors fill in and sign; every investor invited to the offering then signs it online in onboarding. With places for a co-investor, the section says so and names the investors with no co-investor on their account. "Edit fields", "Replace the PDF" and "Remove" change it.
 - "Exit timing": "How exit is defined", its dates, and "Note shown to investors".
 - "Distributions": "Frequency", "Default payment type" and "Target or rate shown to investors".
-- "Fund accounting" and "Structure" (with "Edit structure"): fees, carried interest, preferred return, auditor and waterfall, used for the audit package.
+- "Fund accounting" and "Structure" (with "Edit structure"): fees, carried interest, preferred return, auditor and waterfall, for the audit package.
 - "Key terms shown to investors": tick "Show" for each term investors see; "Add term" adds one.
 - "Latest update": text shown on the investor's investment page.
 - "ACH originator for this offering": a company name and ID when the offering pays from its own bank account.
@@ -111,20 +111,20 @@ To invite an investor:
 1. Choose "Invite an investor" at the top.
 2. Stay on "One investor" and fill in "First name", "Last name" and "Email".
 3. Check "Investor type": it decides the tax form the investor is shown; the investor can correct it in onboarding.
-4. Optional: "More options (optional)" sets the account name, offering, commitment or a personal note. With no offering chosen, the investor only sets up their account.
+4. Optional: "More options (optional)" sets the account name, offering, commitment or a personal note. With no offering, the investor only sets up their account.
 5. Choose "Send invitation".
 
-The investor gets one link through every step. For several at once, choose "Import a list", upload a CSV or Excel file or paste the list, choose "Check list", then send. "Add manually" adds an investor onboarded offline on paper documents as an active investor, with no onboarding link sent.
+The investor gets one link for every step. To invite several, choose "Import a list", upload a CSV or Excel file or paste the list, choose "Check list", then send. "Add manually" adds an investor onboarded offline on paper documents as active, with no onboarding link sent.
 
-"Invitations" follows each invitation, filtered by In progress, Completed and All; the tick box "Accept subscriptions automatically once the agreement is countersigned and the investor is verified" turns that on. An invitation whose agreement waits for the firm's signature has "Countersign". In the table, "View portal" shows the portal as that investor sees it; an investor not yet activated has "Invitation" and "Send reminder" instead. With no integration server connected, the firm sends each invitation from its own email app, with the email and link prepared by the portal.
+"Invitations" follows each invitation, filtered by In progress, Completed and All; the tick box "Accept subscriptions automatically once the agreement is countersigned and the investor is verified" turns that on. An invitation whose agreement waits for the firm's signature has "Countersign". In the table, "View portal" shows the portal as that investor sees it; an investor not yet activated has "Invitation" and "Send reminder" instead. With no integration server connected, the portal prepares each invitation email with its link and the firm sends it from its own email app.
 
-A co-investor is a second person on an investor's account, for example a spouse investing jointly. To add one to an investor on file: choose "Account" beside the investor in the table, then "Add co-investor", fill in "First name", "Last name" and "Email" (their own, not the investor's) and choose "Add co-investor". An account has one co-investor, who signs their own places on its agreements with their own sign-in. The "Co-investor sign-in email" then opens with their own link, which opens only their places: send it from your own email app with "Open in your email app" (or "Copy link"), then choose "Mark as sent"; until then the row says "Sign-in link ready to send", and "Sign-in link" in the "Account" window reopens the email. A changed email gives a new link and stops the earlier one.
+A co-investor is a second person on an investor's account, for example a spouse investing jointly. To add one to an investor on file: choose "Account" beside the investor in the table, then "Add co-investor", fill in "First name", "Last name" and "Email" (their own, not the investor's) and choose "Add co-investor". An account has one co-investor, who signs their own places on its agreements with their own sign-in. The "Co-investor sign-in email" then opens with their link, which opens only their places: send it with "Open in your email app" (or "Copy link"), then choose "Mark as sent"; until then the row says "Sign-in link ready to send". "Sign-in link" in the "Account" window reopens the email. A changed email gives a new link and stops the old one.
 
 With the integration server connected, nothing is sent by hand: the server emails the co-investor their sign-in once the investor has signed, and the row says "Sign-in emailed" with the date (before that, "Sign-in is emailed once" the investor "has signed"); a changed email or "Remove co-investor" cancels the link sent.
 
 An admin records a W-9 the investor signed on paper, or an uploaded completed W-9 showing the last four digits of the taxpayer number, with "W-9 signed on paper" under the investor's activation; "Undo" removes the record. Without it, a distribution of an offering set to notes or to a corporation or REIT proposes backup withholding for that investor.
 
-An agreement still out for signature with places for a co-investor adds them as a signer, after the investor and before the firm; the investor does not sign again. An agreement everyone has signed stays as it is. The "Account" window also has "Change co-investor" and "Remove co-investor". When an offering's agreement has places for a co-investor and the account has none, the row says "Agreement has places for a co-investor", and the "Account" window has "This investor has no co-investor" to say there is none.
+An agreement still out for signature with places for a co-investor adds the co-investor as a signer, after the investor and before the firm; the investor does not sign again. Fully signed agreements stay as they are. The "Account" window also has "Change co-investor" and "Remove co-investor". When an offering's agreement has places for a co-investor but the account has none, the row says "Agreement has places for a co-investor", and "This investor has no co-investor" in the "Account" window says there is none.
 
 ## console-esign
 audience: sponsor
@@ -144,7 +144,7 @@ To send a document for signature:
 5. Choose the "Signing order": "In order" or "Any order".
 6. Choose "Continue to place fields": the envelope's page opens to place the fields and send it.
 
-In Envelopes, "Open" opens an envelope, "Remind" reminds the signers who have not signed, "Void" cancels one out for signature, and a completed one has "Signed PDF" and "Certificate". To countersign, open the envelope and choose "Sign as sponsor". "Save as template" makes a template from an envelope.
+In Envelopes, "Open" opens an envelope, "Remind" reminds signers who have not signed, "Void" cancels one out for signature, and a completed one has "Signed PDF" and "Certificate". To countersign, open the envelope and choose "Sign as sponsor". "Save as template" on an envelope makes a template.
 
 ## console-envelope
 audience: sponsor
@@ -156,12 +156,12 @@ anchor: Review and send
 anchor: Save as template
 
 One envelope: a document, its signers and its status.
-- "Recipients": each signer with their order, role, status and when they viewed and signed.
+- "Recipients": each signer's order, role, status and when they viewed and signed.
 - "Details": status, file, signing order and the dates sent and completed.
 - "Document": the Show pages button previews the pages with each signer's fields and what is filled so far.
-- A completed envelope also has "Signed record" (the record ID and the SHA-256 of the original and the signed PDF), "Verify a signed copy" ("Choose a PDF" checks a file against the stored record; the file is read in the browser only) and "Audit trail", every event.
+- A completed envelope also has "Signed record" (record ID and the SHA-256 of the original and the signed PDF), "Verify a signed copy" ("Choose a PDF" checks a file against the stored record, reading it in the browser only) and "Audit trail", every event.
 
-In a draft envelope, place each signer's fields, then send it with "Review and send"; "Save as template" keeps the PDF and its fields for reuse. When the firm is a signer and its turn has come, "Sign as sponsor" opens the document to countersign. A completed envelope has "Signed PDF" and "Certificate" at the top.
+In a draft, place each signer's fields, then send with "Review and send"; "Save as template" keeps the PDF and its fields for reuse. When the firm is a signer and its turn has come, "Sign as sponsor" opens the document to countersign. A completed envelope has "Signed PDF" and "Certificate" at the top.
 
 ## console-calls
 audience: sponsor
@@ -179,7 +179,7 @@ To issue a call:
 3. Check "Allocation by investor".
 4. Choose "Issue call and notify investors".
 
-To record money received, choose the call in "Calls", then "Record payment" beside an investor or "Record all as received"; the contribution is added to the investor's capital account. A reminder can be sent from there to the investors who have not paid.
+To record money received, choose the call in "Calls", then "Record payment" beside an investor or "Record all as received"; the contribution is added to the investor's capital account. A reminder can be sent from there to investors who have not paid.
 
 ## console-distributions
 audience: sponsor
@@ -193,8 +193,8 @@ anchor: Record distribution
 Allocate a payment to an offering's investors pro rata by amount invested, then make the NACHA file for the bank.
 
 Under "New distribution":
-1. Choose the "Offering" and the "Payment type".
-2. Set the "Payment (effective) date". Banking days only; most banks need files 1 to 2 banking days ahead.
+1. Choose the "Offering" and "Payment type".
+2. Set the "Payment (effective) date": banking days only; most banks need files 1 to 2 banking days ahead.
 3. Under "Amount", choose "Annualized rate" or "Total amount" and enter the figure.
 4. Optional: change "Bank statement description (10)", up to 10 characters.
 5. Check the table: each investor's share, amount and how they are paid (ACH or check).
@@ -219,7 +219,7 @@ Headed "Investor requests": the redemptions and subscriptions investors submit a
 
 1. Filter with Open or All above the list.
 2. Choose "Approve" or "Decline" beside a request.
-3. After approving, the row has "Record payment" for a redemption or "Record funding" for a subscription to an open-ended fund: choose it once the money has moved. For a commitment whose subscription agreement still waits for the firm's signature, it has "Countersign", which opens the agreement to sign as the firm; the commitment goes on the investor register once that signing is finished. The investor register, capital accounts and audit schedules then update automatically.
+3. After approving, the row has "Record payment" for a redemption or "Record funding" for a subscription to an open-ended fund: choose it once the money has moved. For a commitment whose subscription agreement still waits for the firm's signature, it has "Countersign", which opens the agreement to sign as the firm; once signed, the commitment goes on the investor register. The register, capital accounts and audit schedules then update automatically.
 
 Redemptions are paid at net asset value on the dealing date, which follows the fund's notice period and lock-up; the payment can be recorded once that month's valuation is final.
 
@@ -238,7 +238,7 @@ Under "New notice":
 1. Choose a "Template": "Quarterly report available", "New documents uploaded" or "Custom message".
 2. Under "Send to", choose all investors or one offering's investors, or pick particular people under "Specific investors" to send to them only.
 3. Optional: tick "Include investors who have not activated their accounts"; their email links to account activation instead of sign-in.
-4. Check the "Subject" and "Message"; the words in braces listed under the message are replaced for each investor.
+4. Check "Subject" and "Message"; the words in braces listed under the message are replaced for each investor.
 5. Read the preview beside the form, then choose the send button, which names the number of investors.
 
 "Sent notices" lists what was sent, to whom and by whom.
@@ -255,9 +255,9 @@ Publish quarterly reports, capital account statements, tax documents and notices
 
 Under "Publish documents":
 1. Under "Files", choose the files: PDF preferred, up to 25 MB each.
-2. Choose the "Type" (Reports, Statements, Tax, Legal, Notices or Other) and the "Fund".
+2. Choose the "Type" (Reports, Statements, Tax, Legal, Notices or Other) and "Fund".
 3. Under "Who receives each file", choose "All investors", or "Match investor IDs in file names" to send each file only to the investor whose ID is in its name.
-4. Enter a "Title" and the "Document date".
+4. Enter a "Title" and "Document date".
 5. Optional: tick "Notify recipients that new documents are in their portal".
 6. Choose "Publish".
 
@@ -274,14 +274,14 @@ anchor: Not this one
 Take in the tax documents the CPA prepared and confirm whose each one is. A confirmed document shows "Not delivered": investors do not see it yet.
 
 To import:
-1. Under "Import", choose the "Fund", the "Type" and the "Tax year".
+1. Under "Import", choose the "Fund", "Type" and "Tax year".
 2. Under "Files", choose the CPA's PDF files, up to 25 MB each.
 3. Choose "Import": the file is listed under "Imports" with the number to confirm; choose it to open it.
 
 A Schedule K-1 (Form 1065) file is cut into one package per K-1, each proposed to the fund's investor whose name or taxpayer number's last four digits agree. Any other type is one package per file.
 
 To confirm:
-1. Under "Confirm together", check each row; "Not this one" moves a row to the others. Then choose the button "Confirm" with the count.
+1. Under "Confirm together", check each row; "Not this one" moves a row to the others. Then choose "Confirm" with the count.
 2. Under "One by one", compare the picture with the investor proposed, change the "Investor" if needed, then choose "Confirm". "View pages" shows every page; "Set aside" and "Reopen" put a package aside and bring it back.
 3. For a file with no text, type the "First page" and "Last page" and choose "Make package".
 
@@ -298,7 +298,7 @@ To deliver:
 
 "Send on paper" lists documents owed on paper: enter the date and choose "Mark sent on paper". "Notice came back" on a row adds one there.
 
-To withdraw a document, an admin chooses "Withdraw", enters a "Reason" and chooses "Withdraw document". For an amended document, tick "This replaces the document delivered on" before delivering.
+An admin withdraws a document with "Withdraw", a "Reason" and "Withdraw document". For an amended document, tick "This replaces the document delivered on" before delivering.
 
 ## console-books
 audience: sponsor
@@ -356,7 +356,7 @@ anchor: Re-screen
 
 Identity verification, sanctions and PEP screening and accredited investor checks run automatically through the connections set on the Integrations page. Anything flagged, and any check waiting on the team, waits here; the number beside AML/KYC in the menu counts them.
 
-- The four totals are Cleared, Needs review, Re-screening due, and In progress or not started.
+- The four totals: Cleared, Needs review, Re-screening due, and In progress or not started.
 - Filter the table with "Needs attention" or "All investors".
 - "Review match" beside an investor opens a potential screening match for the team to decide.
 - "Re-screen" beside an investor runs the screening again; the button at the top re-screens every investor whose re-screening is due.
@@ -372,12 +372,12 @@ menu: Report, then AML program
 anchor: AML program
 anchor: Sanctions records are kept for ten years.
 
-A record of the firm's AML program to show a bank, fund administrator, auditor or investor who asks for it. It has eight sections:
+The firm's AML program on record, to show a bank, fund administrator, auditor or investor who asks for it. It has eight sections:
 - "Policy": "Statement", "Scope", "Adopted on" and "Approved by".
 - "Responsible person": "Name", "Title" and "Designated on".
 - "Risk assessment": "Investor types, countries and offerings".
 - "Procedures in force": filled in from the Integrations page, and changed there (which connections run each check, how often investors are re-screened, when verified accreditation is required and how long it is valid, the hold for politically exposed persons, and whether approval is automatic).
-- "Screening log": every screening and every review of a possible match from the change log, newest first, with the date, the investor, what happened and who did it.
+- "Screening log": every screening and every review of a possible match from the change log, newest first, with date, investor, what happened and who did it.
 - "Escalation": "Who is told of a possible match and what is reported".
 - "Training and independent review": "Training" entries and "Independent reviews" entries.
 - "Retention": "Sanctions records are kept for ten years."
@@ -393,16 +393,16 @@ anchor: First Form D notice
 anchor: Silence
 anchor: I filed this myself
 
-Filings lists each offering under Rule 506(b) or Rule 506(c) with what is due for its Form D and state notices, each with its date and reason. The number beside Filings in the menu counts those due or overdue and not silenced. An offering under another exemption, or with none set, is not listed; the exemption is set in the offering's settings. Nothing on the page is required.
+Each offering under Rule 506(b) or Rule 506(c), with what is due for its Form D and state notices, each with its date and reason. The number beside Filings in the menu counts what is due or overdue and not silenced. An offering under another exemption, or with none set (it is set in the offering's settings), is not listed. Nothing on the page is required.
 
 - "First Form D notice" shows once the offering has a first sale, due 15 days after it. "Form D annual amendment" shows once a notice is on record, due one year after the latest one.
-- A state notice shows for each state with a sale, with that state's first sale date. Several states show as one row, "State notices", that opens to the states.
+- Each state with a sale shows a state notice with that state's first sale date. Several states show as one row, "State notices", that opens to the states.
 - "Silence" turns a reminder off: it stays on the page, greyed, with its date, and is no longer counted; "Turn back on" restores it. "Silence all" and "Turn all back on" do the same for all the offering's reminders.
-- "I filed this myself" records a Form D the firm filed, with its date and, if the firm has it, the accession number. "Filed" beside a state records that state's notice; "Record all as filed" records all the offering's state notices with one date.
+- "I filed this myself" records a Form D the firm filed, with its date and, if known, the accession number. "Filed" beside a state records its notice; "Record all as filed" records all the offering's state notices with one date.
 - "Options" under an offering: "First sale" confirms another first sale date, "Offering ended" records the date it ended, "Recorded as filed" lists what the firm recorded, each with "Remove", and "Not filing for this offering" turns its reminders off until "Turn reminders back on".
-- "Form D" under an offering opens its notice by item, pre-filled from the offering and its subscriptions: total offering amount, minimum investment, amount sold, number of investors and of non-accredited investors, and date of first sale. Each pre-filled value says where it came from ("From the offering", "From the subscriptions"); a value you change is kept. "Review" shows the whole notice and, under "To fix before it can be signed off", what EDGAR would refuse, each with "Go to it". An admin signs off with name and title under the SEC's Terms of Submission; "Sign off" records an order: $100 for a Form D, $50 for an amendment. The page itself charges and files nothing: "Sending it to be filed needs the portal connected to its server." "Make changes" starts a new draft from a signed notice. Once a notice is filed, "Start an amendment" begins one from it, or from the file or text of a notice filed elsewhere.
-- "EDGAR access" under an offering tracks an issuer with no EDGAR account through seven steps: each person's own sign-in, Form ID on the SEC dashboard, the printout signed before a notary, the upload, the CIK, the delegation to the filing agent and its acceptance. "Done" marks a step with its date; "Undo" takes it back. "Open the answer sheet" lays out the Form ID answers part by part, each with "Copy", to enter on the SEC dashboard yourself: the portal files no Form ID and never asks for a password, tax number or Social Security number. "The issuer already has a CIK" records the CIK and the name as EDGAR shows it and skips the application steps; the CIK and name fill the Form D notice. "Ready to file" shows once the delegation is accepted.
-- "State filings" under an offering ticks each state where its investors live, with the first sale date there; untick a state, or add one with "Add a state". Investors with no state on file are counted in one line and tick no state. An investor in a U.S. territory other than Puerto Rico gets a state notice reminder, but a territory cannot be ordered. State notices are filed from the filed Form D: with none on record, enter its date and accession number. Every state fee and the filing system fee shows "To be confirmed" until confirmed. An admin's "Order state filings" records one order, $100 for any number of states plus the state fees once confirmed; the page itself charges and files nothing. "Record result" enters a state's filing date, filing ID, fee paid and renewal date; "Order renewal" records a $50 renewal order.
+- "Form D" under an offering opens its notice by item, pre-filled from the offering and its subscriptions: total offering amount, minimum investment, amount sold, number of investors and of non-accredited investors, and date of first sale. Each pre-filled value names its source ("From the offering", "From the subscriptions"); a value you change is kept. "Review" shows the whole notice and, under "To fix before it can be signed off", what EDGAR would refuse, each with "Go to it". An admin signs off with name and title under the SEC's Terms of Submission; "Sign off" records an order: $100 for a Form D, $50 for an amendment. The page itself charges and files nothing: "Sending it to be filed needs the portal connected to its server." "Make changes" starts a new draft from a signed notice. Once a notice is filed, "Start an amendment" begins one from it, or from the file or text of a notice filed elsewhere.
+- "EDGAR access" under an offering tracks an issuer with no EDGAR account through seven steps: each person's own sign-in, Form ID on the SEC dashboard, the printout signed before a notary, the upload, the CIK, the delegation to the filing agent and its acceptance. "Done" marks a step with its date; "Undo" takes it back. "Open the answer sheet" lays out the Form ID answers part by part, each with "Copy", to enter on the SEC dashboard yourself: the portal files no Form ID and never asks for a password, tax number or Social Security number. "The issuer already has a CIK" records the CIK and the name as EDGAR shows it, skipping the application steps; the CIK and name fill the Form D notice. "Ready to file" shows once the delegation is accepted.
+- "State filings" under an offering ticks each state where its investors live, with its first sale date; untick a state, or add one with "Add a state". Investors with no state on file are counted in one line and tick none. An investor in a U.S. territory other than Puerto Rico gets a state notice reminder, but a territory cannot be ordered. State notices are filed from the filed Form D; with none on record, enter its date and accession number. Every state fee and the filing system fee shows "To be confirmed" until confirmed. An admin's "Order state filings" records one order: $100 for any number of states, plus the state fees once confirmed; here too the page charges and files nothing. "Record result" enters a state's filing date, filing ID, fee paid and renewal date; "Order renewal" records a $50 renewal order.
 - An order shows its lines, the amount due and its status; an admin cancels a recorded order with "Cancel order".
 
 ## console-brand
@@ -463,7 +463,7 @@ menu: Settings, then Team
 anchor: Who can sign in to your console, and what each person can do.
 anchor: Invite someone
 
-Only an admin opens this page; a team member asks an admin. It lists who can sign in to the console, with each person's role and status.
+Only an admin opens this page; a team member asks an admin. Who can sign in to the console, with each person's role and status.
 
 To add a person, under "Invite someone":
 1. Enter "First name", "Last name" and "Email".
@@ -567,7 +567,7 @@ To open or download a document:
 
 "Electronic delivery of tax documents" is optional: without it, tax documents come on paper and all else works the same. To receive them here, choose "Review and consent", read the terms and choose "I consent"; a tax document waiting for you then appears in the list. An opened tax document shows the date it leaves the portal. To stop, choose "Withdraw consent": the date is shown, and "Consent again" restarts it.
 
-A second person who signs too, for example a joint owner, is added to the account by the firm as its co-investor: ask the firm's team. The co-investor has their own sign-in and is asked only for their own places, under "Waiting for your signature".
+The firm adds a second signer, for example a joint owner, as the account's co-investor: ask the firm's team. The co-investor has their own sign-in and is asked only for their own places, under "Waiting for your signature".
 
 ## updates
 audience: investor
@@ -589,8 +589,8 @@ anchor: Update bank account
 anchor: Sign-in and delivery
 
 The account's details.
-- "Investor": account title, type, primary contact, email, phone and mailing address. They cannot be edited here: to change them, contact the firm's team named there.
-- "Distribution payments": the payment method and the bank account on file. To change the bank account, choose "Update bank account", enter the new account and choose "Save bank account".
+- "Investor": account title, type, primary contact, email, phone and mailing address, not editable here: to change them, contact the firm's team named there.
+- "Distribution payments": the payment method and the bank account on file; to change the account, choose "Update bank account", enter the new one and choose "Save bank account".
 - "Tax and accreditation": the tax form on file, the last digits of the taxpayer ID and the accreditation on file. When a verification has expired, "Verify again" starts a new one.
 - "Sign-in and delivery": electronic delivery, two-step verification and the date the account was activated.
 - "Appearance": "Light", "Dark" or "Match this device". The choice is saved in this browser.
@@ -695,7 +695,7 @@ Details of the investor.
 1. Choose "Investing as": an individual, a joint account, a trust, a company or an IRA. The fields below change with the choice.
 2. Enter the legal name as on the government ID, the "Country of mailing address", the address and the "Phone". A joint account asks for "Your first name", "Your last name", "Second owner’s first name", "Second owner’s last name" and "How you hold the account".
 3. For a person, enter the "Date of birth" and "Citizenship". A trust, company or IRA is asked for its own details instead.
-4. Enter the taxpayer number the page asks for: "Social Security number", "Employer ID number (EIN)" for a company or IRA, or "Taxpayer ID (SSN or EIN of the trust)". Type the nine digits, with or without dashes or spaces: only the digits count, and the field takes up to 11 characters. Fewer than nine digits shows "Enter all nine digits." When the field says "Only if you have one.", leave it empty or give all nine digits. A number already on file shows its last four digits; leave the field empty to keep it.
+4. Enter the taxpayer number the page asks for: "Social Security number", "Employer ID number (EIN)" for a company or IRA, or "Taxpayer ID (SSN or EIN of the trust)". Type the nine digits, with or without dashes or spaces: only digits count, up to 11 characters. Fewer digits show "Enter all nine digits." Where the field says "Only if you have one.", leave it empty or give all nine digits. A number on file shows its last four digits; leave the field empty to keep it.
 5. Answer the question about senior political figures and choose "Continue".
 
 ## invite/identity
