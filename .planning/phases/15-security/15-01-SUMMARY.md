@@ -1,8 +1,8 @@
 ---
 phase: 15-security
 plan: 01
-status: blocked
-blocked_by: "full gate not passed: browser parts crashed with the disk 100% full (34 MB free), not judged"
+status: complete
+owner_check: "pending (15-11); nothing here is called working before it"
 subsystem: server sign-in
 tags: [auth, sessions, scrypt, csrf, lockout]
 requires: []
@@ -22,22 +22,23 @@ decisions:
   - "People indexed under DATA_KEY_PREVIOUS still sign in and are re-indexed under DATA_KEY"
   - "The email is sealed as typed (NFKC, trimmed); the index is of the lower-cased form"
 metrics:
-  completed: 2026-11-26
+  completed: 2026-11-27
 actuals:
   tokens: 16700      # chars/4 over auth.mjs, both tests, SOURCE.txt and the index.mjs diff; list.js is 124,683 bytes of data more
   tasks: 3
-  commits: 7
+  commits: 8         # measured before this summary update: git rev-list --count a1338b4..a2be969
 plan_head_before: a1338b462f5be391adca1a3056099d469a91dc2f
-plan_head_after: e35811c (before this summary commit)
+plan_head_after: a2be969 (the tree the gate passed on; this summary update is one more docs commit)
 ---
 
 # Phase 15 Plan 01: the server's own sign-in (people, scrypt passwords, one session cookie, waits and locks, the open server closed)
 
 ## Failures first
 
-1. **The full gate did not pass, and it was not judged on the code.** Task 3's gate (`GATE_OUT=SCRATCH/exec-15-01/gate bash gate13.sh`)
-   ran its reference part with the machine's disk at 100% (`/dev/vda 252G 39G 34M 100% /`; 25 GB of it is other agents'
-   scratch folders, which I did not touch). Every browser part failed with the browser itself dying:
+1. **The first full-gate run failed because the machine ran out of disk, not because of the code. The reruns passed.**
+   Task 3's gate (`GATE_OUT=SCRATCH/exec-15-01/gate bash gate13.sh`) first ran its reference part with the disk at 100%
+   (`/dev/vda 252G 39G 34M 100% /`; 25 GB of it was other agents' scratch folders, which I did not touch). Every browser
+   part failed because the browser itself died:
    `FAIL sign-w9 ran to the end :: page.screenshot: Target crashed`, `FAIL full ran to the end :: page.evaluate: Target crashed`,
    `page.goto: net::ERR_INSUFFICIENT_RESOURCES`, then `browser.newContext: Target page, context or browser has been closed`
    for every later case. The reference lines it printed:
@@ -53,12 +54,23 @@ plan_head_after: e35811c (before this summary commit)
    GATE FAIL MEASURE
    GATE FAIL owner's folder: index.txt and four signed PDFs
    ```
-   I stopped the run there (it was queued for a browser slot, and every later browser step would have crashed the same way
-   and taken disk and a slot from other agents). TWO PERSONS starts no server (its check and phase 4's lib.js name no
-   server route), so that failure cannot come from this plan's server-only change; the others crashed the same way.
-   **Needed:** free disk, then rerun Task 3's verify (`bash SCRATCH/exec-15-01/tools/verify3.sh`, which is the plan's
-   verify with B2 applied) into the same folder. Until that run ends `GATE_EXIT=0` with
-   `GATE ok server tests 438 = base 422 + 16 declared`, this plan is not done.
+   I stopped that run (every later browser step would have crashed the same way). Once there was disk again I reran Task 3's
+   verify (`bash SCRATCH/exec-15-01/tools/verify3.sh`, the plan's verify with B2 applied) into the same folder, on tree
+   a2be969. That run and the next one each hit the 2-hour background limit while waiting for the shared browser slots
+   (heavy.sh; up to 30 minutes per step). Each rerun into the same folder kept the steps that had already passed. The
+   third run finished:
+   ```
+   GATE ok   server tests 438 = base 422 + 16 declared
+   ...
+   GATE ok   phase 13 checks: none in this tree
+   GATE_EXIT=0
+   VERIFY3_EXIT=0
+   ```
+   That is 86 `GATE ok` lines and 0 `GATE FAIL` lines across the reference gate (FORMS FLOW (34), STATUS FLOW (26), SERVER
+   MODE (15), TWO PERSONS, MEASURE, the owner's folder, EMAIL DIALOG, WAYS OUT, NO NETWORK, SAFARI FINISH, the signing and
+   record base comparisons and the rest) and phases 08 to 12 (AML RECORD, PACKAGE *, FILINGS *, FORMD *, DIST *, TAX *,
+   books, REPORTS *). Phase 13 has no checks in this tree. The browser steps that crashed in the first run all passed on
+   the same code.
 2. The plan's numbers that did not hold (measured, not failures of the code):
    - At the base, POST /v1/auth/signup answered **404**, not 401 (the open server reached the invitations module, which
      owns no such path).
@@ -83,7 +95,8 @@ plan_head_after: e35811c (before this summary commit)
 - Full server suite (all.txt, before the gate): `# tests 438` `# pass 438` `# fail 0` `# duration_ms 32994.858935`
   = base 422 (measured at a1338b4: `# tests 422` `# pass 422` `# fail 0`) + 16.
 - The diff check: http.mjs, store.mjs, accounts.mjs and README.md unchanged from a1338b4.
-- Gate: see Failures first (not passed, environment).
+- Gate (gate.txt, third run on a2be969): `GATE ok   server tests 438 = base 422 + 16 declared`, 86 `GATE ok`, 0 `GATE FAIL`,
+  last line `GATE_EXIT=0`; verify3.sh ended `VERIFY3_EXIT=0` (its own suite run: `# tests 438`, `# fail 0`).
 - scrypt (N=2^15, r=8, p=3, 32 bytes): 260 ms for one check run alone on this machine. auth.test.mjs alone takes
   24 to 30 s (lockout 9.1 s, per address 9.0 s: those are real scrypt runs).
 
@@ -107,6 +120,7 @@ plan_head_after: e35811c (before this summary commit)
 - 1e65c12 test(15-01): RED sessions at the sponsor gate
 - aeb864d feat(15-01): sessions at the sponsor gate; the open server closes once anyone signs up
 - e35811c wip(15-01): save summary draft before the gate
+- a2be969 docs(15-01): summary, failures first (the tree the gate passed on)
 
 ## Interfaces as built (for 15-04, 15-05, 15-06, 15-14, 15-15, 15-17)
 As in the plan's interfaces block, with these differences:
@@ -172,6 +186,6 @@ until 15-04); GET /v1/admin/people, POST /v1/admin/people/:id/unlock behind ADMI
 
 ## Self-Check
 - Files: server/lib/auth.mjs, server/test/auth.test.mjs, server/test/auth-gate.test.mjs, assets/vendor/pwlist/{list.js,
-  SOURCE.txt, SHA256SUMS, LICENSE} exist; commits 5c71184, b29cc1f, b1a0505, af02eec, 1e65c12, aeb864d, e35811c are on
-  wip/15-01.
-- Self-Check: FAILED on the plan's done criterion only: the full gate has not passed (Failures first, item 1).
+  SOURCE.txt, SHA256SUMS, LICENSE} exist; commits 5c71184, b29cc1f, b1a0505, af02eec, 1e65c12, aeb864d, e35811c, a2be969
+  are on origin/wip/15-01.
+- Self-Check: PASSED. The suite is base + 16, the full gate passed with every phase, and the owner's check (15-11) is still to come.
