@@ -416,6 +416,12 @@ async function layout(check, what) {
   r.broken.forEach((b) => console.log(`BROKEN WORD ${what}: ${b}`));
   const tables = Array.from(new Set(r.broken.map((b) => b.split(':')[0])));
   check(`on the phone, no word in the preview's tables is broken across lines (${r.broken.length} broken${tables.length ? ', in ' + tables.join(', ') : ''})`, r.broken.length === 0, r.broken.slice(0, 6));
+  // a table wider than the phone scrolls in its own box: its title and first column stay at the box's left edge, and
+  // no figure is cut (debug report-preview-tables-phone)
+  const L = await F.tableLayout(W.fr);
+  const wide = L.filter((x) => x.wide);
+  const cut = [].concat(...L.map((x) => x.cut.map((c) => `${x.title}: ${c}`)));
+  check(`on the phone, each table wider than its box keeps its title and first column in place when scrolled to its end, and no figure is cut (${wide.map((x) => x.title).join(', ') || 'none wide'})`, wide.every(F.heldInPlace) && cut.length === 0, { held: wide.map((x) => [x.title, x.held]), cut });
 }
 
 /* ---------- the steps ---------- */

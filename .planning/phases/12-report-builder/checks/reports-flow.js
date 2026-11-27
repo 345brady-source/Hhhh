@@ -165,6 +165,63 @@ async function sizes(fr, selector) {
     return { name: (b.getAttribute('aria-label') || b.innerText || '').trim().slice(0, 40), w: Math.round(r.width), h: Math.round(r.height) };
   }), selector);
 }
+/**
+ * The preview's tables as the frame draws them: for each, its title, columns, width and its box's width; the words of its
+ * cells broken across lines (a column too narrow for its words); the cells that may break inside a word (overflow-wrap
+ * not normal: the cause of the phone fault, anywhere lets a table squeeze a column to one letter); the figures cut (a .num
+ * cell narrower than its text);
+ * whether its first column is fixed; and, when it is wider than its box, where its title and the first cell of each row
+ * are once the box is scrolled to its end (0 = still at the box's left edge). The box is scrolled back afterwards.
+ */
+async function tableLayout(fr) {
+  return fr.evaluate(() =>
+    Array.from(document.querySelectorAll('#rb-preview table')).map((t) => {
+      const cap = t.querySelector('caption');
+      const box = t.parentElement;
+      const broken = [];
+      t.querySelectorAll('th, td').forEach((c) => {
+        const w = document.createTreeWalker(c, NodeFilter.SHOW_TEXT);
+        let n;
+        while ((n = w.nextNode())) {
+          const re = /\S+/g;
+          let m;
+          while ((m = re.exec(n.textContent))) {
+            const rg = document.createRange();
+            rg.setStart(n, m.index);
+            rg.setEnd(n, m.index + m[0].length);
+            if (new Set(Array.from(rg.getClientRects()).map((x) => Math.round(x.top))).size > 1) broken.push(m[0]);
+          }
+        }
+      });
+      const loose = Array.from(t.querySelectorAll('th, td')).filter((c) => getComputedStyle(c).overflowWrap !== 'normal').length;
+      const cut = Array.from(t.querySelectorAll('.num')).filter((c) => c.scrollWidth > c.clientWidth + 1).map((c) => c.innerText.trim());
+      const wide = box.scrollWidth > box.clientWidth + 1;
+      let held = null;
+      if (wide) {
+        box.scrollLeft = box.scrollWidth;
+        const left = box.getBoundingClientRect().left;
+        held = { caption: Math.round(cap.getBoundingClientRect().left - left), first: Array.from(t.rows).map((r) => Math.round(r.cells[0].getBoundingClientRect().left - left)) };
+        box.scrollLeft = 0;
+      }
+      return {
+        title: cap ? cap.innerText.trim() : '',
+        cols: t.rows[0] ? t.rows[0].cells.length : 0,
+        w: Math.round(t.getBoundingClientRect().width),
+        box: box.clientWidth,
+        wide,
+        broken,
+        loose,
+        cut,
+        fixed: !!t.rows[0] && getComputedStyle(t.rows[0].cells[0]).position === 'sticky',
+        held
+      };
+    })
+  );
+}
+/** One line per table: title (columns, width in its box). */
+const tablesLine = (L) => L.map((x) => `${x.title} (${x.cols} columns, ${x.w} px in ${x.box} px${x.wide ? ', scrolls sideways' : ''})`).join('; ');
+/** A table wider than its box keeps its title and first column at the box's left edge when scrolled to its end. */
+const heldInPlace = (x) => !!x.held && x.held.caption === 0 && x.held.first.every((v) => v === 0);
 const lastLog = (fr) => fr.evaluate(() => {
   const a = window.CVPortal.state.ws.audit || [];
   return a.length ? a[a.length - 1].action : '';
@@ -212,6 +269,16 @@ const parts = {
     check(`the preview's capital account ends at ${want.end} for ${want.id}, as NS.audit.period gives (Q4 2026)`, !!cap && cap.foot && cap.foot[0] === 'Ending capital' && cap.foot[1] === want.end, { cap, want });
     check('the preview names the investor', st.text.indexOf(`Prepared for ${want.title}`) >= 0, st.text.slice(0, 300));
     check('no error stands and See the PDF is on', st.errors.length === 0 && st.pdf === true, st);
+    // the tables as the phone draws them: whole words, and a wide table scrolls in its own box with its title and first
+    // column in place (debug report-preview-tables-phone: text columns were squeezed to one letter)
+    const L = await tableLayout(fr);
+    console.log(`preview tables on the phone: ${tablesLine(L)}`);
+    const broken = [].concat(...L.map((x) => x.broken.map((b) => `${x.title}: '${b}'`)));
+    const loose = L.reduce((n, x) => n + x.loose, 0);
+    check(`on the phone, no word in the preview's tables is broken across lines (${broken.length} broken) and every cell breaks only between words (overflow-wrap normal; ${loose} cells not)`, L.length >= 3 && broken.length === 0 && loose === 0, broken.slice(0, 6));
+    const wide = L.filter((x) => x.wide);
+    const cut = [].concat(...L.map((x) => x.cut.map((c) => `${x.title}: ${c}`)));
+    check(`on the phone, each table wider than its box keeps its title and first column in place when scrolled to its end, and no figure is cut (${wide.map((x) => x.title).join(', ') || 'none wide'})`, wide.length >= 1 && wide.every(heldInPlace) && cut.length === 0, { held: wide.map((x) => [x.title, x.held]), cut });
     await A.page.screenshot({ path: path.join(OUT(), 'phone-preview.png') });
     await T.press(fr, '[data-action=rb-pdf]');
     const drawn = await fr
@@ -497,6 +564,11 @@ const parts = {
     await previewFor(fr, { who: 'fund', as: 'KBC-1001' });
     const st = await previewState(fr);
     check('the preview is for KBC-1001 with no error', st.errors.length === 0 && st.text.indexOf('Prepared for') >= 0, st.errors);
+    // the desktop look the phone fix must leave alone: every table fits its box, words whole, no column fixed
+    const L = await tableLayout(fr);
+    console.log(`preview tables at 1280 px: ${tablesLine(L)}`);
+    const off = L.filter((x) => x.wide || x.fixed || x.broken.length || x.loose || x.cut.length).map((x) => ({ title: x.title, wide: x.wide, fixed: x.fixed, broken: x.broken.slice(0, 3), loose: x.loose, cut: x.cut.slice(0, 3) }));
+    check(`at 1280 px every preview table fits its box (none scrolls sideways), with no word broken (every cell breaks only between words), no figure cut and no fixed column (${L.length} tables)`, L.length >= 4 && off.length === 0, off);
     const model = await fr.evaluate((fund) => {
       const NS = window.CVPortal;
       const w = NS.state.ws;
@@ -722,4 +794,4 @@ const parts = {
 if (require.main === module) {
   Lib.runParts(parts, { name: 'REPORTS FLOW', unit: 'parts', flag: '--only', browser: true });
 }
-module.exports = { parts, open, toTab, create, previewState, previewFor, openSec, png };
+module.exports = { parts, open, toTab, create, previewState, previewFor, openSec, png, tableLayout, heldInPlace };
