@@ -1,5 +1,5 @@
 ---
-status: fixing
+status: verifying
 trigger: "SERVER MODE printed once `SERVER MODE: FAIL (parts run: 15) - tax-request` at 75b2fc5 (after merging 13-03); two immediate reruns PASS; failing run's detail not kept"
 created: 2026-11-27T00:00:00Z
 updated: 2026-11-27T00:00:00Z
@@ -11,7 +11,7 @@ updated: 2026-11-27T00:00:00Z
 hypothesis: server-mode.js:1588-1596 (tax-request) reads `snaps` right after the first heading, but the listener pushes each GET /v1/invite body only after its own `await res.json()`, a second round trip to the browser after the response event; when the check's node process is held up for longer than the ~80-130 ms margin (load, GC), the heading wins and snaps is [] -> only "the snapshot is a tax-form request ..." FAILs
 bug_class: Heisenbug (1 failure seen in 3 runs under 3-4 gates; 0 in 45 unmodified reruns)
 test: fix applied to the tree; verification: server tests, SERVER MODE x10 full, CO-INVESTOR SERVER, EMAIL DIALOG
-next_action: apply fix/apply.py to the tree's server-mode.js, commit, push; then run the verification set
+next_action: wait for SERVER MODE x10 full (run-201..210, two loops), CO-INVESTOR SERVER (coinv-1), EMAIL DIALOG (emaildlg-1), pinned stress runs; record each
 
 reasoning_checkpoint:
   hypothesis: "The tax-request part FAILed once because the check read the snapshot list at the device's first heading while the body of GET /v1/invite was still on its way to the check (server-mode.js:1589 pushes after await res.json(); 1596 reads with no wait for it)."
@@ -96,6 +96,11 @@ started: first seen at 75b2fc5 (13-03 merged); 13-03's own gate on base 8efaa5c 
     rg-red-clean (TIMING_CLEAN_DELAY=1500) | SERVER MODE: FAIL (parts run: 1) - clean | 11 PASS, 2 FAIL: FAIL clean the investor's page received the snapshot from the server :: 0; FAIL clean the investor in the snapshot is the invited investor alone
     rg-green-clean (TIMING_CLEAN_DELAY=1500) | SERVER MODE: PASS (parts run: 1) | 13 PASS, 0 FAIL
   implication: the fix makes both reads independent of when the body reaches the check, and checks the same snapshot fields as before
+
+- timestamp: 2026-11-27T15:15Z
+  checked: fix committed d146e80 (server-mode.js only, the verified scratch copy byte for byte); `cd server && node --test` on the fixed tree (node_modules linked)
+  found: `# tests 584` `# pass 584` `# fail 0` rc=0 (debug-tax-flake/server-tests.txt)
+  implication: server suite unchanged (the fix touches only the check)
 
 ## Resolution
 
