@@ -392,7 +392,11 @@ const parts = {
     const r = neverBank(ach[3], 4);
     const chk = holders.find((i) => i.payment && i.payment.method === 'check') || Object.assign(ach[4], { payment: { method: 'check', bank: null } });
     check('the distribution has an ACH, a savings, a wire, a returned and a check payee', !!(a && s && w && r && chk) && new Set([a, s, w, r, chk]).size === 5);
+    // a new account, held out of the file (its pre-note first)
+    const held = neverBank(ach.filter((i) => ![a, s, w, r, chk].includes(i))[0], 6);
+    R.markNew(held, '2026-11-16T15:00:00.000Z');
     const rows = R.fileEntries(ws, holders.map((investor) => ({ investor, cents: 1000 })), { today: '2026-11-17', effective: date }).entries;
+    check('the held account is not in the file', !rows.some((x) => x.id === held.id));
     const { rec } = sendFile(NS, ws, rows, { effective: date, now: new Date(2026, 10, 17, 10, 0), at: '2026-11-17T15:00:00.000Z' });
     const run = NS.data.recordRun(ws, { offeringId: 'kb-fund-ii', date, type: 'Distribution', total: 3000000 }, { by: ADMIN, today: '2026-11-17', id: 'kb-fund-ii-2026-11-18-s' });
     R.attach(ws, rec.id, run.id);
@@ -428,6 +432,12 @@ const parts = {
     const sInv = ws.investors.find((i) => NS.data.runLines(ws, seeded).lines.some((l) => l.investorId === i.id) && i.payment.method === 'ach' && i !== w);
     const sd = R.lineStatus(ws, seeded, sInv.id, TODAY) || {};
     check('a seeded paid run (no file record) reads paid by ACH to the account on file', sd.status === 'paid' && sd.method === 'ach' && sd.ending === String(sInv.payment.bank.account).slice(-4) && /^Paid by ACH to the (checking|savings) account ending \d{4}$/.test(sd.words), { status: sd.status, method: sd.method });
+    const ph = st(held.id);
+    check("a line held out of the run's sent file: 'held', 'Not paid yet' (never 'Paid by ACH')", ph.status === 'held' && ph.method === 'ach' && ph.words === 'Not paid yet', ph);
+    const wv = ws.investors.find((i) => NS.data.runLines(ws, seeded).lines.some((l) => l.investorId === i.id) && i.payment.method === 'ach' && i !== sInv);
+    wirePayee(wv);
+    const sw = R.lineStatus(ws, seeded, wv.id, TODAY) || {};
+    check("a payment made before the investor's wire details were saved: 'Paid', method unknown (not wire, not check)", sw.status === 'paid' && sw.method === '' && sw.words === 'Paid' && sw.wireSent === null, sw);
     check('lineStatus takes the run or its id, and is null for an investor with no line', J(R.lineStatus(ws, run.id, a.id, TODAY)) === J(pa) && R.lineStatus(ws, run, 'KBC-0000', TODAY) === null);
   },
 
