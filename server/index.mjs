@@ -20,7 +20,10 @@
  *   POST /v1/intake               read an offering's documents for the intake screen (lib/intake.mjs; ndjson stream)
  *   POST /v1/read                 read an uploaded subscription agreement's places (lib/read.mjs)
  *   POST /v1/help                 answer a question about using the portal (lib/help.mjs)
- *   GET  /health                  which providers are configured, and whether reading is available
+ *   GET  /health                  which providers are configured, whether reading is available, and warnings (pages, security.txt)
+ *   GET  /.well-known/security.txt  the security contact (RFC 9116), from SECURITY_CONTACT and SECURITY_TXT_EXPIRES
+ *   GET  /, /portal.html, /assets/…  with SERVE_PORTAL=1, the portal's own pages (lib/pages.mjs)
+ *   GET/PUT /v1/workspace, …/files/:id  the firm's workspace, sealed, checked by role (lib/workspace.mjs)
  *
  * Investor invitations (lib/invitations.mjs; see README.md):
  *   POST /v1/invitations          the console invites an investor; this server emails the link
@@ -62,6 +65,8 @@ import { createAuth } from './lib/auth.mjs';
 import { createAuditLog, SERVER } from './lib/auditlog.mjs';
 import { createGuards, can } from './lib/roles.mjs';
 import { createTeam } from './lib/team.mjs';
+import { createWorkspaces } from './lib/workspace.mjs';
+import { createPages } from './lib/pages.mjs';
 import { createBilling } from './lib/billing.mjs';
 import { changedChecks } from './lib/changed.mjs'; // GET /v1/checks/changed (plan 08-08)
 import { createFilings } from './lib/filings.mjs';
@@ -198,6 +203,8 @@ export function createServer(opts = {}) {
   const signin = createAuth({ env, store, vault: invites.vault, now, clientOf: (req) => clientOf(req, env), invites, accounts, audit: changeLog }); // people, passwords and the session cookie (plan 15-01)
   const guards = createGuards({ signin, store, now }); // the route table's checks (lib/roles.mjs, plan 15-05)
   const team = createTeam({ store, signin, audit: auditLog, now, env }); // the firm's people, roles and invitations (plan 15-05)
+  const workspaces = createWorkspaces({ env, store, vault: invites.vault, now, audit: auditLog, signin }); // the firm's workspace, sealed, by role (plan 15-06)
+  const pages = opts.pages || createPages({ env, now }); // the portal's own pages and security.txt from this server (plan 15-13, mounted by 15-06)
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
   const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
@@ -744,8 +751,14 @@ export function createServer(opts = {}) {
     const ownPage = /^\/(sandbox|hosted|billing)\//.test(path);
     if (!ownPage && !cors(req, res, env.PORTAL_ORIGIN)) return send(res, 403, { error: 'Origin not allowed' });
     if (req.method === 'OPTIONS') return send(res, 204, '');
+    // The portal's own pages (SERVE_PORTAL=1): a fixed list made at start-up, before any API route (lib/pages.mjs, C-07).
+    if (pages.has(req.method, path) && pages.serve(req, res, path)) return;
+    if (req.method === 'GET' && path === '/.well-known/security.txt') {
+      const t = pages.securityTxt();
+      return t.status === 200 ? send(res, 200, t.body, { 'Content-Type': t.type, 'X-Content-Type-Options': 'nosniff' }) : send(res, 404, { error: 'Not found' });
+    }
 
-    if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS), reader: await readerOn() });
+    if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS), reader: await readerOn(), warnings: pages.health().warnings });
     // Sign-in (lib/auth.mjs): before every token dispatch, so an invitation token sent to POST /v1/invite/login reaches it.
     if (path.startsWith('/v1/auth/') || (req.method === 'POST' && path === '/v1/invite/login')) return signin.handle(req, res, path);
 
@@ -945,6 +958,14 @@ export function createServer(opts = {}) {
         throw e;
       }
     }
+    if (auth && /^\/v1\/workspace(\/|$)/.test(path)) {
+      try {
+        return await workspaces.handle(req, res, url, auth); // the firm's workspace (lib/workspace.mjs); its refusals reach the change log
+      } catch (e) {
+        if (e.refused) logRefusal(auth, req, path, e.refused);
+        throw e;
+      }
+    }
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
     if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)
@@ -1063,6 +1084,7 @@ export function createServer(opts = {}) {
   server.store = store;
   server.signin = signin;
   server.audit = auditLog;
+  server.workspaces = workspaces;
   server.invitations = invites;
   server.taxdocs = taxdocs;
   server.on('close', () => invites.stop());
