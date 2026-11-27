@@ -1,6 +1,6 @@
 ---
 task: scan-tokens
-status: in-progress
+status: complete
 start_commit: 9815af5e4999469fba39d73263e635c2f0eb3ef2
 branch: wip/scan-tokens
 ---
@@ -85,4 +85,45 @@ text outside links is unchanged and 500 fresh `randomBytes(32)` invite tokens ne
 - Start tree 9815af5 (full `git archive` copy in the scratchpad, same node_modules): `# tests 506  # pass 506  # fail 0`
 - After the fix: `# tests 509  # pass 509  # fail 0` (44.5 s wall) = 506 + the 3 tests of scan-tokens.test.mjs.
 
-<!-- gsd:write-continue -->
+## Phase 6 checks that run lib.js `leakCheck` over emails (once each, through heavy.sh, P6_OUT in the scratchpad)
+
+Callers of `leakCheck` that put email text in: co-investor-server.js (568, 654), server-mode.js (1643 tax-request,
+1720 include-tax). email-dialog.js does not call `leakCheck` in this tree; it was run because the task names it.
+
+- `EMAIL DIALOG: PASS (parts run: 3)` - 62 PASS, 0 FAIL
+- `CO-INVESTOR SERVER: PASS (parts run: 5)` - 132 PASS, 0 FAIL, including
+  `PASS cosign-desktop white label in the console row and the co-investor’s email` and the phone twin
+- `SERVER MODE: PASS (parts run: 2)` with `--only tax-request,include-tax` (the two parts that scan emails) - 46 PASS,
+  0 FAIL, including `PASS tax-request tax-request: white label: the email, the done screen and the console row pass the
+  leak check` and `PASS include-tax include-tax: white label: the emails, the done screen and the console row pass the
+  leak check`. The other server-mode parts were not run (they scan screens only).
+
+## Limits (known, not hidden)
+
+- A path word of 16+ characters that mixes capitals, small letters and digits (for example `PoweredByCarrow2026`) would
+  be taken out by the fallback rule and not scanned. Lower-case or digit-free path words, every host, all text outside
+  links, and the subject are always scanned. The product's own tokens sit after `#invite-`, `#room-`, `#taxdoc-`,
+  which the first rule strips whatever their letters.
+- Only text inside `http(s)://` links is touched; a token printed outside a link would still be scanned (the product
+  prints none).
+
+## Deviations
+
+None from the task. No product code changed (only server/test and the phase 6 checks' lib.js). STATE.md / ROADMAP.md
+not touched (quick task on a wip branch, not merged).
+
+## Files changed
+
+- server/test/helpers.mjs (stripLinkTokens)
+- server/test/scan-tokens.test.mjs (new, `// gate: tests 3`)
+- server/test/invitations-cosign.test.mjs, invitations-reverify.test.mjs, invitations-taxrequest.test.mjs,
+  invitations-includetax.test.mjs, invitations-existing.test.mjs, invitations.test.mjs, mail.test.mjs,
+  review-round2.test.mjs (vendor scans wrapped)
+- .planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js (stripLinkTokens,
+  used in leakCheck, exported)
+
+## Self-Check: PASSED
+
+The planted script, the parity script and the outputs are in
+/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/scan-tokens/ (red.txt, green.txt,
+suite-start.txt, suite-after.txt, check-email-dialog.txt, check-co-investor-server.txt, check-server-mode.txt).
