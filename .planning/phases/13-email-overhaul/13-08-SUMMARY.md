@@ -38,6 +38,41 @@ plan_head_after: see the final commit of this summary
 
 # Phase 13 Plan 08: e-sign notices and portal emails Summary
 
+## Paused (owner's indefinite pause, 2026-11-27)
+
+**Failures first.**
+- **The gate is not finished: no GATE_EXIT.** It was killed at the pause, partway through phase 08's checks; phase 10 and phase 13 checks had not run. At that point it had printed 36 "GATE ok" lines and 1 "GATE FAIL".
+- **The one FAIL is CO-INVESTOR SERVER (5)**, part cosign-forged. The check was not edited by this plan; it may be affected by this plan's void change (with a server, void now also posts to /v1/messages). The exact line, from GATE_OUT/gate/coserver.txt:
+  `FAIL cosign-forged after the firm voided the agreement, the submission changes nothing and the audit line says it is no longer out for signature :: {"said":["Co-investor signature not used: Daniel Whitaker: the agreement signed on Oluwaseun Brightwater's device came back, but Oluwaseun Brightwater has already signed it; nothing was changed","Co-investor signature not used: Daniel Whitaker: the agreement signed on Oluwaseun Brightwater's device came back, but the agreement is no longer out for signature (voided); nothing was changed"],"status":"voided","check":{"finished":true,"toast":"Checked. Nothing new."}}`
+  It has not yet been rerun alone. That is required and still owed, before anything is called noise.
+- **The guide prose is still untrue.** server/help/guide.md line 471 (console-team) still says "They get an email to set a password and turn on two-step sign-in." That is 13-10's text, not this plan's.
+
+**The orchestrator's three decisions ("Decision during 13-08"): all three are built and pass on this tree.**
+1. **Server-mode line in place of the switch: done.** With a server, the Account page shows no "Invitations to new offerings" switch. In its place it shows "To stop invitations to new offerings, use the link at the bottom of any such email." The change handler also refuses that key in server mode. With no server, the three switches stay as built.
+2. **Guide skip line: done** (commit 52f7681). It is exactly one line under `## skip`. `node server/help/build.mjs` regenerated server/lib/help-guide.mjs with no byte change, and `--verify` says it is in sync. The help tests pass 9 of 9.
+3. **Honest dialog words: done, self-serve only; managed-same passes, byte-identical.**
+   - Void dialog with a server: "Reason (kept with the envelope, not emailed)".
+   - Review dialog with a server: no "Email subject" field, and the message is labelled "Message (shown on the signing page)". es-send keeps the existing subject when the field is absent.
+   - Team hint without a server: "They get an email to set a password and turn on two-step sign-in (simulated in this demo)."
+   - Team hint with a server: "The invitation is saved here; it is emailed once sign-in accounts are connected."
+   - B2 itself moved to 15-17; index.mjs and roles.mjs were not touched.
+
+**Last RED, GREEN and verify lines.**
+- RED (red-3.txt; the check was committed in d55b213, then the void label was narrowed to the wording above in ecd6661):
+  - `FAIL team-honest no server: the Team page hint says "They get an email to set a password and turn on two-step sign-in (simulated in this demo)." :: They get an email to set a password and turn on two-step sign-in.`
+  - `FAIL server-words with a server: the review dialog has no "Email subject" field (the server's notice has its own subject) :: ["Email subject","Message (shown in the email and on the signing page)","Recipients"]`
+  - `FAIL server-words ran to the end :: page.evaluate: TypeError: Cannot read properties of undefined (reading 'value') at NS.forms.es-send`
+  - `PORTAL MAIL: FAIL (parts run: 2) - team-honest, server-words`
+- GREEN (portal-2.txt, code in ecd6661): `PORTAL MAIL: PASS (parts run: 9)`, 115 PASS lines, 0 FAIL. The check now has 9 parts: server-words was added, and its `// last` line says 9.
+- **Server tests: 606 of 606 pass** (base 605 + 1 declared). The gate's own step agreed: `GATE ok   server tests 606 = base 605 + 1 declared`.
+- Gate lines that passed before the stop include: SIGNING DOCUMENTS (8), PRESS AND CO-INVESTOR (10), RECORD AND LOST AGREEMENT (7), "signing/record: no FAIL the base lacks", and AML RECORD (7).
+
+**Next step to resume.**
+1. Rerun CO-INVESTOR SERVER alone twice through heavy.sh, with server/node_modules linked: `NODE_PATH=$(npm root -g) bash <scratchpad>/exec-011/heavy.sh node .planning/phases/06-*/checks/co-investor-server.js --only cosign-forged`. Report both results with the exact lines.
+2. If it fails because of this plan's void change, fix it in esign.js (RED first).
+3. Rerun the gate into the same folder: `rm -f $O/gate.txt; GATE13_PHASES="08 10" GATE_OUT=<scratchpad>/exec-13-08 bash .planning/phases/13-email-overhaul/checks/gate13.sh`, in the background with timeout 7200000. Steps that already passed are kept. Stay with it until GATE_EXIT.
+4. Update this summary, push wip/13-08, and hand back. Do not merge.
+
 The self-serve console's e-sign moments now go through the firm's integration server as portal-link notices (no document, no signing link), every toast that claimed a send that never happened is honest, the investor has three email switches on the Account page, and an unsubscribe link opens a page on the firm's own portal. PORTAL MAIL passes 8 of 8 parts. The plan is NOT complete: B2 is not built, one server test fails because of the new page, and the gate was not run. Nothing here is ready until the owner has checked it.
 
 ## Failures and what is not done (first)
