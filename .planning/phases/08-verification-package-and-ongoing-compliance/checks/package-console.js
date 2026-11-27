@@ -9,7 +9,8 @@
 //                    but the console hears a refused connection, so it reads "Not sent yet"; the package's check is then
 //                    started and the server's invitation cancelled; sent again, the server answers 409 package_used: its
 //                    sentence on screen word for word, the old invitation closed, a new invitation for the same investor,
-//                    offering, amount and package choice with a new id reading "Not sent yet", nothing charged and nothing
+//                    offering, amount and package choice with a new id reading "Not sent yet" (the closed one, never sent,
+//                    reads "Created <time>" under Activity, never "Sent <time>"), nothing charged and nothing
 //                    sent by itself; sending the new one pays one new package at the server's price
 //   tier-mismatch    the console's invitation id is paid at the identity tier (POST /v1/billing/entitlements, the account's
 //                    token), then the sponsor sends that invitation to a Rule 506(c) offering with the box ticked: the real
@@ -413,6 +414,8 @@ const parts = {
       await listTab(p, 'all');
       const oldRow = await rowText(p, one.id);
       check('on "All", the old invitation\'s row shows the server\'s sentence word for word', !!SENT && oldRow.indexOf(SENT) >= 0 && /Cancelled/i.test(oldRow), oldRow);
+      const oldWhen = await p.evaluate((id) => Array.from(document.querySelectorAll(`tr[data-invitation="${id}"] .inv8-activity .inv8-when`)).map((e) => e.textContent.trim()), one.id);
+      check('the old invitation, closed and never sent, reads "Created <time>" under Activity, never "Sent <time>"', oldWhen.length >= 1 && /^Created \S/.test(oldWhen[0]) && !oldWhen.some((t) => /^Sent\b/.test(t)), oldWhen);
       const audited = await p.evaluate((s) => (window.CVPortal.state.ws.audit || []).filter((a) => a.action === 'Invitation replaced' && String(a.detail || '').indexOf(s) >= 0).length, SENT);
       check('one audit entry "Invitation replaced" with the server\'s sentence', audited === 1, audited);
       await C.A.page.screenshot({ path: path.join(SHOTS, 'used-all.png') });
