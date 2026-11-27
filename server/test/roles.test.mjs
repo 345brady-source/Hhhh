@@ -283,6 +283,7 @@ test('each role', async () => {
       ['POST', '/v1/billing/card/setup', 'account', {}],
       ['POST', '/v1/billing/entitlements', 'spend', { items: [] }],
       ['POST', '/v1/taxdocs', 'operate', {}],
+      ['GET', '/v1/team', 'team'],
       ['GET', '/v1/audit', 'audit'],
       ['POST', '/v1/filings/orders', 'spend', {}]
     ];
@@ -326,7 +327,7 @@ test('tokens once people exist', async () => {
     for (const [label, bearer, q] of [['the firm’s account token', mine, ''], ['the shared API_TOKEN', API, `?workspace=${owner.ws}`]]) {
       const inv = await call(base, 'GET', `/v1/invitations${q}`, { bearer, origin: '' });
       assert.equal(inv.status, 200, `${label}: the automation routes stay open (${inv.text})`);
-      for (const path of ['/v1/billing', '/v1/audit', '/v1/outbox']) {
+      for (const path of ['/v1/billing', '/v1/team', '/v1/audit', '/v1/outbox']) {
         const r = await call(base, 'GET', path + q, { bearer, origin: '' });
         assert.deepEqual([r.status, r.body], [403, { error: 'This needs a person signed in.', code: 'person' }], `${label} ${path}`);
       }
