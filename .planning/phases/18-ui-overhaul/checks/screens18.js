@@ -315,42 +315,6 @@ function line(part, key, res) {
  * recorded (root = the open dialog) and closed by its X.
  */
 const D = (file, nth, line, what, editions, setup, open) => ({ file, nth, line, what, editions, setup, open });
-const DIALOGS = [
-  // recorded twice: with no server (the one sentence), then with the preview's stand-in for the server (the field and Send)
-  Object.assign(D('help.js', 1, 171, 'Help', ['diy'], 'helpPreview', [{ route: 'console' }, { press: '[data-action="help-open"]' }]), { first: ['none', ' (no server)'] }),
-  D('invitations.js', 5, 2949, 'Notifications (the bell)', ['diy'], 'none', [{ route: 'console' }, { press: '[data-action="inv8-bell"]' }]),
-  D('console.js', 1, 1047, 'Invitation email (an investor invited before invitations were recorded)', ['diy', 'managed'], 'none', [{ route: 'console-investors' }, { press: '[data-action="invite-preview"][data-id="{invited}"]' }]),
-  D('coinvestor.js', 3, 270, 'Account (an investor on file)', ['diy', 'managed'], 'none', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }]),
-  D('coinvestor.js', 4, 295, 'Add co-investor', ['diy', 'managed'], 'none', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }, { press: '#dlg [data-action="co-add"]' }]),
-  D('coinvestor.js', 5, 306, 'Add co-investor with its field messages (an empty form submitted: nothing is saved)', ['diy', 'managed'], 'none', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }, { press: '#dlg [data-action="co-add"]' }, { fill: ['#co-first', ''] }, { fill: ['#co-last', ''] }, { fill: ['#co-email', ''] }, { press: '#dlg [data-form="co-save"] button[type="submit"]' }]),
-  D('coinvestor.js', 2, 130, 'Co-investor sign-in email', ['diy'], 'coSignIn', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }, { press: '#dlg [data-action="co-link"]' }]),
-  D('coinvestor.js', 6, 355, 'Remove the co-investor?', ['diy', 'managed'], 'coSignIn', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }, { press: '#dlg [data-action="co-remove"]' }]),
-  D('coinvestor.js', 1, 122, 'Co-investor sign-in email, the link expired', ['diy'], 'coExpired', [{ route: 'console-investors' }, { press: '[data-action="co-record"][data-id="{inv}"]' }, { press: '#dlg [data-action="co-link"]' }]),
-  D('console.js', 3, 1677, 'Cancel this distribution', ['diy', 'managed'], 'none', [{ route: 'console-distributions' }, { press: '[data-action="dist-cancel"]' }]),
-  D('console.js', 2, 1505, 'Build the file again (a distribution whose NACHA file was downloaded)', ['diy', 'managed'], 'nachaReleased', [{ press: '[data-action="nacha-again"]' }]),
-  D('diy.js', 1, 162, 'Investor sign-up link', ['diy'], 'none', [{ route: 'console-offering-{raising}' }, { press: '[data-action="join-link"]' }]),
-  D('esign.js', 11, 4484, 'Remove the subscription agreement?', ['diy', 'managed'], 'none', [{ route: 'console-offering-{raising}' }, { press: '[data-action="es-agreement-remove"]' }]),
-  D('esign.js', 10, 4170, 'Subscription agreement (an offering without one)', ['diy', 'managed'], 'none', [{ route: 'console-offering-{plain}' }, { press: '[data-action="es-agreement-new"]' }]),
-  D('invitations.js', 3, 2669, 'Ask to re-verify', ['diy'], 'none', [{ route: 'console-investors' }, { press: '[data-action="reverify-request"]' }]),
-  D('integrations.js', 2, 1627, 'Add a connection', ['diy'], 'none', [{ route: 'console-integrations' }, { press: '[data-action="iv-conn-add"]' }]),
-  D('integrations.js', 3, 1734, 'Remove a connection?', ['diy'], 'connection', [{ route: 'console-integrations' }, { press: '[data-action="iv-conn-remove"][data-id="{conn}"]' }]),
-  D('invitations.js', 2, 2591, 'Invitation email (an open invitation)', ['diy'], 'invitation', [{ route: 'console-investors' }, { press: '[data-action="invite-preview"][data-id="{newInv}"]' }]),
-  D('invitations.js', 4, 2780, 'Cancel this invitation?', ['diy'], 'none', [{ route: 'console-investors' }, { press: '[data-action="inv8-cancel"][data-id="{it}"]' }]),
-  D('invitations.js', 1, 2575, 'Invitation cancelled (a closed invitation)', ['diy'], 'invitationClosed', [{ route: 'console-investors' }, { press: '[data-action="invite-preview"][data-id="{newInv}"]' }]),
-  D('esign.js', 1, 1726, 'Delete this template?', ['diy', 'managed'], 'templatesTab', [{ press: '[data-action="es-tpl-del"]' }]),
-  D('esign.js', 4, 2480, 'Delete this draft?', ['diy', 'managed'], 'draft', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-delete"]' }]),
-  D('esign.js', 5, 2506, 'Review and send', ['diy', 'managed'], 'draftFields', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-review"]' }]),
-  D('esign.js', 6, 2543, 'Save as template', ['diy', 'managed'], 'none', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-save-tpl"]' }]),
-  D('esign.js', 3, 2182, 'Read the PDF again?', ['diy', 'managed'], 'editorRead', [{ press: '[data-action="es-reread"]' }]),
-  D('taxdocs-ui.js', 1, 537, 'Tax document pages (View pages on an imported K-1 file)', ['diy'], 'taxImport', [{ press: '[data-action="tx-view"]' }]),
-  D('integrations.js', 1, 914, 'Verification (the investor\'s Verify now; the managed Account page has no Verify now)', ['diy'], 'asInvestor', [{ route: 'account' }, { press: '.pt-main [data-action="iv-start"]' }]),
-  D('portal.js', 2, 1160, 'A document (the investor\'s Documents)', ['diy', 'managed'], 'asInvestor', [{ route: 'documents' }, { press: '[data-action="open-doc"]' }]),
-  D('portal.js', 1, 1102, 'An uploaded document (the investor\'s Documents)', ['diy', 'managed'], 'uploadedDoc', [{ route: 'documents' }, { press: '[data-action="open-doc"][data-id="doc-p18-upload"]' }]),
-  D('esign.js', 7, 2890, 'Decline to sign (the W-9 signing view of a new invitation)', ['diy'], 'w9View', [{ press: '[data-action="es-decline"]' }]),
-  D('signature.js', 1, 673, 'Adopt your signature (the W-9 signing view)', ['diy'], 'w9Consent', [{ press: '.es-doc-sign [data-fid="{sigField}"]' }]),
-  D('esign.js', 9, 3465, 'An agreement signed by the investor, waiting for countersignature (the investor\'s Documents)', ['diy'], 'onboarded', [{ route: 'documents' }, { press: '[data-action="es-open-mine"]' }]),
-  D('esign.js', 8, 3040, 'A signed document with its certificate (the investor\'s Documents)', ['diy'], 'signedDoc', [{ route: 'documents' }, { press: '[data-action="es-open-doc"]' }]),
-  D('esign.js', 2, 1915, 'Void the agreement? (the sponsor\'s envelope page)', ['diy'], 'asAdminEnvelope', [{ route: 'console-envelope-{agrEnv}' }, { press: '[data-action="es-void"]' }])
-];
+const DIALOGS = []; // RED (plan 18-01 Task 3 step 1): the table empty, the dialogs parts must fail
 
 module.exports = { normalize, ID_RE, HASH_TOKEN_RE, ORIGIN_RE, RULES, compare, diff, chartsSame, line, mask, DIALOGS, MARKS24, MARK_MAP, FONT_LABELS, NEW_FONT, c5, empty, path };
