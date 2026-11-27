@@ -71,6 +71,11 @@ started: since coMerge was written (to confirm with git log).
   found: "# tests 456", "# pass 456", "# fail 0".
   implication: server tests unchanged. Browser GREEN runs started (whole CO-INVESTOR SERVER; preview co-link-desktop with a temporary measurement probe, commit 733ff1f, to be removed).
 
+- timestamp: 2026-11-27T02:17Z (run 02:13:28-02:16:44 UTC by the run's own clock)
+  checked: GREEN, whole co-investor-server.js on ebe8b55 (fix + the RED assertions), through heavy.sh, GATE_FRESH=1 (scratchpad comerge/green-coserver/run.txt)
+  found: "CO-INVESTOR SERVER: PASS (parts run: 5)"; 132 PASS, 0 FAIL (128 before + the 4 new); per part: cosign-desktop 44, cosign-phone 43, cosign-later 18, cosign-change-remove 14, cosign-forged 13. Now PASS: "cosign-desktop after the import the investors row says the co-investor signed ("Signed <date>"), and the sign-in record has when they signed", "cosign-desktop the console sends no cancel for the sign-in the co-investor finished, and the audit has no "sign-in cancelled" line", and the same two for cosign-phone. cosign-change-remove still cancels on a changed email and on Remove (its audit check passes); cosign-forged's replays still say "already signed" and "no longer out for signature".
+  implication: the RED passes with the fix; nothing else in the check changed. The row's text matched /Co-investor: <name> · Signed [A-Z][a-z]{2} \d{1,2}, \d{4}/ and the record's signedAt equals the signer's.
+
 ## Resolution
 
 root_cause:
