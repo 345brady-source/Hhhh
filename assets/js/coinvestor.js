@@ -262,6 +262,7 @@
           <div><dt>Account type</dt><dd>${h(type)}</dd></div>
           <div><dt>Offerings</dt><dd>${offs.length ? h(offs.map((o) => o.shortName || o.name).join(', ')) : 'None yet'}</dd></div>
         </dl>
+        ${NS.emailsUI ? NS.emailsUI.logSection(ws, inv) : ''}
         ${placelessHTML(ws, inv)}
         ${noticeHTML(ws, inv)}
         <div class="cs-row cs-row-end">${acts}<button class="cs-btn" type="button" data-action="close-dialog">Close</button></div>

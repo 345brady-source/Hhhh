@@ -10,6 +10,20 @@
  * the firm's, and the sample offering's name becomes the workspace's first offering's, so no other firm's name is ever
  * shown. A logo that is not a PNG, JPEG or GIF is left out, as the sent email leaves it out (the firm's name is shown).
  *
+ * The page also says what the firm still needs (its postal address, before invitations to a new offering: C-06, "To be
+ * confirmed with counsel") and when its logo appears as its name, and lists the latest 200 emails of the workspace
+ * ("Sent", with an investor filter).
+ *
+ * The sent emails (EM-08): logSection(ws, inv) is the investor's list on their Account record (coinvestor.js), newest
+ * first, from the workspace's log (ws.mailLog, NS.emails.log) and, with an integration server connected, the server's
+ * log (GET /v1/messages/log?workspace=&investorId=, which also holds what the server sent on its own, such as the tax
+ * consent notice), as it answered the last time the record was opened. One message is listed once: a workspace entry
+ * the server handled (any status but simulated and manual) and a server entry of the same kind for the same investor,
+ * written within ten minutes of each other, are the same message, shown with the server's status and time (each server
+ * entry stands for at most one workspace entry, the nearest in time). A refused call shows one sentence (a 403: the
+ * role cannot see them; anything else: they could not be loaded) and the workspace's own entries. No request is made
+ * without a server; with one, only that GET. Entries are drawn as text (no message text, no link is shown).
+ *
  * Loaded after console.js and coinvestor.js on the self-serve pages only (diy.html, portal.html); the managed edition
  * does not load it. Everything drawn from data is escaped (NS.ui.h); the previews are emails.js's escaped output, with
  * their links made inert.
@@ -33,6 +47,26 @@
   const NOT_YET = 'Sent once sign-in accounts are connected.';
   const LATER = ['password_reset', 'team_invitation'];
   const RASTER = /^data:image\/(?:png|jpeg|gif);base64,/;
+  const LOGO_LINE = "Your logo appears as your firm's name in emails.";
+  const POSTAL_LINE = 'Your firm’s postal address is needed before invitations to a new offering: add it under Settings, then Portal and brand. (To be confirmed with counsel)';
+  const LOAD_FAILED = 'Sent emails could not be loaded from your integration server.';
+  const NO_ROLE = 'Your role cannot see sent emails from your integration server.';
+  /** The status of a sent email in plain words. */
+  const SAYS = {
+    simulated: 'Simulated in this demo',
+    manual: 'Sent from your email app',
+    outbox: 'Kept on your integration server',
+    held: 'Waiting for your domain',
+    sent: 'Sent',
+    failed: 'Not sent',
+    suppressed: 'Not sent',
+    unsubscribed: 'Not sent: turned off by the investor',
+    delivered: 'Delivered',
+    bounced: 'Came back',
+    complained: 'Marked as spam'
+  };
+  const MAX = 200;
+  const SAME_MS = 10 * 60 * 1000;
 
   /* ---------- The sample, in the firm's brand ---------- */
   /** The firm as the sent email has it: firmFromTenant, with a logo that is not a PNG, JPEG or GIF left out. */
@@ -126,18 +160,146 @@
   }
   const listHTML = (ws, list) => `<ul class="eml-list" style="list-style:none;margin:0;padding:0">${list.map((r) => rowHTML(ws, r)).join('')}</ul>`;
 
+  /** An uploaded logo the emails cannot carry (not a PNG, JPEG or GIF, or too large): the firm's name is shown instead. */
+  const logoAsName = (ws) => !!(ws.tenant.logo && ws.tenant.logo.type === 'image' && String(ws.tenant.logo.image || '')) && !firmOf(ws).logo;
+
+  /* ---------- The sent emails ---------- */
+  const serverOn = (ws) => !!(ws && NS.integrations && NS.integrations.serverUrl && NS.integrations.serverUrl(ws));
+  /** GET on the firm's integration server with the console's token (NS.integrations.api when present). */
+  async function call(ws, path) {
+    if (NS.integrations.api) return NS.integrations.api(ws, 'GET', path);
+    const s = NS.integrations.ensure(ws).server;
+    const headers = { Accept: 'application/json' };
+    if (s.token) headers.Authorization = `Bearer ${s.token}`;
+    const res = await fetch(NS.integrations.serverUrl(ws) + path, { method: 'GET', headers });
+    if (!res.ok) throw Object.assign(new Error(`The integration server answered ${res.status}.`), { status: res.status });
+    return res.json();
+  }
+  // What the server answered, per workspace and investor ('' for the whole workspace): { entries, error, busy, at }.
+  const cache = {};
+  const cacheKey = (ws, investorId) => `${ws.tenant.id}|${investorId || ''}`;
+  /** Ask the server for its sent log (one GET), then draw the lists that show it again. fresh: ms an answer stays good. */
+  function load(ws, investorId, fresh) {
+    const key = cacheKey(ws, investorId);
+    const c = cache[key] || (cache[key] = { entries: null, error: '', busy: false, at: 0 });
+    if (c.busy || (fresh && c.at && Date.now() - c.at < fresh)) return;
+    c.busy = true;
+    const path = `/v1/messages/log?workspace=${encodeURIComponent(ws.tenant.id)}${investorId ? `&investorId=${encodeURIComponent(investorId)}` : ''}&limit=${MAX}`;
+    call(ws, path)
+      .then(
+        (r) => {
+          c.entries = Array.isArray(r && r.entries) ? r.entries : [];
+          c.error = '';
+        },
+        (e) => {
+          c.entries = null;
+          c.error = e && e.status === 403 ? NO_ROLE : LOAD_FAILED;
+        }
+      )
+      .then(() => {
+        c.busy = false;
+        c.at = Date.now();
+        document.querySelectorAll('[data-eml-log]').forEach((el) => {
+          if (el.getAttribute('data-eml-log') === key) el.innerHTML = logBody(ws, investorId, el.hasAttribute('data-eml-page'));
+        });
+      });
+  }
+  const SERVER_SIDE = (s) => s !== 'simulated' && s !== 'manual';
+  /** The workspace's and the server's entries, one per message (see the head of this file), newest first. */
+  function merge(local, server) {
+    const used = [];
+    const out = server.map((e) => ({ at: String(e.at || ''), kind: String(e.kind || ''), subject: String(e.subject || ''), investorId: String(e.investorId || ''), to: String(e.to || ''), status: String(e.status || '') }));
+    local.forEach((l) => {
+      if (SERVER_SIDE(l.status)) {
+        let best = -1;
+        let gap = Infinity;
+        out.forEach((s, i) => {
+          if (i >= server.length || used.indexOf(i) >= 0 || s.kind !== l.kind || s.investorId !== String(l.investorId || '')) return;
+          const g = Math.abs(Date.parse(s.at) - Date.parse(l.at));
+          if (g <= SAME_MS && g < gap) {
+            best = i;
+            gap = g;
+          }
+        });
+        if (best >= 0) return used.push(best);
+      }
+      out.push({ at: String(l.at || ''), kind: String(l.kind || ''), subject: String(l.subject || ''), investorId: String(l.investorId || ''), to: String(l.to || ''), status: String(l.status || '') });
+    });
+    return out.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0)).slice(0, MAX);
+  }
+  function entriesFor(ws, investorId) {
+    const local = (ws.mailLog || []).filter((e) => e && (!investorId || e.investorId === investorId));
+    const c = serverOn(ws) ? cache[cacheKey(ws, investorId)] : null;
+    return { list: merge(local, (c && c.entries) || []), note: (c && c.error) || '' };
+  }
+  const when = (at) => {
+    const d = new Date(at);
+    return isNaN(d.getTime()) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  };
+  const nameOf = (ws, e) => {
+    const inv = (ws.investors || []).find((i) => i.id === e.investorId);
+    return inv ? inv.title || inv.contact : e.to;
+  };
+  const kindLabel = (k) => (EM().KINDS[k] ? EM().KINDS[k].label : '');
+  /** One list of sent emails; page: the whole workspace's, with whom each went to and the page's investor filter. */
+  function logBody(ws, investorId, page) {
+    const got = entriesFor(ws, investorId);
+    const who = page ? ui().who || '' : '';
+    const list = got.list.filter((e) => !who || e.investorId === who);
+    const note = got.note ? `<p class="cs-hint eml-note">${h(got.note)}</p>` : '';
+    if (!list.length) return `${note}<p class="cs-hint eml-none">No emails yet.</p>`;
+    return `${note}<ul class="eml-log" style="list-style:none;margin:0;padding:0">${list
+      .map(
+        (e) =>
+          `<li class="eml-item" data-at="${h(e.at)}" style="padding:8px 0;border-top:1px solid #e2e5e9;overflow-wrap:anywhere"><span class="cs-hint eml-when">${h(when(e.at))}</span><br><strong class="eml-subj">${h(e.subject || kindLabel(e.kind))}</strong><br>${page ? `<span class="eml-who">${h(nameOf(ws, e))}</span> · ` : ''}<span class="eml-status" data-status="${h(e.status)}">${h(SAYS[e.status] || SAYS.failed)}</span></li>`
+      )
+      .join('')}</ul>`;
+  }
+  /** The investor's sent emails, for their Account record. With a server, its log is asked for again on each open. */
+  function logSection(ws, inv) {
+    if (!ws || !inv) return '';
+    if (serverOn(ws)) setTimeout(() => load(ws, inv.id, 0), 0);
+    return `<section class="eml-record" style="margin:16px 0"><h3 style="margin:0 0 4px">Emails</h3><div data-eml-log="${h(cacheKey(ws, inv.id))}">${logBody(ws, inv.id, false)}</div></section>`;
+  }
+  function sentHTML(ws) {
+    const who = ui().who || '';
+    const ids = [];
+    entriesFor(ws, '').list.forEach((e) => e.investorId && ids.indexOf(e.investorId) < 0 && ids.push(e.investorId));
+    if (who && ids.indexOf(who) < 0) ids.push(who);
+    const opts = ids
+      .map((id) => ({ id, name: nameOf(ws, { investorId: id, to: id }) }))
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+      .map((o) => `<option value="${h(o.id)}"${o.id === who ? ' selected' : ''}>${h(o.name)}</option>`)
+      .join('');
+    return `<div class="cs-grid"><label class="cs-field" for="eml-who"><span>Investor</span><select id="eml-who" data-change="eml-who"><option value="">All investors</option>${opts}</select></label></div>
+      <div data-eml-log="${h(cacheKey(ws, ''))}" data-eml-page>${logBody(ws, '', true)}</div>`;
+  }
+
   NS.views[ROUTE] = {
     mode: 'console',
     render() {
       const ws = W();
       const { investors, team } = rows();
+      const needs = String(ws.tenant.postalAddress || '').trim() ? [] : [POSTAL_LINE];
       return CK().shell(
         `${CK().head('Emails', 'Every email your portal sends, in your brand. Open a preview to see it as your investors and your team receive it.')}
+        ${logoAsName(ws) ? `<p class="cs-hint eml-logo">${LOGO_LINE}</p>` : ''}
+        ${needs.length ? CK().panel('Before you send', `<ul class="eml-needs">${needs.map((l) => `<li>${h(l)}</li>`).join('')}</ul>`) : ''}
         ${CK().panel('To investors', listHTML(ws, investors))}
-        ${CK().panel('To your team', listHTML(ws, team))}`,
+        ${CK().panel('To your team', listHTML(ws, team))}
+        ${CK().panel('Sent', sentHTML(ws))}`,
         ROUTE
       );
+    },
+    after() {
+      const ws = W();
+      if (serverOn(ws)) load(ws, '', 5000);
     }
+  };
+  NS.changes['eml-who'] = (el) => {
+    ui().who = el.value;
+    const box = document.querySelector('#view [data-eml-page]');
+    if (box) box.innerHTML = logBody(W(), '', true);
   };
 
   /** Phone, Desktop or Text: opens that preview under its row (one open at a time); pressed again, it closes. */
@@ -159,5 +321,5 @@
     el.setAttribute('aria-pressed', 'true');
   };
 
-  NS.emailsUI = { sample, firmOf, rows };
+  NS.emailsUI = { sample, firmOf, rows, logSection, merge, SAYS };
 })(window.CVPortal);

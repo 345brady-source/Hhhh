@@ -200,7 +200,7 @@
    * field comes with the Portal and brand setting, plan 13-09) is not stopped: the sentence would point to a setting that
    * is not there.
    */
-  const postalMissing = (ws) => Object.prototype.hasOwnProperty.call(ws.tenant, 'postalAddress') && !String(ws.tenant.postalAddress || '').trim();
+  const postalMissing = (ws) => !!E.diy && Object.prototype.hasOwnProperty.call(ws.tenant, 'postalAddress') && !String(ws.tenant.postalAddress || '').trim(); // plan 13-09: never in the managed edition (C-05)
 
   /** Add the investor and their invitation. Nothing is sent yet (send()). */
   function create(ws, o) {

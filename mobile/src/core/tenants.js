@@ -59,6 +59,7 @@
     nav: 'light',
     appearance: 'light',
     support: { team: 'Investor Relations', email: 'investors@newclient.com', phone: '(212) 555-0100', hours: 'Mon–Fri, 9:00 a.m.–5:00 p.m. ET' },
+    postalAddress: '',
     disclaimer: 'Information in this portal is provided to existing investors for informational purposes only and is not an offer to sell or a solicitation of an offer to buy any security. [Regulatory disclosures to be provided by counsel.]',
     signin: { headline: 'Investor Portal', sub: 'Sign in to view your investments, distributions and documents.' },
     // Investor home page: a hero image, a few lines about the firm and up to three headline figures (all optional).
