@@ -40,3 +40,26 @@ FAIL undo-roles the matched line offers "Move match" to the new entry :: [... "m
 FAIL undo-roles after Move match the line names the new entry, dated 2026-12-14 and not reversed :: {"match":{"entry":"je-000016","line":2},"date":"2026-12-15","src":"run:fa-run-1","reversed":true}
 FAIL undo-roles a team member can upload (the layout form, as the account has no kept layout) :: []
 BANK FLOW: FAIL (parts run: 6) - csv-desktop, twice-phone, refused, split-desktop, undo-roles
+
+### First run of Task 2's code (O/try2.txt): 108 passed, 4 failed
+Three were the check's own selector (it looked for `.bb-form[data-kind="layout"]`; the form is `.bk-form`). The fourth
+was the check's own order: the team member sold part of Portfolio Co X before its purchase had been decided, and the
+books refused it ("more than the investment's cost of $0.00"). The check now decides the purchase first.
+
+### BOOKS FLOW after B1 (O/books-flow-fail-1.txt): FAIL, 174 passed, 1 failed
+```
+FAIL entries-desktop the bank files were asked for only as the parts list names them, in order :: {"asked":["/assets/js/bankfiles.js","/assets/js/books-bank.js","/assets/js/books-bank-ui.js","/assets/js/bankfiles.js","/assets/js/books-bank.js","/assets/js/books-bank-ui.js"],"want":[...the three once...]}
+BOOKS FLOW: FAIL (parts run: 8) - entries-desktop
+```
+Cause: with PARTS no longer empty, entries-desktop reloads the page, and the reloaded page asks for the three files
+again; the check counted the asks of both loads. Fixed in books-flow.js (outside files_modified, see Deviations):
+reframe() empties the list before each reload, so each load's asks are compared with the parts list.
+
+### RED-3 (published, the check run inside an extracted copy of the base tree c8f922f), O/red-3.txt
+```
+PASS published the frame refuses fetch() (connect-src none is in force)
+FAIL published ran to the end :: frame.waitForSelector: Timeout 30000ms exceeded.
+  (waiting for locator('[data-bk="part-bank"]') to be visible)
+BANK FLOW: FAIL (parts run: 1) - published
+```
+The extracted base tree was deleted after the run.
