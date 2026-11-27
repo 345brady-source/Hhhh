@@ -3,8 +3,7 @@ phase: 15-security
 plan: 02
 subsystem: security / two-step sign-in
 tags: [totp, rfc6238, rfc4226, hmac-sha1, gate]
-status: blocked
-blocked_by: "WebKit is not installed on this machine: TOTP FRAME's two WebKit parts fail, so Task 2's verify and gate15 (GATE_EXIT=1) fail on that one step"
+status: complete
 requires: []
 provides:
   - "assets/js/totp.js: window.CVPortal.totp / module.exports (base32, hotp, totp, verify, newKey, formatKey, otpauth, recovery codes, browserHmac, usesWebCrypto, demoHmacSha1)"
@@ -22,41 +21,55 @@ decisions:
   - "totp-frame.js serves its host page, frame page and totp.js from its own loopback server and names that server in script-src (frame with no same origin)"
   - "totp-frame.js always runs every part (GATE_FRESH=1 inside, as phase 14's watermark.js does) so the 'frame WebCrypto' lines always print"
   - "gate15.sh: a phase 13 or 14 folder holding no check prints 'phase NN checks: none in this tree'"
+  - "orchestrator (2026-11-27, Option B): no WebKit in this container; totp-frame.js runs its WebKit parts only where WebKit starts, prints one NOTE line otherwise, Chromium parts use phase 6's iPhone profile; marker TOTP FRAME: PASS (parts run: 2)"
 metrics:
   completed: 2026-11-27
-  tasks: "3 of 3 built; Task 2's verify and the gate fail on WebKit only"
-actuals:
-  tokens: 14600
   tasks: 3
-  commits: 11
+actuals:
+  tokens: 15000
+  tasks: 3
+  commits: 13
 plan_head_before: a1338b462f5be391adca1a3056099d469a91dc2f
+gate_head: 5b0146f
 ---
 
 # Phase 15 Plan 02: the two-step code module and the phase gate
 
 One file, assets/js/totp.js, computes and checks authenticator-app codes for both the browser and the server. The RFCs'
-published test values pass on the server (node:crypto) and in Chromium inside a sandboxed frame with no network, with
-WebCrypto and with WebCrypto removed. gate15.sh is the phase gate (self-test PASS (9)). WebKit could not be run here, so
-the plan is **not complete**: the gate run ends GATE_EXIT=1 on that one step.
+published test values pass on the server (node:crypto) and in Chromium (iPhone profile) inside a sandboxed frame with no
+network, with WebCrypto and with WebCrypto removed. gate15.sh is the phase gate: self-test PASS (9), and its full run on
+this tree ends GATE_EXIT=0. Nothing here is on screen yet and nothing is called ready: no page loads totp.js (15-07 adds
+the first one; 15-04 is the first server user), and the owner's iPhone check is still to come.
 
 Base commit: a1338b462f5be391adca1a3056099d469a91dc2f (a1338b4). Server tests measured on the base: 422 (`# tests 422`, `# fail 0`).
-Nothing is on screen yet: no page loads totp.js (15-07 adds the first one; 15-04 is the first server user).
 
 ## Failures first
 
-0. **gate15.sh run on this tree: GATE_EXIT=1.** 88 `GATE ok` lines and one `GATE FAIL TOTP FRAME`. The cause is item 1.
-1. **WebKit is not installed on this machine, so the frame check's two WebKit parts fail** (`webkit-subtle`, `webkit-fallback`):
-   `browserType.launch: Executable doesn't exist at /opt/pw-browsers/webkit-2359/pw_run.sh`. Playwright 1.63.0 is installed with
-   Chromium only (`/opt/pw-browsers`: chromium-1243, chromium_headless_shell-1243, ffmpeg). Installing WebKit is a download
-   (`playwright install webkit`, from cdn.playwright.dev, plus its system libraries) that the plan rules out ("No package is
-   installed") and the disk could not hold (free space on / went from 294 MB to 9 MB and back to about 440 MB during this
-   run, shared with the other builds). Not installed. So `TOTP FRAME` ends `FAIL (parts run: 4) - webkit-subtle, webkit-fallback`
-   and Task 2's verify does not pass. The WebKit answer to Open Question 1 is therefore NOT measured.
-2. Two check bugs found by the first GREEN runs and fixed in the check (not in totp.js): in a frame with no same origin, totp.js
-   did not load at all. (a) The frame's origin is opaque, which `'self'` does not match, so the check server is named in
-   script-src; (b) Chromium then refused the script by its local-network rule, because pages Playwright fulfils itself carry no
-   network address; the check now serves its host page, frame page and totp.js from its own loopback server. A new check line
-   ("the page loaded with nothing refused ... and no script error") would have caught both at once.
+1. **WebKit is not installed in this container, so nothing here ran in real WebKit.** Playwright 1.63.0 has Chromium only
+   (/opt/pw-browsers), and WebKit would also need system libraries that are missing (ldconfig does not find libgtk-4,
+   libwoff2dec, libavif, libenchant-2, libsecret-1, libmanette, libwpe, libsoup-3 or libgstgl). The first version of the
+   frame check had two WebKit parts, and they failed:
+   `FAIL webkit-subtle webkit starts :: browserType.launch: Executable doesn't exist at /opt/pw-browsers/webkit-2359/pw_run.sh`.
+   That made the gate run on 6d06a94 end `GATE_EXIT=1` (88 ok, one `GATE FAIL TOTP FRAME`).
+   **Decision (orchestrator, 2026-11-27, 15-CONTEXT "no WebKit in this container", Option B):** do not install WebKit.
+   Chromium with phase 6's iPhone profile stands in. Where WebKit cannot start with "Executable doesn't exist", the check
+   prints exactly one line, `NOTE WebKit not installed here: the owner's iPhone check covers WebCrypto and the fallback in the frame`,
+   and does not count the WebKit parts. The marker is `TOTP FRAME: PASS (parts run: 2)`. Where WebKit is present, its two
+   parts still run (and the full count is 4). **The WebKit answer to Open Question 1 is not measured;** the owner's iPhone
+   check (15-11) is the only WebKit test.
+2. **EMAIL DIALOG (a reference gate step, phase 6) failed twice on 5b0146f, then passed** on a third run of the same tree:
+   `FAIL phone phone-390x844-frame520px: every paragraph of the email, its footer and the buttons were seen whole (10 of 11) :: ["p: The link below takes you through everyth"]`.
+   It passed in all three runs on 6d06a94, and this plan changes nothing it uses (only totp-frame.js changed between the
+   two trees). Another tree failed the same way at about the same time (exec-report-fixes, 06:06), and a scratchpad
+   folder `emflaky/` shows the flakiness is being looked into. Kept: SCRATCH/exec-15-02/email-run4.txt and email-run5.txt.
+3. **CO-INVESTOR SERVER (reference gate, phase 6), part cosign-forged, failed once** in the first run on 6d06a94 ("an
+   audit line says so :: {"said":[],"same":true}"), then passed on a rerun of the same tree. It passes in 15-03's gate too,
+   so it looks flaky under load. That is not proven. Kept: SCRATCH/exec-15-02/coserver-run1.txt.
+4. **Check bugs found by the first GREEN runs, fixed in the check (not in totp.js).** With a frame that has no same origin,
+   totp.js did not load at all. (a) The frame's origin is opaque, which `'self'` does not match, so the check server is
+   named in script-src. (b) Chromium then refused the script by its local-network rule, because pages Playwright fulfils
+   itself carry no network address; the check now serves its host page, frame page and totp.js from its own loopback
+   server. A new check line ("the page loaded with nothing refused ... and no script error") catches both.
 
 ## RED evidence (verbatim last lines)
 
@@ -171,55 +184,59 @@ B1 checked by hand on a stand-in run: GATE_OUT/gate/base-commit.txt "old", GATE_
 ## Open Question 1 (does the owner's kind of frame offer WebCrypto?)
 
 - Chromium (sandbox="allow-scripts", no same origin, connect-src 'none', 390x844 touch): **yes**, and it is a secure context.
-- WebKit: **not measured** (WebKit is not installed here; see Failures first).
+- WebKit: **not measured here** (WebKit is not installed in this container). Orchestrator decision 2026-11-27: the owner's
+  iPhone check (15-11) covers WebCrypto and the fallback in the frame in Safari.
 
-## Gate run (GATE_OUT=SCRATCH/exec-15-02, base-commit.txt = a1338b4, HEAD 6d06a94, default phases 08 to 14)
+## The check still fails when totp.js is broken (after the WebKit change)
 
-It took three runs into the same folder. Runs 1 and 2 were stopped at the two-hour limit for background commands, and
-each rerun kept every step that had passed. Run 1 also had **one failure that did not come back**: CO-INVESTOR SERVER,
-part cosign-forged ("the same submission arriving again changes nothing ... and an audit line says so ::
-{"said":[],"same":true}"). Run 2 ran it again on the same tree and it passed (`GATE ok   CO-INVESTOR SERVER (5)`). The
-check also passes in 15-03's gate on the same base, and this plan changes nothing it uses, so it looks flaky under load.
-That is not proven. Run 1's output is kept in SCRATCH/exec-15-02/coserver-run1.txt.
-
-Last lines of run 3 (O/gate.txt):
+A planted bug (hotp's offset `& 15` changed to `& 14`, uncommitted) was run through the changed check, then reverted with
+`git checkout -- assets/js/totp.js` (status clean again at 5b0146f). Output (SCRATCH/exec-15-02/planted.txt):
 
 ```
-GATE ok   HELP PREVIEW (6) (kept from 2026-11-27 00:15:19 UTC)
-GATE ok   signing: no FAIL the base lacks
-GATE ok   record: no FAIL the base lacks
-GATE ok   base-server-tests (kept from 2026-11-27 00:50:56 UTC)
-GATE ok   server tests 430 = base 422 + 8 declared
-GATE ok   AML RECORD (7)
+NOTE WebKit not installed here: the owner's iPhone check covers WebCrypto and the fallback in the frame
+PASS chromium-subtle the page runs in a sandboxed frame with no same origin, on a 390x844 touch screen with an iPhone's user agent
+FAIL chromium-subtle RFC 6238's six SHA-1 values (8 digits) are computed exactly :: {"got":["80435326","07081804","19292136","70034533","09409713","65353130"],...
+FAIL chromium-subtle RFC 4226's ten HOTP values are computed exactly :: {"got":["755224","435326","359152","969429","338314","254676","287922","162583","516548","905116"],...
+FAIL chromium-fallback RFC 6238's six SHA-1 values (8 digits) are computed exactly :: ...
+FAIL chromium-fallback RFC 4226's ten HOTP values are computed exactly :: ...
+TOTP FRAME: FAIL (parts run: 2) - chromium-subtle, chromium-fallback
+```
+
+## Gate run on 5b0146f (GATE_OUT=SCRATCH/exec-15-02, base-commit.txt = a1338b4, GATE_SERVER_TESTS=430, phases 08 to 14)
+
+The new commit changed the tree key (HEAD), so every step ran again; nothing from the 6d06a94 runs was kept. It took
+three runs into the same folder: the first ran every step and failed only EMAIL DIALOG; the second reran only EMAIL
+DIALOG and it failed again; the third reran it and it passed (see Failures first, item 2). Last lines of the third run
+(O/gate.txt):
+
+```
+GATE ok   EMAIL DIALOG (3)
 ...
-GATE ok   REPORTS XLSX
+GATE ok   server tests 430 = base 422 + 8 declared
+...
+GATE ok   REPORTS XLSX (kept from 2026-11-27 06:11:01 UTC)
 GATE ok   phase 13 checks: none in this tree
-GATE ok   DATAROOM MODEL
-GATE ok   WATERMARK
-GATE FAIL TOTP FRAME
-  totp-frame.js: the last line should be: TOTP FRAME: PASS (parts run: 4)
-  totp-frame.js: the last line was:       TOTP FRAME: FAIL (parts run: 4) - webkit-subtle, webkit-fallback
-GATE_EXIT=1
+GATE ok   DATAROOM MODEL (kept from 2026-11-27 06:11:07 UTC)
+GATE ok   WATERMARK (kept from 2026-11-27 06:11:10 UTC)
+GATE ok   TOTP FRAME (kept from 2026-11-27 06:11:13 UTC)
+GATE_EXIT=0
 ```
 
-Every reference gate step passed (its own GATE_EXIT=0): the 28 named steps from STATUS MATH (13) to HELP PREVIEW (6),
-plus the phase 4 signing and phase 5 record comparisons with the base. Phase 08's six checks, phase 09's eight, phase 10's
-thirteen, phase 11's twelve, phase 12's seven and phase 14's two all passed. Phase 13 has no check in this tree.
+89 `GATE ok` lines, 0 `GATE FAIL`. The reference gate's own count line is `GATE ok   server tests 430` (GATE_SERVER_TESTS=430)
+and its own GATE_EXIT is 0. Phase 08's 6 checks, 09's 8, 10's 13, 11's 12, 12's 7, 14's 2 and phase 15's TOTP FRAME all
+passed; phase 13 has no check in this tree. The frame check's lines in the gate (O/gate/totp-frame.txt):
 
-GATE_EXIT=1
+```
+NOTE WebKit not installed here: the owner's iPhone check covers WebCrypto and the fallback in the frame
+frame WebCrypto: yes (chromium, secure context: yes)
+frame WebCrypto: yes (chromium, secure context: yes)
+TOTP FRAME: PASS (parts run: 2)
+```
 
-## What is needed to finish (for the orchestrator; the owner's choice)
+GATE_EXIT=0
 
-- **Option A, install WebKit for the checks ($0):** `node $(npm root -g)/playwright/cli.js install webkit` (WebKit 26.6,
-  Playwright build v2359, into /opt/pw-browsers) and `... install-deps webkit` (apt, as root). Most of WebKit's system
-  libraries are missing here: ldconfig does not find libgtk-4, libwoff2dec, libavif, libenchant-2, libsecret-1, libmanette,
-  libwpe, libsoup-3 or libgstgl. There is room now (about 8.8 GB free at the end of the run). Then rerun
-  `GATE_OUT=SCRATCH/exec-15-02 bash .planning/phases/15-security/checks/gate15.sh` on the HEAD the gate judged (6d06a94).
-  Every passed step is kept and only TOTP FRAME runs again. Plans 15-07, 15-09, 15-10, 15-11, 15-16, 15-18, 15-19 and
-  15-20 also call for WebKit.
-- **Option B, Chromium stands in for WebKit** (as phase 6's checks did: "Real WebKit is not installed here"): the WebKit
-  parts would be removed, or changed to Chromium with an iPhone profile. The WebKit answer to Open Question 1 would stay
-  unknown until the owner's own iPhone check. This needs a plan change and was not done here.
+Earlier gate runs on 6d06a94 (before the decision): reference passed, every other phase's checks passed, and
+`GATE FAIL TOTP FRAME` (`TOTP FRAME: FAIL (parts run: 4) - webkit-subtle, webkit-fallback`) gave GATE_EXIT=1.
 
 ## Commits (on wip/15-02; not merged)
 
@@ -234,24 +251,31 @@ GATE_EXIT=1
 | 976d933 | fix: totp-frame names the check server in script-src |
 | 698f32b | fix: totp-frame serves its pages from a real loopback server |
 | a9159c3 | feat: totp.js verify, set-up key and address, recovery codes, the preview's own HMAC (Task 2 GREEN) |
-| 6d06a94 | wip: summary with verify lines (the HEAD the gate judged) |
-| (next) | docs: this summary with the gate result |
+| 6d06a94 | wip: summary with verify lines |
+| 93f875c | docs: summary with the first gate result (GATE_EXIT=1, WebKit) |
+| 5b0146f | fix: totp-frame runs WebKit parts only where WebKit is installed; Chromium iPhone profile (the HEAD the gate judged) |
+| (next) | docs: this summary |
 
 ## Deviations from Plan
 
-1. **[Rule 1, check bug] totp-frame.js frame set-up.** The plan said to copy no-network.js's frame set-up, which uses
+1. **[Orchestrator decision, Option B] WebKit parts.** The plan's truth SE-13 asks for Chromium and WebKit. WebKit is not
+   installed here, so the WebKit parts run only where WebKit starts. Chromium now uses phase 6's iPhone profile (390x844,
+   device scale 3, touch, iOS user agent; the check asserts the user agent). The marker counts 2 parts. Commit 5b0146f.
+2. **[Rule 1, check bug] totp-frame.js frame set-up.** The plan said to copy no-network.js's frame set-up, which uses
    allow-same-origin and pages Playwright fulfils itself. With the plan's sandbox (scripts only), that set-up never loaded
-   totp.js: the origin is opaque, and Chromium's local-network rule refused the script. The check now runs its own loopback
-   server for the three files and names it in script-src. Commits 976d933 and 698f32b.
-2. **[Rule 2] gate15.sh other phases:** a phase whose checks folder exists but holds no check (phase 13 holds only
+   totp.js. The check now runs its own loopback server for the three files and names it in script-src. Commits 976d933
+   and 698f32b.
+3. **[Rule 2] gate15.sh other phases:** a phase whose checks folder exists but holds no check (phase 13 holds only
    gate13.sh) prints "GATE ok   phase NN checks: none in this tree" instead of printing nothing.
-3. **Order of commits:** Task 3's RED and gate15.sh were committed while Task 1's frame run waited in the shared browser
+4. **Order of commits:** Task 3's RED and gate15.sh were committed while Task 1's frame run waited in the shared browser
    queue. Each task still has its own RED commit before its GREEN commit.
-4. **The plan's Task 3 note "A full gate run is not needed here":** the orchestrator required a full run. It was done (above).
-5. **Test 1's marker reads "// gate: tests 8" from Task 1 on**, as the plan says. Until Task 2 the file declared 8 tests
+5. **The plan's Task 3 note "A full gate run is not needed here":** the orchestrator required a full run. It was done (above).
+6. **Test 1's marker reads "// gate: tests 8" from Task 1 on**, as the plan says. Until Task 2 the file declared 8 tests
    while it held 1.
-6. **Not done, by the rules of this run:** STATE.md, ROADMAP.md, REQUIREMENTS.md and .planning/WINDOWS.md are not touched.
+7. **Not done, by the rules of this run:** STATE.md, ROADMAP.md, REQUIREMENTS.md and .planning/WINDOWS.md are not touched.
    AUTOPILOT says executors never touch STATE.md or ROADMAP.md, and only the plan's files plus this summary are changed.
+8. **Base kept at a1338b4.** The gate judged 5b0146f on that base; claude/refract-reskin has moved since (df80f88). This
+   branch was not rebased.
 
 ## Threat model check
 
@@ -268,11 +292,17 @@ GATE_EXIT=1
 
 None. totp.js is complete for the plan's interface. It is not wired to any screen or route yet (15-04 and 15-07 do that).
 
+## Open items
+
+- WebKit is not measured. The owner's iPhone check (15-11) covers WebCrypto and the fallback in the frame in Safari.
+- EMAIL DIALOG's phone part and CO-INVESTOR SERVER's cosign-forged part each failed under load and passed on a rerun of the
+  same tree; neither is caused by this plan.
+
 ## Self-Check
 
 - FOUND: assets/js/totp.js, server/test/totp.test.mjs, .planning/phases/15-security/checks/totp-frame.js,
   .planning/phases/15-security/checks/gate15.sh
-- FOUND (ancestors of HEAD): 22482fc 5e22c89 9201568 7a3cc9a 5c7a212 7da9120 976d933 698f32b a9159c3 6d06a94
-- server/node_modules link removed from the worktree.
+- FOUND (ancestors of HEAD): 22482fc 5e22c89 9201568 7a3cc9a 5c7a212 7da9120 976d933 698f32b a9159c3 6d06a94 93f875c 5b0146f
+- server/node_modules link removed from the worktree; the planted bug reverted (git status clean before this summary).
 
-## Self-Check: PASSED (files and commits). The plan's own done criteria are NOT met (WebKit).
+## Self-Check: PASSED
