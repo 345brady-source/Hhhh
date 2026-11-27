@@ -87,3 +87,26 @@ All four (and, orchestrator's extension, every phase 18 plan):
 - W-8: rerun `node .planning/tools/preview/make-help-data.mjs` in the verify, then `git diff --quiet -- .planning/tools/preview/help-data.js`.
 - I-4: note in the SUMMARY that HELP SCREENS no longer walks console-intake (out of NAV).
 - Start: after 18-06 (so 18-02, 18-03) and 13-06; wave 5 beside 18-09; not while 13-10, the guide-trim task, 14-04, 14-10, 15-07, 15-08, 15-09, 15-10, 15-16, 16-09, 16-12 or 16-13 runs.
+
+## Plan-check additions, 18-01..18-04 (gsd-plan-checker at e1bf3c3; binding; full text scratchpad checks-18-a.md)
+18-01:
+- PC-18-01-1: Step 0 proves each wait with `git merge-base --is-ancestor <commit> HEAD` for dcf002f (13-08, merged inside 0abb5e6), aeed1ab (15-14), 4277aa8 (16-07) and adba2c8 (small-fixes-c); a failure stops and is reported.
+- PC-18-01-2: each plan writes its measured start server count into $O/base-count.txt and the verify uses `-eq` that number (622 on main today), recorded in its SUMMARY; each plan declares +0.
+- PC-18-01-3: screen records also hold placeholder, value (inputs and selects; ID_RE applied), title, alt and aria-describedby text; self-test cases "placeholder" and "value" FAIL; C3's apply changes placeholder and aria-label only.
+- PC-18-01-4: self-test adds "dialog-word" (one word changed in an esign.js dialog: FAIL in dialogs-desktop and dialogs-phone), "phone-only" (a control hidden under 900px only: FAIL in console-phone), "managed" (a word changed on an index.html staff page: FAIL in managed-desktop); compare() FAILs any screen whose record has 0 content lines or 0 actions on either tree ("FAIL <part> <key>: empty record"); each a named grep in the verify.
+- PC-18-01-5: every DIALOGS row whose opener exists in both editions is recorded on diy.html and index.html in dialogs-desktop and dialogs-phone; the SUMMARY lists rows × edition × size; a missing edition FAILs the part.
+- W: Task 3's dialog count compares to a value measured at run time, not a constant already true.
+18-02:
+- PC-18-02-1: until 18-03, investor-side font assertions run on a firm whose apply() writes no font pair, or assert the tokens.css defaults; the investor Brygada/Ysabeau assertion moves to 18-03's pair case; no brand.js or tenants.js edit in 18-02.
+- PC-18-02-2: Task 3 verify adds named greps that each FAILs: `FAIL .* (present|words|reachable)` from the three stand-ins (O/st-present.txt, O/st-words.txt, O/st-reach.txt) and the PHONE_LAYOUT_18-unset run (O/unset.txt ends `PHONE LAYOUT: FAIL (parts run: 4) - ...`); `ls $P6_OUT/desktop-diff-18-*.txt` non-empty; no phase 18 entry without PHONE_LAYOUT_18=1.
+- PC-18-02-3: the font file delta is measured into O/font-counts.txt and read from there.
+- PC-18-02-4: the contrast part runs light and :root[data-theme="dark"] and prints each pair with its ratio.
+- PC-18-02-5: the wait list adds 14-11 (portal.html).
+18-03:
+- PC-18-03-1: screens18 C6 handles the Q4 switch: when the plan tree's stored font is 'brygada' and the base's was 'funnel', the expected checked radio is Brygada & Ysabeau and Funnel unchecked; otherwise the base's checked radio stays; self-test "c6-wrong" (a firm that stored 'plex' shows Brygada checked: FAIL). Fixed in 18-01 (preferred) or 18-03 Task 1 as a recorded deviation adding only this case.
+- PC-18-03-2: the wait list adds 16-13 (brand.js, tenants.js, mobile brand copy) and 13-09's mobile tenants copy.
+- PC-18-03-3: markKey's unknown-key fallback is 'cartouche' (D-10 map); case old asserts it.
+18-04:
+- PC-18-04-1: depends_on adds 18-03 (--brand-fill tokens); 18-04 moves to the wave after 18-03.
+- PC-18-04-2: the signer part compares every .es-fld and Review marker rectangle with the base tree within 0.5px at 1280 and the iPhone profile on the W-9 signing view, the agreement signing view, the countersign view and the sender's envelope page wherever it draws field boxes; each prints its box count; 0 is a FAIL.
+- PC-18-04-3: Task 3 verify reruns sig and ed for both trees itself (rm -f the four files first); per pair the plan run's `^PASS ` count >= the base's, a final reporter line present in both, and no FAIL the base lacks.
