@@ -261,3 +261,4 @@
 - portal.js: the subscribe offer is on the self-serve subscribe line and on the "not available to sign online yet" line (the preview's sample offering has no stored agreement).
 - Open: onboarding.js's own accreditation step does not mention the open re-verification request; guide line held in GUIDE-PASS.md.
 - Owner's check (iPhone): Ask to re-verify shows the greyed package box; Send request, then the investor's subscribe page offers "Verify your accreditation" (Step 1 of 2).
+- Merged tree (9815af5): REVERIFY PASS (9), PACKAGE CONSOLE PASS (7), PACKAGE INVITE PASS (12), SMALL FIXES PASS (2).
