@@ -22,14 +22,34 @@ const FIRM = { name: 'Harbor Ridge Capital', shortName: 'Harbor Ridge', legalNam
 // The console's summary of an investor on file whose verification lapsed (flags and a date, no personal details).
 const ONFILE = { accredited: false, accreditedUntil: '', holds: false };
 const INVESTOR = { id: 'HRC-0042', contact: 'Dana Whitfield', title: 'Dana Whitfield', type: 'individual', email: 'dana@investor.example', existing: ONFILE };
-// The firm's own accreditation connection, run through this server (a stand-in provider).
-const OWN = { connections: [{ id: 'acc-own', name: 'Accreditation letters', type: 'server', connector: 'accredit', checks: ['accreditation'] }], use: { accreditation: ['acc-own'] }, rules: { validDays: 90 }, accreditationRequired: false };
+// The firm's own accreditation connection, run through this server (a stand-in provider that is not the package's).
+const OWN = { connections: [{ id: 'acc-own', name: 'Accreditation letters', type: 'server', connector: 'letters', checks: ['accreditation'] }], use: { accreditation: ['acc-own'] }, rules: { validDays: 90 }, accreditationRequired: false };
 // White label (C-01 apart): no provider, product or library word in what the investor or the sponsor reads.
 const VENDOR = /didit|stripe|verify\s*investor|verifyinvestor|north capital|parallel markets|carrow|\bvale\b|powered by|diy/i;
 
-/** The default registry plus a stand-in accreditation provider that records its calls. */
+/** The default registry plus two stand-in accreditation providers that record their calls: the package's and the firm's own. */
 const accreditCalls = [];
+const ownCalls = [];
+const identityCalls = [];
 const PROVIDERS = Object.assign({}, await loadProviders({ env: {} }), {
+  idown: {
+    name: 'Identity',
+    kinds: ['identity'],
+    env: ['IDOWN_API_KEY'],
+    createSession: (ctx) => {
+      identityCalls.push(ctx);
+      return { status: 'pending', url: '' };
+    }
+  },
+  letters: {
+    name: 'Accreditation letters',
+    kinds: ['accreditation'],
+    env: ['LETTERS_API_KEY'],
+    createSession: (ctx) => {
+      ownCalls.push(ctx);
+      return { status: 'pending', url: '' };
+    }
+  },
   accredit: {
     name: 'Accreditation check',
     kinds: ['accreditation'],
@@ -87,7 +107,7 @@ const submission = (acc) => ({ investor: { id: 'HRC-0042', contact: 'Dana Whitfi
 const IDCHECK = { IDCHECK_API_KEY: 'key-test-0123456789', IDCHECK_WORKFLOW: 'wf-test-1', IDCHECK_WEBHOOK_SECRET: 'whk-test-secret-abcdef' };
 const start = (fn, env) => {
   const net = mockFetch([]);
-  return withServer({ env: Object.assign({ API_TOKEN: API, DATA_KEY: KEY, PUBLIC_URL: 'https://verify.example', ACCREDIT_API_KEY: 'acc-test-0123456789', RATE_LIMIT_PER_MIN: '0' }, IDCHECK, env), fetch: net, providers: PROVIDERS, now: () => T0 }, (base, server) => fn(base, server, net));
+  return withServer({ env: Object.assign({ API_TOKEN: API, DATA_KEY: KEY, PUBLIC_URL: 'https://verify.example', ACCREDIT_API_KEY: 'acc-test-0123456789', LETTERS_API_KEY: 'letters-test-0123456789', IDOWN_API_KEY: 'idown-test-0123456789', RATE_LIMIT_PER_MIN: '0' }, IDCHECK, env), fetch: net, providers: PROVIDERS, now: () => T0 }, (base, server) => fn(base, server, net));
 };
 
 test('reverify flag: kept only for an investor on file with no offering, no tax-form request and no portal link; the link carries it', () =>
@@ -148,7 +168,7 @@ test('reverify summary: the sponsor’s finished summary has a re-verification r
   start(async (base, server) => {
     const r = await invite(base);
     // The investor starts the firm's own check with their link; its result arrives on this server (the stand-in's answer).
-    const ver = await j(base, 'POST', '/v1/verifications', { token: r.token, bearer: '', body: { kind: 'accreditation', provider: 'accredit', investor: { id: 'HRC-0042', name: 'Dana Whitfield' } } });
+    const ver = await j(base, 'POST', '/v1/verifications', { token: r.token, bearer: '', body: { kind: 'accreditation', provider: 'letters', investor: { id: 'HRC-0042', name: 'Dana Whitfield' } } });
     assert.equal(ver.status, 200, ver.text);
     server.store.put('verifications', { id: ver.body.id, status: 'verified', method: 'Letter from a CPA', completedAt: new Date(T0 + 60e3).toISOString() });
     const c = await complete(base, r.token, submission({ status: 'pending', ref: ver.body.id, connection: 'acc-own' }));
@@ -200,20 +220,25 @@ test('reverify tier: with the package a sponsor account is charged the server’
 test('reverify plain: without the package nothing is charged and the firm’s own accreditation connection is used', () =>
   start(async (base, server, net) => {
     // The console sends the firm's connections as they are, its own identity check among them: the link uses accreditation only.
-    const own = { connections: OWN.connections.concat({ id: 'id-own', name: 'Identity', type: 'server', connector: 'idcheck', checks: ['identity', 'aml'] }), use: { identity: ['id-own'], aml: ['id-own'], accreditation: ['acc-own'] }, rules: OWN.rules, accreditationRequired: false };
+    const own = { connections: OWN.connections.concat({ id: 'id-own', name: 'Identity', type: 'server', connector: 'idown', checks: ['identity'] }), use: { identity: ['id-own'], accreditation: ['acc-own'] }, rules: OWN.rules, accreditationRequired: false };
     const r = await invite(base, { verification: own });
     assert.equal(server.store.list('entitlements').length, 0, 'no package');
     assert.equal(server.store.list('payments').length, 0, 'nothing charged');
     assert.equal(server.store.get('invitations', r.id).package, undefined);
     const v = await view(base, r.token);
     assert.deepEqual(v.verification.use, { accreditation: ['acc-own'] }, 'the link uses the firm’s own accreditation connection only');
-    const acc = accreditCalls.length;
-    const s = await j(base, 'POST', '/v1/verifications', { token: r.token, bearer: '', body: { kind: 'accreditation', provider: 'accredit', investor: { id: 'HRC-0042', name: 'Dana Whitfield' } } });
+    const ownN = ownCalls.length;
+    const pkg = accreditCalls.length;
+    const s = await j(base, 'POST', '/v1/verifications', { token: r.token, bearer: '', body: { kind: 'accreditation', provider: 'letters', investor: { id: 'HRC-0042', name: 'Dana Whitfield' } } });
     assert.equal(s.status, 200, s.text);
-    assert.equal(accreditCalls.length, acc + 1, 'the firm’s own connection ran');
-    const id = await j(base, 'POST', '/v1/verifications', { token: r.token, bearer: '', body: { kind: 'identity', provider: 'idcheck', investor: { id: 'HRC-0042', name: 'Dana Whitfield' } } });
+    assert.equal(ownCalls.length, ownN + 1, 'the firm’s own connection ran');
+    assert.equal(accreditCalls.length, pkg, 'the package’s provider did not');
+    // The firm's own identity connection would answer an ordinary invitation's link; a re-verification link is refused it.
+    const idN = identityCalls.length;
+    const id = await j(base, 'POST', '/v1/verifications', { token: r.token, bearer: '', body: { kind: 'identity', provider: 'idown', investor: { id: 'HRC-0042', name: 'Dana Whitfield' } } });
     assert.equal(id.status, 403, id.text);
-    assert.equal(net.calls.length, 0, 'no provider was called for identity');
+    assert.equal(identityCalls.length, idN, 'no identity provider was called');
+    assert.equal(net.calls.length, 0, 'nothing left this machine');
   }));
 
 test('reverify snapshot: the stored snapshot of a request carries no address, taxpayer number, bank detail or tax pre-fill', () =>
