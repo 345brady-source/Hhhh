@@ -42,3 +42,13 @@ FAIL managed-taxdocs ran to the end :: frame.waitForFunction: Timeout 20000ms ex
 DELIVER FLOW: FAIL (parts run: 1) - managed-taxdocs
 ```
 (no report can be made without the batch engine, so no report open can be counted beside the tax document's)
+
+### The part can catch a double count (fault put in a scratch copy of the tree only; SCRATCH/exec-12-08/fault-3.txt; exit 1)
+
+The report hook in a copy of reports-deliver.js was made to also count a tax document's open (a second hook counting
+it, T-12-38). managed-taxdocs failed on exactly that, and the copy was put back:
+```
+FAIL managed-taxdocs opening the tax document counts in its tax.opens (taxdocs-investor.js's hook) and adds no report open :: {"tax":2,"taxReport":false,"rep":0,"reports":0,"taxLog":2,"repLog":0}
+FAIL managed-taxdocs a report opened in the same session counts in its report block only :: {"tax":2,"taxReport":false,"rep":1,"reports":1,"taxLog":2,"repLog":1}
+DELIVER FLOW: FAIL (parts run: 1) - managed-taxdocs
+```
