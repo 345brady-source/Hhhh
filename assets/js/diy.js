@@ -334,6 +334,19 @@
     f[path] = v;
     if (path === 'first' || path === 'last') f.name = personName(f);
   };
+  /**
+   * Plan 13-08 (EM-12, C-03): no team invitation is emailed yet (that comes with sign-in accounts on the server), so the
+   * toast never says one was sent: with no server it is simulated; with one, the invitation is kept until then.
+   */
+  function inviteToast(email) {
+    let server = '';
+    try {
+      server = NS.integrations && NS.integrations.serverUrl ? NS.integrations.serverUrl(W()) : '';
+    } catch (e) {
+      server = '';
+    }
+    return server ? `Invitation to ${email} saved; it is emailed once sign-in accounts are connected.` : `Invitation to ${email} ${NS.emails ? NS.emails.SIMULATED : '(simulated in this demo)'}.`;
+  }
   NS.forms['team-invite'] = () => {
     const f = teamState();
     const w = W();
@@ -347,7 +360,7 @@
     S().ui.team = null;
     NS.app.save(true);
     NS.app.render();
-    U.toast(`Invitation sent to ${m.email}`);
+    U.toast(inviteToast(m.email));
   };
   NS.changes['team-role'] = (el) => {
     const w = W();
@@ -366,7 +379,7 @@
   };
   NS.actions['team-resend'] = (el) => {
     const m = team(W()).find((x) => x.id === el.getAttribute('data-id'));
-    if (m) U.toast(`Invitation sent again to ${m.email}`);
+    if (m) U.toast(inviteToast(m.email));
   };
   NS.actions['team-remove'] = (el) => {
     const w = W();

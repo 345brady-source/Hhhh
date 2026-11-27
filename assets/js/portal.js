@@ -1234,12 +1234,45 @@
             ${row('Activated', inv.onboarding.completed ? date(inv.onboarding.completed) : '—')}
           </dl></section>
         </div>
+        ${SELF() ? emailPrefsHTML(inv) : ''}
         ${appearanceHTML()}`,
         'account'
       );
     }
   };
   NS.actions['update-bank'] = () => NS.startOnboarding(viewer().id, 'bank');
+
+  /* ---------- The investor's email choices (plan 13-08, EM-11, D-30) ---------- */
+  // Self-serve only. Three optional kinds, each on until the investor turns it off (absent means on, so there is nothing to
+  // set); the choice is kept on the investor (inv.emailPrefs) and the console's sends honour it (emails.js prefsAllow).
+  const SELF = () => !!(NS.EDITION && NS.EDITION.diy);
+  const EMAIL_PREFS = [
+    ['documents', 'New documents'],
+    ['quarterly', 'Quarterly reports'],
+    ['offering', 'Invitations to new offerings']
+  ];
+  function emailPrefsHTML(inv) {
+    const p = inv.emailPrefs && typeof inv.emailPrefs === 'object' ? inv.emailPrefs : {};
+    return `<section class="sec settings-sec">
+          ${sec('Email')}
+          <fieldset class="choice settings-choice">
+            <legend class="sr-only">Email</legend>
+            ${EMAIL_PREFS.map(([k, label]) => `<label class="choice-row" for="ep-${k}" style="min-height:44px;align-items:center"><input id="ep-${k}" type="checkbox" role="switch" data-change="email-pref" data-k="${k}"${p[k] === false ? '' : ' checked'}><span><strong>${label}</strong></span></label>`).join('')}
+          </fieldset>
+          <p class="meta">Notices you must receive, such as capital calls and tax documents, are always emailed.</p>
+        </section>`;
+  }
+  NS.changes['email-pref'] = (el) => {
+    const inv = viewer();
+    const k = el.getAttribute('data-k');
+    if (!inv || !EMAIL_PREFS.some((x) => x[0] === k)) return;
+    if (!inv.emailPrefs || typeof inv.emailPrefs !== 'object') inv.emailPrefs = {};
+    inv.emailPrefs[k] = !!el.checked;
+    NS.app.save(true);
+    NS.app.render();
+    const again = document.getElementById(`ep-${k}`);
+    if (again) again.focus();
+  };
 
   /* ---------- Settings ---------- */
   // Route is #preferences: the bare name "settings" is reserved by the host's artifact viewer.
@@ -1319,6 +1352,87 @@
     if (inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
     else NS.app.go('overview');
   };
-  NS.actions.forgot = () => U.toast('A password reset link would be emailed to the address on file.');
+  // Self-serve (plan 13-08, EM-12, C-03): no reset email is sent until sign-in accounts are on the server.
+  NS.actions.forgot = () =>
+    U.toast(SELF() ? `Password reset email ${NS.emails ? NS.emails.SIMULATED : '(simulated in this demo)'}. If you cannot sign in, contact ${T().support.team || T().name}.` : 'A password reset link would be emailed to the address on file.');
   NS.actions.activate = (el) => NS.startOnboarding(el.getAttribute('data-id'));
+
+  /* ---------- Stop invitations to new offerings (plan 13-08, EM-11, C-02 "To be confirmed with counsel") ---------- */
+  /*
+   * The page an unsubscribe link opens: <the firm's portal page>?server=<its integration server>#unsubscribe-<token>
+   * (server/lib/messages.mjs). Self-serve only, on any device, no portal data needed. The link's ?server= address must
+   * pass app.js's test (state.remote), or nothing is fetched. The firm's name comes from the server (the name inside the
+   * signed token); the one button posts {} to <server>/unsubscribe/<token>, which answers the same for every token.
+   */
+  if (SELF()) {
+    const UV = { token: null, firm: '', load: '', busy: false, done: false, msg: '' };
+    const TOKEN = /^[A-Za-z0-9_-]{1,800}\.[A-Za-z0-9_-]{1,100}$/;
+    const usable = (param) => {
+      const r = S().remote;
+      return !!r && !r.refused && !!r.server && TOKEN.test(String(param || ''));
+    };
+    const portalHome = () => {
+      try {
+        const u = new URL(location.href);
+        u.searchParams.delete('server');
+        u.hash = 'sign-in';
+        return u.toString();
+      } catch (e) {
+        return '#sign-in';
+      }
+    };
+    const page = (firm, inner) =>
+      `<div class="pt pt-auth txl"><header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${h(firm || '')}</span></div></header><main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ivf-msg">${inner}<p class="txl-way"><a class="txl-out" href="${h(portalHome())}">Go to the investor portal</a></p></div></main></div>`;
+    const call = async (method) => {
+      const headers = { Accept: 'application/json' };
+      if (method === 'POST') headers['Content-Type'] = 'application/json';
+      const res = await fetch(`${S().remote.server}/unsubscribe/${encodeURIComponent(UV.token)}`, { method, headers, body: method === 'POST' ? '{}' : undefined });
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json();
+    };
+    NS.views.unsubscribe = {
+      standalone: true,
+      edition: 'diy',
+      title: 'Invitations to new offerings',
+      render(param) {
+        if (UV.token !== param) Object.assign(UV, { token: param, firm: '', load: '', busy: false, done: false, msg: '' });
+        if (!usable(param)) return page('', `<h1>This link works only from the email you received.</h1>`);
+        if (UV.done) return page(UV.firm, `<h1>Invitations to new offerings</h1><p class="lede" role="status">Done. Invitations to new offerings will no longer be emailed to you.</p>`);
+        return page(
+          UV.firm,
+          `<h1>Invitations to new offerings</h1><div class="ob-actions"><button class="btn btn-primary" type="button" data-action="unsub-stop"${UV.busy ? ' disabled' : ''}>Stop invitations to new offerings</button></div>${UV.msg ? `<p class="field-error" role="alert">${h(UV.msg)}</p>` : ''}`
+        );
+      },
+      after(param) {
+        if (!usable(param) || UV.load) return;
+        UV.load = 'loading';
+        const token = UV.token;
+        call('GET').then(
+          (r) => {
+            if (UV.token !== token) return;
+            UV.firm = String((r && r.firm) || '');
+            UV.load = 'ready';
+            NS.app.render();
+          },
+          () => {
+            if (UV.token === token) UV.load = 'failed';
+          }
+        );
+      }
+    };
+    NS.actions['unsub-stop'] = async () => {
+      if (UV.busy || UV.done || !usable(UV.token)) return;
+      UV.busy = true;
+      UV.msg = '';
+      NS.app.render();
+      try {
+        await call('POST');
+        UV.done = true;
+      } catch (e) {
+        UV.msg = 'The integration server could not be reached.';
+      }
+      UV.busy = false;
+      NS.app.render();
+    };
+  }
 })(window.CVPortal);

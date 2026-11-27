@@ -366,6 +366,7 @@
     ['join-', 'join'],
     ['invite-', 'invite'],
     ['taxdoc-', 'taxdoc'],
+    ['unsubscribe-', 'unsubscribe'],
     ['co-', 'co']
   ];
   function parseHash() {
