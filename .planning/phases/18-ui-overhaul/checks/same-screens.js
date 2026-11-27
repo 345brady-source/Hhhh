@@ -179,7 +179,14 @@ function judge(check, part, got, o) {
   if (check && !o.noVendorCheck) {
     Object.values(vendorNotes).forEach((n) => console.log(n));
     Object.keys(vendorNotes).forEach((k) => delete vendorNotes[k]);
-    check(`no request left the page's origin on this tree (${keys.length} screens)`, got.plan.outside.length === 0, got.plan.outside.slice(0, 6));
+    // a request the base tree makes too is the product's own (the signature faces' font sheet, answered empty by the check
+    // browser); one this tree adds fails
+    const nurl = (u) => String(u).replace(S18.ORIGIN_RE, 'http://origin.example');
+    const baseOut = got.base.outside.map(nurl);
+    const newOut = got.plan.outside.map(nurl).filter((u) => baseOut.indexOf(u) < 0);
+    const oldOut = got.plan.outside.map(nurl).filter((u, i, a) => baseOut.indexOf(u) >= 0 && a.indexOf(u) === i);
+    if (oldOut.length) console.log(`NOTE ${part} requests outside the page's origin that the base tree makes too (the product's own; the check browser answers or refuses them): ${JSON.stringify(oldOut.slice(0, 3))}`);
+    check(`no request outside the page's origin on this tree that the base tree does not make (${keys.length} screens)`, newOut.length === 0, newOut.slice(0, 6));
     const nerr = (e) => String(e).replace(S18.ORIGIN_RE, 'http://origin.example').replace(S18.ID_RE, '<id>');
     const baseErr = got.base.pageErrors.map(nerr);
     const fresh = got.plan.pageErrors.map(nerr).filter((e) => baseErr.indexOf(e) < 0);
@@ -519,9 +526,18 @@ const SETUP = {
   // needs), then the same distribution loaded again: its sent file's record offers Build again
   nachaReleased: async (W, c) => {
     await route(W, 'console-distributions');
-    c.run = await ev(W, () => (document.querySelector('[data-action="dist-load"]') || { getAttribute: () => '' }).getAttribute('data-id'));
-    if (!c.run || !(await press(W, `[data-action="dist-load"][data-id="${c.run}"]`, { wait: 700 }))) throw new Error('no recorded distribution to load');
-    if (!(await press(W, '[data-action=nacha-build]:not([disabled])', { wait: 900 }))) throw new Error('nacha-build could not be pressed');
+    const runs = await ev(W, () => Array.from(document.querySelectorAll('[data-action="dist-load"]')).map((b) => b.getAttribute('data-id')));
+    c.run = '';
+    for (const id of runs) {
+      await route(W, 'console');
+      await route(W, 'console-distributions');
+      if (!(await press(W, `[data-action="dist-load"][data-id="${id}"]`, { wait: 700 }))) continue;
+      if (await press(W, '[data-action=nacha-build]:not([disabled])', { wait: 900 })) {
+        c.run = id;
+        break;
+      }
+    }
+    if (!c.run) throw new Error(`no recorded distribution of ${runs.length} builds a file`);
     const got = W.A.page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
     if (!(await press(W, '[data-action=nacha-download]:not([disabled])', { wait: 700 }))) throw new Error('nacha-download could not be pressed');
     await got;
@@ -608,7 +624,7 @@ const SETUP = {
     }, null, { timeout: 120000, polling: 250 });
     // the imported file's own page (the list links to it)
     await W.fr.waitForTimeout(500);
-    if (!(await press(W, '#main a[href^="#console-taxdocs-"]', { wait: 700 }))) throw new Error('the imported file is not listed');
+    if (!(await press(W, '#main a[href^="#console-taxdocs-batch-"]', { wait: 700 }))) throw new Error('the imported file is not listed');
     await W.fr.waitForSelector('[data-action="tx-view"]', { timeout: 30000 });
     await W.fr.waitForTimeout(500);
   },

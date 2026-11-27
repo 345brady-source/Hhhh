@@ -19,9 +19,9 @@ const L = require('../../06-onboarding-forms-w-9-and-w-8-collected-in-the-invest
 
 /* ---------- normalization ---------- */
 // ids made from Date.now() and Math.random() (inv-, off-, env- …): the two trees run at different moments. The plan's
-// prefixes, the others the portal's uid() calls use (grep "uid('" and "-' + Date.now()" in assets/js), and any prefix
+// prefixes, the others the portal's id makers use (uid(), newId('tb'), 'c_' connections, "-' + Date.now()"), and any prefix
 // followed by a 13-digit Date.now(); co- only with a digit in it, so "co-investor" and "co-investment" stay words
-const ID_RE = /\b(?:(?:inv|invt|off|env|tok|ik|run|call|req|doc|tpl|rec|tx|tm|fd|ntf|tf|sg|n|mail|dep|aml)-[a-z0-9]{6,}|co-(?=[a-z]*\d)[a-z0-9]{6,}|[a-z]{1,8}-\d{13})\b/g;
+const ID_RE = /\b(?:(?:inv|invt|off|env|tok|ik|run|call|req|doc|tpl|rec|tx|tm|fd|ntf|tf|sg|n|mail|dep|aml|tb)-[a-z0-9]{6,}|c_[a-z0-9]{8,}|co-(?=[a-z]*\d)[a-z0-9]{6,}|[a-z]{1,8}-\d{13})\b/g;
 // a route or link that carries a token (invitation, sign-in, room, tax document, co-investor sign-in): the token part -> ~
 const HASH_TOKEN_RE = /([#/](?:invite|sign-?in|room|taxdoc|co)[-/=])[A-Za-z0-9_-]{8,}/gi;
 // the check servers' own address (each tree is served on its own free port): http://127.0.0.1:<port> -> <origin>
@@ -35,8 +35,18 @@ const ISO_TIME_RE = /\b(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\b/g;
 const DIGITS_RE = /\d{6,}/g;
 const mask = (s) => String(s === undefined || s === null ? '' : s).replace(DIGITS_RE, '[digits]');
 const norm = (s) => L.stripLinkTokens(String(s).replace(ORIGIN_RE, 'http://origin.example').replace(ORIGIN_ENC_RE, 'http%3A%2F%2Forigin.example')).replace(HASH_TOKEN_RE, '$1~').replace(ID_RE, '<id>').replace(TIME_RE, '<time>').replace(ISO_TIME_RE, '$1T<time>');
+// a mailto: link is compared decoded (its body holds the same links and times the screen does)
+const decodeMail = (v) => {
+  if (!/^mailto:/i.test(v)) return v;
+  try {
+    return decodeURIComponent(v);
+  } catch (e) {
+    return v;
+  }
+};
 const normAction = (a) => {
   const x = {};
+  if (typeof a.href === 'string') a = Object.assign({}, a, { href: decodeMail(a.href) });
   Object.keys(a).forEach((k) => {
     const v = a[k];
     if (typeof v === 'string') x[k] = norm(v);
@@ -342,10 +352,10 @@ const DIALOGS = [
   D('invitations.js', 4, 2780, 'Cancel this invitation?', ['diy'], 'none', [{ route: 'console-investors' }, { press: '[data-action="inv8-cancel"][data-id="{it}"]' }]),
   D('invitations.js', 1, 2575, 'Invitation cancelled (a closed invitation)', ['diy'], 'invitationClosed', [{ route: 'console-investors' }, { press: '[data-action="invite-preview"][data-id="{newInv}"]' }]),
   D('esign.js', 1, 1726, 'Delete this template?', ['diy', 'managed'], 'templatesTab', [{ press: '[data-action="es-tpl-del"]' }]),
+  D('esign.js', 3, 2182, 'Read the PDF again?', ['diy', 'managed'], 'editorRead', [{ press: '[data-action="es-reread"]' }]),
   D('esign.js', 4, 2480, 'Delete this draft?', ['diy', 'managed'], 'draft', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-delete"]' }]),
   D('esign.js', 5, 2506, 'Review and send', ['diy', 'managed'], 'draftFields', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-review"]' }]),
   D('esign.js', 6, 2543, 'Save as template', ['diy', 'managed'], 'none', [{ route: 'console-envelope-{draft}' }, { press: '[data-action="es-save-tpl"]' }]),
-  D('esign.js', 3, 2182, 'Read the PDF again?', ['diy', 'managed'], 'editorRead', [{ press: '[data-action="es-reread"]' }]),
   D('taxdocs-ui.js', 1, 537, 'Tax document pages (View pages on an imported K-1 file)', ['diy'], 'taxImport', [{ press: '[data-action="tx-view"]' }]),
   D('integrations.js', 1, 914, 'Verification (the investor\'s Verify now; the managed Account page has no Verify now)', ['diy'], 'asInvestor', [{ route: 'account' }, { press: '.pt-main [data-action="iv-start"]' }]),
   D('portal.js', 2, 1160, 'A document (the investor\'s Documents)', ['diy', 'managed'], 'asInvestor', [{ route: 'documents' }, { press: '[data-action="open-doc"]' }]),
