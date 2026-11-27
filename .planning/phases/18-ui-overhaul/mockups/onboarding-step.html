@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup: invitation step, Investor status (phase 18)</title>
+<link rel="stylesheet" href="regal.css">
+<style>
+  :root { --brand: #006C95; --brand-ink: #FFFFFF; --brand-text: #006C95; }
+  .ivf-progress { margin-bottom: 32px; }
+  .ivf-progress .ob-count span { color: var(--fg-2); }
+  fieldset { border: 0; margin: 0 0 24px; padding: 0; min-width: 0; }
+  legend { font-size: 16px; font-weight: 500; margin-bottom: 12px; color: var(--fg); padding: 0; }
+  .yesno { display: grid; grid-template-columns: repeat(2, minmax(0, 160px)); gap: 8px; }
+</style>
+</head>
+<body>
+<p class="mock-note">Phase 18 mockup: one step of an investor's invitation (Investor status), with the sample sponsor's brand. Same steps, same order, same questions and the same rule that nothing is required; only the look and the place of "Ask me anything" change.</p>
+<div class="pt">
+  <header class="pt-head">
+    <div class="pt-head-in">
+      <span class="lockup">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 31 L23 7 L27.5 13 L12 31 Z" fill="#006C95"/><path d="M16.5 31 L29.5 15.5 L37 31 Z" fill="#77B6CA"/></svg>
+        <span class="wm"><span class="wm-name">Kestrel Bay</span><span class="wm-meta">Capital</span></span>
+      </span>
+      <span class="ob-note">Account setup</span>
+      <div class="pt-right">
+        <button class="ask" type="button" aria-haspopup="dialog"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Ask me anything</span></button>
+        <button class="icon-btn ask-icon" type="button" aria-haspopup="dialog" aria-label="Ask me anything"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
+      </div>
+    </div>
+  </header>
+  <div class="ob">
+    <ol class="ob-steps" aria-label="Steps">
+      <li class="done"><span class="ob-num"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Welcome</span></li>
+      <li class="done"><span class="ob-num"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Create your login</span></li>
+      <li class="done"><span class="ob-num"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Investor information</span></li>
+      <li class="done"><span class="ob-num"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Identity verification</span></li>
+      <li class="current" aria-current="step"><span class="ob-num">5</span><span>Investor status</span></li>
+      <li><span class="ob-num">6</span><span>Tax certification</span></li>
+      <li><span class="ob-num">7</span><span>Distribution payments</span></li>
+      <li><span class="ob-num">8</span><span>Subscription</span></li>
+      <li><span class="ob-num">9</span><span>Subscription agreement</span></li>
+      <li><span class="ob-num">10</span><span>Done</span></li>
+    </ol>
+    <form class="ob-form" novalidate>
+      <div class="ivf-progress">
+        <p class="ob-count">Step 5 of 10<span>: Investor status</span></p>
+        <div class="ob-bar" role="progressbar" aria-label="Account setup progress" aria-valuemin="1" aria-valuemax="10" aria-valuenow="5" aria-valuetext="Step 5 of 10: Investor status"><span style="width:50%"></span></div>
+      </div>
+      <h1>Investor status</h1>
+      <fieldset style="margin-top:24px">
+        <legend>Is Whitfield Family Trust an accredited investor?</legend>
+        <div class="choice yesno">
+          <label><input type="radio" name="acc" checked><span><b>Yes</b></span></label>
+          <label><input type="radio" name="acc"><span><b>No</b></span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Which ground applies?</legend>
+        <div class="choice">
+          <label><input type="radio" name="g"><span><b>Income over $200,000 (or $300,000 together with a spouse or spousal equivalent) in each of the last two years, expecting the same this year</b></span></label>
+          <label><input type="radio" name="g" checked><span><b>Net worth over $1 million, not counting the primary residence</b></span></label>
+          <label><input type="radio" name="g"><span><b>Holds a Series 7, 65 or 82 license in good standing</b></span></label>
+          <label><input type="radio" name="g"><span><b>Entity with total assets over $5 million, not formed to make this investment</b></span></label>
+        </div>
+      </fieldset>
+      <div class="ob-actions"><button class="btn" type="button">Back</button><button class="btn btn-primary" type="submit">Continue</button></div>
+      <p class="ob-saved">Your progress is saved. You can come back with your invitation link at any time.</p>
+    </form>
+  </div>
+</div>
+</body>
+</html>
