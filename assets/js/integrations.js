@@ -1351,7 +1351,8 @@
   }
   function mailPanel(ws) {
     const url = serverUrl(ws);
-    if (!url) return '';
+    // Without a server: one line, and no request is made.
+    if (!url) return '<section class="cs-panel" id="iv-mail" aria-labelledby="iv-mail-h"><div class="cs-panel-head"><h2 id="iv-mail-h">Email sending</h2></div><p class="cs-hint">Sending from your own domain needs your integration server.</p></section>';
     const m = mailState();
     if (m.url !== url && !m.loading) {
       m.data = null;
@@ -1790,4 +1791,7 @@
 
   NS.integrations = { NOTE_506C_NEVER, CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, rescreenOne, rescreenable, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
   NS.integrations.roleNames = roleNames;
+  // The console's call to its integration server (plans 13-06, 13-08, 13-09): api(ws, method, path, body) → the JSON answer;
+  // a refusal rejects with the server's own sentence as the message (err.status, err.code, err.server = true).
+  NS.integrations.api = api;
 })(window.CVPortal);
