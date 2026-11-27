@@ -40,3 +40,8 @@
 - W2 (16-04): books-post.js sample() tracks no 2000; add case sample (Kestrel Bay, one line returned: books balance, unbalanced list and exceptions unchanged, cash up by the net); POSTING RETURNS 10 cases in both verify lines.
 - Info: also refuse GONOSUMDB/GOPRIVATE/GOINSECURE matching moov-io in achcli.sh; PREFIX_SWAP has no image for 00/61-72/80 (stop with FAIL if met); a merged-tree AUDIT SAME base must contain 11-12's and 11-18's merges too; planning docs still hold real numbers (mask on next edit).
 - Start now: 16-01 yes; 16-03 yes (with B2, B3); 16-04 yes; 16-02 no: waits for 08-18, 11-13 and 12-06 (console.js, diy.html, portal.html).
+
+## After 16-01 (merged 2026-11-27)
+- nacha.js computes bank holidays by rule for any year (Sunday holidays observed Monday, Saturday holidays not moved), equal to an independent calendar for 2025-2035 (112 dates) and to the old table for 2025-2028; mobile copy regenerated. The pinned reader (moov-io/ach achcli v1.69.1, hash-checked, cached at /root/.cache/cv-checks/achcli-v1.69.1/achcli) runs in checks; gate16.sh built (self-test 9; GATE_FRESH=1 when the base changes). Gate GATE_EXIT=0 (first run crashed six browser steps with 15-38 MB disk free; rerun passed). HOLIDAYS passes on the merged tree; server tests 456.
+- Measured: the reader pads short records with spaces, so a 93-character record is accepted; record length is enforced only by the builder's own "Every record is 94 characters". Later plans must not rely on the reader for record length.
+- Open: one self-test failure of its `only` case (empty output once in 13 runs, cause unknown; output kept in scratchpad exec-16-01/self-fail-1.txt; the self-test now prints each run's output on failure).
