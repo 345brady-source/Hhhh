@@ -15,6 +15,10 @@ const TAX = 'Remove the taxpayer number: emails never carry tax numbers.';
 const LONG = 'Remove the long number: emails never carry account or tax numbers.';
 const PASS = 'Remove the password: emails never carry passwords.';
 const SVG = 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=';
+// The model maker's names: banned from every message too, but kept out of assets/js (a file the browser ships may not
+// name them; the reference gate's leak step reads every line of assets/js), so they live here, beside the tests.
+const MODEL_NAMES = [/anthropic/i, /claude/i];
+const banned = () => E().BANNED.concat(MODEL_NAMES);
 
 /** Every sample of every kind, with the sample firm, an SVG-logo firm and a firm whose optional fields are empty. */
 function renders() {
@@ -85,13 +89,17 @@ test('no sensitive data in any render: no pattern in what is sent, no field for 
 test('banned words: no platform, vendor or library name, and never the plain-tier word, in any variant or in the headers', () => {
   const all = renders();
   for (const { kind, variant, m } of all) {
-    for (const p of parts(m)) for (const re of E().BANNED) assert.ok(!re.test(p), `${kind} ${variant}: ${re}`);
+    for (const p of parts(m)) for (const re of banned()) assert.ok(!re.test(p), `${kind} ${variant}: ${re}`);
   }
   const { m, data } = all[0];
   const raw = buildMessage({ from: { name: data.firm.name, address: 'notices@harborridge.example' }, to: { name: 'Anita Shah', address: 'anita@investor.example' }, replyTo: data.firm.supportEmail, subject: m.subject, text: m.text, html: m.html, inline: [], headers: m.headers, date: new Date('2026-11-10T12:00:00Z') });
   const head = raw.split('\r\n\r\n')[0];
-  for (const re of E().BANNED) assert.ok(!re.test(head), `${re} in the headers`);
+  for (const re of banned()) assert.ok(!re.test(head), `${re} in the headers`);
   assert.equal(E().SIMULATED, '(simulated in this demo)');
+  // The shipped file itself: no line names the model maker (the reference gate's leak rule for assets/js).
+  const own = readFileSync(new URL('../../assets/js/emails.js', import.meta.url), 'utf8').split('\n');
+  const named = own.map((l, i) => (MODEL_NAMES.some((re) => re.test(l)) ? i + 1 : 0)).filter(Boolean);
+  assert.deepEqual(named, [], `assets/js/emails.js lines ${named.join(', ')}`);
 });
 
 test('links: only the investor’s own link and the firm’s support address; redactLink and log() keep no link', () => {
