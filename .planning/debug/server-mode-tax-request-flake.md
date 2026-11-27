@@ -107,6 +107,11 @@ started: first seen at 75b2fc5 (13-03 merged); 13-03's own gate on base 8efaa5c 
   found: tfull-3 PASS (15) margin=173. Pinned: margins 141-172 ms, lagMaxMs 24-41, all PASS (one CPU lets the check run while the page renders, so it widens the margin rather than closing it; stopped after 6). Fixed: run-201 and run-202 `SERVER MODE: PASS (parts run: 15)`, coinv-1 `CO-INVESTOR SERVER: PASS (parts run: 5)`
   implication: natural runs of the unfixed check: 0 failures in 58 (45 unmodified + 13 instrumented natural). The race needs the check's own process held up >~80 ms while the browser keeps running (other gates' load), which these runs did not reach.
 
+- timestamp: 2026-11-27T15:37Z
+  checked: fixed tree (d146e80): run-203, run-204, run-206 (full SERVER MODE); emaildlg-1 (EMAIL DIALOG)
+  found: run-201/202/203/204/206 `SERVER MODE: PASS (parts run: 15)` (5 of 10 so far); `CO-INVESTOR SERVER: PASS (parts run: 5)`; `EMAIL DIALOG: PASS (parts run: 3)`
+  implication: verification in progress (5 more full runs)
+
 ## Resolution
 
 root_cause:
