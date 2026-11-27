@@ -360,6 +360,26 @@
     if (!u.sub || u.sub.offeringId !== o.id) u.sub = { offeringId: o.id, amount: String(o.minimum || ''), accredited: false, docs: false, esign: false, signature: '', err: null, done: null };
     return u.sub;
   }
+  /**
+   * Plan 08-20 (the 08-09 warning): when an active investor's subscription is refused for the accreditation, the subscribe
+   * screen (also the one saying the agreement cannot be signed online yet) offers the firm's open re-verification request
+   * ("Verify your accreditation"); with none, a lapsed verification and no accreditation check the portal can run itself,
+   * it says the firm will send a link. '' otherwise: a check the portal can run stays offered as today, in the subscription.
+   */
+  function reverifyOffer(inv, o) {
+    const I = NS.integrations;
+    const gate = I && NS.inviteFlow && NS.inviteFlow.reverifyAsk && inv.onboarding.status === 'complete' ? I.subscribeGate(W(), inv, o) : null;
+    if (!gate || gate.action !== 'accreditation') return '';
+    const banner = (more) => `<div class="iv-banner" role="status">${icon('alert')}<span>${h(gate.reason)}</span>${more}</div>`;
+    const href = NS.inviteFlow.reverifyAsk(inv);
+    if (href) return banner(`<a class="btn btn-primary" href="${h(href)}">Verify your accreditation</a>`);
+    const a = I.peek(inv).accreditation;
+    const own = (I.ensure(W()).use.accreditation || []).some((id) => {
+      const x = I.conn(W(), id);
+      return !!x && x.builtin !== 'self';
+    });
+    return a.status === 'verified' && !I.selfCertified(a) && !own ? banner(`<span>${h(T().shortName)} will send you a link to verify again.</span>`) : '';
+  }
   NS.views.subscribe = {
     mode: 'portal',
     render(id) {
@@ -372,13 +392,13 @@
       if (setup && !(setup.existing && setup.offeringId !== o.id)) return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">${setup.existing ? `${h(T().shortName)} invited you to subscribe. Your invitation takes you through the documents and the subscription agreement.` : 'Finish setting up your account first. Your subscription is the last step, and your progress so far is saved.'}</p><a class="btn btn-primary" href="#invite-${h(setup.token)}">${setup.existing ? 'Continue your subscription' : 'Continue account setup'}</a></div>`, 'investments');
       // Self-serve edition: the investor signs the offering's own subscription agreement, never a typed form in its place.
       const agr = NS.EDITION && NS.EDITION.diy && NS.esign && NS.esign.templateReady ? NS.esign.templateReady(W(), o.id) : null;
-      if (agr === false) return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">The subscription agreement for ${h(o.name)} is not available to sign online yet. Contact ${h(T().support.team)}${T().support.email ? ` at ${h(T().support.email)}` : ''}.</p></div>`, 'investments');
+      if (agr === false) return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}${reverifyOffer(inv, o)}<div class="done-box"><p class="lede">The subscription agreement for ${h(o.name)} is not available to sign online yet. Contact ${h(T().support.team)}${T().support.email ? ` at ${h(T().support.email)}` : ''}.</p></div>`, 'investments');
       // Self-serve edition, no invitation for this offering (a typed or bookmarked address): never the typed form with its
       // accredited statement (C-05, D-30). The button starts the same guided subscription as Investments (sub-start); a
       // render never creates records.
       if (NS.EDITION && NS.EDITION.diy && NS.inviteFlow) {
         const onFile = inv.onboarding.status === 'complete';
-        return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">${onFile ? 'Your subscription takes you through the documents and the subscription agreement.' : 'Finish setting up your account first. Your subscription is the last step.'}</p><button class="btn btn-primary" type="button" data-action="sub-start" data-id="${h(o.id)}">${onFile ? 'Continue your subscription' : 'Continue account setup'}</button></div>`, 'investments');
+        return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}${reverifyOffer(inv, o)}<div class="done-box"><p class="lede">${onFile ? 'Your subscription takes you through the documents and the subscription agreement.' : 'Finish setting up your account first. Your subscription is the last step.'}</p><button class="btn btn-primary" type="button" data-action="sub-start" data-id="${h(o.id)}">${onFile ? 'Continue your subscription' : 'Continue account setup'}</button></div>`, 'investments');
       }
       const f = subForm(o);
       const cfg = NS.audit ? NS.audit.settings(o) : null;

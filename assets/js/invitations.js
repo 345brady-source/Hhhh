@@ -271,7 +271,7 @@
     // Plan 08-06 (D-01): the sponsor ticked "Add verification package". Kept only where the box could be ticked: a server
     // is connected and offers the package for this invitation. The server is sent the choice and this invitation's id
     // (snapshot); it decides what is charged.
-    if (o.package === true && packageBox(ws, { email, offeringId: off ? off.id : '' }).enabled) invitation.package = true;
+    if (o.package === true && (invitation.reverify ? reverifyPackage(ws) : packageBox(ws, { email, offeringId: off ? off.id : '' })).enabled) invitation.package = true;
     if (token) invitation.link = linkFor(ws, invitation);
     if (!have) ws.investors.push(investor);
     list(ws).push(invitation);
@@ -611,14 +611,15 @@
   /**
    * Plan 08-09 (D-04, C-06): ask an investor on file to verify their accreditation again. Built as requestTax: an open request
    * is reused (in server mode its email is sent again with a new link); otherwise a new invitation (existing, reverify, no
-   * offering) holds the accreditation step and the done screen only. opts.package: the verification package (plan 08-20).
-   * Resolves to { invitation, res, reused }.
+   * offering) holds the accreditation step and the done screen only. opts.package: the verification package (plan 08-20),
+   * kept only when the dialog's box allows it (reverifyPackage, the invite form's rule); an open request reused is sent
+   * again as it is, so nothing is paid twice. Resolves to { invitation, res, reused }.
    */
   async function requestReverify(ws, inv, opts) {
     if (!inv || !active(inv)) throw new Error('Only an investor with an active account can be asked to verify their accreditation again here.');
     const open = openReverifyRequest(ws, inv);
     if (open) return { invitation: open, reused: true, res: serverOn(ws) ? await resend(ws, open) : { emailStatus: 'manual' } };
-    const it = create(ws, Object.assign({ name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, reverify: true }, opts && opts.package === true ? { package: true } : {})).invitation;
+    const it = create(ws, Object.assign({ name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, reverify: true }, opts && opts.package === true && reverifyPackage(ws).enabled ? { package: true } : {})).invitation;
     NS.app.save(true);
     return { invitation: it, reused: false, res: await send(ws, it) };
   }
@@ -681,7 +682,8 @@
       if (it.reverify) o.reverify = true;
       const e = validate(ws, o);
       if (e.amount || e.cls) Object.assign(o, { cents: 0, cls: '' });
-      if (!Object.keys(validate(ws, o)).length) made = create(ws, o).invitation;
+      // Plan 08-20 (G6): a re-verification is made again as requestReverify makes it (an active investor on file, no offering).
+      if (it.reverify ? active(inv) : !Object.keys(validate(ws, o)).length) made = create(ws, o).invitation;
     }
     if (made) audit(ws, 'Invitation replaced', `${inv.title}: ${said}`, it.offeringId, it.investorId);
     NS.app.save(true);
@@ -2580,6 +2582,26 @@
   // Plan 08-09 (D-04, C-06): "Ask to re-verify" on the Investors page (console.js shows it for an active investor whose
   // verification by a third party is missing, lapsed or about to lapse while an offering needs one). Its dialog names the
   // investor and what the link holds; "Send request" makes the request, or sends an open one again.
+  /** Plan 08-20 (D-01): the dialog's "Add verification package" box, priced by the server's reverify tier (package.js box). */
+  const reverifyPackage = (w) => (E.diy && NS.pkg ? NS.pkg.box(w, null, 'reverify') : { show: false, enabled: false, label: '', line: '', href: '' });
+  function reverifyBoxHtml(w) {
+    const pk = reverifyPackage(w);
+    return `<label class="cs-check cs-wide inv8-package" id="rv-package-row" for="rv-package"${pk.show ? '' : ' hidden'}><input id="rv-package" name="package" type="checkbox"${pk.enabled ? '' : ' disabled'}><span><span id="rv-package-label">${h(pk.label)}</span><span class="cs-hint" id="rv-package-line"${pk.line ? '' : ' hidden'}>${packageLine(pk)}</span></span></label>`;
+  }
+  /** The dialog's box brought up to date in place when the server's answer arrives (a tick stays only while it is allowed). */
+  function syncReverifyPackage() {
+    const row = document.getElementById('rv-package-row');
+    const input = document.getElementById('rv-package');
+    if (!row || !input || !W()) return;
+    const pk = reverifyPackage(W());
+    row.hidden = !pk.show;
+    input.disabled = !pk.enabled;
+    if (!pk.enabled) input.checked = false;
+    document.getElementById('rv-package-label').textContent = pk.label;
+    const line = document.getElementById('rv-package-line');
+    line.hidden = !pk.line;
+    line.innerHTML = packageLine(pk);
+  }
   function reverifyDialog(w, inv) {
     const I = IV();
     const a = I ? I.peek(inv).accreditation : {};
@@ -2591,11 +2613,13 @@
       <div class="dlg-body inv8-reverify">
         ${now ? `<p>${h(now)}</p>` : ''}
         <p>${h(inv.contact)} gets a link that holds the accreditation step only. A Rule 506(c) subscription needs a current verification.</p>
-        ${open ? '<p class="cs-hint">A request is already open: sending it again gives a new link, and the earlier one stops working.</p>' : ''}
+        ${open ? '<p class="cs-hint">A request is already open: sending it again gives a new link, and the earlier one stops working.</p>' : reverifyBoxHtml(w)}
+        <p class="cs-error" id="rv-said" role="alert" hidden></p>
         <div class="cs-row cs-row-end inv8-actions"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="reverify-send" data-id="${h(inv.id)}">Send request</button></div>
       </div>`,
       'dlg-reverify'
     );
+    if (!open && NS.pkg && serverOn(w)) NS.pkg.load(w).then(syncReverifyPackage);
   }
   NS.actions['reverify-request'] = (el) => {
     if (!E.diy) return;
@@ -2604,6 +2628,15 @@
     const inv = invOf(w, el.getAttribute('data-id'));
     if (inv) reverifyDialog(w, inv);
   };
+  /** The refusal's sentence in the open dialog ("Send request" can be pressed again); a toast when the dialog was closed. */
+  function reverifySaid(el, said, inv) {
+    const line = document.getElementById('rv-said');
+    const d = document.getElementById('dlg');
+    if (!line || !d || !d.open) return U.toast(`The re-verification request for ${inv.title} could not be sent: ${said}`);
+    line.textContent = said;
+    line.hidden = false;
+    el.disabled = false;
+  }
   NS.actions['reverify-send'] = async (el) => {
     if (!E.diy) return;
     if (!NS.app.can('operate')) return U.toast('Only your team can ask investors to verify their accreditation.');
@@ -2612,9 +2645,10 @@
     if (!inv || asking[inv.id]) return;
     asking[inv.id] = true;
     el.disabled = true;
+    const tick = document.getElementById('rv-package');
     let out = null;
     try {
-      out = await requestReverify(w, inv);
+      out = await requestReverify(w, inv, { package: !!(tick && tick.checked && !tick.disabled) });
     } catch (e) {
       U.toast(String((e && e.message) || e));
     } finally {
@@ -2624,8 +2658,10 @@
     if (!out) return U.closeDialog();
     const res = out.res || {};
     if (res.emailStatus === 'manual') return showEmail(out.invitation.id);
+    // Plan 08-20 (G6): a refusal stays in the dialog as the server's own sentence, alone (the request's row shows it too); a
+    // used package has left a new request, sent with the next "Send request".
+    if (res.emailStatus === 'failed') return reverifySaid(el, res.error, inv);
     U.closeDialog();
-    if (res.emailStatus === 'failed') return U.toast(`The re-verification request for ${inv.title} could not be sent: ${res.error}`);
     U.toast(res.emailStatus === 'outbox' ? `Re-verification request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Re-verification request emailed to ${inv.contact}.`);
   };
   NS.actions['inv8-copy'] = (el) => {
