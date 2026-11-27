@@ -420,8 +420,22 @@ Admin only; a team member asks an admin. It sets how the portal looks to investo
 - "Investor home page": the "Hero image", "About your firm" and up to three headline figures.
 - "Type and layout": "Typeface", "Header", "Corners" and "Appearance".
 - "Investor onboarding": "Ask for accreditation", "Require consent to electronic delivery", and "Direct deposit" as "Required" or "Optional (check allowed)".
-- "Support and disclosures": the support "Team name", "Email", "Phone" and "Hours" investors see, the "Sign-in heading", "Sign-in text" and "Footer disclosure".
+- "Support and disclosures": the support "Team name", "Email", "Phone" and "Hours" investors see, the "Sign-in heading", "Sign-in text" and "Footer disclosure", and the "Postal address" printed in your emails' footer.
 - "Configuration": "Copy JSON" copies the portal's configuration for backup.
+
+## console-emails
+audience: sponsor
+kind: console
+title: Emails
+menu: Settings, then Emails
+anchor: Every email your portal sends, in your brand. Open a preview to see it as your investors and your team receive it.
+anchor: To your team
+
+Every email the portal and your integration server send, in your brand, under "To investors" and "To your team". Each line shows the email's subject; "Phone", "Desktop" and "Text" open a preview under it, which is the email as it is sent, with sample investor details.
+- "Password reset" and "Team invitation" say "Sent once sign-in accounts are connected."
+- "Before you send" shows what is still missing, such as your firm's postal address, needed before invitations to a new offering; add it as "Postal address" on Portal and brand.
+- An uploaded logo that is not a PNG, JPEG or GIF file appears as your firm's name in emails; the page says so.
+- "Sent" lists the latest 200 emails with when, to whom and what happened, such as "Simulated in this demo", "Sent from your email app", "Sent", "Delivered" or "Came back"; "Investor" shows one investor's. Each investor's emails are also on their "Account" record.
 
 ## console-integrations
 audience: sponsor

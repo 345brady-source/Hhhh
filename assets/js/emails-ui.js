@@ -275,7 +275,7 @@
       <div data-eml-log="${h(cacheKey(ws, ''))}" data-eml-page>${logBody(ws, '', true)}</div>`;
   }
 
-  NS.views[ROUTE] = {
+  NS.views['console-emails'] = {
     mode: 'console',
     render() {
       const ws = W();
