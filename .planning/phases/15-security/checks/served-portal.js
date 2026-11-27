@@ -13,6 +13,9 @@
 //   4. requires 0 securitypolicyviolation events in the page from the first script on, no page error, and a policy that
 //      allows WebAssembly ('wasm-unsafe-eval') and never 'unsafe-eval'; the page itself also compiles a small
 //      WebAssembly module under the policy (as the reader's own code needs to).
+//   Measured with --plant no-wasm (2026-11-27): in Chromium the text reader's worker takes no policy from the page (its
+//   script is served without one), so step 3 still passes without 'wasm-unsafe-eval'; the header check, step 4's
+//   compile and the violation count are what fail.
 // Parts:
 //   chromium-desktop   Chromium, 1440 x 1000
 //   chromium-iphone    Chromium with the iPhone profile of phase 6's checks (390 x 844, touch, the iPhone user agent)
