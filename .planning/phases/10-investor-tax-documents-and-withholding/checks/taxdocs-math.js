@@ -42,7 +42,8 @@ function facts(partners) {
 }
 /** A fresh portal, a workspace of the given partners holding the offering, the firm's contact set, and one batch. */
 function setup(partners, opts) {
-  const NS = B.portal();
+  // emails.js too: the notice is its tax_notice render (plan 13-07), as on the pages, where it loads before taxdocs.js
+  const NS = B.portal(['data.js', 'audit.js', 'operations.js', 'emails.js', 'taxdocs.js']);
   const T = NS.taxdocs;
   const list = partners || B.PARTNERS;
   const ws = B.workspace(list);
@@ -396,7 +397,9 @@ const cases = {
     const n = T.notice(ws, a);
     check('the notice subject is exactly the words of section 7.01', n.subject === 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE' && T.NOTICE_SUBJECT === n.subject, n.subject);
     check('the body says how to open and print the document', /open/i.test(n.body) && /print/i.test(n.body) && /Schedule K-1 \(Form 1065\)/.test(n.body), n.body);
-    check("the body names the firm's contact (name, mailing address, telephone, email) and the date it stays available until", [CONTACT.name, CONTACT.address, CONTACT.phone, CONTACT.email, a.tax.availableUntil].every((s) => n.body.indexOf(s) >= 0), n.body);
+    // the date in words, as the render prints it (plan 13-07): 2027-09-10 reads September 10, 2027
+    const untilWords = new Date(`${a.tax.availableUntil}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    check("the body names the firm's contact (name, mailing address, telephone, email) and the date it stays available until", [CONTACT.name, CONTACT.address, CONTACT.phone, CONTACT.email, untilWords].every((s) => n.body.indexOf(s) >= 0), n.body);
     const b = docFor(2, 'INV-1003');
     void b;
     const l = T.lists(ws, { offeringId: B.OFFERING, kind: 'k1-1065', year: '2025' });
