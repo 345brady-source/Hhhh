@@ -1,5 +1,5 @@
 ---
-status: fixing
+status: verifying
 trigger: "EMAIL DIALOG (3) fails its phone part under load: 'n of 11 paragraphs seen whole' in the phone frame (4, 7 and 10 of 11 across runs) in the gates of 10-11, 11-15, 14-01 and 11-14 (twice); passes when rerun unchanged."
 created: 2026-11-27T05:40Z
 updated: 2026-11-27T05:46Z
@@ -80,6 +80,11 @@ started: seen in the gates of 10-11, 11-15, 14-01, 11-14 (twice).
   checked: product dialog opening (assets/js/app.js dialog(): innerHTML, showModal, focus the first [autofocus] or button) and the CSS for any dialog animation
   found: no opening animation or transition on .dlg; the email card and body are laid out once; first look in every trace is at scrollTop 0 with the same target offsets as at the end.
   implication: no layout settling after the open to wait for in the check; the only moving thing is the scroll itself.
+
+- timestamp: 2026-11-27T05:48Z
+  checked: the fix (email-dialog.js readThrough only, working tree saved as a wip commit): each finger stroke = touchStart, the same 8 touchMoves of 15px, the finger held still 200 ms, touchEnd; every look (the first, and after every stroke or wheel notch) waits for atRest(): the body's scrollTop unchanged over 5 animation frames, bounded 5 s; the fixed 250 ms and 60 ms waits are gone. New check line "<view>: the dialog came to rest after every finger stroke|wheel notch before it was looked at (within 5 s each)". The "seen whole" detail now names each missed part with its height, the window and the scrollTop range in which it is whole, plus every look's scrollTop. Its pass condition is unchanged: every one of the 11 (10 for tax-request) targets whole at some look.
+  found: fixed check, part phone 3 times, RATE=6, outside the queue, load average 3.6-6.3 (scratchpad emflaky/rate6-fixed3/): COUNTS frame520px pass=3 of 3, framefull pass=3 of 3. Looks at scrollTop 0, 113, 225, 337, 450, 555, 667, 779, 884, 945, 945: 94-113px per stroke in every view; the scroll events show each stroke's last event inside the drag (e.g. 113 at 5124, next event 5519 at the next stroke): no momentum after the lift, even when touchMoves reached the page bunched (22-30px jumps).
+  implication: travel per look is now the finger's travel, independent of timing, under every part's slack (234px at the smallest). Falsification test passed so far; next the 20-run proof.
 
 ## Resolution
 
