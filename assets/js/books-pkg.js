@@ -556,7 +556,7 @@
         if (!s) continue;
         const bytes = await storedBytes(s.id);
         const kind = bytes ? kindOf(bytes) : '';
-        if (kind) forms.push({ name: `forms/${slug(i.id)}_${String(s.form).replace(/[^A-Za-z0-9-]+/g, '')}.${kind}`, data: bytes });
+        if (kind) forms.push({ name: `forms/${String(i.id).replace(/[^A-Za-z0-9-]+/g, '_')}_${String(s.form).replace(/[^A-Za-z0-9-]+/g, '')}.${kind}`, data: bytes });
         else absent.push(`Signed form not on this device: ${i.id} ${s.form}`);
       }
     }
