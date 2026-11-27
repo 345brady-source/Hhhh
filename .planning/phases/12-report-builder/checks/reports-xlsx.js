@@ -128,17 +128,14 @@ const parts = {
     const { NS } = L;
     const { sampleWorkspaces } = require(path.join(T.P11, 'checks/load11.js'));
     const ws = sampleWorkspaces(NS).find((w) => w.tenant.id === 'ashwell-ridge');
-    // The sample holdings are generated rows with no id until plan 11-11 moves holdings onto the journal (12-01); here
-    // the real figures are used with each holding row given the id the journal will give it, so an asset item can name it.
-    const D = Object.assign({}, NS.reportsData, {
-      holdings(w, oid, to) {
-        const H = NS.reportsData.holdings(w, oid, to);
-        return H && Object.assign({}, H, { rows: H.rows.map((h, k) => Object.assign({}, h, { id: h.id || `h${k + 1}` })) });
-      }
-    });
+    // The sample holdings carry their seeded ids (tenants.js, quick task 2026-11-27-report-fixes): the asset item names
+    // the first holding of ar-cedar-row by its own id.
+    const D = NS.reportsData;
+    const hid = ((D.holdings(ws, 'ar-cedar-row', '2026-12-31') || { rows: [] }).rows[0] || {}).id || '';
+    check("the first holding of ar-cedar-row has its seeded id ('ar-cedar-row-the-residences-at-cedar-row')", hid === 'ar-cedar-row-the-residences-at-cedar-row', hid);
     const LABELS = ['=HYPERLINK("http://x","y")', '+1', '-2', '@x'];
     const t = S.template(NS, ws, 'q-realestate');
-    t.sections.find((s) => s.key === 'assets').opts.items = [{ holdingId: 'h1', photoIds: [], text: [], figures: LABELS.map((label, k) => ({ label, value: `Value ${k + 1}` })) }];
+    t.sections.find((s) => s.key === 'assets').opts.items = [{ holdingId: hid, photoIds: [], text: [], figures: LABELS.map((label, k) => ({ label, value: `Value ${k + 1}` })) }];
     const rid = NS.reportsData.holders(ws, 'ar-cedar-row', '2026-12-31')[0].id;
     const r = NS.reports.resolve(ws, t, Object.assign({ when: S.WHEN, audience: { kind: 'investor', investorId: rid, offeringId: 'ar-cedar-row' } }, S.Q4), rid, D);
     check('the model resolves', r.errors.length === 0 && !!r.model, r.errors);
