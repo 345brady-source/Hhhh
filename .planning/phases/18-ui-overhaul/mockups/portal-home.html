@@ -35,9 +35,14 @@
 </style>
 </head>
 <body>
-<p class="mock-note">Phase 18 mockup: the investor's Home in the regal frame, carrying the sample sponsor's own logo and color (no other firm's name appears). Sample data only. Words are today's; Help leaves the footer and becomes "Ask me anything" at the top right.</p>
+<p class="mock-note">Phase 18 mockup: the investor's Home in the regal frame, carrying the sample sponsor's own logo and color (no other firm's name appears). Sample data only. Words are today's; Help leaves the footer and becomes "Ask me anything" at the top right (desktop: a utility row above the menu; phone: the magnifier beside Menu).</p>
 <div class="pt">
   <header class="pt-head">
+    <div class="pt-util"><div class="pt-util-in">
+      <button class="ask help-entry" type="button" aria-haspopup="dialog"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Ask me anything</span></button>
+      <span class="pt-user"><b>Eleanor Whitfield</b><span>Whitfield Family Trust</span></span>
+      <a class="pt-signout" href="#">Sign out</a>
+    </div></div>
     <div class="pt-head-in">
       <a class="lockup" href="#" aria-label="Kestrel Bay Capital Investor Portal">
         <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 31 L23 7 L27.5 13 L12 31 Z" fill="#006C95"/><path d="M16.5 31 L29.5 15.5 L37 31 Z" fill="#77B6CA"/></svg>
@@ -45,10 +50,7 @@
       </a>
       <nav class="pt-nav" aria-label="Investor Portal"><a href="#" aria-current="page">Home</a><a href="#">Investments</a><a href="#">Distributions</a><a href="#">Documents</a><a href="#">Updates</a><a href="#">Account</a></nav>
       <div class="pt-right">
-        <button class="ask" type="button" aria-haspopup="dialog"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Ask me anything</span></button>
         <button class="icon-btn ask-icon" type="button" aria-haspopup="dialog" aria-label="Ask me anything"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
-        <span class="pt-user"><b>Eleanor Whitfield</b><span>Whitfield Family Trust</span></span>
-        <a class="pt-user" href="#" style="font-size:14px">Sign out</a>
         <button class="pt-menu" type="button" aria-expanded="false"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span></button>
       </div>
     </div>
@@ -100,10 +102,10 @@
           <section class="sec">
             <div class="sec-head"><h2>Company overview</h2></div>
             <p style="color:var(--fg-2)">Kestrel Bay Capital invests in coastal multifamily and private credit for families and foundations.</p>
-            <dl class="figs" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:16px;border-left:0;border-right:0;border-radius:0">
-              <div class="fig" style="padding:16px 8px 16px 0"><dt>Capital managed</dt><dd style="font-size:22px">$410M</dd></div>
-              <div class="fig" style="padding:16px 8px"><dt>Properties</dt><dd style="font-size:22px">18</dd></div>
-              <div class="fig" style="padding:16px 0 16px 8px"><dt>Founded</dt><dd style="font-size:22px">2011</dd></div>
+            <dl class="figs-mini">
+              <div><dt>Capital managed</dt><dd>$410M</dd></div>
+              <div><dt>Properties</dt><dd>18</dd></div>
+              <div><dt>Founded</dt><dd>2011</dd></div>
             </dl>
           </section>
           <section class="sec">
