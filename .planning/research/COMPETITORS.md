@@ -289,7 +289,7 @@ Automatic field placement on any agreement (measured 65-96%, 3 of 4 under the ba
 **Option C — Low base plus per-investor fee**
 - $49/mo plus $1 per active investor per month.
 - For: tracks cost and value closely.
-- Against: harder to predict; sponsors see a meter on every investor they add, which works against the funnel; Allocations-style per-investor charges are disliked in syndication forums (not researched in depth here).
+- Against: harder to predict; sponsors see a meter on every investor they add, which works against the funnel.
 
 **Recommendation: Option B,** with the 40 founding sponsors kept at $99 flat at any investor count for 24 months after their free year, which honours the offer. Charge nothing in month 13 until server-held data, sign-in and email from the sponsor's domain are merged and owner-checked. If they are not, extend the free period rather than bill for an unfinished product.
 
@@ -300,4 +300,28 @@ Automatic field placement on any agreement (measured 65-96%, 3 of 4 under the ba
 - Our hosting, model and email costs per sponsor were not measured, so the margin at $99 is unknown.
 - The recommendation assumes the BUILDING items are owner-checked before billing starts. If they are not, the right price is $0.
 
-<!-- gsd:write-continue -->
+## 6. Claims that could not be sourced, and open questions
+
+### Could not be sourced (do not repeat them as fact)
+
+- Any competitor's price read on its own live pricing page. Pages were blocked; every price came from search extracts or review sites.
+- Juniper Square's current entry price; whether it offers its own domain; K-1 delivery; capital collection by ACH.
+- InvestNext's Fundraising price ($99 and $299 both appear); the amount of its onboarding fee and of its custom-domain add-on; its ACH fee (0.03% + $0.25 comes from a third-party review and may be a misprint of 0.3%).
+- The price of Cash Flow Portal's syndication/fund suite.
+- Any SponsorCloud price (the $95-$600 range is an estimate by a listing site).
+- AppFolio Investment Manager, Yardi and RealPage prices from the vendors themselves.
+- Passthrough, Dealpath, Groundbreaker and Altvia portal prices.
+- Carta's fund-administration price from any Carta document.
+- VerifyInvestor's own per-letter price (the project's earlier $69 figure, in 08-CONTEXT, was also read through search results and marked unconfirmed).
+- What banks charge sponsors for ACH origination, which is the hidden cost of our $0 bank-file path.
+- Competitors' security attestations (SOC 1 or SOC 2).
+- The source URL of the $150-$300 per-investor K-1 preparation figure (vendor blog, URL not tied in the extract).
+- Our own cost to serve one sponsor (hosting, model calls, email).
+- What sponsors will pay. No survey, interview or test exists.
+
+### Open questions for the owner or later research
+
+1. Open the vendor pricing pages directly once the session's network allows these hosts: investnext.com, cashflowportal.com, covercy.com, agorareal.com, sponsorcloud.io, junipersquare.com. Then replace the search-extract figures here.
+2. Ask the owner's own bank what it charges for ACH origination and same-day files. That is the true cost of our payment path to a sponsor.
+3. Measure hosting, model and email cost per sponsor in the free year, to set the margin.
+4. Decide whether the investor-count limit for Starter is 100 or another figure, after seeing the 40 sponsors' real investor counts.
