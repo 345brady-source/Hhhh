@@ -366,7 +366,9 @@ const parts = {
     check("no 'Year-end package' panel and no error on it", !at.panel && !at.text && !at.err, at);
     const files = await fr.evaluate(() => Array.from(document.scripts).map((s) => s.src).filter((u) => /books-pkg|filesout/.test(u)));
     check("none of this plan's files is on the page", files.length === 0, files);
-    await ends(check, A, fr);
+    // The managed edition is Carrow & Vale's own portal, so its name on screen is no leak (books-flow.js managed: no leak search).
+    await T.wayOut(check, fr);
+    await T.quiet(check, A, fr);
     await A.context.close();
   }
 };

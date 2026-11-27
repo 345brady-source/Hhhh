@@ -3199,6 +3199,7 @@
           </tbody></table></div>
           ${lastExport ? `<p class="cs-hint">Last exported ${date(lastExport.at.slice(0, 10))} by ${h(lastExport.actor)}: <code>${h(lastExport.record)}</code>. ${h(lastExport.detail)}.</p>` : ''}`
         )}
+        ${NS.runHooks('auditPanels', w) /* the Year-end package panel, "Download year-end package" (books-pkg.js, self-serve owners only) */}
         ${panel(
           'Preview',
           `<div class="cs-tabs aud-tabs" role="group" aria-label="Schedule">${B.list.map((s) => `<button type="button" class="cs-tab" data-action="aud-tab" data-t="${s.id}" aria-pressed="${s.id === tab.id}">${h(s.title)}</button>`).join('')}</div>
