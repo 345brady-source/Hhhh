@@ -122,9 +122,9 @@
 
   /* ---------- sections other files add (NS.booksUI) ---------- */
   const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
-  // A section is listed here only when its files ship, so no visit asks for a file that is not there. Plan 11-15 adds
-  // bank: ['bankfiles.js', 'books-bank.js', 'books-bank-ui.js'] (the statement reader, the bank decisions, its screen).
-  const PARTS = Object.freeze({});
+  // A section is listed here only when its files ship, so no visit asks for a file that is not there. The bank section
+  // loads the statement reader, the bank decisions and its screen, in that order.
+  const PARTS = Object.freeze({ bank: ['bankfiles.js', 'books-bank.js', 'books-bank-ui.js'] });
   const parts = {};
   const load = { started: false, settled: false, waiting: false };
   function part(key, spec) {

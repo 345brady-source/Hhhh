@@ -5,7 +5,9 @@
  * Stored in the fund's books (fund.bank):
  *   accounts  [ { id: 'ba-<n>', name, last4, code, map } ]   code is the account's cash account in the chart: 1000 for
  *             the first, then 1001, 1002, ... added as 'Cash: <name>'; only the last four digits of the number are kept
- *   imports   [ { id, account, name, sha256, from, to, added, fileId, at, by } ]   fileId names the bytes kept elsewhere
+ *   imports   [ { id, account, name, sha256, from, to, added, fileId, at, by, openingCents, closingCents } ]   fileId
+ *             names the bytes kept elsewhere; the two balances are the file's own, or null when it carries none
+ *   accounts[].opening  { date, cents, at, by }   the bank's balance when the first statement starts (see Reconciling)
  *   lines     [ { id, account, date, cents, text, ref, imp, match: { entry, line } | null, entry: id | null } ]
  *             id is '<account id>:<the statement reader's id>', so the same statement in two accounts never collides
  *   recs      [ { account, asOf, statementCents, bookCents, outstanding: [ [entryId, lineIndex, cents] ], at, by } ]
@@ -156,7 +158,8 @@
     out.added = fresh.length;
     if (out.added > 0) {
       fresh.forEach((l) => bank.lines.push(l));
-      bank.imports.push({ id: impId, account: acct.id, name: String(opts.name || ''), sha256: String(opts.sha256 || ''), from: parsed.from || null, to: parsed.to || null, added: out.added, fileId: String(opts.fileId || ''), at: opts.at || new Date().toISOString(), by: String(opts.by || '') });
+      const bal = (v) => (Number.isSafeInteger(v) ? v : null);
+      bank.imports.push({ id: impId, account: acct.id, name: String(opts.name || ''), sha256: String(opts.sha256 || ''), from: parsed.from || null, to: parsed.to || null, added: out.added, fileId: String(opts.fileId || ''), at: opts.at || new Date().toISOString(), by: String(opts.by || ''), openingCents: bal(parsed.openingCents), closingCents: bal(parsed.closingCents) });
     }
     return out;
   }
@@ -369,17 +372,55 @@
 
   /* ---------- Reconciling to a statement date ---------- */
   /**
-   * { statementCents, bookCents, outstanding, undecided, differenceCents } at asOf. Outstanding: cash lines dated on or
-   * before asOf that no statement line dated on or before asOf is matched to and no statement line posted; an entry and
-   * its reversal (both by asOf) are left out together when neither is in the bank, since they add up to nothing.
+   * The opening balance of a bank account whose first statement starts after its books do. Its date is the first
+   * statement line's date (the earliest line stored on the account); the balance is the bank's at the start of that day,
+   * the statement's beginning balance. Asked for only when the journal holds a cash line on the account dated before it.
+   * { date, needed, entered: { date, cents, at, by } | null }, or null when nothing is imported and none was entered.
+   */
+  function openingOf(ws, offeringId, accountId) {
+    const acct = accountOf(ws, offeringId, accountId);
+    const entered = acct.opening && isDate(acct.opening.date) && Number.isSafeInteger(acct.opening.cents) ? clone(acct.opening) : null;
+    if (entered) return { date: entered.date, needed: true, entered };
+    let first = '';
+    (bankOf(ws, offeringId).lines || []).forEach((l) => l && l.account === accountId && isDate(l.date) && (!first || l.date < first) && (first = l.date));
+    if (!first) return null;
+    const C = acct.code;
+    const before = journalOf(ws, offeringId).some((e) => e && Array.isArray(e.lines) && typeof e.date === 'string' && e.date < first && e.lines.some((l) => String(l[0]) === C));
+    return { date: first, needed: before, entered: null };
+  }
+  /** Enter the opening balance (whole cents, by a named person); refused once a reconciliation of the account is stored. */
+  function setOpening(ws, offeringId, accountId, cents, who) {
+    who = who || {};
+    const op = openingOf(ws, offeringId, accountId);
+    if (!op) throw new Error('Import a statement first: the opening balance is the bank balance when the first statement starts.');
+    if (!Number.isSafeInteger(cents)) throw new Error('The opening balance must be a whole number of cents.');
+    if (typeof who.by !== 'string' || !who.by.trim()) throw new Error('Entering an opening balance needs the name of the person entering it.');
+    if ((bankOf(ws, offeringId).recs || []).some((r) => r && r.account === accountId)) throw new Error('A reconciliation of this account is stored, so its opening balance can no longer change.');
+    const a = store(ws, offeringId).accounts.find((x) => x && x.id === accountId);
+    a.opening = { date: op.date, cents, at: who.at || new Date().toISOString(), by: who.by };
+    return clone(a.opening);
+  }
+  /**
+   * { statementCents, bookCents, outstanding, undecided, differenceCents, opening } at asOf. Outstanding: cash lines dated
+   * on or before asOf that no statement line dated on or before asOf is matched to and no statement line posted; an entry
+   * and its reversal (both by asOf) are left out together when neither is in the bank, since they add up to nothing.
+   *
+   * With an opening balance (date D, the bank's balance B0 at the start of D): everything dated before D is in B0 or is
+   * one figure, the cash the books hold before D that the bank had not shown by D and has not shown since (book balance
+   * the day before D, less B0, less the pre-D cash lines matched to statement lines from D to asOf). It is listed as one
+   * outstanding item with no entry (entry '', line -1) when it is not zero; lines and entries before D are not listed.
+   * When an opening balance is needed and not entered, differenceCents is null: the difference cannot be known.
    */
   function reconcile(ws, offeringId, accountId, asOf, statementCents) {
     const acct = accountOf(ws, offeringId, accountId);
     if (!isDate(asOf)) throw new Error('The statement date is not a real calendar date written YYYY-MM-DD.');
     if (!Number.isSafeInteger(statementCents)) throw new Error('The statement balance must be a whole number of cents.');
     const C = acct.code;
+    const op = openingOf(ws, offeringId, accountId);
+    const D = op && op.needed ? op.date : '';
+    if (D && asOf < D) throw new Error(`The statement date is before the first statement line, ${D}; choose ${D} or later.`);
     const all = (bankOf(ws, offeringId).lines || []).filter((l) => l && l.account === accountId);
-    const lines = all.filter((l) => l.date <= asOf);
+    const lines = all.filter((l) => l.date <= asOf && (!D || l.date >= D));
     const matched = matchedKeys(ws, offeringId, asOf);
     const posting = new Set(all.filter((l) => l.entry).map((l) => l.entry));
     const j = journalOf(ws, offeringId);
@@ -387,7 +428,7 @@
     const rv = reversals(j);
     const outstanding = [];
     j.forEach((e) => {
-      if (!e || !Array.isArray(e.lines) || e.date > asOf || posting.has(e.id)) return;
+      if (!e || !Array.isArray(e.lines) || e.date > asOf || (D && e.date < D) || posting.has(e.id)) return;
       e.lines.forEach((l, i) => {
         if (String(l[0]) !== C || matched.has(lineKey(e.id, i))) return;
         if (e.rev) {
@@ -403,18 +444,34 @@
     const und = lines.filter((l) => !decided(l));
     const bookCents = B.balance(ws, offeringId, C, asOf);
     const sum = (xs) => xs.reduce((t, x) => t + x.cents, 0);
-    return { statementCents, bookCents, outstanding, undecided: clone(und), differenceCents: statementCents - bookCents + sum(outstanding) - sum(und) };
+    const out = { statementCents, bookCents, outstanding, undecided: clone(und), differenceCents: null, opening: D ? { date: D, cents: op.entered ? op.entered.cents : null, needed: true } : null };
+    if (D && !op.entered) return out;
+    if (D) {
+      const prior = addDays(D, -1);
+      let cleared = 0;
+      all.forEach((l) => {
+        if (!l.match || l.date < D || l.date > asOf) return;
+        const e = byId.get(l.match.entry);
+        if (e && e.date < D && e.lines[l.match.line]) cleared += e.lines[l.match.line][1];
+      });
+      const before = B.balance(ws, offeringId, C, prior) - op.entered.cents - cleared;
+      if (before) outstanding.unshift({ entry: '', line: -1, date: prior, cents: before, memo: '' });
+    }
+    out.differenceCents = statementCents - bookCents + sum(outstanding) - sum(und);
+    return out;
   }
   /** Store the reconciliation; refused unless the difference is exactly zero. */
   function markReconciled(ws, offeringId, accountId, asOf, statementCents, who) {
     who = who || {};
     const r = reconcile(ws, offeringId, accountId, asOf, statementCents);
+    if (r.differenceCents === null) throw new Error(`Enter the opening balance at ${r.opening.date} first: the bank balance when the first statement starts.`);
     if (r.differenceCents !== 0) throw new Error(`The reconciliation is off by ${dollars(r.differenceCents)}; it can be stored only when the difference is $0.00.`);
     if (typeof who.by !== 'string' || !who.by.trim()) throw new Error('Storing a reconciliation needs the name of the person storing it.');
     const rec = { account: accountId, asOf, statementCents, bookCents: r.bookCents, outstanding: r.outstanding.map((o) => [o.entry, o.line, o.cents]), at: who.at || new Date().toISOString(), by: who.by };
+    if (r.opening) rec.opening = { date: r.opening.date, cents: r.opening.cents };
     store(ws, offeringId).recs.push(rec);
     return clone(rec);
   }
 
-  B.bank = { addAccount, setMap, importLines, undecided, candidates, match, unmatch, autoMatch, categorize, uncategorize, reconcile, markReconciled };
+  B.bank = { addAccount, setMap, importLines, undecided, candidates, match, unmatch, autoMatch, categorize, uncategorize, openingOf, setOpening, reconcile, markReconciled };
 })(typeof window !== 'undefined' ? window : globalThis);
