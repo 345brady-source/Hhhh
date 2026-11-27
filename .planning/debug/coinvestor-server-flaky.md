@@ -98,3 +98,8 @@ started: since 06-39; seen in 08-17's gate, 11-13's gate run 3, exec-15-02 run 1
   checked: npm --prefix server test on the fixed tree (6e3da17 + debug docs), scratchpad coflaky/server-tests.txt
   found: "# tests 456", "# pass 456", "# fail 0".
   implication: server tests unchanged (the fix touches only the check).
+
+- timestamp: 2026-11-27T01:02Z
+  checked: fixed check under the E2 fault (DELAY_DELETE_MS=400), part cosign-forged 3 times in one slot under load (scratchpad coflaky/e2-fixed/, runN.sh)
+  found: COUNTS e2-fixed: pass=3 fail=0 of 3; "CO-INVESTOR SERVER: PASS (parts run: 3)". Trace run 1: the forged import's held DELETE lands +17.06 s, its cancel +17.07 s, and only then replay #1's put (+17.11 s); replay #1's check GETs the submission and DELETEs it (lands +18.74 s), then replay #2's put (+18.80 s).
+  implication: the run that failed every time before the fix (same fault) passes; each replay now starts after the previous check ended. Falsification test of the reasoning checkpoint passed.
