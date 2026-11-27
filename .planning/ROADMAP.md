@@ -531,3 +531,10 @@ Plans:
 - [ ] 16-13-PLAN.md — The guide's lines inside the caps, the leak and white-label scans over everything phase 16 writes, phase 16's checks in the reference gate, the mobile copies in step, the full gate on the merged tree, the preview built (AC-14, AC-15) (wave 5)
 - [ ] 16-14-PLAN.md — The owner's path walked at phone size and written down failures first; checkpoint: the owner's iPhone check; his bank's ACH guide and masked return report applied when they arrive (AC-07 to AC-12, AC-14, AC-16) (wave 6, not autonomous)
 
+### Phase 17: CRM connection (HubSpot)
+
+**Goal:** A sponsor connects its own HubSpot account from the console's Integrations page: each investor becomes or matches a HubSpot contact, each commitment a deal, and onboarding progress (invited, signed, accredited, funded) keeps those records up to date; a lead in HubSpot can be invited to an offering from the console. Through the integration server's provider-neutral connectors; investors never see the CRM; no taxpayer or bank number ever leaves for the CRM. Nothing is called ready before the owner has checked it.
+**Requirements**: defined in 17-RESEARCH.md
+**Depends on:** Phase 13 (sending and the sent log), Phase 15 (roles, server-held data), Phase 16 (built after it, owner's decision)
+**Plans:** to be planned
+
