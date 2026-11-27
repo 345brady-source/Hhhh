@@ -1,3 +1,4 @@
+// gate: tests 2
 // A reviewer's letter on the imported record (08-CONTEXT "After 08-18"): when an accreditation result with letters arrives
 // before the sponsor imports the investor's onboarding, the stored submission still names the letters (type and label
 // only), so the console offers "Download letter". Letters the investor's browser claims are never kept.

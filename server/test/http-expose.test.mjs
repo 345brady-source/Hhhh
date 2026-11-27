@@ -1,3 +1,4 @@
+// gate: tests 2
 // The letter's file name reaches the console (08-CONTEXT "After 08-18"): the console runs on another origin, so the browser
 // shows it the Content-Disposition header only when the server exposes it.
 import test from 'node:test';
