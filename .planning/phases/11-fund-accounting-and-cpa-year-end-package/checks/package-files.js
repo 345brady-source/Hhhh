@@ -195,8 +195,15 @@ const cases = {
     check('the workbook holds no formula', !!W.X && W.X.raw_formulas === 0, W.X && W.X.raw_formulas);
     const tab = (name) => (W.X ? W.X.sheets.find((s) => s.name === name) : null);
     const tb = tab('Trial balance');
-    const tbTotal = tb ? rowWhere(grid(tb), 1, 'Total') : null;
-    check("'Trial balance' total row: Debits 556500.0, Credits 556500.0, Ending balance 0", !!tbTotal && Number(tbTotal[5]) === 556500 && Number(tbTotal[6]) === 556500 && Number(tbTotal[7] || 0) === 0, tbTotal);
+    const tbg = tb ? grid(tb) : [];
+    const tbTotal = rowWhere(tbg, 1, 'Total');
+    // The tab's Debits and Credits columns are the year's activity (new-schedules.js: 100,000,000 cents each); the
+    // hand-worked 556,500.00 is the total of the debit balances and of the credit balances (fixture tbDebits/tbCredits).
+    check("'Trial balance' total row: Debits 1000000.0 = Credits 1000000.0 (the year's activity), Ending balance 0", !!tbTotal && Number(tbTotal[5]) === 1000000 && Number(tbTotal[6]) === 1000000 && Number(tbTotal[7] || 0) === 0, tbTotal);
+    const ends = tbg.slice(1).filter((r) => r && r[1] !== 'Total').map((r) => Number(r[7] || 0));
+    const dr = Math.round(ends.filter((v) => v > 0).reduce((s, v) => s + v, 0) * 100) / 100;
+    const cr = Math.round(ends.filter((v) => v < 0).reduce((s, v) => s + v, 0) * 100) / 100;
+    check("'Trial balance' ending balances: debit balances 556500.0, credit balances -556500.0", dr === 556500 && cr === -556500, { dr, cr });
     const bsTab = K.NS.files.sheetName('Balance sheet in Schedule L order', null);
     const bs = tab(bsTab);
     const g = bs ? grid(bs) : [];
