@@ -11,8 +11,8 @@
 //          the "make it when missing" idiom, read from the scripts' text), has a SECTIONS line; 'invite' excepted (the
 //          console's own server link, never saved). A key only scripts diy.html does not load yet create is printed as a
 //          NOTE line, not a failure. Every line's write is a permission, 'server' or 'never'.
-//   mask   for every sample workspace, mask(ws, 'team') leaves no run of five or more digits in any investor's payment
-//          or in tenant.ach, shows each routing and account number as '****' and its last four digits, and leaves the
+//   mask   for every sample workspace, mask(ws, 'team') leaves no run of five or more digits in any investor's payment,
+//          in tenant.ach or in an offering's ACH originator (achOverride), shows each routing and account number as '****' and its last four digits, and leaves the
 //          workspace it was given unchanged.
 // --without <key> drops that line from this check's in-memory copy of SECTIONS (the proof that "keys" can fail).
 const fs = require('fs');
@@ -113,6 +113,8 @@ async function mask({ check }) {
     const pays = JSON.stringify(m.investors.map((i) => i.payment || null));
     check(`${ws.tenant.id}: no run of five or more digits in any investor's payment`, !/\d{5}/.test(pays), (pays.match(/\d{5,}/g) || []).length + ' runs');
     check(`${ws.tenant.id}: no run of five or more digits in tenant.ach`, !/\d{5}/.test(JSON.stringify(m.tenant.ach)), (JSON.stringify(m.tenant.ach).match(/\d{5,}/g) || []).length + ' runs');
+    const overrides = JSON.stringify((m.offerings || []).map((o) => o.achOverride || null));
+    check(`${ws.tenant.id}: no run of five or more digits in an offering's ACH originator`, !/\d{5}/.test(overrides), (overrides.match(/\d{5,}/g) || []).length + ' runs');
     const wrong = [];
     let n = 0;
     ws.investors.forEach((i, x) => {

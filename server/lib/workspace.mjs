@@ -71,14 +71,14 @@ const BANK_NUMBERS = Object.freeze(['payment.bank.routing', 'payment.bank.accoun
  *   grow    optional: true = the stored array must be a prefix of the new one; or (stored, next) → '' | a refusal sentence
  *   fields  optional (an object section): { key: permission } for sub-keys with their own permission
  *   each    optional (an array section of items with ids): { key: permission } for each item's sub-keys
- *   masked  optional: paths (in the section, or in each item for an 'each' line) shown as '****' and the last four
+ *   masked  optional: paths (in an object section, or in each item of an array section) shown as '****' and the last four
  *           digits to a role without 'pay'
  * A key with no line is refused for every role (REFUSALS.never); 'invite' (the console's own server link) never has one.
  * A change needing 'pay' also needs a sign-in in the last 10 minutes (C-10).
  */
 export const SECTIONS = Object.freeze({
   tenant: Object.freeze({ write: 'configure', fields: Object.freeze({ ach: 'pay' }), masked: ACH_NUMBERS }),
-  offerings: Object.freeze({ write: 'configure' }),
+  offerings: Object.freeze({ write: 'configure', masked: Object.freeze(['achOverride.companyId']) }),
   integrations: Object.freeze({ write: 'configure' }),
   invitationRules: Object.freeze({ write: 'configure' }),
   amlProgram: Object.freeze({ write: 'configure' }),
@@ -141,11 +141,11 @@ function setPath(o, path, v) {
 const shown = (v) => v !== undefined && v !== null && v !== '';
 /** A number as a role without pay reads it: '****' and the last four characters. */
 export const maskValue = (v) => `****${String(v).replace(/\s+/g, '').slice(-4)}`;
-const itemsOf = (line, sec) => (line.each ? (Array.isArray(sec) ? sec.filter(isObject) : []) : isObject(sec) ? [sec] : []);
+const itemsOf = (line, sec) => (Array.isArray(sec) ? sec.filter(isObject) : isObject(sec) ? [sec] : []);
 const idOf = (it, n) => (it && (typeof it.id === 'string' || typeof it.id === 'number') ? `id:${it.id}` : `#${n}`);
-/** [next item, stored item] for the items of a section present in both (an 'each' line pairs items by id). */
+/** [next item, stored item] for the items of a section present in both (an array section pairs its items by id). */
 function pairs(line, next, stored) {
-  if (!line.each) return isObject(next) && isObject(stored) ? [[next, stored]] : [];
+  if (!Array.isArray(next) && !Array.isArray(stored)) return isObject(next) && isObject(stored) ? [[next, stored]] : [];
   if (!Array.isArray(next) || !Array.isArray(stored)) return [];
   const byId = new Map(stored.map((s, n) => [idOf(s, n), s]));
   return next.map((x, n) => [x, byId.get(idOf(x, n))]).filter(([x, s]) => isObject(x) && isObject(s));
@@ -401,7 +401,7 @@ export function createWorkspaces({ env = {}, store, vault, now = () => Date.now(
     if (req.method === 'GET') {
       if (!entry) return send(res, 404, { error: GUARD_SAY.notFound });
       const cur = get(id);
-      if (cur && personalFile(cur.ws, fid) && !allows(auth.role, 'personal')) throw refuse(403, REFUSALS.personal, 'section', 'files: personal');
+      if ((!cur || personalFile(cur.ws, fid)) && !allows(auth.role, 'personal')) throw refuse(403, REFUSALS.personal, 'section', 'files: personal');
       const k = fileKey(id, fid);
       const buf = store.getBlob(k);
       if (!buf) return send(res, 404, { error: GUARD_SAY.notFound });
