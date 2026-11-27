@@ -180,7 +180,7 @@ function bank(fr) {
       reads: Number((q('.bb') || { dataset: {} }).dataset.reads || 0),
       accts: all('.bb-acct').map((a) => ({ id: a.getAttribute('data-id'), text: t(a) })),
       result: t(q('.bb-result')),
-      errs: all('.bb-err').map(t).filter(Boolean),
+      errs: all('.bk-err').map(t).filter(Boolean),
       layout: !!q('.bb-form[data-kind="layout"]'),
       overlap: t(q('.bb-overlap')),
       acceptAll: t(q('[data-action=bb-accept-all]')),
