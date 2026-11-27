@@ -1,10 +1,10 @@
-desktop console-overview: sideways overflow 0px; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 9
-desktop offerings: sideways overflow 0px; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 3
-desktop portal-home: sideways overflow 0px; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 7
-desktop onboarding-step: sideways overflow 0px; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 6
+desktop console-overview: sideways overflow 0px; past the right edge outside a scroller: 0; text cut: 0; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 9
+desktop offerings: sideways overflow 0px; past the right edge outside a scroller: 0; text cut: 0; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 3
+desktop portal-home: sideways overflow 0px; past the right edge outside a scroller: 0; text cut: 0; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 8
+desktop onboarding-step: sideways overflow 0px; past the right edge outside a scroller: 0; text cut: 0; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 6
 desktop: outside requests 0
-phone console-overview: sideways overflow 0px; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 5
-phone offerings: sideways overflow 0px; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 1
-phone portal-home: sideways overflow 0px; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 5
-phone onboarding-step: sideways overflow 0px; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 6
+phone console-overview: sideways overflow 0px; past the right edge outside a scroller: 0; text cut: 0; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 8
+phone offerings: sideways overflow 0px; past the right edge outside a scroller: 0; text cut: 0; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 4
+phone portal-home: sideways overflow 0px; past the right edge outside a scroller: 0; text cut: 0; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 7
+phone onboarding-step: sideways overflow 0px; past the right edge outside a scroller: 0; text cut: 0; fonts loaded: Source Serif 4 200 900, Source Sans 3 400, Source Sans 3 500; controls under 24px high: 6
 phone: outside requests 0
