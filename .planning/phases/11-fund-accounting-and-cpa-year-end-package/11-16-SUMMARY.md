@@ -10,3 +10,7 @@
 - Task 2 verify, run 1: `PACKAGE FILES: PASS (cases run: 6)`, but the folder test failed: checks-out held `.parts` (the gate-resume store lib.js runParts writes there) and `package-flow-17049` (the Task 3 RED run going on at the same time). Rerun after RED 3 (below).
 - red-3.txt (Task 3): `FAIL button-phone the Audit page for fund A has the 'Year-end package' panel with its one line :: null`, `FAIL button-phone ran to the end :: frame.evaluate: TypeError: NS.books.package is not a function` (books-pkg.js not on the page).
 - Guide: GUIDE.sponsor 44,641 bytes before, 44,766 after: +125 (cap 160).
+- Task 2 verify, run 2: `PACKAGE FILES: PASS (cases run: 6)`; checks-out holds only `.parts` (VERIFY2-OK with `.parts` excluded).
+- RED 3 also showed a fault in the check itself: the managed part ran the leak search, which flags "Carrow & Vale" on Carrow & Vale's own managed page; the managed part now runs way out and quiet only, as books-flow.js's managed part does.
+- First flow run on the code: 5 of 6 parts passed; button-phone failed one assertion: withholding.js was not asked for during the part, because the console already had it on the page (loaded from the page's own address before the Audit page opened). The check now reads the files asked for and the page's own script elements.
+- help-guide server tests on the tree: `# pass 9`, `# fail 0` (the anchor must be in console.js, the file that registers console-audit, so the one hook line carries it in a comment).
