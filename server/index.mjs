@@ -59,6 +59,9 @@ import { createInvitations } from './lib/invitations.mjs';
 import { createTaxDocs } from './lib/taxdocs.mjs';
 import { createAccounts } from './lib/accounts.mjs';
 import { createAuth } from './lib/auth.mjs';
+import { createAuditLog, SERVER } from './lib/auditlog.mjs';
+import { createGuards, can } from './lib/roles.mjs';
+import { createTeam } from './lib/team.mjs';
 import { createBilling } from './lib/billing.mjs';
 import { changedChecks } from './lib/changed.mjs'; // GET /v1/checks/changed (plan 08-08)
 import { createFilings } from './lib/filings.mjs';
@@ -178,7 +181,23 @@ export function createServer(opts = {}) {
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   const accounts = createAccounts({ store, now });
-  const signin = createAuth({ env, store, vault: invites.vault, now, clientOf: (req) => clientOf(req, env), invites, accounts }); // people, passwords and the session cookie (plan 15-01)
+  // The server change log (lib/auditlog.mjs, SE-08): sign-ins reach it through lib/auth.mjs's log(), refusals and the team's
+  // changes from here and lib/team.mjs. The person is always the session's (or the fixed Server actor), never the request's.
+  const auditLog = createAuditLog({ store, vault: invites.vault, now });
+  const AUTH_ACTIONS = { signup: 'Signed up', signin: 'Signed in', signout: 'Signed out', locked: 'Locked after too many tries', unlocked: 'Unlocked by the operator' };
+  const nameOf = (p) => (p && typeof p.name === 'string' ? p.name : p ? signin.people.open(p).name : '');
+  const changeLog = {
+    /** lib/auth.mjs's entries: the event as before (no personal data), and the change log when the workspace is known. */
+    append({ workspace = '', person = null, personId = '', action, detail = '', record = '' } = {}) {
+      store.event({ type: 'auth', action, workspace });
+      if (!workspace || !invites.vault.allowed) return null;
+      const p = person && person.id ? person : personId ? store.get('people', personId) : null;
+      return auditLog.append({ workspace, person: p ? { id: p.id, name: nameOf(p) } : SERVER, action: AUTH_ACTIONS[action] || action, detail, record });
+    }
+  };
+  const signin = createAuth({ env, store, vault: invites.vault, now, clientOf: (req) => clientOf(req, env), invites, accounts, audit: changeLog }); // people, passwords and the session cookie (plan 15-01)
+  const guards = createGuards({ signin, store, now }); // the route table's checks (lib/roles.mjs, plan 15-05)
+  const team = createTeam({ store, signin, audit: auditLog, now, env }); // the firm's people, roles and invitations (plan 15-05)
   const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
   const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
   const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
@@ -191,12 +210,32 @@ export function createServer(opts = {}) {
    * the server's own origin throws 403 (lib/auth.mjs).
    */
   function sponsorAuth(req) {
-    if (env.API_TOKEN && authorize(req, env)) return { shared: true };
+    const all = () => true; // a token (or the open server) may do anything its routes allow; a session by its role (lib/roles.mjs)
+    if (env.API_TOKEN && authorize(req, env)) return { shared: true, can: all };
     const account = accounts.find(String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, ''));
-    if (account) return { account };
+    if (account) return { account, can: all };
     const session = signin.sponsor(req);
-    if (session) return session;
-    return !env.API_TOKEN && !store.list('accounts').length && !signin.required() ? { shared: true } : null;
+    if (session) return Object.assign(session, { can: (permission) => can(session, permission) });
+    return !env.API_TOKEN && !store.list('accounts').length && !signin.required() ? { shared: true, can: all } : null;
+  }
+  /** A refusal on the change log of the caller's workspace, with the person from the session (SE-05, SE-08). */
+  function logRefusal(auth, req, path, permission) {
+    const ws = auth.person ? auth.person.workspace : auth.account ? auth.account.workspace : '';
+    if (!ws || !invites.vault.allowed) return store.event({ type: 'refused', workspace: ws, permission });
+    const who = auth.person ? { id: auth.person.id, name: nameOf(auth.person) } : { id: auth.account.id, name: 'Account token' };
+    auditLog.append({ workspace: ws, person: who, action: 'Refused', detail: `${req.method} ${path}: ${permission}` });
+  }
+  /** The change log's routes (audit permission, checked by the guard): list, verify, export (every export is logged). */
+  function auditRoutes(req, res, url, auth) {
+    const path = url.pathname;
+    const ws = auth.person ? auth.person.workspace : auth.account ? auth.account.workspace : url.searchParams.get('workspace') || '';
+    if (!ws) return send(res, 400, { error: 'Add ?workspace= to name the workspace' });
+    if (path === '/v1/audit') return send(res, 200, { entries: auditLog.list(ws, { before: url.searchParams.get('before') || undefined, limit: url.searchParams.get('limit') || 100 }) });
+    if (path === '/v1/audit/verify') return send(res, 200, auditLog.verify(ws));
+    const out = auditLog.exportAll(ws);
+    const who = auth.person ? { id: auth.person.id, name: nameOf(auth.person) } : auth.account ? { id: auth.account.id, name: 'Account token' } : SERVER;
+    auditLog.append({ workspace: ws, person: who, action: 'Change log exported', detail: `${out.entries.length} entries` });
+    return send(res, 200, out, { 'Content-Disposition': `attachment; filename="change-log-${ws}.json"`, 'Cache-Control': 'no-store' });
   }
   /** The operator's routes for sponsor accounts. Off unless ADMIN_TOKEN is set; then they need that token, compared in constant time. */
   async function admin(req, res, path) {
@@ -878,6 +917,9 @@ export function createServer(opts = {}) {
       return invites.investor(req, res, path, scope);
     }
 
+    // A team or investor invitation's one-time token (lib/team.mjs): its own check, so before the sponsor gate.
+    if (path === '/v1/team/accept') return limited(req) ? send(res, 429, { error: 'Too many requests' }) : team.accept(req, res, url);
+
     // Sponsor accounts (ADMIN_TOKEN): below the invitation token's refusal above, so an investor's link never reaches them.
     if (/^\/v1\/admin(\/|$)/.test(path)) return admin(req, res, path);
     if (/^\/v1\/filings\/staff(\/|$)/.test(path)) return filings.staff(req, res, url);
@@ -888,6 +930,21 @@ export function createServer(opts = {}) {
     // another workspace's record answers 404 (never 403, which would confirm the record exists).
     const pin = auth && auth.account ? auth.account.workspace : null;
     const foreign = (rec) => pin !== null && (rec.workspace || '') !== pin;
+    // Every sponsor route's permission comes from one table (lib/roles.mjs ROUTES); a path it does not name answers 404.
+    if (auth && !scope && path.startsWith('/v1/')) {
+      const no = guards.guard(req, path, auth);
+      if (no && (no.status === 401 || no.status === 403)) logRefusal(auth, req, path, no.permission || no.code);
+      if (no) return send(res, no.status, no.status === 401 || no.status === 403 ? { error: no.error, code: no.code } : { error: no.error });
+    }
+    if (auth && /^\/v1\/audit(\/|$)/.test(path)) return auditRoutes(req, res, url, auth); // the server change log (plan 15-05)
+    if (auth && /^\/v1\/team(\/|$)/.test(path)) {
+      try {
+        return await team.handle(req, res, url, auth); // the team (lib/team.mjs); its own refusals reach the change log too
+      } catch (e) {
+        if (e.refused) logRefusal(auth, req, path, e.refused);
+        throw e;
+      }
+    }
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
     if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)
@@ -1005,6 +1062,7 @@ export function createServer(opts = {}) {
   );
   server.store = store;
   server.signin = signin;
+  server.audit = auditLog;
   server.invitations = invites;
   server.taxdocs = taxdocs;
   server.on('close', () => invites.stop());

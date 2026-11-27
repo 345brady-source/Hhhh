@@ -443,7 +443,8 @@ test('reseal people sign in', async (t) => {
   const log1 = createAuditLog({ store: st, vault: openVault({ DATA_KEY: k1 }) });
   log1.append({ workspace: ws, person: { id: 'per_1', name: 'Pat Owner' }, action: 'Sent', record: 'inv_1', detail: 'Invitation sent' });
   log1.append({ workspace: ws, person: { id: 'per_1', name: 'Pat Owner' }, action: 'Signed', record: 'inv_1', detail: 'Agreement signed' });
-  assert.deepEqual(log1.verify(ws), { ok: true, count: 2, brokenAt: 0 });
+  // Plan 15-05: the sign-up itself is the chain's first entry (sign-ups and sign-ins reach the change log).
+  assert.deepEqual(log1.verify(ws), { ok: true, count: 3, brokenAt: 0 });
   st.close();
   const signIn = async (DATA_KEY) => {
     const s = openStore(file);
@@ -462,9 +463,10 @@ test('reseal people sign in', async (t) => {
   st = openStore(file);
   const [p] = st.list('people');
   assert.equal(p.emailIndex, emailIndex(k2, person.email));
-  assert.match(r.out, /^resealed auditlog: 2$/m);
+  assert.match(r.out, /^resealed auditlog: 3$/m);
   const log2 = createAuditLog({ store: st, vault: openVault({ DATA_KEY: k2 }) });
-  assert.deepEqual(log2.verify(ws), { ok: true, count: 2, brokenAt: 0 }, 'the chain still verifies after the reseal');
-  assert.deepEqual(log2.list(ws).map((e) => e.detail), ['Agreement signed', 'Invitation sent'], 'and opens with the new key alone');
+  assert.deepEqual(log2.verify(ws), { ok: true, count: 4, brokenAt: 0 }, 'the chain still verifies after the reseal (and the sign-in after it)');
+  assert.deepEqual(log2.list(ws).map((e) => e.action), ['Signed in', 'Signed', 'Sent', 'Signed up'], 'and opens with the new key alone');
+  assert.deepEqual(log2.list(ws).filter((e) => e.record === 'inv_1').map((e) => e.detail), ['Agreement signed', 'Invitation sent']);
   st.close();
 });

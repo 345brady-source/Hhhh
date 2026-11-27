@@ -11,6 +11,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readRaw, parseJson, send } from './http.mjs';
 import { id } from './crypto.mjs';
 import { openVault } from './vault.mjs';
+import { REFUSALS } from './roles.mjs';
 import { createMailer, validAddress, invitationMessage, resendMessage, notificationMessage, reminderMessage, money } from './mail.mjs';
 
 const DAY = 864e5;
@@ -29,6 +30,7 @@ const PACKAGE_KEY = /^[A-Za-z0-9_-]{1,80}$/;
 const PACKAGE_IDS = ['package-id', 'package-acc'];
 const PACKAGE_SAYS = {
   account_required: [403, 'Card payments need a sponsor account.'],
+  role: [403, REFUSALS.spend], // a signed-in person whose role has no spend (plan 15-05, C-10)
   package_unavailable: [409, 'The verification package is not available on this server right now. Nothing was charged.'],
   already_sent: [409, 'This invitation was already sent. Nothing was charged.'],
   tier_mismatch: [409, "This invitation's package was paid at another level. Nothing was charged."]
@@ -1300,6 +1302,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     // price billing holds for it (credit first, then the card). A refusal leaves nothing behind.
     let paid = null;
     if (wantsPackage) {
+      if (auth && auth.can && !auth.can('spend')) return refusePackage(res, 'role');
       const account = auth && auth.account;
       if (!account) return refusePackage(res, 'account_required');
       if (!PACKAGE_KEY.test(clientId)) throw fail(400, 'invitation.clientId is required with the package (1 to 80 letters, digits, underscores or hyphens)');

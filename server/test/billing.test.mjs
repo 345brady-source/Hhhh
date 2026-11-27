@@ -693,8 +693,9 @@ test('who: the shared token answers 403 on every billing route, an investor’s 
     const all = [['GET', '/v1/billing'], ['POST', '/v1/billing/card/setup'], ['DELETE', '/v1/billing/card'], ['POST', '/v1/billing/entitlements', { items: ids(1, 'identity', 'z') }], ['GET', '/v1/billing/anything']];
     for (const [method, path, body] of all) {
       const shared = await j(base, method, path, { bearer: API, body, origin: PORTAL });
-      assert.equal(shared.status, 403, `${method} ${path}`);
-      assert.deepEqual(shared.body, { error: 'Card payments need a sponsor account.', code: 'account_required' });
+      // Plan 15-05: a path the route table (lib/roles.mjs ROUTES) does not name answers 404 before any module.
+      assert.equal(shared.status, path === '/v1/billing/anything' ? 404 : 403, `${method} ${path}`);
+      assert.deepEqual(shared.body, path === '/v1/billing/anything' ? { error: 'Not found' } : { error: 'Card payments need a sponsor account.', code: 'account_required' });
       const investor = await j(base, method, path, { bearer: a.token, invite: 'x'.repeat(43), body });
       assert.equal(investor.status, 401, `${method} ${path} with an invitation token`);
       assert.equal((await j(base, method, path, { body })).status, 401, `${method} ${path} with no token`);
