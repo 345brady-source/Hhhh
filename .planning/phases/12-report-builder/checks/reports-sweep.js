@@ -295,7 +295,7 @@ const parts = {
       }
       hits.push(...scan(`${what} PDF text`, text));
       hits.push(...scan(`${what} PDF properties`, Object.keys(P.info).map((k) => `${k}: ${P.info[k]}`).join('\n')));
-      L12.fonts(P.file).forEach((f) => fonts.add(f));
+      L12.fonts(P.file).forEach((f) => fonts.add(f.replace(/-\d+$/, '')));
       fs.rmSync(P.file, { force: true });
       const xf = L12.save(OUT(), `${books.length + 1}-${j.s.id}.xlsx`, NS.files.workbook(R.sheets(r.model), { when: new Date(Date.UTC(2027, 0, 20)) }));
       books.push({ what, file: xf });
@@ -312,7 +312,7 @@ const parts = {
       fs.rmSync(b.file, { force: true });
     });
     console.log(`outputs: ${jobs.length} starter x firm reports (${firms.length} firms, fund A included), ${made} PDFs, ${books.length} workbooks (${xparts} parts)`);
-    console.log(`fonts inside the PDFs' font data (C-02, for the owner's check; not page text): ${Array.from(fonts).join(', ')}`);
+    console.log(`fonts inside the PDFs' font data (C-02, for the owner's check; not page text; each name ends in a number that differs per file): ${Array.from(fonts).sort().join(', ')}`);
     check(`every report resolves and composes (${made} of ${jobs.length})`, bad.length === 0 && made === jobs.length && made > 0, bad.slice(0, 5));
     check(`every workbook was read (${books.length})`, books.length === made && Object.keys(all).length === books.length, { books: books.length, read: Object.keys(all).length });
     report(check, 'no vendor, library or model name, never the forbidden word, audited or ILPA compliant, no gross performance in any PDF text, PDF property or workbook string', hits);
