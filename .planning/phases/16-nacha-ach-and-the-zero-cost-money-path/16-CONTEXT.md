@@ -51,3 +51,13 @@
 - Merged-tree gate: AUDIT SAME's base must be at or after a072fb3 (16-03's product commit) and hold the 11-12 and 11-18 merges.
 - Must not come back: 13-01-PLAN.md:174 and 13-06-PLAN.md:115 use the routing number ending 0021 as test data; their executors use its image (prefix 13, same last seven digits) instead. Planning docs still holding real numbers (16-RESEARCH.md, 16-03-PLAN.md, 06-WALKTHROUGH-2.md, those two phase 13 plans) are masked to endings when next edited.
 - ACH LEAK skips the all-zero routing number (fund-a.ofx/qfx BANKID) and names the kept BAI2 samples, assets/vendor/ and assets/forms/ in its NOTE line.
+
+## Plan-check additions, wave 2 (16-05, 16-06; checked 2026-11-27 against 9c9f51c; 2 blockers fixed here, 4 warnings). Executors apply these with their plan. Findings: scratchpad checks-16-wave2.md.
+- B1 (16-06 bad-93.ach): the reader pads short records, so "bad-93.ach fails lib16.validate" cannot hold. bad-93.ach is ret-r03.ach with one trailing blank removed from one record, nothing else changed. Case fixtures: exactly one 93-character line, all others 94, every other .ach passes the reader, no reader assertion on bad-93 (its result noted in the SUMMARY). Case refusals: parse throws 'Line <n> has 93 characters; a NACHA file has 94 on every line.' for that line. Count 12.
+- B2 (16-06 C07): C07 corrected data is routing = first 9 characters (no space before the account), then whitespace parts for account and transaction code (moov-io/ach v1.69.1 addenda98.go:393-419, 471-474); C03/C06 by whitespace as planned. Case noc adds corrected('C07', '190000033' + account(4) + spaces + '22') = routing, account, checking, and a C07 routing failing the check digit gets problem. Count 12.
+- W1 (16-06): make-fixtures.js takes --out <dir>; case fixtures regenerates into a temp folder and requires byte-equal files and MANIFEST. If 16-05 merged first and bytes change, regenerate and record it.
+- W2 (16-05 sameday): add 2027-09-16 with 150000000 cents (warns) and 2027-09-17 with 1000000000 exactly (no warning). Count 11.
+- W3 (16-05 offset): add a balanced file with no opts.offset: the same block check, no offset entry, all records 94.
+- W4 (16-05): console.js today does not disable Download/Copy on a red check (16-02 not merged); read it as the tree has it; SUMMARY says so, and the owner check of the builder waits for 16-02.
+- Info: C-02 stepping is 16-02's and C-03 timing 16-07's; guide lines to the SUMMARY only; df -h before 16-05's full gate; the reader's acceptance of return and COR fixtures is unmeasured (fix a fixture, never drop the assertion).
+- Start now: 16-05 yes; 16-06 yes. No file overlap with each other or with 16-04, 08-08, 08-09, 10-11, 11-15, 12-08, 15-01/02/03, audit-same-books or the debugger.
