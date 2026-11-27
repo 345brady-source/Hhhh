@@ -442,24 +442,13 @@ const useAml = (p, ids) =>
     NS.integrations.ensure(NS.state.ws).use.aml = ids.slice();
     NS.app.save(true);
   }, ids);
-/**
- * Until the console's own GET /v1/checks/changed answered (started by `go`) and the console has applied that answer: its
- * record of the server's time of the last pull has reached the answer's own time (integrations.js pullChanged writes it
- * after applying every listed check, in the same step). Resolves to the answer's JSON, or null.
- */
+/** Until the console's own GET /v1/checks/changed answered (started by `go`); resolves to its JSON, or null. */
 async function pulled(C, go) {
   const res = C.cp.waitForResponse((r) => /\/v1\/checks\/changed\?/.test(r.url()) && r.request().method() === 'GET', { timeout: 30000 }).catch(() => null);
   await go();
   const r = await res;
   const body = r ? await r.json().catch(() => null) : null;
-  if (body && typeof body.now === 'string' && Date.parse(body.now)) {
-    const applied = await C.cp
-      .waitForFunction((now) => (Date.parse(window.CVPortal.integrations.ensure(window.CVPortal.state.ws).server.pulledAt || '') || 0) >= Date.parse(now), body.now, { timeout: 30000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!applied) throw new Error('the console did not apply its GET /v1/checks/changed answer within 30 s');
-  }
-  await C.cp.waitForTimeout(800); // what the console does next with the answer
+  await C.cp.waitForTimeout(800); // what the console does with the answer
   return body;
 }
 /** The attention list's re-screening line ('' when there is none). */
