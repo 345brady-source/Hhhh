@@ -410,6 +410,8 @@ const cases = {
     const t = NS.TENANTS.find((x) => x.sample && NS.ops.ensure(NS.seedWorkspace(x)).offerings.some((o) => o.id === 'kb-fund-ii'));
     const ws = NS.ops.ensure(NS.seedWorkspace(t));
     const o = ws.offerings.find((x) => x.id === 'kb-fund-ii');
+    // Made beforehand: one sync, and the change log a loaded workspace carries (a freshly seeded sample workspace has
+    // none until the Audit page's first build seeds it, audit.js ensureLog: an existing write of build, not the package's).
     NS.books.sync(ws, { today: '2026-11-19' });
     NS.audit.ensureLog(ws);
     const before = J(ws);

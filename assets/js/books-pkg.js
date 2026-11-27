@@ -296,6 +296,12 @@
     const PROP = 'Property and depreciation inputs';
     const COST = { 1100: 1, 1400: 1, 1410: 1 };
     let property = null;
+    // A sample fund's holdings come from the Audit page's generated rows, at the year end and at the year before's end.
+    const endRows = generated ? (P.hold && P.hold.rows) || [] : [];
+    let startRows = [];
+    if (generated && P.before) startRows = (NS.audit.period(ws, o, `${y - 1}-01-01`, `${y - 1}-12-31`).hold || {}).rows || [];
+    const endNames = new Set(endRows.map((r) => r.name));
+    const soldRows = startRows.filter((r) => !endNames.has(r.name));
     const propCols = [COL('Property'), COL('Address'), COL('Placed in service', 'date'), COL('Land', 'money'), COL('Building', 'money'), COL('Cost in the books', 'money'), COL('Additions in the year', 'money'), COL('Mortgage balance at year end', 'money'), COL('Interest paid in the year', 'money')];
     if (props.length) {
       const rows = props.map((h) => {
@@ -319,8 +325,10 @@
       });
       property = sheet('property', PROP, 'For each property the fund holds: what the sponsor entered (address, placed-in-service date, the split of cost between land and building) and, from the books, its cost, the year’s additions, the mortgage on it at year end and the interest paid on it in the year. Property is carried at cost; depreciation is the preparer’s.', propCols, rows);
     } else if (generated && P.S && P.S.key === 'realestate') {
-      // A sample real estate fund: the Audit page's generated properties; what the generator does not give is to be confirmed.
-      const rows = ((P.hold && P.hold.rows) || []).map((r) => {
+      // A sample real estate fund: the Audit page's generated properties held at the beginning or the end of the year
+      // (one sold in the year is at 0 at year end); what the generator does not give is to be confirmed.
+      const rows = endRows.concat(soldRows).map((r) => {
+        const held = endRows.indexOf(r) >= 0;
         const name = r.name;
         const address = (r.h && r.h.location) || (miss(PROP, name, 'address'), TBC);
         miss(PROP, name, 'placed in service');
@@ -328,9 +336,9 @@
         miss(PROP, name, 'building');
         miss(PROP, name, 'additions in the year');
         miss(PROP, name, 'interest paid in the year');
-        return [name, address, TBC, TBC, TBC, r.cost, TBC, r.debt || 0, TBC];
+        return [name, address, TBC, TBC, TBC, held ? r.cost : 0, TBC, held ? r.debt || 0 : 0, TBC];
       });
-      property = sheet('property', PROP, 'For each property: its cost and the mortgage on it at year end; the placed-in-service date, the split between land and building, the year’s additions and the interest paid are to be confirmed. Property is carried at cost; depreciation is the preparer’s.', propCols, rows);
+      property = sheet('property', PROP, 'For each property held at the beginning or the end of the year: its cost and the mortgage on it at year end (0 for a property sold in the year); the placed-in-service date, the split between land and building, the year’s additions and the interest paid are to be confirmed. Property is carried at cost; depreciation is the preparer’s.', propCols, rows);
     }
 
     /* Investments */
@@ -338,7 +346,12 @@
     const NOINV = 'Not assigned to an investment';
     const invRows = [];
     if (generated) {
-      ((P.hold && P.hold.rows) || []).forEach((r) => invRows.push([r.name, 'Held at year end', to, r.cost, null, null, r.fv]));
+      // The generator records no sale; an investment held at the beginning and gone at year end is named, its sale to be confirmed.
+      soldRows.forEach((r) => {
+        miss(INV, r.name, 'sale date, proceeds, cost given up and gain');
+        invRows.push([r.name, 'Sale', TBC, TBC, TBC, TBC, null]);
+      });
+      endRows.forEach((r) => invRows.push([r.name, 'Held at year end', to, r.cost, null, null, r.fv]));
     } else {
       const marked = (hid) => (Array.isArray(fb.marks) ? fb.marks : []).some((m) => m && m.holding === hid && typeof m.date === 'string' && m.date <= to) || toLines.some((l) => l.holding === hid && l.src.indexOf('mark:') === 0);
       holdings
