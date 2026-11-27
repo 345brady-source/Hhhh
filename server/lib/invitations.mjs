@@ -1301,7 +1301,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       return { link: url, emailStatus: 'unsubscribed', emailError: '' };
     }
     if (msg.commercial) {
-      const stop = unsub.urls(rec.workspace, snap.investor.id, snap.investor.email, snap.portalUrl);
+      const stop = unsub.urls(rec.workspace, snap.investor.id, snap.investor.email, snap.portalUrl, snap.firm.name);
       const m = render(head.kind, { firm: snap.firm, investor: snap.investor, offering: snap.offering, invitation: snap.invitation, link: url, expiresAt: rec.expiresAt, started, unsubscribeUrl: stop.footer });
       Object.assign(msg, { text: m.text, html: m.html, headers: stopHeaders(m, stop.header) });
     }
