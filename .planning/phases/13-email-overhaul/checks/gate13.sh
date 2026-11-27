@@ -40,6 +40,9 @@ ROOT="$PWD"
 # exactly the same key (HEAD, the uncommitted changes, the base commit, the command line) and prints its line as
 # "GATE ok   <name> (kept from <time>)"; a step killed part-way, a failed step or a changed tree runs again.
 # GATE_FRESH=1 runs every step. The reference gate keeps its own steps the same way, in the same folder.
+# A rerun with a different base commit (GATE_OUT/base-commit.txt differs from the copy an earlier run left in
+# GATE_OUT/gate/base-commit.txt) sets GATE_FRESH=1 for the whole run and says so in one note line: several kept
+# steps (the reference gate's server step, say) carry no base in their key, so they would be kept from the old base.
 . "$ROOT/.planning/checks/gate-lib.sh" || { echo "GATE FAIL $ROOT/.planning/checks/gate-lib.sh could not be loaded"; echo "GATE_EXIT=1"; exit 1; }
 S=/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad
 P=.planning/phases/13-email-overhaul
@@ -300,6 +303,11 @@ mkdir -p "$GATE_OUT/gate" || { bad "GATE_OUT/gate cannot be created"; finish; }
 GATE_OUT=$(cd "$GATE_OUT" && pwd)
 G="$GATE_OUT/gate"
 [ -s "$GATE_OUT/base-commit.txt" ] || { bad "no base commit: $GATE_OUT/base-commit.txt is missing or empty; nothing was run"; finish; }
+# Kept steps are not all keyed by the base commit: a different base runs every step again (13-01 re-check B1).
+if [ -f "$G/base-commit.txt" ] && ! cmp -s "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"; then
+  export GATE_FRESH=1
+  echo "GATE note: base commit changed; every step runs again"
+fi
 cp "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"
 # A base tree left by an earlier run is reused only while its stamp names this base commit (gate_base_tree).
 gate_init "$G" || { bad "GATE_OUT/gate/.gate-steps cannot be created"; finish; }
