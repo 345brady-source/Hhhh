@@ -87,6 +87,7 @@ export function openStore(file) {
   }
   data.filings = data.filings || {}; data.filingIssuers = data.filingIssuers || {};
   data.taxdocs = data.taxdocs || {}; // tax documents delivered to the investor's own device (lib/taxdocs.mjs, plan 10-12)
+  data.senders = data.senders || {}; data.maillog = data.maillog || {}; data.mailsuppress = data.mailsuppress || {}; data.mailprefs = data.mailprefs || {}; // sponsors' senders, the sealed sent log, bounce and complaint lists, mail preferences (plans 13-02, 13-03, 13-04)
   let timer = null;
   const flush = () => {
     clearTimeout(timer);

@@ -28,7 +28,10 @@
  * Investor invitations (lib/invitations.mjs; see README.md):
  *   POST /v1/invitations          the console invites an investor; this server emails the link
  *   GET  /v1/invitations          their statuses; GET/DELETE /v1/invitations/:id/submission, POST …/resend, …/cancel
- *   GET  /v1/outbox               messages kept here when no SMTP server is set
+ *   GET  /v1/outbox               messages kept here when no SMTP server is set (and held ones, waiting for a sponsor's domain)
+ *   GET/PUT /v1/mail/sender, POST /v1/mail/sender/check  the address a workspace's messages go from (lib/senders.mjs)
+ *   GET  /v1/messages/log         the workspace's sealed sent log (lib/maillog.mjs)
+ *   POST /v1/mail/events          delivery events from the mail provider, signature-checked by its adapter (server/mailers/)
  *   POST /v1/admin/accounts       the operator makes a sponsor account with its own token (ADMIN_TOKEN; lib/accounts.mjs)
  *   GET  /v1/admin/accounts       the accounts; POST /v1/admin/accounts/:id/token replaces an account's token
  *   GET  /v1/invite               the investor's browser loads its onboarding (X-Invite-Token)
@@ -74,6 +77,7 @@ import { createIntake } from './lib/intake.mjs';
 import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
 import { createHelp } from './lib/help.mjs';
 import { costOf, logLine } from './lib/model.mjs';
+import { pick as mailAdapterOf } from './mailers/index.mjs';
 import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
 export { STATUSES };
@@ -184,7 +188,12 @@ export function createServer(opts = {}) {
   // Help shares that cap too, and has its own daily cap (lib/help.mjs).
   const help = opts.help || createHelp({ env, fetch: opts.fetch, budget: intake.budget || undefined, now });
 
-  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
+  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, mailCtx: opts.mailCtx });
+  // The mail adapter MAIL_PROVIDER names (server/mailers/): delivery events are its to verify. Its own, larger rate limit:
+  // the provider sends one event per message from a few addresses.
+  const mailAdapter = mailAdapterOf(env);
+  const mailCtx = () => Object.assign({ env, now }, opts.mailCtx || {});
+  const eventsLimited = rateLimiter(Object.assign({}, env, { RATE_LIMIT_PER_MIN: env.MAIL_EVENTS_PER_MIN === undefined ? 600 : env.MAIL_EVENTS_PER_MIN }));
   const accounts = createAccounts({ store, now });
   // The server change log (lib/auditlog.mjs, SE-08): sign-ins reach it through lib/auth.mjs's log(), refusals and the team's
   // changes from here and lib/team.mjs. The person is always the session's (or the fixed Server actor), never the request's.
@@ -243,6 +252,41 @@ export function createServer(opts = {}) {
     const who = auth.person ? { id: auth.person.id, name: nameOf(auth.person) } : auth.account ? { id: auth.account.id, name: 'Account token' } : SERVER;
     auditLog.append({ workspace: ws, person: who, action: 'Change log exported', detail: `${out.entries.length} entries` });
     return send(res, 200, out, { 'Content-Disposition': `attachment; filename="change-log-${ws}.json"`, 'Cache-Control': 'no-store' });
+  }
+  /**
+   * The firm's sender and its sent log (plan 13-03, EM-06, EM-08). A sponsor account's token, or a session, acts on its own
+   * workspace whatever the query or body names; the shared token names the workspace.
+   *   GET  /v1/mail/sender?workspace=      → { address, domain, status, detail, records, live }
+   *   PUT  /v1/mail/sender { address }     → { address, domain, status, records }
+   *   POST /v1/mail/sender/check           → { status, detail, records, released }: held messages go out once ready
+   *   GET  /v1/messages/log?workspace=&investorId=&limit= → { entries }
+   * live is true only when the operator set MAIL_LIVE=1 (after the provider's production access and a real send).
+   */
+  async function mailRoutes(req, res, url, auth) {
+    const path = url.pathname;
+    const pin = auth.account ? auth.account.workspace : null;
+    let body = {};
+    if (req.method === 'PUT' || req.method === 'POST') {
+      const raw = await readRaw(req, 16 * 1024);
+      body = raw.length ? parseObject(raw) : {};
+    }
+    const given = req.method === 'GET' ? url.searchParams.get('workspace') : body.workspace;
+    const ws = pin !== null ? pin : typeof given === 'string' ? given : '';
+    if (!ws) return send(res, 400, { error: 'Add the workspace to name it' });
+    const live = env.MAIL_LIVE === '1';
+    if (path === '/v1/messages/log') {
+      if (!invites.vault.allowed) return send(res, 400, { error: invites.vault.problem });
+      return send(res, 200, { entries: invites.mailLog.list(ws, { investorId: url.searchParams.get('investorId') || '', limit: url.searchParams.get('limit') || 200 }) }, { 'Cache-Control': 'no-store' });
+    }
+    if (path === '/v1/mail/sender/check') {
+      const c = await invites.senders.check(ws);
+      const released = c.status === 'ready' ? (await invites.mailer.release(ws)).released : 0;
+      return send(res, 200, { status: c.status, detail: c.detail, records: c.records, released, live });
+    }
+    if (req.method === 'PUT') return send(res, 200, Object.assign(await invites.senders.set(ws, body.address), { live }));
+    const s = invites.senders.get(ws);
+    if (!s) return send(res, 200, { address: '', domain: '', status: 'not_set_up', detail: 'No sending address is set up yet.', records: [], live });
+    return send(res, 200, { address: s.address, domain: s.domain, status: s.status, detail: s.detail, records: s.records, live });
   }
   /** The operator's routes for sponsor accounts. Off unless ADMIN_TOKEN is set; then they need that token, compared in constant time. */
   async function admin(req, res, path) {
@@ -869,6 +913,25 @@ export function createServer(opts = {}) {
     }
     if (path.startsWith('/billing/')) return req.method === 'POST' && limited(req) ? send(res, 429, { error: 'Too many requests' }) : billing.handle(req, res, url, null); // the hosted card page (lib/billing.mjs); no token reaches it
 
+    // Delivery events from the mail provider (plan 13-03, EM-07): no token, before the sponsor gate like /v1/results; the
+    // adapter verifies each message's signature, and anything it does not verify changes nothing.
+    if (path === '/v1/mail/events') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      if (eventsLimited(req)) return send(res, 429, { error: 'Too many requests' });
+      const raw = await readRaw(req, 256 * 1024);
+      let events;
+      try {
+        events = await mailAdapter.events(req, raw, mailCtx());
+      } catch (e) {
+        if (!e.status) throw e;
+        store.event({ type: 'mail_event_refused', status: e.status });
+        return send(res, e.status, { error: e.status === 401 ? 'Not authorized' : e.message });
+      }
+      const list = Array.isArray(events) ? events : [];
+      for (const ev of list) invites.mailLog.event(ev);
+      return send(res, 200, { received: list.length });
+    }
+
     // Results pushed by a provider or the sponsor's own automation (for "link" checks, or any provider
     // that reports outcomes this way). Off unless RESULTS_TOKEN is set; it has its own token, not API_TOKEN.
     if (path === '/v1/results') {
@@ -967,6 +1030,7 @@ export function createServer(opts = {}) {
       }
     }
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
+    if (auth && (path === '/v1/mail/sender' || path === '/v1/mail/sender/check' || path === '/v1/messages/log')) return mailRoutes(req, res, url, auth); // the sender and the sent log (plan 13-03)
     if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
     if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)
 

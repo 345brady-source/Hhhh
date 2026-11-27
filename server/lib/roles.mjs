@@ -64,6 +64,7 @@ export const ROUTES = Object.freeze([
   other('GET', { path: '/security.html' }, 'public', 'with SERVE_PORTAL=1 the security page, when its file exists'),
   other('GET', { path: '/disclosure.html' }, 'public', 'with SERVE_PORTAL=1 the disclosure page, when its file exists'),
   other('GET', { prefix: '/assets' }, 'public', 'with SERVE_PORTAL=1 the files under assets/ listed at start-up, by extension'),
+  other('POST', { path: '/v1/mail/events' }, 'public', 'delivery events from the mail provider, each signature-checked by the mail adapter (plan 13-03)'),
 
   /* --- invitations (lib/invitations.mjs) --- */
   team('GET', { path: '/v1/invitations' }, 'view', true),
@@ -74,6 +75,12 @@ export const ROUTES = Object.freeze([
   team('POST', { source: INVITATION }, 'operate', true),
   team('GET', { path: '/v1/outbox' }, 'operate', false), // holds live links
   team('GET', { path: '/v1/checks/changed' }, 'view', true),
+
+  /* --- the firm's sender and the sent log (index.mjs, lib/senders.mjs, lib/maillog.mjs, plan 13-03) --- */
+  team('GET', { path: '/v1/mail/sender' }, 'view', true),
+  team('PUT', { path: '/v1/mail/sender' }, 'configure', true),
+  team('POST', { path: '/v1/mail/sender/check' }, 'configure', true),
+  team('GET', { path: '/v1/messages/log' }, 'personal', true), // investors' addresses and the texts sent to them
 
   /* --- checks, reading and help (index.mjs) --- */
   team('GET', { path: '/v1/connectors' }, 'person', true),
