@@ -1211,7 +1211,7 @@
       const ex = (Array.isArray(fb.exceptions) ? fb.exceptions : []).filter(Boolean);
       const closedChanges = ex.filter((x) => x.kind === 'closed').length;
       if (closedChanges) items.push(`${closedChanges} changes to records inside a closed period are not applied.`);
-      const unposted = ex.filter((x) => x.kind === 'amount' || x.kind === 'mismatch' || x.kind === 'overpaid').length;
+      const unposted = ex.filter((x) => x.kind === 'amount' || x.kind === 'mismatch' || x.kind === 'overpaid' || x.kind === 'date').length;
       if (unposted) items.push(`${unposted} records could not be posted to the books as recorded.`);
       add('books', 'Books recorded for the period', !items.length, items.length ? 'The statements show only what is recorded; each line names an input that is missing.' : `Every bank account is reconciled through ${dateLong(P.to)}, every bank line is decided, each investment has a value in the period and the fee terms are set.`, items);
     }
