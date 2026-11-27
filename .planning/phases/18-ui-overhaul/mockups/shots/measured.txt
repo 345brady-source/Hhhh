@@ -1,0 +1,8 @@
+desktop direction-b/console-overview: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Commissioner; figures: Commissioner: default proportional, with tabular-nums NOT tabular
+desktop direction-b/portal-home: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Commissioner; figures: Commissioner: default proportional, with tabular-nums NOT tabular
+desktop marks: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Brygada 1918, Ysabeau Office; figures: Brygada 1918: default proportional, with tabular-nums tabular; Ysabeau Office: default tabular, with tabular-nums tabular
+desktop: outside requests 0
+phone direction-b/console-overview: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Commissioner
+phone direction-b/portal-home: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Commissioner
+phone marks: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Brygada 1918, Ysabeau Office
+phone: outside requests 0
