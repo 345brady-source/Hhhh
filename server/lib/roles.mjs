@@ -58,6 +58,12 @@ export const ROUTES = Object.freeze([
   other('*', { prefix: '/hosted' }, 'public', 'pages this server hosts for a provider flow; reached by an unguessable check id'),
   other('*', { prefix: '/sandbox' }, 'public', 'the sandbox provider’s stand-in page; reached by an unguessable id'),
   other('*', { prefix: '/billing' }, 'public', 'the hosted card page (an unguessable session id) and signature-checked billing deliveries'),
+  other('GET', { path: '/.well-known/security.txt' }, 'public', 'the security contact (RFC 9116), built from the server’s settings'),
+  other('GET', { path: '/' }, 'public', 'with SERVE_PORTAL=1 the portal page from lib/pages.mjs’s fixed list (plan 15-06)'),
+  other('GET', { path: '/portal.html' }, 'public', 'with SERVE_PORTAL=1 the portal page from lib/pages.mjs’s fixed list'),
+  other('GET', { path: '/security.html' }, 'public', 'with SERVE_PORTAL=1 the security page, when its file exists'),
+  other('GET', { path: '/disclosure.html' }, 'public', 'with SERVE_PORTAL=1 the disclosure page, when its file exists'),
+  other('GET', { prefix: '/assets' }, 'public', 'with SERVE_PORTAL=1 the files under assets/ listed at start-up, by extension'),
 
   /* --- invitations (lib/invitations.mjs) --- */
   team('GET', { path: '/v1/invitations' }, 'view', true),

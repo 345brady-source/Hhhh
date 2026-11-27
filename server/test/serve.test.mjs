@@ -40,7 +40,8 @@ test('served page', async () => {
     assert.equal(js.status, 200);
     assert.ok(js.buf.equals(readFileSync(join(ROOT, 'assets/js/app.js'))), 'the file as it is');
     for (const p of ['/diy.html', '/server/index.mjs', '/server/data/store.json', '/.planning/STATE.md', '/assets/../server/index.mjs']) assert.equal((await get(base, p)).status, 404, p);
-    assert.equal((await get(base, '/v1/workspace')).status, 401, 'the API still answers behind its own checks');
+    const api = await get(base, '/v1/workspace');
+    assert.deepEqual([api.status, JSON.parse(api.buf.toString('utf8')).code], [403, 'person'], 'the API still answers behind its own checks (people only)');
   });
   await withServer({ env: { PUBLIC_URL: PUBLIC } }, async (base) => {
     assert.equal((await get(base, '/')).status, 404, 'SERVE_PORTAL unset: no page is served');

@@ -274,7 +274,7 @@ The sponsor enters a few details in the console; this server emails the investor
 
 How it fits together:
 
-1. The console sends `POST /v1/invitations` with a snapshot of what the investor's onboarding needs (the firm's brand, the investor's basics, the offering with its documents, the subscription agreement template and PDF, and the non-secret verification settings).
+1. The console sends `POST /v1/invitations` with a snapshot of what the investor's onboarding needs (the firm's brand, the investor's name and details, the offering with its documents, the subscription agreement template and PDF, and the non-secret verification settings).
 2. This server creates a token (32 random bytes, returned once; only its SHA-256 is stored), builds the link `<portalUrl>?server=<this server's PUBLIC_URL>#invite-<token>` and emails it from the firm.
 3. The investor's browser calls `GET /v1/invite` with `X-Invite-Token: <token>`, reports each step with `PUT /v1/invite/progress`, starts its own identity and accreditation checks and screening on `/v1/verifications` and `/v1/screenings` with the same header, and finishes with `POST /v1/invite/complete`. The sponsor is emailed.
 4. While the console is open it polls `GET /v1/invitations`, fetches each finished submission, merges it into the workspace and deletes it here.
@@ -471,7 +471,7 @@ People sign in to the console with their own email and password (`/v1/auth/*`, `
 | `AUTH_SIGNIN_PER_15MIN` | 20 | Sign-in tries per address in 15 minutes. |
 | `AUTH_COUNTER_MAX` | 10000 | Addresses and unknown emails the try counters remember (the oldest is dropped first). |
 
-**The cookie.** A session is one cookie: `__Host-session` (Secure, HttpOnly, SameSite=Strict) when `PUBLIC_URL` is `https://`, `session` otherwise; the server keeps only its SHA-256. A browser sends a SameSite=Strict cookie only to the site that set it, so the portal's pages must come from this server: `SERVE_PORTAL=1` serves them (it arrives with the served portal, plan 15-06; until then the setting does nothing). Every write made with the cookie must be JSON from the server's own origin (or one listed in `PORTAL_ORIGIN`); anything else is refused with no change.
+**The cookie.** A session is one cookie: `__Host-session` (Secure, HttpOnly, SameSite=Strict) when `PUBLIC_URL` is `https://`, `session` otherwise; the server keeps only its SHA-256. A browser sends a SameSite=Strict cookie only to the site that set it, so the portal's pages must come from this server: `SERVE_PORTAL=1` serves them (see Workspace on the server). Every write made with the cookie must be JSON from the server's own origin (or one listed in `PORTAL_ORIGIN`); anything else is refused with no change.
 
 **Tokens once a firm has people.** A sponsor account's token is for the firm's automation. Once its workspace has an active team person, the token reaches only these routes, and every other one answers 403 `This needs a person signed in.`: `GET`/`POST /v1/invitations` and `/v1/invitations/:id` (submission, resend, cancel), `GET /v1/checks/changed`, `GET /v1/connectors`, `POST /v1/intake`, `POST /v1/read`, `POST /v1/help`, `POST /v1/verifications`, `GET /v1/verifications/:id` and its evidence, `POST /v1/screenings`, `GET /v1/screenings/:id`, `GET`/`POST /v1/taxdocs` and `POST /v1/taxdocs/:id/withdraw|resend`. The outbox, billing, filings, the team, the change log, messages and the data room need a person signed in. The shared `API_TOKEN` follows the same rule once anyone on the server has signed up (or `AUTH_REQUIRED=1`). A firm with no people keeps its token on every route, as before.
 
@@ -514,6 +514,33 @@ An invitation link is `<PUBLIC_URL>/#accept-<token>`: 32 random bytes after the 
 1. Confirm the person by phone, calling a number you already held for the firm before the request (from its sign-up or contract records), never one given in the request, and never by email alone: whoever holds the Owner's mailbox may be the attacker.
 2. Only after that call, reset the Owner's two-step with `POST /v1/admin/people/:id/two-step/reset`. The Owner signs in with their password and sets up two-step again.
 3. The reset is on the firm's change log; tell the Owner to check it and their sessions.
+
+## Workspace on the server
+
+On a server with sign-in, the firm's workspace (investors with their bank accounts, offerings, runs, notices, documents, the change log) is held here, not in the browser (`lib/workspace.mjs`). The console moves onto these routes with plan 15-17; until then the console keeps its own browser copy.
+
+**How it is stored.** Each save is one new version, sealed with `DATA_KEY` (AES-256-GCM) as a file in `<STORE_FILE>.blobs/`; the last 10 versions are kept and older ones are deleted. Files (agreements, signed forms, statements) are sealed files too, with their names and types sealed in the store. The store file holds only the version numbers, file sizes and SHA-256 hashes: no investor's name, bank number or document in plain text. A full taxpayer number is never stored: a save in which an investor's `tin`, `ssn`, `ein`, `ftin`, `usTin`, `w8UsTin`, `ownerTin`, `e8UsTin` or `e8Owner<n>Tin` holds more than four digits answers 400 `A full taxpayer number cannot be saved in the workspace.` (only the last four, as `tinLast4`, are kept).
+
+| Route | Who | What it does |
+| --- | --- | --- |
+| `GET /v1/workspace` | anyone on the team | `{ version, ws }`; 404 `code: 'empty'` before the first save. `ws.team` is always the server's own people. |
+| `PUT /v1/workspace` | by section (below) | `{ version, ws }` → `{ version }`. `version` is the one the save started from; a save from an older one answers 409 `Someone else saved changes. Reload to see them.` and changes nothing. At most 32 MB. |
+| `GET /v1/workspace/files/:id` | anyone on the team; a signed tax form or an identity document needs a role that sees personal details | The file, as an attachment. |
+| `PUT /v1/workspace/files/:id` | Owner, Admin, Staff | `{ name, type, base64 }` → `{ id, size, sha256 }`; over 25 MB answers 413 `This file is over 25 MB.` |
+| `DELETE /v1/workspace/files/:id` | Owner, Admin, Staff | `{ ok: true }`. |
+
+These routes need a person signed in (an account token or the shared `API_TOKEN` is refused). Another firm's workspace or file answers 404.
+
+**Who may change what.** Each top-level section of the workspace has one line in `SECTIONS` (`lib/workspace.mjs`), with the permission a change needs; a save is compared section by section with the stored version, and a change the person's role does not allow answers 403 with the role's sentence (the section is named in the change log, never in the answer). The firm's settings, offerings, integrations and templates need an Admin or the Owner; investors, runs, documents and the rest of the day-to-day work need Staff or above; Read-only and the Accountant change nothing; a section no line names is refused for everyone. The workspace's own change log can only grow: a save that drops or edits an earlier entry answers 403 `The change log can only grow.`
+
+- Bank accounts: an investor's bank account, and the firm's own originating bank details, change only for an Admin or the Owner who signed in within the last 10 minutes (else 401 `code: 'fresh'`). Each change is written to the server's change log as `Bank account changed` with the investor's id, never the numbers. A change the firm makes this way is the firm's own confirmation; phase 16's pre-note rule still applies before money goes there.
+- Masking: Staff, Read-only and the Accountant read every routing and account number as `****` and its last four digits; a save that sends that masked value back keeps the stored number. The Accountant also reads no investor's email, phone, address or contact name, and no identity or verification document.
+
+**Serving the pages (`SERVE_PORTAL=1`).** The session cookie is SameSite=Strict, so the browser sends it only to the site that set it: the portal's pages must come from this server, the same origin as the API. With `SERVE_PORTAL=1` this server serves `portal.html` (at `/` and `/portal.html`), `security.html` and `disclosure.html` when their files exist, and the files under `assets/` by extension, from a list made when the server starts (no other file of the checkout, the store or the keys can be reached; a page changed on disk is served with its new policy after a restart). Each page carries a content security policy naming its inline scripts by hash and exactly the outside hosts it loads from. Set `PUBLIC_URL` to the server's `https://` address: `/health` warns `Sign-in needs HTTPS: set PUBLIC_URL to the https address of this server.` otherwise.
+
+**security.txt.** `GET /.well-known/security.txt` (RFC 9116) is built from `SECURITY_CONTACT` (a `mailto:` or `https:` address) and `SECURITY_TXT_EXPIRES` (a date less than a year away) with the https `PUBLIC_URL`; until both are set it answers 404 and `/health` warns `security.txt is not served: set SECURITY_CONTACT and SECURITY_TXT_EXPIRES.` The security contact address and domain are To be confirmed by the firm running the server.
+
+`GET /health` keeps `ok`, `providers` and `reader` and adds `warnings`, the list above. A closed portal's final deletion and its export come with plan 15-20.
 
 ## Portal help
 
@@ -727,7 +754,7 @@ The tools print counts and file names only, never a key or anything the store ho
 - Adapter-private data (provider ids, tokens) stays on the server; the portal sees only normalized fields.
 - Webhooks are verified over the raw bytes, timestamp-checked and de-duplicated; unsigned webhooks are refused.
 - `GET /hosted/:id` never redirects to a link the portal supplied (the `link` provider), so this server's domain cannot be used as an open redirect.
-- Error messages are scrubbed of every secret, raw, URL-encoded or inside base64 (for example a basic-auth `user:password` echoed back by a provider).
+- Error messages are scrubbed of every secret, raw, URL-encoded or inside base64 (for example a `user:password` pair from an Authorization header echoed back by a provider).
 - Reading: the reading key is read from `CARROWVALE_API_KEY` only (no other key, token, profile or address setting is used, and the service address is fixed), it is built into one client in `lib/model.mjs`, and it never leaves this server. `POST /v1/intake` and `POST /v1/read` sit behind `PORTAL_ORIGIN`, `API_TOKEN`, the rate limit, the size limits and the spend cap. Text inside an uploaded agreement is treated as data: the reading can only choose among places the browser measured on the page, and every field lands on printed geometry.
 - Portal help: `POST /v1/help` uses the same key and client and sits behind `PORTAL_ORIGIN`, a credential (`API_TOKEN` or an invitation link's token), the rate limit, its own hourly limit and both caps. Who is asking comes from the credential, never from the request; the conversation is kept by this server, so a request cannot supply earlier turns; a person's question is treated as a question, never as an instruction, and every answer is checked before it is sent.
 - Invitations: personal data encrypted at rest with `DATA_KEY`, tokens stored only as hashes, links scoped to one investor, submissions deleted after import (see Data protection). SMTP credentials are never sent unencrypted or included in error messages.
