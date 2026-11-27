@@ -8,7 +8,7 @@ updated: 2026-11-27T00:00:00Z
 ## Current Focus
 
 bug_class: Bohrbug (deterministic: same counts every run, base probe reproduced the walk's 60/22/40 exactly)
-hypothesis: CONFIRMED - `.rb-doc { overflow-wrap: anywhere }` (assets/css/reports.css:41) is inherited by every preview table cell; `anywhere` counts a break between any two letters when the browser sizes a column's narrowest width, so the auto table layout squeezes text columns to one letter (27-36 px) and gives the room to the nowrap number columns. Contributing: a hyphenated word ('Single-name') splits at its hyphen when its column sits at its narrowest width.
+hypothesis: CONFIRMED - `.rb-doc { overflow-wrap: anywhere }` (assets/css/reports.css:38) is inherited by every preview table cell; `anywhere` counts a break between any two letters when the browser sizes a column's narrowest width, so the auto table layout squeezes text columns to one letter (27-36 px) and gives the room to the nowrap number columns. Contributing: a hyphenated word ('Single-name') splits at its hyphen when its column sits at its narrowest width.
 next_action: apply fix in reports.css (+ hyphen span in reports-ui.js tableHTML), run probe phone+desktop, pixel-diff desktop, then walk12 and the listed checks
 
 reasoning_checkpoint:
@@ -45,7 +45,7 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
 
 - timestamp: 2026-11-27T00:00:00Z
   checked: assets/css/reports.css (preview styles) and assets/js/reports-ui.js:915-919 tableHTML
-  found: table markup is `<div class="tbl-scroll rb-tblwrap"><table class="rb-tbl">` with `.num` cells (`white-space: nowrap; text-align: right`). `.rb-doc` (reports.css:41) sets `overflow-wrap: anywhere`, inherited by th/td. `.rb-tbl { width: 100% }`, no min-width or white-space on text cells. `.tbl-scroll` (console.css:296, portal.css:198) is `overflow-x: auto`.
+  found: table markup is `<div class="tbl-scroll rb-tblwrap"><table class="rb-tbl">` with `.num` cells (`white-space: nowrap; text-align: right`). `.rb-doc` (reports.css:38) sets `overflow-wrap: anywhere`, inherited by th/td. `.rb-tbl { width: 100% }`, no min-width or white-space on text cells. `.tbl-scroll` (console.css:296, portal.css:198) is `overflow-x: auto`.
   implication: candidate cause in code (CSS): `overflow-wrap: anywhere` collapses text-cell min-content to one glyph; auto table layout then gives the slack to nowrap number columns.
 
 - timestamp: 2026-11-27T14:10:00Z
@@ -61,7 +61,7 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
 - timestamp: 2026-11-27T14:25:00Z
   checked: same probe with one rule injected through CSSOM: `.rb-tbl th, .rb-tbl td { overflow-wrap: normal; }` (probe-h1-phone.txt)
   found: broken words 60->0 (KB), 3->0 (KB stmt), 22->0 (AR), 40->1 (PB). Text columns now at their longest word (Investment 80-104 px, Security 69-75, Date 75, Type 58, Period 68). Tables wider than the box now scroll inside it: Holdings 461/506 px, Net performance 587/596 px, Distributions 375, Totals 326 in a 308 px box. Rows shrink (KB Holdings 2878 -> 574 px tall). One word still split in PB Holdings (to identify).
-  implication: CONFIRMS the cause: inherited `overflow-wrap: anywhere` (reports.css:41 .rb-doc) sets each text cell's min-content to one glyph, and the auto table layout gives the room to the nowrap number columns. Removing it from the cells alone fixes nearly all; one remaining break is a different mechanism (likely a hyphen/slash break opportunity, not anywhere).
+  implication: CONFIRMS the cause: inherited `overflow-wrap: anywhere` (reports.css:38 .rb-doc) sets each text cell's min-content to one glyph, and the auto table layout gives the room to the nowrap number columns. Removing it from the cells alone fixes nearly all; one remaining break is a different mechanism (likely a hyphen/slash break opportunity, not anywhere).
 
 - timestamp: 2026-11-27T14:40:00Z
   checked: the one word still split after h1 (probe prints each broken word)
@@ -123,9 +123,24 @@ started: since phase 12 report preview (plan 12-06); caught first by 12-09 walk 
   found: `WALK12: FAIL (steps run: 28) - kb-open, ar-letter, pb-letter`; 249 PASS, 3 FAIL (all W5); 5 new held-in-place checks PASS; compare-walk.py: 0 base-passing checks lost.
   implication: walk GREEN for this fault with the stronger guard.
 
+- timestamp: 2026-11-27T17:40:00Z
+  checked: the new REPORTS FLOW assertions against the BASE product files (reports.css and reports-ui.js from b8d8613, committed as wip save 690fcff, then the fix re-applied as e75171e), rf-red-base.txt (1298 s, mostly waiting for a check slot)
+  found: `REPORTS FLOW: FAIL (parts run: 2) - open-phone`: 'no word broken' FAIL (63 broken: Totals 'Period', 'inception', Net performance 'Investment', 'Kestrel', 'Bay' ...); 'keeps its title and first column in place' FAIL (Net performance title and first cells at -236 px, Holdings at -57 px when scrolled to the end); preview-pdf 1280 px check PASS on base (the desktop was right before; that check guards it from now on).
+  implication: the phone assertions bite on the fault (RED on base, GREEN on the fix).
+
+- timestamp: 2026-11-27T17:45:00Z
+  checked: fix-site mutation: with the phone rules in place, does anything catch the loss of the root rule (`.rb-tbl th, .rb-tbl td { overflow-wrap: normal }`)?
+  found: by reasoning, the phone min-width of 8em hides it for words shorter than 8em at 390 px, and nothing tests 641-1279 px, where the phone rules are off and anywhere would squeeze columns again; the mutant would likely survive.
+  implication: added a root-cause invariant to tableLayout (`loose`: cells whose computed overflow-wrap is not normal) folded into the REPORTS FLOW phone and 1280 px checks; mutant run in a scratch copy of the tree (scratchpad/debug-report-tables/mutant-tree, root rule removed) to prove it is now killed.
+
+- timestamp: 2026-11-27T17:46:00Z
+  checked: line number of the root cause in base reports.css (git show b8d8613:assets/css/reports.css, grep -n for the .rb-doc rule)
+  found: line 38, not 41 as first written here and in the fix commit e75171e's message.
+  implication: correction recorded; the file and rule named in e75171e are right, the line number there is off by 3.
+
 ## Resolution
 
-root_cause: "assets/css/reports.css:41 `.rb-doc { overflow-wrap: anywhere }` is inherited by the preview's table cells; `anywhere` (unlike break-word) counts a break between any two letters in a cell's narrowest (min-content) width, so the automatic table layout at the phone's 308 px squeezed text columns to one letter (27-36 px) and gave the width to the nowrap number columns; tables whose number columns alone exceeded 308 px also overflowed (343-544 px). Contributing (AND): a hyphenated word ('Single-name') breaks at its hyphen whenever its column sits at its narrowest width."
+root_cause: "assets/css/reports.css:38 `.rb-doc { overflow-wrap: anywhere }` is inherited by the preview's table cells; `anywhere` (unlike break-word) counts a break between any two letters in a cell's narrowest (min-content) width, so the automatic table layout at the phone's 308 px squeezed text columns to one letter (27-36 px) and gave the width to the nowrap number columns; tables whose number columns alone exceeded 308 px also overflowed (343-544 px). Contributing (AND): a hyphenated word ('Single-name') breaks at its hyphen whenever its column sits at its narrowest width."
 fix: "reports.css: `.rb-tbl th, .rb-tbl td { overflow-wrap: normal }` (all widths) and `.rb-nw { white-space: nowrap }`; phone only (max-width 640px) for tables of 4+ columns: the table box is a size container with its own stacking context and a right-edge shade while columns remain; caption sticky at left 0, 100cqw wide; text cells min-width 8em; first column sticky at left 0, white, 1 px divider. reports-ui.js tableHTML: words with a hyphen, dash or slash in text cells wrapped in span.rb-nw (text unchanged)."
 verification: "(pending walk12 and the listed checks)"
 files_changed: [assets/css/reports.css, assets/js/reports-ui.js]
