@@ -71,11 +71,11 @@
   /* ---------- what is open in the section (kept across drawings, never stored) ---------- */
   function ui(o) {
     const all = S().ui;
-    if (!all.bb || all.bb.fund !== o.id) all.bb = { fund: o.id, acct: '', form: '', a: { name: '', last4: '' }, pending: null, result: '', reads: all.bb ? all.bb.reads : 0, err: {}, dec: {}, notThis: {}, show: PAGE, showDone: PAGE, rec: { date: '', stmt: null } };
+    if (!all.bb || all.bb.fund !== o.id) all.bb = { fund: o.id, acct: '', form: '', a: { name: '', last4: '' }, pending: null, result: '', reads: all.bb ? all.bb.reads : 0, err: {}, dec: {}, notThis: {}, show: PAGE, showDone: PAGE, rec: { date: '', stmt: null, open: '', openEdit: false } };
     return all.bb;
   }
   function resetAccount(u) {
-    Object.assign(u, { pending: null, result: '', err: {}, dec: {}, notThis: {}, show: PAGE, showDone: PAGE, rec: { date: '', stmt: null } });
+    Object.assign(u, { pending: null, result: '', err: {}, dec: {}, notThis: {}, show: PAGE, showDone: PAGE, rec: { date: '', stmt: null, open: '', openEdit: false } });
   }
   const fundOf = (ws, id) => (ws.books && ws.books.funds && ws.books.funds[id]) || null;
   const bankOf = (ws, id) => {
@@ -129,10 +129,74 @@
     return `<h3 class="bk-h3">Bank accounts</h3>${list}${pick}${form}`;
   }
 
+  /* ---------- a CSV's columns, confirmed once per bank account ---------- */
+  const ORDERS = [['mdy', 'Month/day/year'], ['dmy', 'Day/month/year'], ['ymd', 'Year-month-day']];
+  const colText = (v) => (v === null || v === undefined ? '' : String(v));
+  /** The form's fields from a guessed or kept column map (every column an index written as text, '' for none). */
+  function formOf(m) {
+    return { date: colText(m.date), text: colText(m.text), amount: m.amount !== null && m.amount !== undefined ? colText(m.amount) : m.in !== null && m.in !== undefined ? 'two' : '', in: colText(m.in), out: colText(m.out), balance: colText(m.balance), check: colText(m.check), order: m.order || 'mdy', neg: m.outNegative !== false, header: !!m.header };
+  }
+  /** The column map the statement reader takes, from the form's fields. */
+  function mapOf(f) {
+    const n = (v) => (v === '' || v === null || v === undefined ? null : Number(v));
+    const two = f.amount === 'two';
+    return { date: n(f.date), text: n(f.text), amount: two ? null : n(f.amount), in: two ? n(f.in) : null, out: two ? n(f.out) : null, balance: n(f.balance), check: n(f.check), header: !!f.header, order: f.order, outNegative: two ? true : !!f.neg };
+  }
+  /**
+   * The layout form of a statement in columns, filled from the guess: which column holds the date, the description, the
+   * amount (or money in and money out), the balance and the check number, the order the dates are written in, whether
+   * money out is shown as negative and whether the first row names the columns; under it, the first five lines read with
+   * that layout, as money in and money out. One function, so another screen reading columns can follow it.
+   */
+  function layoutHTML(p) {
+    const f = p.form;
+    const first = p.rows[0] || [];
+    const width = p.rows.reduce((w, r) => Math.max(w, r.length), 0);
+    const cols = [];
+    for (let i = 0; i < width; i++) cols.push([String(i), f.header ? first[i] || `Column ${i + 1}` : `Column ${i + 1}${first[i] ? ': ' + first[i] : ''}`]);
+    const none = [['', 'None']];
+    const two = f.amount === 'two';
+    const check = (id, bind, on, label) => `<label class="cs-check" for="${id}"><input id="${id}" type="checkbox" data-bind="bb:${bind}"${on ? ' checked' : ''}><span>${label}</span></label>`;
+    let preview;
+    try {
+      const head = String(p.text).split(/\r\n|\r|\n/).slice(0, f.header ? 6 : 5).join('\n');
+      const lines = BF().parse(head, { kind: 'csv', map: mapOf(f) }).lines.slice(0, 5);
+      preview = `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact bk-lines bb-preview"><thead><tr><th scope="col">Date</th><th scope="col">Description</th><th scope="col" class="num">Money in</th><th scope="col" class="num">Money out</th></tr></thead><tbody>${lines
+        .map((l) => `<tr><td>${h(day(l.date))}</td><td>${h(mask(l.text))}</td><td class="num">${l.cents > 0 ? usd(l.cents) : ''}</td><td class="num">${l.cents < 0 ? usd(-l.cents) : ''}</td></tr>`)
+        .join('')}</tbody></table></div>`;
+    } catch (e) {
+      preview = `<p class="bk-err" role="alert">${h(sentence(e))}</p>`;
+    }
+    return `<div class="bk-form" data-kind="layout">
+      <p class="bk-e-memo">${h(p.name)}</p>
+      <div class="bk-grid">
+        ${field('bb-m-date', 'Date', select('bb-m-date', 'pending.form.date', cols, f.date, 'Choose a column'))}
+        ${field('bb-m-text', 'Description', select('bb-m-text', 'pending.form.text', cols, f.text, 'Choose a column'))}
+        ${field('bb-m-amount', 'Amount', select('bb-m-amount', 'pending.form.amount', cols.concat([['two', 'Money in and money out columns']]), f.amount, 'Choose a column'))}
+        ${two ? field('bb-m-in', 'Money in', select('bb-m-in', 'pending.form.in', cols, f.in, 'Choose a column')) : ''}
+        ${two ? field('bb-m-out', 'Money out', select('bb-m-out', 'pending.form.out', cols, f.out, 'Choose a column')) : ''}
+        ${field('bb-m-balance', 'Balance', select('bb-m-balance', 'pending.form.balance', none.concat(cols), f.balance))}
+        ${field('bb-m-check', 'Check number', select('bb-m-check', 'pending.form.check', none.concat(cols), f.check))}
+        ${field('bb-m-order', 'Date order', select('bb-m-order', 'pending.form.order', ORDERS, f.order))}
+      </div>
+      ${two ? '' : check('bb-m-neg', 'pending.form.neg', f.neg, 'Money out shown as negative')}
+      ${check('bb-m-header', 'pending.form.header', f.header, 'First row names the columns')}
+      ${preview}
+      <div class="cs-row">${btn('bb-layout-use', 'Use this layout', '', 'cs-btn-primary')}${btn('bb-pending-cancel', 'Cancel')}</div>
+    </div>`;
+  }
+
   function fileHTML(ws, o, u, acct, can) {
     if (!can) return '';
     const input = `<label class="cs-field bb-file-label" for="bb-file"><span>Statement file (CSV, OFX, QFX, QBO or BAI2)</span><input id="bb-file" type="file" data-change="bb-file"></label>`;
-    return `<h3 class="bk-h3">Statements</h3>${input}${u.result ? `<p class="bb-result" role="status">${h(u.result)}</p>` : ''}${errLine(u, 'file')}`;
+    const p = u.pending && u.pending.acct === acct.id ? u.pending : null;
+    let stage = '';
+    if (p && p.stage === 'layout') stage = layoutHTML(p);
+    if (p && p.stage === 'overlap') {
+      const more = p.counts.added ? btn('bb-overlap-new', `Add only the ${plural(p.counts.added, 'other line', 'other lines')}`) : '';
+      stage = `<div class="bk-form" data-kind="overlap"><p class="bb-overlap">These lines match lines already imported from another file.</p><div class="cs-row">${btn('bb-overlap-add', 'Add anyway')}${more}${btn('bb-pending-cancel', 'Cancel', '', 'cs-btn-primary')}</div></div>`;
+    }
+    return `<h3 class="bk-h3">Statements</h3>${input}${u.result ? `<p class="bb-result" role="status">${h(u.result)}</p>` : ''}${errLine(u, 'file')}${stage}`;
   }
 
   /** The undecided lines of the account with their candidates, split into suggestions and lines to decide. */
@@ -165,8 +229,36 @@
 
   /** The decision being typed for line k. */
   function decOf(u, k) {
-    if (!u.dec[k]) u.dec[k] = { acct: '', hold: '', newName: '', inv: '', cost: '' };
+    if (!u.dec[k]) u.dec[k] = { acct: '', hold: '', newName: '', inv: '', cost: '', parts: [] };
     return u.dec[k];
+  }
+  const blankPart = () => ({ acct: '', amt: '', hold: '', inv: '' });
+  /** What the split's parts typed so far leave of the bank amount (over the amounts that can be read). */
+  function splitLeft(d, l) {
+    let t = 0;
+    d.parts.forEach((r) => {
+      const c = cents(r.amt);
+      if (!c.bad) t += c.cents;
+    });
+    return Math.abs(l.cents) - t;
+  }
+  const offText = (d, l) => {
+    const left = splitLeft(d, l);
+    return left ? `Off by ${usd(Math.abs(left))}` : 'The parts add up to the bank amount.';
+  };
+  function splitHTML(ws, o, u, k, d, l) {
+    const opts = decisionAccounts(ws, o).map((a) => [a.code, `${a.code} ${a.name}`]);
+    const holds = holdingsOf(ws, o.id).map((y) => [y.id, y.name]);
+    const invs = holdersOf(ws, o.id).map((i) => [i.id, `${i.title} (${i.id})`]);
+    const rows = d.parts
+      .map((r, i) => {
+        const id = (w) => `bb-s-${w}-${k}-${i}`;
+        const bind = (w) => `dec.${k}.parts.${i}.${w}`;
+        const extra = HOLDING.indexOf(r.acct) >= 0 ? field(id('hold'), 'Investment', select(id('hold'), bind('hold'), holds, r.hold, 'Choose an investment'), ' data-w="hold"') : INVESTOR.indexOf(r.acct) >= 0 ? field(id('inv'), 'Investor', select(id('inv'), bind('inv'), invs, r.inv, 'Choose an investor'), ' data-w="inv"') : '';
+        return `<li class="bk-fline">${field(id('acct'), 'Account', select(id('acct'), bind('acct'), opts, r.acct, 'Choose an account'), ' data-w="acct"')}${extra}${field(id('amt'), 'Amount', moneyIn(id('amt'), bind('amt'), r.amt), ' data-w="amt"')}</li>`;
+      })
+      .join('');
+    return `<ol class="bk-flines">${rows}</ol><p class="bk-offby" id="bb-offby-${k}" aria-live="polite">${offText(d, l)}</p><div class="cs-row">${btn('bb-split-add', 'Add line', ` data-k="${k}"`)}</div>`;
   }
   function decisionHTML(ws, o, u, x, can) {
     const k = x.k;
@@ -174,7 +266,7 @@
     if (!can) return `<li class="bk-entry bb-line" data-k="${k}" data-id="${h(l.id)}">${lineHead(l)}</li>`;
     const d = decOf(u, k);
     const money = l.cents > 0;
-    const specials = money ? [['sale', KIND.sale]] : [['purchase', KIND.purchase]];
+    const specials = (money ? [['sale', KIND.sale]] : [['purchase', KIND.purchase]]).concat([['split', 'Split between accounts']]);
     const opts = specials.concat(decisionAccounts(ws, o).map((a) => [a.code, `${a.code} ${a.name}`]));
     const isKind = d.acct === 'purchase' || d.acct === 'sale';
     const showHold = isKind || HOLDING.indexOf(d.acct) >= 0;
@@ -189,6 +281,7 @@
         ${showInv ? field(`bb-d-inv-${k}`, 'Investor', select(`bb-d-inv-${k}`, `dec.${k}.inv`, invs, d.inv, 'Choose an investor')) : ''}
         ${d.acct === 'sale' ? field(`bb-d-cost-${k}`, 'Cost given up', moneyIn(`bb-d-cost-${k}`, `dec.${k}.cost`, d.cost)) : ''}
       </div>
+      ${d.acct === 'split' ? splitHTML(ws, o, u, k, d, l) : ''}
       ${errLine(u, 'line-' + k)}
       <div class="cs-row">${btn('bb-post', 'Post', ` data-k="${k}"`, 'cs-btn-primary')}</div>
     </li>`;
@@ -209,18 +302,26 @@
     const byId = new Map(j.map((e) => [e.id, e]));
     const ct = BK().closedThrough(ws, o.id);
     const shown = done.slice(0, u.showDone);
+    const rv = reversedSet(j);
     const item = ({ l, k }) => {
       let what = '';
+      let move = '';
       if (l.match) {
         const e = byId.get(l.match.entry);
         what = `Matched: ${e ? `${e.memo || e.id} · ${day(e.date)}` : l.match.entry}`;
+        // The record was changed after the match and posted again: offer the new entry.
+        if (!e || rv.has(e.id)) {
+          const c = BB().candidates(ws, o.id, l.id);
+          what = c.length ? 'The matched entry was replaced; move the match to the new one.' : 'The matched entry was replaced and no new entry matches; undo the match.';
+          if (can) move = c.map((x) => `<p class="bk-sub">${h(candText(x))}</p><div class="cs-row">${btn('bb-move', 'Move match', ` data-k="${k}" data-entry="${h(x.entry)}" data-line="${x.line}"`, 'cs-btn-primary')}</div>`).join('');
+        }
       } else {
         const e = byId.get(l.entry);
         const codes = e ? e.lines.filter((x) => String(x[0]) !== acct.code).map((x) => acctName(ws, o, String(x[0]))) : [];
         what = `Posted: ${Array.from(new Set(codes)).join(', ') || l.entry}`;
       }
       const undo = can && !(ct && l.date <= ct) ? `<div class="cs-row">${btn('bb-undo', 'Undo', ` data-k="${k}"`)}</div>` : '';
-      return `<li class="bk-entry bb-done" data-k="${k}" data-id="${h(l.id)}">${lineHead(l)}<p class="bk-sub">${h(what)}</p>${errLine(u, 'line-' + k)}${undo}</li>`;
+      return `<li class="bk-entry bb-done" data-k="${k}" data-id="${h(l.id)}">${lineHead(l)}<p class="bk-sub">${h(what)}</p>${move}${errLine(u, 'line-' + k)}${undo}</li>`;
     };
     return `<h3 class="bk-h3">Decided</h3><ol class="bk-entries">${shown.map(item).join('')}</ol>${done.length > shown.length ? `<div class="cs-row">${btn('bb-more-done', 'Show more')}<span class="cs-hint">${shown.length} of ${done.length} shown</span></div>` : ''}`;
   }
@@ -259,14 +360,26 @@
     const have = !st.bad && !st.empty;
     const sum = (xs) => xs.reduce((t, x) => t + x.cents, 0);
     const dd = (k, label, v) => `<div><dt>${label}</dt><dd class="bb-r-${k}">${v}</dd></div>`;
-    const outs = r.outstanding.map((x) => `<li>${h(day(x.date))} ${h(x.memo || 'Entered in the books, not yet in the bank')} <span class="bk-code">${usd(x.cents)}</span></li>`).join('');
+    // An item with no entry is everything before the opening balance's date that the bank has not shown.
+    const outs = r.outstanding.map((x) => `<li>${x.entry ? `${h(day(x.date))} ${h(x.memo || x.entry)}` : h(`Before ${day(r.opening.date)}: in the books, not yet in the bank`)} <span class="bk-code">${usd(x.cents)}</span></li>`).join('');
+    let opening = '';
+    if (r.opening) {
+      const op = acct.opening || null;
+      const recs = bankOf(ws, o.id).recs.some((x) => x && x.account === acct.id);
+      if (r.opening.cents === null || u.rec.openEdit)
+        opening = can
+          ? `<div class="bk-grid">${field('bb-r-open', `Opening balance at ${h(day(r.opening.date))}`, moneyIn('bb-r-open', 'rec.open', u.rec.open || ''))}</div><p class="cs-hint">The bank balance when the first statement starts: its beginning balance.</p><div class="cs-row">${btn('bb-open-save', 'Save opening balance', '', 'cs-btn-primary')}</div>`
+          : '';
+      else
+        opening = `<p class="bk-sub bb-r-opening">Opening balance at ${h(day(r.opening.date))}: ${usd(r.opening.cents)}${op ? `, entered by ${h(op.by)} on ${h(day(String(op.at || '').slice(0, 10)))}` : ''}.</p>${can && !recs ? `<div class="cs-row">${btn('bb-open-edit', 'Change opening balance')}</div>` : ''}`;
+    }
     let diff;
     if (st.bad) diff = h(`Statement balance: ${BAD_AMOUNT}`);
     else if (!have) diff = 'Type the statement balance.';
     else if (r.differenceCents === null) diff = h(`To be confirmed: opening balance at ${day(r.opening.date)}`);
     else diff = usd(r.differenceCents);
     const ok = have && r.differenceCents === 0;
-    return `<dl class="bk-facts">
+    return `${opening}<dl class="bk-facts">
         ${dd('statement', 'Statement balance', have ? usd(st.cents) : 'Not typed yet')}
         ${dd('book', 'Book balance', usd(r.bookCents))}
         ${dd('out', 'Outstanding items', `${r.outstanding.length} · ${usd(sum(r.outstanding))}`)}
@@ -376,19 +489,54 @@
   /* ---------- the statement file ---------- */
   /** The parsed statement with every line's text and reference cut to the last four of any account number. */
   const masked = (p) => Object.assign({}, p, { lines: p.lines.map((l) => Object.assign({}, l, { text: mask(l.text), ref: mask(l.ref) })) });
-  /** Store the lines and keep the file's bytes; the result in one line. */
-  async function commitImport(ws, o, u, p) {
+  /**
+   * Store the lines and keep the file's bytes; the result in one line. allowOverlap adds lines that match lines already
+   * imported from another file (the sponsor said so); without it they are left out and counted as already imported.
+   */
+  async function commitImport(ws, o, u, p, allowOverlap) {
     const acct = bankOf(ws, o.id).accounts.find((a) => a.id === p.acct);
     if (!acct) throw new Error('That bank account is no longer there.');
     const sha = NS.audit.sha256(new Uint8Array(p.bytes));
     const fileId = `bank-${o.id}-${acct.id}-${sha.slice(0, 16)}`;
-    const r = BB().importLines(ws, o.id, acct.id, p.parsed, { name: p.name, sha256: sha, fileId, by: actor(), at: new Date().toISOString() });
+    const r = BB().importLines(ws, o.id, acct.id, p.parsed, { allowOverlap: !!allowOverlap, name: p.name, sha256: sha, fileId, by: actor(), at: new Date().toISOString() });
     if (r.added) {
       await NS.ops.files.put(fileId, new Blob([p.bytes], { type: p.type || 'application/octet-stream' }));
       CK().audit('Bank statement imported', `${p.name}, SHA-256 ${sha}: ${plural(r.added, 'line', 'lines')} added to ${acct.name} ending ${acct.last4}.`, o.id, fileId);
     }
     NS.app.save();
-    u.result = `${plural(r.added, 'new line', 'new lines')}, ${r.skipped + r.overlap} already imported.`;
+    u.pending = null;
+    u.result = `${plural(r.added, 'new line', 'new lines')}, ${r.skipped + (allowOverlap ? 0 : r.overlap)} already imported.`;
+  }
+  /** Import, or first ask when some lines match lines already imported from another file (tried on a copy of the fund). */
+  async function offer(ws, o, u, p) {
+    const books = ws.books && ws.books.funds ? ws.books : { v: 1, funds: {} };
+    const funds = Object.assign({}, books.funds);
+    if (funds[o.id]) funds[o.id] = JSON.parse(JSON.stringify(funds[o.id]));
+    const dry = Object.assign({}, ws, { books: Object.assign({}, books, { funds }) });
+    const r = BB().importLines(dry, o.id, p.acct, p.parsed, {});
+    if (r.overlap) {
+      p.stage = 'overlap';
+      p.counts = r;
+      u.pending = p;
+      return;
+    }
+    await commitImport(ws, o, u, p, false);
+  }
+  /** A statement in columns: read with the account's kept layout, or the layout form when it has none or it no longer fits. */
+  async function columns(ws, o, u, acct, p, text) {
+    p.text = text;
+    p.rows = BF().csvRows(text).filter((r) => r.length);
+    if (acct.map) {
+      try {
+        p.parsed = masked(BF().parse(text, { kind: 'csv', map: acct.map }));
+        return offer(ws, o, u, p);
+      } catch (e) {
+        u.err.file = `${sentence(e)} Check the columns below.`;
+      }
+    }
+    p.form = formOf(acct.map || BF().csvGuess(p.rows));
+    p.stage = 'layout';
+    u.pending = p;
   }
   NS.changes['bb-file'] = async (el) => {
     const file = el.files && el.files[0];
@@ -407,8 +555,11 @@
       const kind = BF().detect(text);
       if (!kind) throw new Error(NOT_STATEMENT);
       const p = { name: mask(file.name), type: file.type || '', bytes, acct: acct.id, kind };
-      p.parsed = masked(BF().parse(text, { kind }));
-      await commitImport(ws, o, u, p);
+      if (kind === 'csv') await columns(ws, o, u, acct, p, text);
+      else {
+        p.parsed = masked(BF().parse(text, { kind }));
+        await offer(ws, o, u, p);
+      }
     } catch (e) {
       u.err.file = sentence(e);
       u.pending = null;
@@ -419,6 +570,38 @@
       /* the next drawing replaces the input anyway */
     }
     u.reads++;
+    NS.app.render();
+  };
+  /** An action on the file waiting for an answer: a refusal becomes the file's one line; the page is drawn again. */
+  const pendingAct = (fn) => async () => {
+    const c = ctx();
+    if (!NS.app.can('operate')) return U.toast('Only your team can do this.');
+    const p = c.u.pending;
+    c.u.err = {};
+    if (p && c.acct && p.acct === c.acct.id) {
+      try {
+        await fn(c, p);
+      } catch (e) {
+        c.u.err.file = sentence(e);
+      }
+    } else c.u.pending = null;
+    c.u.reads++;
+    NS.app.render();
+  };
+  NS.actions['bb-layout-use'] = pendingAct(async ({ ws, o, u, acct }, p) => {
+    const map = mapOf(p.form);
+    p.parsed = masked(BF().parse(p.text, { kind: 'csv', map }));
+    BB().setMap(ws, o.id, acct.id, map);
+    NS.app.save();
+    await offer(ws, o, u, p);
+  });
+  NS.actions['bb-overlap-add'] = pendingAct(({ ws, o, u }, p) => commitImport(ws, o, u, p, true));
+  NS.actions['bb-overlap-new'] = pendingAct(({ ws, o, u }, p) => commitImport(ws, o, u, p, false));
+  NS.actions['bb-pending-cancel'] = () => {
+    const { u } = ctx();
+    u.pending = null;
+    u.err = {};
+    u.result = '';
     NS.app.render();
   };
 
@@ -469,6 +652,27 @@
       return NEW;
     };
     if (d.acct === 'purchase') return { kind: 'purchase', holding: holding() };
+    if (d.acct === 'split') {
+      const lines = [];
+      d.parts.forEach((r, i) => {
+        const n = i + 1;
+        const c = cents(r.amt);
+        if (!r.acct && c.empty) return;
+        if (c.bad || c.cents < 0) throw new Error(`Part ${n}: ${BAD_AMOUNT}`);
+        if (!r.acct) throw new Error(`Part ${n}: choose the account.`);
+        if (c.empty || !c.cents) throw new Error(`Part ${n}: type its amount.`);
+        if (NEEDS_HOLDING.indexOf(r.acct) >= 0 && !r.hold) throw new Error(`Part ${n}: choose the investment.`);
+        if (NEEDS_INVESTOR.indexOf(r.acct) >= 0 && !r.inv) throw new Error(`Part ${n}: choose the investor whose capital this is.`);
+        const it = { account: r.acct, cents: c.cents };
+        if (HOLDING.indexOf(r.acct) >= 0 && r.hold) it.holding = r.hold;
+        if (INVESTOR.indexOf(r.acct) >= 0 && r.inv) it.partner = r.inv;
+        lines.push(it);
+      });
+      if (!lines.length) throw new Error('Fill in the parts of the split.');
+      const left = splitLeft(d, l);
+      if (left) throw new Error(`Off by ${usd(Math.abs(left))}: the parts must add up to the bank amount of ${usd(Math.abs(l.cents))}.`);
+      return { kind: 'split', lines };
+    }
     if (d.acct === 'sale') {
       const c = cents(d.cost);
       if (c.bad || c.cents < 0) throw new Error(`Cost given up: ${BAD_AMOUNT}`);
@@ -520,6 +724,21 @@
     CK().audit('Bank decision undone', `${l.date} ${l.text}: ${usd(l.cents)}`, o.id, l.id);
     return 'Undone';
   });
+  NS.actions['bb-split-add'] = (el) => {
+    const { u } = ctx();
+    decOf(u, kOf(el)).parts.push(blankPart());
+    NS.app.render();
+  };
+  /** A match whose entry was replaced (its record changed and was posted again) moved to the new entry. */
+  NS.actions['bb-move'] = act(lineSlot, ({ ws, o }, el) => {
+    const l = lineAt(ws, o, kOf(el));
+    const target = { entry: el.getAttribute('data-entry'), line: Number(el.getAttribute('data-line')) };
+    if (!BB().candidates(ws, o.id, l.id).some((c) => c.entry === target.entry && c.line === target.line)) throw new Error('That entry no longer matches this line; the page has been drawn again.');
+    if (l.match) BB().unmatch(ws, o.id, l.id);
+    BB().match(ws, o.id, l.id, target);
+    logMatch(ws, o, l, target);
+    return 'Match moved';
+  });
 
   /* ---------- reconcile ---------- */
   NS.actions['bb-mark'] = act('rec', ({ ws, o, u, acct }) => {
@@ -530,6 +749,21 @@
     const r = BB().markReconciled(ws, o.id, acct.id, date, st.cents, { by: actor() });
     CK().audit('Bank account reconciled', `${acct.name} ending ${acct.last4} at ${date}: statement ${usd(r.statementCents)}, book ${usd(r.bookCents)}, ${plural(r.outstanding.length, 'outstanding item', 'outstanding items')}, difference $0.00`, o.id, acct.id);
     return 'Reconciled';
+  });
+  NS.actions['bb-open-edit'] = () => {
+    const { u } = ctx();
+    u.rec.openEdit = true;
+    NS.app.render();
+  };
+  NS.actions['bb-open-save'] = act('rec', ({ ws, o, u, acct }) => {
+    const c = cents(u.rec.open);
+    if (c.bad) throw new Error(`Opening balance: ${BAD_AMOUNT}`);
+    if (!String(u.rec.open || '').trim()) throw new Error('Type the opening balance: the bank balance when the first statement starts.');
+    const op = BB().setOpening(ws, o.id, acct.id, c.cents, { by: actor() });
+    CK().audit('Bank opening balance entered', `${acct.name} ending ${acct.last4}: ${usd(op.cents)} at ${op.date}, the bank balance when the first statement starts`, o.id, acct.id);
+    u.rec.open = '';
+    u.rec.openEdit = false;
+    return 'Opening balance saved';
   });
 
   /* ---------- typing: kept in the section's state; the figures are drawn again in place ---------- */
@@ -546,7 +780,17 @@
       t = t[key];
     }
     t[p[p.length - 1]] = v;
-    if (/^dec\.\d+\.(acct|hold)$/.test(path)) return NS.app.render();
+    if (/^dec\.\d+\.acct$/.test(path) && v === 'split') {
+      const d = decOf(u, p[1]);
+      if (!d.parts.length) d.parts = [blankPart(), blankPart()];
+    }
+    if (/^dec\.\d+\.(acct|hold|parts\.\d+\.acct)$/.test(path) || /^pending\.form\./.test(path)) return NS.app.render();
+    if (/^dec\.\d+\.parts\.\d+\.amt$/.test(path)) {
+      const l = bankOf(ws, o.id).lines[Number(p[1])];
+      const out = document.getElementById(`bb-offby-${p[1]}`);
+      if (l && out) out.textContent = offText(decOf(u, p[1]), l);
+      return;
+    }
     if (path === 'rec.date') {
       u.rec.stmt = null;
       return NS.app.render();
