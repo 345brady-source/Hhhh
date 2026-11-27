@@ -73,3 +73,10 @@ Binding on the executors (full text with each fix: scratchpad checks-13-wave2.md
 - Owner's read of the wording at 13-10 (sponsor messages name the investor as the console holds the name, e.g. "Shah, Anita").
 - Wave 2 can start: 13-11 now; 13-03 now (15-05 merged); 13-05 after 11-16 merges.
 - Combined merged tree af0b7b9 (15-05 + 13-01 + 15-04): EMAIL DIALOG 3, CO-INVESTOR SERVER 5, SERVER MODE 15 pass; GATE13 SELF-TEST PASS (8); server tests 544/544.
+
+## After 13-11 (merged 2026-11-27)
+- Gate13 (GATE13_PHASES="09", as the plan names) GATE_EXIT=0; plan tree 554 = 544 + 10. Merged tree: run 1 553/554 (auth-gate.test.mjs "operator": its `/pw|emailIndex|salt|hash|session/i` scan over the whole response text matched a random id; second time today), run 2 554/554. A quick task fixes that test (auth-gate-scan).
+- 24 new variants, 61 text goldens; staff filing email byte-identical to the base and rendered through emails.js; commercial footer (postal address + a way to stop) on subscribe invitations, offering invitations with no commitment, their new-link resends and offering-news notices ("To be confirmed with counsel"); dispatch refuses a possibly commercial message when the firm has no postal address.
+- Deviations: password reset button reads 'Open the reset page' (the text version "Choose a new password:" tripped the password scan); tax notice link and consent emails put the URL in the button and add a greeting and long dates (13-07 checks its tests against these goldens); 'unsubscribed' added to the mail log statuses.
+- Open: List-Unsubscribe headers are rendered but mail.mjs does not pass headers through yet (13-03 or 13-04); co-investor confirmation's 'Open your portal' button: the caller passes no portalUrl when the co-investor has no portal login; owner's read at 13-10; counsel on the commercial classification.
+- Unblocked: 15-14 needs 13-03 too; 14-13 (after 13-01 and 13-11, while no plan edits emails.js; it waits for 15-14 per 15's roadmap line).
