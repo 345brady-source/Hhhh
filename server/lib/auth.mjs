@@ -10,7 +10,7 @@ import { createRequire } from 'node:module';
 import { readRaw, parseJson, send, header } from './http.mjs';
 import { id, sha256 } from './crypto.mjs';
 import { createAccounts } from './accounts.mjs';
-import { permissionsOf } from './roles.mjs';
+import { permissionsOf, allows, REFUSALS } from './roles.mjs';
 
 /** The two-step code module the pages use too (assets/js/totp.js), always with Node's own HMAC-SHA-1 here. */
 const TOTP = createRequire(import.meta.url)('../../assets/js/totp.js');
@@ -36,7 +36,10 @@ const SAY = {
   unauthorized: 'Not authorized',
   notFound: 'Not found',
   code: 'That code is not right. Check the time on your phone and try the newest code.',
-  fresh: 'Enter your password again to do this.'
+  fresh: 'Enter your password again to do this.',
+  codes: 'Too many wrong codes. Sign in again.',
+  console: 'Two-step sign-in is required for everyone who uses the console.',
+  firmRule: 'Your firm requires two-step sign-in.'
 };
 const wait = (n) => `Too many tries. Wait ${n} ${n === 1 ? 'second' : 'seconds'} and try again.`;
 
@@ -533,8 +536,9 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     const pend = p.twoStepPending;
     if (!pend || !pend.key || ms(pend.until) <= now()) return send(res, 400, { error: SAY.code, code: 'start' });
     const b32 = vault.open(pend.key, `person:${p.id}:twoStepPending`);
+    if (!/^[0-9]{6}$/.test(typedCode(b.code))) return send(res, 400, { error: SAY.code }); // not a guess: not counted
     const step = await TOTP.verify({ key: TOTP.base32Decode(b32), code: b.code, time: now(), hmac: hmacSha1 });
-    if (step === null) return send(res, 401, { error: SAY.code });
+    if (step === null) return wrongCode(res, s);
     const { codes, stored } = newRecovery();
     const t = iso(now());
     people.update(p.id, { twoStep: { key: seal(p.id, 'twoStep', b32), lastStep: step, at: t }, twoStepPending: null, recovery: stored });
@@ -550,11 +554,93 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     const s = caller(req, ['code']);
     const b = await body(req);
     const p = store.get('people', s.person.id);
-    const step = await appStep(p, b.code);
-    if (step === null || !acceptStep(p.id, step)) return send(res, 401, { error: SAY.code });
+    const typed = typedCode(b.code);
+    const recovery = /^[0-9]{6}$/.test(typed) ? '' : TOTP.normalRecovery(typed);
+    if (!/^[0-9]{6}$/.test(typed) && !recovery) return send(res, 400, { error: SAY.code }); // neither kind of code: not counted
+    let extra = {};
+    if (recovery) {
+      if (!useRecovery(p.id, recovery)) return wrongCode(res, s);
+      extra = { recoveryLeft: unusedCodes(store.get('people', p.id)) };
+    } else {
+      const step = await appStep(p, typed);
+      if (step === null || !acceptStep(p.id, step)) return wrongCode(res, s);
+    }
     sessions.end(s.session.id); // a new id after the code
     const { sid, rec } = sessions.issue(p, 'full', req, { authAt: s.session.authAt, mfaAt: iso(now()) });
-    return send(res, 200, { stage: rec.stage }, { 'Set-Cookie': sessions.cookie(sid) });
+    return send(res, 200, Object.assign({ stage: rec.stage }, extra), { 'Set-Cookie': sessions.cookie(sid) });
+  }
+
+  const typedCode = (code) => (typeof code === 'string' || typeof code === 'number' ? String(code).replace(/\s+/g, '') : '');
+  /** A wrong code of the right form counts on a half-done sign-in; the 5th ends it. */
+  function wrongCode(res, s) {
+    if (s.session.stage === 'full') return send(res, 401, { error: SAY.code });
+    const n = (Number(store.get('sessions', s.session.id).codeFails) || 0) + 1;
+    if (n >= 5) {
+      sessions.end(s.session.id);
+      return send(res, 401, { error: SAY.codes }, { 'Set-Cookie': sessions.clear() });
+    }
+    store.put('sessions', { id: s.session.id, codeFails: n });
+    return send(res, 401, { error: SAY.code });
+  }
+  /** Marks an unused recovery code used; false when none matches. Every stored hash is compared. */
+  function useRecovery(pid, normal) {
+    const p = store.get('people', pid);
+    if (!p || !p.twoStep || !Array.isArray(p.recovery)) return false;
+    const want = Buffer.from(sha256(normal), 'hex');
+    let hit = -1;
+    p.recovery.forEach((r, i) => {
+      const got = Buffer.from(String((r && r.hash) || ''), 'hex');
+      if (got.length === want.length && timingSafeEqual(got, want) && !r.used && hit < 0) hit = i;
+    });
+    if (hit < 0) return false;
+    people.update(pid, { recovery: p.recovery.map((r, i) => (i === hit ? Object.assign({}, r, { used: iso(now()) }) : r)) });
+    return true;
+  }
+
+  /** POST /v1/auth/recovery-codes { code }: ten new codes for a current app code; the old ten stop working. */
+  async function recoveryCodes(req, res) {
+    requireVault();
+    const s = caller(req);
+    const b = await body(req);
+    const p = store.get('people', s.person.id);
+    const typed = typedCode(b.code);
+    const step = /^[0-9]{6}$/.test(typed) ? await appStep(p, typed) : null;
+    if (step === null || !acceptStep(p.id, step)) return send(res, 401, { error: SAY.code });
+    const { codes, stored } = newRecovery();
+    people.update(p.id, { recovery: stored });
+    log({ workspace: p.workspace, person: p, action: 'Recovery codes replaced' });
+    return send(res, 200, { recoveryCodes: codes });
+  }
+
+  /** POST /v1/auth/two-step/off: investors only, with a fresh sign-in, and not while the firm requires it. */
+  async function twoStepOff(req, res) {
+    requireVault();
+    const s = caller(req);
+    await body(req);
+    const p = s.person;
+    if (p.kind !== 'investor') return send(res, 403, { error: SAY.console });
+    const w = workspaceOf(p.workspace);
+    if (w && w.investorTwoStep) return send(res, 403, { error: SAY.firmRule });
+    needFresh(s);
+    people.update(p.id, { twoStep: null, twoStepPending: null, recovery: [] });
+    sessions.endAll(p.id, s.session.id); // the person's other sign-ins end; this one stays
+    log({ workspace: p.workspace, person: p, action: 'Two-step sign-in turned off' });
+    return send(res, 200, { ok: true });
+  }
+
+  /** POST /v1/auth/firm/investor-two-step { required }: the Owner's rule for the firm's investors (C-03, off by default). */
+  async function investorRule(req, res) {
+    requireVault();
+    const s = caller(req);
+    if (s.person.kind !== 'team' || !allows(s.person.role, 'account')) return send(res, 403, { error: REFUSALS.account });
+    needFresh(s);
+    const b = await body(req);
+    if (typeof b.required !== 'boolean') return send(res, 400, { error: SAY.fields });
+    const w = workspaceOf(s.person.workspace);
+    if (!w) return send(res, 404, { error: SAY.notFound });
+    store.put('workspaces', { id: w.id, investorTwoStep: b.required });
+    log({ workspace: w.id, person: s.person, action: 'Investor two-step rule changed', detail: b.required ? 'on' : 'off' });
+    return send(res, 200, { required: b.required });
   }
 
   const ROUTES = {
@@ -565,8 +651,13 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
     '/v1/auth/me': ['GET', me],
     '/v1/auth/two-step/start': ['POST', twoStepStart],
     '/v1/auth/two-step/confirm': ['POST', twoStepConfirm],
-    '/v1/auth/code': ['POST', codeRoute]
+    '/v1/auth/code': ['POST', codeRoute],
+    '/v1/auth/recovery-codes': ['POST', recoveryCodes],
+    '/v1/auth/two-step/off': ['POST', twoStepOff],
+    '/v1/auth/firm/investor-two-step': ['POST', investorRule]
   };
+  /** The routes a half-done sign-in (or none) may call; every other /v1/auth/ path needs a full session first (Pitfall 1). */
+  const OPEN = new Set(['/v1/auth/status', '/v1/auth/signup', '/v1/auth/signin', '/v1/auth/signout', '/v1/auth/me', '/v1/auth/two-step/start', '/v1/auth/two-step/confirm', '/v1/auth/code']);
   /** The /v1/auth/ routes and POST /v1/invite/login; false for any other path. */
   async function handle(req, res, path) {
     if (req.method === 'POST' && path === '/v1/invite/login') {
@@ -579,6 +670,7 @@ export function createAuth({ env = {}, store, vault, now = () => Date.now(), cli
       if (vault && vault.allowed) standInHash().catch(() => (standIn = null)); // made before the first sign-in, so its first check costs one run too
       // Every write here must come from the portal's own page as JSON, cookie or not: no sign-in or sign-up from another site.
       if (WRITE.includes(req.method) && !sameSiteWrite(req)) throw fail(403, SAY.refused);
+      if (!OPEN.has(path)) caller(req); // deny by default: nothing else answers a half-done sign-in
       const r = Object.prototype.hasOwnProperty.call(ROUTES, path) ? ROUTES[path] : null;
       if (!r) send(res, 404, { error: SAY.notFound });
       else if (req.method !== r[0]) send(res, 405, { error: `Use ${r[0]}` });
