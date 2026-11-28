@@ -112,7 +112,6 @@ body.mode-portal { background: var(--page); }
 .hm-main, .hm-side { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
 .hm-grid .hm-main > *, .hm-grid .hm-side > * { margin-top: 0; margin-bottom: 0; }
 /* The lead object on Home, the portfolio panel, is lifted a little. No long cast: the next panel sits a gutter below. */
-.hm-main > .sec:has(.pf-bars) { box-shadow: var(--edge-light), var(--shadow-lift); }
 
 .kpis { margin: var(--space-lg) 0 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-md) var(--space-lg); }
 .kpis > div { display: flex; flex-direction: column; gap: var(--space-2xs); min-width: 0; }

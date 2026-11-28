@@ -354,17 +354,24 @@ const parts = {
           return out;
         });
         check(`${page}: a link is steel, underlined, with a 0.2em underline offset`, link.color === link.steel && /underline/.test(link.line) && Math.abs(parseFloat(link.offset) - 0.2 * parseFloat(link.size)) < 0.05, link);
-        let focus = null;
-        for (let i = 0; i < 120 && !focus; i++) {
+        // Tab through the page: the first button keyboard focus reaches (or, on a screen with no button, the first control)
+        // must show the base ring; every other control reached is listed for the plans that restyle it
+        const reached = [];
+        const hasButton = await fr.evaluate(() => Array.from(document.querySelectorAll('button')).some((b) => b.offsetParent && b.tabIndex >= 0 && !b.disabled));
+        for (let i = 0; i < 60; i++) {
           await A.page.keyboard.press('Tab');
-          focus = await fr.evaluate(() => {
+          const r = await fr.evaluate(() => {
             const el = document.activeElement;
-            if (!el || el.tagName !== 'BUTTON' || !el.matches(':focus-visible')) return null;
+            if (!el || el === document.body || !el.matches(':focus-visible')) return null;
             const s = getComputedStyle(el);
-            return { el: el.className || el.tagName, style: s.outlineStyle, width: s.outlineWidth, offset: s.outlineOffset };
+            return { tag: el.tagName, el: `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : ''}`, style: s.outlineStyle, width: s.outlineWidth, offset: s.outlineOffset };
           });
+          if (r) reached.push(r);
+          if (r && (!hasButton || r.tag === 'BUTTON')) break;
         }
-        check(`${page}: a keyboard-focused button shows a 2px outline offset 2px`, !!focus && focus.style !== 'none' && focus.width === '2px' && focus.offset === '2px', focus);
+        const focus = reached.find((r) => (hasButton ? r.tag === 'BUTTON' : true)) || null;
+        reached.filter((r) => r !== focus && !(r.style !== 'none' && r.width === '2px' && r.offset === '2px')).slice(0, 5).forEach((r) => console.log(`NOTE ${page}: ${r.el} keeps its own focus ring (${r.style} ${r.width}, offset ${r.offset}): its stylesheet is a later plan's`));
+        check(`${page}: a keyboard-focused ${hasButton ? 'button' : 'control (the screen has no button)'} shows a 2px outline offset 2px`, !!focus && focus.style !== 'none' && focus.width === '2px' && focus.offset === '2px', focus);
         const icon = await fr.evaluate(() => {
           const el = document.querySelector('svg.i');
           return el ? getComputedStyle(el).strokeWidth : null;
