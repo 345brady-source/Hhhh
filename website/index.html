@@ -1,0 +1,238 @@
+<title>Carrow &amp; Vale</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brygada+1918:ital,wght@0,400;0,500;0,600;1,400&family=Ysabeau+Office:wght@400;500;600&display=swap">
+<style>
+/* Layout: a private-bank house style. Navy grounds for the masthead and closing band, ivory reading pages, a single brown-gold accent used for rules, numerals and the one call to action. */
+:root {
+  --navy: #13213A;
+  --navy-2: #1C2E4D;
+  --gold: #9C7A4A;
+  --gold-2: #B8935E;
+  --ivory: #F7F4EE;
+  --paper: #FFFFFF;
+  --ink: #1A2233;
+  --ink-2: #4A5468;
+  --rule: #DDD5C7;
+  --on-navy: #EFE9DE;
+  --on-navy-2: #B9C0CD;
+  --display: "Brygada 1918", Georgia, "Times New Roman", serif;
+  --body: "Ysabeau Office", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { overflow-x: clip; }
+body { margin: 0; background: var(--ivory); color: var(--ink); font: 400 17px/1.6 var(--body); }
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 3px; }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); font-weight: 500; text-wrap: balance; margin: 0; color: var(--ink); }
+h2 { font-size: clamp(30px, 4vw, 42px); line-height: 1.15; }
+h3 { font-size: 22px; line-height: 1.25; }
+p { margin: 0; }
+.label { font: 600 13px/1.2 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.lead { font-size: 19px; color: var(--ink-2); max-width: 62ch; }
+.btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 2px; font: 600 15px/1 var(--body); letter-spacing: .04em; text-decoration: none; border: 1px solid transparent; transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+.btn-gold { background: var(--gold); color: #fff; }
+.btn-gold:hover { background: #866740; }
+.btn-line { border-color: currentColor; color: var(--on-navy); }
+.btn-line:hover { background: rgba(255,255,255,.08); }
+
+/* masthead */
+.mast { background: var(--navy); color: var(--on-navy); margin-top: calc(-1 * env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 22px; border-bottom: 1px solid rgba(239,233,222,.14); }
+.brand { display: flex; flex-direction: column; text-decoration: none; line-height: 1; }
+.brand b { font: 500 22px/1 var(--display); letter-spacing: .18em; }
+.brand b i { font-style: normal; color: var(--gold-2); padding: 0 .2em; }
+.brand span { font: 500 11px/1 var(--body); letter-spacing: .32em; color: var(--on-navy-2); margin-top: 7px; }
+.nav { display: flex; gap: 28px; font: 500 15px/1 var(--body); }
+.nav a { text-decoration: none; color: var(--on-navy-2); }
+.nav a:hover { color: var(--on-navy); }
+.hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: center; padding-block: 72px 88px; }
+.hero h1 { color: var(--on-navy); font-size: clamp(38px, 5.2vw, 60px); line-height: 1.06; }
+.hero h1 em { color: var(--gold-2); font-style: italic; }
+.hero p { color: var(--on-navy-2); font-size: 19px; margin-top: 22px; max-width: 46ch; }
+.hero .acts { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+.hero figure { margin: 0; border: 1px solid rgba(239,233,222,.18); border-radius: 6px; overflow: hidden; box-shadow: 0 30px 60px -20px rgba(0,0,0,.55); }
+.creds { display: flex; flex-wrap: wrap; gap: 14px 40px; padding-block: 22px; border-top: 1px solid rgba(239,233,222,.14); color: var(--on-navy-2); font-size: 15px; }
+.creds b { color: var(--on-navy); font-weight: 600; }
+
+section { padding-block: 96px; }
+.head { display: grid; gap: 14px; margin-bottom: 48px; max-width: 760px; }
+
+/* services */
+.svc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--rule); }
+.svc article { padding: 32px 28px 36px 0; border-bottom: 1px solid var(--rule); }
+.svc article:not(:nth-child(3n)) { border-right: 1px solid var(--rule); margin-right: 0; }
+.svc article:nth-child(3n+2), .svc article:nth-child(3n) { padding-left: 28px; }
+.svc .n { font: 400 15px/1 var(--display); color: var(--gold); margin-bottom: 18px; display: block; }
+.svc h3 { margin-bottom: 10px; }
+.svc p { color: var(--ink-2); font-size: 16px; }
+.svc ul { margin: 14px 0 0; padding: 0; list-style: none; font-size: 15px; color: var(--ink-2); }
+.svc li { padding: 5px 0; border-top: 1px dotted var(--rule); }
+.more { margin-top: 32px; font-size: 16px; }
+.more a { color: var(--gold); text-underline-offset: 4px; }
+
+/* portal */
+.portal { background: var(--paper); border-block: 1px solid var(--rule); }
+.price { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 56px; align-items: start; }
+.card { border: 1px solid var(--rule); border-top: 3px solid var(--gold); background: var(--ivory); padding: 34px; border-radius: 2px; }
+.card .amt { font: 500 64px/1 var(--display); color: var(--navy); margin: 18px 0 6px; font-variant-numeric: lining-nums tabular-nums; }
+.card .amt small { font: 400 18px/1 var(--body); color: var(--ink-2); margin-left: 6px; }
+.card h3 { font-size: 26px; }
+.card p { color: var(--ink-2); margin-top: 12px; }
+.card .btn { margin-top: 26px; }
+.feat { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 36px; }
+.feat div { padding: 16px 0; border-bottom: 1px solid var(--rule); }
+.feat b { display: block; font: 500 18px/1.3 var(--display); color: var(--ink); margin-bottom: 4px; }
+.feat span { font-size: 15px; color: var(--ink-2); }
+
+/* white label */
+.brands { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.brands figure { margin: 0; }
+.brands .shot { border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--paper); box-shadow: 0 18px 40px -24px rgba(19,33,58,.45); aspect-ratio: 1920 / 1350; }
+.brands .shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.brands figcaption { margin-top: 14px; font-size: 15px; color: var(--ink-2); }
+.brands figcaption b { display: block; font: 500 18px/1.3 var(--display); color: var(--ink); }
+.console { margin-top: 64px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 48px; align-items: center; }
+.console figure { margin: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; box-shadow: 0 18px 40px -24px rgba(19,33,58,.45); }
+.console ul { margin: 18px 0 0; padding: 0; list-style: none; color: var(--ink-2); }
+.console li { padding: 8px 0; border-top: 1px solid var(--rule); }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; counter-reset: s; }
+.steps div { border-top: 2px solid var(--gold); padding-top: 18px; }
+.steps i { font: 400 34px/1 var(--display); color: var(--gold); font-style: normal; display: block; margin-bottom: 12px; }
+.steps p { color: var(--ink-2); font-size: 16px; margin-top: 8px; }
+
+/* close */
+.close { background: var(--navy); color: var(--on-navy); }
+.close h2 { color: var(--on-navy); }
+.close .row { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-end; justify-content: space-between; }
+.close p { color: var(--on-navy-2); margin-top: 14px; max-width: 52ch; }
+.close .contact { display: grid; gap: 6px; font-size: 18px; }
+.close .contact span { user-select: all; }
+footer { background: var(--navy); color: var(--on-navy-2); font-size: 14px; border-top: 1px solid rgba(239,233,222,.14); }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-block: 26px calc(26px + env(safe-area-inset-bottom, 0px)); }
+
+@media (max-width: 960px) {
+  .hero, .price, .console { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .svc { grid-template-columns: minmax(0, 1fr); }
+  .svc article { padding: 28px 0 !important; border-right: 0 !important; }
+  .brands { grid-template-columns: minmax(0, 1fr); }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nav { display: none; }
+}
+@media (max-width: 560px) {
+  .feat, .steps { grid-template-columns: minmax(0, 1fr); }
+  section { padding-block: 64px; }
+  .hero { padding-block: 48px 56px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href="#top" aria-label="Carrow and Vale Shareholder Advisors"><b>CARROW<i>&amp;</i>VALE</b><span>SHAREHOLDER ADVISORS</span></a>
+      <nav class="nav" aria-label="Site"><a href="#services">Services</a><a href="#portal">The Portal</a><a href="#brands">Your Brand</a><a href="#process">How It Works</a><a href="#contact">Contact</a></nav>
+    </div>
+    <div class="hero" id="top">
+      <div>
+        <p class="label">Investor relations &amp; securities distribution</p>
+        <h1>The investor relations function, <em>run by licensed professionals.</em></h1>
+        <p>Carrow &amp; Vale is a financial services firm. Series&nbsp;7 and Series&nbsp;63 licensed securities agents, investor support answered in your firm's name, reporting your investors rely on, and a portal built to carry your brand.</p>
+        <div class="acts"><a class="btn btn-gold" href="#contact">Book a Consultation</a><a class="btn btn-line" href="#portal">See the Portal</a></div>
+      </div>
+      <figure><img src="img/brand-harbor.jpg" alt="An investor's home page in the portal, branded for Harbor Ridge Partners, with a photo of the sponsor's residential project"></figure>
+    </div>
+    <div class="creds"><span><b>Series 7 &amp; 63</b> licensed securities agents</span><span><b>Offering creation</b> through placement</span><span><b>Monthly &amp; quarterly</b> investor reporting</span><span><b>One platform</b> for your firm and your investors</span></div>
+  </div>
+</header>
+
+<main>
+  <section id="services">
+    <div class="wrap">
+      <div class="head"><p class="label">Services</p><h2>A complete investor relations function, delivered under your brand.</h2><p class="lead">Engage Carrow &amp; Vale for a single service or the full function. Every engagement is documented and reported back to your team.</p></div>
+      <div class="svc">
+        <article><span class="n">I</span><h3>Securities Creation &amp; Distribution</h3><p>Series 7 and Series 63 licensed securities agents who take an offering from creation to placement with your investors.</p><ul><li>Offering presentations to existing investors</li><li>Follow-on and new-offering placement</li><li>Investment-related questions</li><li>Data room and investor CRM management</li></ul></article>
+        <article><span class="n">II</span><h3>Investor Portal &amp; Reporting</h3><p>A secure portal carrying your brand, paired with reporting your investors can rely on.</p><ul><li>Monthly investor updates</li><li>Quarterly reports and account statements</li><li>Tax documents: K-1, grantor trust letter or 1099-INT</li><li>Distribution processing and NACHA files</li></ul></article>
+        <article><span class="n">III</span><h3>Investor Support</h3><p>Email and phone support answered in your firm's name, with every interaction logged for your records.</p><ul><li>Branded email support</li><li>Dedicated phone line</li><li>Tax-season support</li></ul></article>
+        <article><span class="n">IV</span><h3>Onboarding &amp; Compliance</h3><p>A smooth, documented path from commitment to funded investor.</p><ul><li>Guided online activation</li><li>KYC and AML verification</li><li>Accredited investor verification</li><li>Investor records and data management</li></ul></article>
+        <article><span class="n">V</span><h3>Investor Services</h3><p>The recurring administrative work that keeps investors informed and accounts accurate.</p><ul><li>Capital call notices and follow-up</li><li>Distribution notices</li><li>Transfer and redemption processing</li><li>Investor satisfaction surveys</li></ul></article>
+        <article><span class="n">VI</span><h3>Communications &amp; Marketing</h3><p>Investor-ready materials and communications, produced in your brand.</p><ul><li>Pitch decks, one-pagers and fund updates</li><li>Investor notices and email campaigns</li><li>Annual meetings, webinars and investor events</li><li>Press releases and media relations</li></ul></article>
+      </div>
+      <p class="more">See every service in detail at <a href="https://www.carrowvale.com/services.html">carrowvale.com</a>.</p>
+    </div>
+  </section>
+
+  <section class="portal" id="portal">
+    <div class="wrap">
+      <div class="head"><p class="label">The Portal</p><h2>A complete do-it-yourself fund portal, built by people who run investor relations.</h2><p class="lead">The same platform our team uses for clients, available to run yourself. Raise, onboard, sign, report, distribute and file from one place.</p></div>
+      <div class="price">
+        <div class="card">
+          <p class="label">DIY Fund Portal</p>
+          <p class="amt">$200<small>per month</small></p>
+          <h3>Everything in one portal.</h3>
+          <p>Your logo, colors and web address. Your investors, your offerings and your team. Add Carrow &amp; Vale's licensed agents and support whenever you need them.</p>
+          <a class="btn btn-gold" href="#contact">Start with the Portal</a>
+        </div>
+        <div class="feat">
+          <div><b>Investor onboarding</b><span>One invitation link through every step: profile, W-9 or W-8, verification and bank details.</span></div>
+          <div><b>Built-in e-signature</b><span>Subscription documents signed inside onboarding, with a sealed signed record. No envelope fees.</span></div>
+          <div><b>KYC, AML &amp; accreditation</b><span>Connect the verification providers you choose, one or several per check.</span></div>
+          <div><b>Capital calls &amp; distributions</b><span>Pro-rata allocation, notices, and NACHA payment files for your bank, at no per-payment cost.</span></div>
+          <div><b>Fund accounting</b><span>Capital accounts, waterfalls, share classes and a CPA year-end package.</span></div>
+          <div><b>Tax documents</b><span>K-1 delivery, 1099s and withholding, with electronic delivery consent.</span></div>
+          <div><b>Report builder</b><span>Quarterly letters and statements as PDF and Excel, in your brand.</span></div>
+          <div><b>Form D &amp; blue sky</b><span>Filing preparation and state notice tracking for each offering.</span></div>
+          <div><b>Email from your domain</b><span>Notices, invitations and reports sent from your own address, with a sent log.</span></div>
+          <div><b>Team roles &amp; security</b><span>Admins, team members and accountants, with two-step sign-in.</span></div>
+          <div><b>Ask me anything</b><span>A help assistant on every page for your team and your investors.</span></div>
+          <div><b>Mobile ready</b><span>Every screen works on a phone, for you and for your investors.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="brands">
+    <div class="wrap">
+      <div class="head"><p class="label">Your Brand</p><h2>Your investors see your firm. Your projects. Your name.</h2><p class="lead">Every portal carries the sponsor's logo, colors, typeface and photographs of its own projects. The same platform, three example firms, shown with sample data.</p></div>
+      <div class="brands">
+        <figure><div class="shot"><img src="img/brand-kestrel.jpg" alt="Investor home page branded for Kestrel Bay Capital, with a photo of an apartment development" loading="lazy"></div><figcaption><b>Kestrel Bay Capital</b>Coastal multifamily and private credit</figcaption></figure>
+        <figure><div class="shot"><img src="img/brand-harbor.jpg" alt="Investor home page branded for Harbor Ridge Partners, with photos of luxury residences" loading="lazy"></div><figcaption><b>Harbor Ridge Partners</b>Luxury single-family residences</figcaption></figure>
+        <figure><div class="shot"><img src="img/brand-alder.jpg" alt="Investor home page branded for Alder &amp; Finch Real Estate, with a photo of a mid-rise apartment building" loading="lazy"></div><figcaption><b>Alder &amp; Finch Real Estate</b>Mid-rise apartment repositioning</figcaption></figure>
+      </div>
+      <div class="console">
+        <div><p class="label">Sponsor Console</p><h2 style="margin-top:14px">Your team runs the fund from one screen.</h2>
+          <ul><li>Offerings, investors and commitments</li><li>Capital calls, distributions and payment files</li><li>Documents, notices and investor requests</li><li>Accounting, audit schedules and filings</li></ul></div>
+        <figure><img src="img/console.jpg" alt="The sponsor console overview with setup steps, fund figures and a funds ledger" loading="lazy"></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="portal" id="process">
+    <div class="wrap">
+      <div class="head"><p class="label">How It Works</p><h2>Up and running in four steps.</h2></div>
+      <div class="steps">
+        <div><i>1</i><h3>Discovery</h3><p>We learn your fund, your investors and how you communicate with them today.</p></div>
+        <div><i>2</i><h3>Brand &amp; Setup</h3><p>Your portal is set up with your logo, colors and domain, plus your support lines.</p></div>
+        <div><i>3</i><h3>Investor Onboarding</h3><p>Your investors are invited and helped through activation, one by one.</p></div>
+        <div><i>4</i><h3>Ongoing Reporting</h3><p>Monthly and quarterly reports go out on schedule, and our team answers every question.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="close" id="contact">
+    <div class="wrap">
+      <div class="row">
+        <div><p class="label">Contact</p><h2 style="margin-top:14px">Give your investors a better experience.</h2><p>Tell us about your firm and we will walk you through the portal, reporting, support and distribution options that fit.</p></div>
+        <div class="contact"><span>(917) 837-7427</span><span>info@carrowvale.com</span><a class="btn btn-gold" href="https://www.carrowvale.com/contact.html" style="margin-top:12px">Book a Consultation</a></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span>© 2026 Carrow &amp; Vale Shareholder Advisors.</span><span>Portal screens shown with sample data and fictional firms.</span></div></footer>
