@@ -85,6 +85,7 @@
     'console-audit': row('act', 'act', 'read', 'read'),
     'console-aml': row('act', 'read', 'read', 'hidden'),
     'console-filings': row('act', 'act', 'read', 'read'),
+    'console-emails': row('act', 'act', 'read', 'hidden'), // Emails (plan 13-09): the previews and the sent log, which names investors
     'console-security': row('act', 'act', 'act', 'act') // Sign-in and security: one's own password, two-step and sessions
   });
 
