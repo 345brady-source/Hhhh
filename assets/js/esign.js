@@ -26,12 +26,11 @@
   const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
   const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   // Loaded only when a name or value has characters the standard PDF fonts cannot print (Ł, ř, ễ …): the
-  // library that embeds a font file, and a font with a wide character set in two weights.
+  // library that embeds a font file.
   const FONTKIT_URL = 'https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js';
-  const UNICODE_FONT = { regular: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf', bold: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf' };
-  // The same two font files shipped with the portal as scripts (assets/vendor/textfont), loaded only when needed: a page
-  // that may load scripts but not fetch files (the published preview's sandboxed frame) still gets them. The address above
-  // is used only when the shipped copy cannot be loaded.
+  // The font with a wide character set, in two weights, shipped with the portal as scripts (assets/vendor/textfont) and
+  // loaded only when needed: a page that may load scripts but not fetch files (the published preview's sandboxed frame)
+  // still gets it. It has no outside address: when the shipped copy cannot be loaded, the value is drawn as a picture.
   const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
   const besideMe = (rel, fallback) => {
     try {
@@ -411,7 +410,7 @@
     return u8;
   }
   const fontFiles = {};
-  /** The Unicode font file of one weight ('regular' or 'bold') as an ArrayBuffer: the shipped copy, else its address. */
+  /** The Unicode font file of one weight ('regular' or 'bold') as an ArrayBuffer, from the copy shipped with the portal. */
   function fontFile(weight) {
     if (!fontFiles[weight])
       fontFiles[weight] = (async () => {
@@ -419,12 +418,10 @@
         try {
           await loadOnce(FONT_DATA[weight], have);
         } catch (e) {
-          /* the shipped copy did not load; the font's address below */
+          /* the shipped copy did not load: rejected below */
         }
         if (have()) return fromBase64(NS.fontData[weight]).buffer;
-        const r = await fetch(UNICODE_FONT[weight]);
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.arrayBuffer();
+        throw new Error('The font file could not be loaded.');
       })().catch((e) => {
         delete fontFiles[weight];
         throw e;

@@ -8,6 +8,8 @@
 (function (global) {
   'use strict';
   const NS = (global.CVPortal = global.CVPortal || {});
+  // This script's own address, read once at load: the font stylesheets are found beside it (no document in a test vm).
+  const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
 
   /* ---------- Color math: sRGB <-> OKLab / OKLCH, WCAG contrast ---------- */
 
@@ -120,13 +122,15 @@
   /* ---------- Type pairs and corner styles a client can choose ---------- */
 
   // `weight` and `tracking` are how each display face is set in headings (the Refract theme sets its own light and tight).
+  // `css` names the pair's stylesheets in assets/fonts (one per family): the faces come with the portal, from its own
+  // address, and only the chosen pair's stylesheets are linked.
   const FONTS = {
     funnel: {
       label: 'Funnel',
       note: 'Light, calm',
       display: "'Funnel Display', ui-sans-serif, system-ui, sans-serif",
       body: "'Funnel Sans', ui-sans-serif, system-ui, sans-serif",
-      href: 'https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500&family=Funnel+Sans:wght@400;500&display=swap',
+      css: ['funnel-display', 'funnel-sans'],
       weight: 400,
       tracking: '-0.032em'
     },
@@ -135,21 +139,21 @@
       note: 'Clean, neutral',
       display: "'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif",
       body: "'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      href: 'https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap'
+      css: ['hanken-grotesk']
     },
     serif: {
       label: 'Source Serif & Sans',
       note: 'Traditional, institutional',
       display: "'Source Serif 4', Georgia, 'Times New Roman', serif",
       body: "'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      href: 'https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Source+Sans+3:wght@400;500;600;700&display=swap'
+      css: ['source-serif-4', 'source-sans-3']
     },
     plex: {
       label: 'IBM Plex Sans',
       note: 'Technical, precise',
       display: "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
       body: "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap'
+      css: ['ibm-plex-sans']
     },
     // Public Sans keeps the Franklin look and, unlike Libre Franklin, lines its figures up in columns.
     franklin: {
@@ -157,14 +161,14 @@
       note: 'Sturdy, official',
       display: "'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
       body: "'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      href: 'https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap'
+      css: ['public-sans']
     },
     manrope: {
       label: 'Manrope',
       note: 'Modern, geometric',
       display: "'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif",
       body: "'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap'
+      css: ['manrope']
     }
   };
   const RADII = {
@@ -452,17 +456,34 @@
   const block = (o) => Object.keys(o).map((k) => `--${k}:${o[k]};`).join('');
   let loadedFont = '';
 
-  function loadFont(href) {
-    if (!href || href === loadedFont) return;
-    loadedFont = href;
-    let link = document.getElementById('cv-tenant-font');
-    if (!link) {
-      link = document.createElement('link');
-      link.id = 'cv-tenant-font';
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
+  /** The address of a family stylesheet in assets/fonts, beside this script's own address (as the page has it). */
+  function fontSheet(stem) {
+    const rel = `../fonts/${stem}.css`;
+    try {
+      return HERE ? new URL(rel, HERE).href : `assets/fonts/${stem}.css`;
+    } catch (e) {
+      return `assets/fonts/${stem}.css`;
     }
-    link.href = href;
+  }
+  /** Keeps one stylesheet link per family of the chosen pair (marked data-cv-tenant-font); the same choice twice does nothing. */
+  function loadFont(list) {
+    if (typeof document === 'undefined' || !Array.isArray(list) || !list.length) return;
+    const key = list.join(' ');
+    if (key === loadedFont) return;
+    loadedFont = key;
+    const want = list.map(fontSheet);
+    const have = Array.from(document.querySelectorAll('link[data-cv-tenant-font]'));
+    have.forEach((l) => {
+      if (want.indexOf(l.href) < 0) l.remove();
+    });
+    want.forEach((href) => {
+      if (have.some((l) => l.isConnected && l.href === href)) return;
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.setAttribute('data-cv-tenant-font', '');
+      link.href = href;
+      document.head.appendChild(link);
+    });
   }
 
   function setFavicon(t, tk) {
@@ -500,7 +521,7 @@
       `:root{${block(tk.light)}${block(tk.paper)}${base}}\n` +
       `@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${block(tk.dark)}color-scheme:dark}}\n` +
       `:root[data-theme="dark"]{${block(tk.dark)}color-scheme:dark}`;
-    loadFont(f.href);
+    loadFont(f.css);
     try {
       setFavicon(t, tk);
     } catch (e) {

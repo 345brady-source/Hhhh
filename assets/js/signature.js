@@ -6,7 +6,7 @@
  *
  * esign.js keeps the signing itself. It opens this dialog from a signature or initials field (open) and, when the
  * signer selects Adopt and sign, asks for what they made (result). Nothing here leaves the browser: an image is read,
- * cleaned and trimmed on this device. The handwriting faces are fetched the first time the dialog opens, not before.
+ * cleaned and trimmed on this device. The handwriting faces come with the portal (assets/fonts) and are loaded the first time the dialog opens, not before.
  */
 (function (NS) {
   'use strict';
@@ -14,7 +14,8 @@
   const { h, icon } = U;
 
   /* ---------- Styles, inks and sizes ---------- */
-  // Each style's face is a token in esign.css (--es-hand-…): the first family named there is the one fetched.
+  // Each style's face is a token in esign.css (--es-hand-…): the first family named there is the one loaded, from its
+  // stylesheet in assets/fonts (the face's name in lower case, words joined by '-').
   // `optical` evens out how large the faces look at one size (a formal script's small letters are tiny beside a marker's).
   const STYLES = [
     { id: 'formal', label: 'Formal', token: '--es-hand-formal', weight: 400, optical: 1.04 },
@@ -38,7 +39,8 @@
   // The largest picture kept for each: about 240 dots to the inch on a signature line and an initials box of ordinary
   // size, which prints sharply and keeps a signed agreement's record small.
   const OUT = { signature: { w: 600, h: 200 }, initials: { w: 240, h: 150 } };
-  const FACES_URL = 'https://fonts.googleapis.com/css2';
+  // This script's own address, read once at load: the faces' stylesheets are found beside it.
+  const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
   const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
   // The pen: width in CSS pixels (thinner when the hand moves fast, or by pressure with a stylus), how closely the line
   // follows the pointer (1 = exactly, less = steadier) and the shortest move worth keeping.
@@ -67,36 +69,64 @@
     return c;
   };
 
-  /* ---------- The handwriting faces, fetched when the dialog first opens ---------- */
-  let sheet = null;
-  let failedAt = 0;
+  /* ---------- The handwriting faces, shipped with the portal and loaded when the dialog first opens ---------- */
+  const sheets = {};
+  const failedAt = {};
   const faceIn = {};
   const facesIn = () => STYLES.every((s) => faceIn[s.id]);
-  function loadSheet() {
-    if (sheet) return sheet;
+  /** The address of a style's stylesheet in assets/fonts (Pinyon Script -> pinyon-script.css), beside this script. */
+  function sheetOf(s) {
+    const slug = faceOf(s)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const rel = `../fonts/${slug}.css`;
+    try {
+      return HERE ? new URL(rel, HERE).href : `assets/fonts/${slug}.css`;
+    } catch (e) {
+      return `assets/fonts/${slug}.css`;
+    }
+  }
+  /** Resolves true once the style's stylesheet is in the page (one the page links already is used as it is). */
+  function loadSheet(s) {
+    if (sheets[s.id]) return sheets[s.id];
     // After a failure the request is not made again for a little while (every letter typed asks for the faces).
-    if (Date.now() - failedAt < 15000) return Promise.resolve(false);
-    sheet = new Promise((resolve) => {
+    if (Date.now() - (failedAt[s.id] || 0) < 15000) return Promise.resolve(false);
+    const href = sheetOf(s);
+    sheets[s.id] = new Promise((resolve) => {
+      const linked = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).find((l) => l.href === href);
+      if (linked) {
+        let ready = false;
+        try {
+          ready = !!(linked.sheet && linked.sheet.cssRules);
+        } catch (e) {
+          ready = !!linked.sheet;
+        }
+        if (ready) return resolve(true);
+        linked.addEventListener('load', () => resolve(true), { once: true });
+        linked.addEventListener('error', () => resolve(false), { once: true });
+        return;
+      }
       const link = document.createElement('link');
-      link.id = 'sg-faces';
+      link.id = `sg-face-${s.id}`;
       link.rel = 'stylesheet';
-      link.href = `${FACES_URL}?${STYLES.map((s) => `family=${encodeURIComponent(faceOf(s)).replace(/%20/g, '+')}${s.weight === 400 ? '' : `:wght@${s.weight}`}`).join('&')}&display=swap`;
+      link.href = href;
       link.onload = () => resolve(true);
-      // Offline, or the request was blocked: the styles fall back to the device's own script faces, and a later
-      // opening of the dialog tries again.
+      // The file could not be loaded: the style falls back to the device's own script faces, and a later opening of
+      // the dialog tries again.
       link.onerror = () => {
         link.remove();
-        sheet = null;
-        failedAt = Date.now();
+        delete sheets[s.id];
+        failedAt[s.id] = Date.now();
         resolve(false);
       };
       document.head.appendChild(link);
     });
-    return sheet;
+    return sheets[s.id];
   }
   /** Resolves true once the style's face is in, with every part of it that `text` needs (accented letters come apart). */
   function loadFace(s, text) {
-    return loadSheet().then((ok) => {
+    return loadSheet(s).then((ok) => {
       if (!ok || !document.fonts || !document.fonts.load) return false;
       return document.fonts.load(`${s.weight} 48px "${faceOf(s)}"`, `${text || ''}A`).then(
         (got) => {

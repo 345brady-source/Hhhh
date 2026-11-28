@@ -3,7 +3,7 @@
 
 Usage (repo root): python3 .planning/tools/preview/build.py <out-dir> [reset-key]
 - Rewrites the preview page's stylesheet and script lists from diy.html, in diy.html's order, keeping the preview's own
-  lines (theme, fonts, one-time reset, edition) and putting help-data.js and help-preview.js right before help.js.
+  lines (theme, one-time reset, edition) and putting help-data.js and help-preview.js right before help.js.
 - Copies every tracked file under assets/ that has an extension (the artifact host refuses files without one), plus the
   two preview files, into <out-dir>, and writes <out-dir>/files.txt (published path per line).
 - Bumps the page's one-time reset key when one is given.
