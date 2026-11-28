@@ -100,7 +100,25 @@ const DESKTOP_EXPECTED = [
 ];
 /** The phase 18 entry's verdict on one screen: { ok, why } (why: present, words, reachable or works, with the detail). */
 function overhaul18(ctx) {
-  return { ok: false, why: 'not written yet' };
+  const S18 = L18().S18;
+  if (!ctx.base || !ctx.now) return { ok: false, why: `present: no screen record ${ctx.base ? 'on this tree' : 'on the base tree'}` };
+  // present: every control of the base record (tag, data-action, href, accessible name) is in this tree's record, or the
+  // difference is one screens18 rule's exact transform (words below then holds)
+  const key = (a) => [a.tag, a.action || '', a.href || '', a.name || ''].join('|');
+  const have = {};
+  ctx.now.content.actions.concat(ctx.now.frame.actions).forEach((a) => (have[key(a)] = (have[key(a)] || 0) + 1));
+  const words = S18.compare(ctx.base, ctx.now);
+  const gone = [];
+  ctx.base.content.actions.concat(ctx.base.frame.actions).forEach((a) => {
+    if (have[key(a)]) have[key(a)]--;
+    else gone.push(a);
+  });
+  if (gone.length && !words.ok) return { ok: false, why: `present: ${gone.length} control(s) of the base screen missing, first ${gone[0].tag} "${gone[0].name || ''}"${gone[0].action ? ` (data-action ${gone[0].action})` : ''}` };
+  if (!words.ok) return { ok: false, why: `words: ${S18.line('', '', words).replace(/^FAIL\s+/, '')}` };
+  const out = ctx.reach.filter((r) => !r.ok);
+  if (out.length) return { ok: false, why: `reachable: ${out.length} control(s) not reachable, first ${out[0].name} (on screen ${out[0].on}, hit ${out[0].hit})` };
+  if (ctx.failed) return { ok: false, why: `works: the part has ${ctx.failed} failed check(s)` };
+  return { ok: true, why: '' };
 }
 /** The signing bar grown by its hint's extra line: every change is inside the bar's box, or a move straight down by one shared distance. */
 function hintLine(gone, added) {
