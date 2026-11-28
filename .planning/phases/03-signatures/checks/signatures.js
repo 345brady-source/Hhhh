@@ -4,16 +4,21 @@
 // adopting once, a signature kept in the form used before this change, and the dialog on a phone.
 //
 // Run:  python3 -m http.server 8791   (from the repository root; or set SIGN_PORT)   then   node signatures.js
-// The Phase 4 helpers serve the PDF libraries from a scratch vendor folder and answer web-font requests from a local
-// cache (empty when the font service cannot be reached), so nothing here depends on what a letter looks like: the
-// assertions are on computed font families, on the pixels of the pictures and on the strokes themselves.
+// The Phase 4 helpers serve the PDF libraries from a scratch vendor folder; the handwriting faces come with the portal
+// (assets/fonts, quick own-fonts) and any outside request is refused. Nothing here depends on what a letter looks like:
+// the assertions are on computed font families, on the pixels of the pictures and on the strokes themselves.
 const path = require('path');
 const F = require('../../04-signing-inside-onboarding/checks/lib.js');
 const { check, done } = F.reporter();
 
 const INV = { name: 'Morgan Blake', email: 'morgan.blake@example.org' };
 const OTHER_BRAND = /Carrow|\bVale\b|Powered by|Google|DocuSign|SignNow|HelloSign|Adobe|Dropbox|PandaDoc|Pinyon|Delafield|Caveat|Dafoe/i;
-const FACES = /fonts\.googleapis\.com\/css2\?family=/;
+// The five handwriting-only stylesheets on the page's own origin (caveat.css is linked by the page itself at load).
+const FACES = /\/assets\/fonts\/(pinyon-script|mrs-saint-delafield|nothing-you-could-do|bad-script|mr-dafoe)\.css$/;
+// The six handwriting stylesheets and their files, refused in the no-file run.
+const HAND_FILES = /\/assets\/fonts\/((files\/)?(pinyon-script|mrs-saint-delafield|caveat|nothing-you-could-do|bad-script|mr-dafoe)[-.])/;
+const SLUGS = ['pinyon-script', 'mrs-saint-delafield', 'caveat', 'nothing-you-could-do', 'bad-script', 'mr-dafoe'];
+const HAND = [['Pinyon Script', 400], ['Mrs Saint Delafield', 400], ['Caveat', 500], ['Nothing You Could Do', 400], ['Bad Script', 400], ['Mr Dafoe', 400]];
 const shot = (p, name) => p.screenshot({ path: path.join(F.SHOTS, `sig-${name}.png`) });
 
 async function atSigning(browser, v, opts) {
@@ -24,11 +29,11 @@ async function atSigning(browser, v, opts) {
   A.faces = [];
   A.sent = [];
   p.on('request', (r) => {
-    if (FACES.test(r.url()) && /Pinyon/.test(r.url())) A.faces.push(r.url());
+    if (r.url().startsWith(F.ORIGIN + '/') && FACES.test(new URL(r.url()).pathname)) A.faces.push(r.url());
     if (r.method() !== 'GET') A.sent.push(`${r.method()} ${r.url()}`);
   });
-  // The handwriting faces cannot be reached: the stylesheet request fails, as it does with no connection.
-  if (opts.offline) await A.context.route(FACES, (route) => (/Pinyon/.test(route.request().url()) ? route.abort() : route.fallback()));
+  // The handwriting font files cannot be loaded: every request for their stylesheets and files fails.
+  if (opts.offline) await A.context.route((u) => u.origin === F.ORIGIN && HAND_FILES.test(u.pathname), (route) => route.abort());
   const off = await F.setupPortal(p, A.context, {});
   const inv = await F.createInvitation(p, { name: INV.name, email: INV.email, offeringId: off.offeringId, cents: 7500000 });
   await p.goto(`${F.BASE}?tenant=${inv.tenant}#invite-${inv.token}`);
@@ -166,7 +171,7 @@ const SCRIPT = [[0.1, 0.7], [0.15, 0.35], [0.2, 0.7], [0.25, 0.45], [0.3, 0.7], 
       const ini = scr.fields.filter((f) => f.type === 'initials');
       const sig = scr.fields.filter((f) => f.type === 'signature');
       check('the signer has two initials fields and a signature field to complete', ini.length === 2 && sig.length === 1, scr.fields.map((f) => f.type));
-      const before = await p.evaluate(() => ({ link: !!document.getElementById('sg-faces'), module: typeof window.CVPortal.signature.open }));
+      const before = await p.evaluate(() => ({ link: !!document.querySelector('link[id^="sg-face-"]'), module: typeof window.CVPortal.signature.open }));
       check('SIG-01 no handwriting face is asked for before the dialog opens', !before.link && A.faces.length === 0 && before.module === 'function', { before, faces: A.faces });
 
       await openDialog(p, ini[0].id);
@@ -175,10 +180,10 @@ const SCRIPT = [[0.1, 0.7], [0.15, 0.35], [0.2, 0.7], [0.25, 0.45], [0.3, 0.7], 
         const fam = (el) => getComputedStyle(el).fontFamily;
         const styles = Array.from(r.querySelectorAll('.sg-style')).map((l) => ({ id: l.querySelector('input').value, label: l.querySelector('input').getAttribute('aria-label'), checked: l.querySelector('input').checked, family: fam(l.querySelector('.sg-hand-ink')), text: l.querySelector('.sg-hand-ink').textContent, size: parseFloat(getComputedStyle(l.querySelector('.sg-hand-ink')).fontSize) }));
         const hero = (k) => { const el = r.querySelector(`.sg-pane-type .sg-cell-${k} .sg-hand-ink`); const box = el.getBoundingClientRect(); const cell = el.closest('.sg-cell').getBoundingClientRect(); return { text: el.textContent, family: fam(el), size: parseFloat(getComputedStyle(el).fontSize), color: getComputedStyle(el).color, inside: box.left >= cell.left - 1 && box.right <= cell.right + 1 }; };
-        const link = document.getElementById('sg-faces');
+        const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map((l) => l.href);
         return {
           title: document.querySelector('#dlg h2').textContent, tabs: Array.from(r.querySelectorAll('[role="tablist"] [role="tab"]')).map((t) => `${t.textContent}:${t.getAttribute('aria-selected')}`), group: r.querySelector('.sg-styles').tagName, styles, signature: hero('signature'), initials: hero('initials'),
-          link: link ? link.href : '', inks: Array.from(r.querySelectorAll('.sg-inkopt input')).map((i) => `${i.value}:${i.checked}`), name: document.getElementById('es-type-text').value, ini: document.getElementById('sg-initials-text').value, text: document.getElementById('dlg').innerText, focus: document.activeElement && document.activeElement.id
+          links, inks: Array.from(r.querySelectorAll('.sg-inkopt input')).map((i) => `${i.value}:${i.checked}`), name: document.getElementById('es-type-text').value, ini: document.getElementById('sg-initials-text').value, text: document.getElementById('dlg').innerText, focus: document.activeElement && document.activeElement.id
         };
       });
       check('the dialog offers Type, Draw and Upload as tabs, with Type first', dlg.tabs.join() === 'Type:true,Draw:false,Upload:false' && /signature/i.test(dlg.title), dlg.tabs);
@@ -187,7 +192,12 @@ const SCRIPT = [[0.1, 0.7], [0.15, 0.35], [0.2, 0.7], [0.25, 0.45], [0.3, 0.7], 
       check('SIG-01 each style is written in its own handwriting face', new Set(firsts).size === dlg.styles.length && dlg.styles.every((s) => /cursive\s*$/.test(s.family)) && !firsts.some((f) => /Funnel|sans|serif|system/i.test(f)), dlg.styles.map((s) => s.family));
       check('SIG-01 every style previews the signer\'s own name', dlg.styles.every((s) => s.text === INV.name && s.size >= 11), dlg.styles.map((s) => `${s.text}@${s.size}`));
       check('SIG-01 the large preview shows the signature and the initials in the chosen style, inside their cells', dlg.signature.text === INV.name && dlg.initials.text === 'MB' && dlg.signature.family === dlg.styles.find((s) => s.checked).family && dlg.signature.size >= 30 && dlg.signature.inside && dlg.initials.inside, { s: dlg.signature, i: dlg.initials });
-      check('SIG-01 the faces are fetched when the dialog opens: one stylesheet request naming all six', A.faces.length === 1 && firsts.every((f) => dlg.link.includes(f.replace(/ /g, '+'))) && /display=swap/.test(dlg.link), { faces: A.faces, link: dlg.link });
+      const faceIn = await p
+        .waitForFunction((hand) => hand.every(([f, w]) => document.fonts.check(`${w} 48px "${f}"`, 'Morgan Blake') && Array.from(document.fonts).some((x) => x.family.replace(/["']/g, '') === f && x.status === 'loaded')), HAND, { timeout: 10000 })
+        .then(() => true, () => false);
+      const perSheet = SLUGS.filter((x) => x !== 'caveat').map((x) => A.faces.filter((u) => u.endsWith(`/assets/fonts/${x}.css`)).length);
+      const linked = SLUGS.map((x) => dlg.links.some((h) => h.endsWith(`/assets/fonts/${x}.css`)));
+      check('SIG-01 the faces are fetched when the dialog opens: the stylesheet of each of the six faces is in the page and each face is loaded', perSheet.every((n) => n === 1) && A.faces.length === 5 && linked.every(Boolean) && faceIn, { faces: A.faces, perSheet, linked, faceIn, firsts });
       check('SIG-04 the dialog collects the name and the initials together, the initials derived from the name', dlg.name === INV.name && dlg.ini === 'MB', { name: dlg.name, ini: dlg.ini });
       const blue = await tokenRgb(p, '--es-ink-blue');
       const black = await tokenRgb(p, '--es-ink-black');
@@ -374,7 +384,7 @@ const SCRIPT = [[0.1, 0.7], [0.15, 0.35], [0.2, 0.7], [0.25, 0.45], [0.3, 0.7], 
       await p.waitForSelector('.ivf-done', { timeout: 30000 });
       const fin = await p.evaluate(({ envId, sid }) => { const e = window.CVPortal.state.ws.envelopes.find((x) => x.id === envId); const s = e.signers.find((x) => x.id === sid); return { status: s.status, sig: s.signature && { kind: s.signature.kind, style: s.signature.style, png: /^data:image\/png;base64,/.test(s.signature.png) }, ini: s.initials && { kind: s.initials.kind, style: s.initials.style, png: /^data:image\/png;base64,/.test(s.initials.png) }, vals: e.fields.filter((f) => f.signerId === sid && (f.type === 'signature' || f.type === 'initials')).map((f) => f.value) }; }, { envId: scr.envId, sid: scr.sid });
       check('SIG-04 signing finishes: the signer\'s record holds both pictures and the style of each, and the three fields are signed', fin.status === 'signed' && fin.sig && fin.sig.png && fin.sig.style === 'uploaded' && fin.ini && fin.ini.png && fin.ini.style === 'bold' && fin.vals.length === 3 && fin.vals.every((v) => v === 'adopted'), fin);
-      check('desktop: no page or console errors, and no request left the page but the font service', A.errors.length === 0 && A.net.external.length === 0, { errors: A.errors, ext: A.net.external });
+      check('desktop: no page or console errors, and no request left the page', A.errors.length === 0 && A.net.external.length === 0, { errors: A.errors, ext: A.net.external });
     } catch (e) {
       check('desktop run completed', false, String(e && e.stack ? e.stack : e));
     }
@@ -459,7 +469,7 @@ const SCRIPT = [[0.1, 0.7], [0.15, 0.35], [0.2, 0.7], [0.25, 0.45], [0.3, 0.7], 
     await A.context.close();
   }
 
-  /* ============ 3. No connection to the font service: the dialog still works ============ */
+  /* ============ 3. Without the handwriting font files: the dialog still works ============ */
   {
     const { A, p } = await atSigning(browser, { width: 1440, height: 1000 }, { offline: true });
     try {
@@ -467,12 +477,12 @@ const SCRIPT = [[0.1, 0.7], [0.15, 0.35], [0.2, 0.7], [0.25, 0.45], [0.3, 0.7], 
       const sig = scr.fields.find((f) => f.type === 'signature');
       const t0 = Date.now();
       await openDialog(p, sig.id);
-      const o = await p.evaluate(() => ({ fams: Array.from(document.querySelectorAll('.sg-style .sg-hand-ink')).map((e) => getComputedStyle(e).fontFamily.split(',')[0]), opacity: getComputedStyle(document.querySelector('.sg-pane-type .sg-cell-signature .sg-hand-ink')).opacity, link: !!document.getElementById('sg-faces') }));
-      check('without the font service the dialog is ready at once, its handwriting showing in the device\'s own script faces', Date.now() - t0 < 4000 && o.opacity === '1' && new Set(o.fams).size === 6 && !o.link, { ms: Date.now() - t0, o });
+      const o = await p.evaluate(() => ({ fams: Array.from(document.querySelectorAll('.sg-style .sg-hand-ink')).map((e) => getComputedStyle(e).fontFamily.split(',')[0]), opacity: getComputedStyle(document.querySelector('.sg-pane-type .sg-cell-signature .sg-hand-ink')).opacity, link: !!document.querySelector('link[id^="sg-face-"]') }));
+      check('without the handwriting font files the dialog is ready at once, its handwriting showing in the device\'s own script faces, and no link whose id starts with sg-face- remains', Date.now() - t0 < 4000 && o.opacity === '1' && new Set(o.fams).size === 6 && !o.link, { ms: Date.now() - t0, o });
       await adopt(p);
       const got = await adopted(p);
-      check('without the font service a typed signature and initials are still adopted as pictures', transparentPicture(await picture(p, got.signature.png), 600, 200) && transparentPicture(await picture(p, got.initials.png), 240, 150) && got.signature.style === 'formal', Object.assign({}, got.signature, { png: '' }));
-      check('without the font service: no page errors', A.errors.length === 0, A.errors);
+      check('without the handwriting font files a typed signature and initials are still adopted as pictures', transparentPicture(await picture(p, got.signature.png), 600, 200) && transparentPicture(await picture(p, got.initials.png), 240, 150) && got.signature.style === 'formal', Object.assign({}, got.signature, { png: '' }));
+      check('without the handwriting font files: no page errors', A.errors.length === 0, A.errors);
     } catch (e) {
       check('no-connection run completed', false, String(e && e.stack ? e.stack : e));
     }

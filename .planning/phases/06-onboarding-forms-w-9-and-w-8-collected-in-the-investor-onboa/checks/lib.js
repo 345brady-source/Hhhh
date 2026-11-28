@@ -30,9 +30,7 @@ const LOCAL = {
   'pdf-lib/1.17.1/pdf-lib.min.js': path.join(VENDOR, 'pdflib/package/dist/pdf-lib.min.js')
 };
 const JSDELIVR = {
-  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': { file: path.join(VENDOR, 'fontkit/package/dist/fontkit.umd.min.js'), type: 'application/javascript' },
-  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf': { file: path.join(VENDOR, 'dejavu/package/ttf/DejaVuSans.ttf'), type: 'font/ttf' },
-  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf': { file: path.join(VENDOR, 'dejavu/package/ttf/DejaVuSans-Bold.ttf'), type: 'font/ttf' }
+  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': { file: path.join(VENDOR, 'fontkit/package/dist/fontkit.umd.min.js'), type: 'application/javascript' }
 };
 const IGNORE = /Failed to load resource|net::ERR|favicon/;
 
@@ -159,7 +157,6 @@ async function open(S, opts) {
     if (m && LOCAL[m[1]]) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(LOCAL[m[1]]) });
     const jd = u.match(/^https:\/\/cdn\.jsdelivr\.net\/npm\/(.+)$/);
     if (jd && JSDELIVR[jd[1]]) return route.fulfill({ status: 200, contentType: JSDELIVR[jd[1]].type, headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(JSDELIVR[jd[1]].file) });
-    if (/^https:\/\/fonts\.googleapis\.com\//.test(u)) return route.fulfill({ status: 200, contentType: 'text/css', body: '' });
     net.external.push(u);
     return route.abort();
   });

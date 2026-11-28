@@ -74,6 +74,10 @@ const CHOICES = {
 // The handwriting styles of signature.js and the face each is drawn in (esign.css --es-hand-<id>, first family).
 const HANDS = { formal: 'Pinyon Script', flowing: 'Mrs Saint Delafield', casual: 'Caveat', quick: 'Nothing You Could Do', neat: 'Bad Script', bold: 'Mr Dafoe' };
 const WEIGHT_OF_HAND = { casual: 500 };
+// Letters of the latin-ext test name a face does not have at all: measured in its own file's cmap and in the outside
+// host's latin-ext file of the same face (2026-11-28, scratchpad exec-own-fonts/cmap-probe.js): identical, so these two
+// faces borrowed the same letters before. The test asserts exactly these are borrowed, and every other letter is the face's.
+const LACKS = { 'Mrs Saint Delafield': ['\u017B', '\u0107'], 'Mr Dafoe': ['\u017B', '\u0107'] };
 // A sample in each non-Latin subset and one code point of it only that subset covers.
 const SAMPLES = {
   vietnamese: { text: 'Nguyễn', cp: 0x1ec5 },
@@ -404,7 +408,8 @@ async function typedSignature(check, fr, net, label) {
     check(`${id}: typedPng makes a PNG of '${NAME}'`, typeof png === 'string' && png.startsWith('data:image/png') && png.length > 1000, typeof png === 'string' ? png.length : png);
     const row = ROW_OF_FAMILY[face];
     const offExt = await fromFace(fr, face, w, NAME_EXT);
-    if (row.subsets.includes('latin-ext')) check(`${id}: ${face} draws every letter of '${NAME_EXT}' (latin-ext)`, offExt.length === 0, offExt);
+    if (row.subsets.includes('latin-ext') && LACKS[face]) check(`${id}: ${face} draws every letter of '${NAME_EXT}' (latin-ext) but ${LACKS[face].join(' ')}, which the face has not (as on the outside host)`, JSON.stringify(offExt) === JSON.stringify(LACKS[face]), offExt);
+    else if (row.subsets.includes('latin-ext')) check(`${id}: ${face} draws every letter of '${NAME_EXT}' (latin-ext)`, offExt.length === 0, offExt);
     else check(`${id}: ${face} has no latin-ext, so '${NAME_EXT}' borrows letters (the test can tell)`, offExt.length > 0, offExt);
     if (row.subsets.includes('vietnamese')) {
       vi.push(face);

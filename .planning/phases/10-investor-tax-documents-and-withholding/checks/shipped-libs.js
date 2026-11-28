@@ -231,18 +231,14 @@ async function taxWalk(check, S, A, fr, opts) {
 
 /**
  * lib10's quiet, for a part that loads the page again (Lib.setupPortal) and signs: lib10 clears the requests a page makes
- * while it loads, and these parts cannot. The one kind of outside request allowed is the page's typography stylesheets
- * (fonts.googleapis.com: the brand's faces when the firm opens, the handwriting faces when the signature dialog opens),
- * which the policy in force does not restrict and no PDF path uses; they are printed so the report names them.
+ * while it loads, and these parts cannot. No outside request at all is allowed: the brand's faces and the handwriting
+ * faces come with the portal (assets/fonts, quick own-fonts).
  */
 async function quietReloaded(check, A, fr) {
   const refused = await fr.evaluate(() => (window.__cspv || []).slice());
   check('the policy refused nothing (no fetch, no outside script)', refused.length === 0, refused);
   check('no script error in the browser', A.errors.length === 0, A.errors);
-  const styles = A.p10.outside.filter((u) => /^https:\/\/fonts\.googleapis\.com\/css2\?/.test(u));
-  const other = A.p10.outside.filter((u) => styles.indexOf(u) < 0);
-  check("no request outside the page's origin other than its typography stylesheets", other.length === 0 && A.net.external.length === 0, other.concat(A.net.external));
-  if (styles.length) console.log(`NOTE typography stylesheets asked of fonts.googleapis.com (not a PDF library): ${styles.length}`);
+  check("no request outside the page's origin", A.p10.outside.length === 0 && A.net.external.length === 0, A.p10.outside.concat(A.net.external));
 }
 
 /** White label on the managed page: its own firm's name is on screen by design (P/checks/dist-flow.js, part managed). */
@@ -350,8 +346,8 @@ const parts = {
     const refused = await fr.evaluate(() => (window.__cspv || []).slice());
     check('the policy refused nothing', refused.length === 0, refused);
     check('no script error in the browser (a missing shipped file is not an error the page shows)', A.errors.length === 0, A.errors);
-    const libsOrStyles = (u) => CDN.test(u) || /^https:\/\/fonts\.googleapis\.com\/css2\?/.test(u);
-    check('every outside request was a library address of the two hosts (or a typography stylesheet), answered (none left unanswered)', A.net.external.length === 0 && A.p10.outside.every(libsOrStyles), { external: A.net.external, other: A.p10.outside.filter((u) => !libsOrStyles(u)) });
+    const libs = (u) => CDN.test(u);
+    check('every outside request was a library address of the two hosts, answered (none left unanswered)', A.net.external.length === 0 && A.p10.outside.every(libs), { external: A.net.external, other: A.p10.outside.filter((u) => !libs(u)) });
     await T.leak(check, fr);
     await A.context.close();
   },

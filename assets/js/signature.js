@@ -87,26 +87,16 @@
       return `assets/fonts/${slug}.css`;
     }
   }
-  /** Resolves true once the style's stylesheet is in the page (one the page links already is used as it is). */
+  /** Resolves true once the style's stylesheet is in the page. */
   function loadSheet(s) {
     if (sheets[s.id]) return sheets[s.id];
     // After a failure the request is not made again for a little while (every letter typed asks for the faces).
     if (Date.now() - (failedAt[s.id] || 0) < 15000) return Promise.resolve(false);
     const href = sheetOf(s);
+    // A stylesheet the page links itself (caveat.css, for --font-sign) came with the page, before any dialog: it is used as
+    // it is, and loading its face tells whether it is there.
+    if (Array.from(document.querySelectorAll('link[rel="stylesheet"]')).some((l) => l.href === href && !l.id.startsWith('sg-face-'))) return (sheets[s.id] = Promise.resolve(true));
     sheets[s.id] = new Promise((resolve) => {
-      const linked = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).find((l) => l.href === href);
-      if (linked) {
-        let ready = false;
-        try {
-          ready = !!(linked.sheet && linked.sheet.cssRules);
-        } catch (e) {
-          ready = !!linked.sheet;
-        }
-        if (ready) return resolve(true);
-        linked.addEventListener('load', () => resolve(true), { once: true });
-        linked.addEventListener('error', () => resolve(false), { once: true });
-        return;
-      }
       const link = document.createElement('link');
       link.id = `sg-face-${s.id}`;
       link.rel = 'stylesheet';

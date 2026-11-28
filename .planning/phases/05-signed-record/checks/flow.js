@@ -2,7 +2,7 @@
 // subscription agreement, one invited investor walked through onboarding to the signed agreement, then the countersignature.
 // Serve the repository root first:  python3 -m http.server 8947
 // The app loads its PDF reader and writer from a CDN; where the network is closed, point VENDOR_DIR at local npm copies
-// (pdfjs/package/build, pdflib/package/dist) and FONT_DIR at local copies of the web fonts.
+// (pdfjs/package/build, pdflib/package/dist). The web fonts come with the portal (assets/fonts).
 const path = require('path');
 const fs = require('fs');
 const { chromium } = require('playwright');
@@ -12,7 +12,6 @@ const ORIGIN = `http://localhost:${PORT}`;
 const BASE = `${ORIGIN}/diy.html`;
 const SCRATCH = '/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad';
 const VENDOR = process.env.VENDOR_DIR || path.join(SCRATCH, 'vendor');
-const FONT_DIR = process.env.FONT_DIR || path.join(SCRATCH, 'esign', 'inv', 'fonts');
 const OUT = process.env.OUT_DIR || path.join(__dirname, 'out');
 fs.mkdirSync(OUT, { recursive: true });
 const LOCAL = {
@@ -21,9 +20,7 @@ const LOCAL = {
   'pdf-lib/1.17.1/pdf-lib.min.js': path.join(VENDOR, 'pdflib/package/dist/pdf-lib.min.js')
 };
 const JSDELIVR = {
-  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': { file: path.join(VENDOR, 'fontkit/package/dist/fontkit.umd.min.js'), type: 'application/javascript' },
-  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf': { file: path.join(VENDOR, 'dejavu/package/ttf/DejaVuSans.ttf'), type: 'font/ttf' },
-  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf': { file: path.join(VENDOR, 'dejavu/package/ttf/DejaVuSans-Bold.ttf'), type: 'font/ttf' }
+  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': { file: path.join(VENDOR, 'fontkit/package/dist/fontkit.umd.min.js'), type: 'application/javascript' }
 };
 const IGNORE = /Failed to load resource|net::ERR|favicon/;
 
@@ -34,15 +31,6 @@ async function routeAll(context) {
     if (u.startsWith(ORIGIN + '/') || u.startsWith('blob:') || u.startsWith('data:')) return route.continue();
     const m = u.match(/^https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/(.+)$/);
     if (m && LOCAL[m[1]] && fs.existsSync(LOCAL[m[1]])) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(LOCAL[m[1]]) });
-    if (/^https:\/\/fonts\.googleapis\.com\//.test(u)) {
-      const css = path.join(FONT_DIR, 'fonts.css');
-      return route.fulfill({ status: 200, contentType: 'text/css', body: fs.existsSync(css) ? fs.readFileSync(css, 'utf8') : '' });
-    }
-    const g = u.match(/^https:\/\/fonts\.gstatic\.com\/(.+)$/);
-    if (g) {
-      const f = path.join(FONT_DIR, g[1].replace(/\//g, '_'));
-      return fs.existsSync(f) ? route.fulfill({ status: 200, contentType: 'font/woff2', body: fs.readFileSync(f) }) : route.abort();
-    }
     const jd = u.match(/^https:\/\/cdn\.jsdelivr\.net\/npm\/(.+)$/);
     if (jd && JSDELIVR[jd[1]] && fs.existsSync(JSDELIVR[jd[1]].file)) return route.fulfill({ status: 200, contentType: JSDELIVR[jd[1]].type, headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(JSDELIVR[jd[1]].file) });
     return route.abort();

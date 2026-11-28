@@ -35,9 +35,7 @@ const LOCAL = {
 const JSD = 'https://cdn.jsdelivr.net/npm/';
 const JSD_DIR = process.env.VENDOR_DIR || path.join(SCRATCH, 'vendor');
 const JSD_LOCAL = {
-  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': [path.join(JSD_DIR, 'fontkit/package/dist/fontkit.umd.min.js'), 'application/javascript'],
-  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf': [path.join(JSD_DIR, 'dejavu/package/ttf/DejaVuSans.ttf'), 'font/ttf'],
-  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf': [path.join(JSD_DIR, 'dejavu/package/ttf/DejaVuSans-Bold.ttf'), 'font/ttf']
+  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': [path.join(JSD_DIR, 'fontkit/package/dist/fontkit.umd.min.js'), 'application/javascript']
 };
 // The two archives, pinned by content: the hashes the package registry published for these versions (read when the phase was planned).
 const PINS = [
@@ -88,7 +86,6 @@ async function start() {
     const u = route.request().url();
     if (u.startsWith(base) || u.startsWith('blob:') || u.startsWith('data:') || u.startsWith('about:')) return route.continue();
     if (u.startsWith(CDN) && LOCAL[u.slice(CDN.length)]) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(LOCAL[u.slice(CDN.length)]) });
-    if (/fonts\.(googleapis|gstatic)\.com/.test(u)) return route.fulfill({ status: 200, contentType: 'text/css', body: '' });
     // Plan 06-16: the official tax form in onboarding embeds the Unicode font through fontkit (esign.js), answered from the
     // same vendored copies the phase 6 checks use, when they are there.
     const jd = u.startsWith(JSD) && JSD_LOCAL[u.slice(JSD.length)];

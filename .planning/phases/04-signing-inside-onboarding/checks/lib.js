@@ -2,7 +2,6 @@
 // Serve the repository root first:  python3 -m http.server 8791   (or set SIGN_PORT).
 // The PDF libraries are served from local copies (VENDOR_DIR) because the sandbox blocks the CDN.
 const { chromium } = require('playwright');
-const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -14,9 +13,7 @@ const SCRATCH = process.env.SIGN_SCRATCH || path.join(os.tmpdir(), 'claude-0/-ho
 const VENDOR = process.env.VENDOR_DIR || path.join(SCRATCH, 'vendor');
 const OUT = process.env.SIGN_OUT || path.join(SCRATCH, 'signflow');
 const SHOTS = path.join(OUT, 'shots');
-const FONTS = path.join(OUT, 'fonts');
 fs.mkdirSync(SHOTS, { recursive: true });
-fs.mkdirSync(FONTS, { recursive: true });
 
 const LOCAL = {
   'pdf.js/3.11.174/pdf.min.js': path.join(VENDOR, 'pdfjs/package/build/pdf.min.js'),
@@ -24,24 +21,9 @@ const LOCAL = {
   'pdf-lib/1.17.1/pdf-lib.min.js': path.join(VENDOR, 'pdflib/package/dist/pdf-lib.min.js')
 };
 const JSDELIVR = {
-  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': { file: path.join(VENDOR, 'fontkit/package/dist/fontkit.umd.min.js'), type: 'application/javascript' },
-  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf': { file: path.join(VENDOR, 'dejavu/package/ttf/DejaVuSans.ttf'), type: 'font/ttf' },
-  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf': { file: path.join(VENDOR, 'dejavu/package/ttf/DejaVuSans-Bold.ttf'), type: 'font/ttf' }
+  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': { file: path.join(VENDOR, 'fontkit/package/dist/fontkit.umd.min.js'), type: 'application/javascript' }
 };
 const IGNORE = /Failed to load resource|net::ERR|favicon/;
-
-/** A web font file or stylesheet, fetched once through the machine's proxy and kept in the scratch folder. */
-function cached(url, ext) {
-  const file = path.join(FONTS, Buffer.from(url).toString('base64url').slice(-120) + ext);
-  if (!fs.existsSync(file)) {
-    try {
-      execFileSync('curl', ['-sS', '-m', '20', '-A', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36', '-o', file, url], { stdio: 'ignore' });
-    } catch (e) {
-      return null;
-    }
-  }
-  return fs.existsSync(file) && fs.statSync(file).size ? file : null;
-}
 
 async function routeAll(context) {
   const state = { external: [] };
@@ -52,14 +34,6 @@ async function routeAll(context) {
     if (m && LOCAL[m[1]]) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(LOCAL[m[1]]) });
     const jd = u.match(/^https:\/\/cdn\.jsdelivr\.net\/npm\/(.+)$/);
     if (jd && JSDELIVR[jd[1]]) return route.fulfill({ status: 200, contentType: JSDELIVR[jd[1]].type, headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(JSDELIVR[jd[1]].file) });
-    if (/^https:\/\/fonts\.googleapis\.com\//.test(u)) {
-      const f = cached(u, '.css');
-      return f ? route.fulfill({ status: 200, contentType: 'text/css', headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(f) }) : route.fulfill({ status: 200, contentType: 'text/css', body: '' });
-    }
-    if (/^https:\/\/fonts\.gstatic\.com\//.test(u)) {
-      const f = cached(u, '.woff2');
-      return f ? route.fulfill({ status: 200, contentType: 'font/woff2', headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(f) }) : route.abort();
-    }
     state.external.push(u);
     return route.abort();
   });
