@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /email/
+
+Sitemap: https://goodfellowcm.com/sitemap.xml

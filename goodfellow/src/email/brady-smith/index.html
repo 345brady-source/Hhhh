@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow"><title>Email signature | Brady Smith</title></head><body style="margin:0;padding:32px;background:#FFFFFF;"><p style="font:14px/1.5 Arial,sans-serif;color:#3A4654;max-width:560px;margin:0 0 6px;">Click <b>Copy signature</b>, then paste it into your email program’s signature settings. If the button doesn’t work, drag to select the signature below, copy it, and paste.</p><button id="copy" type="button" style="font:600 14px Arial,sans-serif;padding:9px 18px;border-radius:999px;border:0;background:#C9A45C;color:#1E2A37;cursor:pointer;margin:6px 0 26px;">Copy signature</button><span id="msg" role="status" style="font:13px Arial,sans-serif;color:#3A4654;margin-left:10px;"></span><div id="sig"><table cellpadding="0" cellspacing="0" border="0" role="presentation" style="font-family:Arial,Helvetica,sans-serif;color:#1E2A37;border-collapse:collapse;">
+<tr>
+<td style="padding:0 18px 0 0;vertical-align:middle;"><a href="https://goodfellowcm.com/" style="text-decoration:none;"><img src="https://goodfellowcm.com/images/goodfellow-email-logo.png" width="150" height="66" alt="Goodfellow Capital Markets" style="display:block;border:0;outline:none;width:150px;height:66px;"></a></td>
+<td style="border-left:2px solid #C9A45C;padding:2px 0 2px 18px;vertical-align:middle;">
+<div style="font-size:16px;line-height:20px;font-weight:bold;color:#1E2A37;">Brady Smith, CETF&reg;</div>
+<div style="font-size:11px;line-height:16px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#8C6E32;padding-top:2px;">Partner</div>
+<div style="font-size:13px;line-height:18px;color:#1E2A37;padding-top:8px;">Goodfellow Capital Markets</div>
+<div style="font-size:13px;line-height:18px;color:#3A4654;"><a href="tel:+16578313559" style="color:#3A4654;text-decoration:none;">(657) 831-3559</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="mailto:bsmith@goodfellowcm.com" style="color:#3A4654;text-decoration:none;">bsmith@goodfellowcm.com</a></div>
+<div style="font-size:13px;line-height:18px;"><a href="https://goodfellowcm.com/" style="color:#8C6E32;text-decoration:none;font-weight:bold;">goodfellowcm.com</a></div>
+<div style="font-size:12px;line-height:17px;color:#5B6662;padding-top:2px;">353 Lexington Avenue, 4th Floor, Ste 407, New York, NY 10016</div>
+</td>
+</tr>
+<tr>
+<td colspan="2" style="padding-top:14px;"><div style="font-size:10px;line-height:14px;color:#7A858F;max-width:520px;">Securities offered through registered representatives of MIT Associates, LLC, Member FINRA/SIPC. Goodfellow Capital Markets, LLC and MIT Associates, LLC are separate, unaffiliated entities. This email and any attachments are confidential and intended only for the named recipient. If you received this message in error, please notify the sender and delete it.</div></td>
+</tr>
+</table></div><script>document.getElementById('copy').addEventListener('click', function () {
+  var el = document.getElementById('sig'), msg = document.getElementById('msg');
+  function manual() { var r = document.createRange(); r.selectNodeContents(el); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    try { document.execCommand('copy'); msg.textContent = 'Copied. Paste it into your signature settings.'; } catch (e) { msg.textContent = 'Selected. Press Ctrl+C (or Cmd+C) to copy.'; } }
+  try { navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([el.innerHTML], { type: 'text/html' }), 'text/plain': new Blob([el.innerText], { type: 'text/plain' }) })])
+    .then(function () { msg.textContent = 'Copied. Paste it into your signature settings.'; }, manual); } catch (e) { manual(); }
+});</script></body></html>
