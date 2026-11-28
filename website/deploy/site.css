@@ -291,4 +291,15 @@ button.btn { cursor: pointer; }
   .flow-out::before { left: 36px; right: auto; border-right: 0; width: 0; }
 }
 @media (max-width: 600px) { .flow-side ul { grid-template-columns: minmax(0, 1fr); } }
+/* faq */
+.faq-wrap { max-width: 880px; }
+.faq-group + .faq-group { margin-top: 56px; }
+.faq-group h2 { font-size: clamp(24px, 2.6vw, 32px); margin-bottom: 18px; }
+.faq-item { background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--edge-light), 0 10px 24px -20px rgba(16,28,51,.35); margin-bottom: 12px; }
+.faq-item summary { cursor: pointer; list-style: none; padding: 18px 56px 18px 22px; font: 400 18px/1.4 var(--display); color: var(--ink); position: relative; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after { content: ""; position: absolute; right: 24px; top: 50%; width: 9px; height: 9px; border-right: 1.5px solid var(--gold); border-bottom: 1.5px solid var(--gold); transform: translateY(-70%) rotate(45deg); transition: transform .2s ease; }
+.faq-item[open] summary::after { transform: translateY(-30%) rotate(-135deg); }
+.faq-item summary:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; border-radius: 14px; }
+.faq-item p { padding: 0 22px 20px; color: var(--ink-2); font-size: 15.5px; margin: 0; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
