@@ -340,14 +340,14 @@ const parts = {
           const probe = document.createElement('i');
           probe.style.color = 'var(--color-steel)';
           document.body.appendChild(probe);
-          const out = { color: s.color, steel: getComputedStyle(probe).color, offset: s.textUnderlineOffset, size: s.fontSize, line: s.textDecorationLine };
+          const out = { color: s.color, steel: getComputedStyle(document.documentElement).getPropertyValue('--color-steel').trim() ? getComputedStyle(probe).color : 'no --color-steel', offset: s.textUnderlineOffset, size: s.fontSize, line: s.textDecorationLine };
           a.remove();
           probe.remove();
           return out;
         });
         check(`${page}: a link is steel, underlined, with a 0.2em underline offset`, link.color === link.steel && /underline/.test(link.line) && Math.abs(parseFloat(link.offset) - 0.2 * parseFloat(link.size)) < 0.05, link);
         let focus = null;
-        for (let i = 0; i < 40 && !focus; i++) {
+        for (let i = 0; i < 120 && !focus; i++) {
           await A.page.keyboard.press('Tab');
           focus = await fr.evaluate(() => {
             const el = document.activeElement;
