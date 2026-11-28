@@ -159,17 +159,23 @@ footer a:hover { color: var(--on-navy); }
 .price-card { padding: 32px; color: var(--ink); }
 .price-card .price { margin-top: 12px; padding-top: 0; border-top: 0; }
 .price-card p:not(.kicker) { color: var(--ink-2); font-size: 16px; margin: 14px 0 24px; }
-.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.features { columns: 2; column-gap: 28px; }
+.features .feature { break-inside: avoid; margin-bottom: 28px; display: inline-block; width: 100%; }
+.phero-split h1 { font-size: clamp(36px, 4.2vw, 54px); hyphens: none; }
+.phero-split h1 .nowrap { white-space: nowrap; }
 .feature { padding: 30px 28px 32px; background: var(--panel); border: 1px solid var(--rule); border-top: 3px solid var(--gold); border-radius: var(--radius-panel); box-shadow: var(--edge-light), var(--shadow-panel); min-width: 0; }
 .feature .num { font: 400 14px/1 var(--display); color: var(--gold); letter-spacing: .1em; }
 .feature h3 { font-size: 23px; line-height: 1.2; margin: 18px 0 16px; }
 .feature ul { list-style: none; margin: 0; padding: 0; }
 .feature li { position: relative; padding: 9px 0 9px 18px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 15px; line-height: 1.5; }
 .feature li::before { content: ""; position: absolute; left: 0; top: 1.15em; width: 8px; height: 1px; background: var(--gold); }
+.feature .intro { color: var(--ink); font-size: 16px; margin: -4px 0 14px; }
+.feature li b { color: var(--ink); font-weight: 600; }
+.tag { display: inline-block; vertical-align: 1px; margin-left: 4px; padding: 2px 9px; border: 1px solid var(--gold); border-radius: 999px; color: #7A5C33; background: #FBF6EE; font: 600 11px/1.5 var(--body); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 .shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
 @media (max-width: 980px) {
   .phero-split { grid-template-columns: minmax(0, 1fr); gap: 36px; }
-  .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .features { columns: 1; }
   .shots { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 600px) { .features { grid-template-columns: minmax(0, 1fr); } }
