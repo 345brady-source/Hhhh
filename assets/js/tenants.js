@@ -8,7 +8,11 @@
  * "distributions" in their own way.
  *
  * The four sample clients are fictional firms, as are their holdings and auditors. Routing numbers pass the ABA
- * check digit but belong to no real bank; account numbers are invented.
+ * check digit but use prefixes no bank has (no routing number starts with them), so they belong to no real bank;
+ * account numbers are invented.
+ *
+ * Each seeded holding's id is its offering's id and its name ('kb-fund-ii-halsey-controls-corp'), written out here: reports
+ * keep photos, wording and figures by holding id, so an id never changes, even if the holding's name is edited.
  */
 (function (NS) {
   'use strict';
@@ -47,11 +51,12 @@
     portalName: 'Investor Portal',
     domain: 'investors.newclient.com',
     logo: { type: 'monogram', letters: 'NC', image: '', plate: false },
-    colors: { primary: '#0F2742', accent: '#1F7A8C' },
-    font: 'hanken',
+    // The standard look is the Refract theme's own: pool-blue accent, water shade, the Funnel faces.
+    colors: { primary: '#006C95', accent: '#77B6CA' },
+    font: 'funnel',
     radius: 'soft',
     nav: 'light',
-    appearance: 'system',
+    appearance: 'light',
     support: { team: 'Investor Relations', email: 'investors@newclient.com', phone: '(212) 555-0100', hours: 'Mon–Fri, 9:00 a.m.–5:00 p.m. ET' },
     disclaimer: 'Information in this portal is provided to existing investors for informational purposes only and is not an offer to sell or a solicitation of an offer to buy any security. [Regulatory disclosures to be provided by counsel.]',
     signin: { headline: 'Investor Portal', sub: 'Sign in to view your investments, distributions and documents.' },
@@ -88,11 +93,11 @@
       portalName: 'Investor Portal',
       domain: 'investors.kestrelbaycap.com',
       logo: { type: 'wing', letters: 'KB', image: '', plate: false },
-      colors: { primary: '#14304F', accent: '#B4873F' },
-      font: 'serif',
+      colors: { primary: '#006C95', accent: '#77B6CA' },
+      font: 'funnel',
       radius: 'soft',
       nav: 'light',
-      appearance: 'system',
+      appearance: 'light',
       home: { about: 'Kestrel Bay Capital invests in lower-middle-market industrial and business services companies alongside founders and management teams. The firm has raised two funds and a series of co-investments and private notes since 2014.', m1v: '$640M', m1l: 'Capital managed', m2v: '14', m2l: 'Companies backed', m3v: '2014', m3l: 'Founded' },
       support: { team: 'Kestrel Bay Investor Relations', email: 'ir@kestrelbaycap.com', phone: '(212) 555-0148', hours: 'Mon–Fri, 8:30 a.m.–6:00 p.m. ET' },
       disclaimer:
@@ -101,8 +106,8 @@
       onboarding: { accreditation: true, taxForm: true, ach: 'required', esign: true },
       ach: {
         odfiName: 'First Harbor Bank',
-        odfiRouting: '021305810',
-        destinationRouting: '021305810',
+        odfiRouting: '131305810',
+        destinationRouting: '131305810',
         destinationName: 'FIRST HARBOR BANK',
         immediateOrigin: '1834201957',
         originName: 'KESTREL BAY CAPITAL',
@@ -110,7 +115,7 @@
         companyId: '1834201957',
         entryDescription: 'DISTRIB',
         balanced: false,
-        offset: { routing: '021305810', account: '7731004428', type: 'checking' }
+        offset: { routing: '131305810', account: '7731004428', type: 'checking' }
       },
       idPrefix: 'KBC',
       auditor: 'Halvorsen Pike LLP',
@@ -136,13 +141,13 @@
           achOverride: { companyName: 'KB FUND II LP', companyId: '1834209921' },
           calls: [['2019-09-30', 0.25], ['2020-03-31', 0.2], ['2020-10-15', 0.2], ['2021-06-30', 0.2], ['2022-03-31', 0.15]],
           holdings: [
-            { name: 'Brightline Packaging Holdings, LLC', security: 'Class A units (control)', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 9.0x', weight: 19, cost: 0.58, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Corwin Industrial Services, Inc.', security: 'Common stock (control)', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 8.25x', weight: 16, cost: 0.66, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Dalton Fire & Safety Group, LLC', security: 'Class A units (control)', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 13.5%', weight: 15, cost: 0.71, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Eastfield Metal Finishing, LLC', security: 'Preferred and common units', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 7.5x', weight: 13, cost: 0.92, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Fairmont Route Logistics, Inc.', security: 'Common stock (control)', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 8.0x', weight: 14, cost: 0.8, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Granger HVAC Services, LLC', security: 'Class A units (control)', level: 3, method: 'Recent transaction: signed letter of intent', input: 'LOI enterprise value $96 million', weight: 12, cost: 0.55, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Halsey Controls Corp.', security: 'Common stock (control)', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 8.75x', weight: 11, cost: 0.74, support: { every: 3, doc: 'Quarterly valuation memo' } }
+            { id: 'kb-fund-ii-brightline-packaging-holdings-llc', name: 'Brightline Packaging Holdings, LLC', security: 'Class A units (control)', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 9.0x', weight: 19, cost: 0.58, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'kb-fund-ii-corwin-industrial-services-inc', name: 'Corwin Industrial Services, Inc.', security: 'Common stock (control)', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 8.25x', weight: 16, cost: 0.66, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'kb-fund-ii-dalton-fire-safety-group-llc', name: 'Dalton Fire & Safety Group, LLC', security: 'Class A units (control)', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 13.5%', weight: 15, cost: 0.71, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'kb-fund-ii-eastfield-metal-finishing-llc', name: 'Eastfield Metal Finishing, LLC', security: 'Preferred and common units', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 7.5x', weight: 13, cost: 0.92, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'kb-fund-ii-fairmont-route-logistics-inc', name: 'Fairmont Route Logistics, Inc.', security: 'Common stock (control)', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 8.0x', weight: 14, cost: 0.8, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'kb-fund-ii-granger-hvac-services-llc', name: 'Granger HVAC Services, LLC', security: 'Class A units (control)', level: 3, method: 'Recent transaction: signed letter of intent', input: 'LOI enterprise value $96 million', weight: 12, cost: 0.55, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'kb-fund-ii-halsey-controls-corp', name: 'Halsey Controls Corp.', security: 'Common stock (control)', level: 3, method: 'Market approach: EV/EBITDA multiple', input: 'EV/EBITDA 8.75x', weight: 11, cost: 0.74, support: { every: 3, doc: 'Quarterly valuation memo' } }
           ],
           seed: { events: [['2023-12-21', 0.04], ['2024-06-28', 0.05], ['2024-12-20', 0.035], ['2025-06-27', 0.06], ['2025-12-19', 0.04], ['2026-06-26', 0.055], ['2026-09-24', 0.03]] }
         },
@@ -163,7 +168,7 @@
             { label: 'Lead sponsor', value: 'Kestrel Bay Fund III, L.P.', show: true }
           ],
           update: 'Revenue grew 14% year over year through September. A sale process is planned for 2027.',
-          holdings: [{ name: 'Harlow Precision Components, Inc.', security: 'Series B preferred stock', level: 3, method: 'Market approach: EV/EBITDA multiple, calibrated to entry', input: 'EV/EBITDA 10.5x', weight: 100, cost: 0.83, support: { every: 3, doc: 'Quarterly valuation memo' } }],
+          holdings: [{ id: 'kb-harlow-harlow-precision-components-inc', name: 'Harlow Precision Components, Inc.', security: 'Series B preferred stock', level: 3, method: 'Market approach: EV/EBITDA multiple, calibrated to entry', input: 'EV/EBITDA 10.5x', weight: 100, cost: 0.83, support: { every: 3, doc: 'Quarterly valuation memo' } }],
           seed: { events: [['2025-11-14', 0.03]] }
         },
         {
@@ -184,7 +189,7 @@
             { label: 'Maturity', value: 'June 30, 2027', show: true }
           ],
           update: 'All interest payments have been made on schedule.',
-          holdings: [{ name: 'Equipment-secured term loans (6 borrowers)', security: 'Senior secured first-lien loans, 11.0% fixed', level: 3, method: 'Income approach: yield analysis', input: 'Market yield 10.75%', weight: 100, cost: 1, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } }],
+          holdings: [{ id: 'kb-note-24a-equipment-secured-term-loans-6-borrowers', name: 'Equipment-secured term loans (6 borrowers)', security: 'Senior secured first-lien loans, 11.0% fixed', level: 3, method: 'Income approach: yield analysis', input: 'Market yield 10.75%', weight: 100, cost: 1, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } }],
           seed: { rate: 0.11, freq: 'Quarterly', start: '2024-10-15', type: 'Interest' }
         }
       ],
@@ -204,7 +209,7 @@
       font: 'franklin',
       radius: 'soft',
       nav: 'light',
-      appearance: 'system',
+      appearance: 'light',
       home: { about: 'Ashwell Ridge acquires and operates multifamily and medical office properties across the Sun Belt, and offers them to investors as syndications and Delaware Statutory Trusts.', m1v: '$410M', m1l: 'Property acquired', m2v: '2,150', m2l: 'Apartment units', m3v: '2011', m3l: 'Founded' },
       support: { team: 'Ashwell Ridge Investor Services', email: 'investors@ashwellridge.com', phone: '(615) 555-0172', hours: 'Mon–Fri, 8:00 a.m.–5:00 p.m. CT' },
       disclaimer:
@@ -213,8 +218,8 @@
       onboarding: { accreditation: true, taxForm: true, ach: 'required', esign: true },
       ach: {
         odfiName: 'Cumberland State Bank',
-        odfiRouting: '061002157',
-        destinationRouting: '061002157',
+        odfiRouting: '171002157',
+        destinationRouting: '171002157',
         destinationName: 'CUMBERLAND STATE BANK',
         immediateOrigin: '1620487715',
         originName: 'ASHWELL RIDGE ADVISORS',
@@ -222,7 +227,7 @@
         companyId: '1620487715',
         entryDescription: 'DISTRIB',
         balanced: true,
-        offset: { routing: '061002157', account: '4400918265', type: 'checking' }
+        offset: { routing: '171002157', account: '4400918265', type: 'checking' }
       },
       idPrefix: 'ARR',
       auditor: 'Brandt & Ostrow LLP',
@@ -247,7 +252,7 @@
           update: 'Renovations are complete on 212 of 288 units. Occupancy was 95.1% at the end of September.',
           achOverride: { companyName: 'CEDAR ROW APTS', companyId: '1883301246' },
           accounting: { carry: 30, pref: 8, waterfall: { type: 'american', tiers: [{ kind: 'pref', rate: 8, simple: true }, { kind: 'roc' }, { kind: 'split', lp: 70, gp: 30, upTo: 15 }, { kind: 'split', lp: 50, gp: 50 }] } },
-          holdings: [{ name: 'The Residences at Cedar Row', security: '288-unit multifamily, built 2004', location: 'Raleigh, North Carolina', acquired: '2022-06-15', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 5.40%', weight: 100, cost: 0.86, ltv: 0.58, debtRate: '5.12% fixed', debtMaturity: '2032-07-01', support: { every: 12, anchor: '06-30', doc: 'Appraisal, Hollis Meyer Valuation Group' } }],
+          holdings: [{ id: 'ar-cedar-row-the-residences-at-cedar-row', name: 'The Residences at Cedar Row', security: '288-unit multifamily, built 2004', location: 'Raleigh, North Carolina', acquired: '2022-06-15', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 5.40%', weight: 100, cost: 0.86, ltv: 0.58, debtRate: '5.12% fixed', debtMaturity: '2032-07-01', support: { every: 12, anchor: '06-30', doc: 'Appraisal, Hollis Meyer Valuation Group' } }],
           seed: { rate: 0.06, freq: 'Monthly', start: '2022-09-15', type: 'Income' }
         },
         {
@@ -270,9 +275,9 @@
           update: 'All three buildings are 100% leased. No tenant renewals are due before 2029.',
           achOverride: { companyName: 'AR MEDICAL DST', companyId: '1883302517' },
           holdings: [
-            { name: 'Brentwood Medical Pavilion', security: 'Medical office, 46,200 sq ft, triple net', location: 'Brentwood, Tennessee', acquired: '2023-03-01', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 6.10%', weight: 40, cost: 0.94, ltv: 0.45, debtRate: '4.85% fixed', debtMaturity: '2033-03-01', support: { every: 12, anchor: '03-31', doc: 'Appraisal, Calloway Realty Advisors', missing: ['2026-03-31'] } },
-            { name: 'Hendersonville Specialty Clinic', security: 'Medical office, 39,800 sq ft, triple net', location: 'Hendersonville, Tennessee', acquired: '2023-03-01', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 6.25%', weight: 33, cost: 0.95, ltv: 0.45, debtRate: '4.85% fixed', debtMaturity: '2033-03-01', support: { every: 12, anchor: '03-31', doc: 'Appraisal, Calloway Realty Advisors' } },
-            { name: 'Murfreesboro Outpatient Center', security: 'Medical office, 32,400 sq ft, triple net', location: 'Murfreesboro, Tennessee', acquired: '2023-03-01', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 6.40%', weight: 27, cost: 0.97, ltv: 0.45, debtRate: '4.85% fixed', debtMaturity: '2033-03-01', support: { every: 12, anchor: '03-31', doc: 'Appraisal, Calloway Realty Advisors' } }
+            { id: 'ar-mob-dst-brentwood-medical-pavilion', name: 'Brentwood Medical Pavilion', security: 'Medical office, 46,200 sq ft, triple net', location: 'Brentwood, Tennessee', acquired: '2023-03-01', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 6.10%', weight: 40, cost: 0.94, ltv: 0.45, debtRate: '4.85% fixed', debtMaturity: '2033-03-01', support: { every: 12, anchor: '03-31', doc: 'Appraisal, Calloway Realty Advisors', missing: ['2026-03-31'] } },
+            { id: 'ar-mob-dst-hendersonville-specialty-clinic', name: 'Hendersonville Specialty Clinic', security: 'Medical office, 39,800 sq ft, triple net', location: 'Hendersonville, Tennessee', acquired: '2023-03-01', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 6.25%', weight: 33, cost: 0.95, ltv: 0.45, debtRate: '4.85% fixed', debtMaturity: '2033-03-01', support: { every: 12, anchor: '03-31', doc: 'Appraisal, Calloway Realty Advisors' } },
+            { id: 'ar-mob-dst-murfreesboro-outpatient-center', name: 'Murfreesboro Outpatient Center', security: 'Medical office, 32,400 sq ft, triple net', location: 'Murfreesboro, Tennessee', acquired: '2023-03-01', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 6.40%', weight: 27, cost: 0.97, ltv: 0.45, debtRate: '4.85% fixed', debtMaturity: '2033-03-01', support: { every: 12, anchor: '03-31', doc: 'Appraisal, Calloway Realty Advisors' } }
           ],
           seed: { rate: 0.0525, freq: 'Monthly', start: '2023-04-15', type: 'Income' }
         },
@@ -293,7 +298,7 @@
             { label: 'Sale price', value: '$34.6 million', show: true }
           ],
           update: 'The property was sold on July 31, 2025. Final proceeds were distributed on August 15, 2025.',
-          holdings: [{ name: 'Larch Commons Apartments', security: '196-unit multifamily', location: 'Chattanooga, Tennessee', acquired: '2019-05-01', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 5.75%', weight: 100, cost: 0.72, ltv: 0.6, debtRate: '4.10% fixed', debtMaturity: '2029-05-01', support: { every: 12, anchor: '04-30', doc: 'Appraisal, Hollis Meyer Valuation Group' } }],
+          holdings: [{ id: 'ar-larch-larch-commons-apartments', name: 'Larch Commons Apartments', security: '196-unit multifamily', location: 'Chattanooga, Tennessee', acquired: '2019-05-01', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 5.75%', weight: 100, cost: 0.72, ltv: 0.6, debtRate: '4.10% fixed', debtMaturity: '2029-05-01', support: { every: 12, anchor: '04-30', doc: 'Appraisal, Hollis Meyer Valuation Group' } }],
           seed: { rate: 0.06, freq: 'Monthly', start: '2023-01-15', end: '2025-07-15', type: 'Income', final: ['2025-08-15', 1.62, 'Return of capital and gain'] }
         }
       ],
@@ -313,7 +318,7 @@
       font: 'plex',
       radius: 'soft',
       nav: 'brand',
-      appearance: 'system',
+      appearance: 'light',
       home: { about: 'Greywater owns contracted energy and water infrastructure: community solar, mineral royalties and regulated utilities, held for long-term income.', m1v: '$520M', m1l: 'Assets owned', m2v: '63', m2l: 'Operating assets', m3v: '2016', m3l: 'Founded' },
       support: { team: 'Greywater Investor Relations', email: 'ir@greywaterinfra.com', phone: '(303) 555-0119', hours: 'Mon–Fri, 7:30 a.m.–5:30 p.m. MT' },
       disclaimer:
@@ -322,8 +327,8 @@
       onboarding: { accreditation: true, taxForm: true, ach: 'optional', esign: true },
       ach: {
         odfiName: 'Front Range National Bank',
-        odfiRouting: '112000781',
-        destinationRouting: '112000781',
+        odfiRouting: '882000781',
+        destinationRouting: '882000781',
         destinationName: 'FRONT RANGE NATL BANK',
         immediateOrigin: '1471203385',
         originName: 'GREYWATER INFRASTRUCTURE',
@@ -331,7 +336,7 @@
         companyId: '1471203385',
         entryDescription: 'DISTRIB',
         balanced: false,
-        offset: { routing: '112000781', account: '6602113790', type: 'checking' }
+        offset: { routing: '882000781', account: '6602113790', type: 'checking' }
       },
       idPrefix: 'GIP',
       auditor: 'Whitcombe Hale LLP',
@@ -354,10 +359,10 @@
           ],
           update: 'Generation was 3% ahead of plan for the first nine months of 2026.',
           holdings: [
-            { name: 'Arroyo Seco Solar, LLC', security: '64 MW, Colorado, 20-year PPA', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 7.25%', weight: 31, cost: 0.9, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Pinon Flats Solar, LLC', security: '58 MW, New Mexico, 20-year PPA', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 7.50%', weight: 27, cost: 0.92, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Kiowa Creek Solar, LLC', security: '52 MW, Colorado, 20-year PPA', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 7.25%', weight: 24, cost: 0.88, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Rio Puerco Solar, LLC', security: '38 MW, New Mexico, 20-year PPA', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 7.75%', weight: 18, cost: 0.95, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } }
+            { id: 'gw-solar-i-arroyo-seco-solar-llc', name: 'Arroyo Seco Solar, LLC', security: '64 MW, Colorado, 20-year PPA', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 7.25%', weight: 31, cost: 0.9, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'gw-solar-i-pinon-flats-solar-llc', name: 'Pinon Flats Solar, LLC', security: '58 MW, New Mexico, 20-year PPA', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 7.50%', weight: 27, cost: 0.92, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'gw-solar-i-kiowa-creek-solar-llc', name: 'Kiowa Creek Solar, LLC', security: '52 MW, Colorado, 20-year PPA', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 7.25%', weight: 24, cost: 0.88, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'gw-solar-i-rio-puerco-solar-llc', name: 'Rio Puerco Solar, LLC', security: '38 MW, New Mexico, 20-year PPA', level: 3, method: 'Income approach: discounted cash flow', input: 'Discount rate 7.75%', weight: 18, cost: 0.95, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } }
           ],
           seed: { rate: 0.08, freq: 'Quarterly', start: '2022-04-15', type: 'Income' }
         },
@@ -378,7 +383,7 @@
             { label: 'Operators', value: '11 operators, 214 producing wells', show: true }
           ],
           update: 'Eighteen new wells were turned to sales on program acreage in the third quarter.',
-          holdings: [{ name: 'Delaware Basin mineral and royalty interests', security: '1,840 net royalty acres, 214 producing wells', level: 3, method: 'Income approach: discounted cash flow of proved reserves', input: 'Discount rate 11%; strip pricing', weight: 100, cost: 0.9, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } }],
+          holdings: [{ id: 'gw-royalty-23-delaware-basin-mineral-and-royalty-interests', name: 'Delaware Basin mineral and royalty interests', security: '1,840 net royalty acres, 214 producing wells', level: 3, method: 'Income approach: discounted cash flow of proved reserves', input: 'Discount rate 11%; strip pricing', weight: 100, cost: 0.9, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } }],
           seed: { rate: 0.105, freq: 'Monthly', start: '2023-05-20', type: 'Royalty income', vary: 0.18 }
         },
         {
@@ -398,7 +403,7 @@
             { label: 'Lead sponsor', value: 'Greywater Infrastructure Fund II, L.P.', show: true }
           ],
           update: 'The Arizona rate case concluded in August with a 9.2% approved return on equity.',
-          holdings: [{ name: 'Desert Basin Water Holdings, LLC', security: 'Class B units', level: 3, method: 'Market approach: enterprise value to rate base', input: '1.65x rate base', weight: 100, cost: 0.88, support: { every: 3, doc: 'Quarterly valuation memo' } }],
+          holdings: [{ id: 'gw-water-desert-basin-water-holdings-llc', name: 'Desert Basin Water Holdings, LLC', security: 'Class B units', level: 3, method: 'Market approach: enterprise value to rate base', input: '1.65x rate base', weight: 100, cost: 0.88, support: { every: 3, doc: 'Quarterly valuation memo' } }],
           seed: { rate: 0.06, freq: 'Quarterly', start: '2024-01-15', type: 'Income' }
         }
       ],
@@ -415,20 +420,20 @@
       domain: 'investors.pellbrookpartners.com',
       logo: { type: 'arch', letters: 'PB', image: '', plate: false },
       colors: { primary: '#33305E', accent: '#3E8E8C' },
-      font: 'hanken',
+      font: 'funnel',
       radius: 'soft',
       nav: 'light',
-      appearance: 'system',
+      appearance: 'light',
       home: { about: 'Pellbrook manages venture, long/short, digital asset and multi-strategy funds for families, endowments and individual investors.', m1v: '$1.9B', m1l: 'Assets under management', m2v: '6', m2l: 'Funds', m3v: '2009', m3l: 'Founded' },
       support: { team: 'Pellbrook Investor Relations', email: 'ir@pellbrookpartners.com', phone: '(415) 555-0163', hours: 'Mon–Fri, 8:00 a.m.–5:00 p.m. PT' },
       disclaimer:
-        'Information in this portal is provided to investors in Pellbrook funds for informational purposes only. Fund values are estimates until audited. Past performance is not indicative of future results. [Regulatory disclosures to be provided by counsel.]',
+        'Information in this portal is provided to investors in Pellbrook funds for informational purposes only. Fund values are estimates until the annual financial statements are final. Past performance is not indicative of future results. [Regulatory disclosures to be provided by counsel.]',
       signin: { headline: 'Investor Portal', sub: 'Sign in to view your investments, capital account and documents.' },
       onboarding: { accreditation: true, taxForm: true, ach: 'required', esign: true },
       ach: {
         odfiName: 'Bayshore Commerce Bank',
-        odfiRouting: '121088639',
-        destinationRouting: '121088639',
+        odfiRouting: '901088639',
+        destinationRouting: '901088639',
         destinationName: 'BAYSHORE COMMERCE BANK',
         immediateOrigin: '1946205531',
         originName: 'PELLBROOK PARTNERS',
@@ -436,7 +441,7 @@
         companyId: '1946205531',
         entryDescription: 'DISTRIB',
         balanced: false,
-        offset: { routing: '121088639', account: '5530177204', type: 'checking' }
+        offset: { routing: '901088639', account: '5530177204', type: 'checking' }
       },
       idPrefix: 'PBP',
       auditor: 'Calder Reyes LLP',
@@ -462,14 +467,14 @@
           calls: [['2023-03-31', 0.15], ['2023-10-02', 0.15], ['2024-06-28', 0.15], ['2025-04-15', 0.15]],
           openCall: { notice: '2026-10-28', due: '2026-11-12', pct: 0.1, purpose: 'Follow-on investments in Quillon Robotics and Lattice Ledger' },
           holdings: [
-            { name: 'Quillon Robotics, Inc.', security: 'Series A and B preferred stock', level: 3, method: 'Recent financing round, calibrated', input: 'Series C price $4.12 per share', weight: 21, cost: 0.38, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Lattice Ledger, Inc.', security: 'Series A preferred stock', level: 3, method: 'Market approach: revenue multiple', input: 'EV/ARR 9.0x', weight: 17, cost: 0.62, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Northbeam Data Systems, Inc.', security: 'Series A preferred stock', level: 3, method: 'Recent financing round, calibrated', input: 'Series A-2 price $2.65 per share', weight: 14, cost: 0.81, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Tessellate Security, Inc.', security: 'Seed and Series A preferred stock', level: 3, method: 'Market approach: revenue multiple', input: 'EV/ARR 7.5x', weight: 12, cost: 0.74, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Parcelwise, Inc.', security: 'Seed preferred stock', level: 3, method: 'Option pricing model (backsolve)', input: 'Volatility 70%; 4.0-year term', weight: 9, cost: 0.9, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Brimstone Analytics, Inc.', security: 'Series A preferred stock', level: 3, method: 'Recent financing round (February 2025)', input: 'Series A price $1.80 per share', weight: 8, cost: 1, support: { every: 3, doc: 'Quarterly valuation memo', staleSince: '2025-03-31' } },
-            { name: 'Fieldnote Health, Inc.', security: 'Seed preferred stock', level: 3, method: 'Market approach: revenue multiple, with 50% discount', input: 'EV/revenue 3.0x', weight: 5, cost: 2, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { name: 'Seven other seed-stage companies', security: 'Seed preferred stock and SAFEs', level: 3, method: 'Recent financing rounds, calibrated', input: 'Most recent round prices', weight: 14, cost: 0.95, support: { every: 3, doc: 'Quarterly valuation memo' } }
+            { id: 'pb-ventures-i-quillon-robotics-inc', name: 'Quillon Robotics, Inc.', security: 'Series A and B preferred stock', level: 3, method: 'Recent financing round, calibrated', input: 'Series C price $4.12 per share', weight: 21, cost: 0.38, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'pb-ventures-i-lattice-ledger-inc', name: 'Lattice Ledger, Inc.', security: 'Series A preferred stock', level: 3, method: 'Market approach: revenue multiple', input: 'EV/ARR 9.0x', weight: 17, cost: 0.62, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'pb-ventures-i-northbeam-data-systems-inc', name: 'Northbeam Data Systems, Inc.', security: 'Series A preferred stock', level: 3, method: 'Recent financing round, calibrated', input: 'Series A-2 price $2.65 per share', weight: 14, cost: 0.81, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'pb-ventures-i-tessellate-security-inc', name: 'Tessellate Security, Inc.', security: 'Seed and Series A preferred stock', level: 3, method: 'Market approach: revenue multiple', input: 'EV/ARR 7.5x', weight: 12, cost: 0.74, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'pb-ventures-i-parcelwise-inc', name: 'Parcelwise, Inc.', security: 'Seed preferred stock', level: 3, method: 'Option pricing model (backsolve)', input: 'Volatility 70%; 4.0-year term', weight: 9, cost: 0.9, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'pb-ventures-i-brimstone-analytics-inc', name: 'Brimstone Analytics, Inc.', security: 'Series A preferred stock', level: 3, method: 'Recent financing round (February 2025)', input: 'Series A price $1.80 per share', weight: 8, cost: 1, support: { every: 3, doc: 'Quarterly valuation memo', staleSince: '2025-03-31' } },
+            { id: 'pb-ventures-i-fieldnote-health-inc', name: 'Fieldnote Health, Inc.', security: 'Seed preferred stock', level: 3, method: 'Market approach: revenue multiple, with 50% discount', input: 'EV/revenue 3.0x', weight: 5, cost: 2, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'pb-ventures-i-seven-other-seed-stage-companies', name: 'Seven other seed-stage companies', security: 'Seed preferred stock and SAFEs', level: 3, method: 'Recent financing rounds, calibrated', input: 'Most recent round prices', weight: 14, cost: 0.95, support: { every: 3, doc: 'Quarterly valuation memo' } }
           ],
           seed: { events: [['2026-05-29', 0.025]] }
         },
@@ -494,10 +499,10 @@
           ],
           update: 'Net exposure ended October at 31% long; gross exposure was 182%.',
           holdings: [
-            { name: 'Equity long book (46 positions)', security: 'Listed equities, North America and Europe', level: 1, method: 'Quoted price: exchange closing price', input: 'Observable', weight: 104, cost: 0.86 },
-            { name: 'Equity short book (31 positions)', security: 'Securities sold short', level: 1, method: 'Quoted price: exchange closing price', input: 'Observable', weight: -73, cost: 1.04 },
-            { name: 'U.S. Treasury bills', security: 'Maturities under six months', level: 1, method: 'Quoted price', input: 'Observable', weight: 58, cost: 0.998, income: true },
-            { name: 'Total return swaps (2 counterparties)', security: 'Single-name and basket swaps, net unrealized', level: 2, method: 'Model price from observable inputs', input: 'Underlying prices and financing spreads', weight: 2.5, cost: 0 }
+            { id: 'pb-long-short-equity-long-book-46-positions', name: 'Equity long book (46 positions)', security: 'Listed equities, North America and Europe', level: 1, method: 'Quoted price: exchange closing price', input: 'Observable', weight: 104, cost: 0.86 },
+            { id: 'pb-long-short-equity-short-book-31-positions', name: 'Equity short book (31 positions)', security: 'Securities sold short', level: 1, method: 'Quoted price: exchange closing price', input: 'Observable', weight: -73, cost: 1.04 },
+            { id: 'pb-long-short-u-s-treasury-bills', name: 'U.S. Treasury bills', security: 'Maturities under six months', level: 1, method: 'Quoted price', input: 'Observable', weight: 58, cost: 0.998, income: true },
+            { id: 'pb-long-short-total-return-swaps-2-counterparties', name: 'Total return swaps (2 counterparties)', security: 'Single-name and basket swaps, net unrealized', level: 2, method: 'Model price from observable inputs', input: 'Underlying prices and financing spreads', weight: 2.5, cost: 0 }
           ]
         },
         {
@@ -521,11 +526,11 @@
           ],
           update: 'Staking income was 3.1% annualized on staked ETH and SOL in the third quarter.',
           holdings: [
-            { name: 'Bitcoin (BTC)', symbol: 'BTC', security: 'Spot, cold storage', level: 1, method: 'Quoted price: principal market, 23:59:59 UTC', input: 'Observable', weight: 47, cost: 0.52, price: 19500, beta: 1, decimals: 8, custodian: 'Qualified custodian A, cold storage', wallet: 'bc1q8z…4h7k' },
-            { name: 'Ether (ETH)', symbol: 'ETH', security: 'Spot, 62% staked', level: 1, method: 'Quoted price: principal market, 23:59:59 UTC', input: 'Observable', weight: 27, cost: 0.61, price: 1050, beta: 1.2, decimals: 8, custodian: 'Qualified custodian A, staking', wallet: '0x71C2…9aE3', custodyDiff: { from: '2026-10-28', qty: 0.4123, note: 'Staking rewards credited by the custodian on Oct 28 are not yet recorded in the books' } },
-            { name: 'Solana (SOL)', symbol: 'SOL', security: 'Spot, 80% staked', level: 1, method: 'Quoted price: principal market, 23:59:59 UTC', input: 'Observable', weight: 13, cost: 0.44, price: 33, beta: 1.5, decimals: 8, custodian: 'Qualified custodian A, staking', wallet: '7xKX…q2Lm' },
-            { name: 'USD Coin (USDC)', symbol: 'USDC', security: 'Stablecoin', level: 2, method: 'Redemption value with the issuer', input: '1 USDC = $1.00', weight: 6, cost: 1, price: 1, beta: 0, decimals: 2, income: true, custodian: 'Qualified custodian A, hot wallet', wallet: '0x3fA9…77b1' },
-            { name: 'Lattice Ledger (LTL) token purchase agreement', security: 'Locked tokens, unlock March 2027', level: 3, method: 'Quoted price less discount for lack of marketability', input: 'DLOM 30%', weight: 4, cost: 0.8, custodian: 'Held by the issuer under the agreement', support: { every: 3, doc: 'Quarterly valuation memo' } }
+            { id: 'pb-digital-bitcoin-btc', name: 'Bitcoin (BTC)', symbol: 'BTC', security: 'Spot, cold storage', level: 1, method: 'Quoted price: principal market, 23:59:59 UTC', input: 'Observable', weight: 47, cost: 0.52, price: 19500, beta: 1, decimals: 8, custodian: 'Qualified custodian A, cold storage', wallet: 'bc1q8z…4h7k' },
+            { id: 'pb-digital-ether-eth', name: 'Ether (ETH)', symbol: 'ETH', security: 'Spot, 62% staked', level: 1, method: 'Quoted price: principal market, 23:59:59 UTC', input: 'Observable', weight: 27, cost: 0.61, price: 1050, beta: 1.2, decimals: 8, custodian: 'Qualified custodian A, staking', wallet: '0x71C2…9aE3', custodyDiff: { from: '2026-10-28', qty: 0.4123, note: 'Staking rewards credited by the custodian on Oct 28 are not yet recorded in the books' } },
+            { id: 'pb-digital-solana-sol', name: 'Solana (SOL)', symbol: 'SOL', security: 'Spot, 80% staked', level: 1, method: 'Quoted price: principal market, 23:59:59 UTC', input: 'Observable', weight: 13, cost: 0.44, price: 33, beta: 1.5, decimals: 8, custodian: 'Qualified custodian A, staking', wallet: '7xKX…q2Lm' },
+            { id: 'pb-digital-usd-coin-usdc', name: 'USD Coin (USDC)', symbol: 'USDC', security: 'Stablecoin', level: 2, method: 'Redemption value with the issuer', input: '1 USDC = $1.00', weight: 6, cost: 1, price: 1, beta: 0, decimals: 2, income: true, custodian: 'Qualified custodian A, hot wallet', wallet: '0x3fA9…77b1' },
+            { id: 'pb-digital-lattice-ledger-ltl-token-purchase-agreement', name: 'Lattice Ledger (LTL) token purchase agreement', security: 'Locked tokens, unlock March 2027', level: 3, method: 'Quoted price less discount for lack of marketability', input: 'DLOM 30%', weight: 4, cost: 0.8, custodian: 'Held by the issuer under the agreement', support: { every: 3, doc: 'Quarterly valuation memo' } }
           ]
         },
         {
@@ -567,13 +572,13 @@
             { name: 'Cash management', weight: 5, mu: 0.04, vol: 0.001 }
           ],
           holdings: [
-            { sleeve: 'Equity long/short', name: 'Equity long/short book (net 33% long)', security: 'Listed equities and index futures', level: 1, method: 'Quoted price: exchange closing price', input: 'Observable', weight: 34, cost: 0.9 },
-            { sleeve: 'Credit', name: 'High-yield bonds and leveraged loans (71 positions)', security: 'Corporate credit', level: 2, method: 'Broker quotes and pricing service', input: 'Observable quotes', weight: 18, cost: 0.97, income: true },
-            { sleeve: 'Credit', name: 'Direct lending (4 loans)', security: 'Senior secured loans', level: 3, method: 'Income approach: yield analysis', input: 'Market yield 11.5%', weight: 8, cost: 1, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { sleeve: 'Global macro', name: 'Government bonds, futures and FX forwards', security: 'Rates, currencies and commodities', level: 1, method: 'Quoted price', input: 'Observable', weight: 20, cost: 0.99 },
-            { sleeve: 'Event-driven', name: 'Merger arbitrage and special situations (24 positions)', security: 'Listed equities and credit', level: 1, method: 'Quoted price: exchange closing price', input: 'Observable', weight: 12, cost: 0.93 },
-            { sleeve: 'Event-driven', name: 'Litigation finance claims (3)', security: 'Contingent claims', level: 3, method: 'Income approach: probability-weighted cash flows', input: 'Probability of success 55–70%', weight: 3, cost: 0.85, support: { every: 3, doc: 'Quarterly valuation memo' } },
-            { sleeve: 'Cash management', name: 'U.S. Treasury bills', security: 'Maturities under three months', level: 1, method: 'Quoted price', input: 'Observable', weight: 5, cost: 0.999, income: true }
+            { id: 'pb-multi-equity-long-short-book-net-33-long', sleeve: 'Equity long/short', name: 'Equity long/short book (net 33% long)', security: 'Listed equities and index futures', level: 1, method: 'Quoted price: exchange closing price', input: 'Observable', weight: 34, cost: 0.9 },
+            { id: 'pb-multi-high-yield-bonds-and-leveraged-loans-71-positions', sleeve: 'Credit', name: 'High-yield bonds and leveraged loans (71 positions)', security: 'Corporate credit', level: 2, method: 'Broker quotes and pricing service', input: 'Observable quotes', weight: 18, cost: 0.97, income: true },
+            { id: 'pb-multi-direct-lending-4-loans', sleeve: 'Credit', name: 'Direct lending (4 loans)', security: 'Senior secured loans', level: 3, method: 'Income approach: yield analysis', input: 'Market yield 11.5%', weight: 8, cost: 1, income: true, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'pb-multi-government-bonds-futures-and-fx-forwards', sleeve: 'Global macro', name: 'Government bonds, futures and FX forwards', security: 'Rates, currencies and commodities', level: 1, method: 'Quoted price', input: 'Observable', weight: 20, cost: 0.99 },
+            { id: 'pb-multi-merger-arbitrage-and-special-situations-24-positions', sleeve: 'Event-driven', name: 'Merger arbitrage and special situations (24 positions)', security: 'Listed equities and credit', level: 1, method: 'Quoted price: exchange closing price', input: 'Observable', weight: 12, cost: 0.93 },
+            { id: 'pb-multi-litigation-finance-claims-3', sleeve: 'Event-driven', name: 'Litigation finance claims (3)', security: 'Contingent claims', level: 3, method: 'Income approach: probability-weighted cash flows', input: 'Probability of success 55–70%', weight: 3, cost: 0.85, support: { every: 3, doc: 'Quarterly valuation memo' } },
+            { id: 'pb-multi-u-s-treasury-bills', sleeve: 'Cash management', name: 'U.S. Treasury bills', security: 'Maturities under three months', level: 1, method: 'Quoted price', input: 'Observable', weight: 5, cost: 0.999, income: true }
           ]
         },
         {
@@ -593,7 +598,7 @@
             { label: 'Lead investor', value: 'Pellbrook Ventures I, L.P.', show: true }
           ],
           update: 'Quillon shipped its second-generation picking robot to three new warehouse customers in the third quarter.',
-          holdings: [{ name: 'Quillon Robotics, Inc.', security: 'Series C preferred stock', level: 3, method: 'Recent financing round, calibrated', input: 'Series C price $4.12 per share', weight: 100, cost: 0.97, support: { every: 3, doc: 'Quarterly valuation memo' } }]
+          holdings: [{ id: 'pb-spv-quillon-quillon-robotics-inc', name: 'Quillon Robotics, Inc.', security: 'Series C preferred stock', level: 3, method: 'Recent financing round, calibrated', input: 'Series C price $4.12 per share', weight: 100, cost: 0.97, support: { every: 3, doc: 'Quarterly valuation memo' } }]
         },
         {
           id: 'pb-ventures-ii',

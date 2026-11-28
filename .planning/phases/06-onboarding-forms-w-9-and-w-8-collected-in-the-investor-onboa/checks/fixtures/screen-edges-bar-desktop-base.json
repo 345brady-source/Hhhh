@@ -1,0 +1,46 @@
+{
+ "the sign-up page": {
+  "position": "fixed",
+  "box": [
+   16,
+   744,
+   335.4,
+   40
+  ],
+  "viewPad": "0px",
+  "mainPad": ""
+ },
+ "the console Overview": {
+  "position": "fixed",
+  "box": [
+   16,
+   744,
+   774.6,
+   40
+  ],
+  "viewPad": "0px",
+  "mainPad": "104px"
+ },
+ "Investors": {
+  "position": "fixed",
+  "box": [
+   16,
+   744,
+   774.6,
+   40
+  ],
+  "viewPad": "0px",
+  "mainPad": "104px"
+ },
+ "the investor’s Home": {
+  "position": "fixed",
+  "box": [
+   16,
+   744,
+   774.6,
+   40
+  ],
+  "viewPad": "64px",
+  "mainPad": ""
+ }
+}

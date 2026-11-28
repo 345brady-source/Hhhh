@@ -1,0 +1,20 @@
+Subject: Harbor Ridge Capital: your Form W-9
+Preheader: Harbor Ridge Capital asks you to complete your Form W-9.
+
+Dear Anita,
+
+Harbor Ridge Capital asks you to complete your Form W-9.
+
+The link below opens your Form W-9, filled in from the details we hold. You check it and sign it online, or upload a completed form instead. Nothing else is asked.
+
+Complete your tax form:
+https://portal.example/portal.html?server=https%3A%2F%2Fapi.example#invite-sample
+
+This link is personal to you; please do not forward it. It expires on December 10, 2026.
+
+Questions? Contact Investor Relations at ir@harborridge.example or +1 212 555 0100.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

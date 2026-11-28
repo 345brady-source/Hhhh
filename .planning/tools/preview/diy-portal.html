@@ -1,0 +1,84 @@
+<title>Carrow &amp; Vale</title>
+<script>
+// Light is the portal's standard look: set it before the first paint. What the host frame asked for is kept aside, so a
+// firm or a viewer who chooses "Match this device" still follows it. Once, this also clears a look chosen earlier in this
+// preview, so the standard shows; Dark and Match this device can be chosen again on the Account page.
+(function () {
+  var r = document.documentElement;
+  r.setAttribute('data-host-theme', r.getAttribute('data-theme') || '');
+  r.setAttribute('data-theme', 'light');
+  try {
+    if (localStorage.getItem('cv-preview-light') !== '1') { localStorage.removeItem('sdesk1:appearance'); localStorage.setItem('cv-preview-light', '1'); }
+  } catch (e) {}
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500&amp;family=Funnel+Sans:wght@400;500&amp;family=Caveat:wght@500&amp;display=swap">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/portal.css">
+<link rel="stylesheet" href="assets/css/console.css">
+<link rel="stylesheet" href="assets/css/esign.css">
+<link rel="stylesheet" href="assets/css/diy.css">
+<link rel="stylesheet" href="assets/css/filings.css">
+<link rel="stylesheet" href="assets/css/tax.css">
+<div id="app"></div>
+<script>
+// One-time reset of this preview: clears what was entered before, so it opens as a first-time sponsor sign-up. Runs once per browser.
+try {
+  if (localStorage.getItem('cv-preview-reset') !== 'fresh-6') {
+    Object.keys(localStorage).filter(function (k) { return k.indexOf('sdesk1:') === 0; }).forEach(function (k) { localStorage.removeItem(k); });
+    try { indexedDB.deleteDatabase('cvp-documents'); } catch (e) {}
+    localStorage.setItem('cv-preview-reset', 'fresh-6');
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  }
+} catch (e) {}
+</script>
+<script>window.CVPortalEdition = 'diy';</script>
+<script src="assets/js/edition.js"></script>
+<script src="assets/js/brand.js"></script>
+<script src="assets/js/tenants.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/workspace.js"></script>
+<script src="assets/js/nacha.js"></script>
+<script src="assets/js/charts.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/documents.js"></script>
+<script src="assets/js/portal.js"></script>
+<script src="assets/js/engrave.js"></script>
+<script src="assets/js/onboarding.js"></script>
+<script src="assets/js/structures.js"></script>
+<script src="assets/js/audit.js"></script>
+<script src="assets/js/operations.js"></script>
+<script src="assets/js/books.js"></script>
+<script src="assets/js/books-post.js"></script>
+<script src="assets/js/eligibility.js"></script>
+<script src="assets/js/reader.js"></script>
+<script src="assets/js/intake.js"></script>
+<script src="assets/js/console.js"></script>
+<script src="assets/js/amlprogram.js"></script>
+<script src="assets/js/anchors.js"></script>
+<script src="assets/js/placement.js"></script>
+<script src="assets/js/meaning.js"></script>
+<script src="assets/js/picturepage.js"></script>
+<script src="assets/js/textread.js"></script>
+<script src="assets/js/esign.js"></script>
+<script src="assets/js/taxmaps.js"></script>
+<script src="assets/js/taxforms.js"></script>
+<script src="assets/js/record.js"></script>
+<script src="assets/js/signflow.js"></script>
+<script src="assets/js/signature.js"></script>
+<script src="assets/js/fieldeditor.js"></script>
+<script src="assets/js/integrations.js"></script>
+<script src="assets/js/package.js"></script>
+<script src="assets/js/diy.js"></script>
+<script src="assets/js/invitations.js"></script>
+<script src="assets/js/coinvestor.js"></script>
+<script src="help-data.js"></script>
+<script src="help-preview.js"></script>
+<script src="assets/js/help.js"></script>
+<script src="assets/js/filings.js"></script>
+<script src="assets/js/filings-ui.js"></script>
+<script src="assets/js/taxdocs.js"></script>
+<script src="assets/js/taxdocs-ui.js"></script>

@@ -1,0 +1,22 @@
+Subject: Harbor Ridge Capital: set up your investor account
+Preheader: Harbor Ridge Capital has invited you to set up your investor account.
+
+Dear Anita,
+
+Harbor Ridge Capital has invited you to set up your investor account.
+
+The link below takes you through everything in one place, in about 10 to 15 minutes: your login, investor information, identity verification, tax certification, and where to send distributions. Your progress is saved, so you can stop and come back.
+
+Have a government-issued photo ID and your bank account details ready.
+
+Set up your account:
+https://portal.example/portal.html?server=https%3A%2F%2Fapi.example#invite-sample
+
+This link is personal to you; please do not forward it. It expires on December 10, 2026.
+
+Questions? Contact Investor Relations at ir@harborridge.example or +1 212 555 0100.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

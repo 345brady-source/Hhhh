@@ -1,0 +1,8 @@
+FAIL consent ran to the end :: frame.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#dlg form[data-form="help-ask"] input')[22m
+
+    at askQ (/home/user/Hhhh/.claude/worktrees/agent-ad8dc6b8b5914732f/.planning/phases/07-help-chatbot/checks/help-preview.js:215:14)
+    at async Object.consent (/home/user/Hhhh/.claude/worktrees/agent-ad8dc6b8b5914732f/.planning/phases/07-help-chatbot/checks/help-preview.js:452:7)
+    at async Object.runParts (/home/user/Hhhh/.claude/worktrees/agent-ad8dc6b8b5914732f/.planning/phases/06-onboarding-forms-w-9-and-w-8-collected-in-the-investor-onboa/checks/lib.js:708:7)
+HELP PREVIEW: FAIL (parts run: 1) - consent

@@ -1,0 +1,60 @@
+console-overview.html
+  FAIL 19 :52 dash "—" in copy | fix: A comma, a colon, a full stop or parentheses; never a dash
+  FAIL 63 :10 middle-dot meta string "Direction A, "the private bank's annual report": …" | fix: Line breaks, columns or hairlines; one dot in a byline at most
+  FAIL 67 :23 "AML/KYC" typed in capitals at 15px tracked 0.06em (<a>) | fix: Sentence case in the body face; capitals survive only as a wordmark or as the display voice
+  WARN F1 :10 straight quote in prose x5 (first: Direction A, "the private ban) | fix: Use typographic quotes: “ ” ’
+  WARN F23 :1 the document lacks a meta description | fix: Name the language, title the page in its own words, and describe it in one sentence for link previews
+a.css
+  FAIL 20 :1 no Hallmark stamp on the first non-empty line of any CSS | fix: The stamp comment is line 1 of the CSS; only @charset may precede it
+  FAIL 34 :1 no overflow-x: clip on html and body | fix: overflow-x: clip on both html and body
+  FAIL 48 :49 colour literal #fff outside tokens (color on .iconbtn .count) | fix: Lift the value into the token block
+  FAIL 67 :58 .wm span: letter-spaced tracked 0.04em at 14px in a label role | fix: Labels, captions, table heads, nav links and meta are the body face (or the theme's label face), a step smaller, sentence case, untracked
+  FAIL 67 :63 .grp-l: letter-spaced tracked 0.08em at 14px in a label role
+  FAIL 67 :90 .hl dt: letter-spaced tracked 0.04em at 14px in a label role
+  FAIL 67 :95 .ledger thead th: letter-spaced tracked 0.04em at 14px in a label role
+  FAIL 67 :104 .ledger tfoot th: letter-spaced tracked 0.06em at 14px in a label role
+  FAIL 67 :125 .nav-in a: letter-spaced tracked 0.06em at 16px in a label role
+  FAIL 67 :136 .notice time: letter-spaced tracked 0.04em at 14px in a label role
+  FAIL 67 :192 .cc-x: letter-spaced tracked 0.04em at 12px in a label role
+  FAIL 67 :220 .menu: letter-spaced tracked 0.06em at 14px in a label role
+  FAIL 67 :231 .ledger.stack td::before: letter-spaced tracked 0.04em at 14px in a label role
+  REFLEX 24b :35 padding: 0 18px (off the 4px scale) on .btn | fix: Use the 4px spacing scale
+  REFLEX 24b :46 gap: 10px (off the 4px scale) on .ask
+  REFLEX 24b :49 padding: 0 5px (off the 4px scale) on .iconbtn .count
+  REFLEX 24b :63 padding: 0 28px 6px (off the 4px scale) on .grp-l
+  REFLEX 24b :67 padding: 0 6px (off the 4px scale) on .rail .n
+  REFLEX 24b :71 margin-top: 10px (off the 4px scale) on .head p
+  REFLEX 24b :73 padding-bottom: 10px (off the 4px scale) on .block-h
+  REFLEX 24b :83 gap: 14px (off the 4px scale) on .agenda .act
+  REFLEX 24b :87 padding: 20px 20px 18px 0 (off the 4px scale) on .hl > div
+  REFLEX 24b :90 margin-top: 10px (off the 4px scale) on .hl dt
+  REFLEX 24b :95 padding: 12px 14px 10px (off the 4px scale) on .ledger thead th
+  REFLEX 24b :97 padding: 14px (off the 4px scale) on .ledger td, .ledger tbody th
+  REFLEX 24b :103 padding: 14px (off the 4px scale) on .ledger tfoot th, .ledger tfoot td
+  REFLEX 24b :109 gap: 14px (off the 4px scale) on .attn li
+  REFLEX 24b :109 padding: 14px 0 (off the 4px scale) on .attn li
+  REFLEX 24b :138 gap: 18px (off the 4px scale) on .notice .acts
+  REFLEX 24b :142 gap: 6px (off the 4px scale) on .lad-row
+  REFLEX 24b :142 margin-bottom: 22px (off the 4px scale) on .lad-row
+  REFLEX 24b :151 gap: 6px (off the 4px scale) on .keyed
+  REFLEX 24b :158 gap: 6px (off the 4px scale) on .tl
+  REFLEX 24b :166 gap: 6px 12px (off the 4px scale) on .offer dl
+  REFLEX 24b :170 padding: 14px 10px 14px 0 (off the 4px scale) on .stats > div
+  REFLEX 24b :173 margin-top: 6px (off the 4px scale) on .stats dt
+  REFLEX 24b :175 padding: 14px 0 (off the 4px scale) on .docs li
+  REFLEX 24b :180 gap: 6px 28px (off the 4px scale) on .pf-row
+  REFLEX 24b :188 margin-bottom: 6px (off the 4px scale) on .cc b
+  REFLEX 24b :220 padding: 0 14px (off the 4px scale) on .menu
+  REFLEX 24b :222 gap: 6px (off the 4px scale) on .acct
+  REFLEX 24b :228 padding: 14px 0 (off the 4px scale) on .ledger.stack tr
+  REFLEX 24b :238 padding: 14px 0 4px (off the 4px scale) on .ledger.stack tfoot th
+  REFLEX 24b :240 padding-bottom: 10px (off the 4px scale) on .ledger.stack tfoot tr:last-child td:last-child
+  REFLEX 24b :243 margin-bottom: 14px (off the 4px scale) on .cc b
+  REFLEX 26b :1 no :active styling anywhere | fix: All eight states; guard: not a form control, no aria-disabled anywhere
+  REFLEX 26b :1 no :disabled styling anywhere
+  WARN F3 :21 no text-wrap: balance on any display head (4 head rule(s), e.g. h1, h2, h3) | fix: Add text-wrap: balance to h1/h2-level heads
+portal-home.html
+  FAIL 67 :86 "Q4 24 Q1 25 Q2 25 Q3 25 Q4 25 Q…" typed in capitals tracked 0.04em (<div class="cc-x">)
+  WARN F1 :11 straight quote in prose x5 (first: he sample sponsor's own mark and)
+  WARN F23 :1 the document lacks a meta description
+sloplint: 17 FAIL, 34 REFLEX, 5 WARN across 3 file(s).

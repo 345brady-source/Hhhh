@@ -43,3 +43,49 @@ export function mockFetch(routes) {
   f.calls = calls;
   return f;
 }
+
+/*
+ * White-label leak scans of emails: the random token parts of links taken out first, so a vendor word that a random
+ * token holds by chance ("...9DiyTq...", "...iRoNnXN...") is not reported as a leak. Every other character stays in the
+ * text the scan sees, the link's host and its path words included. Taken out, each replaced with "~":
+ *   - the token or path segment after an invite or sign-in link prefix (#invite-, #room-, #taxdoc-, /invite/, /signin/);
+ *   - the values of the query keys token=, t=, sig=, signature= (also after "&amp;" in HTML);
+ *   - after the host, any run of 16 or more base64url characters that mixes capitals, small letters and digits, as a
+ *     random token does (a lower-case path word such as "powered-by-carrow-2026" stays and is still scanned).
+ * Only the vendor-name regexes run over this; the "basic" and taxpayer-number checks keep the raw text.
+ * The phase 6 browser checks hold the same rules in their lib.js (stripLinkTokens), kept the same as here.
+ */
+const LINK_RE = /\bhttps?:\/\/[^\s"'<>()]+/gi;
+const PREFIX_TOKEN_RE = /([#/](?:invite|sign-?in|room|taxdoc)[-/=])[A-Za-z0-9_-]+/gi;
+const QUERY_TOKEN_RE = /([?&;#](?:token|t|sig|signature)=)[^&;#\s"'<>]*/gi;
+const RANDOM_RUN_RE = /[A-Za-z0-9_-]{16,}/g;
+export function stripLinkTokens(text) {
+  return String(text === undefined || text === null ? '' : text).replace(LINK_RE, (url) => {
+    const start = url.indexOf('//') + 2;
+    const at = url.slice(start).search(/[/?#]/);
+    if (at < 0) return url; // only a host: all of it is scanned
+    const cut = start + at;
+    const rest = url
+      .slice(cut)
+      .replace(PREFIX_TOKEN_RE, '$1~')
+      .replace(QUERY_TOKEN_RE, '$1~')
+      .replace(RANDOM_RUN_RE, (run) => (/[A-Z]/.test(run) && /[a-z]/.test(run) && /\d/.test(run) ? '~' : run));
+    return url.slice(0, cut) + rest;
+  });
+}
+
+/*
+ * Every key, at any depth, of a parsed JSON value (the objects inside arrays included). A check that a reply holds no
+ * secret field (a hash, a salt, a session) runs over these names, not over the whole reply text: the text also holds
+ * random ids, and one that holds "pw" or "Hash" by chance is no secret field. The values stay pinned by the test's own
+ * deepEqual of the reply, and its includes() checks of the real secrets.
+ */
+export function keysDeep(value, out = []) {
+  if (Array.isArray(value)) for (const v of value) keysDeep(v, out);
+  else if (value && typeof value === 'object')
+    for (const [k, v] of Object.entries(value)) {
+      out.push(k);
+      keysDeep(v, out);
+    }
+  return out;
+}

@@ -1,0 +1,20 @@
+Subject: Shah, Anita verified their accreditation again
+Preheader: Shah, Anita went through your request to verify their accreditation again on November 10, 2026.
+
+Shah, Anita went through your request to verify their accreditation again on November 10, 2026.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+Accredited investor: Verified
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Next: the console adds the result to the investor’s record the next time it is open.
+
+Nothing else in their investor record changes.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

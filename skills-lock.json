@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "skills": {
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "commit": "11ca2b3bdd555649f278ee348c32a9302b24dcf1",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "e960cc1c18fed7c3a88e4c2129157e35939e5e039b44b1e8d6b333fafa7653bb"
+    }
+  }
+}

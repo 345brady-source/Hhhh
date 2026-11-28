@@ -91,11 +91,16 @@ export function quotedPrintable(str) {
 const base64Lines = (buf) => (Buffer.from(buf).toString('base64').match(/.{1,76}/g) || []).join('\r\n');
 const boundary = () => `=_${randomBytes(12).toString('hex')}`;
 
+const MESSAGE_ID = /^[0-9a-f]{32}@[\w.-]{1,253}$/;
+/** A new Message-ID (without its angle brackets) in the sending domain: the sent log matches delivery events by it. */
+export const newMessageId = (domain) => `${randomBytes(16).toString('hex')}@${String(domain || 'localhost').replace(/[^\w.-]/g, '') || 'localhost'}`;
+
 /**
  * Build a complete message (CRLF line ends). msg: { from: { name, address }, to: { name, address },
  * replyTo, subject, text, html, inline: [{ cid, contentType, data: Buffer }], date: Date, domain,
- * headers: { Name: value } }. Text and HTML go in multipart/alternative; inline images (a logo)
- * wrap it in multipart/related.
+ * headers: { Name: value }, messageId }. messageId (newMessageId's form) is the caller's, so it can be logged; one is
+ * made when it is missing. Text and HTML go in multipart/alternative; inline images (a logo) wrap it in
+ * multipart/related.
  */
 export function buildMessage(msg) {
   const date = msg.date || new Date();
@@ -107,7 +112,7 @@ export function buildMessage(msg) {
   ];
   if (msg.replyTo && validAddress(msg.replyTo)) lines.push(`Reply-To: <${msg.replyTo}>`);
   lines.push(headerLine('Subject', msg.subject));
-  lines.push(`Message-ID: <${randomBytes(16).toString('hex')}@${domain}>`);
+  lines.push(`Message-ID: <${MESSAGE_ID.test(String(msg.messageId || '')) ? msg.messageId : newMessageId(domain)}>`);
   for (const [k, v] of Object.entries(msg.headers || {})) if (/^[A-Za-z][\w-]{0,60}$/.test(k)) lines.push(headerLine(k, v));
   lines.push('MIME-Version: 1.0');
   const alt = boundary();
@@ -350,279 +355,210 @@ export function smtpConfig(env) {
   };
 }
 
+/** The relay's id for an accepted message, from its reply to DATA ("250 Ok <id>", "... queued as <id>"), or ''. */
+export const relayIdOf = (response) => {
+  const m = /\b(?:Ok|OK|queued as)\s+<?([\w.@-]+)>?/.exec(String(response || ''));
+  return m ? m[1] : '';
+};
+
+/** The sentences the mailer answers with (the console shows them as they are). */
+export const MAIL_SAYS = Object.freeze({
+  notReady: 'Email sending from your domain is not set up yet.',
+  attachments: 'Emails never carry attachments.',
+  bounced: 'Earlier email to this address bounced, so nothing more is sent to it.',
+  complained: 'This person reported your email as unwanted, so no more of these are sent to them.'
+});
+// The record field a released message's new status is written to, for the invitations' own messages.
+const STATUS_FIELD = { invitation: 'emailStatus', invitation_resent: 'emailStatus', sponsor_notification: 'notifyStatus', submission_reminder: 'reminderStatus' };
+const LOGO = (x) => x && x.data && /^image\/(png|jpeg|gif)$/.test(x.contentType);
+
 /**
- * The server's mailer. send({ kind, invitationId, workspace, fromName, replyTo, to, toName, subject,
- * text, html, inline }) → { emailStatus: 'sent' | 'outbox' | 'failed', error? }. Without SMTP_HOST,
- * messages are sealed into the outbox (readable at GET /v1/outbox) instead of being sent.
+ * The server's mailer. createMailer({ env, store, vault, now, tls, senders, log }) → { configured, send, outbox, purge,
+ * release }.
+ * send({ kind, invitationId, refId, investorId, workspace, fromName, replyTo, to, toName, subject, text, html, inline,
+ *        headers, link, optional, commercial, attachments }) →
+ *   { emailStatus: 'sent' | 'outbox' | 'held' | 'failed' | 'suppressed', error?, logId? }
+ *   - Never an attachment (C-12): a message with any is refused; the only inline part kept is the firm's logo.
+ *   - The sender (EM-06, C-11): a workspace's message goes From the firm's name at the workspace's own ready address
+ *     (senders, lib/senders.mjs). On a server with sponsor accounts (a signed-up firm has one) a workspace whose domain is
+ *     not ready has its message held: kept sealed in the outbox, never sent from another domain. A single-sponsor server
+ *     (neither) uses MAIL_FROM as before; staff mail (workspace '') always uses MAIL_FROM.
+ *   - Suppression (EM-07): an address that bounced for good gets nothing; an address that complained about a workspace
+ *     gets no optional or possibly commercial mail from it.
+ *   - Without SMTP_HOST, messages are sealed into the outbox (readable at GET /v1/outbox) instead of being sent.
+ *   - With log (lib/maillog.mjs) every message leaves one sent-log entry, whatever became of it (logId).
+ * release(workspace) → { released, failed, suppressed }: once the workspace's domain is ready, its held messages younger
+ *   than OUTBOX_DAYS go out from its address.
  */
-export function createMailer({ env, store, vault, now = () => Date.now(), tls: tlsOpts } = {}) {
+export function createMailer({ env, store, vault, now = () => Date.now(), tls: tlsOpts, senders = null, log = null } = {}) {
   const cfg = smtpConfig(env);
   if (cfg && tlsOpts) cfg.tls = tlsOpts;
   const days = Number(env.OUTBOX_DAYS);
   const OUTBOX_DAYS = env.OUTBOX_DAYS !== undefined && env.OUTBOX_DAYS !== '' && Number.isFinite(days) && days >= 1 && days <= 365 ? days : 30;
+  const iso = () => new Date(now()).toISOString();
+  const refOf = (m) => m.refId || m.invitationId || '';
+  /** One sent-log entry for the message ('' when the mailer has no log). */
+  const logged = (m, status, extra = {}) => (log ? log.add(Object.assign({ workspace: m.workspace || '', kind: m.kind || '', refId: refOf(m), investorId: m.investorId || '', status, to: m.to, toName: m.toName || '', subject: m.subject, text: m.text, link: m.link }, extra)) : '');
+  const answer = (emailStatus, logId, error) => Object.assign({ emailStatus }, error ? { error } : {}, logId ? { logId } : {});
+  /** A server with sponsor accounts (a firm that signs up gets one too, lib/auth.mjs). */
+  const sponsors = () => store.list('accounts').length > 0;
+  /** { address } to send from, or { held: true } when the workspace's own domain is not ready. */
+  function senderFor(m) {
+    const ws = m.workspace || '';
+    if (!ws) return { address: env.MAIL_FROM };
+    const s = senders ? senders.get(ws) : null;
+    if (s && s.status === 'ready' && validAddress(s.address)) return { address: s.address };
+    return sponsors() ? { held: true } : { address: env.MAIL_FROM };
+  }
+  /** Suppressed for this message: the sentence, or ''. */
+  function stopped(m) {
+    if (!log) return '';
+    if (log.suppressed(m.to)) return MAIL_SAYS.bounced;
+    if ((m.optional || m.commercial) && log.optionalOff(m.workspace || '', m.to)) return MAIL_SAYS.complained;
+    return '';
+  }
+  /** Over SMTP from `from` → { ok, messageId, relayId, error }. */
+  async function deliver(from, m, replyTo) {
+    const messageId = newMessageId(from.split('@')[1]);
+    const data = buildMessage({ from: { name: m.fromName, address: from }, to: { name: m.toName, address: m.to }, replyTo, subject: m.subject, text: m.text, html: m.html, inline: m.inline, date: new Date(now()), headers: m.headers, messageId });
+    try {
+      const r = await smtpSend(cfg, { from, to: [m.to], data });
+      return { ok: true, messageId, relayId: relayIdOf(r.response) };
+    } catch (e) {
+      // Mail servers often quote the recipient in a refusal; the store keeps no addresses in plain text.
+      const error = redactAddresses(e.message).slice(0, 300);
+      store.event({ type: 'email_failed', kind: m.kind || '', invitationId: m.invitationId || '', error });
+      return { ok: false, messageId, relayId: '', error };
+    }
+  }
+  /** A released or dropped held message: its invitation's status follows. */
+  function follow(x, status) {
+    const field = STATUS_FIELD[x.kind];
+    if (!field || !x.invitationId || !store.get('invitations', x.invitationId)) return;
+    store.put('invitations', Object.assign({ id: x.invitationId, [field]: status }, field === 'emailStatus' ? { emailError: '' } : {}));
+  }
+
   return {
     configured: !!cfg,
-    async send(m) {
+    async send(m0) {
+      const m = Object.assign({}, m0, { inline: (m0.inline || []).filter(LOGO).slice(0, 1) });
       const replyTo = validAddress(m.replyTo) ? m.replyTo : validAddress(env.MAIL_REPLY_TO) ? env.MAIL_REPLY_TO : '';
-      if (!validAddress(m.to)) return { emailStatus: 'failed', error: 'The recipient’s email address is not valid' };
+      if (m0.attachments && !(Array.isArray(m0.attachments) && m0.attachments.length === 0)) return answer('failed', logged(m, 'failed', { error: MAIL_SAYS.attachments }), MAIL_SAYS.attachments);
+      if (!validAddress(m.to)) return answer('failed', logged(m, 'failed', { to: '' }), 'The recipient’s email address is not valid');
+      const stop = stopped(m);
+      if (stop) return answer('suppressed', logged(m, 'suppressed', { error: stop }), stop);
+      const who = senderFor(m);
       if (!cfg) {
-        const from = validAddress(env.MAIL_FROM) ? env.MAIL_FROM : '';
-        const rec = { id: id('msg'), at: new Date(now()).toISOString(), kind: m.kind || '', invitationId: m.invitationId || '', workspace: m.workspace || '' };
+        const from = who.address && validAddress(who.address) ? who.address : validAddress(env.MAIL_FROM) ? env.MAIL_FROM : '';
+        const rec = { id: id('msg'), at: iso(), kind: m.kind || '', invitationId: m.invitationId || '', workspace: m.workspace || '' };
         rec.box = vault.seal({ from: from ? formatAddress(m.fromName, from) : oneLine(m.fromName), to: m.to, toName: m.toName || '', replyTo, subject: m.subject, text: m.text, html: m.html }, `outbox:${rec.id}`);
+        const logId = logged(m, 'outbox');
+        if (logId) rec.logId = logId;
         store.put('outbox', rec);
-        return { emailStatus: 'outbox' };
+        return answer('outbox', logId);
       }
-      if (!validAddress(env.MAIL_FROM)) return { emailStatus: 'failed', error: 'Set MAIL_FROM on the integration server (the address messages are sent from)' };
-      const data = buildMessage({ from: { name: m.fromName, address: env.MAIL_FROM }, to: { name: m.toName, address: m.to }, replyTo, subject: m.subject, text: m.text, html: m.html, inline: m.inline, date: new Date(now()), headers: m.headers });
-      try {
-        await smtpSend(cfg, { from: env.MAIL_FROM, to: [m.to], data });
-        return { emailStatus: 'sent' };
-      } catch (e) {
-        // Mail servers often quote the recipient in a refusal; the store keeps no addresses in plain text.
-        const error = redactAddresses(e.message).slice(0, 300);
-        store.event({ type: 'email_failed', kind: m.kind || '', invitationId: m.invitationId || '', error });
-        return { emailStatus: 'failed', error };
+      if (who.held) {
+        // C-11: kept sealed in the outbox exactly as an outbox message is (and purged after OUTBOX_DAYS like one) until the
+        // workspace's domain is ready; never sent from another domain.
+        const rec = { id: id('msg'), at: iso(), kind: m.kind || '', invitationId: m.invitationId || '', workspace: m.workspace || '', held: true, reason: 'sender_not_ready' };
+        rec.box = vault.seal({ from: oneLine(m.fromName), to: m.to, toName: m.toName || '', replyTo, subject: m.subject, text: m.text, html: m.html }, `outbox:${rec.id}`);
+        rec.rel = vault.seal({ fromName: m.fromName || '', headers: m.headers || {}, inline: m.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, base64: Buffer.from(x.data).toString('base64') })), optional: !!m.optional, commercial: !!m.commercial, investorId: m.investorId || '' }, `outbox:${rec.id}:rel`);
+        const logId = logged(m, 'held', { error: MAIL_SAYS.notReady });
+        if (logId) rec.logId = logId;
+        store.put('outbox', rec);
+        return answer('held', logId, MAIL_SAYS.notReady);
       }
+      if (!validAddress(who.address)) {
+        const error = 'Set MAIL_FROM on the integration server (the address messages are sent from)';
+        return answer('failed', logged(m, 'failed', { error }), error);
+      }
+      const r = await deliver(who.address, m, replyTo);
+      if (!r.ok) return answer('failed', logged(m, 'failed', { error: r.error, messageId: r.messageId }), r.error);
+      return answer('sent', logged(m, 'sent', { messageId: r.messageId, relayId: r.relayId }));
     },
-    /** Outbox messages, newest first, optionally for one workspace or invitation. */
+    /** Outbox messages (held ones marked held), newest first, optionally for one workspace or invitation. */
     outbox({ workspace, invitationId } = {}) {
       return store
         .list('outbox')
         .filter((x) => (!workspace || x.workspace === workspace) && (!invitationId || x.invitationId === invitationId))
         .sort((a, b) => (a.at < b.at ? 1 : -1))
         .slice(0, 200)
-        .map((x) => Object.assign({ id: x.id, at: x.at, kind: x.kind, invitationId: x.invitationId, workspace: x.workspace }, vault.open(x.box, `outbox:${x.id}`)));
+        .map((x) => Object.assign({ id: x.id, at: x.at, kind: x.kind, invitationId: x.invitationId, workspace: x.workspace }, x.held ? { held: true } : {}, vault.open(x.box, `outbox:${x.id}`)));
     },
-    /** Drop outbox messages older than OUTBOX_DAYS (they carry live links). */
+    /** Drop outbox messages (held ones too) older than OUTBOX_DAYS (they carry live links). */
     purge(nowMs = now()) {
       let n = 0;
       for (const x of store.list('outbox')) if (Date.parse(x.at) + OUTBOX_DAYS * 864e5 < nowMs) n += store.remove('outbox', x.id) ? 1 : 0;
       return n;
+    },
+    /** The workspace's held messages, sent from its own address now that its domain is ready (oldest first). */
+    async release(workspace) {
+      const out = { released: 0, failed: 0, suppressed: 0 };
+      const s = cfg && senders && workspace ? senders.get(workspace) : null;
+      if (!s || s.status !== 'ready' || !validAddress(s.address)) return out;
+      const held = store
+        .list('outbox')
+        .filter((x) => x.held && x.workspace === workspace && Date.parse(x.at) + OUTBOX_DAYS * 864e5 >= now())
+        .sort((a, b) => (a.at < b.at ? -1 : 1));
+      for (const x of held) {
+        const b = vault.open(x.box, `outbox:${x.id}`) || {};
+        const rel = (x.rel && vault.open(x.rel, `outbox:${x.id}:rel`)) || {};
+        const m = { kind: x.kind, invitationId: x.invitationId, workspace, fromName: rel.fromName, to: b.to, toName: b.toName, subject: b.subject, text: b.text, html: b.html, headers: rel.headers, optional: rel.optional, commercial: rel.commercial, inline: (rel.inline || []).map((i) => ({ cid: i.cid, contentType: i.contentType, data: Buffer.from(i.base64, 'base64') })) };
+        const stop = stopped(m);
+        if (stop) {
+          store.remove('outbox', x.id);
+          if (log && x.logId) log.update(x.logId, { status: 'suppressed', error: stop });
+          follow(x, 'suppressed');
+          out.suppressed++;
+          continue;
+        }
+        const r = await deliver(s.address, m, b.replyTo);
+        if (!r.ok) {
+          // Still held: tried again at the next check that finds the domain ready.
+          if (log && x.logId) log.update(x.logId, { error: r.error });
+          out.failed++;
+          continue;
+        }
+        store.remove('outbox', x.id);
+        if (log && x.logId) log.update(x.logId, { status: 'sent', messageId: r.messageId, relayId: r.relayId, error: '' });
+        follow(x, 'sent');
+        out.released++;
+      }
+      return out;
     }
   };
 }
 
 /* ---------- The firm's messages ---------- */
 
-const esc = (s) => String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const hex = (c) => (/^#[0-9a-f]{6}$/i.test(String(c || '')) ? c : /^#[0-9a-f]{3}$/i.test(String(c || '')) ? `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}` : '');
-export function money(cents, currency) {
-  const n = Math.round(Number(cents) || 0) / 100;
-  try {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD', minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(n);
-  } catch {
-    return `${currency || 'USD'} ${n.toLocaleString('en-US')}`;
-  }
-}
-export function longDate(iso) {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-}
-/** A raster logo data URL becomes an inline image (most email apps block data: URLs). */
-function logoPart(firm) {
-  const m = /^data:(image\/(?:png|jpeg|gif));base64,([A-Za-z0-9+/=\s]+)$/.exec(String((firm && firm.logo) || ''));
-  return m ? { cid: 'logo@firm', contentType: m[1], data: Buffer.from(m[2], 'base64') } : null;
-}
-function supportLine(firm) {
-  const bits = [firm.supportEmail, firm.supportPhone].filter(Boolean);
-  const who = firm.supportTeam || firm.name;
-  return bits.length ? `${who}: ${bits.join(', ')}` : who;
-}
-function footerText(firm) {
-  return [firm.legalName || firm.name, firm.disclaimer].filter(Boolean).join('\n\n');
-}
+// The wording and layout of every message live in assets/js/emails.js, the one template set the console's previews use too
+// (plan 13-01, EM-01); the builders below hand it the same data and turn its inline parts into Buffers.
+import { createRequire } from 'node:module';
+const emails = createRequire(import.meta.url)('../../assets/js/emails.js');
+const delivered = (r) => ({ subject: r.subject, preheader: r.preheader, text: r.text, html: r.html, inline: r.inline.map((x) => ({ cid: x.cid, contentType: x.contentType, data: Buffer.from(x.base64, 'base64') })), commercial: !!r.commercial }); // commercial: the mailer's complaint rule (13-03)
 
-/** Shared layout: text and HTML from the same parts. parts: { greeting, paras, note, rows, button, after }. */
-function compose(firm, subject, parts) {
-  const primary = hex(firm.colors && firm.colors.primary) || '#0F2742';
-  const logo = logoPart(firm);
-  const text = [];
-  if (parts.greeting) text.push(parts.greeting);
-  for (const p of parts.paras || []) text.push(p);
-  if (parts.note) text.push(`${parts.note.from}:\n${parts.note.text.split('\n').map((l) => `> ${l}`).join('\n')}`);
-  if (parts.rows && parts.rows.length) text.push(parts.rows.map(([k, v]) => `${k}: ${oneLine(v)}`).join('\n'));
-  if (parts.button) text.push(`${parts.button.label}:\n${parts.button.href}`);
-  for (const p of parts.after || []) text.push(p);
-  text.push(`--\n${footerText(firm)}`);
-
-  const p = (s) => `<p style="margin:0 0 16px">${esc(s).replace(/\n/g, '<br>')}</p>`;
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
-<body style="margin:0;padding:0;background:#f4f5f7;color:#1b1f24;font:16px/1.55 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7"><tr><td align="center" style="padding:24px 12px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border:1px solid #e2e5e9;border-radius:6px">
-<tr><td style="padding:20px 28px;border-bottom:3px solid ${primary}">${logo ? `<img src="cid:${logo.cid}" alt="${esc(firm.name)}" style="max-height:44px;max-width:220px;border:0">` : `<span style="font-size:19px;font-weight:700;color:${primary}">${esc(firm.name)}</span>`}</td></tr>
-<tr><td style="padding:28px">
-${parts.greeting ? p(parts.greeting) : ''}${(parts.paras || []).map(p).join('')}${
-    parts.note ? `<p style="margin:0 0 6px;color:#5b6470;font-size:14px">${esc(parts.note.from)}:</p><blockquote style="margin:0 0 16px;padding:10px 14px;border-left:3px solid ${primary};background:#f7f8fa">${esc(parts.note.text).replace(/\n/g, '<br>')}</blockquote>` : ''
-  }${
-    parts.rows && parts.rows.length
-      ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 20px;border-collapse:collapse;font-size:15px">${parts.rows.map(([k, v]) => `<tr><td style="padding:7px 12px 7px 0;color:#5b6470;border-bottom:1px solid #eef0f2;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="padding:7px 0;border-bottom:1px solid #eef0f2;font-weight:600">${esc(v)}</td></tr>`).join('')}</table>`
-      : ''
-  }${
-    parts.button ? `<p style="margin:8px 0 24px"><a href="${esc(parts.button.href)}" style="display:inline-block;background:${primary};color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:5px">${esc(parts.button.label)}</a></p><p style="margin:0 0 16px;font-size:13px;color:#5b6470">If the button does not work, copy this link into your browser:<br><span style="word-break:break-all">${esc(parts.button.href)}</span></p>` : ''
-  }${(parts.after || []).map(p).join('')}
-</td></tr>
-<tr><td style="padding:18px 28px;border-top:1px solid #e2e5e9;font-size:12px;line-height:1.5;color:#6b7480">${footerText(firm).split('\n\n').map((s) => `<p style="margin:0 0 8px">${esc(s)}</p>`).join('')}</td></tr>
-</table></td></tr></table></body></html>`;
-  return { subject, text: text.join('\n\n'), html, inline: logo ? [logo] : [] };
-}
-
-const STEPS_SENTENCE = 'The link takes you through everything in one place: creating your login, your investor information, identity verification, accredited investor verification if your investment needs it, tax certification, distribution payments, and the subscription documents to review and sign.';
+export const money = (cents, currency) => emails.money(cents, currency);
+export const longDate = (iso) => emails.longDate(iso);
 
 /** The invitation: who invited them, to what, the note, what they will need, the link and its expiry. */
 export function invitationMessage({ firm, investor, offering, invitation, link, expiresAt }) {
-  const name = investor.contact || investor.title || 'investor';
-  if (invitation.existing && offering && offering.name) return subscribeMessage({ firm, name, offering, invitation, link, expiresAt });
-  if (invitation.existing && invitation.access) return accessMessage({ firm, name, invitation, link, expiresAt });
-  const subject = offering && offering.name ? `${offering.name}: complete your investor onboarding` : `Complete your investor onboarding with ${firm.name}`;
-  const rows = [];
-  if (offering && offering.name) rows.push(['Offering', offering.name]);
-  if (invitation.cents) rows.push(['Commitment', money(invitation.cents, offering && offering.currency)]);
-  return compose(firm, subject, {
-    greeting: `Dear ${name},`,
-    paras: [offering && offering.name ? `${firm.name} has invited you to invest in ${offering.name} and to open your investor account.` : `${firm.name} has invited you to open your investor account.`],
-    rows,
-    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
-    button: { label: 'Start your onboarding', href: link },
-    after: [
-      `${STEPS_SENTENCE} It takes about 10 to 15 minutes, and you can stop and pick up where you left off.`,
-      'Please have a government-issued photo ID and your bank details ready.',
-      `This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`,
-      `Questions? Reply to this email or contact ${supportLine(firm)}.`
-    ]
-  });
-}
-
-/** An investor the firm added from paper documents: a link to open their portal. Nothing to fill in. */
-function accessMessage({ firm, name, invitation, link, expiresAt, again }) {
-  return compose(firm, `${again ? 'Reminder: ' : ''}${firm.name}: your investor portal`, {
-    greeting: `Dear ${name},`,
-    paras: [
-      again ? `Here is a new link to your investor portal with ${firm.name}. Any earlier link we sent no longer works.` : `${firm.name} has set up your investor portal.`,
-      'Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below lets you create your login and opens your portal, where you will find your investments, statements and documents.'
-    ],
-    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
-    button: { label: 'Open your portal', href: link },
-    after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
-  });
-}
-
-/** An investor already on file, invited to subscribe to another offering: no ID or bank details needed. */
-function subscribeMessage({ firm, name, offering, invitation, link, expiresAt }) {
-  const rows = [['Offering', offering.name]];
-  if (invitation.cents) rows.push(['Commitment', money(invitation.cents, offering.currency)]);
-  return compose(firm, `${offering.name}: your subscription`, {
-    greeting: `Dear ${name},`,
-    paras: [`${firm.name} has invited you to subscribe to ${offering.name}.`],
-    rows,
-    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
-    button: { label: 'Review and subscribe', href: link },
-    after: [
-      'The link takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file. It takes about 5 minutes.',
-      `This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`,
-      `Questions? Reply to this email or contact ${supportLine(firm)}.`
-    ]
-  });
+  return delivered(emails.render('invitation', { firm, investor, offering, invitation, link, expiresAt }));
 }
 
 /** A new link for the same invitation (the earlier link stops working). */
 export function resendMessage({ firm, investor, offering, invitation, link, expiresAt, started }) {
-  const name = investor.contact || investor.title || 'investor';
-  if (invitation.existing && invitation.access && !(offering && offering.name)) return accessMessage({ firm, name, invitation, link, expiresAt, again: true });
-  if (invitation.existing && offering && offering.name) {
-    return compose(firm, `Reminder: ${offering.name}: your subscription`, {
-      greeting: `Dear ${name},`,
-      paras: [`Here is a new link to your subscription to ${offering.name} with ${firm.name}. Any earlier link we sent no longer works.`, started ? 'You can pick up where you left off.' : 'It takes about 5 minutes. Your account details are already on file.'],
-      rows: invitation.cents ? [['Commitment', money(invitation.cents, offering.currency)]] : [],
-      note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
-      button: { label: started ? 'Continue your subscription' : 'Review and subscribe', href: link },
-      after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
-    });
-  }
-  const subject = offering && offering.name ? `Reminder: ${offering.name}: complete your investor onboarding` : `Reminder: complete your investor onboarding with ${firm.name}`;
-  return compose(firm, subject, {
-    greeting: `Dear ${name},`,
-    paras: [
-      `Here is a new link to complete your investor onboarding with ${firm.name}${offering && offering.name ? ` for ${offering.name}` : ''}. Any earlier link we sent no longer works.`,
-      started ? 'You can pick up where you left off.' : 'It takes about 10 to 15 minutes. Please have a government-issued photo ID and your bank details ready.'
-    ],
-    rows: invitation.cents ? [['Commitment', money(invitation.cents, offering && offering.currency)]] : [],
-    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
-    button: { label: started ? 'Continue your onboarding' : 'Start your onboarding', href: link },
-    after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
-  });
+  return delivered(emails.render('invitation_resent', { firm, investor, offering, invitation, link, expiresAt, started }));
 }
 
 /**
  * To the sponsor, once, before a finished onboarding the console never imported is deleted: open the console (it imports
- * on its own) before the date, or the investor's paperwork is gone. For an investor already on file (existing) it is their
- * subscription that waits: the console keeps the record it holds and adds only what the link collected.
+ * on its own) before the date, or the investor's paperwork is gone.
  */
-export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing }) {
-  const who = investor.contact || investor.title || 'An investor';
-  const rows = [['Investor', who], ['Email', investor.email]];
-  if (offering && offering.name) rows.push(['Offering', offering.name]);
-  rows.push(['Finished', longDate(completedAt)], ['Deleted on', longDate(deleteOn)]);
-  if (existing) {
-    return compose(firm, `Waiting in your console: ${who}’s subscription`, {
-      paras: [`${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''} on ${longDate(completedAt)}, but the console has not added it to your records yet.`],
-      rows,
-      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
-      after: [
-        `Open the console before ${longDate(deleteOn)}: it adds the subscription, the signed agreement and any new accreditation result as soon as it opens.`,
-        'After that date the submitted subscription and signed documents are deleted from the integration server to protect them, and the investor would have to submit their subscription again.'
-      ]
-    });
-  }
-  return compose(firm, `Waiting in your console: ${who}’s onboarding`, {
-    paras: [`${who} finished onboarding on ${longDate(completedAt)}, but the console has not added them to your investor records yet.`],
-    rows,
-    button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
-    after: [
-      `Open the console before ${longDate(deleteOn)}: it adds the investor, their verification results, documents and signed agreement as soon as it opens.`,
-      'After that date their submitted details and signed documents are deleted from the integration server to protect them, and the investor would have to complete onboarding again.'
-    ]
-  });
+export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing, taxRequest, reverify, coSign }) {
+  return delivered(emails.render('submission_reminder', { firm, investor, offering, consoleUrl, completedAt, deleteOn, existing, taxRequest, reverify, coSign }));
 }
 
 /** To the sponsor: who finished, the offering and commitment, verification and agreement status, and a link to the console. */
 export function notificationMessage({ firm, investor, offering, summary, consoleUrl, completedAt }) {
-  const who = investor.contact || investor.title || 'An investor';
-  const existing = !!(summary && summary.existing);
-  // A portal link: the investor created their login and opened their portal; nothing else was asked of them.
-  if (summary && summary.access) {
-    return compose(firm, `${who} opened their investor portal`, {
-      paras: [`${who} used the portal link you sent and created their login on ${longDate(completedAt)}.`],
-      rows: summary.rows,
-      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
-      after: [summary.next]
-    });
-  }
-  // An investor on file who reached the end without subscribing (the offering stopped accepting subscriptions first).
-  const none = existing && summary && summary.requested === false;
-  const subject = none
-    ? `${who}: no subscription${offering && offering.name ? ` to ${offering.name}` : ''}`
-    : existing
-      ? `${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''}`
-      : `${who} finished onboarding${offering && offering.name ? ` for ${offering.name}` : ''}`;
-  return compose(firm, subject, {
-    paras: [
-      none
-        ? `${who} went through your invitation on ${longDate(completedAt)}, but no subscription was submitted: the offering was no longer accepting subscriptions when they reached that step.`
-        : existing
-          ? `${who} completed the subscription steps on ${longDate(completedAt)}.`
-          : `${who} completed every onboarding step on ${longDate(completedAt)}.`
-    ],
-    rows: summary.rows,
-    button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
-    after: [
-      summary.next,
-      // An investor already on file: the console keeps the record it holds and adds only what the link collected.
-      none
-        ? 'Nothing is added to their investor record; the details you already hold for them stay as they are.'
-        : existing
-        ? 'Their subscription, signed agreement and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.'
-        : 'Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.'
-    ]
-  });
+  return delivered(emails.render('sponsor_notification', { firm, investor, offering, summary, consoleUrl, completedAt }));
 }

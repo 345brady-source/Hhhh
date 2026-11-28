@@ -1,0 +1,18 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "restyle",
+  "scope": "app",
+  "theme": "refract",
+  "axes": "light/grotesk-sans/cool",
+  "nav": "kept: the firm top bar with tabs (portal), the grouped menu (console)",
+  "signature": "the portfolio panel; an engraved plate beside the sign-in form in place of the theme light",
+  "waived": [
+   "24b",
+   "39b",
+   "49b"
+  ],
+  "prompt": "restyle an investor portal, its onboarding and signing flows and the sponsor console in Refract; layout, wiring and copy kept",
+  "date": "2026-11-11"
+ }
+]

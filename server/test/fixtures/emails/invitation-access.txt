@@ -1,0 +1,20 @@
+Subject: Harbor Ridge Capital: your investor portal
+Preheader: Harbor Ridge Capital has set up your investor portal.
+
+Dear Anita,
+
+Harbor Ridge Capital has set up your investor portal.
+
+Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below lets you create your login and opens your portal, where you will find your investments, statements and documents.
+
+Open your portal:
+https://portal.example/portal.html?server=https%3A%2F%2Fapi.example#invite-sample
+
+This link is personal to you; please do not forward it. It expires on December 10, 2026.
+
+Questions? Contact Investor Relations at ir@harborridge.example or +1 212 555 0100.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

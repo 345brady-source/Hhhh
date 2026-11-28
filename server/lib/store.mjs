@@ -1,13 +1,83 @@
 // A small JSON-file store for verifications, screenings, invitations, the outbox and webhook events,
 // plus blob files for large binaries (offering documents, signed PDFs) kept next to it.
 // Replace with your database in production; keep the same methods.
+// A file store holds "<file>.lock" ({ pid, startedAt }) while it is open, so the tools in server/tools/ can refuse
+// to rewrite a store a running server holds, and a change still waiting in the 50 ms timer is written when the
+// process exits or is stopped (SIGTERM, SIGINT).
 import { readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const BLOB_KEY = /^[\w-]{1,120}$/;
 
+/** The lock a live process other than this one holds on a store file, or null. */
+export function lockedByOther(file) {
+  let lock;
+  try {
+    lock = JSON.parse(readFileSync(`${file}.lock`, 'utf8'));
+  } catch {
+    return null;
+  }
+  const pid = Number(lock && lock.pid);
+  if (!Number.isInteger(pid) || pid <= 0 || pid === process.pid) return null;
+  try {
+    process.kill(pid, 0);
+  } catch (e) {
+    if (e.code !== 'EPERM') return null; // that process has ended: the lock is stale
+  }
+  return { pid, startedAt: String(lock.startedAt || '') };
+}
+
+const held = new Map(); // resolved store file -> how many open stores in this process hold its lock
+/** Writes "<file>.lock" naming this process; release() removes it once nothing here holds it, if it still names us. */
+export function holdLock(file) {
+  const f = resolve(file);
+  if (!held.get(f)) {
+    mkdirSync(dirname(f), { recursive: true });
+    writeFileSync(`${f}.lock`, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
+  }
+  held.set(f, (held.get(f) || 0) + 1);
+  let done = false;
+  return {
+    release() {
+      if (done) return;
+      done = true;
+      const n = (held.get(f) || 1) - 1;
+      if (n > 0) {
+        held.set(f, n);
+        return;
+      }
+      held.delete(f);
+      try {
+        if (JSON.parse(readFileSync(`${f}.lock`, 'utf8')).pid === process.pid) unlinkSync(`${f}.lock`);
+      } catch {
+        /* already gone */
+      }
+    }
+  };
+}
+
+const live = new Set(); // open file stores; each is finished (flushed, lock released) once on exit
+let hooked = false;
+function hookExit() {
+  if (hooked) return;
+  hooked = true;
+  const finishAll = () => {
+    for (const finish of [...live]) finish();
+  };
+  process.on('exit', finishAll);
+  process.on('SIGTERM', () => {
+    finishAll();
+    process.exit(0);
+  });
+  process.on('SIGINT', () => {
+    finishAll();
+    process.exit(130);
+  });
+}
+
 export function openStore(file) {
-  let data = { verifications: {}, screenings: {}, invitations: {}, outbox: {}, events: [], seen: [] };
+  let data = { verifications: {}, screenings: {}, invitations: {}, outbox: {}, accounts: {}, events: [], seen: [] };
+  Object.assign(data, { billing: {}, entitlements: {}, ledger: {}, payments: {} }); // card payments (lib/billing.mjs)
   if (file) {
     try {
       data = Object.assign(data, JSON.parse(readFileSync(file, 'utf8')));
@@ -15,8 +85,13 @@ export function openStore(file) {
       /* new store */
     }
   }
+  data.filings = data.filings || {}; data.filingIssuers = data.filingIssuers || {};
+  data.taxdocs = data.taxdocs || {}; // tax documents delivered to the investor's own device (lib/taxdocs.mjs, plan 10-12)
+  data.senders = data.senders || {}; data.maillog = data.maillog || {}; data.mailsuppress = data.mailsuppress || {}; data.mailprefs = data.mailprefs || {}; // sponsors' senders, the sealed sent log, bounce and complaint lists, mail preferences (plans 13-02, 13-03, 13-04)
   let timer = null;
   const flush = () => {
+    clearTimeout(timer);
+    timer = null;
     if (!file) return;
     mkdirSync(dirname(file), { recursive: true });
     const tmp = `${file}.tmp`;
@@ -27,6 +102,20 @@ export function openStore(file) {
     clearTimeout(timer);
     timer = setTimeout(flush, 50);
   };
+  let lock = null;
+  const finish = () => {
+    live.delete(finish);
+    try {
+      if (timer) flush();
+    } finally {
+      if (lock) lock.release();
+    }
+  };
+  if (file) {
+    lock = holdLock(file);
+    live.add(finish);
+    hookExit();
+  }
   // Blobs: files in "<store file>.blobs/" (in memory when the store has no file). Callers seal them first.
   const memBlobs = new Map();
   const blobDir = file ? `${file}.blobs` : '';
@@ -99,6 +188,8 @@ export function openStore(file) {
     },
     blobDir,
     flush,
+    /** Writes a pending change now and releases the lock (tests and the tools in server/tools/). */
+    close: () => finish(),
     data: () => data
   };
 }

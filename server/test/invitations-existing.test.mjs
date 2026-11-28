@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { withServer } from './helpers.mjs';
+import { withServer, stripLinkTokens } from './helpers.mjs';
 import { BUILTINS } from '../providers/index.mjs';
 
 const API = 'sponsor-api-token-0123456789';
@@ -58,19 +58,33 @@ test('an investor already on file: the flag and accreditation summary reach the 
     assert.ok(!JSON.stringify(snap).includes('123-45-6789') && !JSON.stringify(snap).includes('000123456'));
     const [m] = await outbox(base, r.id);
     assert.equal(m.kind, 'invitation');
-    assert.equal(m.subject, 'Harbor Ridge Fund III: your subscription');
+    assert.equal(m.subject, 'Harbor Ridge Capital: your subscription to Harbor Ridge Fund III');
     assert.match(m.text, /has invited you to subscribe to Harbor Ridge Fund III/);
     assert.match(m.text, /Your account details are already on file/);
     assert.ok(!/photo ID|bank details ready/i.test(m.text), 'no request for ID or bank details');
     assert.ok(m.text.includes(r.link));
-    assert.ok(!/carrow|powered by|diy portal/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy portal/i.test(stripLinkTokens(m.text + m.html)));
     // A reminder keeps the subscription wording.
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
-    assert.equal(re.subject, 'Reminder: Harbor Ridge Fund III: your subscription');
+    assert.equal(re.subject, 'New link: Harbor Ridge Capital: your subscription to Harbor Ridge Fund III');
     assert.match(re.text, /new link to your subscription to Harbor Ridge Fund III/);
     assert.ok(!/photo ID|bank details ready/i.test(re.text));
+  }));
+
+test('D-09: the investor type the sponsor chose reaches the investor link; anything but the four types is dropped', () =>
+  start(async (base) => {
+    for (const taxType of ['us-individual', 'us-entity', 'foreign-individual', 'foreign-entity']) {
+      const r = await create(base, { investor: { id: 'HRC-0009', contact: 'Zoë Müller', type: 'individual', email: `zoe.${taxType}@investor.example`, taxType } });
+      const snap = (await j(base, 'GET', '/v1/invite', { token: r.token, auth: false })).body;
+      assert.equal(snap.investor.taxType, taxType, JSON.stringify(snap.investor));
+    }
+    for (const taxType of ['foreign', 'US individual', '<b>us-entity</b>', 7, null]) {
+      const r = await create(base, { investor: { id: 'HRC-0010', contact: 'Ada Q', email: `ada.${String(taxType).replace(/\W/g, '')}@investor.example`, taxType } });
+      const snap = (await j(base, 'GET', '/v1/invite', { token: r.token, auth: false })).body;
+      assert.equal(snap.investor.taxType, undefined, `dropped: ${JSON.stringify(taxType)}`);
+    }
   }));
 
 test('a bad existing summary is cleaned: a date that is not a date is dropped, flags are only true when true', () =>
@@ -80,7 +94,7 @@ test('a bad existing summary is cleaned: a date that is not a date is dropped, f
     assert.deepEqual(snap.investor.existing, { accredited: false, accreditedUntil: '', holds: false });
     assert.equal(snap.invitation.existing, undefined, 'existing is only set by a real true');
     const [m] = await outbox(base, r.id);
-    assert.equal(m.subject, 'Harbor Ridge Fund III: complete your investor onboarding');
+    assert.equal(m.subject, 'Harbor Ridge Capital: your invitation to invest in Harbor Ridge Fund III');
   }));
 
 test('the sponsor summary for an existing investor: no identity or screening rows, accreditation on file, subscription subject', () =>
@@ -160,7 +174,7 @@ test('a finished onboarding the console never imported: the sponsor is reminded 
     assert.match(m.text, /has not added them to your investor records yet/);
     assert.match(m.text, /^Deleted on: December 10, 2026$/m);
     assert.match(m.text, /Open the console before December 10, 2026/);
-    assert.ok(!/carrow|powered by|diy portal/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy portal/i.test(stripLinkTokens(m.text + m.html)));
     assert.equal(server.store.get('invitations', kept.id).reminderStatus, 'outbox');
 
     clock.t += 3 * DAY;
@@ -201,11 +215,11 @@ test('a portal link for an investor added from paper documents: its own email, r
     assert.match(m.text, /nothing to fill in/);
     assert.match(m.text, /Open your portal:/);
     assert.ok(!/photo ID|bank details|onboarding|identity verification/i.test(m.text), m.text);
-    assert.ok(!/carrow|powered by|diy/i.test(m.text + m.html));
+    assert.ok(!/carrow|powered by|diy/i.test(stripLinkTokens(m.text + m.html)));
     const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
     assert.equal(again.status, 200, JSON.stringify(again.body));
     const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
-    assert.equal(re.subject, 'Reminder: Harbor Ridge Capital: your investor portal');
+    assert.equal(re.subject, 'New link: Harbor Ridge Capital: your investor portal');
     const done = await complete(base, again.body.token, { investor: { id: 'HRC-0031', contact: 'Paula Paper' } });
     assert.equal(done.status, 200, JSON.stringify(done.body));
     const n = (await outbox(base, r.id)).find((x) => x.kind === 'sponsor_notification');
@@ -220,5 +234,5 @@ test('the access flag only counts for an investor already on file', () =>
     const snap = (await j(base, 'GET', '/v1/invite', { token: r.token, auth: false })).body;
     assert.equal(snap.invitation.access, undefined);
     const [m] = await outbox(base, r.id);
-    assert.match(m.subject, /Complete your investor onboarding/);
+    assert.match(m.subject, /: set up your investor account$/);
   }));

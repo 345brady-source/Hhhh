@@ -17,21 +17,41 @@
  *   GET  /hosted/:id              a page this server hosts for a provider flow (for example a provider's JS SDK)
  *   POST /hosted/:id              that page's form or SDK result
  *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
- *   GET  /health                  which providers are configured
+ *   POST /v1/intake               read an offering's documents for the intake screen (lib/intake.mjs; ndjson stream)
+ *   POST /v1/read                 read an uploaded subscription agreement's places (lib/read.mjs)
+ *   POST /v1/help                 answer a question about using the portal (lib/help.mjs)
+ *   GET  /health                  which providers are configured, whether reading is available, and warnings (pages, security.txt)
+ *   GET  /.well-known/security.txt  the security contact (RFC 9116), from SECURITY_CONTACT and SECURITY_TXT_EXPIRES
+ *   GET  /, /portal.html, /assets/…  with SERVE_PORTAL=1, the portal's own pages (lib/pages.mjs)
+ *   GET/PUT /v1/workspace, …/files/:id  the firm's workspace, sealed, checked by role (lib/workspace.mjs)
  *
  * Investor invitations (lib/invitations.mjs; see README.md):
  *   POST /v1/invitations          the console invites an investor; this server emails the link
  *   GET  /v1/invitations          their statuses; GET/DELETE /v1/invitations/:id/submission, POST …/resend, …/cancel
- *   GET  /v1/outbox               messages kept here when no SMTP server is set
+ *   GET  /v1/outbox               messages kept here when no SMTP server is set (and held ones, waiting for a sponsor's domain)
+ *   GET/PUT /v1/mail/sender, POST /v1/mail/sender/check  the address a workspace's messages go from (lib/senders.mjs)
+ *   GET  /v1/messages/log         the workspace's sealed sent log (lib/maillog.mjs)
+ *   POST /v1/messages             notices, capital calls and e-sign notices to up to 500 investors (lib/messages.mjs)
+ *   GET  /v1/messages/preferences who turned offering news off; POST /unsubscribe/<token> the one-click address
+ *   POST /v1/mail/events          delivery events from the mail provider, signature-checked by its adapter (server/mailers/)
+ *   POST /v1/admin/accounts       the operator makes a sponsor account with its own token (ADMIN_TOKEN; lib/accounts.mjs)
+ *   GET  /v1/admin/accounts       the accounts; POST /v1/admin/accounts/:id/token replaces an account's token
  *   GET  /v1/invite               the investor's browser loads its onboarding (X-Invite-Token)
  *   PUT  /v1/invite/progress      …reports the step it is on
  *   POST /v1/invite/complete      …sends back the finished paperwork; the sponsor is emailed
+ *
+ * Tax documents on the investor's own device (lib/taxdocs.mjs, plan 10-12; see README.md):
+ *   POST /v1/taxdocs              the console sends one delivered tax document, sealed; this server emails the link
+ *   GET  /v1/taxdocs              statuses and opens; POST /v1/taxdocs/:id/withdraw, …/resend
+ *   GET  /v1/taxdoc               the investor's page: the firm, the title and what is needed (X-Doc-Token)
+ *   POST /v1/taxdoc/open          …the document, with the last four digits of the tax number on record
  *
  * No verification vendor is built in: sponsors plug in the services they use
  * (declarative connectors, code plug-ins, or hosted links plus the results
  * API; see README.md), as many per check as they like.
  *
- * Node 18 or later, no dependencies. Configure with environment variables
+ * Node 18 or later. One dependency, the reading service's official client (pinned in package.json), needed only for
+ * reading; every other route works without it. Configure with environment variables
  * (see README.md). Statuses are normalized for the portal: identity
  * pending | passed | review | failed; accreditation pending | verified |
  * review | rejected; screening pending | clear | potential_match. A provider
@@ -43,7 +63,24 @@ import { readRaw, parseJson, send, cors, header } from './lib/http.mjs';
 import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
-import { createInvitations } from './lib/invitations.mjs';
+import { createInvitations, cleanFirm } from './lib/invitations.mjs';
+import { createMessages } from './lib/messages.mjs';
+import { createTaxDocs } from './lib/taxdocs.mjs';
+import { createAccounts } from './lib/accounts.mjs';
+import { createAuth } from './lib/auth.mjs';
+import { createAuditLog, SERVER } from './lib/auditlog.mjs';
+import { createGuards, can } from './lib/roles.mjs';
+import { createTeam } from './lib/team.mjs';
+import { createWorkspaces } from './lib/workspace.mjs';
+import { createPages } from './lib/pages.mjs';
+import { createBilling } from './lib/billing.mjs';
+import { changedChecks } from './lib/changed.mjs'; // GET /v1/checks/changed (plan 08-08)
+import { createFilings } from './lib/filings.mjs';
+import { createIntake } from './lib/intake.mjs';
+import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
+import { createHelp } from './lib/help.mjs';
+import { costOf, logLine } from './lib/model.mjs';
+import { pick as mailAdapterOf } from './mailers/index.mjs';
 import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
 export { STATUSES };
@@ -110,14 +147,16 @@ function cleanEvidence(list) {
   });
 }
 
+/** The client's address: the first X-Forwarded-For entry behind a trusted proxy (TRUST_PROXY=1), else the socket's. */
+const clientOf = (req, env) => (env.TRUST_PROXY === '1' ? String(header(req.headers, 'x-forwarded-for') || '').split(',')[0].trim() : '') || req.socket.remoteAddress || 'unknown';
+
 /** A small per-client limit on the calls that can cost money or create records. */
 function rateLimiter(env) {
   const max = Number(env.RATE_LIMIT_PER_MIN === undefined ? 60 : env.RATE_LIMIT_PER_MIN);
   const hits = new Map();
   return (req) => {
     if (!max) return false;
-    const fwd = env.TRUST_PROXY === '1' ? String(header(req.headers, 'x-forwarded-for') || '').split(',')[0].trim() : '';
-    const who = fwd || req.socket.remoteAddress || 'unknown';
+    const who = clientOf(req, env);
     const now = Date.now();
     const h = hits.get(who);
     if (!h || now > h.reset) {
@@ -146,8 +185,139 @@ export function createServer(opts = {}) {
   const origins = String(env.PORTAL_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
   const limited = rateLimiter(env);
   const now = opts.now || (() => Date.now());
+  const intake = opts.intake || createIntake({ env, fetch: opts.fetch });
+  // The agreement reader shares the intake's spend cap, so the cap counts every reading call this server makes.
+  const reader = opts.reader || createReader({ env, fetch: opts.fetch, budget: intake.budget || undefined });
+  // Help shares that cap too, and has its own daily cap (lib/help.mjs).
+  const help = opts.help || createHelp({ env, fetch: opts.fetch, budget: intake.budget || undefined, now });
 
-  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
+  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, mailCtx: opts.mailCtx, firmRecord: (ws) => storedTenant(ws) });
+  // The mail adapter MAIL_PROVIDER names (server/mailers/): delivery events are its to verify. Its own, larger rate limit:
+  // the provider sends one event per message from a few addresses.
+  const mailAdapter = mailAdapterOf(env);
+  const mailCtx = () => Object.assign({ env, now }, opts.mailCtx || {});
+  const eventsLimited = rateLimiter(Object.assign({}, env, { RATE_LIMIT_PER_MIN: env.MAIL_EVENTS_PER_MIN === undefined ? 600 : env.MAIL_EVENTS_PER_MIN }));
+  const unsubLimited = rateLimiter(Object.assign({}, env, { RATE_LIMIT_PER_MIN: env.MAIL_EVENTS_PER_MIN === undefined ? 600 : env.MAIL_EVENTS_PER_MIN })); // one-click unsubscribes (plan 13-04)
+  const accounts = createAccounts({ store, now });
+  // The server change log (lib/auditlog.mjs, SE-08): sign-ins reach it through lib/auth.mjs's log(), refusals and the team's
+  // changes from here and lib/team.mjs. The person is always the session's (or the fixed Server actor), never the request's.
+  const auditLog = createAuditLog({ store, vault: invites.vault, now });
+  const AUTH_ACTIONS = { signup: 'Signed up', signin: 'Signed in', signout: 'Signed out', locked: 'Locked after too many tries', unlocked: 'Unlocked by the operator' };
+  const nameOf = (p) => (p && typeof p.name === 'string' ? p.name : p ? signin.people.open(p).name : '');
+  const changeLog = {
+    /** lib/auth.mjs's entries: the event as before (no personal data), and the change log when the workspace is known. */
+    append({ workspace = '', person = null, personId = '', action, detail = '', record = '' } = {}) {
+      store.event({ type: 'auth', action, workspace });
+      if (!workspace || !invites.vault.allowed) return null;
+      const p = person && person.id ? person : personId ? store.get('people', personId) : null;
+      return auditLog.append({ workspace, person: p ? { id: p.id, name: nameOf(p) } : SERVER, action: AUTH_ACTIONS[action] || action, detail, record });
+    }
+  };
+  const signin = createAuth({ env, store, vault: invites.vault, now, clientOf: (req) => clientOf(req, env), invites, accounts, audit: changeLog }); // people, passwords and the session cookie (plan 15-01)
+  const guards = createGuards({ signin, store, now }); // the route table's checks (lib/roles.mjs, plan 15-05)
+  const team = createTeam({ store, signin, audit: auditLog, now, env }); // the firm's people, roles and invitations (plan 15-05)
+  const workspaces = createWorkspaces({ env, store, vault: invites.vault, now, audit: auditLog, signin }); // the firm's workspace, sealed, by role (plan 15-06)
+  /** The firm record the workspace keeps on this server (lib/workspace.mjs, server mode), or null (C-06, plan 13-04). */
+  function storedTenant(ws) {
+    try {
+      const w = ws ? workspaces.get(ws) : null;
+      return w && w.ws && w.ws.tenant && typeof w.ws.tenant === 'object' ? w.ws.tenant : null;
+    } catch {
+      return null;
+    }
+  }
+  const pages = opts.pages || createPages({ env, now }); // the portal's own pages and security.txt from this server (plan 15-13, mounted by 15-06)
+  const billing = createBilling({ env, store, fetch: fetchFn, now, providers: PROVIDERS, publicUrl, origins }); // card payments for the verification package
+  const filings = createFilings({ env, store, vault: invites.vault, mailer: invites.mailer, limited, now, accounts, transport: opts.edgarTransport });
+  const messages = createMessages({ env, store, vault: invites.vault, mailer: invites.mailer, log: invites.mailLog, publicUrl, returnTo: (u) => returnTo(u), cleanFirm, limited, now }); // notices, capital calls, e-sign notices (plan 13-04)
+  const taxdocs = createTaxDocs({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls, vault: invites.vault, mailer: invites.mailer }); // tax documents to the investor's own device (plan 10-12)
+  const pkg = invites.usePackages({ billing, providers: PROVIDERS, identity: env.PACKAGE_IDENTITY_PROVIDER || 'idcheck', accreditation: env.PACKAGE_ACCREDITATION_PROVIDER || 'accredit' }); // the package on invitations (08-05); 08-15 adds its route helpers
+  /**
+   * Who is calling a sponsor route: null (refuse), { shared: true } (the shared API_TOKEN, or an open server: no API_TOKEN,
+   * no account, nobody signed up and AUTH_REQUIRED unset), { account } (a sponsor's own token; the call then acts on that
+   * account's workspace only), or a signed-in console person's session ({ account, session, person, role, via: 'session' },
+   * pinned to its workspace the same way). A half-done sign-in throws 401 code 'stage'; a cookie write that is not JSON from
+   * the server's own origin throws 403 (lib/auth.mjs).
+   */
+  function sponsorAuth(req) {
+    const all = () => true; // a token (or the open server) may do anything its routes allow; a session by its role (lib/roles.mjs)
+    if (env.API_TOKEN && authorize(req, env)) return { shared: true, can: all };
+    const account = accounts.find(String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, ''));
+    if (account) return { account, can: all };
+    const session = signin.sponsor(req);
+    if (session) return Object.assign(session, { can: (permission) => can(session, permission) });
+    return !env.API_TOKEN && !store.list('accounts').length && !signin.required() ? { shared: true, can: all } : null;
+  }
+  /** A refusal on the change log of the caller's workspace, with the person from the session (SE-05, SE-08). */
+  function logRefusal(auth, req, path, permission) {
+    const ws = auth.person ? auth.person.workspace : auth.account ? auth.account.workspace : '';
+    if (!ws || !invites.vault.allowed) return store.event({ type: 'refused', workspace: ws, permission });
+    const who = auth.person ? { id: auth.person.id, name: nameOf(auth.person) } : { id: auth.account.id, name: 'Account token' };
+    auditLog.append({ workspace: ws, person: who, action: 'Refused', detail: `${req.method} ${path}: ${permission}` });
+  }
+  /** The change log's routes (audit permission, checked by the guard): list, verify, export (every export is logged). */
+  function auditRoutes(req, res, url, auth) {
+    const path = url.pathname;
+    const ws = auth.person ? auth.person.workspace : auth.account ? auth.account.workspace : url.searchParams.get('workspace') || '';
+    if (!ws) return send(res, 400, { error: 'Add ?workspace= to name the workspace' });
+    if (path === '/v1/audit') return send(res, 200, { entries: auditLog.list(ws, { before: url.searchParams.get('before') || undefined, limit: url.searchParams.get('limit') || 100 }) });
+    if (path === '/v1/audit/verify') return send(res, 200, auditLog.verify(ws));
+    const out = auditLog.exportAll(ws);
+    const who = auth.person ? { id: auth.person.id, name: nameOf(auth.person) } : auth.account ? { id: auth.account.id, name: 'Account token' } : SERVER;
+    auditLog.append({ workspace: ws, person: who, action: 'Change log exported', detail: `${out.entries.length} entries` });
+    return send(res, 200, out, { 'Content-Disposition': `attachment; filename="change-log-${ws}.json"`, 'Cache-Control': 'no-store' });
+  }
+  /**
+   * The firm's sender and its sent log (plan 13-03, EM-06, EM-08). A sponsor account's token, or a session, acts on its own
+   * workspace whatever the query or body names; the shared token names the workspace.
+   *   GET  /v1/mail/sender?workspace=      → { address, domain, status, detail, records, live }
+   *   PUT  /v1/mail/sender { address }     → { address, domain, status, records }
+   *   POST /v1/mail/sender/check           → { status, detail, records, released }: held messages go out once ready
+   *   GET  /v1/messages/log?workspace=&investorId=&limit= → { entries }
+   * live is true only when the operator set MAIL_LIVE=1 (after the provider's production access and a real send).
+   */
+  async function mailRoutes(req, res, url, auth) {
+    const path = url.pathname;
+    const pin = auth.account ? auth.account.workspace : null;
+    let body = {};
+    if (req.method === 'PUT' || req.method === 'POST') {
+      const raw = await readRaw(req, 16 * 1024);
+      body = raw.length ? parseObject(raw) : {};
+    }
+    const given = req.method === 'GET' ? url.searchParams.get('workspace') : body.workspace;
+    const ws = pin !== null ? pin : typeof given === 'string' ? given : '';
+    if (!ws) return send(res, 400, { error: 'Add the workspace to name it' });
+    const live = env.MAIL_LIVE === '1';
+    if (path === '/v1/messages/log') {
+      if (!invites.vault.allowed) return send(res, 400, { error: invites.vault.problem });
+      return send(res, 200, { entries: invites.mailLog.list(ws, { investorId: url.searchParams.get('investorId') || '', limit: url.searchParams.get('limit') || 200 }) }, { 'Cache-Control': 'no-store' });
+    }
+    if (path === '/v1/mail/sender/check') {
+      const c = await invites.senders.check(ws);
+      const released = c.status === 'ready' ? (await invites.mailer.release(ws)).released : 0;
+      return send(res, 200, { status: c.status, detail: c.detail, records: c.records, released, live });
+    }
+    if (req.method === 'PUT') return send(res, 200, Object.assign(await invites.senders.set(ws, body.address), { live }));
+    const s = invites.senders.get(ws);
+    if (!s) return send(res, 200, { address: '', domain: '', status: 'not_set_up', detail: 'No sending address is set up yet.', records: [], live });
+    return send(res, 200, { address: s.address, domain: s.domain, status: s.status, detail: s.detail, records: s.records, live });
+  }
+  /** The operator's routes for sponsor accounts. Off unless ADMIN_TOKEN is set; then they need that token, compared in constant time. */
+  async function admin(req, res, path) {
+    if (!env.ADMIN_TOKEN) return send(res, 404, { error: 'Not found' });
+    if (limited(req)) return send(res, 429, { error: 'Too many requests' });
+    if (!safeEqual(String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, ''), String(env.ADMIN_TOKEN))) return send(res, 401, { error: 'Not authorized' });
+    if (/^\/v1\/admin\/people(\/|$)/.test(path)) return signin.admin(req, res, path); // people and their locks (lib/auth.mjs)
+    if (path === '/v1/admin/accounts') {
+      if (req.method === 'GET') return send(res, 200, { accounts: accounts.list() });
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use GET or POST' });
+      return send(res, 200, accounts.create(parseObject(await readRaw(req, 16 * 1024))));
+    }
+    const m = path.match(/^\/v1\/admin\/accounts\/(acct_[\w-]+)\/token$/);
+    if (!m) return send(res, 404, { error: 'Not found' });
+    if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+    return send(res, 200, accounts.rotate(m[1]));
+  }
   /**
    * Investors' details on verification and screening records (name, email, address, phone, the names
    * screened) are sealed with DATA_KEY like invitations (lib/vault.mjs); providers get them in memory.
@@ -211,6 +381,7 @@ export function createServer(opts = {}) {
     // make an old result look new; cleared while the check is pending again.
     if (patch.status && patch.status !== rec.status) patch.completedAt = patch.status === 'pending' ? '' : new Date(now()).toISOString();
     if (r.data && typeof r.data === 'object') patch.data = Object.assign({}, rec.data, r.data);
+    if (['status', 'hits', 'screening'].some((k) => patch[k] !== undefined && JSON.stringify(patch[k]) !== JSON.stringify(rec[k]))) patch.changedAt = new Date(now()).toISOString(); // what GET /v1/checks/changed lists (plan 08-08)
     return store.put(table, patch);
   }
 
@@ -261,6 +432,371 @@ export function createServer(opts = {}) {
     return send(res, 200, donePage(rec, (r && r.message) || fallback), HTML);
   }
 
+  /** Whether reading is available (the key's value is never read out). */
+  async function readerOn() {
+    try {
+      return !!(await intake.available());
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * POST /v1/intake: the intake screen's prompt, sent to the reading service as it is. 503 before the body is read when
+   * reading is not available; 400 or 413 for a bad or oversized prompt; 402 when the spend cap could be passed (before any
+   * call); otherwise a 200 ndjson stream: { t } for each piece of the reply's text, { h: 1 } every 15 s while nothing else
+   * is sent, then one last line { ok: true, json } or { ok: false, reason }. Its own errors never reach the global handler,
+   * so no exception text, model or provider name is ever sent; the browser closing the connection stops the call.
+   *
+   * pdfs (optional, D-37): [{ name, data, pages, of }], the PDFs whose text layer could not be read, sent as documents
+   * before the prompt. At most 5; each data base64 whose bytes start with %PDF-; 600 pages in all; a 32 MB body. With PDFs
+   * the input is always counted (free) first: over 900000 tokens is 413, a failed count is 402 with a cap and 502 without.
+   * D-38: the prompt has no character limit of its own (the whole text of the documents is sent); a prompt over 200000
+   * characters is always counted the same way, so one past the reading service's input limit is refused before any call.
+   */
+  const INTAKE_COUNT_CHARS = 200000;
+  const INTAKE_BODY = 32 * 1024 * 1024;
+  const INTAKE_PDFS = 5;
+  const INTAKE_PAGES = 600;
+  const INTAKE_TOKENS = 900000;
+  /** The request's PDFs: [] when there are none, null when malformed, 'too_large' past the count or page limits. */
+  function intakePdfs(list) {
+    if (list === undefined || list === null) return [];
+    if (!Array.isArray(list)) return null;
+    if (!list.length) return [];
+    if (list.length > INTAKE_PDFS) return 'too_large';
+    let pages = 0;
+    for (const p of list) {
+      if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+      if (typeof p.name !== 'string' || !p.name.trim() || p.name.length > 300) return null;
+      if (typeof p.data !== 'string' || !p.data.length || p.data.length % 4 !== 0 || !B64.test(p.data)) return null;
+      if (!Buffer.from(p.data.slice(0, 12), 'base64').subarray(0, 5).equals(Buffer.from('%PDF-'))) return null;
+      if (!Number.isInteger(p.pages) || p.pages < 1 || !Number.isInteger(p.of) || p.of < p.pages) return null;
+      pages += p.pages;
+    }
+    if (pages > INTAKE_PAGES) return 'too_large';
+    return list.map((p) => ({ name: p.name, data: p.data, pages: p.pages, of: p.of }));
+  }
+  const REASONS = ['declined', 'incomplete', 'invalid', 'timeout', 'failed'];
+  async function readIntake(req, res) {
+    const t0 = Date.now();
+    const record = (o) => logLine(env, Object.assign({ at: new Date().toISOString(), route: 'intake', ms: Date.now() - t0, chars: 0, counted: null, outcome: '', stopReason: '', model: '', usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }, cost: 0 }, o));
+    try {
+      if (!(await readerOn())) return send(res, 503, { ok: false, reason: 'unavailable' });
+      let raw;
+      try {
+        raw = await readRaw(req, INTAKE_BODY);
+      } catch (e) {
+        return send(res, e && e.status === 413 ? 413 : 400, { ok: false, reason: e && e.status === 413 ? 'too_large' : 'invalid' });
+      }
+      let body = null;
+      try {
+        body = JSON.parse(raw.toString('utf8'));
+      } catch {
+        body = null;
+      }
+      raw = null;
+      const obj = body && typeof body === 'object' && !Array.isArray(body) ? body : null;
+      body = null;
+      const prompt = obj ? obj.prompt : undefined;
+      if (typeof prompt !== 'string' || !prompt.length) return send(res, 400, { ok: false, reason: 'invalid' });
+      const pdfs = intakePdfs(obj.pdfs);
+      if (pdfs === null) return send(res, 400, { ok: false, reason: 'invalid' });
+      if (pdfs === 'too_large') return send(res, 413, { ok: false, reason: 'too_large' });
+      // The read log counts the PDFs and their pages (numbers only), and only when there are some.
+      const sent = pdfs.length ? { pdfs: pdfs.length, pdfPages: pdfs.reduce((a, p) => a + p.pages, 0) } : {};
+
+      // The spend cap: the request counted (free) and the worst case of this call checked before anything is spent. With
+      // PDFs or a long prompt the request is always counted, so one past the reading service's input limit is refused
+      // before any call.
+      let counted = null;
+      const budget = intake.budget;
+      const capped = !!(budget && budget.on);
+      const large = pdfs.length > 0 || prompt.length > INTAKE_COUNT_CHARS;
+      if (capped || large) {
+        try {
+          counted = pdfs.length ? await intake.count(prompt, pdfs) : await intake.count(prompt);
+        } catch {
+          counted = null;
+        }
+        if (large && counted !== null && counted > INTAKE_TOKENS) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'too_large' }, sent));
+          return send(res, 413, { ok: false, reason: 'too_large' });
+        }
+        if (capped && (counted === null || !budget.allow(counted, intake.maxTokens()))) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'spend_cap' }, sent));
+          console.error('intake: spend_cap 402');
+          return send(res, 402, { ok: false, reason: 'spend_cap' });
+        }
+        if (counted === null) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'failed' }, sent));
+          console.error('intake: failed 502');
+          return send(res, 502, { ok: false, reason: 'failed' });
+        }
+      }
+
+      const ctl = new AbortController();
+      const onClose = () => {
+        if (!res.writableFinished) ctl.abort();
+      };
+      res.on('close', onClose);
+      res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+      let last = Date.now();
+      const write = (o) => {
+        if (res.writableEnded || res.destroyed) return;
+        res.write(JSON.stringify(o) + '\n');
+        last = Date.now();
+      };
+      const beat = setInterval(() => {
+        if (Date.now() - last >= 15000) write({ h: 1 });
+      }, 1000);
+      if (beat.unref) beat.unref();
+      let r;
+      try {
+        r = await intake.run(prompt, Object.assign({ signal: ctl.signal, onText: (t) => write({ t: String(t) }) }, pdfs.length ? { pdfs } : {}));
+      } catch {
+        r = null;
+      } finally {
+        clearInterval(beat);
+      }
+      r = r || { ok: false, reason: 'failed' };
+      const ok = !!(r.ok && r.json && typeof r.json === 'object' && !Array.isArray(r.json));
+      const reason = ok ? '' : ctl.signal.aborted ? 'cancelled' : REASONS.includes(r.reason) ? r.reason : 'failed';
+      write(ok ? { ok: true, json: r.json } : { ok: false, reason: reason === 'cancelled' ? 'failed' : reason });
+      res.off('close', onClose);
+      if (!res.writableEnded) res.end();
+      const usage = r.usage || {};
+      const cost = costOf(usage, r.model);
+      if (budget && budget.add) budget.add(usage, r.model);
+      record(Object.assign({ ms: Number(r.ms) || Date.now() - t0, chars: prompt.length, counted, outcome: ok ? 'read' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd }, sent));
+      if (!ok) console.error(`intake: ${reason}${r.status ? ' ' + Number(r.status) : ''}`);
+    } catch {
+      if (!res.headersSent) return send(res, 500, { ok: false, reason: 'failed' });
+      if (!res.writableEnded) {
+        res.write(JSON.stringify({ ok: false, reason: 'failed' }) + '\n');
+        res.end();
+      }
+    }
+  }
+
+  /**
+   * POST /v1/read: an uploaded agreement and the numbered places the browser measured on it, read by the reading service.
+   * 503 before the body is read when reading is not available; 400 for a malformed request, 413 for one over the limits
+   * (32 MB body, 600 pages, 4 MB of text, 20000 places); 402 when the spend cap could be passed (before any call);
+   * otherwise 200 { ok: true, fields, missing, ms } or a failure { ok: false, reason } (504 timeout; 502 declined,
+   * incomplete, invalid or failed). Its own errors never reach the global handler, so no exception text, model or
+   * provider name is ever sent; the browser closing the connection stops the call. The PDF is never stored.
+   *
+   * D-38, both optional: images [{ page, data, marks }], a picture of each page with numbered places (picture pages, pages
+   * whose text layer cannot be read, and since D-43 every text page with a place) with the candidates drawn and numbered on it (data base64 JPEG or PNG, at most IMAGE_BYTES each and IMAGE_MAX in
+   * all, one per page; marks the numbers drawn on it); range [first, last, of], when the PDF holds only pages first..last
+   * of a longer agreement: the list's pages are then the agreement's own, inside the range, and its numbers are the
+   * agreement's (increasing, not from 1). With images, or a PDF of more than 100 pages or 8 MB, the request is always
+   * counted (free) first: over 900000 tokens is 413 too_large (the browser then sends smaller ranges), a failed count is
+   * 402 with a cap and 502 without. Without either, the request is plan 64's exactly.
+   */
+  const READ_BODY = 32 * 1024 * 1024;
+  const READ_TEXT = 4 * 1024 * 1024;
+  const READ_PLACES = 20000;
+  const READ_PAGES = 600;
+  const READ_TOKENS = 900000;
+  const READ_COUNT_PAGES = 100;
+  const READ_COUNT_CHARS = 8 * 1024 * 1024;
+  /** An image's type from its first bytes: JPEG or PNG, else ''. */
+  const imageType = (data) => {
+    const head = Buffer.from(data.slice(0, 12), 'base64');
+    if (head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) return 'image/jpeg';
+    if (head.length >= 8 && head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+    return '';
+  };
+  const READ_STATUS = { unavailable: 503, timeout: 504, declined: 502, incomplete: 502, invalid: 502, failed: 502 };
+  const B64 = /^[A-Za-z0-9+/]+={0,2}$/;
+  async function readAgreement(req, res) {
+    const t0 = Date.now();
+    const zero = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+    const record = (o) => logLine(env, Object.assign({ at: new Date().toISOString(), route: 'read', ms: Date.now() - t0, pages: 0, candidates: 0, outcome: '', stopReason: '', model: '', usage: zero, cost: 0 }, o));
+    const fail = (status, reason) => send(res, status, { ok: false, reason });
+    try {
+      let on = false;
+      try {
+        on = !!(await reader.available());
+      } catch {
+        on = false;
+      }
+      if (!on) return fail(503, 'unavailable');
+      let raw;
+      try {
+        raw = await readRaw(req, READ_BODY);
+      } catch (e) {
+        return e && e.status === 413 ? fail(413, 'too_large') : fail(400, 'invalid');
+      }
+      let body = null;
+      try {
+        body = JSON.parse(raw.toString('utf8'));
+      } catch {
+        body = null;
+      }
+      raw = null;
+      if (!body || typeof body !== 'object' || Array.isArray(body)) return fail(400, 'invalid');
+      const { pdf, pages, text, list } = body;
+      if (typeof pdf !== 'string' || !pdf.length || pdf.length % 4 !== 0 || !B64.test(pdf)) return fail(400, 'invalid');
+      if (!Number.isInteger(pages) || pages < 1) return fail(400, 'invalid');
+      if (pages > READ_PAGES) return fail(413, 'too_large');
+      if (typeof text !== 'string' || !text.trim()) return fail(400, 'invalid');
+      if (text.length > READ_TEXT) return fail(413, 'too_large');
+      if (!Array.isArray(list) || !list.length) return fail(400, 'invalid');
+      if (list.length > READ_PLACES) return fail(413, 'too_large');
+      // A page range of a longer agreement (D-38): the list's pages are the agreement's own, inside the range.
+      const range = body.range === undefined || body.range === null ? null : body.range;
+      if (range !== null && !(Array.isArray(range) && range.length === 3 && range.every((n) => Number.isInteger(n)) && range[0] >= 1 && range[1] >= range[0] && range[2] >= range[1] && range[1] - range[0] + 1 === pages)) return fail(400, 'invalid');
+      const first = range ? range[0] : 1;
+      const last = range ? range[1] : pages;
+      const place = (e, i) => Array.isArray(e) && e.length === 7 && (range ? Number.isInteger(e[0]) && e[0] >= 1 && (i === 0 || e[0] > list[i - 1][0]) : e[0] === i + 1) && Number.isInteger(e[1]) && e[1] >= first && e[1] <= last && e.slice(2, 6).every((n) => typeof n === 'number' && Number.isFinite(n)) && typeof e[6] === 'string' && e[6].length <= 16;
+      if (!list.every(place)) return fail(400, 'invalid');
+      const count = list.length;
+      // Page images (D-38): at most one per page of the range, JPEG or PNG, within the published limits.
+      let images = null;
+      if (body.images !== undefined && body.images !== null) {
+        if (!Array.isArray(body.images)) return fail(400, 'invalid');
+        if (body.images.length > IMAGE_MAX) return fail(413, 'too_large');
+        const seenPages = new Set();
+        images = [];
+        for (const im of body.images) {
+          if (!im || typeof im !== 'object' || Array.isArray(im)) return fail(400, 'invalid');
+          if (!Number.isInteger(im.page) || im.page < first || im.page > last || seenPages.has(im.page)) return fail(400, 'invalid');
+          if (typeof im.data !== 'string' || !im.data.length || im.data.length % 4 !== 0 || !B64.test(im.data)) return fail(400, 'invalid');
+          if (im.data.length > IMAGE_BYTES) return fail(413, 'too_large');
+          const media = imageType(im.data);
+          if (!media) return fail(400, 'invalid');
+          if (im.marks !== undefined && !(Array.isArray(im.marks) && im.marks.length <= READ_PLACES && im.marks.every((n) => Number.isInteger(n) && n >= 1))) return fail(400, 'invalid');
+          seenPages.add(im.page);
+          images.push(Object.assign({ page: im.page, media_type: media, data: im.data }, im.marks ? { marks: im.marks.slice() } : {}));
+        }
+        if (!images.length) images = null;
+      }
+
+      // The spend cap: the request counted (free) and the worst case of this call checked before anything is spent. With
+      // images or a large PDF the request is always counted, so one past the reading service's input limit is refused
+      // before any call (the browser then reads smaller page ranges).
+      let counted = null;
+      const budget = reader.budget;
+      const capped = !!(budget && budget.on);
+      const large = !!images || pages > READ_COUNT_PAGES || pdf.length > READ_COUNT_CHARS;
+      const sent = images ? { images: images.length } : {};
+      if (capped || large) {
+        try {
+          counted = images ? await reader.count({ pdf, text, images }) : await reader.count({ pdf, text });
+        } catch {
+          counted = null;
+        }
+        if (large && counted !== null && counted > READ_TOKENS) {
+          record(Object.assign({ pages, candidates: count, counted, outcome: 'too_large' }, sent));
+          return fail(413, 'too_large');
+        }
+        if (capped && (counted === null || !budget.allow(counted, reader.maxTokens()))) {
+          record(Object.assign({ pages, candidates: count, outcome: 'spend_cap' }, sent));
+          console.error('read: spend_cap 402');
+          return fail(402, 'spend_cap');
+        }
+        if (counted === null) {
+          record(Object.assign({ pages, candidates: count, counted, outcome: 'failed' }, sent));
+          console.error('read: failed 502');
+          return fail(502, 'failed');
+        }
+      }
+
+      const ctl = new AbortController();
+      const onClose = () => {
+        if (!res.writableFinished) ctl.abort();
+      };
+      res.on('close', onClose);
+      let r;
+      try {
+        const req = { pdf, pages, text, count, list };
+        if (range) Object.assign(req, { ids: list.map((e) => e[0]), first, last, range });
+        if (images) req.images = images;
+        r = await reader.read(req, { signal: ctl.signal });
+      } catch {
+        r = null;
+      }
+      res.off('close', onClose);
+      r = r || { ok: false, reason: 'failed' };
+      const ok = !!(r.ok && Array.isArray(r.fields) && Array.isArray(r.missing));
+      const reason = ok ? '' : READ_STATUS[r.reason] ? r.reason : 'failed';
+      const status = ok ? 200 : READ_STATUS[reason];
+      if (!res.writableEnded && !res.destroyed) {
+        if (ok) send(res, 200, { ok: true, fields: r.fields, missing: r.missing, ms: Number(r.ms) || Date.now() - t0 });
+        else fail(status, reason);
+      }
+      const usage = r.usage || {};
+      const cost = costOf(usage, r.model);
+      if (budget && budget.add) budget.add(usage, r.model);
+      record(Object.assign({ ms: Number(r.ms) || Date.now() - t0, pages, candidates: count, counted, outcome: ok ? 'read' : ctl.signal.aborted ? 'cancelled' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd }, sent));
+      if (!ok) console.error(`read: ${reason} ${status}`);
+    } catch {
+      if (!res.headersSent) fail(502, 'failed');
+      console.error('read: failed 502');
+    }
+  }
+
+  /** The largest help request body: one question of at most 500 characters and a few short keys. */
+  const HELP_BODY = 8 * 1024;
+  /**
+   * Who a help session belongs to: the invitation for an investor's link, one shared owner for the console's token.
+   * This is the one place to change when callers have accounts: the owner becomes the account's id.
+   */
+  const helpOwner = (scope, auth) => (scope ? `inv:${scope.id}` : auth && auth.account ? `acct:${auth.account.id}` : 'sponsor');
+  async function answerHelp(req, res, scope, auth) {
+    const fail = (status, reason) => send(res, status, { ok: false, reason });
+    try {
+      let on = false;
+      try {
+        on = !!(await help.available());
+      } catch {
+        on = false;
+      }
+      if (!on) return fail(503, 'unavailable');
+      let raw;
+      try {
+        raw = await readRaw(req, HELP_BODY);
+      } catch (e) {
+        return e && e.status === 413 ? fail(413, 'too_large') : fail(400, 'invalid');
+      }
+      let body = null;
+      try {
+        body = JSON.parse(raw.toString('utf8'));
+      } catch {
+        body = null;
+      }
+      if (!body || typeof body !== 'object' || Array.isArray(body)) return fail(400, 'invalid');
+      const ctl = new AbortController();
+      const onClose = () => {
+        if (!res.writableFinished) ctl.abort();
+      };
+      res.on('close', onClose);
+      let r;
+      try {
+        // Only these five fields of the body are read; who is asking comes from the credential, never from the body.
+        r = await help.ask({ message: body.message, session: body.session, page: body.page, step: body.step, role: body.role, investor: !!scope, owner: helpOwner(scope, auth), client: clientOf(req, env) }, { signal: ctl.signal });
+      } catch {
+        r = null;
+      }
+      res.off('close', onClose);
+      const sound = !!(r && r.body && Number.isInteger(r.status));
+      if (!sound) r = { status: 502, body: { ok: false, reason: 'failed' }, row: null };
+      if (!res.writableEnded && !res.destroyed) send(res, r.status, r.body);
+      if (!sound) console.error('help: failed 502');
+      if (r.row) {
+        // What the question used counts against the shared cap, and its numbers (never its words) go to the read log.
+        if (help.budget && help.budget.add) help.budget.add(r.row.usage, r.row.model);
+        logLine(env, Object.assign({ at: new Date(now()).toISOString(), route: 'help' }, r.row));
+        if (r.status !== 200) console.error(`help: ${r.body.reason} ${r.status}`);
+      }
+    } catch {
+      if (!res.headersSent) fail(502, 'failed');
+      console.error('help: failed 502');
+    }
+  }
 
   async function route(req, res) {
     const url = new URL(req.url, 'http://localhost');
@@ -270,11 +806,19 @@ export function createServer(opts = {}) {
     // Referrer-Policy: no-referrer), never the portal's, so PORTAL_ORIGIN would refuse them. Those routes take no token and
     // are reached only through unguessable check ids (a client without a browser can simply leave Origin out), so the Origin
     // check adds nothing there and is skipped; every other route, the API included, still answers PORTAL_ORIGIN only.
-    const ownPage = /^\/(sandbox|hosted)\//.test(path);
+    const ownPage = /^\/(sandbox|hosted|billing)\//.test(path);
     if (!ownPage && !cors(req, res, env.PORTAL_ORIGIN)) return send(res, 403, { error: 'Origin not allowed' });
     if (req.method === 'OPTIONS') return send(res, 204, '');
+    // The portal's own pages (SERVE_PORTAL=1): a fixed list made at start-up, before any API route (lib/pages.mjs, C-07).
+    if (pages.has(req.method, path) && pages.serve(req, res, path)) return;
+    if (req.method === 'GET' && path === '/.well-known/security.txt') {
+      const t = pages.securityTxt();
+      return t.status === 200 ? send(res, 200, t.body, { 'Content-Type': t.type, 'X-Content-Type-Options': 'nosniff' }) : send(res, 404, { error: 'Not found' });
+    }
 
-    if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS) });
+    if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS), reader: await readerOn(), warnings: pages.health().warnings });
+    // Sign-in (lib/auth.mjs): before every token dispatch, so an invitation token sent to POST /v1/invite/login reaches it.
+    if (path.startsWith('/v1/auth/') || (req.method === 'POST' && path === '/v1/invite/login')) return signin.handle(req, res, path);
 
     // Provider callbacks: verify the signature over the exact bytes received, then update the record.
     const hook = path.match(/^\/webhooks\/([a-z0-9]+)$/);
@@ -381,6 +925,33 @@ export function createServer(opts = {}) {
       }
       return send(res, 200, PROVIDERS.sandbox.page(rec), HTML);
     }
+    if (path.startsWith('/billing/')) return req.method === 'POST' && limited(req) ? send(res, 429, { error: 'Too many requests' }) : billing.handle(req, res, url, null); // the hosted card page (lib/billing.mjs); no token reaches it
+
+    // Delivery events from the mail provider (plan 13-03, EM-07): no token, before the sponsor gate like /v1/results; the
+    // adapter verifies each message's signature, and anything it does not verify changes nothing.
+    if (path === '/v1/mail/events') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      if (eventsLimited(req)) return send(res, 429, { error: 'Too many requests' });
+      const raw = await readRaw(req, 256 * 1024);
+      let events;
+      try {
+        events = await mailAdapter.events(req, raw, mailCtx());
+      } catch (e) {
+        if (!e.status) throw e;
+        store.event({ type: 'mail_event_refused', status: e.status });
+        return send(res, e.status, { error: e.status === 401 ? 'Not authorized' : e.message });
+      }
+      const list = Array.isArray(events) ? events : [];
+      for (const ev of list) invites.mailLog.event(ev);
+      return send(res, 200, { received: list.length });
+    }
+
+    // One-click unsubscribe from possibly commercial mail (plan 13-04, EM-11): no token of the firm's, before the sponsor
+    // gate; the mail provider posts it from a few addresses, so it has the delivery events' larger per-client limit.
+    if (path === '/unsubscribe' || path.startsWith('/unsubscribe/')) {
+      if (unsubLimited(req)) return send(res, 429, { error: 'Too many requests' });
+      return messages.unsubscribe(req, res, path);
+    }
 
     // Results pushed by a provider or the sponsor's own automation (for "link" checks, or any provider
     // that reports outcomes this way). Off unless RESULTS_TOKEN is set; it has its own token, not API_TOKEN.
@@ -420,6 +991,16 @@ export function createServer(opts = {}) {
       return send(res, 200, { ok: true, id: saved.id, status: saved.status });
     }
 
+    // A tax-document link's token (X-Doc-Token, plan 10-12) opens the two tax-document calls and nothing else; those two
+    // calls open with nothing else (no token, or an invitation's token, is refused).
+    const docToken = header(req.headers, 'x-doc-token');
+    if (path.startsWith('/v1/') && docToken !== undefined) {
+      if (!taxdocs.investorPath(req.method, path)) return send(res, 401, { error: 'Not authorized' });
+      if (req.method === 'POST' && limited(req)) return send(res, 429, { error: 'Too many requests' });
+      return taxdocs.investor(req, res, path, docToken);
+    }
+    if (/^\/v1\/taxdoc(\/|$)/.test(path)) return send(res, 401, { error: 'Not authorized' });
+
     // An invitation link's token (X-Invite-Token) authorizes the investor's own browser for its
     // onboarding and its own verification and screening calls, never the sponsor's routes.
     const inviteToken = header(req.headers, 'x-invite-token');
@@ -433,10 +1014,65 @@ export function createServer(opts = {}) {
       return invites.investor(req, res, path, scope);
     }
 
-    if (path.startsWith('/v1/') && !scope && !authorize(req, env)) return send(res, 401, { error: 'Not authorized' });
-    if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
+    // A team or investor invitation's one-time token (lib/team.mjs): its own check, so before the sponsor gate.
+    if (path === '/v1/team/accept') return limited(req) ? send(res, 429, { error: 'Too many requests' }) : team.accept(req, res, url);
 
+    // Sponsor accounts (ADMIN_TOKEN): below the invitation token's refusal above, so an investor's link never reaches them.
+    if (/^\/v1\/admin(\/|$)/.test(path)) return admin(req, res, path);
+    if (/^\/v1\/filings\/staff(\/|$)/.test(path)) return filings.staff(req, res, url);
+
+    const auth = path.startsWith('/v1/') && !scope ? sponsorAuth(req) : null;
+    if (path.startsWith('/v1/') && !scope && !auth) return send(res, 401, { error: 'Not authorized' });
+    // A sponsor account's calls are pinned to its workspace: what it writes is stored there whatever the request says, and
+    // another workspace's record answers 404 (never 403, which would confirm the record exists).
+    const pin = auth && auth.account ? auth.account.workspace : null;
+    const foreign = (rec) => pin !== null && (rec.workspace || '') !== pin;
+    // Every sponsor route's permission comes from one table (lib/roles.mjs ROUTES); a path it does not name answers 404.
+    if (auth && !scope && path.startsWith('/v1/')) {
+      const no = guards.guard(req, path, auth);
+      if (no && (no.status === 401 || no.status === 403)) logRefusal(auth, req, path, no.permission || no.code);
+      if (no) return send(res, no.status, no.status === 401 || no.status === 403 ? { error: no.error, code: no.code } : { error: no.error });
+    }
+    if (auth && /^\/v1\/audit(\/|$)/.test(path)) return auditRoutes(req, res, url, auth); // the server change log (plan 15-05)
+    if (auth && /^\/v1\/team(\/|$)/.test(path)) {
+      try {
+        return await team.handle(req, res, url, auth); // the team (lib/team.mjs); its own refusals reach the change log too
+      } catch (e) {
+        if (e.refused) logRefusal(auth, req, path, e.refused);
+        throw e;
+      }
+    }
+    if (auth && /^\/v1\/workspace(\/|$)/.test(path)) {
+      try {
+        return await workspaces.handle(req, res, url, auth); // the firm's workspace (lib/workspace.mjs); its refusals reach the change log
+      } catch (e) {
+        if (e.refused) logRefusal(auth, req, path, e.refused);
+        throw e;
+      }
+    }
+    if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
+    if (auth && (path === '/v1/mail/sender' || path === '/v1/mail/sender/check' || path === '/v1/messages/log')) return mailRoutes(req, res, url, auth); // the sender and the sent log (plan 13-03)
+    if (auth && (path === '/v1/messages' || path === '/v1/messages/preferences')) return messages.sponsor(req, res, url, auth); // the firm's notices and its investors' choices (plan 13-04)
+    if (/^\/v1\/billing(\/|$)/.test(path)) return billing.handle(req, res, url, auth); // the sponsor's card, credit and package payments; the account comes from auth only
+    if (req.method === 'GET' && path === '/v1/checks/changed') return send(res, ...changedChecks(store, url, auth, now)); // the checks whose result changed since the console last asked (plan 08-08, D-04)
+
+    if (req.method === 'GET' && path === '/v1/connectors' && auth && auth.account) return send(res, 200, { connectors: pkg.connectors(describe(env, PROVIDERS)) }); // a sponsor account never sees the package providers (08-15)
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
+
+    if (path === '/v1/intake') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      return readIntake(req, res);
+    }
+
+    if (path === '/v1/read') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      return readAgreement(req, res);
+    }
+
+    if (path === '/v1/help') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      return answerHelp(req, res, scope, auth);
+    }
 
     if (req.method === 'POST' && path === '/v1/verifications') {
       const body = parseObject(await readRaw(req));
@@ -449,11 +1085,14 @@ export function createServer(opts = {}) {
       if (scope && investor.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only verify its own investor' });
       // An invitation's token runs only the checks the firm's settings use (never the test sandbox, which runs in the browser).
       if (scope && !(invites.scopeRules(scope).providers[body.kind] || []).includes(body.provider)) return send(res, 403, { error: 'This check is not one the firm uses' });
+      pkg.gate(scope, auth, body.provider, body.kind); // a package provider: only from the invitation holding its own paid package (08-15)
       if (scope) investor.workspace = scope.workspace;
+      if (pin !== null) investor.workspace = pin;
       const vid = id('ver');
+      body.settings = pkg.settings(scope, body.provider, body.settings); // a package check runs with the invitation's firm name only
       // createdAt is on the same clock as invitations: a submission counts only checks created once its invitation existed.
       const rec = store.put('verifications', { id: vid, kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, invitationId: scope ? scope.id : undefined, status: 'pending', settings: cleanSettings(body.settings), investor: sealPersonal('verifications', vid, 'investor', investor), returnUrl: returnTo(body.returnUrl), createdAt: new Date(now()).toISOString() });
-      const r = (await p.createSession(ctx(body.provider, rec))) || {};
+      const r = (await pkg.start(scope, body.provider, () => p.createSession(ctx(body.provider, rec)), body.kind)) || {};
       const saved = apply('verifications', rec, Object.assign({}, r, { status: r.status || 'pending' }));
       store.event({ type: 'verification_started', provider: body.provider, id: rec.id, ref: saved.ref || '' });
       return send(res, 200, { id: saved.id, status: saved.status, url: saved.url || '' });
@@ -462,7 +1101,7 @@ export function createServer(opts = {}) {
     const ver = path.match(/^\/v1\/verifications\/(ver_[\w-]+)$/);
     if (req.method === 'GET' && ver) {
       const rec = store.get('verifications', ver[1]);
-      if (!rec) return send(res, 404, { error: 'Not found' });
+      if (!rec || foreign(rec)) return send(res, 404, { error: 'Not found' });
       if (scope && !ownCheck(rec, scope)) return send(res, 403, { error: 'This invitation can only see its own investor’s checks' });
       return send(res, 200, view(await refresh(rec)));
     }
@@ -473,7 +1112,7 @@ export function createServer(opts = {}) {
       const rec = store.get('verifications', evd[1]);
       const item = rec && (rec.evidence || [])[Number(evd[2])];
       const p = rec && PROVIDERS[rec.provider];
-      if (!rec || !item || !p || !p.fetchEvidence) return send(res, 404, { error: 'Not found' });
+      if (!rec || foreign(rec) || !item || !p || !p.fetchEvidence) return send(res, 404, { error: 'Not found' });
       const file = await p.fetchEvidence(ctx(rec.provider, rec, { item }));
       if (!file || !file.body) return send(res, 404, { error: 'Not found' });
       res.writeHead(200, { 'Content-Type': file.contentType || 'application/pdf', 'Content-Disposition': `attachment; filename="${String(file.fileName || 'evidence.pdf').replace(/[^\w.-]+/g, '_')}"`, 'Cache-Control': 'no-store' });
@@ -490,29 +1129,34 @@ export function createServer(opts = {}) {
       // From an invitation's link: only the screenings the firm uses, and always the investor's names as the sponsor entered them.
       const rules = scope ? invites.scopeRules(scope) : null;
       if (rules && !rules.providers.aml.includes(body.provider)) return send(res, 403, { error: 'This screening is not one the firm uses' });
-      const names = Array.from(new Set((rules ? rules.names : []).concat(body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
+      pkg.gate(scope, auth, body.provider, 'aml'); // a package provider: only from the invitation holding its own paid package (08-15)
+      const names = Array.from(new Set((rules ? rules.names : []).concat(scope && pkg.isPackage(body.provider) ? invites.roleNames(scope) : body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25); // a package screening from a link: the invitation's names plus its stored role names, never the body's (R11, R12)
       if (!names.length) return send(res, 400, { error: 'names are required' });
       const inv = cleanInvestor(body.investor);
       if (scope && inv.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only screen its own investor' });
       if (scope) inv.workspace = scope.workspace;
+      if (pin !== null) inv.workspace = pin;
       const sid = id('scr');
+      body.settings = pkg.settings(scope, body.provider, body.settings); // a package check runs with the invitation's firm name only
       const rec = store.put('screenings', { id: sid, kind: 'aml', provider: body.provider, investorId: inv.id, workspace: inv.workspace, invitationId: scope ? scope.id : undefined, names: sealPersonal('screenings', sid, 'names', names), settings: cleanSettings(body.settings), investor: sealPersonal('screenings', sid, 'investor', inv), status: 'pending', createdAt: new Date(now()).toISOString() });
-      const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
+      const r = (await pkg.start(scope, body.provider, () => p.screen(ctx(body.provider, rec, { names })), 'aml')) || {};
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });
       store.event({ type: 'screening', provider: body.provider, id: rec.id, hits: (saved.hits || []).length });
-      return send(res, 200, { id: saved.id, status: saved.status, hits: saved.hits || [] });
+      return send(res, 200, { id: saved.id, status: saved.status, hits: saved.hits || [], screened: names.length, monitoring: !!r.monitoring });
     }
 
     const scr = path.match(/^\/v1\/screenings\/(scr_[\w-]+)$/);
     if (req.method === 'GET' && scr) {
       const rec = store.get('screenings', scr[1]);
-      if (!rec) return send(res, 404, { error: 'Not found' });
+      if (!rec || foreign(rec)) return send(res, 404, { error: 'Not found' });
       if (scope && !ownCheck(rec, scope)) return send(res, 403, { error: 'This invitation can only see its own investor’s checks' });
       return send(res, 200, screeningView(rec.status === 'pending' ? await refreshScreening(rec) : rec));
     }
 
-    if (await invites.sponsor(req, res, url)) return;
+    if (/^\/v1\/filings(\/|$)/.test(path)) return filings.handle(req, res, url, auth);
+    if (/^\/v1\/taxdocs(\/|$)/.test(path) && !scope) return taxdocs.sponsor(req, res, url, auth); // the sponsor's tax-document calls (plan 10-12)
+    if (await invites.sponsor(req, res, url, auth)) return;
 
     return send(res, 404, { error: 'Not found' });
   }
@@ -520,12 +1164,17 @@ export function createServer(opts = {}) {
   const server = http.createServer((req, res) =>
     route(req, res).catch((e) => {
       if (!e.status && env.NODE_ENV !== 'test') console.error(e);
-      if (!res.headersSent) send(res, e.status || 502, { error: e.status ? e.message : `Provider request failed: ${e.message}` });
+      if (!res.headersSent) send(res, e.status || 502, e.status && e.body ? e.body : { error: e.status ? e.message : `Provider request failed: ${e.message}` }); // e.body: lib/auth.mjs's refusals ({ error, code })
     })
   );
   server.store = store;
+  server.signin = signin;
+  server.audit = auditLog;
+  server.workspaces = workspaces;
   server.invitations = invites;
+  server.taxdocs = taxdocs;
   server.on('close', () => invites.stop());
+  server.on('close', () => taxdocs.stop());
   return server;
 }
 

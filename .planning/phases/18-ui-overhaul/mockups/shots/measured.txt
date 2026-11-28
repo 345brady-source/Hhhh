@@ -1,0 +1,8 @@
+desktop combined/console-overview: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Brygada 1918, Ysabeau SC, Ysabeau Office; figures: Brygada 1918: default proportional, with tabular-nums tabular; Ysabeau SC: default proportional, with tabular-nums NOT tabular; Ysabeau Office: default tabular, with tabular-nums tabular
+desktop combined/portal-home: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Brygada 1918, Ysabeau SC, Ysabeau Office; figures: Brygada 1918: default proportional, with tabular-nums tabular; Ysabeau SC: default proportional, with tabular-nums NOT tabular; Ysabeau Office: default tabular, with tabular-nums tabular
+desktop: outside requests 0
+phone combined/console-overview: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Brygada 1918, Ysabeau SC, Ysabeau Office
+phone combined/portal-home: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Brygada 1918, Ysabeau SC, Ysabeau Office
+phone: outside requests 0
+tablet combined/portal-home: page overflow 0px; past the edge outside a scroller 0; text cut 0; fonts Brygada 1918, Ysabeau SC, Ysabeau Office
+tablet: outside requests 0

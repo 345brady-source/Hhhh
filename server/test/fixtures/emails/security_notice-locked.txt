@@ -1,0 +1,13 @@
+Subject: Harbor Ridge Capital: your account is locked for 15 minutes
+Preheader: On November 10, 2026 at 12:00 UTC, your Harbor Ridge Capital console account was locked for 15 minutes after too many wrong passwords.
+
+Dear Maria,
+
+On November 10, 2026 at 12:00 UTC, your Harbor Ridge Capital console account was locked for 15 minutes after too many wrong passwords.
+
+If these tries were not yours, reset your password from the sign-in page (a new password ends the lock) and tell the Owner of your firm’s console.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

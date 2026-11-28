@@ -1,0 +1,135 @@
+/*
+ * Investor reports tab (self-serve Reports page, plan 12-06): the rb- classes. Phone first: one column at phone width,
+ * every control at least 44 x 44 px there; built on the console's own variables (console.css) and tokens.css.
+ */
+.rb { display: flex; flex-direction: column; gap: var(--space-lg); min-width: 0; }
+.rb-506 { margin: 0; color: var(--cv-ink-2); font-size: var(--text-sm); }
+.rb-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
+@media (min-width: 900px) { .rb-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rb-form .rb-line, .rb-form .rb-who, .rb-form .rb-scope { grid-column: 1 / -1; }
+.rb-opt { display: flex; align-items: center; gap: var(--space-xs); min-height: 44px; color: var(--cv-ink); font-size: var(--text-sm); font-weight: 400; cursor: pointer; }
+.rb-opt input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--cv-accent); }
+.rb-sub { padding-left: var(--space-lg); }
+.rb-line { margin: 0; color: var(--cv-ink-2); font-size: var(--text-sm); }
+.rb-msg { margin: 0; color: var(--cv-danger, #B42318); font-size: var(--text-sm); }
+.rb-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
+.rb .cs-btn { min-height: 44px; min-width: 44px; }
+.rb-ver { color: var(--cv-ink-3); font-size: var(--text-sm); }
+
+/* The list of saved templates */
+.rb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rb-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-lg); padding: var(--space-sm) 0; border-top: 1px solid var(--cv-line); }
+.rb-item:first-child { border-top: 0; }
+.rb-item-main { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; }
+.rb-item-main .strong { font-weight: 500; color: var(--cv-ink); overflow-wrap: anywhere; }
+.rb-item-main .sub { color: var(--cv-ink-3); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.rb-item-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
+.rb-ask { color: var(--cv-ink); font-size: var(--text-sm); }
+
+/* The editor's bar stays on screen: it holds the way back to the list. */
+.rb-bar { position: sticky; top: 0; z-index: var(--z-raised); display: flex; align-items: center; gap: var(--space-md); min-height: 56px; padding: var(--space-xs) 0; background: var(--cv-bg); border-bottom: 1px solid var(--cv-line); }
+@media (max-width: 640px) { .cs-main .rb-bar { top: calc(env(safe-area-inset-top, 0px) + var(--cs-nav-pin, 0px)); } }
+.rb-bar h2 { min-width: 0; margin: 0; font-size: var(--text-lg); font-weight: 500; color: var(--cv-ink); overflow-wrap: anywhere; }
+.rb-back { flex: none; }
+
+/* The preview: a page drawn from the report model */
+.rb-pv { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+.rb-errors { margin: 0; padding: var(--space-sm) var(--space-md) var(--space-sm) var(--space-xl); border-radius: var(--cv-r-inner); background: var(--cv-warn-soft); color: var(--cv-ink); font-size: var(--text-sm); }
+.rb-doc { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; padding: var(--space-lg); border: 1px solid var(--cv-line); border-radius: var(--cv-r-card); background: #FFFFFF; color: #1A1D21; font-size: var(--text-sm); line-height: 1.5; overflow-wrap: anywhere; }
+.rb-doc p, .rb-doc ul, .rb-doc h1, .rb-doc h2, .rb-doc h3, .rb-doc figure { margin: 0; }
+.rb-doc ul { padding-left: var(--space-lg); }
+.rb-cover { display: flex; flex-direction: column; gap: var(--space-2xs); padding: var(--space-lg); border-radius: var(--cv-r-inner); background: var(--rb-accent); color: var(--rb-on, #FFFFFF); }
+.rb-cover-plain { background: none; color: #1A1D21; border-top: 4px solid var(--rb-accent); }
+.rb-cover-photo { background: none; color: #1A1D21; padding: 0 0 var(--space-sm); border-bottom: 4px solid var(--rb-accent); }
+.rb-cover h1, .rb-head h1 { font-size: var(--text-xl); font-weight: 500; line-height: 1.2; }
+.rb-head { display: flex; flex-direction: column; gap: var(--space-2xs); }
+.rb-h1 { margin-top: var(--space-md) !important; font-size: var(--text-lg); font-weight: 500; }
+.rb-h2 { margin-top: var(--space-sm) !important; font-size: var(--text-base, 1rem); font-weight: 500; }
+.rb-note { color: #5E646B; font-size: var(--text-xs); }
+.rb-break { width: 100%; margin: var(--space-sm) 0; border: 0; border-top: 1px dashed #D5D8DC; }
+.rb-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--space-xs); }
+.rb-tile { display: flex; flex-direction: column; gap: var(--space-3xs); padding: var(--space-sm); border: 1px solid #D5D8DC; border-radius: var(--cv-r-inner); }
+.rb-tile-l { color: #5E646B; font-size: var(--text-xs); }
+.rb-tile-v { font-size: var(--text-base, 1rem); font-weight: 500; font-variant-numeric: tabular-nums; }
+.rb-tblwrap { max-width: 100%; }
+.rb-tbl { width: 100%; border-collapse: collapse; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+.rb-tbl caption { padding-bottom: var(--space-2xs); text-align: left; font-size: var(--text-sm); font-weight: 500; }
+.rb-tbl th, .rb-tbl td { padding: var(--space-3xs) var(--space-xs); border-bottom: 1px solid #E5E7EA; text-align: left; vertical-align: top; }
+.rb-tbl th { color: #5E646B; font-weight: 500; }
+.rb-tbl .num { text-align: right; white-space: nowrap; }
+.rb-tbl tfoot td { font-weight: 600; border-top: 1px solid #1A1D21; }
+/* A table cell breaks only between words. The overflow-wrap: anywhere of .rb-doc counted a break between any two letters
+   when the table sized its columns, so on the phone it squeezed text columns to one letter. A word with a hyphen or a
+   slash is kept whole too (rb-nw, from reports-ui.js tableHTML). */
+.rb-tbl th, .rb-tbl td { overflow-wrap: normal; }
+.rb-tbl .rb-nw { white-space: nowrap; }
+/* On the phone, a table of 4 or more columns scrolls sideways in its own box: its title and first column stay in place,
+   and a text column is at least 8em wide, so names wrap on whole words and the figures keep their full width. A shade on
+   the box's right edge shows that columns remain to the right; a white end scrolls with the table and covers it at the end. */
+@media (max-width: 640px) {
+  .rb-tblwrap:has(> .rb-tbl th:nth-child(4)) {
+    container-type: inline-size; isolation: isolate;
+    background: linear-gradient(to left, #FFFFFF 40%, rgba(255, 255, 255, 0)) right / 20px 100% no-repeat local, linear-gradient(to left, rgba(26, 29, 33, 0.18), rgba(26, 29, 33, 0)) right / 14px 100% no-repeat scroll;
+  }
+  .rb-tbl:has(th:nth-child(4)) caption { position: sticky; left: 0; width: 100cqw; }
+  .rb-tbl:has(th:nth-child(4)) :is(th, td):not(.num) { min-width: 8em; }
+  .rb-tbl:has(th:nth-child(4)) tr > :first-child { position: sticky; left: 0; z-index: 1; background: #FFFFFF; box-shadow: inset -1px 0 0 #E5E7EA; }
+}
+.rb-chart { display: flex; flex-direction: column; gap: var(--space-2xs); }
+.rb-chart figcaption { font-weight: 500; }
+.rb-svg { width: 100%; max-width: 520px; height: auto; }
+.rb-legend { display: flex; flex-wrap: wrap; gap: var(--space-3xs) var(--space-sm); padding: 0 !important; list-style: none; color: #5E646B; font-size: var(--text-xs); }
+.rb-key { display: inline-block; width: 10px; height: 10px; margin-right: var(--space-3xs); border-radius: 2px; }
+.rb-photo { display: flex; flex-direction: column; gap: var(--space-3xs); }
+.rb-photo img { display: block; max-width: 100%; height: auto; border-radius: var(--cv-r-inner); }
+.rb-photo figcaption { color: #5E646B; font-size: var(--text-xs); }
+.rb-photo-wait { display: block; width: 100%; aspect-ratio: 3 / 2; border-radius: var(--cv-r-inner); background: #EEF0F2; }
+
+/* The PDF drawn in the page */
+.rb-pdf { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-md); border: 1px solid var(--cv-line); border-radius: var(--cv-r-card); background: var(--cv-panel); }
+.rb-pdf-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
+.rb-pdf-head h3 { margin: 0; font-size: var(--text-sm); font-weight: 500; }
+.rb-pdf .doc-pages { display: flex; flex-direction: column; gap: var(--space-sm); max-height: 80vh; overflow: auto; }
+.rb-pdf .doc-page { display: block; width: 100%; height: auto; box-shadow: 0 0 0 1px var(--cv-line); background: #FFFFFF; }
+
+/* The editor: sections with a switch, move buttons and their options */
+.rb-secs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rb-sec { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-xs) 0; border-top: 1px solid var(--cv-line); }
+.rb-sec:first-child { border-top: 0; }
+.rb-sec-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs); }
+.rb-switch, .rb-sec-name { display: flex; align-items: center; gap: var(--space-xs); min-height: 44px; min-width: 0; color: var(--cv-ink); font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
+.rb-switch input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--cv-accent); }
+.rb-sec.is-off .rb-switch span { color: var(--cv-ink-3); }
+.rb-sec-acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs); }
+.rb .rb-move { padding: var(--space-2xs) var(--space-sm); }
+.rb-opts { display: flex; flex-direction: column; gap: var(--space-md); padding: var(--space-sm) 0 var(--space-xs); }
+.rb-accent { display: flex; align-items: center; gap: var(--space-xs); }
+.rb-accent input[type="color"] { width: 44px; height: 44px; padding: 2px; border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); }
+.rb-accent input[type="text"] { width: 9em; min-height: 44px; padding: var(--space-xs) var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); }
+.rb-file { position: relative; overflow: hidden; align-self: flex-start; }
+.rb-file input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.rb-thumbs { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.rb-thumb { position: relative; display: block; width: 88px; }
+.rb-thumb img, .rb-thumb .rb-photo-wait { display: block; width: 88px; height: 66px; object-fit: cover; border-radius: var(--cv-r-inner); }
+.rb .rb-x { position: absolute; top: -6px; right: -6px; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+.rb-hold { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-sm) 0; border-top: 1px dashed var(--cv-line); }
+.rb-hold h4 { margin: 0; font-size: var(--text-sm); font-weight: 500; color: var(--cv-ink); }
+.rb-fig { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xs); }
+.rb-fig input, .rb-split-row input, .rb-split-row select { width: 100%; min-height: 44px; padding: var(--space-xs) var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); }
+
+/* The rich-text editor */
+.rb-rte { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+.rb-tools { display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+.rb .rb-tool { min-width: 44px; padding: var(--space-2xs) var(--space-sm); }
+.rb-tools select { min-height: 44px; min-width: 44px; max-width: 100%; padding: 0 var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-pill); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); }
+.rb-area { min-height: 132px; padding: var(--space-sm) var(--space-md); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: #FFFFFF; color: #1A1D21; font-size: var(--text-sm); line-height: 1.5; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+.rb-area:focus { outline: 2px solid var(--cv-focus); outline-offset: 1px; }
+.rb-area p, .rb-area h3, .rb-area ul { margin: 0 0 var(--space-xs); }
+.rb-area h3 { font-size: var(--text-base, 1rem); font-weight: 500; }
+.rb-area ul { padding-left: var(--space-lg); }
+
+/* The distribution split */
+.rb-split { display: flex; flex-direction: column; gap: var(--space-xs); }
+.rb-split-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 9em); gap: var(--space-xs); }
+.rb-off:empty, .rb-split-msg:empty { display: none; }
+.rb-leave { display: flex; flex-direction: column; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-radius: var(--cv-r-inner); background: var(--cv-warn-soft); }

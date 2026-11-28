@@ -25,9 +25,10 @@
   }
   const days = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
   const addDays = (s, n) => isoOf(new Date(parse(s).getTime() + n * 864e5));
+  /** s moved n business days (Monday to Friday, no holidays): later for n > 0, earlier for n < 0, s itself for n = 0. */
   function businessDays(s, n) {
     let d = s;
-    for (let k = 0; k < n; ) {
+    for (let k = 0; k < Math.abs(n); ) {
       d = addDays(d, n > 0 ? 1 : -1);
       const wd = parse(d).getUTCDay();
       if (wd !== 0 && wd !== 6) k++;
@@ -247,10 +248,29 @@
     save(ws);
     return r;
   }
+  /**
+   * A subscription signed through an e-signature agreement that the investor has not signed. The investor's own signer on the
+   * envelope decides: esign.js sets the request's signedAt only once everyone has signed (the firm countersigns after
+   * approving), so a request without signedAt whose investor has signed is a normal one waiting for approval. A request whose
+   * envelope is not here counts as signed only with a signedAt (the console's import sets it from the investor's signature).
+   */
+  function unsignedAgreement(ws, r) {
+    if (!r || r.type !== 'subscription' || !r.envelopeId || r.signedAt) return false;
+    const env = ((ws && ws.envelopes) || []).find((e) => e.id === r.envelopeId);
+    const me = env ? env.signers.find((s) => s.investorId === r.investorId) : null;
+    return !(me && me.status === 'signed');
+  }
+  const NOT_SIGNED = 'The subscription agreement is not signed yet.';
   function decide(ws, r, approve, note) {
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     const inv = ws.investors.find((x) => x.id === r.investorId);
     if (!o || !inv || r.status !== 'pending') return false;
+    // Plan 06-34 (plan-check B2): a subscription signed through an agreement the investor has not signed yet ("Continue and
+    // sign later", walkthrough failure 1) is never approved; declining it stays possible.
+    if (approve && unsignedAgreement(ws, r)) {
+      if (NS.ui && NS.ui.toast) NS.ui.toast(NOT_SIGNED);
+      return false;
+    }
     r.status = approve ? 'approved' : 'rejected';
     r.decided = today();
     r.note = note || '';
@@ -258,9 +278,19 @@
     save(ws);
     return true;
   }
-  /** Capital redeemed at the dealing date, from the capital accounts (null until that month is closed). */
+  /**
+   * Capital redeemed at the dealing date, from the capital accounts (null until that month is closed). Once the books are
+   * finalized through the dealing date, it is the amount posted then (the live req:<id> entry's 2200 credit): a later
+   * change inside that month is listed by the books, not applied.
+   */
   function redemptionAmount(ws, r) {
     if (r.paidCents != null) return r.paidCents;
+    const books = ws.books && ws.books.funds && ws.books.funds[r.offeringId];
+    if (NS.books && books && r.dealing && NS.books.closedThrough(ws, r.offeringId) >= r.dealing) {
+      const e = NS.books.live(books, 'req:' + r.id);
+      const owed = e && Array.isArray(e.lines) ? e.lines.reduce((a, l) => (String(l[0]) === '2200' ? a - l[1] : a), 0) : 0;
+      if (e && owed > 0) return owed;
+    }
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     if (!o || !NS.audit) return null;
     const L = NS.audit.ledger(ws, o);
@@ -284,6 +314,11 @@
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     const inv = ws.investors.find((x) => x.id === r.investorId);
     if (r.type !== 'subscription' || r.status !== 'approved' || !o || !inv) return false;
+    // Plan 06-34 (B2): never funded or accepted while its agreement is unsigned.
+    if (unsignedAgreement(ws, r)) {
+      if (NS.ui && NS.ui.toast) NS.ui.toast(NOT_SIGNED);
+      return false;
+    }
     if (isOpen(o)) inv.positions.push(Object.assign({ offeringId: o.id, amount: r.cents / 100, date: r.dealing, ref: r.id }, r.cls ? { class: r.cls } : {}));
     else inv.positions.push(Object.assign({ offeringId: o.id, amount: 0, commitment: r.cents / 100, date: today(), ref: r.id }, r.cls ? { class: r.cls } : {}));
     r.status = isOpen(o) ? 'funded' : 'accepted';
@@ -352,33 +387,142 @@
     return true;
   }
 
-  /* ---------- Published documents (files kept in this browser's IndexedDB in the demo) ---------- */
+  /* ---------- Published documents (files kept in this browser's file store in the demo) ---------- */
   const files = (() => {
     let dbp = null;
+    // Files this browser would not keep (private browsing, a full disk, or the portal shown inside another page) are
+    // held here for as long as the page is open, so an upload and a signing still work; the person is told (app.js).
+    const held = new Map();
+    // Every file kept in this session is also held here, up to RECENT_MAX bytes in all (the oldest go first), so a file
+    // just written (the document being signed, its signed copy) is read back from memory: a browser that stops answering
+    // or loses a stored file during the session (Safari on an iPhone does both) never stops a signing.
+    const recent = new Map();
+    const RECENT_MAX = 64 * 1024 * 1024;
+    let recentBytes = 0;
+    const remember = (id, blob) => {
+      forget(id);
+      if (!blob || blob.size > RECENT_MAX) return;
+      recent.set(id, blob);
+      recentBytes += blob.size;
+      for (const [k, b] of recent) {
+        if (recentBytes <= RECENT_MAX) break;
+        recent.delete(k);
+        recentBytes -= b.size;
+      }
+    };
+    const forget = (id) => {
+      const b = recent.get(id);
+      if (!b) return;
+      recent.delete(id);
+      recentBytes -= b.size;
+    };
+    let refused = false;
+    const refuse = () => {
+      if (refused) return;
+      refused = true;
+      if (NS.app && NS.app.storageNote) NS.app.storageNote();
+    };
+    const unreadable = () => new Error('This browser could not read its saved copy of this file. Reload the page and try again.');
+    /** The browser's file store, or null when the browser will not open it. */
     function db() {
       if (dbp) return dbp;
-      dbp = new Promise((res, rej) => {
+      dbp = new Promise((res) => {
+        const no = () => {
+          refuse();
+          res(null);
+        };
         try {
           const r = indexedDB.open('cvp-documents', 1);
           r.onupgradeneeded = () => r.result.createObjectStore('files');
           r.onsuccess = () => res(r.result);
-          r.onerror = () => rej(r.error);
+          r.onerror = no;
         } catch (e) {
-          rej(e);
+          no();
         }
       });
       return dbp;
     }
-    const tx = (mode, fn) => db().then((d) => new Promise((res, rej) => {
-      const t = d.transaction('files', mode);
-      const req = fn(t.objectStore('files'));
-      t.oncomplete = () => res(req && req.result);
-      t.onerror = () => rej(t.error);
-    }));
+    // A transaction the store refuses (or that cannot start: Safari closes the connection of a page left in the background)
+    // fails here as a rejection, and the next call opens the store again.
+    const tx = (mode, fn) =>
+      db().then(
+        (d) =>
+          d &&
+          new Promise((res, rej) => {
+            const fail = (e) => {
+              if (dbp) dbp = null;
+              try {
+                d.close();
+              } catch (x) {
+                /* already closed */
+              }
+              rej(e);
+            };
+            try {
+              const t = d.transaction('files', mode);
+              const req = fn(t.objectStore('files'));
+              t.oncomplete = () => res(req && req.result);
+              t.onerror = () => fail(t.error);
+              t.onabort = () => fail(t.error);
+            } catch (e) {
+              fail(e);
+            }
+          })
+      );
+    /*
+     * A file is kept as its bytes and type, never as a Blob: Safari can lose the data behind a Blob it kept in IndexedDB,
+     * and reading it then fails with "The object can not be found here." (owner, iPhone: Finish on the W-9). A Blob kept
+     * by an earlier version is read at once, so a lost one is reported here in plain words and never in a signing.
+     */
+    const unpack = async (v) => {
+      if (!v) return undefined;
+      if (v instanceof Blob) {
+        try {
+          return new Blob([await v.arrayBuffer()], { type: v.type });
+        } catch (e) {
+          throw unreadable();
+        }
+      }
+      if (v.bytes instanceof ArrayBuffer) return new Blob([v.bytes], { type: v.type || '' });
+      return undefined;
+    };
     return {
-      put: (id, blob) => tx('readwrite', (s) => s.put(blob, id)),
-      get: (id) => tx('readonly', (s) => s.get(id)),
-      del: (id) => tx('readwrite', (s) => s.delete(id))
+      /** Keep a file. One the browser will not keep is held in memory instead, so this never fails for that reason. */
+      put: (id, blob) => {
+        const hold = () => {
+          refuse();
+          forget(id);
+          held.set(id, blob);
+        };
+        return Promise.resolve()
+          .then(() => blob.arrayBuffer())
+          .then(
+            (bytes) => {
+              const type = blob.type || '';
+              remember(id, new Blob([bytes], { type }));
+              return tx('readwrite', (s) => s.put({ type, bytes }, id)).then((ok) => {
+                if (ok == null) hold();
+                else held.delete(id);
+              }, hold);
+            },
+            hold
+          );
+      },
+      /** A kept file (a Blob in memory), or undefined when there is none. Never fails with the browser's own error text. */
+      get: (id) => {
+        if (held.has(id)) return Promise.resolve(held.get(id));
+        if (recent.has(id)) return Promise.resolve(recent.get(id));
+        return tx('readonly', (s) => s.get(id)).then(unpack, () => {
+          throw unreadable();
+        });
+      },
+      del: (id) => {
+        held.delete(id);
+        forget(id);
+        return tx('readwrite', (s) => s.delete(id)).then(() => undefined);
+      },
+      /** True once a file could not be kept by the browser in this session. */
+      refused: () => refused
     };
   })();
   function docsFor(ws, inv) {
@@ -569,6 +713,7 @@
   }
 
   NS.ops = {
+    unsignedAgreement,
     ensure,
     isOpen,
     liquidity,

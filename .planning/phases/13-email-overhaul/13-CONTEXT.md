@@ -1,0 +1,197 @@
+# Phase 13 context: Email overhaul
+
+Why this is built: the self-serve portal is the funnel that brings sponsors to Carrow & Vale. Every email an investor gets carries the sponsor's firm (white label) and must arrive; a sponsor whose invitations land in spam leaves.
+
+Owner instruction (2026-11-20, verbatim): "work around whatever bullshit you think you need me for". Open questions take the researcher's recommended defaults below. Anything needing counsel shows "To be confirmed with counsel"; anything needing the owner's account shows "To be confirmed" and is never faked.
+
+## Choices (orchestrator, 2026-11-20, from 13-RESEARCH.md)
+- C-01 Provider: Amazon SES on one platform account, as the default (about $1.20-1.92 a month at 12,000 messages; Postmark is the fallback if AWS refuses production access). Code stays provider-neutral: SMTP remains the only send path; adapters in server/mailers/{smtp,ses}.mjs handle domain records, status and delivery events. Built and tested against fakes; live sending waits for the owner's AWS account at the 13-10 checkpoint, and the console shows "To be confirmed" until then. The outside-option table in 13-RESEARCH.md is reported to the owner.
+- C-02 CAN-SPAM split: invitations to a new offering and "offering news" custom notices count as possibly commercial (postal address in the footer, one-click unsubscribe); everything else is transactional. "To be confirmed with counsel".
+- C-03 Password reset and team invitation: templates, previews and honest toasts now; real sending comes with the security step's sign-in accounts.
+- C-04 E-sign server emails are sent as notices with a portal link; the co-investor keeps the existing sign-in link path.
+- C-05 The managed edition's output stays byte-identical.
+- C-06 The firm's postal address is a new optional brand field, required only before possibly commercial mail is sent.
+- C-07 Sent log retention: while the investor or workspace exists, capped by MAIL_LOG_DAYS (default 2,555 days, assumed 7 years).
+- C-08 No automatic expiry reminders to investors in this phase.
+- C-09 Build the investor confirmation email (an e-sign toast already claims the completed copy was emailed).
+- C-10 Open and click tracking: off.
+- C-11 Never fall back to a platform domain when a sponsor's domain is not ready: keep the message in the outbox and tell the sponsor why.
+- C-12 No attachments, ever (signed documents carry taxpayer numbers). Sponsor free text is screened; the server refuses with 422.
+- C-13 onboarding.js is not edited in this phase; invitations.js, esign.js and console.js each have one owner plan per wave.
+
+## Plan-check additions, wave 1 (13-01, 13-02; checked 2026-11-20; 1 blocker, 5 warnings). Executors apply these with their plan. Findings: scratchpad checks-13-wave1.md.
+- Decision: 13-01 keeps its wait for 08-09 (otherwise 08-09 and 13-01 collide in mail.mjs). 13-02 starts now.
+- B1 (blocker, 13-01 Tasks 2 and 3): .planning/phases/06-*/checks/co-investor-server.js joins 13-01's files. Line 499 becomes ``text.indexOf(`Dear ${F.coFirst},`) >= 0`` (coFirst is already set at line 562), because the new rule greets by given name only. List the change with the other assertion edits.
+- W2 (13-01 Task 2): also change server/test/invitations-cosign.test.mjs:132 (the old support line) and server/test/mail.test.mjs:222 ('Dear Ann Lee,' and the Investor Relations line) to "Dear Ann," and the supportSentence wording.
+- W3 (13-01 Task 2, tests 5 and 6): "exactly one data-button whose href equals data.link, cell at least 44 px" applies to investor messages only. For sponsor messages: at most one button, and when there is one, href === consoleUrl (mail.mjs:614-692 has no button when consoleUrl is null).
+- W5 (13-02, gate13 self-test): the wording becomes "each of the eight faults (gate11's six plus the phase 08 and GATE13_PHASES stand-ins) ends GATE FAIL and GATE_EXIT=1; the control is not counted", expecting PASS (8).
+- W6 (13-02 Task 2): join each TXT record's pieces before comparing (a 2048-bit DKIM key is split into strings of at most 255 characters; resolveTxt returns arrays) in smtp.mjs and wherever ses.mjs checks DNS. "Check ready" adds a fake resolver returning the DKIM record in two pieces.
+- Note for the 13-10 checkpoint: with bring-your-own-key DKIM and no custom MAIL FROM, raw headers carry the provider's Return-Path and a second DKIM signature in the provider's domain. The visible message and the DNS records the sponsor copies stay white label; the provider's name appears only in "show original".
+- Server test count today: 368. After 13-02: 386.
+
+## After 13-02 (merged 2026-11-20; server tests 387)
+- Every .mjs under server/test counts as at least one test with node --test, so helper files count one each (ses-fake.mjs carries `// gate: tests 1`). Later plans count helper files the same way.
+- Owner-run items for 13-10: the provider's v2 request and response shapes, the private-key encoding (base64 PKCS#1 DER), the event fields (mail.commonHeaders.messageId with angle brackets), and the certificate host pattern.
+- A domain already used by another workspace is refused with 409. A domain the provider already holds gets the new key (PUT .../dkim/signing). A DMARC record is offered only when the lookup proves none exists (ENOTFOUND or ENODATA), never after a timeout.
+
+## From phase 16 (2026-11-27)
+- 13-01-PLAN.md:174 and 13-06-PLAN.md:115 use a real bank routing number (ending 0021) as test data. Executors use its never-issued image instead (prefix 13, same last seven digits, as 16-03 swapped it in server/test/invitations.test.mjs); ACH LEAK must keep passing.
+
+## Plan-check additions, 13-01 re-check (checked 2026-11-27 against a4e2a54; 3 blockers fixed here, 7 warnings). Executors apply these with their plan. Findings: scratchpad checks-13-01-recheck.md.
+- B1 (Task 3): .planning/phases/13-email-overhaul/checks/gate13.sh joins 13-01's files. Before `cp "$GATE_OUT/base-commit.txt" "$G/base-commit.txt"` add gate14.sh's rule: a different base commit than GATE_OUT/gate/base-commit.txt sets `export GATE_FRESH=1` and prints "GATE note: base commit changed; every step runs again". `--self-test` still ends PASS (8).
+- B2 (Task 2 RED): build base-sponsor.json from `git show $BASE:server/lib/mail.mjs > $O/base/lib/mail.mjs` and `git show $BASE:server/lib/crypto.mjs > $O/base/lib/crypto.mjs` (mail.mjs imports ./crypto.mjs); never from the working tree.
+- B3: test 1 of the guard file uses '131000021', never '021000021' (as "From phase 16").
+- W1 (Task 3 verify): starts `rm -f $O/gate.txt;`; `G=$P/checks/gate13.sh; [ -f $G ] || exit 1;` before the gate (no gate10 fallback).
+- W2: GATE13_PHASES="08 09 10" (08's reverify.js reads the server's reverify email).
+- W3: Task 1 verify adds `[ "$(cat $O/base-count.txt)" -ge 478 ] || exit 1;`. From a4e2a54: 478 -> 486 (Task 2) -> 490 (Task 3).
+- W4 (08-09 variants): invitation and invitation_resent gain reverify (resend subject 'New link: <Firm>: verify your accredited investor status'; text keeps "verify your accredited investor status again", button "Verify your accreditation"); submission_reminder = onboarding, subscription, taxRequest, reverify, coSign; sponsor_notification includes reverify-reverified and reverify-finished; base-sponsor.json and test 3 hold every one.
+- W5 (assertions; line numbers stale, find by grep): invitations-reverify.test.mjs:150 'Reminder: Harbor Ridge Capital: verify your accredited investor status' -> 'New link: Harbor Ridge Capital: verify your accredited investor status'; co-investor-server.js:535 `Dear ${F.coName}` -> `Dear ${F.coFirst},` (wave-1 B1 moved).
+- W6 (Task 3 verify): also `node .planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/ach-leak.js --case checks > $O/ach.txt 2>&1 && grep -q '^ACH LEAK: PASS' $O/ach.txt`.
+- W7: EM-01 here covers the four builders and reverifyMessage; taxdocs.mjs messages move in 13-07; filing_order and package_alert are staff-only and stay out.
+- Start: now, with these. No running build edits 13-01's files; no guide line (any goes to GUIDE-PASS.md).
+
+## Plan-check additions, wave 2 (13-03, 13-05, 13-11), checked against 392bbbc, 2026-11-27
+Binding on the executors (full text with each fix: scratchpad checks-13-wave2.md).
+- B1 (13-03): starts after 15-05 merges. Adds server/lib/roles.mjs to its files with ROUTES lines: GET /v1/mail/sender 'view'; PUT /v1/mail/sender 'configure'; POST /v1/mail/sender/check 'configure'; GET /v1/messages/log with the permission that already guards personal data; other('POST', '/v1/mail/events', 'public', signature checked by the adapter). A test: a signed-in person whose role lacks configure gets 403 on PUT /v1/mail/sender.
+- B2 (all three): test numbers from never-issued ranges: '000-12-3456' (not '123-45-6789') and '991234567890' (not '000123456789'). Both still match 13-01's patterns.
+- B3 (13-11): adds server/test/emails-render.test.mjs and emails-guard.test.mjs to its files (read 13-01's merged tests first): the expiry rule covers only messages with a personal link; allowed hrefs are link, portalUrl, consoleUrl and unsubscribeUrl; the "Reminder:" subject ban covers invitation and resend subjects only. Test counts unchanged.
+- B4 (13-11 Task 2 verify): use `! grep -l 'IMPORTANT TAX RETURN DOCUMENT AVAILABLE' server/test/fixtures/emails/tax_consent*.txt`.
+- W1 (all three): final gate verify starts `rm -f $O/gate.txt;` and `G=$P/checks/gate13.sh; [ -f $G ] || exit 1;` before `bash $G`.
+- W2 (13-03): server/README.md "## Email" found by grep (not line 352); keep 15-05's `auth.can` check in invitations.mjs.
+- W3 (13-05 tracer): the invite gives a commitment (e.g. cents 25000000) or a postal address, so the outbox is reached.
+- W4 (13-11 test 6): the base staff-email output is built from a base-tree worktree with a FILINGS=1 server, or from lines 193-196 of `git show $BASE:server/lib/filings.mjs`.
+- W5 (13-11 Task 2): at least one golden per new kind, besides the 55 total.
+- W6 (13-03, 13-11 Task 1): `[ "$(cat $O/base-count.txt)" -ge 518 ] || exit 1;` (measured base, 506 now plus 13-01's).
+- Start: 13-03 after 13-01 and 15-05 merge; 13-05 after 13-01, 08-20 and 11-16 merge; 13-11 after 13-01 merges (09-08 not running).
+
+## After 13-01 (merged 323fae3, 2026-11-27)
+- Gate13 GATE_EXIT=0 (GATE13_PHASES="08 09 10"); plan tree 490 = 478 + 12. Merged tree 533 of 533; one conflict in server/test/mail.test.mjs resolved by keeping both (13-01's BANNED + model names, scanned through stripLinkTokens).
+- Interface change for later plans: emails.js's BANNED no longer holds the model maker's two names (no line of assets/js may spell them); tests that check renders add them on the test side (MODEL_NAMES in emails-guard.test.mjs).
+- emails.js uses the server's address rule for the support mailto (an address ending `&cc=x` no longer becomes a link).
+- 37 variants with .txt and .html goldens; sponsor messages byte-identical to the base builders.
+- Seen once, not 13-01's: server/test/auth-gate.test.mjs "operator" failed in one full run because a random id matched its `/pw|.../` scan (6 reruns pass). Same random-text class as scan-tokens; queued.
+- Owner's read of the wording at 13-10 (sponsor messages name the investor as the console holds the name, e.g. "Shah, Anita").
+- Wave 2 can start: 13-11 now; 13-03 now (15-05 merged); 13-05 after 11-16 merges.
+- Combined merged tree af0b7b9 (15-05 + 13-01 + 15-04): EMAIL DIALOG 3, CO-INVESTOR SERVER 5, SERVER MODE 15 pass; GATE13 SELF-TEST PASS (8); server tests 544/544.
+
+## After 13-11 (merged 2026-11-27)
+- Gate13 (GATE13_PHASES="09", as the plan names) GATE_EXIT=0; plan tree 554 = 544 + 10. Merged tree: run 1 553/554 (auth-gate.test.mjs "operator": its `/pw|emailIndex|salt|hash|session/i` scan over the whole response text matched a random id; second time today), run 2 554/554. A quick task fixes that test (auth-gate-scan).
+- 24 new variants, 61 text goldens; staff filing email byte-identical to the base and rendered through emails.js; commercial footer (postal address + a way to stop) on subscribe invitations, offering invitations with no commitment, their new-link resends and offering-news notices ("To be confirmed with counsel"); dispatch refuses a possibly commercial message when the firm has no postal address.
+- Deviations: password reset button reads 'Open the reset page' (the text version "Choose a new password:" tripped the password scan); tax notice link and consent emails put the URL in the button and add a greeting and long dates (13-07 checks its tests against these goldens); 'unsubscribed' added to the mail log statuses.
+- Open: List-Unsubscribe headers are rendered but mail.mjs does not pass headers through yet (13-03 or 13-04); co-investor confirmation's 'Open your portal' button: the caller passes no portalUrl when the co-investor has no portal login; owner's read at 13-10; counsel on the commercial classification.
+- Unblocked: 15-14 needs 13-03 too; 14-13 (after 13-01 and 13-11, while no plan edits emails.js; it waits for 15-14 per 15's roadmap line).
+
+## Plan-check additions, wave 3 (13-04, 13-07, 13-09, 13-12), checked against 8100e81, 2026-11-27
+Binding on the executors (full text: scratchpad checks-13-wave3.md).
+- B1 (13-04): add server/lib/roles.mjs (lines only): team('POST',{path:'/v1/messages'},'operate',true); team('GET',{path:'/v1/messages/preferences'},'view',true); the /unsubscribe page outside /v1 rate-limited by 13-04 itself (an other() line if the walk sees it). A test: a role without operate gets 403 on POST /v1/messages (count stays +17).
+- B2, B3: 13-04 and 13-07 depend on 13-03, 13-05 and 13-11.
+- B4 (13-12 api-export): use 13-03's note screen (POST /v1/invitations with a note holding '000-12-3456' answers 422 with screen()'s sentence), not 13-04's route.
+- B5 (13-04, 13-12): fixtures '000-12-3456' and '991234567890'.
+- B6 (13-04): render gets the footer address (portal page `#unsubscribe-<token>`); mailer.send headers = Object.assign({}, r.headers, {'List-Unsubscribe': '<'+header+'>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'}) with the server's POST endpoint; tests read the header from the fake SMTP raw message and the footer from the text and assert they differ.
+- B7 (13-04), orchestrator's choice: the unsubscribe signing key is a random 32-byte secret made once with node:crypto and stored through vault.seal in a store record (no vault.mjs change); "forged" means signed by another server's key.
+- W1 (all four): final gate verify starts `rm -f $O/gate.txt;` and has `G=$P/checks/gate13.sh; [ -f $G ] || exit 1;`.
+- W2 (13-04, 13-07): `[ "$(cat $O/base-count.txt)" -ge <measured base> ] || exit 1;` (555 today, plus 13-03's 17 once merged).
+- W3 (13-07): taxdocs.mjs builds createMailLog({store, vault, env, now}) itself and filters list() by refId (no index.mjs change).
+- W4, orchestrator's choice: 13-03 accepts 'unsubscribed' in maillog.mjs's status set (13-03 has not started; this is binding on it), so 13-04 needs no maillog.mjs edit.
+- W5 (13-04): an invitation is refused 422 for the postal rule only when an email is actually sent and needs includes 'postalAddress'.
+- W6 (13-09): emails-ui.js makes its own fetch to serverUrl(ws) with the console's token (as taxlink.js does), using NS.integrations.api only when present.
+- W7 (13-09): measure GUIDE.sponsor in the Task 3 verify (44,766 of 48,000 now); lines that do not fit go to .planning/GUIDE-PASS.md; the summary reports the size.
+- W8: no whole-text word scan over random content: 13-12 cuts the DKIM record values out before the BANNED scan (or the fakes use a fixed key); 13-04 names its token-shape regex, applied after stripLinkTokens; 13-07 uses a literal last four that appears in no date, phone or amount.
+- W9 (13-09, 13-12): BANNED.concat(MODEL_NAMES) with [/anthropic/i, /claude/i], as emails-guard.test.mjs does.
+- I5 (13-09): 'sponsor' audience kinds go under "To your team"; the preview is drawn from the body's inner content keeping its inline background.
+- Start: 13-04 after 13-03, 13-05, 13-11 merge (shares index.mjs, invitations.mjs, roles.mjs with 13-03 and 15-06). 13-07 after 13-03 and 13-05. 13-09 after 13-03 and 13-05, and not beside 16-02 (console.js, diy.html, portal.html). 13-12 after 13-03 and 13-05.
+- Addition for 13-03 (binding, from W4): maillog.mjs's status set includes 'unsubscribed'.
+- Merged tree 8100e81: FILINGS SERVER 7, EMAIL DIALOG 3, SERVER MODE 15 pass; GATE13 SELF-TEST PASS (8).
+
+## After 13-05 (merged 2026-11-27)
+- Gate13 (GATE13_PHASES="08") GATE_EXIT=0 on the first run (45 GATE ok, 0 FAIL) on base 56c300d, before 13-11 merged; merged tree server tests 567/567; merged-tree browser reruns follow.
+- Deviations: in the self-serve console the co-investor's email opens in the sponsor's own email app (no "simulated" wording; PRESS AND CO-INVESTOR forbids "emailed"/"simulated"), and Mark as sent writes one sent-log entry status manual; the C-06 postal stop applies only when the firm record has a postalAddress field (13-09 adds `postalAddress: ''` to TENANT_TEMPLATE and turns it on: sample tenants or reference checks that invite to an offering with no commitment will then need an address or a commitment); a manual resend keeps the same link and extends it 30 days; snapshot() now sends `access: true` for portal links; held/suppressed/unsubscribed rows say "Waiting to send" or "Not sent".
+- For 13-03 (running): cleanFirm keeps postalAddress. For later: the form can read 13-11's render `needs` instead of its own rule.
+- Found: invitations.js line 3 comment contains the forbidden word (since before 56c300d; not on screen). Queued for the next small fix.
+- Unblocked: 16-02 (pages), 13-07/13-12 (after 13-03), 13-09 (after 13-03, not beside 16-02).
+- Merged tree 38a85ea (with 13-11's emails.js): EMAILS PARITY 3, INVITE MAIL 9, EMAIL DIALOG 3, PRESS AND CO-INVESTOR 10, CO-INVESTOR SERVER 5, SERVER MODE 15, PACKAGE INVITE 12 pass.
+
+## After 13-03 (merged 1704801, 2026-11-27)
+- Gate13 (GATE13_PHASES="08 09 10", base 8efaa5c) GATE_EXIT=0 on the first run (65 ok, 0 FAIL); server tests 584 = 567 + 17; merged tree server tests 584/584.
+- Interfaces: createMailer({env, store, vault, now, tls, senders, log}).send(m) with refId, investorId, link, optional, commercial, attachments, headers → {emailStatus: sent|outbox|held|failed|suppressed, error?, logId?}; release(ws); MAIL_SAYS, relayIdOf, newMessageId. createMailLog({store, vault, env, now}): add, update, event, list(ws,{investorId, refId, limit}), suppressed, optionalOff, purge; LOG_STATUSES includes 'unsubscribed' (W4 done); emailHash, redactText, logDays. Store collections senders, maillog, mailsuppress, mailprefs. server.invitations.senders / .mailLog; createServer takes opts.mailCtx. Routes: GET /v1/mail/sender (view), PUT /v1/mail/sender and POST /v1/mail/sender/check (configure), GET /v1/messages/log (personal), POST /v1/mail/events (public, adapter signature). Note screen answers 422 with screen()'s sentence. New setting MAIL_EVENTS_PER_MIN (default 600).
+- Deviations accepted: mail.mjs delivered() keeps `commercial`; maillog has update() and list() filters by refId (for 13-07); the log redacts token links the caller does not name; a bounce marks emailStatus only for invitation and resent messages.
+- Open: the console's browser `mailLog` key has no SECTIONS line (for 14-08/15-17); held mail is released only when Check is called (13-12's screen); the suppression hash is unsalted SHA-256 (as planned; someone holding the store can confirm a guessed address: owner/counsel note); live sending only after 13-10's account run; relay reply format assumed until 13-10.
+- For 13-04: pass List-Unsubscribe headers through mailer.send headers and log 'unsubscribed'. For 13-07: pass link and investorId from taxdocs.mjs.
+- Merged tree 1704801: FILINGS SERVER 7, CO-INVESTOR SERVER 5, EMAIL DIALOG 3, ROLES TABLE 3, INVITE MAIL 9, EMAILS PARITY 3, PACKAGE INVITE 12 pass; GATE13 SELF-TEST PASS (8). SERVER MODE failed once ('- tax-request', detail not kept), then passed twice on the same tree: intermittent; sent to a GSD debugger (slug server-mode-tax-request-flake) to reproduce and find the cause.
+- SERVER MODE intermittent failure: not reproduced in 60 natural runs (incl. 3 at once under load); cause found in the check (server-mode.js read the snapshot body before its async read finished; same in part clean), RED with the body forced 1500 ms late, fixed in the check, 10/10 full runs pass, server 584/584. Merged. The failed run's lines were lost because a rerun into the same folder overwrites a failed part's saved lines (phase 6 lib.js savePart): small-fixes-c.
+
+## After 13-04 (merged 2026-11-27)
+- Gate13 (GATE13_PHASES="08", base 75b2fc5): run 1 GATE_EXIT=1 on MONITORING part package-not-run (read the sign-in toast and the record before the update; part alone passed twice; same folder rerun GATE_EXIT=0, 52 ok). Treated as a check timing fault under load, not accepted as noise: sent to a GSD debugger (slug monitoring-package-not-run). Server tests 601 = 584 + 17; merged tree 601/601.
+- Interfaces: POST /v1/messages (operate) {workspace, kind, variant, firm, portalUrl, offeringNews, recipients[1..500]} → {results:[{investorId, emailStatus: sent|outbox|held|failed|suppressed|unsubscribed, error}]}; 400 / 422 {error, field} / 429 over MAIL_RATE_PER_HOUR (default 2000 per workspace per rolling hour, in memory). GET /v1/messages/preferences (view). POST /unsubscribe/<token> answers 200 {} for any token (valid records mailprefs '<w>:<emailHash>' offering false how 'link' and event unsubscribed); GET changes nothing. Tokens HMAC-SHA256 with a sealed random 32-byte key in mailprefs/_key; createUnsubscribe exported from messages.mjs.
+- invitations.mjs changes (for 15-14): cleanFirm exported; imports from messages.mjs and render; firmRecord option from index.mjs; unsub instance; sendInvite logs 'unsubscribed' for a commercial invitation to an unsubscribed investor (invitation still created) else re-renders with footer link and headers; create refuses 422 postal sentence only when the email is sent, the stored firm record has postalAddress and render needs it; confirm() after the sponsor notification.
+- Open: the console dialog shows "reply to this email." in a commercial invitation's stop line while the server sends a link (13-08/13-09); server/README.md lacks MAIL_RATE_PER_HOUR, /unsubscribe and confirmations (next README touch); no route to turn offering news back on (13-08); commercial classification "To be confirmed with counsel"; live delivery after 13-10.
+
+## After 13-12 (merged 2026-11-27)
+- Gate13 (GATE13_PHASES="08", base 75b2fc5): run 1 stopped at the 2-hour limit (42 ok, 0 FAIL), rerun into the same folder GATE_EXIT=0 (53 ok). EMAIL SENDING PASS (7). Server tests 584 + 0. Only assets/js/integrations.js and the check changed.
+- Interface: NS.integrations.api(ws, method, path, body?) → JSON; rejects with Error(message = the server's sentence when given), err.status, err.code, err.server; a network failure rejects with TypeError (no status).
+- Added wording (owner to read): 'Once the status is Ready, Check releases them.', 'N waiting email(s) released for sending.', 'The integration server could not be reached.'; 13-10's guide line uses these words.
+- Open (queued for small-fixes-d, server change): on a single-sponsor server (shared API_TOKEN, no accounts) 13-03's mailer sends from MAIL_FROM while the domain is not Ready, so C-11's line "Until then, emails wait on your integration server and are not sent." would be untrue there. Fix: GET /v1/mail/sender answers `holds: true|false` and the screen shows the C-11 line only when holds is true (else a true sentence about sending from the server's own address). The self-serve setup (sponsor accounts) is the real one and is correct today.
+
+## After 13-07 (merged 2026-11-27)
+- Gate13 (GATE13_PHASES="10", base 75b2fc5): run 1 stopped at the 2-hour limit with no failure; rerun into the same folder GATE_EXIT=0 (57 ok). Server tests 588 = 584 + 4 on its tree; merged tree (with 13-04's +17) 605/605. TAX NOTICE PASS (4).
+- Deviation: P10 taxdocs-math.js setup() loads emails.js before taxdocs.js (as the pages do) plus the plan's one assertion change; TAXDOCS MATH PASS (11). Added the row line "The email with the link came back on <date>: send it on paper." (no Resend: the address is on the bounce list) — owner to read.
+- Interfaces: taxdocs.mjs renders tax_notice (variant link) and tax_consent, passes refId/investorId/link to mailer.send, builds its own createMailLog and reads list(ws,{refId}); GET /v1/taxdocs adds emailStatus 'bounced' + bouncedAt only for a permanent bounce. taxdocs.js notice() = render('tax_notice', portal variant).text. taxlink.js pull() marks bounced once; send()/resend() write one NS.emails.log entry.
+- Gap: a notice the server sends after the investor consents at the link is in the server's sent log but not in the workspace log (the console never sees it) — for 13-08's log screen to read the server log.
+
+## Plan-check additions, wave 4 (13-06, 13-08), checked against 1653d1a, 2026-11-27
+Binding on the executors (full text: scratchpad checks-13-wave4.md).
+Both plans:
+- B1: emails.js dispatch calls `o.api('POST','/v1/messages', body)` with three arguments (emails.js:911-945); pass `api: (m, p, b) => NS.integrations.api(ws, m, p, b)` and `connected: !!NS.integrations.serverUrl(ws)`; items are `{ investorId, inv, to: { name, email }, data }`. This replaces the key_links line "api: NS.integrations.api".
+- W1: final gate verify starts `rm -f $O/gate.txt; G=$P/checks/gate13.sh; [ -f $G ] || exit 1;`; each later check `|| exit 1`.
+- W2: a RED file counts only when it fails a named part, e.g. `grep -Eq '^FAIL .*(send-server|esign-server)|part <name>: FAIL' $O/red-1.txt || exit 1` (a plain ^FAIL also matches "FAIL unknown only name", P6 lib.js:697).
+- W3: no whole-text digit or token scan: outbox and toast text through stripLinkTokens first, Message-ID, investor and envelope ids removed (13-06 call-server, 13-08 esign-server); name the token regex; vendor scans via lib13.noVendor (BANNED.concat(MODEL_NAMES) with [/anthropic/i, /claude/i]).
+- W4: phone parts use Chromium with playwright's iPhone profile (390x844, touch) and print `NOTE WebKit not run`.
+- W5: fixtures '000-12-3456', '00-1234567', '991234567890', routing '131000021' or 9 digits starting 19.
+- Server tests: base 605 at 1653d1a (moves with small-fixes-c's word test and 15-14); measure the base on the start commit and declare the exact addition.
+13-06:
+- B4: screen-refused uses '131000021', not '021000021'.
+- B5: a ticked "News about a new offering" custom notice is dispatched with variant 'offeringNews' and offeringNews: true (render and prefsAllow mark commercial by variant, emails.js:795, 861; the server switches on the flag, messages.mjs:227-229).
+- B6: the offering-news preview's stop line reads as the server's does ("use this link: …", the link itself aside), not "reply to this email." (emails.js:811 renders that when no unsubscribeUrl is given) — EM-01's "same words". Same for the console invitation dialog's stop line (invitations.js:319, 360): 13-06 adds assets/js/invitations.js to files_modified and starts after small-fixes-c merges. emails.js is not edited by 13-06 (15-14 holds it); pass the stop URL in.
+- W6: postal: dispatch throws POSTAL before any request (emails.js:884); the console's own check shows the plan's sentence naming Portal and brand before dispatch, or the plan accepts POSTAL; the summary says which.
+- W7: anchors at 1653d1a move after 16-02 and 13-09: console.js noticeDraft 1565, noticeRecipients 1580, emailPreview 1624, console-notices 1643, notice-send 1719 (toast 1740); `investmentFor` is not a console.js function; operations.js ws.notices.push 154, 621; data.js first_name 331.
+- W8: the gate runs every phase; run in the background through heavy.sh; after a limit stop, rerun into the same folder and report both runs.
+- No new route; workspace keys notices and mailLog (16-02 adds the mailLog SECTIONS line).
+- Start: after 13-09 merges (13-09 waits for 16-02) and small-fixes-c merges; not beside 16-02 or 13-09 (console.js).
+13-08:
+- B2, orchestrator's choice (a): offering-news choices agree in both directions between the investor's Account switch, inv.emailPrefs.offering and the server's mailprefs. 13-08 adds an investor-credential route (e.g. `PUT /v1/my-mail-preferences {offering: true|false}`, who: investor, with its ROUTES line in server/lib/roles.mjs, lines only) handled in server/lib/messages.mjs: it records mailprefs '<w>:<emailHash>' with how 'account' (turning offering news back on is only possible by the investor himself, never by the sponsor), and the Account switch calls it in server mode; applyPrefs then reflects the server's record; while the server's record is off and the switch was not changed by the investor, the switch shows off with a true line. Server files leave the plan's "not edited" list for exactly messages.mjs and roles.mjs (lines only); server tests declared with the exact count (RED first). A part proves both directions (unsubscribe link → switch off; switch on → the next commercial message to that investor is sent, not 'unsubscribed'). If index.mjs must change to mount it, stop and report (15-14 is running; it does not hold index.mjs, but say so first).
+- B3: esign.js:2594 (signer's done screen "We will email you a copy when everyone has signed.") promises an emailed copy, which C-09/C-12 forbid: self-serve wording changes to the portal copy; managed stays byte-identical; add it to esign-simulated-phone.
+- W9 (unsubscribe-phone): the second context has no portal data, so ?server= is trusted only through CVPortalConfig.integrationServers or the page's own origin (app.js:293-332), and the part states which one it sets; the view is registered `{ standalone: true, edition: 'diy' }` like taxlink.js:410 with ['unsubscribe-','unsubscribe'] in PREFIXED (app.js:358); the footer link is `<portalUrl>?server=<publicUrl>#unsubscribe-<token>` (messages.mjs:111); the page POSTs `{}` as JSON to `<server>/unsubscribe/<token>`.
+- Lines touched: esign.js 709, 720, 734, 1428, 2379, 2594; diy.js 350, 369; portal.js 1231, 1322; app.js 358-370.
+- I2: e-sign signers with no investor record (the firm's countersigner, a co-investor) keep today's path and are logged as such; state the rule.
+- I1 is 13-09's (logSection reads GET /v1/messages/log per investor, which holds the server-sent consent notice). I3: the forgot toast's "simulated" wording is wired by a later plan after 15-14.
+- Start: now, beside 15-14 and 16-02 (no shared file); merge before own-fonts starts. Gate: GATE13_PHASES="08 10".
+- Merged tree ef87afa (13-04): SERVER MODE 15, CO-INVESTOR SERVER 5, EMAIL DIALOG 3, INVITE MAIL 9, EMAILS PARITY 3, PACKAGE INVITE 12, MONITORING 9, ROLES TABLE 3, FILINGS SERVER 7 pass; GATE13 SELF-TEST PASS (8).
+- Merged tree (13-12 + 13-07 + 13-04): EMAIL SENDING 7, TAX NOTICE 4, TAXLINK FLOW 6, TAXDOCS FLOW 14, TAXDOCS MATH 11, REAL FIRM 9 pass.
+
+## Decision during 13-08 (orchestrator, 2026-11-27)
+- B2 cannot be built honestly now: no browser page holds an investor credential (nothing calls /v1/invite/login; investor routes are not mounted before the sponsor gate in index.mjs) until 15-17/15-18 move the portal sign-in onto the server. Choice: until then, in server mode the Account "Invitations to new offerings" switch is not shown; in its place a true line: "To stop invitations to new offerings, use the link at the bottom of any such email." (the server honours that link). With no server the switch stays as built (the console's own sends honour it). The two-way sync (investor route mounted before the sponsor gate, ROUTES line, messages.mjs handler, the switch calling it, applyPrefs reflecting the server) becomes binding on 15-17 (recorded in 15-CONTEXT). A PORTAL MAIL part proves the server-mode line and that no switch claims what the server does not do.
+- The help guide skip line for the new view is allowed (exactly one line in server/help/guide.md, regenerated with server/help/build.mjs, --verify in sync, help tests pass): "unsubscribe: the page an unsubscribe link in an offering email opens; one button to stop invitations to new offerings and a link back to the portal".
+- Screen words untrue with a server, fixed in 13-08 (self-serve only; managed byte-identical): the void dialog's "Reason (sent to signers)", the review dialog's "Email subject" and "Message (shown in the email …)" when the server's notice uses neither, and the Team page hint "They get an email to set a password …": each says only what actually happens in that mode.
+- For 15-14: pass the firm's name as the fifth argument to unsub.urls (invitations.mjs ~1304) so an invitation's unsubscribe page shows the firm.
+- MONITORING timing fault (from 13-04's gate) fixed in the check (merged): 'Run now' read the demo sign-in toast; now reads only the toast after its own click; part once waits for the screening answer. 1 natural failure in 30 runs before; RED with forced delays; 10/10 full runs after. Same clear-then-wait shape in phase 08 checks/small-fixes.js press(): queued for small-fixes-d.
+
+## Re-check additions, 13-09 (gsd-plan-checker at 6b3ac52, 2026-11-27; binding; full text scratchpad checks-1309-1607.md)
+- B1: adding postalAddress: '' to TENANT_TEMPLATE turns on the C-06 stop for every workspace (workspace.js:66 and data.js:366 merge the template; invitations.js:202 postalMissing tests only that the key exists). Required: (a) the managed edition never shows or applies the postal stop; a managed-same part creates an invitation to an offering with no commitment in index.html and gets no postal error; (b) every existing check that invites to an offering with no commitment, or an on-file investor, in a self-serve workspace keeps passing by giving its workspace a postal address (emails.js SAMPLE_ADDRESS) or a commitment in its own setup, never by weakening an assertion (at least: phase 06 forms-flow, real-firm, record-and-lost-agreement, titles-and-editor, ways-out; phase 08 monitoring, package-flow, package-names; phase 10 taxdocs-flow, taxrecord-flow; phase 11 audit-flow, package-flow; phase 13 invite-mail); each changed check and line listed in the SUMMARY; (c) a part proves a self-serve workspace with an empty address shows "Add your firm's postal address under Settings, then Portal and brand, …" and the same invite passes once the address is saved. If (a) needs an invitations.js line, that file joins files_modified, the Task 3 diff guard drops it, and 13-09 starts after small-fixes-c merges.
+- B2: a non-raster logo (not PNG/JPEG/GIF) shows as the firm's name in the preview exactly as the sent email does (emails.js:148-171); emails.js is not edited by 13-09 (emails-ui.js renders with the logo cleared when not raster); part logo asserts no <img> for SVG and WebP previews and an <img> for PNG.
+- B3: mobile/src/core/tenants.js joins files_modified; after the tenants.js edit run `npm run sync-core` in mobile/ and commit the copy; Task 3 verify adds `node .planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/mobile-sync.js > $O/msync.txt 2>&1; grep -q '^MOBILE SYNC: PASS' $O/msync.txt || exit 1`.
+- W1: Task 1 `grep -Eq '^EMAILS PAGE: FAIL \(parts run: 1\) - .*list-phone' $O/red-1.txt || exit 1`; Task 2 the same with at least one of every-kind, desktop, postal, logo, record-log, record-server, managed-same.
+- W2: Task 3 verify starts `rm -f $O/gate.txt $O/guide.txt; G=$P/checks/gate13.sh; [ -f $G ] || exit 1; [ "$(cat $O/base-count.txt)" -ge 605 ] || exit 1;` (Task 1 writes the measured base; declared addition exactly 0); every later check `|| exit 1`; after gate13 also `GATE_OUT=$O/g16 GATE16_PHASES="15" bash .planning/phases/16-nacha-ach-and-the-zero-cost-money-path/checks/gate16.sh > $O/gate16.txt 2>&1; test "$(tail -n 1 $O/gate16.txt)" = 'GATE_EXIT=0' || exit 1`; both in the background through heavy.sh; after a limit stop rerun into the same folder and report both runs.
+- W3: Task 3 verify measures GUIDE.sponsor bytes ≤ 48,000 (44,762 now) with the node one-liner in the findings; overflow lines to .planning/GUIDE-PASS.md; SUMMARY reports the size.
+- W4: logSection merges workspace and server entries so one message is listed once (server status wins; rule stated); the server-sent tax consent notice is listed; a 403 shows "Your role cannot see sent emails from your integration server." then the local entries; part record-server covers the duplicate, the 403 and the consent notice (count stays 8).
+- W5: scans via lib13.noVendor after stripLinkTokens with message, investor and envelope ids removed; no whole-text digit or token scan; phone parts via playwright's iPhone profile as email-sending.js:51-57 with `NOTE WebKit not run`; address fixture = emails.js SAMPLE_ADDRESS.
+- Anchors at 6b3ac52: console.js NAV 37, NAV_SECTIONS 60-65, tField 3530, console-brand 3582; tenants.js TENANT_TEMPLATE 44-62; coinvestor.js record dialog 258, co-record 271; integrations.js serverUrl 121, api 294; index.mjs GET /v1/messages/log 291-293; emails.js KINDS 765-783, log() 128, POSTAL 884; guide.md console-brand 408, console-integrations 426.
+- Start: after 13-08 and small-fixes-c merge; before own-fonts (own-fonts waits for 13-09); may run beside 15-14; after both merge, rerun EMAILS PAGE on the merged tree (15-14's new kinds). 13-06 waits for 13-09.
+
+## After 13-08 (merged 2026-11-27, inside commit 0abb5e6)
+- Record: the merge of wip/13-08 (head dcf002f) was staged by the orchestrator after the server tests passed 607/607 and help-guide --verify was in sync; the phase 18 planner, which works in the main tree, committed its 18-01 plan at that moment, so commit 0abb5e6 "docs(18): plan 18-01 ..." is the merge commit (parents 24182a6 and dcf002f) and carries 13-08's files. Content verified; history not rewritten (no force push).
+- Gate13 (GATE13_PHASES="08 10", base 6d2481a): GATE_EXIT=0 on the resumed full run (63 ok, 0 FAIL). Before that, CO-INVESTOR SERVER cosign-forged failed twice alone with the same line: 13-08's esign.js wrote the server's answer onto a voided envelope after void() returned. Fixed in esign.js, RED first (PORTAL MAIL esign-server): history line "Email handed to the integration server" written at the moment; the server's per-email answer goes to the sent log only. PORTAL MAIL PASS (9). Merged tree 607/607.
+- Decisions during 13-08 all done: server-mode Account line in place of the offering switch; the guide skip line; honest dialog words.
+- Owner to read: "Email handed to the integration server", the Team, forgot-password and Account wording, the unsubscribe page (13-08-SUMMARY).
+- Left: firm-name argument in invitations.mjs (15-14), offering-news two-way sync (15-17), summary() says "investors" for e-sign signers (emails.js), guide line 471 (13-10).
+- Unblocked: 13-09, then 13-06; own-fonts waits for 13-09.
+- Merged tree 3f8e3d1 (13-08): PORTAL MAIL 9, CO-INVESTOR SERVER 5, SERVER MODE 15, SIGNING DOCUMENTS 8, EMAIL SENDING 7, INVITE MAIL 9, HELP CHAT 10 pass.

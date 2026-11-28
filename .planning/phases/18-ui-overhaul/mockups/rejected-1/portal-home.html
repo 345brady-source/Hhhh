@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup: investor portal Home (phase 18)</title>
+<link rel="stylesheet" href="regal.css">
+<style>
+  /* The sample sponsor's own brand (Kestrel Bay Capital: primary #006C95, second color #77B6CA) on the regal frame.
+     Only these tokens come from the sponsor; paper, ink, rules, type and spacing are the frame's. */
+  :root { --brand: #006C95; --brand-ink: #FFFFFF; --brand-text: #006C95; --brand-2: #77B6CA; }
+  .pf-bars { display: flex; flex-direction: column; gap: 8px; margin: 16px 0 24px; }
+  .pf-track { display: block; height: 8px; background: var(--surface-3); border-radius: 1px; overflow: hidden; }
+  .pf-fill { display: block; height: 100%; background: var(--brand); }
+  .pf-track-2 .pf-fill { background: var(--brand-2); }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--line); }
+  .kpis > div { padding: 16px 16px 0 0; }
+  .kpis > div + div { padding-left: 16px; border-left: 1px solid var(--line); }
+  .kpis dt { font-size: 14px; color: var(--fg-3); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .key { width: 10px; height: 10px; background: var(--brand); flex: none; }
+  .key-2 { background: var(--surface-3); border: 1px solid var(--line-strong); }
+  .key-3 { background: var(--brand-2); }
+  .key-4 { background: transparent; border: 1px solid var(--brand); }
+  .kpis dd { margin: 8px 0 0; font-family: var(--font-display); font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
+  .kpi-note { display: block; font-size: 14px; color: var(--fg-3); margin-top: 4px; }
+  .pf-foot { margin-top: 16px; font-size: 14px; color: var(--fg-2); }
+  .pf-foot strong { font-weight: 500; color: var(--fg); }
+  .hm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  .hm-head p { color: var(--fg-3); font-size: 14px; margin-top: 4px; }
+  .sec-link { font-size: 14px; }
+  .hold { display: flex; flex-direction: column; gap: 6px; min-width: 120px; }
+  .hold-bar { display: block; height: 4px; background: var(--surface-3); }
+  .hold-fill { display: block; height: 100%; background: var(--brand); }
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpis > div:nth-child(3) { padding-left: 0; border-left: 0; } .kpis > div:nth-child(n+3) { border-top: 1px solid var(--line); margin-top: 16px; } .hm-head { flex-direction: column; align-items: flex-start; gap: 4px; } }
+</style>
+</head>
+<body>
+<p class="mock-note">Phase 18 mockup: the investor's Home in the regal frame, carrying the sample sponsor's own logo and color (no other firm's name appears). Sample data only. Words are today's; Help leaves the footer and becomes "Ask me anything" at the top right (desktop: a utility row above the menu; phone: the magnifier beside Menu).</p>
+<div class="pt">
+  <header class="pt-head">
+    <div class="pt-util"><div class="pt-util-in">
+      <button class="ask help-entry" type="button" aria-haspopup="dialog"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Ask me anything</span></button>
+      <span class="pt-user"><b>Eleanor Whitfield</b><span>Whitfield Family Trust</span></span>
+      <a class="pt-signout" href="#">Sign out</a>
+    </div></div>
+    <div class="pt-head-in">
+      <a class="lockup" href="#" aria-label="Kestrel Bay Capital Investor Portal">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 31 L23 7 L27.5 13 L12 31 Z" fill="#006C95"/><path d="M16.5 31 L29.5 15.5 L37 31 Z" fill="#77B6CA"/></svg>
+        <span class="wm"><span class="wm-name">Kestrel Bay</span><span class="wm-meta">Capital</span></span>
+      </a>
+      <nav class="pt-nav" aria-label="Investor Portal"><a href="#" aria-current="page">Home</a><a href="#">Investments</a><a href="#">Distributions</a><a href="#">Documents</a><a href="#">Updates</a><a href="#">Account</a></nav>
+      <div class="pt-right">
+        <button class="icon-btn ask-icon" type="button" aria-haspopup="dialog" aria-label="Ask me anything"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
+        <button class="pt-menu" type="button" aria-expanded="false"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span></button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="pt-wrap">
+      <header class="hm-head" style="margin-bottom:32px"><div><h1>Whitfield Family Trust</h1><p>Account KB-1042 · Trust</p></div><p style="color:var(--fg-3);font-size:14px">As of November 27, 2026</p></header>
+      <div class="pt-cols">
+        <div>
+          <div class="notice"><div><time>Nov 20, 2026</time><strong>Harbor Point Apartments: third-quarter report</strong></div><div class="notice-actions"><button class="link-btn" type="button">View documents</button><button class="link-btn" type="button">Dismiss</button></div></div>
+
+          <section class="sec" aria-label="Portfolio">
+            <div class="sec-head"><h2>Portfolio</h2><a class="sec-link" href="#">View investments</a></div>
+            <div class="pf-bars" role="img" aria-label="$750,000.00 contributed of $900,000.00 committed. $96,412.50 distributed, and holdings valued at $812,300.00.">
+              <span class="pf-track" style="width:100%"><span class="pf-fill" style="width:83.3%"></span></span>
+              <span class="pf-track pf-track-2" style="width:100%"><span class="pf-fill" style="width:10.6%"></span></span>
+            </div>
+            <dl class="kpis">
+              <div><dt><span class="key"></span>Contributed</dt><dd>$750,000</dd><span class="kpi-note">83% of commitment</span></div>
+              <div><dt><span class="key key-2"></span>Commitment</dt><dd>$900,000</dd><span class="kpi-note">2 active investments</span></div>
+              <div><dt><span class="key key-3"></span>Distributed</dt><dd>$96,413</dd><span class="kpi-note">$41,250.00 in 2026</span></div>
+              <div><dt><span class="key key-4"></span>Current value</dt><dd>$812,300</dd><span class="kpi-note">Unaudited, Sep 30, 2026</span></div>
+            </dl>
+            <p class="pf-foot">Total value <strong>$908,713</strong>, <strong>1.21x</strong> the amount contributed.</p>
+          </section>
+
+          <section class="sec" aria-label="Your investments">
+            <div class="sec-head"><h2>Investments</h2><a class="sec-link" href="#">All investments</a></div>
+            <div class="tbl-scroll">
+              <table class="tbl">
+                <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Distributions</th><th scope="col" class="num">Value</th><th scope="col">Time to exit</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row"><a href="#">Harbor Point Apartments</a><span class="sub">Real estate syndication</span></th><td class="num">$500,000</td><td class="num">$61,412.50</td><td class="num">$548,900.00</td><td><span class="hold"><span class="hold-bar"><span class="hold-fill" style="width:38%"></span></span><span class="sub">3 years remaining</span></span></td></tr>
+                  <tr><th scope="row"><a href="#">Tidewater Credit Fund</a><span class="sub">Private credit fund</span></th><td class="num">$250,000</td><td class="num">$35,000.00</td><td class="num">$263,400.00</td><td><span class="hold"><span class="hold-bar"><span class="hold-fill" style="width:72%"></span></span><span class="sub">7 months remaining</span></span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+        <aside>
+          <section class="sec">
+            <div class="sec-head"><h2>Latest offerings</h2></div>
+            <div class="offer">
+              <h3>Harbor Point Apartments</h3>
+              <dl><dt>Minimum</dt><dd>$50,000</dd><dt>Distributions</dt><dd>Quarterly</dd><dt>Closes</dt><dd>Mar 31, 2027</dd></dl>
+              <a class="btn btn-primary" href="#" style="width:100%">Subscribe</a>
+            </div>
+          </section>
+          <section class="sec">
+            <div class="sec-head"><h2>Company overview</h2></div>
+            <p style="color:var(--fg-2)">Kestrel Bay Capital invests in coastal multifamily and private credit for families and foundations.</p>
+            <dl class="figs-mini">
+              <div><dt>Capital managed</dt><dd>$410M</dd></div>
+              <div><dt>Properties</dt><dd>18</dd></div>
+              <div><dt>Founded</dt><dd>2011</dd></div>
+            </dl>
+          </section>
+          <section class="sec">
+            <div class="sec-head"><h2>Recent documents</h2><a class="sec-link" href="#">All documents</a></div>
+            <ul class="docs">
+              <li><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg><div><a href="#">Q3 2026 investor letter</a><time>Nov 20, 2026</time></div></li>
+              <li><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg><div><a href="#">Distribution notice, Q3 2026</a><time>Oct 15, 2026</time></div></li>
+            </ul>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+  <footer class="pt-foot"><div class="pt-foot-in">
+    <div class="pt-foot-row"><span>Investor Relations</span><span>(843) 555-0142</span><span>investors@kestrelbaycap.com</span><span>Mon to Fri, 9 to 5 ET</span></div>
+    <p>Past performance is not a guarantee of future results.</p>
+    <p class="pt-foot-legal">© 2026 Kestrel Bay Capital LLC</p>
+  </div></footer>
+</div>
+</body>
+</html>

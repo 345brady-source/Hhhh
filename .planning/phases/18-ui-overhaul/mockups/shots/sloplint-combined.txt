@@ -1,0 +1,8 @@
+console-overview.html
+  FAIL 19 :53 dash "—" in copy | fix: A comma, a colon, a full stop or parentheses; never a dash
+  FAIL 67 :24 "AML/KYC" typed in capitals at 14px (<a>) | fix: Sentence case in the body face; capitals survive only as a wordmark or as the display voice
+c.css
+  WAIVED 3 :200 side stripe border-left: 4px solid var(--color-brand) on .notice
+  WAIVED 7b :31 pure #000: --color-mask: #000000 (:root)
+  ANSWERED F4 :76 2 filled primary-button recipes: .btn-primary + .pt .btn-primary
+sloplint: 2 FAIL, 0 WARN, 2 WAIVED, 1 ANSWERED across 3 file(s).

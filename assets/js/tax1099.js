@@ -1,0 +1,925 @@
+/*
+ * Form 1099-INT (plan 10-09, D-02) and Form 1099-DIV (plan 10-11, C-07; its own block below): the figures, who is left out and why, where the portal must stop and name the CPA,
+ * the recipient's number read from the signed W-9 and never kept (finding F-3, C-05), the recipient's Copy B, and the
+ * rows of the IRS's upload file with every published rule checked (C-01). No screen (plan 10-10 shows it).
+ *
+ * Every figure comes from what the portal's own records prove:
+ *   box 1 = the gross amounts stored on the investor's lines of interest payments paid in the calendar year
+ *           (NS.data.paidLines, plan 10-01);
+ *   box 4 = the backup withholding stored on the investor's lines in that year (NS.withholding.withheldFor, kind backup,
+ *           plan 10-05; one definition), which the stop "backup-not-interest" keeps equal to the backup withholding on
+ *           the form's own interest payments;
+ *   every other box stays empty. The capital-account engine is never read and no share is worked out from positions
+ *   (F-5).
+ * Instructions for Forms 1099-INT and 1099-OID (Rev. January 2024): boxes 1 and 4, the $10 rule for interest on notes
+ * in registered form or of a type offered to the public (any amount when backup withholding was taken), exempt
+ * recipients; interest added to principal or notes issued at a discount are original issue discount (Form 1099-OID,
+ * not prepared here). Publication 1099 (2026) part J: the name and number are the W-9's; the recipient's number may be
+ * truncated on the recipient's copy, never on what goes to the IRS; the payer's number is never truncated.
+ *
+ * Stored (all additive):
+ *   offering.tax.payer = { name, name2, address1, address2, city, state, zip, phone, tinLast4, registeredForm,
+ *                          paidInMoney, confirmedBy, confirmedAt, setBy, setAt }       never a full taxpayer number
+ *   offering.tax.years = { [year]: { confirmed: { [investorId]: { box1Cents, box4Cents, by, at } | { form: '1099-DIV', boxes, by, at } },
+ *                                    copyB: { [investorId]: docId }, filed: [ { form, receiptId, date, sha256, rows, by, at } ] } }
+ *   run.tax = { interest: boolean, by, at }       a person's answer for a payment whose type does not settle it
+ * The payer and recipient objects the functions below take ({ tinType, tin, nameType, name, name2, first, middle, last,
+ * suffix, country, address1, address2, city, state, zip, phone }) are built by the caller for one file or copy and
+ * dropped. No function of this module stores or logs an object that carries a taxpayer number.
+ *
+ * Works on plain data only and needs nothing when it loads (module.exports under Node).
+ */
+(function (NS) {
+  'use strict';
+
+  const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+  const has = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
+  const who = (by, what) => {
+    if (typeof by !== 'string' || !by.trim()) throw new Error(`${what} needs the name of the person doing it.`);
+    return by.trim();
+  };
+  const nowIso = () => new Date().toISOString();
+  const log = (ws, e) => (NS && NS.audit && NS.audit.log ? NS.audit.log(ws, e) : null);
+  const yearOf = (y) => {
+    const s = String(y == null ? '' : y);
+    if (!/^\d{4}$/.test(s)) throw new Error('A tax year is written YYYY.');
+    return s;
+  };
+  const offeringOf = (ws, id) => {
+    const o = ((ws && ws.offerings) || []).find((x) => x.id === id);
+    if (!o) throw new Error('No offering with this id.');
+    return o;
+  };
+  const W = () => NS.withholding;
+  const D = () => NS.data;
+  /** Whole cents as dollars with two decimals and no separator: 1333332 -> '13333.32'. */
+  const dollars = (c) => `${Math.floor(c / 100)}.${String(c % 100).padStart(2, '0')}`;
+  /** Whole cents as dollars for a person to read: 1333332 -> '13,333.32'. */
+  const money = (c) => `${String(Math.floor(c / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${String(c % 100).padStart(2, '0')}`;
+  const digitsOf = (s) => String(s == null ? '' : s).replace(/[\s-]/g, '');
+
+  /* ---------- which payments are interest ---------- */
+  const INTEREST_TYPES = ['Interest'];
+  const NOT_INTEREST_TYPES = ['Principal', 'Return of capital'];
+  /**
+   * The offering's payments paid in the year (not cancelled, dated 1 January to 31 December and on or before today):
+   * [ { run, counts: 'interest' | 'not-interest' | 'ask', why, stored } ]. A payment counts as interest only when its
+   * type is Interest or a person has said so for it; Principal and Return of capital never count; any other type is
+   * 'ask' until a person answers.
+   */
+  function interestRuns(ws, offering, year, today) {
+    const y = yearOf(year);
+    return (ws.runs || [])
+      .filter((r) => r.offeringId === offering.id && r.date >= `${y}-01-01` && r.date <= `${y}-12-31` && D().runPaid(r, today))
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1))
+      .map((run) => {
+        const type = String(run.type || '');
+        const stored = D().runLines(ws, run).stored;
+        if (INTEREST_TYPES.indexOf(type) >= 0) return { run, counts: 'interest', why: 'The payment type is Interest.', stored };
+        if (NOT_INTEREST_TYPES.indexOf(type) >= 0) return { run, counts: 'not-interest', why: `The payment type is ${type}, which is never interest.`, stored };
+        const t = run.tax && typeof run.tax.interest === 'boolean' ? run.tax : null;
+        if (t) return { run, counts: t.interest ? 'interest' : 'not-interest', why: `${t.by} said this payment ${t.interest ? 'is' : 'is not'} interest.`, stored };
+        return { run, counts: 'ask', why: `The payment type is ${type || 'not set'}; say whether this payment is interest.`, stored };
+      });
+  }
+
+  /* ---------- the payer (never the full number) ---------- */
+  const PAYER_TEXT = ['name', 'name2', 'address1', 'address2', 'city', 'state', 'zip', 'phone'];
+  const PAYER_FLAGS = ['registeredForm', 'paidInMoney'];
+  /** Change what is stored about the payer: text fields, the last four of its number, the two confirmations. */
+  function setPayer(ws, offeringId, patch, opts) {
+    opts = opts || {};
+    patch = patch || {};
+    const o = offeringOf(ws, offeringId);
+    const by = who(opts.by, 'Changing the payer');
+    const at = opts.at || nowIso();
+    const next = Object.assign({}, (o.tax && o.tax.payer) || {});
+    Object.keys(patch).forEach((k) => {
+      const v = patch[k];
+      if (PAYER_TEXT.indexOf(k) >= 0) {
+        const s = String(v == null ? '' : v).trim();
+        if (/\d{9}/.test(s.replace(/[\s-]/g, '')) && k !== 'phone') throw new Error('A taxpayer number is never stored; only its last four digits are.');
+        next[k] = s;
+      } else if (k === 'tinLast4') {
+        const s = String(v == null ? '' : v);
+        if (s && !/^\d{4}$/.test(s)) throw new Error('The last four digits of the payer’s taxpayer number are four digits.');
+        next.tinLast4 = s;
+      } else if (PAYER_FLAGS.indexOf(k) >= 0) {
+        if (typeof v !== 'boolean') throw new Error(`${k} is yes or no.`);
+        next[k] = v;
+        next.confirmedBy = by;
+        next.confirmedAt = at;
+      } else throw new Error(`The payer has no field named "${k}"; a full taxpayer number is never stored.`);
+    });
+    next.setBy = by;
+    next.setAt = at;
+    o.tax = Object.assign({}, o.tax || {}, { payer: next });
+    log(ws, { action: 'Payer for Form 1099 changed', record: o.id, fund: o.id, detail: `${o.shortName || o.name || o.id}: ${Object.keys(patch).join(', ')}`, actor: by });
+    return next;
+  }
+  const payerOf = (offering) => (offering && offering.tax && offering.tax.payer) || {};
+
+  /* ---------- the figures ---------- */
+  /** The last four digits of the U.S. taxpayer number on record (taxCert first, then the record; never a foreign number). */
+  function last4Of(i) {
+    const c = i && i.taxCert && typeof i.taxCert === 'object' ? i.taxCert : {};
+    const v = String(c.tinLast4 || (i && i.tinLast4) || '');
+    return /^\d{4}$/.test(v) ? v : '';
+  }
+  /**
+   * The forms of Form 1099-INT for an offering and year: { forms: [ { investorId, box1Cents, box4Cents, runIds } ],
+   * leftOut: [ { investorId, code, reason, cents } ], stops: [ { code, text, runId } ], totalCents }. While any stop
+   * stands, forms is empty. f: { today }.
+   */
+  const STOP_TEXT = {
+    reporting: 'Form 1099-INT is prepared here only for a fund whose tax reporting type is notes; ask your CPA which tax forms this fund’s investors receive.',
+    registered: 'Confirm that the notes are in registered form or of a type offered to the public, or ask your CPA, because otherwise the threshold for Form 1099-INT is another one ($2,000 from tax year 2026).',
+    'in-money': 'Confirm that interest was paid in money and not added to principal, because interest added to principal, or notes issued at a discount, is original issue discount on Form 1099-OID, which your CPA prepares.',
+    kind: (r) => `Say whether the ${r.type || 'untyped'} payment of ${r.date} is interest (ask your CPA if you are not sure); until then no Form 1099-INT is prepared.`,
+    stored: (r) => `The investors’ amounts of the interest payment of ${r.date} were not stored when it was recorded; confirm them on that distribution, or ask your CPA, before any Form 1099-INT is prepared.`,
+    'other-withholding': (r, name, kind) => `The payment of ${r.date} to ${name} carries tax withheld of another kind than backup withholding (${kind}), which box 4 does not hold; ask your CPA how it is reported.`,
+    'backup-not-interest': (r) => `Backup withholding is stored on the ${r.type || 'untyped'} payment of ${r.date}, which is not interest; ask your CPA how it is reported before any Form 1099-INT is prepared.`
+  };
+  /** Why an investor gets no form, one sentence each (code -> text; no-form takes the W-8 facts). */
+  const LEFT_TEXT = {
+    ira: 'An IRA is an exempt recipient: no Form 1099-INT.',
+    exempt: 'You marked this investor as an exempt recipient: no Form 1099-INT.',
+    foreign: 'A foreign investor with a valid W-8: Form 1042-S from your CPA.',
+    'under-10': 'Interest under $10 with nothing withheld: no Form 1099-INT is required.',
+    'no-w9': 'No signed W-9 on file: a Form 1099-INT is still due, so record the signed W-9 or ask your CPA how to file without the number.',
+    'no-form': (f) => `No valid W-8 or signed W-9 on file (the ${f.form || 'W-8'} ${f.signed ? `expired on ${f.validUntil || 'a date not on record'}` : 'is not signed'}): ask your CPA whether this investor gets Form 1099-INT or Form 1042-S.`
+  };
+  function figuresInt(ws, offering, year, f) {
+    f = f || {};
+    const y = yearOf(year);
+    const today = f.today;
+    const stops = [];
+    const stop = (code, text, runId) => {
+      if (!stops.some((s) => s.code === code && s.runId === runId)) stops.push(Object.assign({ code, text }, runId ? { runId } : {}));
+    };
+    if (W().reporting(offering) !== 'notes') stop('reporting', STOP_TEXT.reporting);
+    const payer = payerOf(offering);
+    if (payer.registeredForm !== true) stop('registered', STOP_TEXT.registered);
+    if (payer.paidInMoney !== true) stop('in-money', STOP_TEXT['in-money']);
+    const runs = interestRuns(ws, offering, y, today);
+    runs.forEach((r) => {
+      if (r.counts === 'ask') stop('kind', STOP_TEXT.kind(r.run), r.run.id);
+      else if (r.counts === 'interest' && !r.stored) stop('stored', STOP_TEXT.stored(r.run), r.run.id);
+    });
+    const countsOf = {};
+    runs.forEach((r) => (countsOf[r.run.id] = r.counts));
+    const yearLines = D().paidLines(ws, { offeringId: offering.id, from: `${y}-01-01`, to: `${y}-12-31`, today });
+    // backup withholding on a payment that does not count as interest would make box 4 more than the form's own
+    yearLines.forEach((p) => {
+      if (countsOf[p.run.id] === 'not-interest' && (p.line.withheld || []).some((w) => w.kind === 'backup')) stop('backup-not-interest', STOP_TEXT['backup-not-interest'](p.run), p.run.id);
+    });
+    const counted = runs.filter((r) => r.counts === 'interest' && r.stored);
+    const ids = counted.map((r) => r.run.id);
+    const per = {};
+    const order = [];
+    D()
+      .paidLines(ws, { offeringId: offering.id, from: `${y}-01-01`, to: `${y}-12-31`, today })
+      .forEach((p) => {
+        if (ids.indexOf(p.run.id) < 0) return;
+        const id = p.line.investorId;
+        if (!per[id]) {
+          per[id] = { investorId: id, box1Cents: 0, runIds: [], last: '' };
+          order.push(id);
+        }
+        per[id].box1Cents += p.line.grossCents;
+        per[id].runIds.push(p.run.id);
+        per[id].last = p.run.date;
+      });
+    const forms = [];
+    const leftOut = [];
+    let totalCents = 0;
+    order.sort().forEach((id) => {
+      const x = per[id];
+      totalCents += x.box1Cents;
+      const i = (ws.investors || []).find((v) => v.id === id);
+      const box4Cents = W().withheldFor(ws, { investorId: id, offeringId: offering.id, year: y, kind: 'backup', today });
+      const out = (code, reason) => leftOut.push({ investorId: id, code, reason, cents: x.box1Cents });
+      // the payee as of the last interest payment of the year (a W-8 valid then was valid at every earlier one)
+      const kind = i ? W().payee(i, x.last) : 'undocumented';
+      if (kind === 'ira' || kind === 'exempt' || kind === 'foreign') return out(kind, LEFT_TEXT[kind]);
+      if (x.box1Cents < 1000 && box4Cents === 0) return out('under-10', LEFT_TEXT['under-10']);
+      if (kind !== 'us') {
+        const w8 = i ? W().w8(i, x.last) : { foreign: false };
+        return w8.foreign ? out('no-form', LEFT_TEXT['no-form'](w8)) : out('no-w9', LEFT_TEXT['no-w9']);
+      }
+      // an included investor: tax withheld of any kind but backup has no box on this form
+      yearLines.forEach((p) => {
+        if (p.line.investorId !== id) return;
+        const odd = (p.line.withheld || []).find((w) => w.kind !== 'backup');
+        if (odd) stop('other-withholding', STOP_TEXT['other-withholding'](p.run, (i && (i.title || i.contact)) || id, odd.kind), p.run.id);
+      });
+      forms.push({ investorId: id, box1Cents: x.box1Cents, box4Cents, runIds: x.runIds.slice() });
+    });
+    return { forms: stops.length ? [] : forms, leftOut, stops, totalCents };
+  }
+
+  /* ---------- a person's answers ---------- */
+  const runOf = (ws, runId) => {
+    const r = (ws.runs || []).find((x) => x.id === runId);
+    if (!r) throw new Error('No distribution with this id is recorded.');
+    return r;
+  };
+  /** A person says whether a payment whose type does not settle it is interest. opts: { by, at }. */
+  function setInterest(ws, runId, yes, opts) {
+    opts = opts || {};
+    const run = runOf(ws, runId);
+    const by = who(opts.by, 'Saying whether a payment is interest');
+    if (INTEREST_TYPES.indexOf(run.type) >= 0 || NOT_INTEREST_TYPES.indexOf(run.type) >= 0) throw new Error(`A payment of type ${run.type} is settled by its type.`);
+    if (typeof yes !== 'boolean') throw new Error('Whether a payment is interest is yes or no.');
+    run.tax = Object.assign({}, run.tax || {}, { interest: yes, by, at: opts.at || nowIso() });
+    log(ws, { action: 'Payment marked for Form 1099-INT', record: run.id, fund: run.offeringId, detail: `The ${run.type || 'untyped'} payment of ${run.date} ${yes ? 'is' : 'is not'} interest`, actor: by });
+    return run.tax;
+  }
+  const yearRec = (o, y) => {
+    o.tax = o.tax || {};
+    o.tax.years = o.tax.years || {};
+    const r = (o.tax.years[y] = o.tax.years[y] || {});
+    r.confirmed = r.confirmed || {};
+    r.copyB = r.copyB || {};
+    r.filed = r.filed || [];
+    return r;
+  };
+  /**
+   * The sponsor confirms an investor's box amounts against the bank: stored with who and when. Form 1099-INT: boxes 1 and
+   * 4; Form 1099-DIV (a fund set to corporation or REIT): every box. opts: { by, at, today }.
+   */
+  function confirmTotals(ws, offeringId, year, investorId, opts) {
+    opts = opts || {};
+    const y = yearOf(year);
+    const o = offeringOf(ws, offeringId);
+    const type = formTypeOf(o);
+    const by = who(opts.by, `Confirming the totals of a Form ${type}`);
+    const F = figuresFor(ws, o, y, { today: opts.today });
+    if (F.stops.length) throw new Error(F.stops[0].text);
+    const form = F.forms.find((x) => x.investorId === investorId);
+    if (!form) throw new Error(`This investor has no Form ${type} for the year.`);
+    const at = opts.at || nowIso();
+    const entry = type === '1099-DIV' ? { form: type, boxes: Object.assign({}, form.boxes), by, at } : { box1Cents: form.box1Cents, box4Cents: form.box4Cents, by, at };
+    yearRec(o, y).confirmed[investorId] = entry;
+    const detail = type === '1099-DIV' ? DIV_BOXES.filter((b) => form.boxes[b]).map((b) => `box ${b} $${money(form.boxes[b])}`).join(', ') : `box 1 $${money(form.box1Cents)}, box 4 $${money(form.box4Cents)}`;
+    log(ws, { action: `Form ${type} totals confirmed`, record: investorId, fund: o.id, detail: `${y}: ${detail}`, actor: by });
+    return entry;
+  }
+  /** True while the confirmed amounts equal the form's figures (every box of a Form 1099-DIV); false once they differ. */
+  function confirmed(ws, offering, year, form) {
+    const c = (((((offering || {}).tax || {}).years || {})[yearOf(year)] || {}).confirmed || {})[form && form.investorId];
+    if (!c || !form) return false;
+    if (form.boxes) return !!c.boxes && DIV_BOXES.every((b) => c.boxes[b] === form.boxes[b]);
+    return !c.boxes && c.box1Cents === form.box1Cents && c.box4Cents === form.box4Cents;
+  }
+
+  /* ---------- Form 1099-DIV (plan 10-11, D-02, C-07): only a split a person gives ---------- */
+  /*
+   * For a fund set to corporation or REIT the character of each distribution is the CPA's (it depends on the
+   * corporation's earnings and profits); the portal never proposes a split. It takes, for each distribution paid in the
+   * year, the split the sponsor or the CPA gives (as percents of the distribution or as amounts in cents), checks the
+   * arithmetic, and shares it out over each investor's stored amount of that distribution:
+   *   boxes 1a, 2a and 3 (Instructions for Form 1099-DIV, Rev. January 2024): the investor's gross in the proportions of
+   *     the split's 1a, 2a and 3, whole cents, the odd cents to the largest remainders (ties: box order 1a, 2a, 3), so the
+   *     three add up to exactly what the investor was paid;
+   *   the portions (the form's words: 1b, 2e and 5 are "the portion of the amount in box 1a"; 2b, 2c, 2d and 2f of the
+   *     amount in box 2a): the investor's own parent box shared out in the proportions of the split's portions and the
+   *     rest of the parent, by the same rule (ties: the portion first), so a portion equal to its parent in the split is
+   *     the investor's parent box, a single portion is the parent box times its share, half a cent up, and 2b + 2c + 2d
+   *     is never more than 2a;
+   *   box 4: the backup withholding stored on the investor's lines (NS.withholding.withheldFor, kind backup), as on
+   *     Form 1099-INT; every other box stays empty.
+   * Stored (additive):
+   *   run.tax.div = { cents: { 1a, 2a, 3 }, part: { 1b, 2b, 2c, 2d, 2e, 2f, 5 }, source: 'entered' | 'irs-default', by, at,
+   *                   pct, partPct (when given as percents) }        cents add up to run.total, each part within its parent
+   *   offering.tax.years[year].divYear = { pct, partPct, by, at }     one split for every distribution of the year
+   *                                                                     (a distribution's own split wins over it)
+   * Percents carry at most four decimals and are worked in exact integers (a percent is held as millionths of the
+   * distribution: 100 percent = 1,000,000).
+   */
+  const DIV_MAIN = ['1a', '2a', '3'];
+  const DIV_PART = ['1b', '2b', '2c', '2d', '2e', '2f', '5'];
+  const DIV_BOXES = ['1a', '1b', '2a', '2b', '2c', '2d', '2e', '2f', '3', '4', '5'];
+  // each group of portions shares out its parent box with the rest of it (2b, 2c and 2d together; the others alone)
+  const DIV_GROUPS = [['1a', ['1b']], ['1a', ['2e']], ['1a', ['5']], ['2a', ['2b', '2c', '2d']], ['2a', ['2f']]];
+  /** The arithmetic rules a split must keep, each with its name (a refusal names the rule it breaks). */
+  const DIV_RULES = {
+    sum: '1a + 2a + 3 must equal the distribution (100 percent of it)',
+    '1b': 'box 1b must be no more than box 1a',
+    '5': 'box 5 must be no more than box 1a',
+    '2e': 'box 2e must be no more than box 1a',
+    '2bcd': 'boxes 2b + 2c + 2d together must be no more than box 2a',
+    '2f': 'box 2f must be no more than box 2a',
+    negative: 'no box may be negative',
+    decimals: 'a percent has at most four decimals',
+    whole: 'an amount is a whole number of cents',
+    fund: 'a split is given only for a distribution of this fund',
+    reporting: 'a split is given only for a distribution of a fund set to corporation or REIT',
+    paid: 'a split is given only for a distribution that is not cancelled'
+  };
+  const breaks = (rule) => Object.assign(new Error(`The split breaks a rule: ${DIV_RULES[rule]}.`), { rule });
+  const DIV_STOP = {
+    reporting: 'Form 1099-DIV is prepared here only for a fund whose tax reporting type is corporation or REIT; ask your CPA which tax forms this fund’s investors receive.',
+    split: (r) => `Enter the split your CPA gives for the distribution of ${r.date} ($${money(r.total)}); until then no Form 1099-DIV is prepared.`,
+    stored: (r) => `The investors’ amounts of the distribution of ${r.date} were not stored when it was recorded; confirm them on that distribution, or ask your CPA, before any Form 1099-DIV is prepared.`
+  };
+  /** The two lines the screen shows in the IRS's words (Instructions for Form 1099-DIV, Rev. January 2024). */
+  const DIV_TEXT = {
+    whole: 'IRS rule: if you are unable to determine whether any part of a payment is a dividend by the time you must file Form 1099-DIV, the entire payment must be reported as a dividend.',
+    f5452: 'A corporation that paid nondividend distributions (box 3) files Form 5452; ask your CPA.'
+  };
+  const LEFT_TEXT_DIV = {
+    ira: 'An IRA is an exempt recipient: no Form 1099-DIV.',
+    exempt: 'You marked this investor as an exempt recipient: no Form 1099-DIV.',
+    foreign: LEFT_TEXT.foreign,
+    'under-10': 'Distributions under $10 with nothing withheld: no Form 1099-DIV is required.',
+    'no-w9': 'No signed W-9 on file: a Form 1099-DIV is still due, so record the signed W-9 or ask your CPA how to file without the number.',
+    'no-form': (f) => `No valid W-8 or signed W-9 on file (the ${f.form || 'W-8'} ${f.signed ? `expired on ${f.validUntil || 'a date not on record'}` : 'is not signed'}): ask your CPA whether this investor gets Form 1099-DIV or Form 1042-S.`
+  };
+  const MILLION = 1000000n;
+  /** A percent as millionths of the whole (70 -> 700,000; '33.3333' -> 333,333), or a refusal naming the rule. */
+  function units(v) {
+    const s = String(v == null || v === '' ? '0' : v).trim();
+    if (/^-/.test(s)) throw breaks('negative');
+    const m = /^(\d+)(?:\.(\d+))?$/.exec(s);
+    if (!m) throw breaks('decimals');
+    if ((m[2] || '').length > 4) throw breaks('decimals');
+    return BigInt(m[1]) * 10000n + BigInt((m[2] || '').padEnd(4, '0') || '0');
+  }
+  /**
+   * total (whole cents) shared out in proportion to weights (non-negative BigInts): whole cents, the odd cents to the
+   * largest remainders, ties to the earlier weight. Adds up to total whenever any weight is above zero.
+   */
+  function shareOut(total, weights) {
+    const W = weights.reduce((a, b) => a + b, 0n);
+    if (W === 0n) return weights.map(() => 0);
+    const T = BigInt(total);
+    const q = weights.map((w) => (T * w) / W);
+    const r = weights.map((w) => (T * w) % W);
+    let left = T - q.reduce((a, b) => a + b, 0n);
+    const order = weights.map((w, k) => k).sort((a, b) => (r[b] > r[a] ? 1 : r[b] < r[a] ? -1 : a - b));
+    for (let n = 0; left > 0n && n < order.length; n++, left--) q[order[n]] += 1n;
+    return q.map(Number);
+  }
+  /** The portions of each parent, shared out of the parent's amount `of` (an object of parent amounts) by split weights. */
+  function portions(of, weight) {
+    const out = {};
+    DIV_GROUPS.forEach(([parent, kids]) => {
+      const pw = weight(parent);
+      const kw = kids.map(weight);
+      const rest = pw - kw.reduce((a, b) => a + b, 0n);
+      const got = shareOut(of[parent], kw.concat([rest < 0n ? 0n : rest]));
+      kids.forEach((k, n) => (out[k] = got[n]));
+    });
+    return out;
+  }
+  /** The portion rules on parent and portion weights (percent units or cents, as BigInts). */
+  function portionRules(main, part) {
+    if (part['1b'] > main['1a']) throw breaks('1b');
+    if (part['5'] > main['1a']) throw breaks('5');
+    if (part['2e'] > main['1a']) throw breaks('2e');
+    if (part['2b'] + part['2c'] + part['2d'] > main['2a']) throw breaks('2bcd');
+    if (part['2f'] > main['2a']) throw breaks('2f');
+  }
+  /** A split given as percents, checked: { main, part } in millionths of the distribution. */
+  function pctUnits(pct, partPct) {
+    pct = pct || {};
+    partPct = partPct || {};
+    for (const k of Object.keys(pct)) if (DIV_MAIN.indexOf(k) < 0) throw new Error(`A split has no box "${k}" among 1a, 2a and 3.`);
+    for (const k of Object.keys(partPct)) if (DIV_PART.indexOf(k) < 0) throw new Error(`A split has no box "${k}" among 1b, 2b, 2c, 2d, 2e, 2f and 5.`);
+    // a negative box is named before any other fault of the same split
+    for (const v of DIV_MAIN.map((k) => pct[k]).concat(DIV_PART.map((k) => partPct[k]))) if (/^-/.test(String(v == null ? '' : v).trim())) throw breaks('negative');
+    const main = {};
+    const part = {};
+    DIV_MAIN.forEach((k) => (main[k] = units(pct[k])));
+    DIV_PART.forEach((k) => (part[k] = units(partPct[k])));
+    if (main['1a'] + main['2a'] + main['3'] !== 100n * 10000n) throw breaks('sum');
+    portionRules(main, part);
+    return { main, part };
+  }
+  /** Percents turned into amounts of a distribution of `total` cents: { cents, part }. */
+  function centsOfPct(total, u) {
+    const got = shareOut(total, DIV_MAIN.map((k) => u.main[k]));
+    const cents = {};
+    DIV_MAIN.forEach((k, n) => (cents[k] = got[n]));
+    return { cents, part: portions(cents, (k) => (u.main[k] !== undefined ? u.main[k] : u.part[k])) };
+  }
+  /** A split given as amounts of a distribution of `total` cents, checked: { cents, part } as Numbers. */
+  function centsChecked(total, c, p) {
+    c = c || {};
+    p = p || {};
+    const vals = DIV_MAIN.map((k) => c[k]).concat(DIV_PART.map((k) => p[k]));
+    vals.forEach((v) => {
+      if (typeof v === 'number' && v < 0) throw breaks('negative');
+    });
+    vals.forEach((v) => {
+      if (!(v === undefined || v === null || v === '' || Number.isSafeInteger(v))) throw breaks('whole');
+    });
+    const cents = {};
+    const part = {};
+    DIV_MAIN.forEach((k) => (cents[k] = Number(c[k] || 0)));
+    DIV_PART.forEach((k) => (part[k] = Number(p[k] || 0)));
+    if (cents['1a'] + cents['2a'] + cents['3'] !== total) throw breaks('sum');
+    const big = (o) => Object.keys(o).reduce((a, k) => Object.assign(a, { [k]: BigInt(o[k]) }), {});
+    portionRules(big(cents), big(part));
+    return { cents, part };
+  }
+  const plainPct = (o, keys) => keys.reduce((a, k) => (o && o[k] !== undefined && o[k] !== '' ? Object.assign(a, { [k]: String(o[k]).trim() }) : a), {});
+  const divRun = (ws, runId, opts, what) => {
+    const run = runOf(ws, runId);
+    if (opts && opts.offeringId && run.offeringId !== opts.offeringId) throw breaks('fund');
+    const o = offeringOf(ws, run.offeringId);
+    if (W().reporting(o) !== 'corp') throw breaks('reporting');
+    if (run.cancelled) throw breaks('paid');
+    return { run, o, by: who(opts && opts.by, what) };
+  };
+  const splitWords = (d) => DIV_BOXES.filter((b) => b !== '4' && ((d.cents && d.cents[b]) || (d.part && d.part[b]))).map((b) => `${b} $${money((d.cents && d.cents[b]) || d.part[b])}`).join(', ') || 'nothing';
+  /**
+   * The sponsor or the CPA gives one distribution's split: spec { pct: { 1a, 2a, 3 }, partPct: { ... } } or { cents: {
+   * 1a, 2a, 3 }, part: { ... } }. Refused (thrown, naming the rule, nothing stored) when a rule is broken. opts: { by, at,
+   * offeringId (when given, the distribution must be this fund's) }. Returns run.tax.div.
+   */
+  function setSplit(ws, runId, spec, opts) {
+    opts = opts || {};
+    spec = spec || {};
+    const { run, o, by } = divRun(ws, runId, opts, 'Giving the split of a distribution');
+    if (spec.source && spec.source !== 'entered') throw new Error('setSplit stores a split a person entered; the year’s split and the IRS’s rule have their own functions.');
+    let got;
+    let entered = {};
+    if (spec.pct) {
+      got = centsOfPct(run.total, pctUnits(spec.pct, spec.partPct));
+      entered = { pct: plainPct(spec.pct, DIV_MAIN), partPct: plainPct(spec.partPct, DIV_PART) };
+    } else if (spec.cents) got = centsChecked(run.total, spec.cents, spec.part);
+    else throw new Error('A split is given as percents (pct) or as amounts in cents (cents).');
+    const div = Object.assign({ cents: got.cents, part: got.part, source: 'entered', by, at: opts.at || nowIso() }, entered);
+    run.tax = Object.assign({}, run.tax || {}, { div });
+    log(ws, { action: 'Form 1099-DIV split entered', record: run.id, fund: o.id, detail: `The distribution of ${run.date} ($${money(run.total)}): ${splitWords(div)}`, actor: by });
+    return div;
+  }
+  /** One split for every distribution of the year, as percents; a distribution's own split wins over it. */
+  function setYearSplit(ws, offeringId, year, spec, opts) {
+    opts = opts || {};
+    spec = spec || {};
+    const y = yearOf(year);
+    const o = offeringOf(ws, offeringId);
+    if (W().reporting(o) !== 'corp') throw breaks('reporting');
+    const by = who(opts.by, 'Giving the split of the year');
+    pctUnits(spec.pct, spec.partPct);
+    const entry = { pct: plainPct(spec.pct, DIV_MAIN), partPct: plainPct(spec.partPct, DIV_PART), by, at: opts.at || nowIso() };
+    yearRec(o, y).divYear = entry;
+    log(ws, { action: 'Form 1099-DIV split entered for the year', record: o.id, fund: o.id, detail: `${o.shortName || o.name || o.id} ${y}: ${DIV_MAIN.concat(DIV_PART).filter((k) => entry.pct[k] || entry.partPct[k]).map((k) => `${k} ${entry.pct[k] || entry.partPct[k]}%`).join(', ')}, for every distribution of the year`, actor: by });
+    return entry;
+  }
+  /** The year's split no longer applies (each distribution then needs its own). */
+  function clearYearSplit(ws, offeringId, year, opts) {
+    opts = opts || {};
+    const y = yearOf(year);
+    const o = offeringOf(ws, offeringId);
+    const by = who(opts.by, 'Removing the split of the year');
+    const r = yearRec(o, y);
+    if (!r.divYear) return null;
+    delete r.divYear;
+    log(ws, { action: 'Form 1099-DIV split for the year removed', record: o.id, fund: o.id, detail: `${o.shortName || o.name || o.id} ${y}`, actor: by });
+    return true;
+  }
+  /** The IRS's rule for a split not known by the filing date, applied only when the sponsor chooses it: all of it box 1a. */
+  function wholeDividend(ws, runId, opts) {
+    opts = opts || {};
+    const { run, o, by } = divRun(ws, runId, opts, 'Reporting the whole payment as a dividend');
+    const part = {};
+    DIV_PART.forEach((k) => (part[k] = 0));
+    const div = { cents: { '1a': run.total, '2a': 0, '3': 0 }, part, source: 'irs-default', by, at: opts.at || nowIso() };
+    run.tax = Object.assign({}, run.tax || {}, { div });
+    log(ws, { action: 'Form 1099-DIV: whole payment reported as a dividend', record: run.id, fund: o.id, detail: `The distribution of ${run.date} ($${money(run.total)}): the IRS’s rule for a split not known by the filing date, chosen by ${by}`, actor: by });
+    return div;
+  }
+  /** The split that applies to a distribution: its own, else the year's (source 'year'), else null. */
+  function splitOf(ws, offering, run) {
+    const own = run && run.tax && run.tax.div;
+    if (own && own.cents) return own;
+    const yr = (((offering && offering.tax) || {}).years || {})[String(run.date).slice(0, 4)];
+    const dy = yr && yr.divYear;
+    if (!dy) return null;
+    const got = centsOfPct(run.total, pctUnits(dy.pct, dy.partPct));
+    return { cents: got.cents, part: got.part, source: 'year', by: dy.by, at: dy.at, pct: dy.pct, partPct: dy.partPct };
+  }
+  /** One investor's boxes from one distribution: their gross shared out by the split (see above). */
+  function divShare(grossCents, split) {
+    const got = shareOut(grossCents, DIV_MAIN.map((k) => BigInt(split.cents[k] || 0)));
+    const main = {};
+    DIV_MAIN.forEach((k, n) => (main[k] = got[n]));
+    const part = portions(main, (k) => BigInt((DIV_MAIN.indexOf(k) >= 0 ? split.cents[k] : split.part[k]) || 0));
+    return Object.assign({}, main, part);
+  }
+  /** The offering's distributions paid in the year: [ { run, split, stored } ], by date. */
+  function divRuns(ws, offering, year, today) {
+    const y = yearOf(year);
+    return (ws.runs || [])
+      .filter((r) => r.offeringId === offering.id && r.date >= `${y}-01-01` && r.date <= `${y}-12-31` && D().runPaid(r, today))
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1))
+      .map((run) => ({ run, split: splitOf(ws, offering, run), stored: D().runLines(ws, run).stored }));
+  }
+  /**
+   * The forms of Form 1099-DIV for an offering and year: { forms: [ { investorId, boxes: { 1a ... 5 } in cents, cashCents,
+   * runIds } ], leftOut, stops, totalCents } (as figuresInt; the $10 line is on cash paid, 1a + 2a + 3). f: { today }.
+   */
+  function figuresDiv(ws, offering, year, f) {
+    f = f || {};
+    const y = yearOf(year);
+    const today = f.today;
+    const stops = [];
+    const stop = (code, text, runId) => {
+      if (!stops.some((s) => s.code === code && s.runId === runId)) stops.push(Object.assign({ code, text }, runId ? { runId } : {}));
+    };
+    if (W().reporting(offering) !== 'corp') stop('reporting', DIV_STOP.reporting);
+    const runs = divRuns(ws, offering, y, today);
+    runs.forEach((r) => {
+      if (!r.stored) stop('stored', DIV_STOP.stored(r.run), r.run.id);
+      else if (!r.split) stop('split', DIV_STOP.split(r.run), r.run.id);
+    });
+    const counted = {};
+    runs.filter((r) => r.stored && r.split).forEach((r) => (counted[r.run.id] = r.split));
+    const yearLines = D().paidLines(ws, { offeringId: offering.id, from: `${y}-01-01`, to: `${y}-12-31`, today });
+    const per = {};
+    const order = [];
+    yearLines.forEach((p) => {
+      const split = counted[p.run.id];
+      if (!split) return;
+      const id = p.line.investorId;
+      if (!per[id]) {
+        per[id] = { investorId: id, boxes: {}, cashCents: 0, runIds: [], last: '' };
+        DIV_BOXES.forEach((b) => (per[id].boxes[b] = 0));
+        order.push(id);
+      }
+      const s = divShare(p.line.grossCents, split);
+      Object.keys(s).forEach((b) => (per[id].boxes[b] += s[b]));
+      per[id].cashCents += p.line.grossCents;
+      per[id].runIds.push(p.run.id);
+      per[id].last = p.run.date;
+    });
+    const forms = [];
+    const leftOut = [];
+    let totalCents = 0;
+    order.sort().forEach((id) => {
+      const x = per[id];
+      totalCents += x.cashCents;
+      const i = (ws.investors || []).find((v) => v.id === id);
+      const box4 = W().withheldFor(ws, { investorId: id, offeringId: offering.id, year: y, kind: 'backup', today });
+      const out = (code, reason) => leftOut.push({ investorId: id, code, reason, cents: x.cashCents });
+      const kind = i ? W().payee(i, x.last) : 'undocumented';
+      if (kind === 'ira' || kind === 'exempt' || kind === 'foreign') return out(kind, LEFT_TEXT_DIV[kind]);
+      if (x.cashCents < 1000 && box4 === 0) return out('under-10', LEFT_TEXT_DIV['under-10']);
+      if (kind !== 'us') {
+        const w8 = i ? W().w8(i, x.last) : { foreign: false };
+        return w8.foreign ? out('no-form', LEFT_TEXT_DIV['no-form'](w8)) : out('no-w9', LEFT_TEXT_DIV['no-w9']);
+      }
+      yearLines.forEach((p) => {
+        if (p.line.investorId !== id) return;
+        const odd = (p.line.withheld || []).find((w) => w.kind !== 'backup');
+        if (odd) stop('other-withholding', STOP_TEXT['other-withholding'](p.run, (i && (i.title || i.contact)) || id, odd.kind), p.run.id);
+      });
+      x.boxes['4'] = box4;
+      forms.push({ investorId: id, boxes: Object.assign({}, x.boxes), cashCents: x.cashCents, runIds: x.runIds.slice() });
+    });
+    return { forms: stops.length ? [] : forms, leftOut, stops, totalCents };
+  }
+
+  /* ---------- which form a fund gets ---------- */
+  /** '1099-DIV' for a fund set to corporation or REIT, '1099-INT' otherwise (whose figures stop unless it is notes). */
+  const formTypeOf = (offering) => (W().reporting(offering) === 'corp' ? '1099-DIV' : '1099-INT');
+  /** The figures of the fund's form: figuresDiv for corporation or REIT, figuresInt otherwise. */
+  const figuresFor = (ws, offering, year, f) => (formTypeOf(offering) === '1099-DIV' ? figuresDiv(ws, offering, year, f) : figuresInt(ws, offering, year, f));
+
+  /* ---------- the recipient's number, from the signed W-9 (held by the caller, never stored) ---------- */
+  /** The pinned blank W-9's own rectangles for the lines and number boxes the reading needs (points, top left). */
+  async function w9Rects(L, blankBytes, map, opts) {
+    opts = opts || {};
+    const hash = opts.sha256 || (NS.audit && NS.audit.sha256);
+    if (typeof hash !== 'function') throw new Error('No SHA-256 function is available to check the form file.');
+    if (String(await hash(blankBytes)).toLowerCase() !== String(map.sha256).toLowerCase()) throw Object.assign(new Error(`The ${map.form} file does not match its pinned fingerprint (${map.revision}).`), { pin: true });
+    const pdf = await L.PDFDocument.load(blankBytes, { updateMetadata: false });
+    const form = pdf.getForm();
+    const h = pdf.getPage(0).getHeight();
+    const rect = (k) => {
+      const r = form.getField(map.fields[k].name).acroField.getWidgets()[0].getRectangle();
+      return { x: r.x, top: h - r.y - r.height, w: r.width, h: r.height };
+    };
+    return { name: rect('name'), business: rect('business'), address: rect('address'), cityStateZip: rect('cityStateZip'), ssn: map.groups.ssn.map(rect), ein: map.groups.ein.map(rect) };
+  }
+  /**
+   * What a signed, flattened W-9's page 1 shows in its own boxes: items are the page's text items ({ s, x, w, top,
+   * bottom }, see textItems), rects come from w9Rects. tin is nine digits from exactly one of the two number boxes, or ''.
+   */
+  function readW9(items, rects) {
+    const inside = (it, r) => {
+      if (it.rot) return false; // a filled value is written left to right; the form's sideways margin label is not one
+      const cx = it.x + (it.w || 0) / 2;
+      const cy = (it.top + it.bottom) / 2;
+      return cx >= r.x - 1 && cx <= r.x + r.w + 1 && cy >= r.top - 1 && cy <= r.top + r.h + 1;
+    };
+    const text = (r) =>
+      (items || [])
+        .filter((it) => inside(it, r))
+        .sort((a, b) => a.top - b.top || a.x - b.x)
+        .map((it) => it.s)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const digits = (rs) => rs.map((r) => text(r).replace(/\D/g, '')).join('');
+    const ssn = digits(rects.ssn);
+    const ein = digits(rects.ein);
+    let tin = '';
+    let tinType = '';
+    if (/^\d{9}$/.test(ssn) && !ein) [tin, tinType] = [ssn, 'SSN'];
+    else if (/^\d{9}$/.test(ein) && !ssn) [tin, tinType] = [ein, 'EIN'];
+    return { name: text(rects.name), business: text(rects.business), address: text(rects.address), cityStateZip: text(rects.cityStateZip), tin, tinType };
+  }
+  /** A number read or typed, accepted only as nine digits ending in the four on record: { ok, why, digits }. */
+  function checkTin(digits, last4) {
+    const s = String(digits == null ? '' : digits).trim();
+    if (!/^\d{4}$/.test(String(last4 == null ? '' : last4))) return { ok: false, why: 'No last four digits of a U.S. taxpayer number are on record for this investor, so the number cannot be checked.' };
+    if (/[^\d\s-]/.test(s)) return { ok: false, why: 'A taxpayer number holds digits only (dashes and spaces may stand between them).' };
+    const d = s.replace(/[\s-]/g, '');
+    if (d.length !== 9) return { ok: false, why: `A taxpayer number has nine digits; this one has ${d.length}.` };
+    if (d.slice(5) !== String(last4)) return { ok: false, why: 'The number does not end in the four digits on record; check it against the signed W-9.' };
+    return { ok: true, why: '', digits: d };
+  }
+  /** A proposal for the IRS's name cells from the W-9's name line, which the sponsor corrects: plain letters only. */
+  function splitName(line) {
+    const plain = String(line == null ? '' : line)
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^A-Za-z -]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const w = plain ? plain.split(' ') : [];
+    const suffix = w.length > 2 && /^(jr|sr|ii|iii|iv|v)$/i.test(w[w.length - 1]) ? w.pop() : '';
+    const first = w.shift() || '';
+    const last = w.pop() || '';
+    return { first, middle: w.join(' '), last, suffix };
+  }
+  /** A proposal for city, state and ZIP from the W-9's city line ("Austin, TX 78701-1234"). */
+  function splitCityStateZip(line) {
+    const s = String(line == null ? '' : line).trim();
+    const m = /^(.*?)[\s,]+([A-Za-z]{2})[\s,]+(\d{5})(?:-?(\d{4}))?$/.exec(s);
+    if (!m) return { city: s, state: '', zip: '' };
+    return { city: m[1].replace(/,\s*$/, '').trim(), state: m[2].toUpperCase(), zip: m[3] + (m[4] || '') };
+  }
+
+  /* ---------- numbers ---------- */
+  /** The recipient's number with all but its last four masked: '***-**-1234' (SSN) or '**-***1234' (EIN). */
+  function truncate(digits, tinType) {
+    const d = digitsOf(digits);
+    if (!/^\d{9}$/.test(d)) throw new Error('A taxpayer number has nine digits.');
+    return tinType === 'EIN' || tinType === 'QI-EIN' ? `**-***${d.slice(5)}` : `***-**-${d.slice(5)}`;
+  }
+  /** The full number in the IRS's dashed shape: XX-XXXXXXX for an EIN, XXX-XX-XXXX otherwise. */
+  function dashed(digits, tinType) {
+    const d = digitsOf(digits);
+    if (!/^\d{9}$/.test(d)) throw new Error('A taxpayer number has nine digits.');
+    return tinType === 'EIN' || tinType === 'QI-EIN' ? `${d.slice(0, 2)}-${d.slice(2)}` : `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}`;
+  }
+
+  /* ---------- Copy B, the recipient's copy ---------- */
+  const COPY_B = '1099-INT 2024-01 Copy B';
+  /** The Copy B map of each form (NS.tax1099data.MAPS). */
+  const COPY_B_OF = { '1099-INT': COPY_B, '1099-DIV': '1099-DIV 2024-01 Copy B' };
+  /**
+   * The answers NS.taxforms.fill takes for Copy B: the payer in full, the recipient's number truncated, and the form's
+   * boxes (Form 1099-INT: 1 and 4; Form 1099-DIV, formType '1099-DIV': 1a to 5, a box of zero left empty).
+   */
+  function copyBAnswers(form, payer, recipient, year, formType) {
+    const y = yearOf(year);
+    const cityLine = (p) => [[p.city, p.state].filter(Boolean).join(', '), p.zip].filter(Boolean).join(' ') + (p.country && p.country !== 'US' ? ` ${p.country}` : '');
+    const payerLines = [payer.name, payer.name2, [payer.address1, payer.address2].filter(Boolean).join(' '), cityLine(payer), payer.phone].filter((s) => s && String(s).trim());
+    return {
+      year: y,
+      payerBlock: payerLines.join('\n'),
+      payerTin: dashed(payer.tin, payer.tinType),
+      recipientTin: truncate(recipient.tin, recipient.tinType),
+      recipientName: recipient.name || [recipient.first, recipient.middle, recipient.last, recipient.suffix].filter(Boolean).join(' '),
+      recipientStreet: [recipient.address1, recipient.address2].filter(Boolean).join(' '),
+      recipientCity: cityLine(recipient),
+      ...(formType === '1099-DIV'
+        ? DIV_BOXES.reduce((a, b) => Object.assign(a, { [`box${b}`]: form.boxes[b] > 0 ? money(form.boxes[b]) : '' }), {})
+        : { box1: money(form.box1Cents), box4: form.box4Cents > 0 ? money(form.box4Cents) : '' })
+    };
+  }
+  /**
+   * The recipient's copy: the official form filled through its own fields by NS.taxforms.fill (the pin is checked
+   * before anything is filled) and flattened, keeping only the map's pages (Copy B and the recipient's instructions).
+   * L is the PDF writer library object; opts are NS.taxforms.fill's ({ fontkit, fontBytes, sha256 }).
+   */
+  async function recipientCopy(L, formBytes, map, answers, opts) {
+    const filled = await NS.taxforms.fill(L, formBytes, map, answers, opts);
+    const src = await L.PDFDocument.load(filled, { updateMetadata: false });
+    const out = await L.PDFDocument.create();
+    // the page numbers kept, in the file's order (filtered from the library's own list, so the library gets its own
+    // kind of array when this file runs in another realm than the library, as in the checks)
+    const want = (map.pages || []).map((p) => p - 1);
+    const pages = await out.copyPages(
+      src,
+      src.getPageIndices().filter((k) => want.indexOf(k) >= 0)
+    );
+    pages.forEach((pg) => out.addPage(pg));
+    return out.save();
+  }
+
+  /* ---------- the IRS upload file (IRIS) ---------- */
+  const columnsOf = (formType) => {
+    const cols = NS.tax1099data && NS.tax1099data.IRIS.columns[formType];
+    if (!cols) throw new Error(`No IRS upload columns for ${formType}.`);
+    return cols;
+  };
+  const header = (formType) => columnsOf(formType).map((c) => c.name);
+  /** One row of the upload file for one form, in the IRS's column order; every cell the portal does not fill is empty. */
+  function row(formType, year, form, payer, recipient) {
+    const cols = columnsOf(formType);
+    const at = {};
+    cols.forEach((c, k) => (at[c.col] = k));
+    const out = cols.map(() => '');
+    const put = (col, v) => (out[at[col]] = v == null ? '' : String(v));
+    const person = (p, first, middle, last, suffix) => {
+      put(first, p.first);
+      put(middle, p.middle);
+      put(last, p.last);
+      put(suffix, p.suffix);
+    };
+    put('A', formType);
+    put('B', yearOf(year));
+    put('C', payer.tinType);
+    put('D', dashed(payer.tin, payer.tinType));
+    put('E', payer.nameType);
+    if (payer.nameType === 'B') {
+      put('F', payer.name);
+      put('G', payer.name2);
+    } else person(payer, 'H', 'I', 'J', 'K');
+    put('L', payer.country || 'US');
+    put('M', payer.address1);
+    put('N', payer.address2);
+    put('O', payer.city);
+    put('P', payer.state);
+    put('Q', payer.zip);
+    if (payer.phone) {
+      put('R', 'D');
+      put('S', payer.phone);
+    }
+    put('T', recipient.tinType);
+    put('U', dashed(recipient.tin, recipient.tinType));
+    put('V', recipient.nameType);
+    if (recipient.nameType === 'B') {
+      put('W', recipient.name);
+      put('X', recipient.name2);
+    } else person(recipient, 'Y', 'Z', 'AA', 'AB');
+    put('AC', recipient.country || 'US');
+    put('AD', recipient.address1);
+    put('AE', recipient.address2);
+    put('AF', recipient.city);
+    put('AG', recipient.state);
+    put('AH', recipient.zip);
+    if (formType === '1099-DIV') {
+      // the box columns of the form's own template (NS.tax1099data.IRIS.boxes); a box of zero is left empty
+      const boxCol = NS.tax1099data.IRIS.boxes[formType];
+      DIV_BOXES.forEach((b) => put(boxCol[b], form.boxes[b] > 0 ? dollars(form.boxes[b]) : ''));
+    } else {
+      put('AN', dollars(form.box1Cents));
+      put('AQ', form.box4Cents > 0 ? dollars(form.box4Cents) : '');
+    }
+    return out;
+  }
+  /** Every fault of the rows against the published rules: [ { row (from 1), col, name, why } ]. */
+  function validate(formType, rows) {
+    const data = NS.tax1099data.IRIS;
+    const cols = columnsOf(formType);
+    const at = {};
+    cols.forEach((c, k) => (at[c.col] = k));
+    const faults = [];
+    (rows || []).forEach((r, n) => {
+      const rowNo = n + 1;
+      if (!Array.isArray(r) || r.length !== cols.length) {
+        faults.push({ row: rowNo, col: '', name: '', why: `has ${Array.isArray(r) ? r.length : 0} cells; the template has ${cols.length}` });
+        return;
+      }
+      const cell = (col) => String(r[at[col]] == null ? '' : r[at[col]]);
+      cols.forEach((c) => {
+        const v = cell(c.col);
+        const fault = (why) => faults.push({ row: rowNo, col: c.col, name: c.name, why });
+        const req = c.required || (c.requiredIf || []).some((q) => (q.filled ? cell(q.col) !== '' : cell(q.col) === q.equals));
+        if (v === '') {
+          if (req) fault(`is required (${c.rule || 'a required field'})`);
+          return;
+        }
+        data.rules.forEach((x) => {
+          if (new RegExp(x.pattern).test(v)) fault(x.why);
+        });
+        if (c.max && v.length > c.max) fault(`is longer than ${c.max} characters (it has ${v.length})`);
+        if (c.trim && /^ | $| {2}/.test(v)) fault('has a leading, trailing or doubled space');
+        if (c.notSame && c.notSame.some((o) => cell(o) !== '' && cell(o).replace(/-/g, '') === v.replace(/-/g, ''))) fault(`is the same as the taxpayer number in column ${c.notSame.join(' or ')}`);
+        if (c.needsOneOf && c.needsOneOf.every((o) => cell(o) === '')) fault(`needs one of the amounts in columns ${c.needsOneOf.join(', ')}`);
+        if (c.values && c.values.indexOf(v) < 0) fault(`is not one of: ${c.values.join(', ')}`);
+        let p = c.pattern;
+        if (c.patternBy) {
+          const key = cell(c.patternBy.col);
+          p = has(c.patternBy.patterns, key) ? c.patternBy.patterns[key] : c.patternBy.patterns['*'];
+        }
+        if (p && !new RegExp(p).test(v)) fault(`does not follow the rule: ${c.rule}`);
+      });
+    });
+    return faults;
+  }
+
+  /**
+   * The upload files: at most IRIS.maxRows rows each, the header line first, lines ended CR LF. Refuses (throws, naming
+   * the first faults) while any row breaks a rule: no file is offered that the rules know to be wrong.
+   * Returns [ { name, text, rows } ].
+   */
+  function files(formType, rows) {
+    const faults = validate(formType, rows);
+    if (faults.length) {
+      const f = faults.slice(0, 3).map((x) => `row ${x.row}, column ${x.col}${x.name ? ` (${x.name})` : ''} ${x.why}`);
+      throw Object.assign(new Error(`The file cannot be built while ${faults.length} cell${faults.length === 1 ? '' : 's'} break the IRS's rules: ${f.join('; ')}${faults.length > 3 ? '; …' : ''}.`), { faults });
+    }
+    if (!(rows || []).length) throw new Error('There is no form to put in the file.');
+    const per = NS.tax1099data.IRIS.maxRows;
+    const year = String(rows[0][1]);
+    const parts = [];
+    for (let k = 0; k < rows.length; k += per) parts.push(rows.slice(k, k + per));
+    const head = header(formType).join(',');
+    return parts.map((p, n) => ({ name: `${formType}-${year}-part-${n + 1}-of-${parts.length}.csv`, rows: p.length, text: [head].concat(p.map((r) => r.join(','))).join('\r\n') + '\r\n' }));
+  }
+  /** Record that the sponsor uploaded a file to the IRS: the receipt id and date, the file's SHA-256, its row count. */
+  function markFiled(ws, offeringId, year, opts) {
+    opts = opts || {};
+    const y = yearOf(year);
+    const o = offeringOf(ws, offeringId);
+    const by = who(opts.by, 'Recording a filing');
+    const receiptId = String(opts.receiptId || '').trim();
+    if (!receiptId) throw new Error('A filing needs the receipt id the IRS gave.');
+    if (!ISO_DAY.test(String(opts.date || ''))) throw new Error('A filing needs the day it was made (YYYY-MM-DD).');
+    if (!/^[0-9a-f]{64}$/i.test(String(opts.sha256 || ''))) throw new Error('A filing needs the fingerprint (SHA-256) of the file uploaded.');
+    if (!(Number.isInteger(opts.rows) && opts.rows > 0)) throw new Error('A filing needs the number of forms in the file.');
+    const type = formTypeOf(o);
+    const entry = { form: type.toLowerCase(), receiptId, date: opts.date, sha256: String(opts.sha256).toLowerCase(), rows: opts.rows, by, at: opts.at || nowIso() };
+    yearRec(o, y).filed.push(entry);
+    log(ws, { action: `Form ${type} file recorded as filed`, record: o.id, fund: o.id, detail: `${y}: ${opts.rows} form${opts.rows === 1 ? '' : 's'}, receipt ${receiptId}, filed ${opts.date}`, actor: by });
+    return entry;
+  }
+
+  /* ---------- reading a page's text ---------- */
+  /** The reader's text items of one page as { s, x, w, top, bottom, rot } in points from the top left. */
+  function textItems(height, items) {
+    // rot: the item is not written left to right on the line (a margin label printed sideways, for example)
+    return (items || []).filter((it) => it && it.str && it.str.trim()).map((it) => Object.assign({ s: it.str, x: it.transform[4], w: it.width || 0, top: height - it.transform[5] - (it.height || 0), bottom: height - it.transform[5] }, Math.abs(it.transform[1]) > 0.01 || Math.abs(it.transform[2]) > 0.01 ? { rot: true } : {}));
+  }
+
+  const API = {
+    INTEREST_TYPES,
+    NOT_INTEREST_TYPES,
+    COPY_B,
+    COPY_B_OF,
+    interestRuns,
+    setPayer,
+    payerOf,
+    last4Of,
+    figuresInt,
+    STOP_TEXT,
+    LEFT_TEXT,
+    setInterest,
+    confirmTotals,
+    confirmed,
+    w9Rects,
+    readW9,
+    checkTin,
+    splitName,
+    splitCityStateZip,
+    truncate,
+    dashed,
+    copyBAnswers,
+    recipientCopy,
+    textItems,
+    markFiled,
+    iris: { header, row, validate, files },
+    // Form 1099-DIV (plan 10-11)
+    DIV_BOXES,
+    DIV_MAIN,
+    DIV_PART,
+    DIV_RULES,
+    DIV_STOP,
+    DIV_TEXT,
+    LEFT_TEXT_DIV,
+    setSplit,
+    setYearSplit,
+    clearYearSplit,
+    wholeDividend,
+    splitOf,
+    divShare,
+    divRuns,
+    figuresDiv,
+    formTypeOf,
+    figuresFor
+  };
+  if (NS) NS.tax1099 = API;
+  if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
+})(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);

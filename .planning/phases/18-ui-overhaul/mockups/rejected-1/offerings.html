@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mockup: Offerings with Offering intake on one page (phase 18)</title>
+<link rel="stylesheet" href="regal.css">
+</head>
+<body>
+<p class="mock-note">Phase 18 mockup: Offerings and Offering intake on one page (D-05). Sample data only. Every word is today's; the menu has no separate Offering intake entry, and "Set up from documents" now moves to the intake section below on the same page.</p>
+<div class="cs">
+  <header class="cs-top">
+    <a class="lockup" href="#">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 31 L23 7 L27.5 13 L12 31 Z" fill="#006C95"/><path d="M16.5 31 L29.5 15.5 L37 31 Z" fill="#77B6CA"/></svg>
+      <span class="wm"><span class="wm-name">Kestrel Bay Capital</span><span class="wm-meta">investors.kestrelbaycap.com</span></span>
+    </a>
+    <div class="cs-top-right">
+      <button class="ask" type="button" aria-haspopup="dialog"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Ask me anything</span></button>
+      <button class="icon-btn" type="button" aria-label="Notifications, 2 unread"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span class="count">2</span></button>
+    </div>
+  </header>
+  <aside class="cs-rail" aria-label="Sponsor console">
+    <nav>
+      <div class="cs-group"><a href="#">Overview</a><a href="#">Notifications <span class="n">2</span></a></div>
+      <div class="cs-group" role="group" aria-label="Raise"><p class="cs-group-label">Raise</p><a href="#" aria-current="page">Offerings</a><a href="#">Investors</a><a href="#">E-sign <span class="n">1</span></a></div>
+      <div class="cs-group" role="group" aria-label="Operate"><p class="cs-group-label">Operate</p><a href="#">Capital calls</a><a href="#">Distributions</a><a href="#">Requests <span class="n">3</span></a><a href="#">Notices</a><a href="#">Documents</a><a href="#">Tax documents</a><a href="#">Accounting</a></div>
+      <div class="cs-group" role="group" aria-label="Report"><p class="cs-group-label">Report</p><a href="#">Reports</a><a href="#">Audit</a><a href="#">AML/KYC</a><a href="#">AML program</a><a href="#">Filings</a></div>
+      <div class="cs-group" role="group" aria-label="Settings"><p class="cs-group-label">Settings</p><a href="#">Portal and brand</a><a href="#">Integrations</a><a href="#">ACH origination</a><a href="#">Team</a></div>
+    </nav>
+  </aside>
+  <main class="cs-main">
+    <div class="cs-wrap">
+      <div class="cs-head">
+        <div><h1>Offerings</h1><p>Each investment is configured separately: how exit is defined, how often it pays, and which terms investors see.</p></div>
+        <div class="cs-actions"><a class="btn" href="#offering-intake">Set up from documents</a><button class="btn btn-primary" type="button">Add offering</button></div>
+      </div>
+
+      <section class="panel">
+        <div class="panel-body tbl-scroll" style="padding-top:24px">
+          <table class="tbl">
+            <thead><tr><th scope="col">Offering</th><th scope="col">Type</th><th scope="col">Closed</th><th scope="col" class="num">Raised</th><th scope="col" class="num">Investors</th><th scope="col">Distributions</th><th scope="col">Exit</th><th scope="col">Status</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><a href="#">Harbor Point Apartments</a><span class="sub">212-unit multifamily, Charleston SC</span></th><td>Real estate syndication</td><td class="num">Mar 31, 2027</td><td class="num">$8,950,000</td><td class="num">14</td><td>Quarterly<span class="sub">Next Jan 15, 2027</span></td><td>Jun 2031<span class="sub">Projected exit date</span></td><td><span class="badge badge-good">Raising</span></td></tr>
+              <tr><th scope="row"><a href="#">Tidewater Credit Fund</a><span class="sub">Senior secured lending</span></th><td>Private credit fund</td><td class="num">Dec 31, 2025</td><td class="num">$6,000,000</td><td class="num">8</td><td>Monthly<span class="sub">Next Dec 1, 2026</span></td><td>No set term<span class="sub">Open-ended</span></td><td><span class="badge badge-neutral">Closed</span></td></tr>
+              <tr><th scope="row"><a href="#">Osprey Ridge Land</a><span class="sub">Entitled land, Bluffton SC</span></th><td>Real estate syndication</td><td class="num">Jun 30, 2021</td><td class="num">$3,500,000</td><td class="num">2</td><td>At exit</td><td>Aug 2026<span class="sub">Exited</span></td><td><span class="badge badge-neutral">Exited</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="section-rule" id="offering-intake"><h2>Offering intake</h2></div>
+      <p class="panel-lead">Upload a fund’s offering documents and the portal reads them and sets up the offering: what investors see, fees and waterfall, share classes, feeder funds, side pockets, equalization, currency, liquidity, distributions and service providers. You review every term, with the passage it came from, before anything changes.</p>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Documents</h2></div>
+        <div class="panel-body">
+          <div class="grid">
+            <label class="field wide"><span>Private placement memorandum, partnership or operating agreement, subscription documents, term sheet</span>
+              <span class="drop"><svg class="svg-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg><span class="btn btn-small">Choose files</span><span class="hint">PDF, Word (.docx) or text. A scanned PDF with no text layer needs OCR first.</span></span>
+            </label>
+            <label class="field wide"><span>Or paste the summary of terms</span><textarea rows="4"></textarea></label>
+          </div>
+          <div class="row"><span class="hint">No documents to hand? Try a sample:</span><button class="btn btn-small" type="button">Hedge fund: master-feeder, three share classes, side pockets</button><button class="btn btn-small" type="button">Real estate: multi-tier promote waterfall</button></div>
+          <div class="grid" style="margin-top:24px">
+            <label class="field"><span>Apply to</span><select><option>A new offering</option><option>Update Harbor Point Apartments</option></select></label>
+            <label class="check" style="grid-column: span 2; align-self: end; padding-bottom: 8px"><input type="checkbox"><span>Make uploaded documents available to investors in this offering (and on its subscription page)</span></label>
+          </div>
+          <div class="row" style="margin-top:24px"><button class="btn btn-primary" type="button" disabled style="opacity:.55">Read documents</button><span class="hint">The documents are read and their terms filled in for you to review.</span></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

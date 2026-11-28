@@ -1,0 +1,17 @@
+Subject: Shah, Anita opened their investor portal
+Preheader: Shah, Anita used the portal link you sent and created their login on November 10, 2026.
+
+Shah, Anita used the portal link you sent and created their login on November 10, 2026.
+
+Investor: Shah, Anita
+Email: anita@investor.example
+
+Open the console:
+https://portal.example/portal.html#console-investors
+
+Nothing to do: their record stays as you hold it.
+
+--
+Harbor Ridge Capital Management LLC
+
+This message is not an offer to sell securities.

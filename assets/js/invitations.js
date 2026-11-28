@@ -1,8 +1,9 @@
 /*
  * Turnkey investor onboarding (DIY edition): the sponsor enters an investor's
- * basic details, the portal emails one link, the link walks the investor
- * through every step (onboarding.js, route #invite-<token>), the sponsor is
- * notified when it is finished and the investor is in the portal.
+ * name, email address and investor type, the portal emails one link, the link
+ * walks the investor through every step (onboarding.js, route
+ * #invite-<token>), the sponsor is notified when it is finished and the
+ * investor is in the portal.
  *
  * NS.invitations is the shared API: invitation records (ws.invitations), the
  * sponsor's notifications (ws.notifications), sending (the integration
@@ -51,10 +52,30 @@
    * created a blank record when reading one, which then read as unverified.
    */
   const probe = (inv) => (inv && !inv.verify ? Object.assign({}, inv) : inv);
+  /**
+   * Does an invitation of this investor to this offering (or to none) need VERIFIED accreditation? One answer, used by the
+   * snapshot the integration server gets and by the verification package the invite form offers (plan 08-06). Read only.
+   */
+  function accreditationRequired(ws, inv, off) {
+    const I = IV();
+    return !!(I && I.needsAccreditation && ((off && I.needsAccreditation(ws, probe(inv), off)) || I.needsAccreditation(ws, probe(inv))));
+  }
   /** "finished onboarding", or for an investor already on file invited to another offering, "finished their subscription". */
-  const finishedWhat = (it) => (it && it.existing ? 'finished their subscription' : 'finished onboarding');
+  const finishedWhat = (it) => (it && it.taxRequest ? 'finished your tax form request' : it && it.reverify ? 'finished your re-verification request' : it && it.existing ? 'finished their subscription' : 'finished onboarding');
   /** "started onboarding", or for an investor already on file, "started their subscription". */
-  const startedWhat = (it) => (it && it.existing ? 'started their subscription' : 'started onboarding');
+  const startedWhat = (it) => (it && it.taxRequest ? 'opened your tax form request' : it && it.reverify ? 'opened your re-verification request' : it && it.existing ? 'started their subscription' : 'started onboarding');
+  /**
+   * Plan 06-26: the official form an investor's tax-form request is for, by the investor type the sponsor chose (D-09);
+   * an investor with none recorded is taken by their kind of account (a U.S. person: Form W-9).
+   */
+  const taxFormFor = (inv) => {
+    const t = inv && NS.INVESTOR_TYPES[inv.taxType] ? inv.taxType : NS.investorKind(NS.investorKindOf(inv)).taxType;
+    return (NS.INVESTOR_TYPES[t] || { form: 'W-9' }).form;
+  };
+  /** Plan 06-26: the investor's open tax-form request (one not completed, cancelled or expired), or null. */
+  const openTaxRequest = (ws, inv) => (ws && inv ? list(ws).filter((x) => x.investorId === inv.id && x.taxRequest && OPEN.indexOf(x.status) >= 0 && !expiredNow(x)).pop() || null : null);
+  /** Plan 08-09 (D-04): the investor's open request to verify their accreditation again (not completed, cancelled or expired), or null. */
+  const openReverifyRequest = (ws, inv) => (ws && inv ? list(ws).filter((x) => x.investorId === inv.id && x.reverify && OPEN.indexOf(x.status) >= 0 && !expiredNow(x)).pop() || null : null);
 
   /* ---------- Records ---------- */
   const list = (ws) => (ws.invitations = ws.invitations || []);
@@ -119,6 +140,8 @@
         changed = true;
       }
     });
+    // Plan 08-09: a re-verification request finished while its check was still waiting: its entry is written once the result is in.
+    list(ws).forEach((it) => it.reverify && it.status === 'completed' && !it.reverifiedAt && reverified(ws, it) && (changed = true));
     return changed;
   }
   function linkFor(ws, it) {
@@ -133,6 +156,8 @@
   const forInvestor = (ws, investorId) => list(ws).filter((x) => x.investorId === investorId).pop() || null;
   const byEmail = (ws, email) => ws.investors.find((i) => String(i.email || '').trim().toLowerCase() === String(email || '').trim().toLowerCase()) || null;
   const active = (inv) => !!(inv && inv.onboarding && inv.onboarding.status === 'complete');
+  /** Plan 06-27 (D-10): an email that belongs to an investor on file (an active account), whom an invitation asks to subscribe only. */
+  const onFileEmail = (ws, email) => isEmail(String(email || '').trim()) && active(byEmail(ws, email));
   /** In the portal for good: an active account, or an invitation already finished. */
   const settled = (ws, inv) => active(inv) || list(ws).some((x) => x.investorId === inv.id && x.status === 'completed');
   /** The end of a sentence after a name that may already end with a period ("Fund II, L.P."). */
@@ -164,8 +189,18 @@
       e.amount = `The minimum for ${off.name}${cls && Number(cls.minimum) > Number(off.minimum || 0) ? ` (${cls.name})` : ''} is ${money(off, minimumCents(off, o.cls))}.`;
     }
     if (off && o.cls && !openClasses(off).some((c) => c.id === o.cls)) e.cls = 'Choose a share class that is open.';
+    // C-06 (plan 13-05): an invitation to a new offering for an investor on file, or to an offering with no commitment, may
+    // be commercial mail: it needs the firm's postal address in its footer. Not prepared while that address is empty.
+    if (!e.offering && off && postalMissing(ws) && (onFileEmail(ws, email) || !(cents > 0))) e.offering = POSTAL_NEEDED;
     return e;
   }
+  const POSTAL_NEEDED = "Add your firm's postal address under Settings, then Portal and brand, before inviting to a new offering. (To be confirmed with counsel.)";
+  /**
+   * The firm's postal address is asked for and empty. A workspace whose firm record has no postal address field yet (the
+   * field comes with the Portal and brand setting, plan 13-09) is not stopped: the sentence would point to a setting that
+   * is not there.
+   */
+  const postalMissing = (ws) => Object.prototype.hasOwnProperty.call(ws.tenant, 'postalAddress') && !String(ws.tenant.postalAddress || '').trim();
 
   /** Add the investor and their invitation. Nothing is sent yet (send()). */
   function create(ws, o) {
@@ -176,9 +211,11 @@
     const off = offOf(ws, o.offeringId);
     const classes = openClasses(off);
     const cls = off && classes.some((c) => c.id === o.cls) ? o.cls : off && classes.length === 1 ? classes[0].id : '';
-    const type = NS.ENTITY_TYPES[o.type] ? o.type : 'individual';
+    // D-09: the investor type the sponsor chose (a kind of U.S. account, or a foreign type; U.S. individual when none).
+    const kind = NS.investorKind(o.type);
+    const type = kind.type;
     const at = nowIso();
-    const id = uid('invt');
+    const id = o.id || uid('invt');
     const token = serverOn(ws) ? '' : newToken();
     const have = byEmail(ws, email);
     const existing = active(have);
@@ -187,6 +224,7 @@
       contact: name,
       title: String(o.account || '').trim() || name,
       type,
+      taxType: kind.taxType,
       email,
       phone: '',
       address: '',
@@ -203,7 +241,7 @@
       have.onboarding = Object.assign({}, have.onboarding, { invitationId: id, offeringId: off ? off.id : '' });
     } else if (have) {
       // Invited again after an earlier invitation was cancelled: the details the sponsor entered now, and a fresh start.
-      Object.assign(have, { contact: name, title: String(o.account || '').trim() || have.title || name, type });
+      Object.assign(have, { contact: name, title: String(o.account || '').trim() || have.title || name, type, taxType: kind.taxType });
       have.onboarding = Object.assign({}, have.onboarding, { status: 'invited', step: 0, invited: today(), completed: '', source: 'invitation', invitationId: id, offeringId: off ? off.id : '' });
     }
     const invitation = {
@@ -233,51 +271,95 @@
     if (existing) invitation.existing = true;
     // An investor added manually (onboarded offline) who is sent a link to their portal: no offering, nothing to fill in.
     if (existing && o.access && !off) invitation.access = true;
+    // Plan 06-26: the sponsor asks an investor on file for their tax form again: the tax step and the done screen only.
+    if (existing && o.taxRequest && !off) invitation.taxRequest = true;
+    // Plan 06-27 (D-10): the sponsor chose "Include tax form" inviting an investor on file to subscribe: the short flow holds
+    // the tax step too (before subscribe). Never on the investor's own portal entry points (onboarding.js selfInvite).
+    if (existing && o.includeTax === true && off && !invitation.taxRequest) invitation.includeTax = true;
+    // Plan 08-09 (D-04, C-06): the sponsor asks an investor on file to verify their accreditation again: the accreditation
+    // step and the done screen only. Never with an offering, a tax-form request or a portal link.
+    if (existing && o.reverify === true && !off && !invitation.taxRequest && !invitation.access) invitation.reverify = true;
+    // Plan 08-06 (D-01): the sponsor ticked "Add verification package". Kept only where the box could be ticked: a server
+    // is connected and offers the package for this invitation. The server is sent the choice and this invitation's id
+    // (snapshot); it decides what is charged.
+    if (o.package === true && (invitation.reverify ? reverifyPackage(ws) : packageBox(ws, { email, offeringId: off ? off.id : '' })).enabled) invitation.package = true;
     if (token) invitation.link = linkFor(ws, invitation);
     if (!have) ws.investors.push(investor);
     list(ws).push(invitation);
-    audit(ws, invitation.access ? 'Portal link sent to investor' : existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}` : invitation.access ? ': added manually, account already set up' : ': account only'}`, off ? off.id : '', investor.id);
+    if (invitation.taxRequest) audit(ws, 'Tax form requested', `${investor.title} (${email}): Form ${taxFormFor(investor)}, the tax step only`, '', investor.id);
+    else if (invitation.reverify) audit(ws, 'Accreditation re-verification requested', `${investor.title} (${email}): the accreditation step only`, '', investor.id);
+    else audit(ws, invitation.access ? 'Portal link sent to investor' : existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}${invitation.includeTax ? `; tax form included (Form ${taxFormFor(investor)})` : ''}` : invitation.access ? ': added manually, account already set up' : ': account only'}`, off ? off.id : '', investor.id);
     return { invitation, investor };
   }
 
-  /* ---------- Email text (the manual path; the server writes its own) ---------- */
+  /* ---------- Email text: the one renderer (assets/js/emails.js) with the data the server is sent (plan 13-05, EM-01) ---------- */
+  /** The investor as snapshot() sends them (without the on-file summary and the tax prefill, which no message prints). */
+  function investorData(ws, it, inv) {
+    return Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest || it.includeTax ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {});
+  }
+  /** The invitation as snapshot() sends it (a portal link says so: the server's email and summary are the portal link's). */
+  function invitationData(it) {
+    return Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.access ? { access: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}, it.reverify ? { reverify: true } : {}, it.package ? { package: true, clientId: it.id } : {});
+  }
+  /** What the renderer is given for this invitation's email: the firm, the investor, the offering, the invitation, link and expiry. */
+  function mailData(ws, it) {
+    const inv = invOf(ws, it.investorId) || { id: it.investorId, contact: '', title: '', type: '', email: '' };
+    const off = offOf(ws, it.offeringId);
+    return { firm: firmOf(ws), investor: investorData(ws, it, inv), offering: off ? { id: off.id, name: off.name, shortName: off.shortName || off.name, currency: curOf(off) } : null, invitation: invitationData(it), link: linkFor(ws, it), expiresAt: it.expiresAt, started: !!it.mailStarted };
+  }
+  /**
+   * The invitation's email as the investor receives it: rendered by NS.emails from the data the server is sent, so the
+   * dialog, the email app's draft and the server's message say the same words. 'invitation_resent' (subject "New link: ")
+   * only when the integration server sent a new link (resend); a manual resend keeps the link and the message.
+   */
   function emailFor(ws, it) {
     const t = ws.tenant;
     const inv = invOf(ws, it.investorId) || { contact: '', title: '', email: '' };
-    const off = offOf(ws, it.offeringId);
-    // "Anita Shah" or "Shah, Anita": the given name, without stray punctuation.
-    const full = String(inv.contact || '').trim();
-    const given = full.indexOf(',') > 0 ? full.split(',').slice(1).join(' ').trim() || full : full;
-    const first = given.split(/\s+/)[0].replace(/[^\p{L}\p{M}'’.-]/gu, '') || 'there';
-    const cls = off && it.cls ? openClasses(off).concat(off.classes || []).find((c) => c.id === it.cls) : null;
-    const subject = off ? `${t.name}: your invitation to invest in ${off.name}` : it.access ? `${t.name}: your investor portal` : `${t.name}: set up your investor account`;
-    const link = linkFor(ws, it);
-    const by = date(String(it.expiresAt || '').slice(0, 10), 'long');
-    const amount = off && it.cents ? `, for a commitment of ${money(off, it.cents)}${cls ? ` in ${cls.name}` : ''}` : '';
-    const what = off ? `${it.existing ? 'subscribe to' : 'set up your investor account and your subscription to'} ${off.name}${amount}` : it.access ? 'open your investor portal' : 'set up your investor account';
-    const lines = [
-      `Dear ${first},`,
-      sentence(`${it.sentBy && it.sentBy !== t.support.team ? `${it.sentBy} at ${t.name}` : t.name} has invited you to ${what}`)
-    ];
-    if (it.note) lines.push(it.note);
-    if (it.access) lines.push('Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below opens your portal.');
-    else if (it.existing && off) lines.push('The link below takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file.');
-    else
-      lines.push(
-        `The link below takes you through everything in one place, in about 10 to 15 minutes: your login, investor information, identity verification${off ? ', accreditation' : ''}, tax certification, where to send distributions${off ? ', and your subscription documents, which you sign online' : ''}. Your progress is saved, so you can stop and come back.`,
-        'Have a government-issued photo ID and your bank account details ready.'
-      );
-    const tail = [
-      `This link is personal to you; please do not forward it. It expires on ${by}.`,
-      `Questions? Contact ${t.support.team}${isEmail(t.support.email) ? ` at ${t.support.email}` : ''}${t.support.phone ? ` or ${t.support.phone}` : ''}.`
-    ];
-    const text = [lines.join('\n\n'), `Start here: ${link}`, tail.join('\n'), t.legalName || t.name].join('\n\n');
-    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : it.access ? 'Open your portal' : 'Set up your account' };
+    const kind = it.serverId && it.mailKind === 'invitation_resent' ? 'invitation_resent' : 'invitation';
+    const d = mailData(ws, it);
+    const r = NS.emails.render(kind, d);
+    return { kind, subject: r.subject, text: r.text, html: r.html, link: d.link, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '' };
   }
   /** mailto: with the subject and body; CRLF line breaks (RFC 6068). */
   function mailtoFor(ws, it) {
     const m = emailFor(ws, it);
     return `mailto:${encodeURIComponent(m.to)}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.text.replace(/\r?\n/g, '\r\n'))}`;
+  }
+  /**
+   * The email card of the dialogs (this file's and coinvestor.js's): the message's text block by block as it is written
+   * (line breaks kept), the button's block shown as the button and its link, then the footer. Nothing added or reworded.
+   */
+  function emailCard(t, m) {
+    const text = String(m.text || '');
+    const at = text.lastIndexOf('\n\n--\n');
+    const body = at >= 0 ? text.slice(0, at) : text;
+    const foot = at >= 0 ? text.slice(at + 5) : '';
+    const tail = m.link ? `:\n${m.link}` : '';
+    const pre = ' style="white-space:pre-wrap"';
+    const para = (b) => (tail && b.length > tail.length && b.slice(-tail.length) === tail ? `<p class="email-cta"${pre}><span class="email-btn">${h(b.slice(0, -tail.length))}</span>\n<span class="inv8-raw">${h(m.link)}</span></p>` : `<p${pre}>${h(b)}</p>`);
+    return `<article class="email"><div class="email-head">${B.lockup(t)}</div><div class="email-body">${body.split('\n\n').map(para).join('')}</div>${foot ? `<div class="email-foot">${foot.split('\n\n').map((f) => `<p style="white-space:pre-wrap;margin:0 0 6px">${h(f)}</p>`).join('')}</div>` : ''}</article>`;
+  }
+
+  /**
+   * EM-08: one sent-log entry (NS.emails.log, ws.mailLog) for an email the console handled: 'manual' when the sponsor marks
+   * it sent from their email app, else the integration server's status. The personal link is taken out of the stored
+   * text. A status the log does not know is kept as the nearest it does (an unsubscribed investor: suppressed).
+   */
+  function logMail(ws, investorId, status, m) {
+    if (!NS.emails || !NS.emails.log || !m) return null;
+    const st = NS.emails.STATUSES.indexOf(status) >= 0 ? status : status === 'unsubscribed' ? 'suppressed' : 'failed';
+    return NS.emails.log(ws, { kind: m.kind || 'invitation', subject: m.subject, to: m.to, investorId, status: st, text: m.text, link: m.link });
+  }
+  /** The co-investor's sign-in email data, as coSignIn sends the server (and coinvestor.js shows it). */
+  function coMailData(ws, inv, si) {
+    const c = inv.coInvestor || {};
+    return { firm: firmOf(ws), investor: { id: inv.id, contact: c.name, title: inv.title, type: inv.type, email: c.email }, offering: null, invitation: { cents: 0, cls: '', note: '', existing: true, coSign: true, envelopeId: (si && si.envelopeId) || '', senderName: senderName(ws) }, link: (si && si.link) || '', expiresAt: (si && si.expiresAt) || '' };
+  }
+  /** The co-investor's sign-in email as the renderer writes it: { kind, subject, text, html, link, to, toName, fromName }. */
+  function coEmail(ws, inv, si) {
+    const d = coMailData(ws, inv, si);
+    const r = NS.emails.render('invitation', d);
+    return { kind: 'invitation', subject: r.subject, text: r.text, html: r.html, link: d.link, to: d.investor.email, toName: d.investor.contact, fromName: ws.tenant.name };
   }
 
   /* ---------- Notifications ---------- */
@@ -332,7 +414,42 @@
     return (ws.requests || []).filter((r) => r.investorId === it.investorId && r.type === 'subscription' && (!it.offeringId || r.offeringId === it.offeringId)).pop() || null;
   }
   const envOf = (ws, r) => (r && r.envelopeId ? (ws.envelopes || []).find((e) => e.id === r.envelopeId) || null : null);
+  /** The investor has signed and the account's co-investor has not yet. */
+  const waitingCo = (env) => !!env && env.status === 'sent' && env.signers.some((s) => s.co && s.status !== 'signed') && env.signers.some((s) => s.investorId && !s.co && s.status === 'signed');
   const waitingCountersign = (env) => !!env && env.status === 'sent' && NS.esign && NS.esign.currentSigners(env).some((s) => s.role === 'countersigner');
+  /** Plan 06-26 / 06-27: what a tax-form request, or an invitation that included the tax form, brought back (the record's tax form when made after it was sent). */
+  function taxText(inv, it) {
+    const tc = inv && inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : null;
+    const form = (tc && tc.form) || (inv ? taxFormFor(inv) : 'W-9');
+    const fresh = !!tc && Date.parse(tc.at || '') >= Date.parse(it.sentAt || '') - 60000;
+    return !fresh ? 'no tax form returned' : tc.received === false ? `Form ${form} ${tc.uploaded ? 'uploaded' : 'signed'}, copy not received: ask the investor for it` : tc.uploaded ? `Form ${form} uploaded` : tc.signed === false ? `Form ${form} not signed` : `Form ${form} signed`;
+  }
+  /** Plan 08-09: an accreditation result made after this request was sent (a result from before it is not what it brought). */
+  const freshAcc = (a, it) => !!a && a.status !== 'not_started' && Date.parse(a.completedAt || a.startedAt || '') >= Date.parse(it.sentAt || '') - 60000;
+  /** Plan 08-09: what a re-verification request brought: the accreditation result, in the console's words. */
+  function reverifyText(inv, it) {
+    const a = inv && IV() ? IV().peek(inv).accreditation : null;
+    if (!freshAcc(a, it)) return 'no new accreditation verification';
+    if (a.status === 'verified' && !IV().selfCertified(a)) return `accreditation verified${a.expiresAt ? `, valid until ${date(a.expiresAt)}` : ''}`;
+    return a.status === 'pending' || a.status === 'review' ? 'accreditation submitted, waiting for the result' : 'accreditation not verified';
+  }
+  /**
+   * Plan 08-09: a re-verification request finished (local mode) or was imported (server mode). Its accreditation result is
+   * capped by the firm's validity days as every verification is (capAccreditation), and a verified, current result made
+   * after the request was sent is logged once as "Accreditation re-verified" (a result that arrives after the request
+   * finished: refresh, on the console's Investors page). Answers whether it was logged now.
+   */
+  function reverified(ws, it) {
+    const inv = invOf(ws, it.investorId);
+    const I = IV();
+    const a = inv && I && I.recorded && I.recorded(inv) ? inv.verify.accreditation : null;
+    if (it.reverifiedAt || !freshAcc(a, it) || a.status !== 'verified' || I.selfCertified(a)) return false;
+    capAccreditation(ws, inv, a);
+    if (!I.accreditationValid(ws, inv)) return false;
+    it.reverifiedAt = nowIso();
+    audit(ws, 'Accreditation re-verified', `${inv.title}: ${a.via || 'verified'}${a.method ? `, ${a.method}` : ''}; valid until ${date(a.expiresAt)}`, '', inv.id);
+    return true;
+  }
   /** Who finished, for what, and where things stand: the completion notice and the list. */
   function outcome(ws, it) {
     const inv = invOf(ws, it.investorId);
@@ -341,20 +458,27 @@
     const env = envOf(ws, r);
     const st = inv && IV() && IV().active(ws) ? IV().status(ws, inv) : null;
     const parts = [];
+    // Plan 06-26: a tax-form request: the form that came back, and how (its record is the one rule taxOnFile reads).
+    if (it.taxRequest) return { text: taxText(inv, it), route: 'console-investors', inv, off: null, r: null, env: null };
+    // Plan 08-09: a re-verification request: the accreditation result it brought, nothing else.
+    if (it.reverify) return { text: reverifyText(inv, it), route: 'console-investors', inv, off: null, r: null, env: null };
     // A request this invitation's import dropped comes first: an earlier request for the same offering is not this one.
     if (it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription${off ? ` to ${off.name}` : ''} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
     else if (r && off) parts.push(`${money(off, r.cents)} subscription to ${off.name}`);
     else if (off && !it.existing) parts.push(`Account activated; no subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else if (off) parts.push(`No subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else parts.push('Account activated');
+    // Plan 06-27 (D-10): the tax form the sponsor included in this invitation to subscribe, and how it came back.
+    if (it.includeTax && it.existing) parts.push(taxText(inv, it));
     if (st) parts.push(st.key === 'approved' ? 'verified' : st.key === 'review' ? 'verification held for your review' : st.key === 'rejected' ? 'verification not approved' : 'verification in progress');
-    if (env) parts.push(env.status === 'completed' ? 'agreement fully signed' : waitingCountersign(env) ? 'agreement signed, waiting for your countersignature' : 'agreement not signed yet');
+    if (env) parts.push(env.status === 'completed' ? 'agreement fully signed' : waitingCountersign(env) ? 'agreement signed, waiting for your countersignature' : waitingCo(env) ? 'agreement signed by the investor, waiting for the co-investor to sign' : 'agreement not signed yet');
     return { text: parts.join('; '), route: waitingCountersign(env) ? `console-envelope-${env.id}` : st && st.key === 'review' ? 'console-kyc' : 'console-investors', inv, off, r, env };
   }
   function complete(ws, it) {
     if (!ws || !it || it.status === 'completed') return;
     const wasStep = it.stepCount;
     Object.assign(it, { status: 'completed', completedAt: new Date().toISOString(), stepKey: 'done', stepLabel: 'Done', stepIndex: wasStep || it.stepIndex, stepCount: wasStep || it.stepCount });
+    if (it.reverify) reverified(ws, it);
     const x = outcome(ws, it);
     notify(ws, 'onboarding_completed', `${x.inv ? x.inv.title : 'An investor'} ${finishedWhat(it)}`, x.text, x.route);
     sweep(ws);
@@ -382,6 +506,7 @@
       const msg = data && typeof data.error === 'string' ? data.error : data && typeof data.message === 'string' ? data.message : res.status === 401 ? 'The integration server did not accept the access token.' : `The integration server answered ${res.status}.`;
       const err = new Error(msg);
       err.status = res.status;
+      err.code = data && typeof data.code === 'string' ? data.code : '';
       throw err;
     }
     return data;
@@ -407,6 +532,12 @@
       return null;
     }
   };
+  /** The firm as the investor's (or co-investor's) page shows it and the server's emails name it. */
+  function firmOf(ws) {
+    const t = ws.tenant;
+    const logo = t.logo && t.logo.type === 'image' && /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,/i.test(t.logo.image || '') && t.logo.image.length <= 600 * 1024 ? t.logo.image : '';
+    return { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', postalAddress: String(t.postalAddress || ''), onboarding: clone(t.onboarding || {}) };
+  }
   /** Everything the investor's browser needs, from this workspace (no secrets: verification settings are names and rules). */
   async function snapshot(ws, it) {
     const t = ws.tenant;
@@ -442,31 +573,42 @@
       const pdf = ready ? await getFile(tpl.docId) : null;
       if (ready && pdf) esign = { template: { id: tpl.id, title: tpl.title, fileName: tpl.fileName, docId: tpl.docId, message: tpl.message || '', roles: tpl.roles, fields: tpl.fields, pages: tpl.pages, pageSizes: tpl.pageSizes, sha256: tpl.sha256 }, pdf: await blobB64(pdf) };
     }
-    const logo = t.logo && t.logo.type === 'image' && /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,/i.test(t.logo.image || '') && t.logo.image.length <= 600 * 1024 ? t.logo.image : '';
     const I = IV();
     const c = I.ensure(ws);
     // Whether this invitation needs VERIFIED accreditation, answered here on the whole workspace: the investor's device holds
     // only the invited offering, so its own reading of the firm's rules ("no offering names an exemption") can misfire.
     // Read only (probe): nothing is written on the investor.
-    const accreditationRequired = !!(I && I.needsAccreditation && ((off && I.needsAccreditation(ws, probe(inv), off)) || I.needsAccreditation(ws, probe(inv))));
+    const needsVerified = accreditationRequired(ws, inv, off);
     return {
       workspace: t.id,
       sendEmail: true,
       portalUrl: portalPage(),
       consoleUrl: `${portalPage()}#console-investors`,
       notifyEmail: senderEmail(ws),
-      firm: { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) },
-      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}),
+      firm: firmOf(ws),
+      investor: Object.assign(investorData(ws, it, inv), it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest || it.includeTax ? { taxPrefill: taxPrefill(inv) } : {}),
       offering,
-      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}),
-      verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired },
+      invitation: invitationData(it),
+      verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired: needsVerified },
       esign
     };
   }
 
   /**
+   * D-01, D-08 (1): the benefit plan answers as known fields only: plan (one of the known values, or ''), planPct (0 to 100,
+   * or null). 'other' is an answer an earlier version offered (a governmental, church or non-U.S. plan: not a benefit plan
+   * investor). The control question is no longer asked (plan 06-15).
+   */
+  const PLANS = ['title1', '4975', 'planAssets', 'other', 'none'];
+  function cleanErisa(e) {
+    if (!e || typeof e !== 'object' || Array.isArray(e)) return null;
+    const pct = typeof e.planPct === 'number' && isFinite(e.planPct) && e.planPct >= 0 && e.planPct <= 100 ? e.planPct : null;
+    return { plan: PLANS.indexOf(e.plan) >= 0 ? e.plan : '', planPct: pct };
+  }
+  /**
    * What the investor's device needs about an investor already on file: whether their accreditation is current (and until when)
-   * and whether they already hold the offering. No personal details: the account stays in this console.
+   * and whether they already hold the offering, and (D-01) their own status answers to prefill the status step: the ground on
+   * their record (accBasis) and their benefit plan answers (erisa). No personal details: the account stays in this console.
    */
   function onFileSummary(ws, inv, it) {
     const I = IV();
@@ -476,7 +618,50 @@
     // probe(): reading must not leave a blank verification record on a legacy investor (it would read as unverified).
     const self = I && I.selfCertified ? I.selfCertified(a) : a.connection === 'self' || a.how === 'self' || a.provider === 'self';
     const ok = !!(I && I.accreditationValid && I.accreditationValid(ws, probe(inv))) && !self;
-    return { accredited: ok, accreditedUntil: ok && /^\d{4}-\d{2}-\d{2}$/.test(String(a.expiresAt || '')) ? a.expiresAt : '', holds: (inv.positions || []).some((p) => p.offeringId === it.offeringId) };
+    const out = { accredited: ok, accreditedUntil: ok && /^\d{4}-\d{2}-\d{2}$/.test(String(a.expiresAt || '')) ? a.expiresAt : '', holds: (inv.positions || []).some((p) => p.offeringId === it.offeringId) };
+    const basis = inv.accreditation && typeof inv.accreditation.basis === 'string' ? inv.accreditation.basis.slice(0, 300) : '';
+    if (basis) out.accBasis = basis;
+    const e = cleanErisa(inv.erisa);
+    if (e) out.erisa = e;
+    return out;
+  }
+  /**
+   * Plan 06-26: what a tax-form request's device needs to pre-fill the official form, from this console's record: the
+   * address, the country, U.S. or other citizenship, the country of citizenship given on an earlier W-8BEN, and when the
+   * investor consented to electronic records and signatures. Never a taxpayer ID or bank detail.
+   */
+  function taxPrefill(inv) {
+    const tc = inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : {};
+    const at = inv.esignConsent && typeof inv.esignConsent === 'object' && /^\d{4}-\d{2}-\d{2}T/.test(String(inv.esignConsent.at || '')) ? String(inv.esignConsent.at) : '';
+    return { address: String(inv.address || '').slice(0, 300), country: String(inv.country || '').slice(0, 60), citizen: inv.citizenship === 'us' || inv.citizenship === 'other' ? inv.citizenship : '', citizenship: tc.form === 'W-8BEN' && typeof tc.citizenship === 'string' ? tc.citizenship.slice(0, 60) : '', consentAt: at };
+  }
+  /**
+   * Plan 06-26 (owner decision on the verification's human item 3): ask an investor on file for their tax form again. An
+   * open request is reused (in server mode its email is sent again with a new link); otherwise a new invitation holds the
+   * tax step and the done screen only. Resolves to { invitation, res, reused }.
+   */
+  async function requestTax(ws, inv) {
+    if (!inv || !active(inv)) throw new Error('Only an investor with an active account can be asked for their tax form here.');
+    const open = openTaxRequest(ws, inv);
+    if (open) return { invitation: open, reused: true, res: serverOn(ws) ? await resend(ws, open) : { emailStatus: 'manual' } };
+    const it = create(ws, { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, taxRequest: true }).invitation;
+    NS.app.save(true);
+    return { invitation: it, reused: false, res: await send(ws, it) };
+  }
+  /**
+   * Plan 08-09 (D-04, C-06): ask an investor on file to verify their accreditation again. Built as requestTax: an open request
+   * is reused (in server mode its email is sent again with a new link); otherwise a new invitation (existing, reverify, no
+   * offering) holds the accreditation step and the done screen only. opts.package: the verification package (plan 08-20),
+   * kept only when the dialog's box allows it (reverifyPackage, the invite form's rule); an open request reused is sent
+   * again as it is, so nothing is paid twice. Resolves to { invitation, res, reused }.
+   */
+  async function requestReverify(ws, inv, opts) {
+    if (!inv || !active(inv)) throw new Error('Only an investor with an active account can be asked to verify their accreditation again here.');
+    const open = openReverifyRequest(ws, inv);
+    if (open) return { invitation: open, reused: true, res: serverOn(ws) ? await resend(ws, open) : { emailStatus: 'manual' } };
+    const it = create(ws, Object.assign({ name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, reverify: true }, opts && opts.package === true && reverifyPackage(ws).enabled ? { package: true } : {})).invitation;
+    NS.app.save(true);
+    return { invitation: it, reused: false, res: await send(ws, it) };
   }
   /** Send (or hand to the sponsor's email app). Resolves to { emailStatus, error? }. */
   async function send(ws, it) {
@@ -498,7 +683,10 @@
       // The agreement template the investor's device was given (or none): an envelope it sends back is checked against it on
       // import, even after the template is replaced or deleted here (merge).
       const tpl = snap.esign && snap.esign.template;
+      delete it.mailKind;
+      delete it.mailStarted;
       Object.assign(it, { serverId: String(r.id || ''), link: String(r.link || ''), token: '', emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), esignTemplate: tpl ? { id: tpl.id, roles: (tpl.roles || []).slice(), docId: tpl.docId } : null });
+      logMail(ws, it.investorId, it.emailStatus, emailFor(ws, it));
       audit(ws, it.emailStatus === 'sent' ? 'Invitation emailed' : 'Invitation saved on the integration server', `${inv ? inv.title : it.investorId}: ${it.emailStatus === 'sent' ? `link emailed to ${inv ? inv.email : ''}` : it.emailStatus === 'outbox' ? 'kept in the server outbox (no SMTP settings)' : it.emailError || it.emailStatus}`, it.offeringId, it.investorId);
       NS.app.save(true);
       return it.emailError ? { emailStatus: it.emailStatus, error: it.emailError } : { emailStatus: it.emailStatus };
@@ -512,11 +700,37 @@
         NS.app.save(true);
         return { emailStatus: 'manual', error: it.emailError };
       }
+      // 08-CONTEXT R7: this invitation's package was used (its check started, its invitation ended): a new invitation.
+      if (e.code === 'package_used') return replaceUsed(ws, it, e.message);
       it.emailStatus = 'failed';
       it.emailError = e.message || 'The invitation could not be sent.';
       NS.app.save(true);
       return { emailStatus: 'failed', error: it.emailError };
     }
+  }
+  /**
+   * 08-CONTEXT R7: the server refused this invitation's package as used (its check started and its invitation ended). The
+   * invitation was never sent, so it is closed here with the server's sentence, and a new one for the same investor, made
+   * from its own options as reinvite() makes them (with the package choice and the tax form choice), waits with a new id
+   * (so a new client id) until the sponsor sends it. Nothing is sent and nothing is charged here.
+   */
+  function replaceUsed(ws, it, said) {
+    const inv = invOf(ws, it.investorId);
+    Object.assign(it, { status: 'cancelled', cancelledAt: new Date().toISOString(), emailStatus: 'failed', emailError: said });
+    let made = null;
+    if (inv) {
+      const off = offOf(ws, it.offeringId);
+      const o = { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note, includeTax: it.includeTax === true };
+      if (it.package) o.package = true;
+      if (it.reverify) o.reverify = true;
+      const e = validate(ws, o);
+      if (e.amount || e.cls) Object.assign(o, { cents: 0, cls: '' });
+      // Plan 08-20 (G6): a re-verification is made again as requestReverify makes it (an active investor on file, no offering).
+      if (it.reverify ? active(inv) : !Object.keys(validate(ws, o)).length) made = create(ws, o).invitation;
+    }
+    if (made) audit(ws, 'Invitation replaced', `${inv.title}: ${said}`, it.offeringId, it.investorId);
+    NS.app.save(true);
+    return { emailStatus: 'failed', error: said, replaced: made ? made.id : '' };
   }
   /** A new email for an open invitation (and 30 more days). */
   async function resend(ws, it) {
@@ -525,17 +739,23 @@
     if (serverOn(ws) && it.serverId) {
       try {
         const r = await api(ws, 'POST', `/v1/invitations/${encodeURIComponent(it.serverId)}/resend`, { sendEmail: true, portalUrl: portalPage() });
-        Object.assign(it, { link: String(r.link || it.link), emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent' });
+        // The server wrote its "New link:" message (started: the investor had begun, as the server reads it).
+        Object.assign(it, { mailKind: 'invitation_resent', mailStarted: !!it.stepKey, link: String(r.link || it.link), emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent' });
+        delete it.resendError;
+        logMail(ws, it.investorId, it.emailStatus, emailFor(ws, it));
       } catch (e) {
         it.emailError = e.message;
+        // The server refused (a returned package, a closed invitation): its sentence stays on the row until a resend goes.
+        if (e.status) it.resendError = e.message;
         NS.app.save(true);
         return { emailStatus: 'failed', error: e.message };
       }
     } else if (serverOn(ws)) {
       return send(ws, it);
     } else {
-      // A new link: the one sent before stops working (the investor's progress is kept on their record).
-      Object.assign(it, { token: newToken(), link: '', expiresAt: new Date(Date.now() + VALID_DAYS * DAY).toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent', emailStatus: 'manual', emailError: '' });
+      // Plan 13-05 (EM-02): the same link, valid 30 more days, so the email the sponsor sends again is the same invitation
+      // (no "New link"); the investor's progress is kept on their record.
+      Object.assign(it, { token: it.token || newToken(), link: '', expiresAt: new Date(Date.now() + VALID_DAYS * DAY).toISOString(), status: it.stepKey ? 'in_progress' : it.openedAt ? 'opened' : 'sent', emailStatus: 'manual', emailError: '' });
       it.link = linkFor(ws, it);
     }
     audit(ws, 'Invitation resent', `${inv ? inv.title : it.investorId}: link valid until ${date(String(it.expiresAt).slice(0, 10))}`, it.offeringId, it.investorId);
@@ -547,7 +767,8 @@
     const inv = invOf(ws, it.investorId);
     if (!inv || it.status !== 'cancelled') return null;
     const off = offOf(ws, it.offeringId);
-    const o = { name: inv.contact, email: inv.email, type: inv.type, account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note };
+    // Plan 06-27 (D-10): the sponsor's "Include tax form" choice on the cancelled invitation is kept.
+    const o = { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note, includeTax: it.includeTax === true };
     const e = validate(ws, o);
     if (e.amount || e.cls) Object.assign(o, { cents: 0, cls: '' });
     const again = validate(ws, o);
@@ -565,6 +786,252 @@
     return true;
   }
 
+  /* ---------- Plan 06-39: the co-investor's own sign-in through the integration server ---------- */
+  // inv.coInvestor.signIn (plan 06-37's record) of the server kind: { server: true, token: '', link (the server's), createdAt,
+  // expiresAt, sentAt, openedAt, serverId, envelopeId, emailStatus, error, signedAt, importedAt }. One sign-in is for one
+  // agreement: the first of the account's agreements that waits for the co-investor (sent, the investor signed, the
+  // co-investor not). The co-investor signs the copy that carries the investor's signature, so nothing is sent before that.
+  const coBusy = new Set(); // accounts whose sign-in is being created or cancelled now
+  const coSi = (inv) => (inv && inv.coInvestor && inv.coInvestor.signIn && inv.coInvestor.signIn.server ? inv.coInvestor.signIn : null);
+  const coWaiting = (ws, inv) => (ws.envelopes || []).find((e) => waitingCo(e) && e.signers.some((s) => s.co && s.investorId === inv.id)) || null;
+  const coRetired = (ws) => (ws.coServerRetired = ws.coServerRetired || []);
+  /** A server sign-in replaced or ended: a late submission for it is recognised (and not used), for the last 200. */
+  function retireCo(ws, inv, si) {
+    if (!si || !si.serverId) return;
+    const list = coRetired(ws);
+    list.push({ id: si.serverId, investorId: inv.id, at: nowIso() });
+    if (list.length > 200) list.splice(0, list.length - 200);
+  }
+  /** The account's sign-in becomes the server kind, nothing sent yet (plan 06-37's local link, just made, is dropped unused). */
+  function serverSignIn(inv) {
+    const c = inv.coInvestor;
+    c.signIn = { server: true, token: '', link: '', createdAt: nowIso(), expiresAt: '', sentAt: '', openedAt: '', serverId: '', envelopeId: '', emailStatus: '', error: '' };
+    return c.signIn;
+  }
+  /** The Account window of this account, drawn again when it is open (what the firm sees follows the server's answer). */
+  function coRefresh(inv) {
+    if (W() && S().route && NS.app.modeOf(S().route) === 'console') NS.app.render();
+    if (document.querySelector(`#dlg[open] .co-record[data-investor="${CSS.escape(inv.id)}"]`) && NS.coInvestor && NS.coInvestor.openRecord) NS.coInvestor.openRecord(inv);
+  }
+  /**
+   * Create the co-investor's sign-in for one agreement on the integration server (06-38 contract): the account and the
+   * co-investor's name and email, the agreement (esign.js coCopy: their places only, no taxpayer number) and its current copy.
+   * The server emails the link. Resolves to true when it was created.
+   */
+  async function coSignIn(ws, inv, env) {
+    const c = inv.coInvestor;
+    const si = coSi(inv);
+    if (!c || !si || !env) return false;
+    coBusy.add(inv.id);
+    si.sending = true;
+    coRefresh(inv);
+    try {
+      const copy = await NS.esign.coCopy(ws, env.id);
+      const body = {
+        workspace: ws.tenant.id,
+        sendEmail: true,
+        portalUrl: portalPage(),
+        consoleUrl: `${portalPage()}#console-investors`,
+        notifyEmail: senderEmail(ws),
+        firm: firmOf(ws),
+        investor: { id: inv.id, contact: c.name, title: inv.title, type: inv.type, email: c.email },
+        offering: null,
+        invitation: { cents: 0, existing: true, coSign: true, envelopeId: env.id, senderName: senderName(ws), expiresAt: new Date(Date.now() + VALID_DAYS * DAY).toISOString() },
+        verification: {},
+        esign: { template: copy.template, pdf: await blobB64(copy.pdf) }
+      };
+      const r = await api(ws, 'POST', '/v1/invitations', body);
+      const failed = r.emailStatus === 'failed';
+      Object.assign(si, { serverId: String(r.id || ''), link: String(r.link || ''), token: '', envelopeId: env.id, emailStatus: String(r.emailStatus || 'sent'), error: failed ? String(r.emailError || 'The integration server could not send the email.') : '', expiresAt: String(r.expiresAt || ''), sentAt: failed ? '' : nowIso(), openedAt: '', signedAt: '', importedAt: '' });
+      delete si.retry;
+      if (NS.emails) logMail(ws, inv.id, si.emailStatus, coEmail(ws, inv, si));
+      audit(ws, failed ? 'Co-investor sign-in not emailed' : 'Co-investor sign-in emailed', `${inv.title}: ${c.name} <${c.email}>, for ${env.title}: ${si.emailStatus === 'outbox' ? 'kept in the server outbox (no SMTP settings)' : failed ? si.error : 'emailed by the integration server'}${copy.redacted ? '; the copy sent to the co-investor leaves out the taxpayer number' : ''}`, env.offeringId || '', inv.id);
+      return true;
+    } catch (e) {
+      si.error = (e && e.message) || 'The sign-in could not be sent.';
+      si.envelopeId = env.id;
+      // No answer at all is tried again on the next check; a refusal waits for the firm's "Send the sign-in again".
+      si.retry = !(e && e.status);
+      audit(ws, 'Co-investor sign-in not sent', `${inv.title}: ${c.name} <${c.email}>, for ${env.title}: ${si.error}`, env.offeringId || '', inv.id);
+      return false;
+    } finally {
+      delete si.sending;
+      coBusy.delete(inv.id);
+      NS.app.save(true);
+      coRefresh(inv);
+    }
+  }
+  /** End a server sign-in (its link then answers that it was cancelled). One the server could not be told about is retried. */
+  async function coCancel(ws, inv, si, why) {
+    if (!si || !si.serverId || si.cancelledAt) return;
+    retireCo(ws, inv, si);
+    si.cancelledAt = nowIso();
+    const who = (inv.coInvestor && inv.coInvestor.name) || 'the co-investor';
+    try {
+      await api(ws, 'POST', `/v1/invitations/${encodeURIComponent(si.serverId)}/cancel`, {});
+      audit(ws, 'Co-investor sign-in cancelled', `${inv.title}: the link sent to ${who} no longer works (${why})`, '', inv.id);
+    } catch (e) {
+      // Already finished or ended on the server: nothing left to cancel.
+      if (e && [404, 409, 410].indexOf(e.status) >= 0) audit(ws, 'Co-investor sign-in cancelled', `${inv.title}: the link sent to ${who} had already ended on the server (${why})`, '', inv.id);
+      else {
+        (ws.coSignInCancel = ws.coSignInCancel || []).push({ id: si.serverId, investorId: inv.id, why });
+        audit(ws, 'Co-investor sign-in not cancelled yet', `${inv.title}: the integration server could not be told that the link sent to ${who} no longer counts (${why}); it is tried again on the next check`, '', inv.id);
+      }
+    }
+    NS.app.save(true);
+  }
+  /**
+   * The sign-ins the server should hold, brought in line (after each check of the server, and after an investor's signed copy
+   * is imported): cancellations not delivered yet are sent; a sign-in for an agreement that no longer waits for the co-investor
+   * (voided, or the co-investor taken off it) is cancelled; an agreement that waits for the co-investor gets its sign-in.
+   */
+  async function coSweep(ws) {
+    let changed = false;
+    for (const x of (ws.coSignInCancel || []).slice()) {
+      try {
+        await api(ws, 'POST', `/v1/invitations/${encodeURIComponent(x.id)}/cancel`, {});
+      } catch (e) {
+        if (!(e && [404, 409, 410].indexOf(e.status) >= 0)) continue;
+      }
+      ws.coSignInCancel = ws.coSignInCancel.filter((y) => y !== x);
+      changed = true;
+    }
+    for (const inv of ws.investors || []) {
+      const si = coSi(inv);
+      if (!si || coBusy.has(inv.id)) continue;
+      const held = si.serverId && !si.cancelledAt && !si.signedAt ? (ws.envelopes || []).find((e) => e.id === si.envelopeId) || null : null;
+      if (si.serverId && !si.cancelledAt && !si.signedAt && !(held && waitingCo(held) && held.signers.some((s) => s.co && s.investorId === inv.id))) {
+        await coCancel(ws, inv, si, 'the agreement no longer waits for the co-investor');
+        changed = true;
+      }
+      const env = coWaiting(ws, inv);
+      if (!env) continue;
+      if (si.serverId && si.envelopeId === env.id && !si.cancelledAt) continue;
+      if (si.error && si.envelopeId === env.id && !si.retry) continue;
+      if (si.serverId) {
+        // The earlier sign-in was for another agreement (signed or ended): this one gets its own.
+        retireCo(ws, inv, si);
+        serverSignIn(inv);
+      }
+      await coSignIn(ws, inv, env);
+      changed = true;
+    }
+    return changed;
+  }
+  /** Anything about co-investor sign-ins still to hear from the server, or to tell it. */
+  const coAwaiting = (ws) => (ws.coSignInCancel || []).length > 0 || (ws.investors || []).some((i) => {
+    const si = coSi(i);
+    return !!si && ((si.serverId && !si.importedAt && !si.cancelledAt) || (!si.serverId && !!coWaiting(ws, i)));
+  });
+  /**
+   * The co-investor's signed agreement came back (POST /v1/invite/complete, 06-38: the server rebuilt the envelope from its
+   * snapshot and kept only the co-investor's signing and own places). Only that is taken, onto this console's own copy
+   * (esign.js importSignature); anything else in the submission is ignored. Nothing is changed when the agreement is no
+   * longer out for signature or the co-investor already signed it: an audit line says what came and why it was not used.
+   */
+  async function coMerge(ws, inv, si, sub) {
+    const c = inv.coInvestor || { name: 'the co-investor' };
+    const env = (ws.envelopes || []).find((e) => e.id === si.envelopeId) || null;
+    const se = sub && sub.envelope && typeof sub.envelope === 'object' ? sub.envelope : null;
+    const coS = env ? env.signers.find((s) => s.co && s.investorId === inv.id) || null : null;
+    const notUsed = (why) => {
+      audit(ws, 'Co-investor signature not used', `${inv.title}: the agreement signed on ${c.name}'s device came back, but ${why}; nothing was changed`, (env && env.offeringId) || '', inv.id);
+      return false;
+    };
+    if (!env || !se || String(se.id) !== env.id) return notUsed('it is not the agreement this sign-in was for');
+    if (!coS) return notUsed('the agreement no longer has the co-investor as a signer');
+    const sent = (Array.isArray(se.signers) ? se.signers : []).find((s) => s && typeof s === 'object' && s.id === coS.id) || null;
+    const values = {};
+    (Array.isArray(se.fields) ? se.fields : []).forEach((f) => {
+      if (f && typeof f === 'object' && env.fields.some((x) => x.id === f.id && x.signerId === coS.id)) values[f.id] = f.value;
+    });
+    const from = Date.parse(si.sentAt || si.createdAt || '');
+    const r = await NS.esign.importSignature(ws, env.id, coS.id, Object.assign({ values, from: isFinite(from) ? from : 0 }, sent ? { status: sent.status, viewedAt: sent.viewedAt, consentAt: sent.consentAt, signedAt: sent.signedAt, signature: sent.signature, initials: sent.initials, userAgent: sent.userAgent } : {}));
+    if (!r.ok) return notUsed(r.why);
+    // The signing step replaced the envelope's signers (it works on a copy), so the co-investor's is read again, now signed.
+    const signed = env.signers.find((s) => s.id === coS.id) || null;
+    si.signedAt = (signed && signed.signedAt) || nowIso();
+    si.importedAt = nowIso();
+    audit(ws, 'Co-investor signed', `${inv.title}: ${c.name} signed ${env.title} on their own device; their signature is on this portal's copy of the agreement, which ${r.complete ? 'is now complete' : 'waits for your countersignature'}. The copy on the integration server is deleted.`, env.offeringId || '', inv.id);
+    return true;
+  }
+  /** One row of the server's list that is a co-investor sign-in (or one replaced or ended): progress, then any submission. */
+  async function coRow(ws, row) {
+    const inv = (ws.investors || []).find((i) => {
+      const si = coSi(i);
+      return !!si && si.serverId === row.id;
+    });
+    const gone = inv ? null : coRetired(ws).find((x) => x.id === row.id);
+    if (!inv && !gone) return null;
+    let changed = false;
+    const si = inv ? coSi(inv) : null;
+    if (si && typeof row.openedAt === 'string' && row.openedAt && !si.openedAt) {
+      si.openedAt = row.openedAt;
+      changed = true;
+    }
+    if (!row.hasSubmission) return changed;
+    const path = `/v1/invitations/${encodeURIComponent(row.id)}/submission`;
+    const sub = await api(ws, 'GET', path);
+    if (inv) await coMerge(ws, inv, si, sub);
+    else {
+      const who = invOf(ws, gone.investorId);
+      audit(ws, 'Co-investor signature not used', `${who ? who.title : gone.investorId}: an agreement signed on a co-investor's device came back for a sign-in that had been replaced or removed; nothing was changed`, '', gone.investorId);
+    }
+    await api(ws, 'DELETE', path);
+    NS.app.save(true);
+    return true;
+  }
+  /** A co-investor on the account becomes a signer on the agreement the investor just signed on their device (server mode). */
+  function coAfterImport(ws, it) {
+    const inv = invOf(ws, it.investorId);
+    if (!inv || !inv.coInvestor || !NS.coSigning) return;
+    NS.coSigning.coAttach(ws, inv);
+  }
+  /* The co-investor hooks (coinvestor.js, plan 06-37): with the server connected the sign-in is the server's, never the link
+     to send by hand. */
+  function coHooks(CI) {
+    CI.hooks.added.push((ws, inv, was) => {
+      if (!serverOn(ws) || !inv.coInvestor) return false;
+      const old = was && was.signIn && was.signIn.server ? was.signIn : null;
+      serverSignIn(inv);
+      const env = coWaiting(ws, inv);
+      if (env) {
+        coBusy.add(inv.id);
+        inv.coInvestor.signIn.sending = true;
+      }
+      (async () => {
+        if (old && old.serverId) await coCancel(ws, inv, old, `the co-investor's email changed to ${inv.coInvestor.email}`);
+        if (env) await coSignIn(ws, inv, env);
+        else coRefresh(inv);
+      })();
+      return true;
+    });
+    CI.hooks.removed.push((ws, inv, removed) => {
+      const si = removed && removed.signIn && removed.signIn.server ? removed.signIn : null;
+      if (si && si.serverId && !si.signedAt) coCancel(ws, inv, si, 'the co-investor was removed from the account');
+    });
+  }
+  if (NS.coInvestor) coHooks(NS.coInvestor);
+  else (NS.coInvestorReady = NS.coInvestorReady || []).push(coHooks);
+  NS.actions['co-signin-retry'] = async (el) => {
+    const ws = W();
+    const inv = invOf(ws, el.getAttribute('data-id'));
+    const si = coSi(inv);
+    if (!inv || !si || !NS.app.can('operate') || coBusy.has(inv.id)) return;
+    const env = coWaiting(ws, inv);
+    if (!env) {
+      si.error = '';
+      NS.app.save(true);
+      return coRefresh(inv);
+    }
+    if (si.serverId) {
+      retireCo(ws, inv, si);
+      serverSignIn(inv);
+    }
+    const ok = await coSignIn(ws, inv, env);
+    U.toast(ok ? `Sign-in sent to ${inv.coInvestor.name}.` : `The sign-in could not be sent: ${coSi(inv).error}`);
+  };
+
   /* ---------- Server mode: statuses and importing finished onboardings ---------- */
   const check = { at: '', error: '', busy: null, subscriptions: 0 };
   /** "2 finished onboardings", "1 finished subscription", or both kinds: what the last import brought (check.subscriptions of n were investors on file). */
@@ -574,7 +1041,7 @@
     return `${n} finished ${what}${n === 1 ? '' : 's'}`;
   }
   /** Anything on the server still to hear about (an older integration server without invitations is never asked). */
-  const awaiting = (ws) => list(ws).some((x) => x.serverId && (OPEN.indexOf(x.status) >= 0 || (x.status === 'completed' && !x.importedAt)));
+  const awaiting = (ws) => list(ws).some((x) => x.serverId && (OPEN.indexOf(x.status) >= 0 || (x.status === 'completed' && !x.importedAt))) || coAwaiting(ws);
   function applyRow(ws, it, row) {
     let changed = false;
     const inv = invOf(ws, it.investorId);
@@ -589,6 +1056,17 @@
     if (it.status !== 'cancelled' && !(it.status === 'completed' && it.importedAt)) set('status', String(row.status || it.status));
     ['stepKey', 'stepLabel', 'openedAt', 'completedAt', 'expiresAt', 'emailStatus', 'emailError'].forEach((k) => typeof row[k] === 'string' && (row[k] || k === 'emailError') && set(k, row[k]));
     ['stepIndex', 'stepCount'].forEach((k) => typeof row[k] === 'number' && set(k, row[k]));
+    // Plan 08-06: the server's word on the package (null, or { tier, status }) replaces the sponsor's tick.
+    if (row.package && typeof row.package === 'object') {
+      const pk = { tier: String(row.package.tier || ''), status: String(row.package.status || '') };
+      if (!it.package || it.package.tier !== pk.tier || it.package.status !== pk.status) {
+        it.package = pk;
+        changed = true;
+      }
+    } else if (row.package === null && it.package) {
+      delete it.package;
+      changed = true;
+    }
     if (!wasOpened && it.openedAt) notify(ws, 'invite_opened', `${inv ? inv.title : 'An investor'} opened the invitation`, offOf(ws, it.offeringId) ? `Invited to ${offOf(ws, it.offeringId).name}` : 'Account invitation', 'console-investors');
     if (it.stepKey && it.stepKey !== wasStep && it.stepKey !== 'done') {
       const have = notes(ws).find((n) => n.kind === 'invite_progress' && n.invitationId === it.id);
@@ -735,6 +1213,19 @@
     env.docId = docId;
     return { firm };
   }
+  /**
+   * Plan 06-22 (research Pattern 6, T-06-47): the tax envelope from the investor's device (the W-9, W-8BEN or W-8BEN-E esign.js
+   * made on the tax step) with envelopeCheck's id and investor tests: new to this console (and not the agreement's own id), a
+   * tax form, this investor as its one signer (nobody countersigns a tax form), and completed with esign.js's name for the
+   * signed copy. Whether that copy came is checked once the files are stored.
+   */
+  function taxCheck(ws, inv, env, agreement) {
+    if (!/^[\w.-]{1,70}$/.test(String(env.id)) || ws.envelopes.some((x) => x.id === env.id) || (agreement && agreement.id === env.id) || env.kind !== 'tax') return false;
+    const signers = Array.isArray(env.signers) ? env.signers : [];
+    const s = signers[0];
+    if (signers.length !== 1 || !s || typeof s !== 'object' || s.role !== 'investor' || s.investorId !== inv.id) return false;
+    return env.status === 'completed' && env.signedDocId === `${env.id}-signed`;
+  }
   /** Same bytes: the file is already here from an earlier attempt at this same import (never a different file). */
   async function sameFile(a, b) {
     if (!a || !b || a.size !== b.size) return false;
@@ -770,7 +1261,15 @@
     let inv = invOf(ws, it.investorId);
     // An invitation to subscribe sent to an investor on file: their record here is the one that counts, whatever its status now.
     const onFile = !!it.existing && !!inv;
+    // Plan 06-26: a tax-form request to an investor on file brings back their tax form (and nothing else): it is taken as a
+    // new investor's is (plans 06-22, 06-23), checked against what came; the rest of the record stays as this console holds it.
+    const taxReq = onFile && !!it.taxRequest;
+    // Plan 06-27 (D-10): an invitation to subscribe that included the tax form brings it back too, taken the same way; the
+    // subscription and the agreement are imported as for any invitation to subscribe.
+    const withTax = onFile && !taxReq && it.includeTax === true;
+    const takesTax = !onFile || taxReq || withTax;
     let taken = false;
+    let withdrawn = false; // a self-certified ground withdrawn from a verification record: decided again below
     let stamped = false;
     if (!inv) {
       inv = { id: it.investorId, contact: '', title: '', type: 'individual', email: '', onboarding: {}, payment: { method: 'check', bank: null }, positions: [] };
@@ -791,7 +1290,41 @@
         // Nothing new to record: a blank record an earlier version left goes, so they read as their KYC on file again.
         delete inv.verify;
       }
-      if (src.esignConsent && typeof src.esignConsent === 'object') inv.esignConsent = clone(src.esignConsent);
+      if (src.esignConsent && typeof src.esignConsent === 'object' && !it.reverify) inv.esignConsent = clone(src.esignConsent);
+      // the tax form this request brought: the device's record of it, checked below against the envelope and files that came
+      if ((taxReq || withTax) && src.taxCert && typeof src.taxCert === 'object' && typeof src.taxCert.form === 'string' && src.taxCert.form) {
+        inv.taxCert = clone(src.taxCert);
+        inv.taxForm = String(src.taxCert.form).slice(0, 40);
+      }
+      // D-01: the status answers the link collected. The benefit plan answers, cleaned to known fields (T-06-17).
+      const e = cleanErisa(src.erisa);
+      if (e && e.plan && !it.reverify) inv.erisa = Object.assign(e, { at: nowIso() });
+      // The ground the investor self-certified on the status step, when no verification was taken: only the answer the request
+      // records (accredited, on this ground), and never over an accreditation a third party verified (that keeps today's rules).
+      const sq = sub.request && typeof sub.request === 'object' && sub.request.qual && typeof sub.request.qual === 'object' ? sub.request.qual : null;
+      const sa = src.accreditation && typeof src.accreditation === 'object' ? src.accreditation : null;
+      const basis = sa && typeof sa.basis === 'string' ? sa.basis.trim().slice(0, 300) : '';
+      const verified = !!(inv.accreditation && inv.accreditation.verifiedBy);
+      if (!taken && basis && !verified && sq && sq.accredited === true && sq.basis === basis) inv.accreditation = Object.assign({}, inv.accreditation, { basis, date: isDay(sa.date) && sa.date <= today() ? sa.date : today() });
+      // The investor answered "not accredited" (the request records it) and no verification was taken: a ground they
+      // self-certified no longer applies. It is withdrawn with the same rule and record as onboarding.js withdrawGround in
+      // local mode (kept as superseded, with when it was given and withdrawn), and so is the self-certification record made
+      // from it. A ground a third party verified (verifiedBy) is never touched.
+      const held = inv.accreditation;
+      if (!taken && sq && sq.accredited === false && held && typeof held === 'object' && held.basis && !held.verifiedBy) {
+        inv.accreditation = Object.assign({}, held, { basis: '', date: '', superseded: { basis: held.basis, date: held.date || '', at: today() } });
+        const N = NS.integrations;
+        if (N && N.recorded && N.recorded(inv)) {
+          const v = inv.verify.accreditation;
+          const fromIt = v && (N.selfCertified(v) || (v.legacy && v.method === held.basis));
+          if (fromIt && v.status !== 'not_started') inv.verify.accreditation = { status: 'not_started', superseded: { method: String(v.method || ''), verifiedAt: v.verifiedAt || '', at: nowIso() } };
+          withdrawn = true;
+        }
+      } else if (!taken && sq && sq.accredited === false && held && typeof held === 'object' && held.basis && held.verifiedBy) {
+        // The device's copy of the record cannot tell a verified ground from a self-certified one, so its own change-log entry
+        // may say the ground no longer applies: the console says what its record holds.
+        audit(ws, 'Accreditation kept', `${inv.title || inv.contact || inv.id} answered "not accredited" on their device. The accreditation verified by ${held.verifiedBy} (${held.basis}) stays on the record; review it with the investor.`, it.offeringId, inv.id);
+      }
       if (!inv.onboarding || typeof inv.onboarding !== 'object') inv.onboarding = {};
     } else {
       Object.keys(src).forEach((k) => {
@@ -831,7 +1364,8 @@
     // The investor's request always arrives pending: only the firm accepts it, for the offering this invitation is for, and only
     // for an amount and share class that offering takes (requestProblem). A request that does not pass is not imported (the
     // agreement signed for it is kept only as a voided record), and the change log and the import notification say why.
-    const r = sub.request && typeof sub.request === 'object' ? clone(sub.request) : null;
+    // A tax-form request holds no subscription (and no agreement, below): nothing of that kind is imported from it.
+    const r = !taxReq && sub.request && typeof sub.request === 'object' ? clone(sub.request) : null;
     ws.requests = ws.requests || [];
     const off = offOf(ws, it.offeringId);
     // A request already here is this same import tried before (it stopped after storing the request): not added twice.
@@ -842,13 +1376,22 @@
       const cls = rIn.cls === undefined || rIn.cls === null || rIn.cls === '' ? String(it.cls || '') : String(rIn.cls);
       // Whether they already hold this offering is this console's to say: the device's copy of the record has no positions.
       Object.assign(rIn, { type: 'subscription', investorId: inv.id, offeringId: off.id, status: 'pending', cents: Number(rIn.cents), additional: inv.positions.some((p) => p.offeringId === off.id) });
+      // Its dates are this console's too, never the device's: the day it was made, from the invitation's sending to today, and
+      // the subscription's closing date (or, for an open-ended offering, its effective date, which a funded position takes),
+      // worked out here as operations.js does for a subscription made in this portal.
+      const sentDay = isDay(String(it.sentAt || '').slice(0, 10)) ? String(it.sentAt).slice(0, 10) : today();
+      let made = isDay(rIn.submitted) ? String(rIn.submitted) : today();
+      if (made < sentDay) made = sentDay;
+      if (made > today()) made = today();
+      rIn.submitted = made;
+      rIn.dealing = NS.ops && NS.ops.isOpen(off) ? NS.ops.subscriptionDate(made) : off.closeDate;
       if (cls) rIn.cls = cls;
       else delete rIn.cls;
       ['decided', 'note', 'completed', 'paid', 'paidCents', 'waitingFor'].forEach((k) => delete rIn[k]);
     }
     if (dropped) it.requestDropped = dropped;
     else delete it.requestDropped;
-    const env = sub.envelope && typeof sub.envelope === 'object' && sub.envelope.id ? clone(sub.envelope) : null;
+    const env = !taxReq && sub.envelope && typeof sub.envelope === 'object' && sub.envelope.id ? clone(sub.envelope) : null;
     ws.envelopes = ws.envelopes || [];
     // The agreement signed for a request that is not imported is kept as a record, voided (below): nobody is asked to sign it.
     const tied = !!(dropped && env && r.envelopeId === env.id);
@@ -887,6 +1430,22 @@
     const sent = (id) => typeof id === 'string' && Object.prototype.hasOwnProperty.call(files, id) && typeof files[id] === 'string';
     const allowed = evidence.slice();
     if (envIn) [envIn.workDocId, envIn.signedDocId].forEach((x) => x && allowed.push(x));
+    // D-30: the purchaser representative's written acknowledgment the imported request names, only under this investor's own
+    // rep- name (onboarding.js names it rep-<investor id>-<time>); the server applies the same test.
+    const so = rIn && rIn.qual && typeof rIn.qual === 'object' ? rIn.qual.sophistication : null;
+    const repRec = so && typeof so === 'object' && so.rep && typeof so.rep === 'object' ? so.rep : null;
+    const repName = new RegExp(`^rep-${reEsc(inv.id)}-[a-z0-9]+$`);
+    if (repRec && repRec.fileId && repName.test(String(repRec.fileId))) allowed.push(String(repRec.fileId));
+    // Plan 06-22: a new investor's signed tax form (an investor on file keeps the tax form this console holds), its signed copy
+    // only: the original and the work copy stay on the device, so nothing here points at them.
+    const tx = takesTax && sub.taxEnvelope && typeof sub.taxEnvelope === 'object' ? clone(sub.taxEnvelope) : null;
+    const taxIn = tx && taxCheck(ws, inv, tx, env) ? Object.assign(tx, { docId: null, workDocId: null, offeringId: null, requestId: null }) : null;
+    if (taxIn) allowed.push(taxIn.signedDocId);
+    // Plan 06-23 (T-06-51): a new investor's tax form uploaded instead, only the one file their record names under their own
+    // tax- name (onboarding.js names it tax-<investor id>-<time>); the server applies the same test.
+    const upCert = takesTax && inv.taxCert && typeof inv.taxCert === 'object' && inv.taxCert.uploaded === true ? inv.taxCert : null;
+    const upId = upCert && typeof upCert.fileId === 'string' && new RegExp(`^tax-${reEsc(inv.id)}-[a-z0-9]+$`).test(upCert.fileId) ? upCert.fileId : '';
+    if (upId) allowed.push(upId);
     const kept = {}; // id -> size, for each file this submission brought that is now stored here
     for (const id of allowed) {
       if (kept[id] !== undefined || !sent(id) || !/^[\w.-]{1,120}$/.test(id)) continue;
@@ -906,6 +1465,11 @@
         /* a file that cannot be stored is listed as missing where it is used */
       }
     }
+    // The request points at the acknowledgment only when this submission brought it (never at another file stored here).
+    if (repRec && repRec.fileId && kept[repRec.fileId] === undefined) {
+      delete repRec.fileId;
+      delete repRec.fileName;
+    }
     // Evidence for a new result is a new upload: a pointer to an earlier file already stored here (an old letter, say) goes.
     for (const k of keptKinds) {
       const x = inv.verify && inv.verify[k];
@@ -922,9 +1486,30 @@
       ws.envelopes.push(envIn);
     }
     if (rIn) {
+      const namedEnvelope = !!rIn.envelopeId;
       // Signed through the envelope that came with it, or not through an envelope at all: never through another envelope here
       // (automatic acceptance would otherwise take someone else's, or an earlier, signed agreement for this subscription).
       if (rIn.envelopeId && (!envIn || rIn.envelopeId !== envIn.id)) delete rIn.envelopeId;
+      // Who signed and when are this console's to say, never the device's (T-06-20): the investor's name on this record, and
+      // the signature the kept envelope records for the investor (none made: not signed), or, for a request signed without an
+      // envelope, the time the integration server recorded the completion. Always from the invitation's sending to now.
+      rIn.signedBy = String(inv.contact || inv.title || '').trim();
+      const sentMs = Date.parse(it.sentAt || '');
+      const clampAt = (t) => {
+        const ms = Date.parse(t || '');
+        if (!isFinite(ms)) return '';
+        const at = Math.min(Date.now(), Math.max(isFinite(sentMs) ? sentMs : ms, ms));
+        return new Date(at).toISOString().replace(/\.\d{3}Z$/, 'Z');
+      };
+      if (rIn.envelopeId) {
+        const signer = envIn.signers.find((s) => s.role === 'investor');
+        rIn.signedAt = signer && signer.status === 'signed' ? clampAt(signer.signedAt) : '';
+      } else if (namedEnvelope) {
+        // Signed through an envelope that was not imported: no signature here to date it by.
+        rIn.signedAt = '';
+      } else {
+        rIn.signedAt = clampAt(sub.completedAt) || clampAt(nowIso());
+      }
       ws.requests.push(rIn);
     }
     if (dropped) audit(ws, 'Subscription not imported', `${inv.title || inv.id}: the subscription request from the investor's device was not added to the portal: ${dropped}${tied && envIn ? '; the agreement signed for it is kept, voided' : ''}. Ask them to subscribe again.`, it.offeringId, inv.id);
@@ -935,6 +1520,45 @@
     const d = signedId && (Array.isArray(sub.docs) ? sub.docs : []).find((x) => x && typeof x === 'object' && x.id === signedId);
     if (d && !ws.docs.some((x) => x.id === signedId)) {
       ws.docs.push({ id: signedId, title: String(d.title || envIn.title || 'Subscription agreement').slice(0, 200), fileName: String(d.fileName || 'Subscription_agreement_signed.pdf').slice(0, 160), type: 'application/pdf', size: kept[signedId], sha256: String(envIn.sha256Signed || ''), cat: 'Legal', offeringId: envIn.offeringId || it.offeringId || null, audience: 'investors', investors: [inv.id], date: isDay(d.date) && d.date <= today() ? d.date : today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'E-sign', envelopeId: envIn.id });
+    }
+    // Plan 06-22: the signed tax form, kept only with the signed copy this submission brought, listed under Tax for this
+    // investor alone (T-06-49), its SHA-256 worked out here from the stored copy.
+    const taxKept = taxIn && kept[taxIn.signedDocId] !== undefined ? await getFile(taxIn.signedDocId) : null;
+    if (taxKept) {
+      const tid = taxIn.signedDocId;
+      taxIn.sha256Signed = NS.audit && NS.audit.sha256 ? NS.audit.sha256(new Uint8Array(await taxKept.arrayBuffer())) : String(taxIn.sha256Signed || '');
+      ws.envelopes.push(taxIn);
+      const td = (Array.isArray(sub.docs) ? sub.docs : []).find((x) => x && typeof x === 'object' && x.id === tid) || {};
+      if (!ws.docs.some((x) => x.id === tid)) ws.docs.push({ id: tid, title: String(td.title || taxIn.title || 'Tax form').slice(0, 200), fileName: String(td.fileName || 'Tax_form_signed.pdf').slice(0, 160), type: 'application/pdf', size: kept[tid], sha256: taxIn.sha256Signed, cat: 'Tax', offeringId: null, audience: 'investors', investors: [inv.id], date: isDay(td.date) && td.date <= today() ? td.date : today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'E-sign', envelopeId: taxIn.id });
+      // Plan 06-34 (walkthrough-2 N1; B1): one tax form per investor. The one just imported replaces every earlier tax form of
+      // this investor held here: a signed one is kept as superseded with its signed copy (no longer listed), an unsigned one
+      // voided (onboarding.js retireTax, the rule the investor's own browser applies).
+      if (NS.inviteFlow && NS.inviteFlow.retireTax) {
+        const s0 = taxIn.signers.find((x) => x.investorId === inv.id) || taxIn.signers[0] || {};
+        const when = NS.ui && NS.ui.date ? NS.ui.date(String(s0.signedAt || nowIso()).slice(0, 10), 'long') : String(s0.signedAt || nowIso()).slice(0, 10);
+        const why = `Replaced by the Form ${(taxIn.taxForm && taxIn.taxForm.form) || 'W-9'} signed on ${when}`;
+        ws.envelopes.filter((e) => e.kind === 'tax' && e.id !== taxIn.id && e.status !== 'voided' && e.status !== 'superseded' && e.signers.some((x) => x.investorId === inv.id)).forEach((e) => NS.inviteFlow.retireTax(ws, inv, e, why, { by: taxIn.id }));
+      }
+    }
+    // A new investor's tax form record is the device's (one on file keeps the record held here), checked against what came:
+    // whether it is signed is read from the kept envelope's own signature field, and a form the device calls signed whose
+    // envelope and signed copy did not arrive is marked as not received (the investor row says to ask for it).
+    const tcert = takesTax && inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : null;
+    if (tcert && !tcert.uploaded && tcert.envelopeId) {
+      if (taxKept && tcert.envelopeId === taxIn.id) {
+        const s0 = taxIn.signers[0];
+        tcert.signed = (Array.isArray(taxIn.fields) ? taxIn.fields : []).some((f) => f && f.signerId === s0.id && f.type === 'signature' && !!f.value);
+        delete tcert.received;
+      } else if (tcert.signed !== false && !(ws.envelopes || []).some((e) => e.id === tcert.envelopeId && e.kind === 'tax' && e.status === 'completed' && e.signers.some((x) => x.investorId === inv.id))) tcert.received = false;
+    } else if (tcert && tcert.uploaded) {
+      // The uploaded form: the record points at it only when this submission brought it under the investor's own name;
+      // otherwise the pointer goes and the form is marked as not received (the investor row says to ask for it).
+      if (upId && kept[upId] !== undefined) delete tcert.received;
+      else {
+        delete tcert.fileId;
+        delete tcert.fileName;
+        tcert.received = false;
+      }
     }
     // The device's own change-log entries: always this investor's, dated between the invitation's sending and now, for this
     // offering and this investor, and marked as coming from their device (never a member of staff, never backdated).
@@ -951,8 +1575,9 @@
     });
     Object.assign(it, { status: 'completed', completedAt: sub.completedAt || it.completedAt || new Date().toISOString(), stepKey: 'done', stepLabel: 'Done', stepIndex: it.stepCount || it.stepIndex });
     await reconfirm(ws, inv, it);
-    // An investor on file is decided again only when the link brought a new result; otherwise their record is as it was.
-    if (onFile && taken && I && I.active(ws) && inv.verify) {
+    // An investor on file is decided again only when the link brought a new result or withdrew a self-certified ground from
+    // their verification record (as withdrawGround does in local mode); otherwise their record is as it was.
+    if (onFile && (taken || withdrawn) && I && I.active(ws) && inv.verify) {
       I.decide(ws, inv);
       I.syncKyc(ws, inv);
     }
@@ -1029,26 +1654,35 @@
         const all = Array.isArray(rows) ? rows : rows && Array.isArray(rows.invitations) ? rows.invitations : [];
         for (const row of all) {
           const it = list(ws).find((x) => x.serverId && x.serverId === row.id);
-          if (!it) continue;
+          if (!it) {
+            // Plan 06-39: a co-investor's sign-in is not an invitation of this list.
+            if (await coRow(ws, row)) changed = true;
+            continue;
+          }
           if (applyRow(ws, it, row)) changed = true;
           if (!row.hasSubmission) continue;
           const path = `/v1/invitations/${encodeURIComponent(row.id)}/submission`;
           if (!it.importedAt) {
             const sub = await api(ws, 'GET', path);
             await merge(ws, it, sub);
+            coAfterImport(ws, it);
             it.importedAt = new Date().toISOString();
+            const rv = !!it.reverify && reverified(ws, it);
             const x = outcome(ws, it);
             // An investor already on file finished a subscription only: their account stays as this console holds it.
-            if (it.existing) audit(ws, 'Subscription imported', `${x.inv ? x.inv.title : it.investorId}: the subscription from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
+            if (it.taxRequest) audit(ws, 'Tax form imported', `${x.inv ? x.inv.title : it.investorId}: the tax form request from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, '', it.investorId);
+            else if (it.reverify) rv || audit(ws, 'Re-verification imported', `${x.inv ? x.inv.title : it.investorId}: ${x.text}; the copy on the integration server is deleted`, '', it.investorId);
+            else if (it.existing) audit(ws, 'Subscription imported', `${x.inv ? x.inv.title : it.investorId}: the subscription from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
             else audit(ws, 'Onboarding imported', `${x.inv ? x.inv.title : it.investorId}: records from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
             notify(ws, 'onboarding_completed', `${x.inv ? x.inv.title : 'An investor'} ${finishedWhat(it)}`, x.text, x.route);
             n++;
-            if (it.existing) check.subscriptions++;
+            if (it.existing && !it.taxRequest && !it.reverify) check.subscriptions++;
             changed = true;
             NS.app.save(true);
           }
           await api(ws, 'DELETE', path);
         }
+        if (await coSweep(ws)) changed = true;
         check.error = '';
       } catch (e) {
         check.error = e.message || 'The integration server could not be reached.';
@@ -1116,8 +1750,27 @@
   const STATUS = { sent: ['mute', 'Sent'], opened: ['adj', 'Opened'], in_progress: ['adj', 'In progress'], completed: ['ok', 'Completed'], cancelled: ['mute', 'Cancelled'], expired: ['bad', 'Expired'] };
   /** Status as the list shows it: an invitation the sponsor has not emailed yet says so. */
   const unsent = (it) => it.status === 'sent' && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0;
-  const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : agreementUnsent(it) ? ['warn', 'Agreement not sent'] : STATUS[it.status] || ['mute', it.status]);
-  const EMAIL = { sent: 'Emailed', outbox: 'In the server outbox', manual: 'Send from your email app', not_sent: 'Not sent yet', failed: 'Could not send' };
+  /** Never sent: open and unsent, or closed (cancelled, expired) before its email went and before it was opened. */
+  const neverSent = (it) => unsent(it) || (['cancelled', 'expired'].indexOf(it.status) >= 0 && !it.openedAt && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0);
+  const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : it.status === 'sent' && NOT_SENT.indexOf(it.emailStatus) >= 0 ? ['warn', it.emailStatus === 'held' ? 'Waiting to send' : 'Not sent'] : agreementUnsent(it) ? ['warn', 'Agreement not sent'] : STATUS[it.status] || ['mute', it.status]);
+  const EMAIL = { sent: 'Emailed', outbox: 'In the server outbox', manual: 'Send from your email app', not_sent: 'Not sent yet', failed: 'Could not send', delivered: 'Delivered', complained: 'Marked as spam by the investor' };
+  /** EM-08: what the server said became of the email, in one plain line on the row (13-03 and 13-04 set these statuses). */
+  const MAIL_LINE = {
+    bounced: (inv) => `The email to ${inv.email} came back. Check the address with the investor, then choose Resend.`,
+    held: () => 'Waiting: email sending from your domain is not set up yet.',
+    suppressed: () => 'Not sent: an earlier email to this address came back.',
+    unsubscribed: () => 'Not sent: this investor turned off invitations to new offerings.'
+  };
+  /** Statuses with which no email reached the investor (the row says "Created", not "Sent"). */
+  const NOT_SENT = ['held', 'suppressed', 'unsubscribed'];
+  /** The toast for an email the server did not send, or '' (a toast never says "emailed" for one). */
+  function notSent(status, what, inv) {
+    if (status === 'held') return `${what} for ${inv.title} is waiting: email sending from your domain is not set up yet.`;
+    if (status === 'suppressed') return `${what} for ${inv.title} was not sent: an earlier email to this address came back.`;
+    if (status === 'unsubscribed') return `${what} for ${inv.title} was not sent: this investor turned off invitations to new offerings.`;
+    if (status === 'bounced') return `${what} for ${inv.title} came back. Check the address with the investor, then choose Resend.`;
+    return '';
+  }
   function stepText(it) {
     if (it.status === 'completed') return 'Finished';
     if (it.stepIndex && it.stepCount) return `Step ${it.stepIndex} of ${it.stepCount}: ${it.stepLabel || it.stepKey}`;
@@ -1156,6 +1809,10 @@
     }
     return u.inv8;
   }
+  NS.binders.inv8b = (path, v) => {
+    if (path === 'includeTax') S().ui.bulkTax = !!v;
+    if (path === 'package') S().ui.bulkPackage = !!v;
+  };
   /** The invite form's optional fields, kept under More options. */
   const MORE_FIELDS = ['type', 'account', 'offeringId', 'amount', 'cls', 'note'];
   NS.binders.inv8 = (path, v) => {
@@ -1166,12 +1823,84 @@
     if (path === 'first' || path === 'last') d.name = [d.first, d.last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
     const k = path === 'offeringId' ? 'offering' : path === 'first' || path === 'last' ? 'name' : path;
     if (d.errors[k]) delete d.errors[k];
+    // Plan 06-27 (D-10): "Include tax form" shows while the email is an investor on file's (shown in place: no re-render while typing).
+    // Plan 06-29: an investor on file keeps the type on their record, so "Investor type" is hidden for their email.
+    if (path === 'email') {
+      const onFile = onFileEmail(W(), v);
+      const row = document.getElementById('iv-tax-row');
+      if (row) row.hidden = !onFile;
+      const type = document.getElementById('iv-type-row');
+      if (type) type.hidden = onFile;
+      syncPackage();
+    }
     if (path === 'offeringId') {
       d.cls = '';
       NS.app.render();
     }
   };
-  const fieldErr = (d, k) => (d.errors[k] ? `<span class="cs-error" id="iv-err-${k}">${h(d.errors[k])}</span>` : '');
+  /**
+   * Plan 08-06 (D-01): the "Add verification package" box for the invitation being written (d: its email and offering):
+   * { show, enabled, label, line, href } from NS.pkg.box. The investor on file for the email, when there is one, goes
+   * with it: what they hold can call for verified accreditation, and the label shows the price of the package the server
+   * will be told about (the same answer the snapshot sends).
+   */
+  function packageBox(ws, d) {
+    if (!E.diy || !NS.pkg) return { show: false, enabled: false, label: '', line: '', href: '' };
+    return NS.pkg.box(ws, d.offeringId || '', undefined, byEmail(ws, d.email));
+  }
+  /** The box's one line; it leads to the Integrations page only for someone who can open it (an admin). */
+  const packageLine = (pk) => (pk.href && NS.app.can('configure') ? `<a href="${h(pk.href)}">${h(pk.line)}</a>` : h(pk.line));
+  /** The box brought up to date in place (the server's answer arrived, or the email changed): no re-render while typing. */
+  function syncPackage() {
+    const row = document.getElementById('iv-package-row');
+    const input = document.getElementById('iv-package');
+    if (!row || !input || !W()) return;
+    const d = draft();
+    const pk = packageBox(W(), d);
+    row.hidden = !pk.show;
+    input.disabled = !pk.enabled;
+    if (!pk.enabled) input.checked = d.package = false;
+    document.getElementById('iv-package-label').textContent = pk.label;
+    const line = document.getElementById('iv-package-line');
+    line.hidden = !pk.line;
+    line.innerHTML = packageLine(pk);
+  }
+  /**
+   * Plan 08-13 (D-01, research Pitfall 9, 08-CONTEXT P1): the list form's "Add verification package" box. Each row is
+   * decided by the single form's own rule (packageBox): the rows it enables are the rows paid for, counted in the label's
+   * total and created with the package; every other row is sent without it. rows: the rows that will be sent.
+   */
+  function bulkPackage(ws, rows) {
+    const off = { show: false, enabled: false, label: '', line: '', href: '' };
+    if (!E.diy || !NS.pkg || !(rows || []).length) return off;
+    const each = rows.map((r) => packageBox(ws, r));
+    const yes = each.filter((b) => b.enabled);
+    if (yes.length) return { show: true, enabled: true, label: `Add verification package to ${yes.length} invitation${yes.length === 1 ? '' : 's'} (${NS.pkg.priceLabel(yes.reduce((n, b) => n + b.cents, 0))})`, line: '', href: '' };
+    const shown = each.find((b) => b.show);
+    return shown ? Object.assign(off, { show: true, label: 'Add verification package', line: shown.line, href: shown.href }) : off;
+  }
+  /** The rows of the checked list that can still be sent (a row that became invalid since is left out of the total too). */
+  const sendable = (ws, rows) => (rows || []).filter((r) => !Object.keys(validate(ws, { name: r.name, email: r.email, offeringId: r.offeringId, cents: r.cents })).length);
+  function bulkPackageHtml(ws, ui) {
+    const bp = bulkPackage(ws, sendable(ws, ui.bulkRows));
+    return `<label class="cs-check inv8-package" id="iv-bulkPackage-row" for="iv-bulkPackage"${bp.show ? '' : ' hidden'}><input id="iv-bulkPackage" name="bulkPackage" type="checkbox" data-bind="inv8b:package"${bp.enabled && ui.bulkPackage ? ' checked' : ''}${bp.enabled ? '' : ' disabled'}><span><span id="iv-bulkPackage-label">${h(bp.label)}</span><span class="cs-hint" id="iv-bulkPackage-line"${bp.line ? '' : ' hidden'}>${packageLine(bp)}</span></span></label>`;
+  }
+  /** The list's box brought up to date in place (the server's answer arrived): no re-render over the paste box. */
+  function syncBulkPackage() {
+    const row = document.getElementById('iv-bulkPackage-row');
+    const input = document.getElementById('iv-bulkPackage');
+    if (!row || !input || !W()) return;
+    const ui = S().ui;
+    const bp = bulkPackage(W(), sendable(W(), ui.bulkRows));
+    row.hidden = !bp.show;
+    input.disabled = !bp.enabled;
+    if (!bp.enabled) input.checked = ui.bulkPackage = false;
+    document.getElementById('iv-bulkPackage-label').textContent = bp.label;
+    const line = document.getElementById('iv-bulkPackage-line');
+    line.hidden = !bp.line;
+    line.innerHTML = packageLine(bp);
+  }
+  const fieldErr =(d, k) => (d.errors[k] ? `<span class="cs-error" id="iv-err-${k}">${h(d.errors[k])}</span>` : '');
   const inval = (d, k) => (d.errors[k] ? ` aria-invalid="true" aria-describedby="iv-err-${k}"` : '');
   function invitePanel() {
     const w = W();
@@ -1184,8 +1913,12 @@
     const cur = off ? curOf(off) : 'USD';
     // Only the name and email are asked for; everything else is optional and stays folded away until it is used or has a problem.
     const dflt = offs.length === 1 ? offs[0].id : '';
-    const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || /Choose an offering/.test(d.errors.email || '') || d.type !== 'individual' || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
+    const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || d.errors.note || /Choose an offering/.test(d.errors.email || '') || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
     const agreement = off && NS.esign && NS.esign.templateReady ? (NS.esign.templateReady(w, off.id) ? 'ready' : 'missing') : '';
+    // Plan 08-06: what the connected server offers is asked once the form is open (never without a server).
+    if (NS.pkg && serverOn(w)) NS.pkg.load(w).then(syncPackage);
+    if (NS.pkg && serverOn(w) && (S().ui.bulkRows || []).length) NS.pkg.load(w).then(syncBulkPackage);
+    const pk = packageBox(w, d);
     const what = off
       ? `They will be invited to ${h(off.name.replace(/\.$/, ''))}${agreement === 'ready' ? ' and sign its subscription agreement during onboarding' : ''} (change under More options).`
       : offs.length
@@ -1195,17 +1928,19 @@
       <label class="cs-field" for="iv-contact"><span>First name</span><input id="iv-contact" name="contact" maxlength="60" autocomplete="off" data-bind="inv8:first" value="${h(d.first || '')}"${inval(d, 'name')}></label>
       <label class="cs-field" for="iv-last"><span>Last name</span><input id="iv-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8:last" value="${h(d.last || '')}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
       <label class="cs-field cs-wide" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
-      <p class="cs-hint cs-wide inv8-what" id="iv-what">They choose how they invest during onboarding. ${what}</p>
+      <label class="cs-check cs-wide inv8-tax" id="iv-tax-row" for="iv-includeTax"${onFileEmail(w, d.email) ? '' : ' hidden'}><input id="iv-includeTax" name="includeTax" type="checkbox" data-bind="inv8:includeTax"${d.includeTax ? ' checked' : ''}><span>Include tax form</span></label>
+      ${E.diy && NS.pkg ? `<label class="cs-check cs-wide inv8-package" id="iv-package-row" for="iv-package"${pk.show ? '' : ' hidden'}><input id="iv-package" name="package" type="checkbox" data-bind="inv8:package"${pk.enabled && d.package ? ' checked' : ''}${pk.enabled ? '' : ' disabled'}><span><span id="iv-package-label">${h(pk.label)}</span><span class="cs-hint" id="iv-package-line"${pk.line ? '' : ' hidden'}>${packageLine(pk)}</span></span></label>` : ''}
+      <label class="cs-field cs-wide" id="iv-type-row" for="iv-type"${onFileEmail(w, d.email) ? ' hidden' : ''}><span>Investor type</span><select id="iv-type" name="type" data-bind="inv8:type">${NS.investorKindOptions(d.type, h)}</select><span class="cs-hint">Decides the tax form they are shown. They can correct it during onboarding.</span></label>
+      <p class="cs-hint cs-wide inv8-what" id="iv-what">${what}</p>
       ${agreement === 'missing' ? `<p class="cs-hint cs-hint-warn cs-wide inv8-warn" id="iv-agreement-warn">${h(off.name.replace(/\.$/, ''))} has no subscription agreement yet. <a href="#console-offering-${h(off.id)}">Add it on the offering</a> so investors sign it during onboarding.</p>` : ''}
       <details class="cs-wide inv8-more" id="iv-more"${moreOpen ? ' open' : ''}>
         <summary>More options (optional)</summary>
         <div class="cs-grid inv8-more-body">
-          <label class="cs-field" for="iv-type"><span>Investing as <em>Optional</em></span><select id="iv-type" name="type" data-bind="inv8:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select><span class="cs-hint">The investor confirms or changes this during onboarding.</span></label>
           <label class="cs-field" for="iv-title"><span>Account name <em>Optional</em></span><input id="iv-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name. The investor can correct it.</span></label>
           <label class="cs-field" for="iv-off"><span>Offering <em>Optional</em></span><select id="iv-off" name="offering" data-bind="inv8:offeringId"${inval(d, 'offering')}><option value=""${!off ? ' selected' : ''}>No offering: account only</option>${offs.map((o) => `<option value="${h(o.id)}"${off && off.id === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>${offs.length ? '' : '<span class="cs-hint">No offering is raising. The investor sets up their account and can subscribe later.</span>'}${fieldErr(d, 'offering')}</label>
           <label class="cs-field" for="iv-amt"><span>Commitment (${cur === 'USD' ? '$' : h(cur)}) <em>Optional</em></span><input id="iv-amt" name="amount" type="number" min="0" step="1000" inputmode="decimal" data-bind="inv8:amount" value="${h(d.amount)}"${off ? '' : ' disabled'}${inval(d, 'amount')}><span class="cs-hint">${off ? `Minimum ${h(money(off, min))}. Leave blank for the investor to choose; if you set it, they cannot change it.` : 'Choose an offering to set a commitment.'}</span>${fieldErr(d, 'amount')}</label>
           ${classes.length > 1 ? `<label class="cs-field" for="iv-cls"><span>Share class</span><select id="iv-cls" name="cls" data-bind="inv8:cls"${inval(d, 'cls')}><option value="">Investor chooses</option>${classes.map((c) => `<option value="${h(c.id)}"${d.cls === c.id ? ' selected' : ''}>${h(c.name)}${Number(c.minimum) ? `, minimum ${h(money(off, Math.round(Number(c.minimum) * 100)))}` : ''}</option>`).join('')}</select>${fieldErr(d, 'cls')}</label>` : ''}
-          <label class="cs-field cs-wide" for="iv-note"><span>Personal note <em>Optional</em></span><textarea id="iv-note" name="note" rows="3" maxlength="2000" data-bind="inv8:note">${h(d.note)}</textarea><span class="cs-hint">Shown in the email and on the investor’s welcome page.</span></label>
+          <label class="cs-field cs-wide" for="iv-note"><span>Personal note <em>Optional</em></span><textarea id="iv-note" name="note" rows="3" maxlength="2000" data-bind="inv8:note"${inval(d, 'note')}>${h(d.note)}</textarea><span class="cs-hint">Shown in the email and on the investor’s welcome page.</span>${fieldErr(d, 'note')}</label>
         </div>
       </details>
       <p class="cs-error cs-wide" id="iv-error" role="alert"${Object.keys(d.errors).length ? '' : ' hidden'}>${Object.keys(d.errors).length ? 'Check the highlighted fields.' : ''}</p>
@@ -1214,9 +1949,12 @@
     const ui = S().ui;
     const eg = h(offs[0] ? offs[0].shortName || offs[0].name : 'Fund I');
     const bulk = `<form class="cs-form" data-form="invite-bulk" novalidate>
-      <label class="cs-field" for="iv-file"><span>Upload a CSV or Excel file</span><input id="iv-file" name="file" type="file" accept="${FILE_ACCEPT}" data-change="inv8-file"${ui.bulkFileError ? ' aria-invalid="true" aria-describedby="iv-file-msg"' : ''}><span class="cs-hint">A .csv or .xlsx file with one investor per row. Columns: first name, last name, email, then optionally offering, commitment and how they invest. A header row is recognized; the first worksheet of an Excel file is read.</span>${ui.bulkFileError ? `<span class="cs-error" id="iv-file-msg" role="alert">${h(ui.bulkFileError)}</span>` : ui.bulkFileNote ? `<span class="cs-hint inv8-file-note" id="iv-file-msg" role="status">${h(ui.bulkFileNote)}</span>` : ''}</label>
-      <label class="cs-field" for="iv-csv"><span>Or paste a list: first name, last name, email, offering, commitment</span><textarea id="iv-csv" name="csv" rows="6" spellcheck="false" placeholder="first name,last name,email,offering,commitment&#10;Anita,Shah,anita.shah@example.com,${eg},100000&#10;Ravi,Patel,ravi.patel@example.com">${h(ui.bulkText || '')}</textarea><span class="cs-hint">One investor per line. Offering and commitment are optional; the offering can be its short name or full name. Add a last column to say how they invest (individual, joint, trust, entity or IRA); otherwise they choose during onboarding. A list with the full name in one column (name, email, offering, commitment) also works.</span></label>
+      <label class="cs-field" for="iv-file"><span>Upload a CSV or Excel file</span><input id="iv-file" name="file" type="file" accept="${FILE_ACCEPT}" data-change="inv8-file"${ui.bulkFileError ? ' aria-invalid="true" aria-describedby="iv-file-msg"' : ''}><span class="cs-hint">A .csv or .xlsx file with one investor per row. Columns: first name, last name, email, then optionally offering, commitment and investor type. A header row is recognized; the first worksheet of an Excel file is read.</span>${ui.bulkFileError ? `<span class="cs-error" id="iv-file-msg" role="alert">${h(ui.bulkFileError)}</span>` : ui.bulkFileNote ? `<span class="cs-hint inv8-file-note" id="iv-file-msg" role="status">${h(ui.bulkFileNote)}</span>` : ''}</label>
+      <label class="cs-field" for="iv-csv"><span>Or paste a list: first name, last name, email, offering, commitment</span><textarea id="iv-csv" name="csv" rows="6" spellcheck="false" placeholder="first name,last name,email,offering,commitment&#10;Anita,Shah,anita.shah@example.com,${eg},100000&#10;Ravi,Patel,ravi.patel@example.com">${h(ui.bulkText || '')}</textarea><span class="cs-hint">One investor per line. Offering and commitment are optional; the offering can be its short name or full name. Add a last column for the investor type: individual, joint, trust, entity or IRA (all U.S.), foreign individual or foreign entity. Without it: U.S. individual. A list with the full name in one column (name, email, offering, commitment) also works.</span></label>
       ${ui.bulkResult || ''}
+      ${(ui.bulkRows || []).some((r) => r.offeringId && onFileEmail(w, r.email)) ? `<label class="cs-check inv8-tax" for="iv-bulkTax"><input id="iv-bulkTax" name="includeTax" type="checkbox" data-bind="inv8b:includeTax"${ui.bulkTax ? ' checked' : ''}><span>Include tax form</span></label>` : ''}
+      ${E.diy && NS.pkg && (ui.bulkRows || []).length ? bulkPackageHtml(w, ui) : ''}
+      ${ui.bulkPayError ? `<p class="cs-error" id="iv-bulk-error" role="alert">${h(ui.bulkPayError)}</p>` : ''}
       <div class="cs-row"><button class="cs-btn" type="submit">Check list</button>${ui.bulkRows && ui.bulkRows.length ? `<button class="cs-btn cs-btn-primary" type="button" data-action="invite-bulk-add"${ui.bulkBusy ? ' disabled aria-busy="true"' : ''}>${ui.bulkBusy ? 'Sending…' : `Send ${ui.bulkRows.length} invitation${ui.bulkRows.length === 1 ? '' : 's'}`}</button>` : ''}</div>
     </form>`;
     const srvUrl = serverOn(w) ? IV().serverUrl(w) : '';
@@ -1271,7 +2009,7 @@
       <label class="cs-field" for="im-last"><span>Last name</span><input id="im-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8m:last" value="${h(d.last)}"${bad('name')}>${err('name')}</label>
       <label class="cs-field" for="im-email"><span>Email</span><input id="im-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8m:email" value="${h(d.email)}"${bad('email')}>${err('email')}</label>
       <label class="cs-field" for="im-phone"><span>Phone <em>Optional</em></span><input id="im-phone" name="phone" type="text" inputmode="tel" maxlength="40" autocomplete="off" data-bind="inv8m:phone" value="${h(d.phone)}"></label>
-      <label class="cs-field" for="im-type"><span>Investing as <em>Optional</em></span><select id="im-type" name="type" data-bind="inv8m:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select></label>
+      <label class="cs-field" for="im-type"><span>Investor type</span><select id="im-type" name="type" data-bind="inv8m:type">${NS.investorKindOptions(d.type, h)}</select></label>
       <label class="cs-field" for="im-title"><span>Account name <em>Optional</em></span><input id="im-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8m:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name.</span></label>
       <label class="cs-field cs-wide" for="im-address"><span>Mailing address <em>Optional</em></span><textarea id="im-address" name="address" rows="2" maxlength="300" data-bind="inv8m:address">${h(d.address)}</textarea></label>
       <label class="cs-field" for="im-off"><span>Offering <em>Optional</em></span><select id="im-off" name="offering" data-bind="inv8m:offeringId"${bad('offering')}><option value=""${!off ? ' selected' : ''}>No offering: account only</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${off && off.id === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>${err('offering')}</label>
@@ -1316,11 +2054,13 @@
     const off = offOf(ws, o.offeringId);
     const cents = off ? Math.max(0, Math.round(Number(o.cents) || 0)) : 0;
     const actor = NS.app.actor();
+    const kind = NS.investorKind(o.type);
     const investor = {
       id: nextInvestorId(ws),
       contact: name,
       title: String(o.account || '').trim() || name,
-      type: NS.ENTITY_TYPES[o.type] ? o.type : 'individual',
+      type: kind.type,
+      taxType: kind.taxType,
       email,
       phone: String(o.phone || '').trim().slice(0, 40),
       address: String(o.address || '').trim().slice(0, 300),
@@ -1402,7 +2142,7 @@
     let it = null;
     let res = null;
     if (d.link) {
-      it = create(w, { name: inv.contact, email: inv.email, type: inv.type, account: inv.title, access: true }).invitation;
+      it = create(w, { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, access: true }).invitation;
       NS.app.save(true);
       res = await send(w, it);
     }
@@ -1415,7 +2155,7 @@
     const v = (n) => (f.elements[n] ? String(f.elements[n].value || '') : '');
     const first = v('contact').trim();
     const last = v('last').trim();
-    return { first, last, name: [first, last].filter(Boolean).join(' '), email: v('email').trim(), type: v('type') || 'individual', account: v('title').trim(), offeringId: v('offering'), amount: v('amount').trim(), cls: v('cls'), note: v('note').trim() };
+    return { first, last, name: [first, last].filter(Boolean).join(' '), email: v('email').trim(), type: v('type') || 'individual', account: v('title').trim(), offeringId: v('offering'), amount: v('amount').trim(), cls: v('cls'), note: v('note').trim(), includeTax: !!(f.elements.includeTax && f.elements.includeTax.checked), package: !!(f.elements.package && f.elements.package.checked && !f.elements.package.disabled) };
   }
   async function submitInvite(f) {
     const w = W();
@@ -1429,6 +2169,9 @@
     const cents = dollars === '' ? '' : isFinite(dollars) ? Math.round(dollars * 100) : NaN;
     const e = validate(w, { name: x.name, first: x.first, last: x.last, email: x.email, offeringId: x.offeringId, cents: cents === '' ? '' : cents, cls: x.cls });
     if (cents !== '' && isNaN(cents)) e.amount = 'Enter the commitment as an amount, or leave it blank.';
+    // EM-04: a note that holds a taxpayer number, a long number or a password is stopped here, before anything is made.
+    const bad = x.note && NS.emails ? NS.emails.screen(x.note) : null;
+    if (bad) e.note = bad.reason;
     d.errors = e;
     if (Object.keys(e).length) {
       NS.app.render();
@@ -1436,7 +2179,7 @@
       if (first) first.focus();
       return;
     }
-    const r = create(w, { name: x.name, email: x.email, type: x.type, account: x.account, offeringId: x.offeringId, cents: cents || 0, cls: x.cls, note: x.note });
+    const r = create(w, { name: x.name, email: x.email, type: x.type, account: x.account, offeringId: x.offeringId, cents: cents || 0, cls: x.cls, note: x.note, includeTax: x.includeTax, package: x.package });
     NS.app.save(true);
     d.busy = true;
     S().ui.inv8Filter = 'open';
@@ -1451,7 +2194,7 @@
     const inv = invOf(w, it.investorId);
     if (res.emailStatus === 'manual') return showEmail(it.id);
     if (res.emailStatus === 'failed') return U.toast(`The invitation for ${inv.title} could not be sent: ${res.error}`);
-    U.toast(res.emailStatus === 'outbox' ? `Invitation for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Invitation emailed to ${inv.contact}.`);
+    U.toast(notSent(res.emailStatus, 'The invitation', inv) || (res.emailStatus === 'outbox' ? `Invitation for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Invitation emailed to ${inv.contact}.`));
   }
   // The DIY edition's invite form replaces the managed edition's (same form id, so existing links keep working).
   const baseInviteOne = NS.forms['invite-one'];
@@ -1507,7 +2250,7 @@
     rows
       .map((r) => r.map((c) => (/[",\t\r\n]/.test(c) ? `"${String(c).replace(/[\r\n]+/g, ' ').replace(/"/g, '""')}"` : c)).join(','))
       .join('\n');
-  const TYPE_WORDS = { individual: 'individual', joint: 'joint', trust: 'trust', entity: 'entity', company: 'entity', llc: 'entity', corporation: 'entity', partnership: 'entity', ira: 'ira' };
+  const TYPE_WORDS = { individual: 'individual', joint: 'joint', trust: 'trust', entity: 'entity', company: 'entity', llc: 'entity', corporation: 'entity', partnership: 'entity', ira: 'ira', usindividual: 'individual', usentity: 'entity', foreignindividual: 'foreign-individual', foreignentity: 'foreign-entity' };
   const HEADERS = {
     first: ['first name', 'first', 'firstname', 'given name'],
     last: ['last name', 'last', 'lastname', 'surname', 'family name'],
@@ -1574,7 +2317,9 @@
       const name = full || [first, last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
       const o = offName ? w.offerings.find((x) => [x.id, x.shortName, x.name].some((n) => n && n.toLowerCase() === String(offName).toLowerCase())) : null;
       const dollars = amt ? Number(String(amt).replace(/[$,\s]/g, '')) : 0;
-      const type = typ ? TYPE_WORDS[String(typ).toLowerCase().replace(/[^a-z]/g, '')] : 'individual';
+      const tw = String(typ || '').toLowerCase().replace(/[^a-z]/g, '');
+      // The owner's four types, also as the form labels read ("U.S. entity (LLC, corporation, trust, IRA, joint)").
+      const type = typ ? TYPE_WORDS[tw] || TYPE_WORDS[['usindividual', 'usentity', 'foreignindividual', 'foreignentity'].find((x) => tw.indexOf(x) === 0) || ''] : 'individual';
       let why = '';
       if (!name) why = 'missing name';
       else if (!isEmail(email)) why = `invalid email "${email || ''}"`;
@@ -1606,10 +2351,18 @@
     ui.bulkText = String(text || '');
     const { rows, errors } = parseBulk(ui.bulkText);
     ui.bulkRows = rows;
-    ui.bulkResult = `<div class="cs-bulk">${rows.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-bulk-tbl"><thead><tr><th scope="col">First name</th><th scope="col">Last name</th><th scope="col">Email</th><th scope="col">Offering</th><th scope="col" class="num">Commitment</th></tr></thead><tbody>${rows
-      .map((r) => `<tr><td>${h(r.first)}</td><td>${h(r.last)}${r.type !== 'individual' ? `<span class="sub">${h(NS.ENTITY_TYPES[r.type].label)}</span>` : ''}</td><td>${h(r.email)}</td><td>${r.offeringName ? h(r.offeringName) : '<span class="cs-muted">Account only</span>'}</td><td class="num">${r.cents ? h(money(offOf(w, r.offeringId), r.cents)) : '<span class="cs-muted">Investor chooses</span>'}</td></tr>`)
-      .join('')}</tbody></table></div>` : ''}${errors.length ? `<ul class="cs-errors">${errors.map((e) => `<li>${h(e)}</li>`).join('')}</ul>` : ''}${!rows.length && !errors.length ? '<p class="cs-muted">No rows found.</p>' : ''}</div>`;
+    // Plan 06-27 (D-10): "Include tax form" starts unticked for each list checked; so does the package box (plan 08-13).
+    ui.bulkTax = false;
+    ui.bulkPackage = false;
+    ui.bulkPayError = '';
+    ui.bulkResult = bulkTable(w, rows, errors);
     return { rows, errors };
+  }
+  /** The checked list as the form shows it: the rows to send, then the lines to fix. */
+  function bulkTable(w, rows, errors) {
+    return `<div class="cs-bulk">${rows.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-bulk-tbl"><thead><tr><th scope="col">First name</th><th scope="col">Last name</th><th scope="col">Email</th><th scope="col">Offering</th><th scope="col" class="num">Commitment</th></tr></thead><tbody>${rows
+      .map((r) => `<tr><td>${h(r.first)}</td><td>${h(r.last)}${r.type !== 'individual' ? `<span class="sub">${h(NS.investorKindLabel(r.type))}</span>` : ''}</td><td>${h(r.email)}</td><td>${r.offeringName ? h(r.offeringName) : '<span class="cs-muted">Account only</span>'}</td><td class="num">${r.cents ? h(money(offOf(w, r.offeringId), r.cents)) : '<span class="cs-muted">Investor chooses</span>'}</td></tr>`)
+      .join('')}</tbody></table></div>` : ''}${errors.length ? `<ul class="cs-errors">${errors.map((e) => `<li>${h(e)}</li>`).join('')}</ul>` : ''}${!rows.length && !errors.length ? '<p class="cs-muted">No rows found.</p>' : ''}</div>`;
   }
   const baseBulk = NS.forms['invite-bulk'];
   NS.forms['invite-bulk'] = function (f) {
@@ -1735,19 +2488,76 @@
     const ui = S().ui;
     const w = W();
     if (ui.bulkBusy) return;
-    const rows = (ui.bulkRows || []).filter((r) => !Object.keys(validate(w, { name: r.name, email: r.email, offeringId: r.offeringId, cents: r.cents })).length);
+    const rows = sendable(w, ui.bulkRows);
+    // Plan 08-13 (D-01, research Pitfall 9, 08-CONTEXT P1, P4, P5): with the box ticked, the rows the single form's rule
+    // enables are paid for before any invitation is created: one payment per group of 200 (the server's limit), each
+    // group sent before the next is paid. A refused payment stops the list there: nothing of that group or after it is
+    // created, those rows stay on the list, and the server's sentence is shown. The server's answer is held still
+    // meanwhile, so the rows paid for are exactly the rows created with the package.
+    const paying = !!(NS.pkg && ui.bulkPackage === true && bulkPackage(w, rows).enabled);
     ui.bulkBusy = true;
+    ui.bulkPayError = '';
     NS.app.render();
-    const made = rows.map((r) => create(w, { name: r.name, email: r.email, type: r.type, offeringId: r.offeringId, cents: r.cents }).invitation);
-    NS.app.save(true);
+    if (paying) NS.pkg.hold(true);
+    const plan = rows.map((r) => {
+      const b = paying ? packageBox(w, r) : null;
+      const pkg = !!(b && b.enabled);
+      // The invitation's id is made before paying and kept on the row: a list sent again after an unconfirmed payment
+      // pays for the same keys, which the server never charges twice.
+      if (pkg && !r.id) r.id = uid('invt');
+      return { r, pkg, tier: pkg ? b.tier : '' };
+    });
+    const made = [];
     const res = [];
-    for (const it of made) res.push(await send(w, it));
-    Object.assign(ui, { bulkBusy: false, bulkRows: null, bulkResult: '', bulkText: '', bulkFileNote: '', bulkFileError: '', inviteOpen: false, inv8Filter: 'open' });
-    NS.app.render();
+    let at = 0;
+    let refused = '';
+    try {
+      while (at < plan.length) {
+        let end = at;
+        for (let n = 0; end < plan.length && !(plan[end].pkg && n === PAY_GROUP); end++) if (plan[end].pkg) n++;
+        const group = plan.slice(at, end);
+        const items = group.filter((x) => x.pkg).map((x) => ({ key: x.r.id, tier: x.tier }));
+        if (items.length) {
+          try {
+            await api(w, 'POST', '/v1/billing/entitlements', { items });
+          } catch (e) {
+            refused = (e && e.message) || 'The payment could not be made.';
+            break;
+          }
+        }
+        // Plan 06-27 (D-10): "Include tax form" applies to the investors on file on the list (create ignores it for anyone else).
+        const its = group.map((x) => {
+          const it = create(w, Object.assign({ name: x.r.name, email: x.r.email, type: x.r.type, offeringId: x.r.offeringId, cents: x.r.cents, includeTax: ui.bulkTax === true }, x.pkg ? { id: x.r.id, package: true } : {})).invitation;
+          if (x.pkg) it.package = true; // paid for above: it carries the package (create's own rule agrees while the answer is held)
+          return it;
+        });
+        NS.app.save(true);
+        for (const it of its) res.push(await send(w, it));
+        made.push(...its);
+        at = end;
+      }
+    } finally {
+      if (paying) {
+        NS.pkg.hold(false);
+        NS.pkg.load(w, true).then(syncBulkPackage);
+      }
+    }
     const manual = res.filter((r) => r.emailStatus === 'manual').length;
     const failed = res.filter((r) => r.emailStatus === 'failed').length;
-    U.toast(manual ? `${made.length} invitation${made.length === 1 ? '' : 's'} ready. Send each one from your email app with Email in the invitations list.` : `${made.length - failed} invitation${made.length - failed === 1 ? '' : 's'} sent${failed ? `; ${failed} could not be sent (see the list)` : ''}.`);
+    const sent = () => U.toast(manual ? `${made.length} invitation${made.length === 1 ? '' : 's'} ready. Send each one from your email app with Email in the invitations list.` : `${made.length - failed} invitation${made.length - failed === 1 ? '' : 's'} sent${failed ? `; ${failed} could not be sent (see the list)` : ''}.`);
+    if (refused) {
+      const left = plan.slice(at).map((x) => x.r);
+      Object.assign(ui, { bulkBusy: false, bulkPayError: refused }, made.length ? { bulkRows: left, bulkResult: bulkTable(w, left, []), bulkFileNote: '' } : {});
+      NS.app.render();
+      if (made.length) sent();
+      return;
+    }
+    Object.assign(ui, { bulkBusy: false, bulkRows: null, bulkResult: '', bulkText: '', bulkFileNote: '', bulkFileError: '', bulkTax: false, bulkPackage: false, bulkPayError: '', inviteOpen: false, inv8Filter: 'open' });
+    NS.app.render();
+    sent();
   };
+  /** Plan 08-13 (P5): the most packages one payment holds (the integration server's limit). */
+  const PAY_GROUP = 200;
 
   /* ---------- Console: the email to send from the sponsor's own email app ---------- */
   /** An invitation whose link no longer works: say why, and offer what still makes sense (never the dead link). */
@@ -1779,7 +2589,7 @@
     const m = emailFor(w, it);
     const local = !it.serverId;
     U.dialog(
-      `<div class="dlg-head"><div><h2>Invitation email</h2><p>${local ? 'Send it from your email app. The portal prepared it with the investor’s link.' : 'The email your integration server sends.'}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      `<div class="dlg-head"><div><h2>${it.taxRequest ? 'Tax form request email' : it.reverify ? 'Re-verification request email' : 'Invitation email'}</h2><p>${local ? 'Send it from your email app. The portal prepared it with the investor’s link.' : 'The email your integration server sends.'}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <div class="dlg-body inv8-email">
         <dl class="inv8-meta">
           <div><dt>From</dt><dd>${h(m.fromName)}${local ? ' <span class="cs-hint">(your own address, from your email app)</span>' : ''}</dd></div>
@@ -1787,16 +2597,7 @@
           <div><dt>To</dt><dd>${h(m.toName)} &lt;${h(m.to)}&gt;</dd></div>
           <div><dt>Subject</dt><dd class="inv8-subject">${h(m.subject)}</dd></div>
         </dl>
-        <article class="email">
-          <div class="email-head">${B.lockup(t)}</div>
-          <div class="email-body">
-            ${m.lines.map((l) => `<p>${h(l).replace(/\n/g, '<br>')}</p>`).join('')}
-            <p><span class="email-btn">${h(m.button)}</span></p>
-            <p class="inv8-raw">${h(m.link)}</p>
-            ${m.tail.map((l) => `<p>${h(l)}</p>`).join('')}
-          </div>
-          <div class="email-foot">${h(t.legalName || t.name)}</div>
-        </article>
+        ${emailCard(t, m)}
         <label class="cs-field inv8-linkfield" for="inv8-link"><span>Invitation link</span><input id="inv8-link" type="text" readonly value="${h(m.link)}"></label>
         ${local && it.emailError ? `<p class="cs-error-text inv8-why">${h(it.emailError)}</p>` : ''}
         ${local ? `<p class="cs-hint">This link opens the portal in this browser only, because no integration server is connected. ${NS.app.can('configure') ? '<a href="#console-integrations" data-action="close-dialog">Connect your integration server</a>' : 'Ask an admin to connect your integration server'} so investors can onboard on their own devices and the email is sent for you.</p>` : ''}
@@ -1811,6 +2612,116 @@
   }
   const itById = (el) => list(W()).find((x) => x.id === el.getAttribute('data-id'));
   NS.actions['inv8-email'] = (el) => showEmail(el.getAttribute('data-id'));
+  // Plan 06-26: "Request tax form" on the Investors page (console.js shows it for an active investor whose tax form is not on
+  // file: missing, not signed, or its signed copy not received). One request at a time per investor.
+  const asking = {};
+  NS.actions['tax-request'] = async (el) => {
+    if (!E.diy) return;
+    if (!NS.app.can('operate')) return U.toast('Only your team can ask investors for their tax form.');
+    const w = W();
+    const inv = invOf(w, el.getAttribute('data-id'));
+    if (!inv || asking[inv.id]) return;
+    asking[inv.id] = true;
+    let out = null;
+    try {
+      out = await requestTax(w, inv);
+    } catch (e) {
+      U.toast(String((e && e.message) || e));
+    } finally {
+      delete asking[inv.id];
+    }
+    NS.app.render();
+    if (!out) return;
+    const res = out.res || {};
+    if (res.emailStatus === 'manual') return showEmail(out.invitation.id);
+    if (res.emailStatus === 'failed') return U.toast(`The tax form request for ${inv.title} could not be sent: ${res.error}`);
+    U.toast(notSent(res.emailStatus, 'The tax form request', inv) || (res.emailStatus === 'outbox' ? `Tax form request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Tax form request emailed to ${inv.contact}.`));
+  };
+  // Plan 08-09 (D-04, C-06): "Ask to re-verify" on the Investors page (console.js shows it for an active investor whose
+  // verification by a third party is missing, lapsed or about to lapse while an offering needs one). Its dialog names the
+  // investor and what the link holds; "Send request" makes the request, or sends an open one again.
+  /** Plan 08-20 (D-01): the dialog's "Add verification package" box, priced by the server's reverify tier (package.js box). */
+  const reverifyPackage = (w) => (E.diy && NS.pkg ? NS.pkg.box(w, null, 'reverify') : { show: false, enabled: false, label: '', line: '', href: '' });
+  function reverifyBoxHtml(w) {
+    const pk = reverifyPackage(w);
+    return `<label class="cs-check cs-wide inv8-package" id="rv-package-row" for="rv-package"${pk.show ? '' : ' hidden'}><input id="rv-package" name="package" type="checkbox"${pk.enabled ? '' : ' disabled'}><span><span id="rv-package-label">${h(pk.label)}</span><span class="cs-hint" id="rv-package-line"${pk.line ? '' : ' hidden'}>${packageLine(pk)}</span></span></label>`;
+  }
+  /** The dialog's box brought up to date in place when the server's answer arrives (a tick stays only while it is allowed). */
+  function syncReverifyPackage() {
+    const row = document.getElementById('rv-package-row');
+    const input = document.getElementById('rv-package');
+    if (!row || !input || !W()) return;
+    const pk = reverifyPackage(W());
+    row.hidden = !pk.show;
+    input.disabled = !pk.enabled;
+    if (!pk.enabled) input.checked = false;
+    document.getElementById('rv-package-label').textContent = pk.label;
+    const line = document.getElementById('rv-package-line');
+    line.hidden = !pk.line;
+    line.innerHTML = packageLine(pk);
+  }
+  function reverifyDialog(w, inv) {
+    const I = IV();
+    const a = I ? I.peek(inv).accreditation : {};
+    const third = a.status === 'verified' && !(I && I.selfCertified(a));
+    const now = !third ? 'No accreditation verification by a third party is on file.' : a.expiresAt && a.expiresAt < today() ? `Their accreditation verification expired on ${date(a.expiresAt)}.` : a.expiresAt ? `Their accreditation verification is valid until ${date(a.expiresAt)}.` : '';
+    const open = openReverifyRequest(w, inv);
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Ask to re-verify</h2><p>${h(inv.contact)}${inv.title && inv.title !== inv.contact ? ` for ${h(inv.title)}` : ''}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body inv8-reverify">
+        ${now ? `<p>${h(now)}</p>` : ''}
+        <p>${h(inv.contact)} gets a link that holds the accreditation step only. A Rule 506(c) subscription needs a current verification.</p>
+        ${open ? '<p class="cs-hint">A request is already open: sending it again gives a new link, and the earlier one stops working.</p>' : reverifyBoxHtml(w)}
+        <p class="cs-error" id="rv-said" role="alert" hidden></p>
+        <div class="cs-row cs-row-end inv8-actions"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="reverify-send" data-id="${h(inv.id)}">Send request</button></div>
+      </div>`,
+      'dlg-reverify'
+    );
+    if (!open && NS.pkg && serverOn(w)) NS.pkg.load(w).then(syncReverifyPackage);
+  }
+  NS.actions['reverify-request'] = (el) => {
+    if (!E.diy) return;
+    if (!NS.app.can('operate')) return U.toast('Only your team can ask investors to verify their accreditation.');
+    const w = W();
+    const inv = invOf(w, el.getAttribute('data-id'));
+    if (inv) reverifyDialog(w, inv);
+  };
+  /** The refusal's sentence in the open dialog ("Send request" can be pressed again); a toast when the dialog was closed. */
+  function reverifySaid(el, said, inv) {
+    const line = document.getElementById('rv-said');
+    const d = document.getElementById('dlg');
+    if (!line || !d || !d.open) return U.toast(`The re-verification request for ${inv.title} could not be sent: ${said}`);
+    line.textContent = said;
+    line.hidden = false;
+    el.disabled = false;
+  }
+  NS.actions['reverify-send'] = async (el) => {
+    if (!E.diy) return;
+    if (!NS.app.can('operate')) return U.toast('Only your team can ask investors to verify their accreditation.');
+    const w = W();
+    const inv = invOf(w, el.getAttribute('data-id'));
+    if (!inv || asking[inv.id]) return;
+    asking[inv.id] = true;
+    el.disabled = true;
+    const tick = document.getElementById('rv-package');
+    let out = null;
+    try {
+      out = await requestReverify(w, inv, { package: !!(tick && tick.checked && !tick.disabled) });
+    } catch (e) {
+      U.toast(String((e && e.message) || e));
+    } finally {
+      delete asking[inv.id];
+    }
+    NS.app.render();
+    if (!out) return U.closeDialog();
+    const res = out.res || {};
+    if (res.emailStatus === 'manual') return showEmail(out.invitation.id);
+    // Plan 08-20 (G6): a refusal stays in the dialog as the server's own sentence, alone (the request's row shows it too); a
+    // used package has left a new request, sent with the next "Send request".
+    if (res.emailStatus === 'failed') return reverifySaid(el, res.error, inv);
+    U.closeDialog();
+    U.toast(notSent(res.emailStatus, 'The re-verification request', inv) || (res.emailStatus === 'outbox' ? `Re-verification request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Re-verification request emailed to ${inv.contact}.`));
+  };
   NS.actions['inv8-copy'] = (el) => {
     const it = itById(el);
     if (!it) return;
@@ -1831,6 +2742,7 @@
       U.closeDialog();
       return U.toast('This invitation is closed, so it was not marked as sent.');
     }
+    logMail(w, it.investorId, 'manual', emailFor(w, it));
     Object.assign(it, { emailStatus: 'sent', emailError: '', sentAt: new Date().toISOString() });
     audit(w, 'Invitation sent', `${inv ? inv.title : it.investorId}: emailed from the sender's own email app`, it.offeringId, it.investorId);
     NS.app.save(true);
@@ -1859,7 +2771,7 @@
     const r = await resend(w, it);
     NS.app.render();
     if (r.emailStatus === 'manual') return showEmail(it.id);
-    U.toast(r.error ? `Could not resend: ${r.error}` : r.emailStatus === 'outbox' ? `New link for ${inv.title} saved in the server outbox.` : `New invitation emailed to ${inv.contact}.`);
+    U.toast(r.error ? r.error : notSent(r.emailStatus, 'The new link', inv) || (r.emailStatus === 'outbox' ? `New link for ${inv.title} saved in the server outbox.` : `New invitation emailed to ${inv.contact}.`));
   };
   NS.actions['inv8-cancel'] = (el) => {
     const it = itById(el);
@@ -1963,7 +2875,7 @@
         const off = offOf(w, it.offeringId);
         const x = it.status === 'completed' ? outcome(w, it) : null;
         const st = statusOf(it);
-        const em = it.emailStatus === 'failed' ? `<span class="cs-error-text">${h(EMAIL.failed)}${it.emailError ? `: ${h(it.emailError)}` : ''}</span>` : h(EMAIL[it.emailStatus] || it.emailStatus || '');
+        const em = it.emailStatus === 'failed' ? `<span class="cs-error-text">${h(EMAIL.failed)}${it.emailError ? `: ${h(it.emailError)}` : ''}</span>` : MAIL_LINE[it.emailStatus] ? `<span class="inv8-mailline${it.emailStatus === 'held' ? '' : ' cs-error-text'}">${h(MAIL_LINE[it.emailStatus](inv))}</span>` : h(EMAIL[it.emailStatus] || it.emailStatus || '');
         const acts = [];
         if (ops && OPEN.indexOf(it.status) >= 0) {
           if (linkFor(w, it)) acts.push(`<button class="cs-btn cs-btn-small" type="button" data-action="inv8-copy" data-id="${h(it.id)}">Copy link</button>`);
@@ -1974,13 +2886,13 @@
         else if (ops && it.status === 'cancelled' && invOf(w, it.investorId) && forInvestor(w, it.investorId) === it) acts.push(`<button class="cs-btn cs-btn-small" type="button" data-action="inv8-reinvite" data-id="${h(it.id)}">Invite again</button>`);
         else if (x && waitingCountersign(x.env)) acts.push(`<a class="cs-btn cs-btn-small cs-btn-primary" href="#console-envelope-${h(x.env.id)}">Countersign</a>`);
         else if (x && x.inv && x.inv.onboarding && x.inv.onboarding.status === 'complete') acts.push(`<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(x.inv.id)}">View portal</button>`);
-        const activity = [[unsent(it) ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
+        const activity = [[neverSent(it) || NOT_SENT.indexOf(it.emailStatus) >= 0 ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
         return `<tr data-invitation="${h(it.id)}">
           <th scope="row"><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.email)}</span></th>
-          <td>${off ? h(off.shortName || off.name) : '<span class="cs-muted">Account only</span>'}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span></td>
-          <td>${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
-          <td class="inv8-activity">${activity}</td>
-          <td>${em}</td>
+          <td data-label="Offering">${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : it.reverify ? 'Re-verification only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span>${it.package ? '<span class="sub inv8-pkg">Package</span>' : ''}</td>
+          <td data-label="Progress">${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
+          <td class="inv8-activity" data-label="Activity">${activity}</td>
+          <td data-label="Email">${em}${it.resendError && OPEN.concat(['expired']).indexOf(it.status) >= 0 ? `<span class="sub cs-error-text inv8-refused">${h(it.resendError)}</span>` : ''}</td>
           <td class="cs-row-actions">${acts.join('')}</td>
         </tr>`;
       })
@@ -1995,7 +2907,7 @@
     return CK().panel(
       `Invitations <span class="cs-count">${open.length} in progress</span>`,
       `<div class="cs-tabs cs-tabs-inline" role="group" aria-label="Invitations">${tabs.map(([k, l]) => `<button type="button" class="cs-tab" data-action="inv8-filter" data-f="${k}" aria-pressed="${f === k}">${l}</button>`).join('')}</div>
-      ${shown.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-tbl"><thead><tr><th scope="col">Investor</th><th scope="col">Offering</th><th scope="col">Progress</th><th scope="col">Activity</th><th scope="col">Email</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="cs-muted">${f === 'open' ? 'No invitations in progress.' : f === 'completed' ? 'No completed onboardings yet.' : 'No invitations.'}</p>`}
+      ${shown.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-tbl cs-stack"><thead><tr><th scope="col">Investor</th><th scope="col">Offering</th><th scope="col">Progress</th><th scope="col">Activity</th><th scope="col">Email</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="cs-muted">${f === 'open' ? 'No invitations in progress.' : f === 'completed' ? 'No completed onboardings yet.' : 'No invitations.'}</p>`}
       <label class="cs-check inv8-rule" for="inv8-rule"><input id="inv8-rule" type="checkbox" data-change="inv8-rule"${r.autoAccept ? ' checked' : ''}${NS.app.can('configure') ? '' : ' disabled'}><span>Accept subscriptions automatically once the agreement is countersigned and the investor is verified<span class="cs-hint">Closed-end offerings: the commitment goes on the investor register. Open-ended funds: approved, then you record the funding when the wire arrives.${NS.app.can('configure') ? '' : ' Only admins can change this.'}</span></span></label>`,
       srv ? `<span class="inv8-check">${check.at ? `<span class="cs-hint">${check.error ? `Last check failed: ${h(check.error)}` : `Checked ${h(ago(check.at)).toLowerCase()}`}</span>` : ''}<button class="cs-btn cs-btn-small" type="button" data-action="inv8-check"${check.busy ? ' disabled' : ''}>Check now</button></span>` : ''
     );
@@ -2109,10 +3021,11 @@
     if (!w || !E.diy || S().remote || S().role === 'investor' || NS.app.modeOf(S().route) !== 'console') return;
     sweepAndShow();
     if (!serverOn(w) || !awaiting(w)) return;
-    const before = JSON.stringify([list(w).map((x) => x.status + x.stepKey + x.importedAt + x.emailStatus), unread(w)]);
+    const coPrint = () => (w.investors || []).map((i) => (coSi(i) ? [coSi(i).serverId, coSi(i).openedAt, coSi(i).signedAt, coSi(i).error].join() : '')).join('|');
+    const before = JSON.stringify([list(w).map((x) => x.status + x.stepKey + x.importedAt + x.emailStatus), unread(w), coPrint()]);
     importCompleted(w).then((n) => {
       if (W() !== w) return;
-      const after = JSON.stringify([list(w).map((x) => x.status + x.stepKey + x.importedAt + x.emailStatus), unread(w)]);
+      const after = JSON.stringify([list(w).map((x) => x.status + x.stepKey + x.importedAt + x.emailStatus), unread(w), coPrint()]);
       updateBell();
       const typing = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
       const dlg = document.getElementById('dlg');
@@ -2145,7 +3058,15 @@
   async function inviteCall(server, token, method, path, body) {
     const headers = { 'X-Invite-Token': token, Accept: 'application/json' };
     if (body) headers['Content-Type'] = 'application/json';
-    const res = await fetch(String(server).replace(/\/+$/, '') + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    let res;
+    try {
+      res = await fetch(String(server).replace(/\/+$/, '') + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    } catch (e) {
+      // No answer at all (offline, the server down): marked so the page says it plainly, never the browser's own text.
+      const err = new Error('The connection failed.');
+      err.network = true;
+      throw err;
+    }
     let data = null;
     try {
       data = await res.json();
@@ -2182,8 +3103,20 @@
     validate,
     emailFor,
     mailtoFor,
+    mailData,
+    emailCard,
+    firmOf,
+    coMailData,
+    coEmail,
+    logMail,
     sweep,
     serverOn,
+    accreditationRequired,
+    requestTax,
+    openTaxRequest,
+    requestReverify,
+    openReverifyRequest,
+    taxFormFor,
     forInvestor,
     activationLabel,
     invitePanel,

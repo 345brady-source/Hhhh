@@ -1,0 +1,24 @@
+{
+  "about": "Hand-worked fund A: its bank account for 2026, made up (no real account, name or number). Every bank fixture in this folder reads to these nine lines. Amounts in whole cents, money in positive. Money in 46,200,000; money out 42,700,000; opening 0; closing 3,500,000 ($35,000.00).",
+  "from": "2026-01-15",
+  "to": "2026-12-15",
+  "lines": [
+    { "date": "2026-01-15", "cents": 30000000, "text": "WIRE IN FA-1001 FUND A CALL 1", "balance": 30000000 },
+    { "date": "2026-01-15", "cents": 15000000, "text": "WIRE IN FA-1002 FUND A CALL 1", "balance": 45000000 },
+    { "date": "2026-01-20", "cents": -40000000, "text": "WIRE OUT PORTFOLIO CO X", "balance": 5000000 },
+    { "date": "2026-03-10", "cents": -750000, "text": "=SUM(A1) LAW FIRM INV 2231", "balance": 4250000 },
+    { "date": "2026-03-31", "cents": -450000, "text": "ACH DEBIT MANAGER FEES Q1", "balance": 3800000 },
+    { "date": "2026-06-30", "cents": 1200000, "text": "ACH CREDIT PORTFOLIO CO X DIVIDEND", "balance": 5000000 },
+    { "date": "2026-06-30", "cents": -450000, "text": "ACH DEBIT MANAGER FEES Q2", "balance": 4550000 },
+    { "date": "2026-09-30", "cents": -450000, "text": "ACH DEBIT MANAGER FEES Q3", "balance": 4100000 },
+    { "date": "2026-12-15", "cents": -600000, "text": "ACH DEBIT DISTRIBUTION FILE", "balance": 3500000 }
+  ],
+  "fitids": ["260115001", "260115002", "260120003", "260310004", "260331005", "260630006", "260630007", "260930008", "261215009"],
+  "files": {
+    "fund-a-signed.csv": { "kind": "csv", "last4": "", "currency": "", "openingCents": null, "closingCents": 3500000 },
+    "fund-a-inout.csv": { "kind": "csv", "last4": "", "currency": "", "openingCents": null, "closingCents": null },
+    "fund-a.qfx": { "kind": "ofx", "last4": "6789", "currency": "USD", "openingCents": null, "closingCents": 3500000 },
+    "fund-a.ofx": { "kind": "ofx", "last4": "6789", "currency": "USD", "openingCents": null, "closingCents": 3500000 },
+    "fund-a.bai": { "kind": "bai2", "last4": "6789", "currency": "USD", "openingCents": 0, "closingCents": 3500000 }
+  }
+}

@@ -3,11 +3,14 @@
 // timeouts), the outbox, and the firm-branded templates.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { buildMessage, dotStuff, encodeWords, headerLine, formatAddress, quotedPrintable, smtpSend, createMailer, invitationMessage, resendMessage, notificationMessage, validAddress } from '../lib/mail.mjs';
 import { openStore } from '../lib/store.mjs';
 import { openVault } from '../lib/vault.mjs';
 import { fakeSmtp, selfSignedCert, decodeQP, parts } from './smtp-fake.mjs';
+import { stripLinkTokens } from './helpers.mjs';
 
+const { BANNED } = createRequire(import.meta.url)('../../assets/js/emails.js');
 const FIRM = { name: 'Harbor Ridge Capital', shortName: 'Harbor Ridge', legalName: 'Harbor Ridge Capital Management LLC', supportTeam: 'Investor Relations', supportEmail: 'ir@harborridge.example', supportPhone: '+1 212 555 0100', colors: { primary: '#123456' }, disclaimer: 'This message is not an offer to sell securities.' };
 const INVESTOR = { id: 'HRC-0007', contact: 'Ann Lee', title: 'Ann Lee', type: 'individual', email: 'ann@investor.example' };
 const OFFERING = { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II', currency: 'USD' };
@@ -218,17 +221,17 @@ test('templates are the firm’s alone: brand, note, link, expiry, support; no p
   const logo = `data:image/png;base64,${Buffer.from('89504e470d0a1a0a', 'hex').toString('base64')}`;
   const firm = Object.assign({}, FIRM, { logo });
   const inv = invitationMessage({ firm, investor: INVESTOR, offering: OFFERING, invitation: { cents: 25000000, note, senderName: 'Maria Ortiz' }, link: 'https://portal.example/diy.html?server=https%3A%2F%2Fv.example#invite-abc', expiresAt: '2026-12-10T12:00:00Z' });
-  assert.equal(inv.subject, 'Harbor Ridge Fund II: complete your investor onboarding');
-  for (const s of ['Dear Ann Lee,', 'Harbor Ridge Capital has invited you to invest in Harbor Ridge Fund II', 'Commitment: $250,000', 'A note from Maria Ortiz:', '> Great to have you', 'https://portal.example/diy.html?server=https%3A%2F%2Fv.example#invite-abc', 'December 10, 2026', 'government-issued photo ID', '10 to 15 minutes', 'Investor Relations: ir@harborridge.example, +1 212 555 0100', 'Harbor Ridge Capital Management LLC', 'not an offer to sell']) assert.ok(inv.text.includes(s), s);
+  assert.equal(inv.subject, 'Harbor Ridge Capital: your invitation to invest in Harbor Ridge Fund II');
+  for (const s of ['Dear Ann,', 'Harbor Ridge Capital has invited you to invest in Harbor Ridge Fund II', 'Commitment: $250,000', 'A note from Maria Ortiz:', '> Great to have you', 'https://portal.example/diy.html?server=https%3A%2F%2Fv.example#invite-abc', 'December 10, 2026', 'government-issued photo ID', '10 to 15 minutes', 'Questions? Contact Investor Relations at ir@harborridge.example or +1 212 555 0100.', 'Harbor Ridge Capital Management LLC', 'not an offer to sell']) assert.ok(inv.text.includes(s), s);
   assert.ok(inv.html.includes('&lt;script&gt;') && !inv.html.includes('<script>'));
   assert.ok(inv.html.includes('src="cid:logo@firm"'));
   assert.ok(inv.html.includes('#123456'));
   assert.equal(inv.inline.length, 1);
   const re = resendMessage({ firm: FIRM, investor: INVESTOR, offering: null, invitation: { cents: 0 }, link: 'https://portal.example/#invite-new', expiresAt: '2026-12-10T12:00:00Z', started: true });
-  assert.equal(re.subject, 'Reminder: complete your investor onboarding with Harbor Ridge Capital');
+  assert.equal(re.subject, 'New link: Harbor Ridge Capital: set up your investor account');
   assert.ok(re.text.includes('Any earlier link we sent no longer works.') && re.text.includes('pick up where you left off') && re.text.includes('Continue your onboarding'));
   const no = notificationMessage({ firm: FIRM, investor: INVESTOR, offering: OFFERING, completedAt: '2026-11-12T10:00:00Z', consoleUrl: 'https://portal.example/diy.html#console-investors', summary: { rows: [['Investor', 'Ann Lee'], ['Commitment', '$250,000'], ['Identity', 'Verified']], next: 'Next: countersign the subscription agreement in the console.' } });
   assert.equal(no.subject, 'Ann Lee finished onboarding for Harbor Ridge Fund II');
   for (const s of ['completed every onboarding step on November 12, 2026', 'Commitment: $250,000', 'Identity: Verified', 'Open the console:\nhttps://portal.example/diy.html#console-investors', 'countersign']) assert.ok(no.text.includes(s), s);
-  for (const m of [inv, re, no]) for (const banned of [/carrow/i, /vale\b/i, /powered by/i, /DIY Portal/i]) assert.ok(!banned.test(m.text + m.html), `${banned} in ${m.subject}`);
+  for (const m of [inv, re, no]) for (const banned of [/carrow/i, /vale\b/i, /powered by/i, /DIY Portal/i].concat(BANNED, [/anthropic/i, /claude/i])) assert.ok(!banned.test(stripLinkTokens(m.text + m.html)), `${banned} in ${m.subject}`);
 });

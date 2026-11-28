@@ -3,6 +3,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { BUILTINS, validateConnector, makeConnector } from '../providers/index.mjs';
 import { verify } from '../providers/connector.mjs';
 import { withServer, post, getJson, mockFetch } from './helpers.mjs';
@@ -31,6 +33,58 @@ test('signature headers over 2 KB are refused before any pattern runs', () => {
   const good = `v1=${sign('secret-1234', body)}`;
   assert.equal(verify(v, body, { 'x-sig': good }, { S: 'secret-1234' }, {}), true);
   assert.equal(verify(v, body, { 'x-sig': `${good},${'x'.repeat(2100)}` }, { S: 'secret-1234' }, {}), false);
+});
+
+/** A pattern whose first use holds the thread until the matcher's time limit stops it, as a busy machine does; later uses are instant. */
+const busyOnce = (src) => {
+  const p = { uses: 0, toString() {
+    p.uses += 1;
+    if (p.uses === 1) for (const end = Date.now() + 5000; Date.now() < end; );
+    return src;
+  } };
+  return p;
+};
+
+test('a correctly signed delivery is accepted when the machine is busy through the pattern time limit', () => {
+  const body = Buffer.from('{"id":"evt_busy"}');
+  const ts = String(Math.floor(Date.now() / 1000));
+  const header = `t=${ts},v1=${sign('secret-1234', `${ts}.${body}`)}`;
+  const pattern = busyOnce('v1=([0-9a-f]+)');
+  const timestampPattern = busyOnce('t=(\\d+)');
+  const v = { type: 'hmac', header: 'X-Sig', secret: '${env.S}', pattern, timestampPattern, signed: '{timestamp}.{body}' };
+  assert.equal(verify(v, body, { 'x-sig': header }, { S: 'secret-1234' }, {}), true, 'a genuine delivery was refused after the first time limit was missed');
+  assert.deepEqual([pattern.uses, timestampPattern.uses], [2, 2], 'each first attempt was stopped by the time limit and tried again');
+});
+
+/* The patterns below pass the load-time check, yet take seconds on 200 characters and days on 2,048; only the time limit stops them. */
+test('a slow pattern on a 2,048-character attacker header is cut off in bounded time', () => {
+  const connector = fileURLToPath(new URL('../providers/connector.mjs', import.meta.url));
+  const script = `
+    import { validateConnector, makeConnector } from ${JSON.stringify(connector)};
+    const def = (verify) => ({ id: 'acmeslow', name: 'Acme Verify', checks: ['identity'], env: ['S'], start: { link: 'https://verify.acme.example/{reference}' },
+      webhook: { verify: Object.assign({ type: 'hmac', header: 'X-Sig', secret: '\${env.S}' }, verify), ref: 'ref' } });
+    const slow = '\\\\w*\\\\w*\\\\w*\\\\w*(z)';
+    const cases = [
+      [def({ pattern: slow }), 'a'.repeat(2048)],
+      [def({ pattern: 'v1=([0-9a-f]+)', timestampPattern: slow, signed: '{timestamp}.{body}' }), 'v1=' + 'f'.repeat(64) + ',' + 'a'.repeat(2048 - 68)]
+    ];
+    const out = cases.map(([d, h]) => {
+      const problems = validateConnector(d);
+      const t = Date.now();
+      const ok = makeConnector(d, {}).verifyWebhook({ rawBody: Buffer.from('{}'), headers: { 'x-sig': h }, env: { S: 'secret-1234' }, query: {} });
+      return { problems, ok, ms: Date.now() - t, len: h.length };
+    });
+    console.log(JSON.stringify(out));
+  `;
+  const r = spawnSync(process.execPath, ['--input-type=module', '-e', script], { timeout: 6000, encoding: 'utf8' });
+  assert.notEqual(r.signal, 'SIGTERM', 'a slow pattern was still running after 6 seconds');
+  const out = JSON.parse(r.stdout);
+  for (const c of out) {
+    assert.deepEqual(c.problems, [], 'the load-time check accepts the pattern, so only the time limit protects');
+    assert.equal(c.len, 2048);
+    assert.equal(c.ok, false);
+    assert.ok(c.ms < 2000, `the slow pattern held the server for ${c.ms} ms`);
+  }
 });
 
 test('an unsigned id header with no body id de-duplicates by the exact body instead', async () => {

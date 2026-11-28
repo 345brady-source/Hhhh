@@ -1,0 +1,16 @@
+{
+  "_source": "https://docs.didit.me/integration/alert-webhooks",
+  "_status": "unconfirmed: documented shape quoted by search on 2026-11-19; to be confirmed in the sandbox by plan 08-12",
+  "reply": {
+    "event_id": "evt-fixture-alert-1",
+    "webhook_type": "aml.new_hit",
+    "timestamp": 1795046400,
+    "created_at": 1795046400,
+    "session_id": "11111111-2222-4333-8444-555555555555",
+    "status": "In Review",
+    "vendor_data": "scr_fixture",
+    "decision": {
+      "aml_screenings": [{ "status": "In Review", "hits": [{ "match_score": 93, "risk_score": 75 }] }]
+    }
+  }
+}

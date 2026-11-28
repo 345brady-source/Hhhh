@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:carrowvale.com)",
+      "WebFetch(domain:www.carrowvale.com)",
+      "Bash(curl -sSL https://www.carrowvale.com*)",
+      "Bash(curl -sSL https://carrowvale.com*)",
+      "Bash(curl -sSL https://unsplash.com/*)",
+      "Bash(curl -sSL https://images.unsplash.com/*)"
+    ]
+  }
+}

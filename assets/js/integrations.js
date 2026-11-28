@@ -244,6 +244,12 @@
    * exemption and the firm asks about accreditation. Another offering being Rule 506(c) does not make it required:
    * subscribing to that offering is gated on its own (subscribeGate, and the invitation flow's offering check).
    */
+  /**
+   * Plan 06-25: what the sponsor is told when the rule is "Never". Rule 506(c) allows accredited purchasers only, and the
+   * issuer must take reasonable steps to verify their status (Rule 506(c)(2)(ii)); with no verification step, investors in
+   * those offerings answer the accredited question themselves, and the verification is the sponsor's to do.
+   */
+  const NOTE_506C_NEVER = 'Rule 506(c) offerings take accredited investors only, and you must take reasonable steps to verify that each one is accredited. With this rule, investors in those offerings only answer the accredited question themselves: taking those verification steps is your responsibility.';
   function needsAccreditation(ws, inv, offering) {
     const r = ensure(ws).rules;
     if (r.accreditationFor === 'all') return true;
@@ -291,8 +297,22 @@
     if (body) headers['Content-Type'] = 'application/json';
     if (s.token) headers.Authorization = `Bearer ${s.token}`;
     const res = await fetch(serverUrl(ws) + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-    if (res.status === 401) throw new Error('The integration server did not accept the access token.');
-    if (!res.ok) throw new Error(`The integration server answered ${res.status}.`);
+    if (!res.ok) {
+      // The server's own sentence (plan 08-07): its refusals are written for the person reading them; the status and
+      // code travel with it. The two older sentences remain for a reply without one.
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = null;
+      }
+      const said = data && typeof data.error === 'string' && data.error.trim() ? data.error.trim() : '';
+      const err = new Error(said || (res.status === 401 ? 'The integration server did not accept the access token.' : `The integration server answered ${res.status}.`));
+      err.status = res.status;
+      err.code = data && typeof data.code === 'string' ? data.code : '';
+      err.server = !!said;
+      throw err;
+    }
     return res.json();
   }
   function investorPayload(ws, inv, extra) {
@@ -379,7 +399,9 @@
     log(ws, inv, RESULT[kind][outcome], `${v.via || 'Unknown connection'}${v.method ? `, ${v.method}` : ''}${v.ref ? ` (ref ${v.ref})` : ''}${v.expiresAt && outcome === 'verified' ? `; valid until ${date(v.expiresAt)}` : ''}${d.note ? `; note: ${d.note}` : ''}`, actor);
     if (kind === 'identity' && outcome === 'passed' && vOf(inv).aml.status !== 'clear') {
       // A connector on for identity and screening that screened with this check: use that result instead of calling again.
-      const pre = d.screening && d.screening.status && ensure(ws).use.aml.indexOf(v.connection) >= 0 ? { connection: v.connection, screening: d.screening } : null;
+      // Not for a package connection (plan 08-07): its names are screened through the server, which keeps the screening
+      // record the import is confirmed against (a result carried on the identity check has none).
+      const pre = d.screening && d.screening.status && ensure(ws).use.aml.indexOf(v.connection) >= 0 && !(conn(ws, v.connection) || {}).package ? { connection: v.connection, screening: d.screening } : null;
       await screen(ws, inv, pre);
     }
     decide(ws, inv);
@@ -409,6 +431,12 @@
       }
       try {
         const res = await api(ws, 'POST', '/v1/screenings', { provider: r.how === 'ofac' ? 'ofac' : x.connector, settings: {}, investor: investorPayload(ws, inv), names });
+        // How many names the server screened (plan 08-19): a package screening covers the names the server holds, not
+        // the ones sent, so the count shown is the server's.
+        if (Number.isInteger(res.screened) && res.screened >= 0) r.screened = res.screened;
+        // The provider keeps watching these names and alerts the server when they appear on a list (plan 08-08): no
+        // calendar re-screen for them.
+        if (res.monitoring === true) r.monitoring = true;
         return done(normScreen(res.status, res.hits), tagHits(res.hits, x.name), res.id);
       } catch (e) {
         r.error = e.message;
@@ -417,6 +445,19 @@
     }
     return r; // Screening by your team (or a connection that cannot screen): waits for the team to record a result.
   }
+  /** Every result of the newest screening is watched by its provider (its alerts reach the console, plan 08-08): no calendar re-screen. */
+  const monitored = (v) => {
+    const rs = (v && v.aml && v.aml.results) || [];
+    return rs.length > 0 && rs.every((r) => r.monitoring === true);
+  };
+  /** The verification package's connections (plan 08-05): an investor's device has them, the console never does. */
+  const PACKAGE_CONNECTIONS = ['package-id', 'package-acc'];
+  /** The newest screening ran through the verification package. */
+  const packageScreened = (v) => ((v && v.aml && v.aml.results) || []).some((r) => PACKAGE_CONNECTIONS.indexOf(r.connection) >= 0);
+  /** The free U.S. Treasury connection, when the firm's screening uses it. */
+  const freeConn = (ws) => (ensure(ws).use.aml.indexOf('ofac') >= 0 ? conn(ws, 'ofac') : null);
+  /** Can "Run now" re-screen this investor? One screened through the package only through the free Treasury connection (G4). */
+  const rescreenable = (ws, inv) => !packageScreened(peek(inv)) || !!freeConn(ws);
   function refreshAml(v) {
     const results = v.aml.results || [];
     v.aml.status = aggregate(results);
@@ -429,19 +470,70 @@
     const owners = ((inv.kyc && inv.kyc.owners) || []).map((o) => o && o.name);
     return Array.from(new Set([inv.contact, inv.title].concat(holderNames(inv), owners).map((n) => String(n || '').trim()).filter(Boolean)));
   }
+  /**
+   * R12 (plan 08-19): the role names a package screening covers beyond the invitation's own: a joint account's other
+   * holders and an entity's beneficial owners, without the investor's and the account's names, each once. None unless the
+   * screening runs through a package connection. The server keeps at most 5 of them.
+   */
+  function roleNames(ws, inv) {
+    if (!inv || !activeFor(ws, 'aml').some((x) => x && x.package)) return [];
+    const seen = [inv.contact, inv.title].map((n) => String(n || '').trim().toLowerCase());
+    return screenNames(inv).filter((n) => {
+      const k = n.toLowerCase();
+      if (seen.indexOf(k) >= 0) return false;
+      seen.push(k);
+      return true;
+    });
+  }
+  const nScreened = (n) => `${n} name${n === 1 ? '' : 's'} screened`;
+  /** The count the change log gives: the server's when the screenings that report one agree, each one's when they differ. */
+  function screenedText(names, results) {
+    const told = results.filter((r) => Number.isInteger(r.screened));
+    if (!told.length) return nScreened(names.length);
+    if (told.every((r) => r.screened === told[0].screened)) return nScreened(told[0].screened);
+    return told.map((r) => `${r.via}: ${nScreened(r.screened)}`).join('; ');
+  }
   /** Sanctions, PEP and adverse media screening of the investor, every joint owner and every beneficial owner, through every screening connection on. */
   async function screen(ws, inv, pre) {
     const v = vOf(inv);
     const names = screenNames(inv);
     const results = [];
+    // On an invitation's device, before a package screening: the role names go to the server first, which screens them with
+    // the invitation's own names (never names sent with the screening). A failure here does not stop the screening.
+    if (ws.invite && ws.invite.mode === 'server' && serverUrl(ws) && activeFor(ws, 'aml').some((x) => x && x.package)) {
+      try {
+        await api(ws, 'PUT', '/v1/invite/progress', { roles: roleNames(ws, inv) });
+      } catch (e) {
+        /* the server then screens the invitation's own names */
+      }
+    }
     for (const x of activeFor(ws, 'aml')) results.push(await screenWith(ws, inv, x, names, pre));
     const pep = (inv.kyc && inv.kyc.pep) || false;
-    v.aml = { status: 'pending', results, names, screenedAt: today(), nextScreen: addDays(today(), ruleDays(ensure(ws).rules, 'rescreenDays')) };
+    v.aml = { status: 'pending', results, names, screenedAt: today(), nextScreen: results.length && results.every((r) => r.monitoring === true) ? '' : addDays(today(), ruleDays(ensure(ws).rules, 'rescreenDays')) };
     refreshAml(v);
-    log(ws, inv, 'Sanctions and PEP screening run', `${names.length} name${names.length === 1 ? '' : 's'} screened. ${results.map((r) => `${r.via}: ${resultText(r)}`).join('. ')}${pep ? '. Self-declared politically exposed person' : ''}`);
+    log(ws, inv, 'Sanctions and PEP screening run', `${screenedText(names, results)}. ${results.map((r) => `${r.via}: ${resultText(r)}`).join('. ')}${pep ? '. Self-declared politically exposed person' : ''}`);
     syncKyc(ws, inv);
     watch(ws, inv); // a screening the server answers later is polled until it does
     return v.aml;
+  }
+  /**
+   * Re-screen through one connection alone (the free Treasury connection), keeping every other result as it was (plan 08-08):
+   * "Run now" for an investor screened through the package, and the automatic re-screen. auto: the automatic run, which
+   * writes nothing when the connection did not answer, so the investor stays due with "Run now". Resolves to the result, or
+   * null when nothing was written.
+   */
+  async function rescreenWith(ws, inv, x, auto) {
+    const v = vOf(inv);
+    const names = screenNames(inv);
+    const r = await screenWith(ws, inv, x, names);
+    if (auto && (r.error || r.status === 'pending')) return null;
+    const results = (v.aml.results || []).filter((y) => y.connection !== x.id).concat([r]);
+    v.aml = Object.assign({}, v.aml, { results, names, screenedAt: today(), nextScreen: addDays(today(), ruleDays(ensure(ws).rules, 'rescreenDays')) });
+    refreshAml(v);
+    log(ws, inv, auto ? 'Re-screened automatically' : 'Sanctions and PEP screening run', `${screenedText(names, [r])}. ${r.via}: ${resultText(r)}`);
+    syncKyc(ws, inv);
+    watch(ws, inv);
+    return r;
   }
   /** The team records a screening result for one connection (Screening by your team, or a screening that never answered). */
   function recordScreen(ws, inv, connectionId, outcome, note, actor) {
@@ -603,6 +695,7 @@
     // Results from before connections keep the method already on file.
     k.method = idVia && (v.identity.connection || !k.method) ? `${idVia}${v.identity.ref ? ` (ref ${v.identity.ref})` : ''}` : k.method || '';
     if (v.aml.screenedAt) {
+      if (monitored(v)) v.aml.nextScreen = ''; // watched by its provider: no calendar re-screen (plan 08-08)
       k.screenedOn = v.aml.screenedAt;
       k.screening = v.aml.status === 'clear' ? 'clear' : v.aml.status === 'pending' ? 'pending' : 'potential_match';
       k.lists = listsText(v);
@@ -623,19 +716,35 @@
       if (v.decision.status === 'review') out.review.push(inv);
       else if (v.decision.status === 'pending' && v.identity.status !== 'not_started') out.pending.push(inv);
       if (awaitingTeam(ws, inv).length) out.record.push(inv);
-      if (v.aml.nextScreen && v.aml.nextScreen <= today()) out.rescreen.push(inv);
+      if (!monitored(v) && v.aml.nextScreen && v.aml.nextScreen <= today()) out.rescreen.push(inv);
       if (v.accreditation.status === 'verified' && v.accreditation.expiresAt && v.accreditation.expiresAt <= in14 && v.accreditation.expiresAt >= soon) out.expiring.push(inv);
     });
     return out;
   }
   async function rescreenDue(ws) {
-    const list = due(ws).rescreen;
+    if (pulling.busy) await pulling.busy; // never alongside the console's own run: it may already have re-screened some
+    // An investor screened through the package is re-screened through the free Treasury connection alone, or left out when
+    // the firm has none: the package provider is never called from here (G4).
+    const list = due(ws).rescreen.filter((inv) => rescreenable(ws, inv));
     for (const inv of list) {
-      await screen(ws, inv);
+      if (packageScreened(peek(inv))) await rescreenWith(ws, inv, freeConn(ws));
+      else await screen(ws, inv);
       decide(ws, inv);
     }
     NS.app.save(true);
     return list.length;
+  }
+  /**
+   * One investor re-screened by a person on the AML/KYC page, by the rule "Run now" follows (G4): one screened through the
+   * package through the free Treasury connection alone, or not at all when the firm has none (resolves to null, nothing
+   * called); any other through every screening connection on. Resolves to { status } of what was written.
+   */
+  async function rescreenOne(ws, inv) {
+    if (!packageScreened(peek(inv))) return screen(ws, inv);
+    const x = freeConn(ws);
+    if (!x) return null;
+    const r = await rescreenWith(ws, inv, x);
+    return { status: vOf(inv).aml.status, result: r };
   }
   /** Ask the integration server for the latest status of open checks and screenings. */
   /** Open checks the integration server will answer for. */
@@ -674,6 +783,7 @@
       const s = await ask(`/v1/screenings/${encodeURIComponent(r.ref)}`);
       if (s.status && s.status !== 'pending') {
         Object.assign(r, { status: normScreen(s.status, s.hits), hits: tagHits(s.hits, r.via), screenedAt: today(), error: '' });
+        if (s.monitoring === true) r.monitoring = true;
         log(ws, inv, 'Screening result received', `${r.via}: ${resultText(r)}`);
         screened = true;
       }
@@ -757,6 +867,8 @@
         (x, i) => `<li class="iv-option"><div class="iv-option-text"><span class="iv-option-name">${h(x.name)}</span>${x.note ? `<span class="hint">${h(x.note)}</span>` : x.builtin === 'sandbox' ? '<span class="hint">Simulated, for trying the flow</span>' : x.builtin === 'manual' ? `<span class="hint">Upload a document for ${h(W().tenant.support.team)} to review</span>` : ''}</div><button class="btn${primary && i === 0 ? ' btn-primary' : ''}" type="button" data-action="iv-start" data-kind="${kind}" data-connection="${h(x.id)}">Continue with ${h(x.name)}</button></li>`
       )
       .join('')}</ul>`;
+  // The last start the server refused, per investor and check, in memory only (cleared by the next start or a reload).
+  const refusals = {};
   /** The verification panel inside the onboarding identity or accreditation step. */
   function stepPanel(ws, inv, kind) {
     const opts = options(ws, kind);
@@ -768,7 +880,8 @@
     const what = kind === 'identity'
       ? 'Take a photo of your government-issued ID and a quick selfie. It takes about two minutes.'
       : 'Show that you are an accredited investor: income, net worth, a letter from your CPA, attorney or adviser, or an existing verification.';
-    const handled = (x) => (x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
+    // The verification package (D-01, C-01): the provider's own page is seen only in the new tab, so the step names no one.
+    const handled = (x) => (x.package ? 'A secure page opens in a new tab for this step.' : x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
     const one = opts.length === 1 ? opts[0] : null;
     const url = v.status === 'pending' ? safeUrl(v.url) : '';
     // While an attempt through another connection (perhaps one since removed) is open, do not describe the remaining option as if it ran.
@@ -782,6 +895,7 @@
       ${v.status === 'pending' && v.how === 'server' ? `<p class="hint iv-note">Finish in the tab that opened. This page updates when you are done.${url ? ` <a href="${h(url)}" target="_blank" rel="noopener">Open it again</a>` : ''}</p>` : ''}
       ${v.status === 'failed' || v.status === 'rejected' ? `<p class="field-error">We could not complete this check. Try again, or contact ${h(t.support.team)} at ${h(t.support.email)}.</p>` : ''}
       ${one ? `<button class="btn ${done ? '' : 'btn-primary'}" type="button" data-action="iv-start" data-kind="${kind}" data-connection="${h(one.id)}">${done ? 'Start again' : startLabel(kind)}</button>` : `<p class="iv-choose">${done ? 'Start again with' : 'Choose how to verify'}</p>${optionRows(kind, opts, !done)}`}
+      ${refusals[`${inv.id}:${kind}`] ? `<p class="field-error iv-refused" role="alert">${h(refusals[`${inv.id}:${kind}`])}</p>` : ''}
     </div>`;
   }
   function canContinue(ws, inv, kind) {
@@ -872,6 +986,7 @@
     const id = el.getAttribute('data-connection');
     if (!id && opts.length > 1) return chooserDialog(kind, opts, back);
     const x = opts.find((y) => y.id === id) || opts[0];
+    delete refusals[`${inv.id}:${kind}`]; // a new start clears the last refusal
     // Open the tab while the click still counts as the investor's, so the browser does not block it.
     const tab = x.type === 'server' || x.type === 'link' ? window.open('', '_blank') : null;
     if (tab) tab.opener = null;
@@ -887,7 +1002,16 @@
       NS.app.render();
     } catch (e) {
       if (tab) tab.close();
-      U.toast(`Could not start the check: ${e.message}`);
+      if ((e && e.server) || x.package) {
+        // The server's own sentence (plan 08-07). Nothing the investor can retry (a returned package, the start limit)
+        // also gives the firm's contact, and so does every failed start of the verification package, whatever the
+        // reason (a lost connection reads the plain sentence, never the raw error). The line stays until the next start.
+        const said = e && e.server ? e.message : 'This check could not start. Please try again later.';
+        const firm = x.package || (e && (e.status === 403 || e.status === 409)) ? ` Contact ${ws.tenant.support.team} at ${ws.tenant.support.email}.` : '';
+        refusals[`${inv.id}:${kind}`] = `${said}${firm && !/[.!?]$/.test(said) ? '.' : ''}${firm}`;
+        U.toast(said);
+        NS.app.render();
+      } else U.toast(`Could not start the check: ${e.message}`);
     }
   };
   NS.actions['iv-sandbox-finish'] = async (el) => {
@@ -958,10 +1082,170 @@
     };
     job.timer = setTimeout(tick, slow ? 3000 : 5000);
   }
-  /** Resume polling for every investor with an open check (after a reload). */
+  /**
+   * Resume polling for every investor with an open check (after a reload). In the sponsor's console (never on an
+   * invitation's device) this also asks the server which checks changed since it last asked (pullChanged).
+   */
   function resume(ws) {
     if (!active(ws) || !serverUrl(ws)) return;
+    if (settleMonitored(ws)) setTimeout(() => W() === ws && NS.app.render(), 0); // local bookkeeping only: no connection
     ws.investors.forEach((inv) => watch(ws, inv, true));
+    ongoing(ws);
+  }
+
+  /* ---------- Ongoing screening (plan 08-08, D-04): what the server learned after a check finished ---------- */
+  const PULL_MS = 10 * 60 * 1000;
+  const pulling = { key: '', at: 0, busy: null, timer: null };
+  const BEGINNING = '1970-01-01T00:00:00.000Z';
+  const ms = (s) => Date.parse(String(s || '')) || 0;
+  /**
+   * The server the sponsor confirmed with "Check connection" on the Integrations page (it answered, at this address): the
+   * only one the console asks anything of by itself. An address that is only saved (never checked, or not reachable when
+   * checked), and every address in the owner's preview, is never asked. Settings checked before plan 08-08 kept only the
+   * status line, which then stands for the address saved.
+   */
+  const confirmed = (ws) => {
+    const s = ensure(ws).server;
+    return !!serverUrl(ws) && (s.confirmed === undefined ? /^Connected/.test(String(s.status || '')) : s.confirmed === serverUrl(ws));
+  };
+  /**
+   * At console load and at most every ten minutes after (one run at a time): the changed checks. Only in the sponsor's
+   * console with a server connected; an invitation's device never asks. Nothing it does shows an error: a pull that fails
+   * asks again from the same time next time.
+   */
+  function ongoing(ws) {
+    if (!ws || ws.invite || !active(ws) || !serverUrl(ws) || !confirmed(ws)) return null;
+    if (pulling.busy) return pulling.busy;
+    const key = `${ws.tenant.id}|${serverUrl(ws)}`;
+    if (pulling.key === key && Date.now() - pulling.at < PULL_MS) return null;
+    pulling.key = key;
+    pulling.at = Date.now();
+    clearTimeout(pulling.timer);
+    pulling.busy = (async () => {
+      let changed = false;
+      try {
+        changed = (await pullChanged(ws)) || changed;
+      } catch (e) {
+        /* asked again from the same time next time */
+      }
+      try {
+        changed = (await autoRescreen(ws)) || changed;
+      } catch (e) {
+        /* tried once for this due date; the investor stays due with "Run now" */
+      }
+      if (changed && W() === ws) NS.app.render();
+    })().finally(() => {
+      pulling.busy = null;
+      pulling.timer = setTimeout(() => W() === ws && ongoing(ws), PULL_MS);
+    });
+    return pulling.busy;
+  }
+  /**
+   * C-06: when the firm's screening uses the free U.S. Treasury connection, investors due for re-screening are re-screened
+   * through that connection alone, by themselves, when the console loads: one at a time, once per due date (a run that gets
+   * no answer writes nothing and is not tried again for that date, so the investor stays due with "Run now"), each with one
+   * change-log entry "Re-screened automatically". A sponsor's own paid connection and team screening never run by
+   * themselves (their results stay as they were); an investor whose screening is monitored is never due. Runs inside
+   * ongoing(), so never while another run is going. Resolves to whether anything was written.
+   */
+  async function autoRescreen(ws) {
+    const x = freeConn(ws);
+    if (!x || ws.invite || !serverUrl(ws)) return false;
+    let n = 0;
+    for (const inv of due(ws).rescreen) {
+      const v = vOf(inv);
+      const day = v.aml.nextScreen;
+      if (v.aml.autoFor === day) continue;
+      v.aml.autoFor = day; // kept before the call: a reload during the run, or a run that fails, does not try this date again
+      NS.app.save(true);
+      if (await rescreenWith(ws, inv, x, true)) {
+        decide(ws, inv);
+        n++;
+      }
+      NS.app.save(true);
+    }
+    return n > 0;
+  }
+  /**
+   * An investor whose screening is watched by its provider keeps no calendar date (an import caps the date it was given, so
+   * one may arrive with one): cleared at console load. Resolves to whether anything was written.
+   */
+  function settleMonitored(ws) {
+    let n = 0;
+    ws.investors.forEach((inv) => {
+      if (!recorded(inv) || !monitored(inv.verify) || (!inv.verify.aml.nextScreen && !(inv.kyc && inv.kyc.nextReview))) return;
+      inv.verify.aml.nextScreen = '';
+      syncKyc(ws, inv);
+      inv.kyc.nextReview = '';
+      n++;
+    });
+    if (n) NS.app.save(true);
+    return n > 0;
+  }
+  /** The hits a changed check carries, named for the reviewer: the server never sends the name screened, so the one screened when there was one. */
+  function pulledHits(v, hits, viaName) {
+    const names = v.aml.names || [];
+    return tagHits(hits, viaName).map((x) => Object.assign(x, { name: x.name || (names.length === 1 ? names[0] : 'One of the names screened') }));
+  }
+  /**
+   * GET /v1/checks/changed since the server's time of the last pull (ensure(ws).server.pulledAt; the beginning of time on the
+   * first). Each check is matched to an investor by its id (a screening result's ref, the identity check's ref) and applied
+   * only toward a hold: a screening that reads potential_match, an identity check that reads review. Never a clear: clearing
+   * stays a person's action on the AML/KYC page, and a person's decision made after the server's change stands. Each
+   * investor newly held gets one change-log entry "Monitoring alert". Resolves to whether anything changed.
+   */
+  async function pullChanged(ws) {
+    const s = ensure(ws).server;
+    // From the server's own time of the last pull, when it was this server; the beginning of time otherwise.
+    let since = s.pulledAt && s.pulledFor === serverUrl(ws) ? s.pulledAt : BEGINNING;
+    const checks = [];
+    // The server lists at most 500 at a time, oldest first: the rest are asked for at once (a first pull of a large book).
+    for (let page = 0; page < 20; page++) {
+      const r = await api(ws, 'GET', `/v1/checks/changed?since=${encodeURIComponent(since)}&workspace=${encodeURIComponent(ws.tenant.id)}`);
+      if (!r || !Array.isArray(r.checks)) break;
+      checks.push(...r.checks);
+      if (typeof r.now === 'string' && ms(r.now)) since = r.now;
+      if (r.checks.length < 500) break;
+    }
+    const touched = [];
+    checks.forEach((c) => {
+      if (!c || typeof c.id !== 'string' || !c.id) return;
+      const inv = ws.investors.find((i) => {
+        if (!recorded(i)) return false;
+        const v = peek(i);
+        return c.table === 'verifications' ? v.identity.ref === c.id : (v.aml.results || []).some((x) => x.ref === c.id);
+      });
+      if (!inv) return;
+      const v = vOf(inv);
+      if (v.decision.manual && ms(v.decision.at) >= ms(c.changedAt)) return; // a person decided after this change
+      let news = '';
+      if (c.table === 'screenings') {
+        const x = (v.aml.results || []).find((y) => y.ref === c.id);
+        if (c.monitoring) x.monitoring = true;
+        // Only a result that had come back clear is held again (one still waiting is poll's to finish).
+        if (c.status !== 'potential_match' || x.status !== 'clear') return;
+        Object.assign(x, { status: 'potential_match', hits: pulledHits(v, c.hits, x.via), screenedAt: today(), error: '' });
+        news = `${x.via}: ${x.hits.length} new potential match${x.hits.length === 1 ? '' : 'es'}${x.hits.length ? ` (${x.hits.map((y) => `${y.listed || y.name} on ${y.list}`).join('; ')})` : ''}`;
+      } else if (c.table === 'verifications' && c.kind === 'identity') {
+        if (c.status !== 'review' || v.identity.status !== 'passed') return;
+        const sc = c.screening && typeof c.screening === 'object' ? { status: normScreen(c.screening.status, c.screening.hits), hits: pulledHits(v, c.screening.hits, v.identity.via || 'Identity check') } : null;
+        Object.assign(v.identity, { status: 'review', completedAt: nowIso() }, sc ? { screening: sc } : {});
+        news = `${v.identity.via || 'Identity check'}: identity check needs review${sc && sc.hits.length ? ` (${sc.hits.map((y) => `${y.listed || y.name} on ${y.list}`).join('; ')})` : ''}`;
+      } else return;
+      const t = touched.find((y) => y.inv === inv);
+      if (t) t.news.push(news);
+      else touched.push({ inv, news: [news] });
+    });
+    s.pulledAt = since;
+    s.pulledFor = serverUrl(ws);
+    touched.forEach(({ inv, news }) => {
+      refreshAml(vOf(inv));
+      log(ws, inv, 'Monitoring alert', news.join('. '));
+      syncKyc(ws, inv);
+      decide(ws, inv);
+    });
+    NS.app.save(true);
+    return touched.length > 0;
   }
 
   /* ---------- Console: the Integrations page ---------- */
@@ -1020,6 +1304,172 @@
       `<button class="cs-btn" type="button" data-action="iv-conn-add">Add a connection</button>`
     );
   }
+  /* ---------- Console: Email sending (plan 13-12, EM-06, C-01, C-11) ----------
+   * The address the firm's emails go from, the DNS records its domain needs, and an honest status, read from and written
+   * to the integration server (GET/PUT /v1/mail/sender, POST /v1/mail/sender/check, plan 13-03). The server keeps an
+   * email waiting until the domain is Ready, and Check is what releases the waiting ones. Live sending stays "To be
+   * confirmed" until the server reports it (MAIL_LIVE, set by the operator after production access and a real send).
+   * Everything the server says is drawn as text. */
+  const MAIL_WORDS = { not_set_up: 'Not set up', pending: 'Waiting for DNS records', ready: 'Ready' };
+  const MAIL_BADGE = { not_set_up: 'cs-badge-mute', pending: 'cs-badge-warn', ready: 'cs-badge-ok' };
+  function mailState() {
+    const st = pageState();
+    if (!st.mail) st.mail = { url: '', loading: false, data: null, draft: null, error: '', fieldError: '', busy: '', released: 0 };
+    return st.mail;
+  }
+  /** notices@ the firm's own domain (its investor support address's). */
+  const suggestedFrom = (ws) => {
+    const d = String(((ws.tenant || {}).support || {}).email || '').split('@')[1] || '';
+    return d ? `notices@${d}` : '';
+  };
+  const cleanSender = (d) => ({
+    address: String(d.address || ''),
+    status: ['not_set_up', 'pending', 'ready', 'failed'].indexOf(d.status) >= 0 ? d.status : 'pending',
+    detail: String(d.detail || ''),
+    records: (Array.isArray(d.records) ? d.records : []).filter((r) => r && typeof r === 'object').map((r) => ({ type: String(r.type || ''), name: String(r.name || ''), value: String(r.value || '') })),
+    live: d.live === true
+  });
+  /** The server's own sentence; a reply that never came says so plainly. */
+  const mailSaid = (e) => (e && e.status ? e.message : 'The integration server could not be reached.');
+  const onPage = () => S().route === 'console-integrations';
+  async function mailLoad(ws) {
+    const m = mailState();
+    const url = serverUrl(ws);
+    m.url = url;
+    m.loading = true;
+    m.error = '';
+    try {
+      const d = await api(ws, 'GET', `/v1/mail/sender?workspace=${encodeURIComponent(ws.tenant.id)}`);
+      if (m.url !== url) return;
+      m.data = cleanSender(d);
+    } catch (e) {
+      if (m.url !== url) return;
+      m.error = mailSaid(e);
+    }
+    m.loading = false;
+    if (onPage()) NS.app.render();
+  }
+  function mailPanel(ws) {
+    const url = serverUrl(ws);
+    // Without a server: one line, and no request is made.
+    if (!url) return '<section class="cs-panel" id="iv-mail" aria-labelledby="iv-mail-h"><div class="cs-panel-head"><h2 id="iv-mail-h">Email sending</h2></div><p class="cs-hint">Sending from your own domain needs your integration server.</p></section>';
+    const m = mailState();
+    if (m.url !== url && !m.loading) {
+      m.data = null;
+      m.draft = null;
+      m.fieldError = '';
+      m.released = 0;
+      m.url = url;
+      m.loading = true;
+      Promise.resolve().then(() => mailLoad(ws));
+    }
+    const d = m.data;
+    const value = m.draft !== null ? m.draft : d && d.address ? d.address : suggestedFrom(ws);
+    const fe = m.fieldError;
+    const status = !d ? '' : d.status === 'failed' ? d.detail || 'A record does not match; check it was copied exactly.' : MAIL_WORDS[d.status];
+    const rec = (r, i) => {
+      const item = (k, label, v, copy) =>
+        `<div><dt>${label}</dt><dd>${copy ? `<code class="sd-link ms-${k}" id="ms-${k}-${i}">${h(v)}</code><span class="cs-row ms-copy-row"><button class="cs-btn cs-btn-small" type="button" data-action="ms-copy" data-for="ms-${k}-${i}" aria-label="Copy the ${label.toLowerCase()} of record ${i + 1}">Copy</button><span class="cs-hint ms-said" aria-live="polite"></span></span>` : `<span class="ms-${k}">${h(v)}</span>`}</dd></div>`;
+      return `<li class="ms-rec" style="border: 1px solid var(--line); border-radius: var(--r-inner); padding: var(--space-sm) var(--space-md)"><dl class="cs-kv" style="grid-template-columns: minmax(0, 1fr)">${item('type', 'Type', r.type, false)}${item('name', 'Name', r.name, true)}${item('value', 'Value', r.value, true)}</dl></li>`;
+    };
+    const set = !!d && d.status !== 'not_set_up';
+    const body = `<form class="ms-form" data-form="ms-setup" novalidate>
+        <div class="cs-row" style="align-items: flex-end; flex-wrap: wrap">
+          <label class="cs-field" for="ms-from" style="flex: 1 1 16rem; min-width: 0"><span>From address</span><input id="ms-from" type="email" inputmode="email" autocomplete="off" spellcheck="false" value="${h(value)}" data-input="ms-from"${fe ? ' aria-invalid="true" aria-describedby="ms-from-err"' : ''}${m.busy ? ' disabled' : ''}>${fe ? `<span class="cs-error" id="ms-from-err">${h(fe)}</span>` : ''}</label>
+          <button class="cs-btn" type="submit"${m.busy ? ' disabled' : ''}>Set up</button>
+        </div>
+      </form>
+      ${!status ? '' : d.status === 'failed' ? `<p class="cs-error ms-state" id="ms-status" tabindex="-1">${h(status)}</p>` : `<p class="ms-state"><span class="cs-badge ${MAIL_BADGE[d.status]}" id="ms-status" tabindex="-1">${h(status)}</span></p>`}
+      ${m.error ? `<p class="cs-error" id="ms-error" role="alert">${h(m.error)}</p>` : ''}
+      ${d && d.records.length && d.status !== 'ready' ? `<p class="cs-hint">Add these records where your domain's DNS is managed, then choose Check.</p>` : ''}
+      ${d && d.records.length ? `<ul class="cs-list ms-records" style="list-style: none; padding-left: 0; gap: var(--space-md)">${d.records.map(rec).join('')}</ul>` : ''}
+      ${set ? `<div class="cs-row"><button class="cs-btn" type="button" data-action="ms-check"${m.busy ? ' disabled' : ''}>${m.busy === 'check' ? 'Checking…' : 'Check'}</button></div>` : ''}
+      ${d && d.status !== 'ready' ? `<p class="cs-hint ms-until">Until then, emails wait on your integration server and are not sent.</p>${set ? '<p class="cs-hint">Once the status is Ready, Check releases them.</p>' : ''}` : ''}
+      ${m.released > 0 ? `<p class="cs-hint ms-released">${m.released} waiting email${m.released === 1 ? '' : 's'} released for sending.</p>` : ''}
+      ${d && !d.live ? '<p class="cs-hint ms-live">Live sending: To be confirmed</p>' : ''}`;
+    return `<section class="cs-panel" id="iv-mail" aria-labelledby="iv-mail-h"><div class="cs-panel-head"><h2 id="iv-mail-h">Email sending</h2></div>${body}</section>`;
+  }
+  NS.changes['ms-from'] = (el) => {
+    mailState().draft = el.value;
+  };
+  NS.forms['ms-setup'] = async (f) => {
+    const ws = W();
+    const m = mailState();
+    if (m.busy || !serverUrl(ws)) return;
+    const input = f.querySelector('#ms-from');
+    const address = String(input ? input.value : m.draft || '').trim();
+    m.busy = 'setup';
+    m.fieldError = '';
+    m.error = '';
+    NS.app.render();
+    let ok = false;
+    try {
+      const d = await api(ws, 'PUT', '/v1/mail/sender', { workspace: ws.tenant.id, address });
+      m.data = cleanSender(Object.assign({}, m.data || {}, d, { detail: d.detail || '' }));
+      m.draft = null;
+      m.released = 0;
+      ok = true;
+      NS.consoleKit.audit('Email sending address set up', `${m.data.address}: ${MAIL_WORDS[m.data.status] || m.data.status}`);
+      NS.app.save(true);
+    } catch (e) {
+      m.fieldError = mailSaid(e);
+    }
+    m.busy = '';
+    if (!onPage()) return;
+    NS.app.render();
+    const el = document.getElementById(ok ? 'ms-status' : 'ms-from');
+    if (el) el.focus();
+  };
+  NS.actions['ms-check'] = async () => {
+    const ws = W();
+    const m = mailState();
+    if (m.busy || !serverUrl(ws)) return;
+    m.busy = 'check';
+    m.error = '';
+    NS.app.render();
+    try {
+      const d = await api(ws, 'POST', '/v1/mail/sender/check', { workspace: ws.tenant.id });
+      m.data = cleanSender(Object.assign({}, m.data || {}, d));
+      m.released = Math.max(0, Math.round(Number(d.released) || 0));
+      NS.consoleKit.audit('Email sending checked', `${m.data.status === 'failed' ? m.data.detail : MAIL_WORDS[m.data.status]}${m.released ? `; ${m.released} waiting email${m.released === 1 ? '' : 's'} released` : ''}`);
+      NS.app.save(true);
+    } catch (e) {
+      m.error = mailSaid(e);
+    }
+    m.busy = '';
+    if (!onPage()) return;
+    NS.app.render();
+    const el = document.getElementById('ms-status') || document.getElementById('ms-error');
+    if (el) el.focus();
+  };
+  /** Copy a record's name or value; where the clipboard is refused, it is left selected with a short line, no error. */
+  NS.actions['ms-copy'] = (el) => {
+    const target = document.getElementById(el.getAttribute('data-for'));
+    if (!target) return;
+    const value = target.textContent;
+    const said = el.parentElement ? el.parentElement.querySelector('.ms-said') : null;
+    const say = (t) => {
+      if (said) said.textContent = t;
+    };
+    const select = () => {
+      try {
+        const r = document.createRange();
+        r.selectNodeContents(target);
+        const s = window.getSelection();
+        s.removeAllRanges();
+        s.addRange(r);
+      } catch (e) {
+        /* the selection is a help only */
+      }
+      say('Selected: copy it from the menu.');
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(value).then(() => say('Copied'), select);
+      else select();
+    } catch (e) {
+      select();
+    }
+  };
   NS.views['console-integrations'] = {
     mode: 'console',
     edition: 'diy',
@@ -1035,12 +1485,13 @@
         `${K.head('Integrations', 'Investors are verified while they onboard: identity, sanctions and PEP screening, and accredited investor status for Rule 506(c) offerings. Plug in the verification services you already use, as many as you need for each check, then set the rules for approval.', `<button class="cs-btn cs-btn-primary" type="button" data-action="iv-save">${c.configured ? 'Save' : 'Save and turn on'}</button>`)}
         ${errs.length ? `<div class="iv-errors" role="alert"><p>Fix these before turning verification on:</p><ul class="cs-errors">${errs.map((e) => `<li>${h(e)}</li>`).join('')}</ul></div>` : ''}
         ${summaryPanel(ws)}
+        ${NS.pkg && NS.pkg.panel ? NS.pkg.panel(ws) : ''}
         ${connectionsPanel(ws)}
         ${K.panel(
           'Approval rules',
           `<div class="cs-grid cs-grid-3">
             <label class="cs-check" for="iv-auto"><input id="iv-auto" type="checkbox" data-bind="ivr:autoApprove"${r.autoApprove ? ' checked' : ''}><span>Approve investors automatically when every check passes<span class="cs-hint">Anything flagged waits on the AML/KYC page for your team.</span></span></label>
-            <label class="cs-field" for="iv-accfor"><span>Require verified accreditation</span><select id="iv-accfor" data-bind="ivr:accreditationFor"><option value="506c"${r.accreditationFor === '506c' ? ' selected' : ''}>For Rule 506(c) offerings</option><option value="all"${r.accreditationFor === 'all' ? ' selected' : ''}>For every offering</option><option value="none"${r.accreditationFor === 'none' ? ' selected' : ''}>Never (self-certification only)</option></select></label>
+            <label class="cs-field" for="iv-accfor"><span>Require verified accreditation</span><select id="iv-accfor" data-bind="ivr:accreditationFor"><option value="506c"${r.accreditationFor === '506c' ? ' selected' : ''}>For Rule 506(c) offerings</option><option value="all"${r.accreditationFor === 'all' ? ' selected' : ''}>For every offering</option><option value="none"${r.accreditationFor === 'none' ? ' selected' : ''}>Never (self-certification only)</option></select>${r.accreditationFor === 'none' ? `<span class="cs-hint iv-warn" id="iv-accfor-note">${h(NOTE_506C_NEVER)}</span>` : ''}</label>
             <label class="cs-field" for="iv-valid"><span>Accreditation valid for (days)</span><input id="iv-valid" type="number" min="30" max="365" step="1" data-bind="ivr:validDays" value="${h(r.validDays)}"><span class="cs-hint">90 days is the common practice for Rule 506(c). A provider’s shorter expiry wins.</span></label>
             <label class="cs-field" for="iv-rescreen"><span>Re-screen investors every (days)</span><input id="iv-rescreen" type="number" min="1" max="365" step="1" data-bind="ivr:rescreenDays" value="${h(r.rescreenDays)}"></label>
             <label class="cs-check" for="iv-pep"><input id="iv-pep" type="checkbox" data-bind="ivr:holdOnPep"${r.holdOnPep ? ' checked' : ''}><span>Hold politically exposed persons for enhanced due diligence</span></label>
@@ -1056,6 +1507,7 @@
           <div class="cs-row iv-check-row"><button class="cs-btn" type="button" data-action="iv-check"${st.checking ? ' disabled' : ''}>${st.checking ? 'Checking…' : 'Check connection'}</button>${c.server.status ? `<span class="cs-hint" id="iv-server-status">${h(c.server.status)}${c.server.checkedAt ? `, ${h(date(c.server.checkedAt.slice(0, 10)))}` : ''}</span>` : ''}</div>
           ${list.length ? `<ul class="cs-list iv-connectors">${list.map((x) => `<li><strong>${h(x.name || x.id)}</strong> <code>${h(x.id)}</code> · ${h(checkList(x.checks))}${x.builtin ? ' · built in' : ''} · ${x.configured ? 'ready' : `<span class="cs-error">missing ${x.missing.map((m) => h(m)).join(', ') || 'settings'}</span>`}</li>`).join('')}</ul>` : ''}`
         )}
+        ${mailPanel(ws)}
         ${activity(ws)}`,
         'console-integrations'
       );
@@ -1086,6 +1538,12 @@
     const r = ensure(W()).rules;
     if (RULE_DAYS[path]) r[path] = days(v, r[path], RULE_DAYS[path][0], RULE_DAYS[path][1]);
     else r[path] = v;
+    // The note under "Require verified accreditation" follows the choice (plan 06-25).
+    if (path === 'accreditationFor') {
+      NS.app.render();
+      const again = document.getElementById('iv-accfor');
+      if (again) again.focus();
+    }
   };
   NS.binders.ivserver = (path, v) => {
     if (path === 'url' || path === 'token') ensure(W()).server[path] = String(v).trim();
@@ -1138,8 +1596,10 @@
       s.connectors = list;
       const ready = list.filter((x) => x.configured).length;
       s.status = `Connected: ${list.length} connector${list.length === 1 ? '' : 's'}, ${ready} ready${note}`;
+      s.confirmed = serverUrl(ws); // the console's own pulls and free re-screens use this server (plan 08-08)
     } catch (e) {
       s.status = `Not reachable (${e.message})`;
+      s.confirmed = '';
     }
     s.checkedAt = nowIso();
     st.checking = false;
@@ -1301,10 +1761,11 @@
     const d = due(ws);
     const c = ensure(ws);
     const items = [];
+    const runnable = d.rescreen.filter((inv) => rescreenable(ws, inv));
     if (d.review.length) items.push(`<li><a href="#console-kyc">${d.review.length} investor${d.review.length === 1 ? '' : 's'} held for review by automated verification</a></li>`);
     if (d.record.length) items.push(`<li><a href="#console-kyc">${d.record.length} investor${d.record.length === 1 ? '' : 's'} waiting for your team to record a verification result</a></li>`);
     else if (d.pending.length) items.push(`<li><a href="#console-kyc">${d.pending.length} investor verification${d.pending.length === 1 ? '' : 's'} waiting for a provider result</a></li>`);
-    if (d.rescreen.length) items.push(`<li><a href="#console-kyc" data-action="iv-rescreen">${d.rescreen.length} investor${d.rescreen.length === 1 ? ' is' : 's are'} due for re-screening. Run now</a></li>`);
+    if (runnable.length) items.push(`<li><a href="#console-kyc" data-action="iv-rescreen">${runnable.length} investor${runnable.length === 1 ? ' is' : 's are'} due for re-screening. Run now</a></li>`);
     if (d.expiring.length) items.push(`<li><a href="#console-kyc">${d.expiring.length} accreditation verification${d.expiring.length === 1 ? '' : 's'} expire within 14 days</a></li>`);
     if (NS.app.can('configure')) {
       if (!ready(ws)) items.push('<li><a href="#console-integrations">Investor verification is in sandbox mode. Plug in your verification providers</a></li>');
@@ -1328,5 +1789,9 @@
     return `<div class="iv-banner" role="status">${icon('alert')}<span>${msg}</span></div>`;
   });
 
-  NS.integrations = { CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
+  NS.integrations = { NOTE_506C_NEVER, CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, rescreenOne, rescreenable, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
+  NS.integrations.roleNames = roleNames;
+  // The console's call to its integration server (plans 13-06, 13-08, 13-09): api(ws, method, path, body) → the JSON answer;
+  // a refusal rejects with the server's own sentence as the message (err.status, err.code, err.server = true).
+  NS.integrations.api = api;
 })(window.CVPortal);

@@ -1,0 +1,1363 @@
+[
+ {
+  "screen": "welcome",
+  "item": "Heading \"Welcome, <first name>\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading; it greets the person the invitation is for.",
+  "text": "Welcome, Dana",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "First sentence: who invited the investor and to what (the account named when it is not the person)",
+  "decision": "keep",
+  "reason": "The investor needs to know who is asking and for which offering and account before consenting.",
+  "text": "Kestrel Bay Capital invited you to open an investor account and subscribe to Kestrel Bay Fund II, L.P.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "The account named for an entity account in the first sentence",
+  "decision": "keep",
+  "reason": "Replaces the removed \"Account\" row: an entity investor sees which account the invitation is for.",
+  "text": "invited you to open an investor account for Whitfield Holdings LLC",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"This page takes you through every step, from creating your login to signing your subscription documents.\"",
+  "decision": "remove",
+  "reason": "Describes the page; the steps themselves and the step counter show it.",
+  "text": "This page takes you through every step",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "On file: \"Your account details are already on file.\"",
+  "decision": "keep",
+  "reason": "Tells an investor on file why they are not asked for their details again.",
+  "text": "Your account details are already on file.",
+  "paths": [
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "On file: \"so this page takes you through the subscription: the offering documents, your commitment and the subscription agreement.\"",
+  "decision": "remove",
+  "reason": "Describes the page; not needed to give consent.",
+  "text": "so this page takes you through the subscription",
+  "paths": [
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Facts row \"Invited by\"",
+  "decision": "remove",
+  "reason": "Repeats the first sentence.",
+  "text": "Invited by",
+  "paths": [
+   "individual-506b",
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Facts row \"Account\" (name and kind)",
+  "decision": "remove",
+  "reason": "Not needed to consent; an entity account is named in the first sentence and the kind of account is chosen on Investor information.",
+  "text": "Dana Whitfield · Individual",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Facts row \"Offering\" (name and type)",
+  "decision": "remove",
+  "reason": "The offering is named in the first sentence; its type is in the offering documents.",
+  "text": "Kestrel Bay Fund II, L.P. · Private equity fund",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Facts row \"Commitment\" (when the firm set the amount)",
+  "decision": "remove",
+  "reason": "The amount is shown where the investor commits, on Subscription.",
+  "text": "Commitment",
+  "paths": [
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "The firm's own note to this investor (when the sponsor wrote one)",
+  "decision": "keep",
+  "reason": "The sponsor's message to this investor can carry instructions the investor needs; it is the sponsor's text, not the portal's."
+ },
+ {
+  "screen": "welcome",
+  "item": "Closed-offering note (\"is no longer accepting subscriptions, so this page sets up your account only\")",
+  "decision": "keep",
+  "reason": "Tells the investor no subscription can be made, which changes what they are doing.",
+  "heldBy": "status-flow (existing flows with a closed offering are unchanged)"
+ },
+ {
+  "screen": "welcome",
+  "item": "\"What you will need\" heading",
+  "decision": "remove",
+  "reason": "Each step asks for what it needs when it needs it.",
+  "text": "What you will need",
+  "paths": [
+   "individual-506b",
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"A government-issued photo ID ...\" / entity: \"Where the account was formed ...\"",
+  "decision": "remove",
+  "reason": "The identity and investor information steps ask for these themselves.",
+  "text": "A government-issued photo ID",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Entity list item \"Where the account was formed, and the name of anyone who owns 25% or more of it\"",
+  "decision": "remove",
+  "reason": "Investor information asks for these itself.",
+  "text": "Where the account was formed",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"Your Social Security number, or your foreign tax number ...\"",
+  "decision": "remove",
+  "reason": "Investor information asks for it itself.",
+  "text": "Your Social Security number, or your foreign tax number",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"Your bank's routing number and your account number, for distributions\"",
+  "decision": "remove",
+  "reason": "The payment step asks for them itself.",
+  "text": "routing number and your account number, for distributions",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"About 10-15 minutes. Your progress is saved after each step ...\"",
+  "decision": "remove",
+  "reason": "A time no one measured; \"progress is saved\" is already on every step.",
+  "text": "About 10",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "On file: \"About 5 minutes. Your investor information, tax form and distribution account stay as they are on file.\"",
+  "decision": "remove",
+  "reason": "A time no one measured; the sentence kept above says the details are on file.",
+  "text": "About 5 minutes",
+  "paths": [
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Consent box title \"Consent to electronic records and signatures\"",
+  "decision": "keep",
+  "reason": "E-SIGN Act (15 U.S.C. 7001(c)): consent to electronic records must be given after the required disclosures; the title names what is consented to.",
+  "text": "Consent to electronic records and signatures",
+  "paths": [
+   "individual-506b",
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Consent scope (\"asks to provide your account documents to you electronically and to have you sign them electronically, under ... ESIGN ... UETA\")",
+  "decision": "keep",
+  "reason": "E-SIGN 7001(c)(1)(B)(ii): the consumer is told what the consent applies to.",
+  "text": "asks to provide your account documents to you electronically",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"Your electronic signature is binding.\"",
+  "decision": "keep",
+  "reason": "States the legal effect of what the investor consents to (ESIGN, UETA).",
+  "text": "Your electronic signature is binding.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"Paper copies.\" (how to get one, at no charge)",
+  "decision": "keep",
+  "reason": "E-SIGN 7001(c)(1)(B)(iv): how to obtain a paper copy and any fee.",
+  "text": "Paper copies.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"Withdrawing consent.\"",
+  "decision": "keep",
+  "reason": "E-SIGN 7001(c)(1)(B)(i), (iii): the right to withdraw consent and how.",
+  "text": "Withdrawing consent.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "\"What you need.\" (browser that shows PDFs, email access, tell us if it changes)",
+  "decision": "keep",
+  "reason": "E-SIGN 7001(c)(1)(C)(i) and (B)(iii): hardware and software requirements and updating contact information.",
+  "text": "What you need.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Tick \"I agree to use electronic records and signatures, and I have read the information above.\"",
+  "decision": "keep",
+  "reason": "The E-SIGN consent itself; nothing electronic can be signed without it.",
+  "text": "I agree to use electronic records and signatures",
+  "paths": [
+   "individual-506b",
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "welcome",
+  "item": "Tick \"I consent to receive statements and notices electronically ...\" (when the firm requires electronic delivery)",
+  "decision": "keep",
+  "reason": "Consent to electronic delivery the firm requires for this portal (E-SIGN). Tax documents are not covered by it: they have their own optional consent on Documents (plan 10-06, Rev. Proc. 2012-17).",
+  "text": "I consent to receive statements and notices electronically",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "login",
+  "item": "Heading \"Create your login\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading.",
+  "text": "Create your login",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "login",
+  "item": "Lede \"You will sign in to <portal> with this email and password.\"",
+  "decision": "remove",
+  "reason": "Repeats the heading.",
+  "text": "You will sign in to",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "login",
+  "item": "First and last name of the person signing in",
+  "decision": "keep",
+  "reason": "Who the login belongs to; the step cannot be completed without them.",
+  "text": "First name",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "login",
+  "item": "Email (read only)",
+  "decision": "keep",
+  "reason": "The username the investor signs in with.",
+  "text": "Email",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "login",
+  "item": "Password, hint \"At least 10 characters\"",
+  "decision": "keep",
+  "reason": "The password, and the rule it must meet to be accepted.",
+  "text": "At least 10 characters",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "login",
+  "item": "Confirm password",
+  "decision": "keep",
+  "reason": "The step checks the two match, so a mistyped password is caught before the investor is locked out.",
+  "text": "Confirm password",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "login",
+  "item": "Note \"Each time you sign in from a new device you will also enter a 6-digit code ...\"",
+  "decision": "remove",
+  "reason": "Not needed to create the login; the code is asked for when it is needed.",
+  "text": "Each time you sign in from a new device",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Heading \"Investor information\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading.",
+  "text": "Investor information",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Lede \"This appears on your account, your subscription documents and your tax forms.\"",
+  "decision": "remove",
+  "reason": "Explains where the details go; not needed to give them.",
+  "text": "This appears on your account",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "\"Investing as\" (kind of account)",
+  "decision": "keep",
+  "reason": "Decides which identity details, beneficial owners and tax form apply (CIP, CDD rule).",
+  "text": "Investing as",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Legal name fields, hint \"Your legal name, as on your government ID\"",
+  "decision": "keep",
+  "reason": "CIP (31 CFR 1010.230, 1020.220) needs the legal name; the hint says which name, so the identity check matches.",
+  "text": "Your legal name, as on your government ID",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Entity legal name, hint \"The legal name of the entity\"",
+  "decision": "keep",
+  "reason": "CDD rule: the legal entity's name.",
+  "text": "The legal name of the entity",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Country, mailing address, city, state, ZIP or postal code",
+  "decision": "keep",
+  "reason": "CIP requires an address.",
+  "text": "Mailing address",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Phone",
+  "decision": "keep",
+  "reason": "Carried into the subscription agreement the investor signs; without it the investor types it into the agreement.",
+  "text": "Phone",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Date of birth",
+  "decision": "keep",
+  "reason": "CIP requires the date of birth of an individual.",
+  "text": "Date of birth",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Citizenship",
+  "decision": "keep",
+  "reason": "Decides U.S. person status for the tax form and the identity check.",
+  "text": "Citizenship",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "State or country of formation (entity, trust) / custodian (IRA)",
+  "decision": "keep",
+  "reason": "CDD rule and the identity check for an account that is not a person.",
+  "text": "State or country of formation",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Controlling person / trustee (read only)",
+  "decision": "keep",
+  "reason": "CDD rule: one individual with control of the entity.",
+  "text": "Controlling person",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Beneficial owners instruction (\"list each person who owns 25% or more ... If no one does, list the person who controls the account\")",
+  "decision": "keep",
+  "reason": "CDD rule (31 CFR 1010.230(d)): the instruction the investor needs to fill the owners correctly.",
+  "text": "Beneficial owners: list each person who owns 25% or more",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Beneficial owner names and ownership percentages",
+  "decision": "keep",
+  "reason": "CDD rule: each 25 percent owner.",
+  "text": "Beneficial owner: first name",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Taxpayer ID, hint \"Nine digits.\"",
+  "decision": "keep",
+  "reason": "CIP requires an identification number; the hint is the format the step accepts.",
+  "text": "Nine digits.",
+  "paths": [
+   "individual-506b",
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Hint \"Stored encrypted; only the last four are shown again.\"",
+  "decision": "remove",
+  "reason": "Reassurance; not needed to enter the number.",
+  "text": "Stored encrypted",
+  "paths": [
+   "individual-506b",
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Optional taxpayer ID hint: \"Only if you have one.\" kept, \"You give your foreign tax number in the tax step.\" removed",
+  "decision": "remove",
+  "reason": "The second sentence describes a later step (rebuilt by the tax plans).",
+  "heldBy": "foreign individual paths (not walked by part lean)"
+ },
+ {
+  "screen": "profile",
+  "item": "Politically exposed person question",
+  "decision": "keep",
+  "reason": "The firm's AML program needs it to decide on enhanced due diligence.",
+  "text": "senior political figure",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "profile",
+  "item": "Option hint \"<team> will contact you for enhanced due diligence\"",
+  "decision": "remove",
+  "reason": "Not needed to answer the question.",
+  "text": "will contact you for enhanced due diligence",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "identity",
+  "item": "Heading \"Identity verification\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading.",
+  "text": "Identity verification",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "identity",
+  "item": "Lede \"<firm> is required to verify the identity of every investor before accepting an investment.\"",
+  "decision": "remove",
+  "reason": "Explains the firm's own duty (sponsor-facing); not needed to do the check.",
+  "text": "is required to verify the identity of every investor",
+  "paths": [
+   "individual-506b",
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "identity",
+  "item": "Entity: \"The check is for <person>, who controls the account.\"",
+  "decision": "keep",
+  "reason": "Tells the investor whose ID to use; without it the wrong person may verify.",
+  "text": "The check is for Dana Whitfield, who controls the account.",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "identity",
+  "item": "The identity check panel (\"Identity check\", instructions, \"Verify my identity\")",
+  "decision": "keep",
+  "reason": "The check itself. Its text (including \"It takes about two minutes\") comes from the identity panel shared with the managed edition, which C-03 leaves unchanged; listed for the owner.",
+  "text": "Verify my identity",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "identity",
+  "item": "Note \"Sanctions and politically exposed person screening ... runs automatically ... nothing to fill in ...\"",
+  "decision": "remove",
+  "reason": "Describes something the investor has nothing to do for.",
+  "text": "Sanctions and politically exposed person screening",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "accreditation",
+  "item": "Heading \"Accredited investor verification\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading.",
+  "text": "Accredited investor verification",
+  "paths": [
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "accreditation",
+  "item": "Lede \"<firm> offers interests only to verified accredited investors (Rule 506(c)), so your accredited status is confirmed by a third party ...\"",
+  "decision": "remove",
+  "reason": "Explains the firm's reason; the panel says what to do.",
+  "text": "confirmed by a third party rather than self-certified",
+  "paths": [
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "accreditation",
+  "item": "The accreditation check panel (\"Accreditation check\", \"Verify my accreditation\")",
+  "decision": "keep",
+  "reason": "Rule 506(c)(2)(ii): the issuer must take reasonable steps to verify; this is the verification.",
+  "text": "Verify my accreditation",
+  "paths": [
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "accreditation",
+  "item": "Tick \"I confirm the information I provide is accurate and will tell <firm> if it changes.\"",
+  "decision": "keep",
+  "reason": "The purchaser's written representation the verification methods rely on (Rule 506(c)(2)(ii)(B) asks for one under the net worth method).",
+  "text": "I confirm the information I provide is accurate",
+  "paths": [
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "accreditation",
+  "item": "Note when the step appears late (\"A self-certification is not enough for this offering ...\")",
+  "decision": "keep",
+  "reason": "Tells the investor why they were sent back to this step before subscribing.",
+  "heldBy": "status-flow parts with a lapsed verification (unchanged)"
+ },
+ {
+  "screen": "status",
+  "item": "Heading \"Investor status\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading.",
+  "text": "Investor status",
+  "paths": [
+   "individual-506b",
+   "entity-rega2",
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Rule 506(b) lede (\"<firm> may accept a limited number of investors who are not accredited, so it asks about your status ...\")",
+  "decision": "remove",
+  "reason": "Explains the firm's reasons; the questions speak for themselves.",
+  "text": "may accept a limited number of investors",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "\"You may leave any question unanswered.\"",
+  "decision": "remove",
+  "reason": "Nothing on the step is required (D-30); the investor finds that out by continuing, and the sentence is needed by no one.",
+  "text": "leave any question unanswered",
+  "paths": [
+   "individual-506b",
+   "entity-rega2",
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Regulation A Tier 2 notice: \"<offering> is offered under Tier 2 of Regulation A. If you are not an accredited investor, what you may put into this offering is limited to 10 percent ...\"",
+  "decision": "keep",
+  "reason": "Rule 251(d)(2)(i)(C): the investor is told of the limit before investing.",
+  "text": "what you may put into this offering is limited to 10 percent",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Regulation A Tier 2: \"<firm> asks you to confirm that your investment is within that limit.\"",
+  "decision": "remove",
+  "reason": "The statement to tick asks it; this sentence repeats it.",
+  "text": "asks you to confirm that your investment is within that limit",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Lede when the firm asks the accredited question (\"<firm> asks each investor whether they are an accredited investor under Regulation D.\")",
+  "decision": "remove",
+  "reason": "Repeats the question.",
+  "heldBy": "status-flow part other"
+ },
+ {
+  "screen": "status",
+  "item": "Lede when only the benefit plan question is asked (\"Your accreditation is verified in its own step, so this step asks only whether ...\")",
+  "decision": "remove",
+  "reason": "Describes the step.",
+  "text": "verified in its own step",
+  "paths": [
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Lede with the firm's accredited question off (\"This step asks only whether ...\")",
+  "decision": "remove",
+  "reason": "Describes the step.",
+  "text": "This step asks only whether",
+  "paths": [
+   "individual-rega1"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Question \"Is <account> an accredited investor?\"",
+  "decision": "keep",
+  "reason": "Rule 506(b): the 35 count needs the answer; Regulation A Tier 2: the limit applies only when not accredited.",
+  "text": "an accredited investor?",
+  "paths": [
+   "individual-506b",
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "\"Which ground applies?\" (after yes)",
+  "decision": "keep",
+  "reason": "Rule 506(b): the issuer's reasonable belief rests on a Rule 501(a) ground.",
+  "text": "Which ground applies?",
+  "paths": [
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Warning \"This offering may already have as many investors who are not accredited as it is able to accept ...\"",
+  "decision": "remove",
+  "reason": "Owner (proposed removal applied): the sponsor's N of 35 flag stays; the server-mode snapshot boolean nonAccreditedFull goes with it.",
+  "heldBy": "status-flow part full; server-mode parts full and clean"
+ },
+ {
+  "screen": "status",
+  "item": "Regulation A Tier 2 statement to tick (\"The total ... is not more than 10 percent of ...\")",
+  "decision": "keep",
+  "reason": "D-07, Rule 251(d)(2)(i)(D): the investor's representation the issuer may rely on.",
+  "text": "is not more than 10 percent of its revenue or its net assets",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "\"Your investment experience\" with its hint",
+  "decision": "remove",
+  "reason": "D-08 (2): not required by Rule 506(b)(2)(ii) or Rule 501(i).",
+  "text": "Your investment experience",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "\"Your education or profession\"",
+  "decision": "remove",
+  "reason": "D-08 (2): not required by Rule 506(b)(2)(ii) or Rule 501(i).",
+  "text": "Your education or profession",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "\"Is a purchaser representative advising you on this investment?\"",
+  "decision": "folded",
+  "reason": "D-08 (2): folded into the one Rule 506(b)(2)(ii) question below, whose answers are alone, with a representative, or no.",
+  "text": "Is a purchaser representative advising you on this investment?",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Question \"Does <account>, alone or with a purchaser representative, have enough knowledge and experience of business and financial matters to judge the merits and risks of this investment?\" (Yes, alone / Yes, with a purchaser representative / No)",
+  "decision": "keep",
+  "reason": "Rule 506(b)(2)(ii): each non-accredited purchaser, alone or with a purchaser representative, has that knowledge and experience (D-08 (2)).",
+  "text": "alone or with a purchaser representative, have enough knowledge and experience of business and financial matters",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "\"Purchaser representative's name\" (with a representative)",
+  "decision": "keep",
+  "reason": "Rule 501(i): who the representative is.",
+  "text": "Purchaser representative’s name",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "\"Representative's firm\"",
+  "decision": "remove",
+  "reason": "D-08 (2): the name identifies the representative; the firm is not required.",
+  "text": "Representative’s firm",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Upload \"Your written acknowledgment that this person is your purchaser representative\" (optional), hint \"PDF, PNG or JPEG, up to 25 MB.\"",
+  "decision": "keep",
+  "reason": "Rule 501(i)(3): the purchaser acknowledges the representative in writing; the hint says which files are accepted.",
+  "text": "Your written acknowledgment that this person is your purchaser representative",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Subheading \"Benefit plans\" (when it follows the accredited questions)",
+  "decision": "keep",
+  "reason": "Separates the second question from the accredited questions on the same screen; left out when it is the only question.",
+  "text": "Benefit plans",
+  "paths": [
+   "individual-506b",
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Benefit plan explanation (\"When benefit plan investors come to hold 25 percent or more ... uses these answers to follow that share.\")",
+  "decision": "remove",
+  "reason": "Explains the firm's own test (sponsor-facing).",
+  "text": "When benefit plan investors come to hold 25 percent or more",
+  "paths": [
+   "individual-506b",
+   "entity-rega2",
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Question \"Is <account> a benefit plan investor?\" (Yes: Title I plan / Yes: section 4975 plan or account / Yes: entity holding plan assets / No)",
+  "decision": "keep",
+  "reason": "D-08 (1), 29 CFR 2510.3-101(f): the 25 percent test needs to know who is a benefit plan investor.",
+  "text": "a benefit plan investor?",
+  "paths": [
+   "individual-506b",
+   "entity-rega2",
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Choice hints \"Such as a company pension or 401(k) plan\", \"Such as an IRA or a Keogh plan\", \"Such as a fund or account in which benefit plans invest\"",
+  "decision": "keep",
+  "reason": "An IRA holder or plan sponsor needs the example to know which answer is theirs.",
+  "text": "Such as an IRA or a Keogh plan",
+  "paths": [
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Choice \"A governmental, church or non-U.S. plan\"",
+  "decision": "remove",
+  "reason": "Such a plan is not a benefit plan investor: the answer is No. An earlier answer of this kind stays visible until changed.",
+  "text": "A governmental, church or non-U.S. plan",
+  "paths": [
+   "individual-506b",
+   "entity-rega2",
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "\"Share of the entity's equity held by benefit plan investors (%)\" (entity holding plan assets)",
+  "decision": "keep",
+  "reason": "D-08 (1): the 25 percent count needs the share.",
+  "text": "Share of the entity’s equity held by benefit plan investors (%)",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Share hint \"From 0 to 100. Only that part of this investment is counted as plan money.\"",
+  "decision": "remove",
+  "reason": "The field takes a percentage by its label; the rest explains the firm's count.",
+  "text": "Only that part of this investment is counted as plan money",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Question \"Does <account>, or an affiliate, have discretionary authority or control over this offering's assets, or give paid investment advice about them?\"",
+  "decision": "remove",
+  "reason": "D-08 (1): the controlling-person marks are removed; the sponsor judges.",
+  "text": "discretionary authority or control over this offering",
+  "paths": [
+   "individual-506b",
+   "entity-rega2",
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "status",
+  "item": "Note \"Your answers are kept with your subscription and shared only with <firm>.\"",
+  "decision": "remove",
+  "reason": "Reassurance; not needed to answer.",
+  "text": "Your answers are kept with your subscription",
+  "paths": [
+   "individual-506b",
+   "entity-rega2",
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "payment",
+  "item": "Heading \"Distribution payments\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading.",
+  "text": "Distribution payments",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "payment",
+  "item": "Lede \"<firm> pays distributions by direct deposit (ACH) to a U.S. bank account.\"",
+  "decision": "keep",
+  "reason": "Tells the investor a U.S. bank account is needed; the renderer is shared with the managed edition (C-03).",
+  "text": "pays distributions by direct deposit (ACH) to a U.S. bank account",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "payment",
+  "item": "Account fields and the ACH authorization",
+  "decision": "keep",
+  "reason": "Not judged here: left to the tax plans 06-16 to 06-21 (plan 06-15 scope)."
+ },
+ {
+  "screen": "subscribe",
+  "item": "Heading \"Subscription\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading.",
+  "text": "Subscription",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Offering name",
+  "decision": "keep",
+  "reason": "Which offering the investor is subscribing to.",
+  "text": "Kestrel Bay Fund II, L.P.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Offering type and summary after the name (\"Private equity fund · Lower middle-market buyout fund\")",
+  "decision": "remove",
+  "reason": "Marketing; it is in the offering documents.",
+  "text": "Lower middle-market buyout fund",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Facts \"Minimum commitment\"",
+  "decision": "remove",
+  "reason": "Repeats the hint under the commitment field.",
+  "text": "Minimum commitment",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Facts \"First close ... (targeted)\"",
+  "decision": "remove",
+  "reason": "Not needed to subscribe; it is in the offering documents.",
+  "text": "First close",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Facts: the offering's terms the sponsor marked to show (strategy, fund size, term, portfolio)",
+  "decision": "remove",
+  "reason": "Summary of the offering documents, not needed to subscribe; the documents carry the terms.",
+  "text": "Fund size",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "\"Offering documents\" heading and list",
+  "decision": "keep",
+  "reason": "The investor represents having read them; they must be able to open them here.",
+  "text": "Private placement memorandum",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Commitment field, hint \"Minimum <amount>.\"",
+  "decision": "keep",
+  "reason": "The amount, and the minimum the step checks.",
+  "text": "Minimum $50,000.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Hint \"Set by <firm> for this invitation.\" under a commitment or class the firm set",
+  "decision": "remove",
+  "reason": "The field is read only; the investor does not need to be told why.",
+  "text": "Set by Kestrel Bay for this invitation.",
+  "paths": [
+   "ira-506c"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Regulation A Tier 2 warning, first sentence \"You have not confirmed that your total investment in this offering is within your limit ...\"",
+  "decision": "keep",
+  "reason": "C-01 and the Tier 2 notice: the investor learns the limit statement is missing before subscribing.",
+  "text": "You have not confirmed that your total investment in this offering is within your limit",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Regulation A Tier 2 warning, second sentence \"You can still subscribe: <firm> reviews every subscription ...\"",
+  "decision": "remove",
+  "reason": "The Continue button shows they can go on.",
+  "text": "You can still subscribe",
+  "paths": [
+   "entity-rega2"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Share class select (more than one class)",
+  "decision": "keep",
+  "reason": "The investor chooses the class they subscribe to.",
+  "heldBy": "status-flow parts with classes (unchanged)"
+ },
+ {
+  "screen": "subscribe",
+  "item": "\"Investing as\" (read only)",
+  "decision": "remove",
+  "reason": "The account is filled into the agreement; not needed here.",
+  "text": "Investing as",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Accreditation statement to tick (\"<account> is not an accredited investor, and the answers given under Investor status remain accurate.\" / \"... is an accredited investor (<ground>), and this remains accurate.\")",
+  "decision": "keep",
+  "reason": "The investor's representation the 506(b) count and the issuer's reasonable belief rest on.",
+  "text": "is not an accredited investor, and the answers given under Investor status remain accurate.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "On file: \"<account> is an accredited investor (<ground>), and this remains accurate.\"",
+  "decision": "keep",
+  "reason": "The same representation for an accredited investor.",
+  "text": "is an accredited investor (",
+  "paths": [
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Note where no accreditation statement is asked (\"Regulation A does not limit this offering to accredited investors ...\" and the Regulation Crowdfunding and Regulation S notes)",
+  "decision": "remove",
+  "reason": "Owner (proposed removal applied): the tick is just left out.",
+  "text": "does not limit this offering to accredited investors",
+  "paths": [
+   "individual-rega1"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Tick \"I have received and read the offering documents listed above, including the subscription agreement, and I make the representations in the subscription agreement.\"",
+  "decision": "keep",
+  "reason": "The investor's receipt and representations the subscription rests on.",
+  "text": "I have received and read the offering documents listed above",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Electronic signature tick and typed name (offering without an agreement template)",
+  "decision": "keep",
+  "reason": "The signature on the subscription when there is no agreement to sign.",
+  "heldBy": "phase 4 checks (unchanged)"
+ },
+ {
+  "screen": "subscribe",
+  "item": "Note \"Next you sign <firm>'s subscription agreement on this page, with your commitment and details filled in.\"",
+  "decision": "remove",
+  "reason": "The button says \"Continue to the agreement\".",
+  "text": "Next you sign",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Note \"No money is due now; <firm> will send wire instructions when capital is called.\" (or the open-ended wording)",
+  "decision": "remove",
+  "reason": "Said on the done screen under \"What happens next\".",
+  "text": "No money is due now; ",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "subscribe",
+  "item": "Submitted view (commitment, submitted date, how to change it)",
+  "decision": "keep",
+  "reason": "An investor who comes back after subscribing needs to see what was submitted and whom to contact.",
+  "heldBy": "status-flow parts back and resume (unchanged)"
+ },
+ {
+  "screen": "agreement",
+  "item": "Heading \"Subscription agreement\"",
+  "decision": "keep",
+  "reason": "The screen needs a heading.",
+  "text": "Subscription agreement",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "agreement",
+  "item": "\"Review <firm>'s subscription agreement. Your commitment and details are filled in.\"",
+  "decision": "remove",
+  "reason": "Describes the screen.",
+  "text": "Your commitment and details are filled in.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "agreement",
+  "item": "\"Select Start to go to each field that needs you, then Finish.\"",
+  "decision": "keep",
+  "reason": "How to complete the signing.",
+  "text": "Select Start to go to each field that needs you, then Finish.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "agreement",
+  "item": "Note when signing again (\"The copy you signed earlier could not be sent from this device ...\")",
+  "decision": "keep",
+  "reason": "Tells the investor why they are signing a second time.",
+  "heldBy": "phase 4 signing-step (unchanged)"
+ },
+ {
+  "screen": "agreement",
+  "item": "Declined text (\"You declined to sign. <team> has been told ...\")",
+  "decision": "keep",
+  "reason": "Tells the investor what happens after declining.",
+  "heldBy": "phase 4 signing-step (unchanged)"
+ },
+ {
+  "screen": "agreement",
+  "item": "The agreement with its fields",
+  "decision": "keep",
+  "reason": "The document the investor signs.",
+  "text": "signing as",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Heading (\"You're all set\" / \"Thank you. Your subscription is submitted\" / \"Thank you. Your paperwork is complete\")",
+  "decision": "keep",
+  "reason": "Tells the investor they have finished.",
+  "text": "You’re all set",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Lede (\"Your account with <firm> is active.\" / review in progress)",
+  "decision": "keep",
+  "reason": "The state of the account, including whether the firm is still reviewing.",
+  "text": "is active.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Summary list (Account, Identity, Sanctions screening, Accreditation, Tax form, Distributions, Subscription, Subscription agreement)",
+  "decision": "remove",
+  "reason": "Repeats what the investor just did; what is still open is under \"What happens next\".",
+  "text": "Sanctions screening",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Summary row \"Tax form W-9\"",
+  "decision": "remove",
+  "reason": "Part of the summary list removed above.",
+  "text": "Tax form",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Summary row \"Accreditation ...\"",
+  "decision": "remove",
+  "reason": "Part of the summary list removed above.",
+  "text": "Accreditation",
+  "paths": [
+   "individual-506b",
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Summary row \"Subscription agreement: Signed; waiting for <firm>'s countersignature\"",
+  "decision": "remove",
+  "reason": "Part of the summary list; \"What happens next\" says the firm countersigns.",
+  "text": "Signed; waiting for",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "\"What happens next\" heading",
+  "decision": "keep",
+  "reason": "Heads the list of what is still to come.",
+  "text": "What happens next",
+  "paths": [
+   "individual-506b",
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Next: \"<firm> reviews your subscription and countersigns the agreement. Its status is shown in your portal under Investments.\"",
+  "decision": "keep",
+  "reason": "What happens to the subscription and where to follow it.",
+  "text": "reviews your subscription",
+  "paths": [
+   "individual-506b",
+   "onfile-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Next: \"A copy of the agreement you signed is in your Documents now ...\"",
+  "decision": "keep",
+  "reason": "Where the signed copy is (ESIGN: the record is available to the signer).",
+  "text": "A copy of the agreement you signed is in your Documents now",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Next: \"No money is due now. When capital is called ...\" (or the open-ended wording)",
+  "decision": "keep",
+  "reason": "When and how money is due.",
+  "text": "No money is due now. When capital is called",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Next: verification still running / evidence not sent (when they apply)",
+  "decision": "keep",
+  "reason": "Tells the investor something is still open or must be sent again.",
+  "heldBy": "status-flow and server-mode parts (unchanged)"
+ },
+ {
+  "screen": "done",
+  "item": "Next: \"Questions? <team> at <email> or <phone>.\"",
+  "decision": "keep",
+  "reason": "Whom to contact.",
+  "text": "Questions? Kestrel Bay Investor Relations",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "done",
+  "item": "Button \"Go to your portal\"",
+  "decision": "keep",
+  "reason": "The way out of onboarding into the portal.",
+  "text": "Go to your portal",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "every step",
+  "item": "Step counter \"Step N of M: <step>\"",
+  "decision": "keep",
+  "reason": "Shows where the investor is and how much is left."
+ },
+ {
+  "screen": "every step",
+  "item": "\"Your progress is saved. You can come back with your invitation link at any time.\"",
+  "decision": "keep",
+  "reason": "The investor can stop and come back with the same link; without it they may think they must finish in one sitting.",
+  "text": "Your progress is saved.",
+  "paths": [
+   "individual-506b"
+  ]
+ },
+ {
+  "screen": "flow",
+  "item": "Welcome and Create your login: kept as two steps",
+  "decision": "keep",
+  "reason": "The consent must be given, and logged with its time, before the login record is created; on one screen the order would be lost."
+ },
+ {
+  "screen": "flow",
+  "item": "Investor information and Identity verification: kept as two steps",
+  "decision": "keep",
+  "reason": "The identity check runs on the details saved by Investor information (IV().finishOnboarding at that step), so it cannot be on the same screen."
+ },
+ {
+  "screen": "flow",
+  "item": "Investor status with only the benefit plan question (Rule 506(c), offerings open to all) and Subscription: kept as two steps",
+  "decision": "keep",
+  "reason": "An investor corrects a status answer on its own step while the subscription is pending (the request then carries the new answer); on the subscribe screen, which turns read only once submitted, that correction would be lost."
+ },
+ {
+  "screen": "flow",
+  "item": "Subscription and Subscription agreement: kept as two steps",
+  "decision": "keep",
+  "reason": "The agreement is prepared from the commitment the subscribe step saves; it cannot be signed before that."
+ },
+ {
+  "screen": "flow",
+  "item": "Accredited investor verification and Investor status (Rule 506(c)): kept as two steps",
+  "decision": "keep",
+  "reason": "The verification is a third-party check the investor completes in its own panel; the benefit plan question is a different matter, answered by everyone with an offering."
+ }
+]
