@@ -99,9 +99,19 @@ const DESKTOP_EXPECTED = [
   { at: /./, phase18: true, test: (gone, added, ctx) => overhaul18(ctx), why: 'phase 18 (D-13 to D-17, the owner-approved regal overhaul): layout may move on the screens of 18-UI-SPEC §11; on each, every element is present, its words are identical (screens18 rules), every control is reachable and the part still works' }
 ];
 /** The phase 18 entry's verdict on one screen: { ok, why } (why: present, words, reachable or works, with the detail). */
+// The base run and this run are made minutes apart with the page's own clock (phone-layout does not freeze it), so machine
+// data that carries the time differs: a NACHA record's creation time, an export's SHA-256. Before the comparison, in both
+// records alike, every run of 16 or more hex characters becomes <hex> and every run of 6 or more digits <digits> (the
+// runs SAME SCREENS masks in its own output). Words, names and amounts with fewer digits are compared as they are.
+function machineData(rec) {
+  const walk = (v) => (typeof v === 'string' ? v.replace(/\b[0-9a-f]{16,}\b/gi, '<hex>').replace(/\d{6,}/g, '<digits>') : Array.isArray(v) ? v.map(walk) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, walk(x)])) : v);
+  return walk(rec);
+}
 function overhaul18(ctx) {
   const S18 = L18().S18;
+  const mask = L18().mask;
   if (!ctx.base || !ctx.now) return { ok: false, why: `present: no screen record ${ctx.base ? 'on this tree' : 'on the base tree'}` };
+  ctx = Object.assign({}, ctx, { base: machineData(ctx.base), now: machineData(ctx.now) });
   // present: every control of the base record (tag, data-action, href, accessible name) is in this tree's record, or the
   // difference is one screens18 rule's exact transform (words below then holds)
   const key = (a) => [a.tag, a.action || '', a.href || '', a.name || ''].join('|');
@@ -113,10 +123,17 @@ function overhaul18(ctx) {
     if (have[key(a)]) have[key(a)]--;
     else gone.push(a);
   });
-  if (gone.length && !words.ok) return { ok: false, why: `present: ${gone.length} control(s) of the base screen missing, first ${gone[0].tag} "${gone[0].name || ''}"${gone[0].action ? ` (data-action ${gone[0].action})` : ''}` };
+  if (gone.length && !words.ok) return { ok: false, why: mask(`present: ${gone.length} control(s) of the base screen missing, first ${gone[0].tag} "${String(gone[0].name || '').slice(0, 60)}"${gone[0].action ? ` (data-action ${gone[0].action})` : ''}`) };
   if (!words.ok) return { ok: false, why: `words: ${S18.line('', '', words).replace(/^FAIL\s+/, '')}` };
-  const out = ctx.reach.filter((r) => !r.ok);
-  if (out.length) return { ok: false, why: `reachable: ${out.length} control(s) not reachable, first ${out[0].name} (on screen ${out[0].on}, hit ${out[0].hit})` };
+  // reachable: every control of the content is reachable, or was not reachable on the base tree either (a layer laid
+  // under another on purpose, e.g. a signing field's hit area under its box): counted per control name
+  const badNow = {};
+  ctx.reach.filter((r) => !r.ok).forEach((r) => (badNow[r.name] = (badNow[r.name] || []).concat(r)));
+  const badBase = {};
+  (ctx.baseReach || []).filter((r) => !r.ok).forEach((r) => (badBase[r.name] = (badBase[r.name] || 0) + 1));
+  const out = [];
+  Object.keys(badNow).forEach((n) => badNow[n].slice(ctx.baseReach ? badBase[n] || 0 : 0).forEach((r) => out.push(r)));
+  if (out.length) return { ok: false, why: mask(`reachable: ${out.length} control(s) not reachable that were reachable on the base tree, first ${out[0].name} (on screen ${out[0].on}, hit ${out[0].hit})`) };
   if (ctx.failed) return { ok: false, why: `works: the part has ${ctx.failed} failed check(s)` };
   return { ok: true, why: '' };
 }
@@ -474,6 +491,7 @@ function verdict(check, W) {
   } else {
     fs.writeFileSync(path.join(OUT, `geometry-${W.part}.json`), JSON.stringify(W.geo));
     fs.writeFileSync(path.join(OUT, `ident-${W.part}.json`), JSON.stringify(W.ident || {}));
+    fs.writeFileSync(path.join(OUT, `reach-${W.part}.json`), JSON.stringify(W.reach || {}));
     check(`desktop: the place and size of every element on ${Object.keys(W.geo).length} screens is recorded for comparison with the tree before`, Object.keys(W.geo).length > 0);
     // PHONE_LAYOUT_BASE=<the phone-layout folder of a run on the tree before>: every element on every screen of this part
     // must stand where it stood there, at the same size and text size (a line per element: name, place, size, text size)
@@ -483,6 +501,8 @@ function verdict(check, W) {
       const B = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {};
       const fi = path.join(baseDir, `ident-${W.part}.json`);
       const BI = fs.existsSync(fi) ? JSON.parse(fs.readFileSync(fi, 'utf8')) : {};
+      const fr2 = path.join(baseDir, `reach-${W.part}.json`);
+      const BR = fs.existsSync(fr2) ? JSON.parse(fs.readFileSync(fr2, 'utf8')) : null;
       const entries = DESKTOP_EXPECTED.filter((e) => !e.phase18 || P18);
       const diff18 = [];
       const rejected18 = [];
@@ -509,7 +529,7 @@ function verdict(check, W) {
         const added = now.filter((x) => addedKeys.indexOf(key(x)) >= 0);
         if (!gone.length && !added.length) return;
         // a change the fix makes on every screen size on purpose, named with its reason (DESKTOP_EXPECTED); anything else fails
-        const ctx = { k, base: BI[k], now: (W.ident || {})[k], reach: (W.reach || {})[k] || [], failed: CURRENT.failed() };
+        const ctx = { k, base: BI[k], now: (W.ident || {})[k], reach: (W.reach || {})[k] || [], baseReach: BR ? BR[k] || [] : null, failed: CURRENT.failed() };
         const why = entries.find((e) => {
           if (!e.at.test(k)) return false;
           if (!e.test) return gone.concat(added).every((x) => e.el.test(x));
