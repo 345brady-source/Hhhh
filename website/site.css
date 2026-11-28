@@ -224,4 +224,30 @@ footer a:hover { color: var(--on-navy); }
 .step p { color: var(--ink-2); font-size: 15px; }
 @media (max-width: 980px) { .steps4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .steps4 { grid-template-columns: minmax(0, 1fr); } }
+/* contact page */
+.contact-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, .8fr); gap: 56px; align-items: start; }
+.form-panel { padding: 40px; }
+.field-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.field { display: grid; gap: 8px; margin-bottom: 20px; min-width: 0; }
+.field label { font: 600 14px/1.2 var(--body); color: var(--ink); }
+.field .opt { font-weight: 400; color: var(--ink-2); }
+.field input, .field select, .field textarea { width: 100%; font: 400 16px/1.4 var(--body); color: var(--ink); background: var(--ivory); border: 1px solid var(--rule); border-radius: var(--radius-inner); padding: 12px 14px; transition: border-color .15s ease, box-shadow .15s ease; }
+.field textarea { resize: vertical; min-height: 140px; }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: #C9BEA9; }
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(156,122,74,.22); background: var(--panel); }
+.field [aria-invalid="true"] { border-color: #A3322B; box-shadow: 0 0 0 3px rgba(163,50,43,.14); }
+.hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.form-error { color: #A3322B; font-size: 15px; margin: 0 0 16px; }
+.form-note { color: var(--ink-2); font-size: 13px; margin-top: 16px; }
+.btn:disabled { opacity: .6; cursor: progress; }
+button.btn { cursor: pointer; }
+.form-done h2 { font-size: clamp(28px, 3vw, 38px); line-height: 1.15; margin: 14px 0 14px; }
+.form-done p:not(.kicker) { color: var(--ink-2); }
+.form-done:focus { outline: none; }
+.contact-side { display: grid; gap: 32px; padding-top: 12px; }
+.contact-side p:not(.kicker), .side-addr { font: 400 20px/1.5 var(--display); color: var(--ink); font-style: normal; margin-top: 10px; }
+.contact-side a { text-decoration: none; border-bottom: 1px solid var(--rule); }
+.contact-side a:hover { border-bottom-color: var(--gold); }
+@media (max-width: 980px) { .contact-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; } }
+@media (max-width: 600px) { .field-row { grid-template-columns: minmax(0, 1fr); gap: 0; } .form-panel { padding: 26px 20px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

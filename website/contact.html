@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contact | Carrow &amp; Vale</title>
+<meta name="description" content="Contact Carrow &amp; Vale Shareholder Advisors, 353 Lexington Avenue, New York.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Ysabeau+Office:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<header class="mast">
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href="./" aria-label="Carrow and Vale Shareholder Advisors, home"><svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true"><path d="M0 0H100L0 100Z" fill="#F1EBDF"/><path d="M100 0V100H0Z" fill="#C2A06C"/><line x1="-6" y1="106" x2="106" y2="-6" stroke="#101C33" stroke-width="11"/></svg><span class="brand-text"><b>CARROW <i>&amp;</i> VALE</b><span>SHAREHOLDER ADVISORS</span></span></a>
+      <nav class="nav" aria-label="Site"><a href="services.html">Services</a><a href="about.html">About</a><a href="portal.html">Fund Portal</a><a href="contact.html" aria-current="page">Contact</a></nav>
+    </div>
+    <div class="phero">
+      <p class="kicker">Contact</p>
+      <h1>Begin a conversation.</h1>
+      <p>Tell us about your firm and your offering. A member of our team will reply within one business day.</p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap contact-grid">
+      <div class="panel form-panel">
+        <form id="contact-form" action="https://formsubmit.co/info@carrowvale.com" method="POST" novalidate>
+          <input type="hidden" name="_subject" value="New inquiry from carrowvale.com">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_captcha" value="false">
+          <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label></div>
+
+          <div class="field-row">
+            <div class="field"><label for="f-first">First name</label><input id="f-first" name="First name" type="text" autocomplete="given-name" required></div>
+            <div class="field"><label for="f-last">Last name</label><input id="f-last" name="Last name" type="text" autocomplete="family-name" required></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" required></div>
+            <div class="field"><label for="f-phone">Phone <span class="opt">(optional)</span></label><input id="f-phone" name="Phone" type="tel" autocomplete="tel"></div>
+          </div>
+          <div class="field"><label for="f-firm">Firm</label><input id="f-firm" name="Firm" type="text" autocomplete="organization" required></div>
+          <div class="field">
+            <label for="f-interest">I am interested in</label>
+            <select id="f-interest" name="Interested in" required>
+              <option value="">Choose one</option>
+              <option>Full-service investor relations and securities distribution</option>
+              <option>Capital raising and licensed representatives</option>
+              <option>Broker-dealer introductions and distribution consultation</option>
+              <option>Product creation and structuring</option>
+              <option>KYC, AML, OFAC and accredited verification</option>
+              <option>Form D and state filings</option>
+              <option>Marketing creation</option>
+              <option>Quarterly and annual reporting</option>
+              <option>The Fund Portal ($100 per month)</option>
+              <option>Something else</option>
+            </select>
+          </div>
+          <div class="field"><label for="f-message">How can we help?</label><textarea id="f-message" name="Message" rows="6" required></textarea></div>
+
+          <p class="form-error" id="form-error" role="alert" hidden></p>
+          <button class="btn btn-solid" type="submit" id="form-submit">Send Message</button>
+          <p class="form-note">We use your details only to reply to you.</p>
+        </form>
+        <div class="form-done" id="form-done" hidden tabindex="-1">
+          <p class="kicker">Thank you</p>
+          <h2>Your message is on its way.</h2>
+          <p>A member of our team will reply within one business day. For anything urgent, call (917) 837-7427.</p>
+        </div>
+      </div>
+
+      <aside class="contact-side">
+        <div>
+          <p class="kicker">Office</p>
+          <address class="side-addr">353 Lexington Avenue<br>4th Floor, Suite 407<br>New York, NY 10016</address>
+        </div>
+        <div>
+          <p class="kicker">Phone</p>
+          <p><a href="tel:+19178377427">(917) 837-7427</a></p>
+        </div>
+        <div>
+          <p class="kicker">Email</p>
+          <p><a href="mailto:info@carrowvale.com">info@carrowvale.com</a></p>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span class="foot-brand"><svg class="foot-mark" viewBox="0 0 100 100" aria-hidden="true"><path d="M0 0H100L0 100Z" fill="#F1EBDF"/><path d="M100 0V100H0Z" fill="#C2A06C"/><line x1="-6" y1="106" x2="106" y2="-6" stroke="#101C33" stroke-width="11"/></svg>© 2026 Carrow &amp; Vale Shareholder Advisors</span><span>353 Lexington Avenue, Suite 407, New York, NY 10016</span><nav aria-label="Footer"><a href="services.html">Services</a><a href="about.html">About</a><a href="portal.html">Fund Portal</a><a href="contact.html">Contact</a></nav></div></footer>
+
+<script>
+(function () {
+  var form = document.getElementById('contact-form');
+  var err = document.getElementById('form-error');
+  var done = document.getElementById('form-done');
+  var btn = document.getElementById('form-submit');
+  function showError(msg) { err.textContent = msg; err.hidden = false; }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    err.hidden = true;
+    var bad = Array.prototype.filter.call(form.querySelectorAll('[required]'), function (el) { return !el.value.trim() || (el.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim())); });
+    form.querySelectorAll('[aria-invalid]').forEach(function (el) { el.removeAttribute('aria-invalid'); });
+    if (bad.length) { bad.forEach(function (el) { el.setAttribute('aria-invalid', 'true'); }); bad[0].focus(); showError('Please complete the highlighted fields.'); return; }
+    if (form.elements['_honey'].value) return;
+    var data = {};
+    new FormData(form).forEach(function (v, k) { data[k] = v; });
+    data._replyto = data.email;
+    btn.disabled = true; btn.textContent = 'Sending…';
+    fetch('https://formsubmit.co/ajax/info@carrowvale.com', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(data) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || String(j.success) === 'false') throw new Error(j.message || 'failed'); }); })
+      .then(function () { form.hidden = true; done.hidden = false; done.focus(); })
+      .catch(function () { btn.disabled = false; btn.textContent = 'Send Message'; showError('Your message could not be sent. Please email info@carrowvale.com or call (917) 837-7427.'); });
+  });
+})();
+</script>
+</body>
+</html>
