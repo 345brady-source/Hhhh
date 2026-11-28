@@ -86,6 +86,7 @@ const NAME = 'Morgan Blake';
 const NAME_EXT = 'Łukasz Żółć';
 const NAME_VI = 'Nguyễn Thị Hương';
 const NON_LATIN_FILE = /(vietnamese|cyrillic|greek)/;
+const FIRM_NAME = /Carrow (&|and) Vale/gi;
 const OUTSIDE_FONT = /fonts\.googleapis\.com|fonts\.gstatic\.com|dejavu-fonts-ttf/;
 const PAGE_POLICY = "connect-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:";
 const SERVED_PHONE = {
@@ -317,23 +318,23 @@ function covers(range, cp) {
 async function latinPass(check, fr, net, k, label) {
   const c = CHOICES[k];
   const fontsCss = await fr.evaluate((k) => (window.CVPortal.brand.FONTS[k] || {}).css || null, k);
-  check(`${label} ${k}: brand.js FONTS.${k}.css names ${c.css.join(', ')}`, JSON.stringify(fontsCss) === JSON.stringify(c.css), fontsCss);
+  check(`${k}: brand.js FONTS.${k}.css names ${c.css.join(', ')}`, JSON.stringify(fontsCss) === JSON.stringify(c.css), fontsCss);
   const sheets = await sheetsIn(fr, c.css);
-  check(`${label} ${k}: its stylesheets are linked from <origin>/assets/fonts and loaded`, sheets.every((x) => x.present && x.loaded), sheets);
+  check(`${k}: its stylesheets are linked from <origin>/assets/fonts and loaded`, sheets.every((x) => x.present && x.loaded), sheets);
   const specs = [];
   for (const fam of [...new Set([c.display, c.body])]) for (const w of ROW_OF_FAMILY[fam].weights) for (const t of ['Aa', 'Łł']) specs.push([`${w} 20px "${fam}"`, t]);
   const got = await loadFaces(fr, specs);
   const bad = got.filter((g) => !g.faces || !g.faces.length || g.faces.some((f) => f.status !== 'loaded'));
-  check(`${label} ${k}: ${c.display}${c.body !== c.display ? ' and ' + c.body : ''} load at every weight for 'Aa' and 'Łł' (latin and latin-ext faces, all loaded)`, bad.length === 0 && got.length === specs.length, bad.slice(0, 4));
+  check(`${k}: ${c.display}${c.body !== c.display ? ' and ' + c.body : ''} load at every weight for 'Aa' and 'Łł' (latin and latin-ext faces, all loaded)`, bad.length === 0 && got.length === specs.length, bad.slice(0, 4));
   const latinExt = got.filter((g) => g.text !== 'Aa').every((g) => g.faces && g.faces.some((f) => covers(f.range, 0x141) && !covers(f.range, 0x41)));
-  check(`${label} ${k}: 'Łł' is drawn from the latin-ext face (its own unicode-range)`, latinExt, got.filter((g) => g.text !== 'Aa').slice(0, 2));
+  check(`${k}: 'Łł' is drawn from the latin-ext face (its own unicode-range)`, latinExt, got.filter((g) => g.text !== 'Aa').slice(0, 2));
   const w0 = ROW_OF_FAMILY[c.display].weights[0];
   const ok = await fr.evaluate(([w, fam]) => document.fonts.check(`${w} 20px "${fam}"`, 'Aa'), [w0, c.display]);
-  check(`${label} ${k}: document.fonts.check for ${c.display} is true`, ok === true, ok);
+  check(`${k}: document.fonts.check for ${c.display} is true`, ok === true, ok);
   await Promise.all(net.pending);
   const nonLatin = net.fontFiles.filter((f) => NON_LATIN_FILE.test(f));
   console.log(`NOTE ${label} ${k}: ${net.fontFiles.length} files received under /assets/fonts/ so far, ${nonLatin.length} of them vietnamese, cyrillic or greek`);
-  check(`${label} ${k}: on this Latin-only page no vietnamese, cyrillic or greek file was received (unicode-range works)`, nonLatin.length === 0, nonLatin.slice(0, 5));
+  check(`${k}: on this Latin-only page no vietnamese, cyrillic or greek file was received (unicode-range works)`, nonLatin.length === 0, nonLatin.slice(0, 5));
 }
 
 /** The second pass of a choice: each family's non-Latin subsets load from that subset's file for a sample in its letters. */
@@ -352,7 +353,7 @@ async function subsetSamples(check, fr, net, fam, label) {
     await Promise.all(net.pending);
     const face = g.faces && g.faces.find((f) => f.status === 'loaded' && covers(f.range, SAMPLES[sub].cp) && !covers(f.range, 0x41));
     const file = net.fontFiles.find((f) => f.startsWith(`/assets/fonts/files/${row.stem}-${sub}-`));
-    check(`${label} ${fam} ${sub}: '${SAMPLES[sub].text}' loads a face from the ${sub} file`, !!face && !!file, { faces: g.faces, error: g.error, file: file || 'not received' });
+    check(`${fam} ${sub}: '${SAMPLES[sub].text}' loads a face from the ${sub} file`, !!face && !!file, { faces: g.faces, error: g.error, file: file || 'not received' });
   }
 }
 
@@ -386,46 +387,46 @@ async function typedSignature(check, fr, net, label) {
   } catch (e) {
     ready = false;
   }
-  check(`${label} the signature dialog opens with its faces in`, ready, 'still loading after 15 s');
+  check(`the signature dialog opens with its faces in`, ready, 'still loading after 15 s');
   await fr.fill('#es-type-text', NAME);
   const styles = await fr.evaluate(() => window.CVPortal.signature.styles.map((s) => s.id));
-  check(`${label} the six handwriting styles`, JSON.stringify(styles.slice().sort()) === JSON.stringify(Object.keys(HANDS).sort()), styles);
+  check(`the six handwriting styles`, JSON.stringify(styles.slice().sort()) === JSON.stringify(Object.keys(HANDS).sort()), styles);
   const vi = [];
   for (const id of Object.keys(HANDS)) {
     const face = HANDS[id];
     const w = WEIGHT_OF_HAND[id] || 400;
     const token = await fr.evaluate((id) => getComputedStyle(document.documentElement).getPropertyValue(`--es-hand-${id}`).split(',')[0].trim().replace(/^["']|["']$/g, ''), id);
-    check(`${label} ${id}: esign.css names ${face} first`, token === face, token);
+    check(`${id}: esign.css names ${face} first`, token === face, token);
     const off = await fromFace(fr, face, w, NAME);
     const isIn = await fr.evaluate(([w, face, t]) => document.fonts.check(`${w} 48px "${face}"`, t), [w, face, NAME]);
-    check(`${label} ${id}: ${face} is loaded and draws every letter of '${NAME}'`, isIn === true && off.length === 0, { loaded: isIn, borrowed: off });
+    check(`${id}: ${face} is loaded and draws every letter of '${NAME}'`, isIn === true && off.length === 0, { loaded: isIn, borrowed: off });
     const png = await fr.evaluate(([t, id]) => window.CVPortal.signature.typedPng(t, id, 'blue', 'signature'), [NAME, id]);
-    check(`${label} ${id}: typedPng makes a PNG of '${NAME}'`, typeof png === 'string' && png.startsWith('data:image/png') && png.length > 1000, typeof png === 'string' ? png.length : png);
+    check(`${id}: typedPng makes a PNG of '${NAME}'`, typeof png === 'string' && png.startsWith('data:image/png') && png.length > 1000, typeof png === 'string' ? png.length : png);
     const row = ROW_OF_FAMILY[face];
     const offExt = await fromFace(fr, face, w, NAME_EXT);
-    if (row.subsets.includes('latin-ext')) check(`${label} ${id}: ${face} draws every letter of '${NAME_EXT}' (latin-ext)`, offExt.length === 0, offExt);
-    else check(`${label} ${id}: ${face} has no latin-ext, so '${NAME_EXT}' borrows letters (the test can tell)`, offExt.length > 0, offExt);
+    if (row.subsets.includes('latin-ext')) check(`${id}: ${face} draws every letter of '${NAME_EXT}' (latin-ext)`, offExt.length === 0, offExt);
+    else check(`${id}: ${face} has no latin-ext, so '${NAME_EXT}' borrows letters (the test can tell)`, offExt.length > 0, offExt);
     if (row.subsets.includes('vietnamese')) {
       vi.push(face);
       const [g] = await loadFaces(fr, [[`${w} 40px "${face}"`, NAME_VI]]);
       await Promise.all(net.pending);
       const vface = g.faces && g.faces.find((f) => f.status === 'loaded' && covers(f.range, 0x1ec5) && !covers(f.range, 0x41));
       const file = net.fontFiles.find((f) => f.startsWith(`/assets/fonts/files/${row.stem}-vietnamese-`));
-      check(`${label} ${id}: '${NAME_VI}' loads ${face}'s vietnamese face from its vietnamese file`, !!vface && !!file, { faces: g.faces, file: file || 'not received' });
+      check(`${id}: '${NAME_VI}' loads ${face}'s vietnamese face from its vietnamese file`, !!vface && !!file, { faces: g.faces, file: file || 'not received' });
       const offVi = await fromFace(fr, face, w, NAME_VI);
-      check(`${label} ${id}: ${face} draws every letter of '${NAME_VI}' (ễ U+1EC5, ư U+01B0 among them)`, offVi.length === 0, offVi);
+      check(`${id}: ${face} draws every letter of '${NAME_VI}' (ễ U+1EC5, ư U+01B0 among them)`, offVi.length === 0, offVi);
       const pv = await fr.evaluate(([t, id]) => window.CVPortal.signature.typedPng(t, id, 'blue', 'signature'), [NAME_VI, id]);
-      check(`${label} ${id}: typedPng makes a PNG of '${NAME_VI}'`, typeof pv === 'string' && pv.startsWith('data:image/png') && pv.length > 1000, typeof pv === 'string' ? pv.length : pv);
+      check(`${id}: typedPng makes a PNG of '${NAME_VI}'`, typeof pv === 'string' && pv.startsWith('data:image/png') && pv.length > 1000, typeof pv === 'string' ? pv.length : pv);
     } else console.log(`NOTE ${label} ${id}: ${face} has no vietnamese subset (as on the outside host)`);
     for (const sub of row.subsets.filter((s) => s !== 'vietnamese' && SAMPLES[s])) {
       const [g] = await loadFaces(fr, [[`${w} 40px "${face}"`, SAMPLES[sub].text]]);
       await Promise.all(net.pending);
       const sface = g.faces && g.faces.find((f) => f.status === 'loaded' && covers(f.range, SAMPLES[sub].cp) && !covers(f.range, 0x41));
       const file = net.fontFiles.find((f) => f.startsWith(`/assets/fonts/files/${row.stem}-${sub}-`));
-      check(`${label} ${id}: '${SAMPLES[sub].text}' loads ${face}'s ${sub} face from its ${sub} file`, !!sface && !!file, { faces: g.faces, file: file || 'not received' });
+      check(`${id}: '${SAMPLES[sub].text}' loads ${face}'s ${sub} face from its ${sub} file`, !!sface && !!file, { faces: g.faces, file: file || 'not received' });
     }
   }
-  check(`${label} at least one handwriting face has vietnamese (${vi.join(', ') || 'none'})`, vi.length > 0);
+  check(`at least one handwriting face has vietnamese (${vi.join(', ') || 'none'})`, vi.length > 0);
   const openText = await fr.evaluate(() => document.body.innerText);
   await fr.evaluate(() => {
     const d = document.getElementById('dlg');
@@ -437,16 +438,21 @@ async function typedSignature(check, fr, net, label) {
 /** The end of a part: nothing left the origin, nothing refused, no error, no face in error, no licence or vendor text. */
 async function quietEnd(check, fr, A, net, label, texts) {
   await Promise.all(net.pending);
-  check(`${label} zero requests left the origin`, net.outside.length === 0, net.outside.slice(0, 5));
+  check(`zero requests left the origin`, net.outside.length === 0, net.outside.slice(0, 5));
   const refused = await fr.evaluate(() => (window.__cspv || []).slice());
-  check(`${label} zero policy refusals`, refused.length === 0, refused.slice(0, 5));
-  check(`${label} no page or console error`, A.errors.length === 0, A.errors.slice(0, 3));
+  check(`zero policy refusals`, refused.length === 0, refused.slice(0, 5));
+  check(`no page or console error`, A.errors.length === 0, A.errors.slice(0, 3));
   const inError = await fr.evaluate(() => Array.from(document.fonts).filter((f) => f.status === 'error').map((f) => `${f.family} ${f.weight} ${f.unicodeRange.slice(0, 30)}`));
-  check(`${label} no face in document.fonts is in error`, inError.length === 0, inError.slice(0, 5));
+  check(`no face in document.fonts is in error`, inError.length === 0, inError.slice(0, 5));
   texts.push(await fr.evaluate(() => document.body.innerText));
-  const all = texts.join('\n');
+  // The firm's own name stays where the owner decided it does (D-18: the sponsor sign-up page; the managed console is
+  // seen by its staff only): it is taken out before the vendor scan and counted; every other vendor name still fails.
+  const raw = texts.join('\n');
+  const own = (raw.match(FIRM_NAME) || []).length;
+  const all = raw.replace(FIRM_NAME, '');
+  if (own) console.log(`NOTE ${label} the firm's own name is on screen ${own} times (D-18 sign-up page, or the managed staff console): not a vendor`);
   const leak = Lib.leakCheck(all);
-  check(`${label} the screen text names no vendor and shows no licence text`, leak.ok && !/Open Font License/i.test(all) && !/fontsource/i.test(all), leak.hits.slice(0, 5));
+  check(`the screen text names no vendor and shows no licence text`, leak.ok && !/Open Font License/i.test(all) && !/fontsource/i.test(all), leak.hits.slice(0, 5));
   const woffs = net.fontFiles.filter((f) => /\.woff2$/.test(f));
   console.log(`NOTE ${label} bytes received under /assets/fonts/: ${net.fontBytes} (${net.fontFiles.length} responses, ${woffs.length} woff2 files)`);
 }
@@ -492,7 +498,7 @@ function pagePart(page, size) {
     try {
       await T.sample(fr, { role: page === 'index.html' ? 'staff' : 'admin' });
       const keys = await fr.evaluate(() => Object.keys(window.CVPortal.brand.FONTS));
-      check(`${label} the Typeface choices are the table's`, JSON.stringify(keys) === JSON.stringify(Object.keys(CHOICES)), keys);
+      check(`the Typeface choices are the table's`, JSON.stringify(keys) === JSON.stringify(Object.keys(CHOICES)), keys);
       const choose = async (k) => {
         if (page === 'index.html') {
           await fr.evaluate((k) => {
@@ -576,8 +582,8 @@ function servedPart(size) {
       });
       const resp = await A.page.goto(srv.origin + '/', { waitUntil: 'load' });
       const csp = (resp && resp.headers()['content-security-policy']) || '';
-      check(`${label} font-src is exactly 'self' data:`, JSON.stringify(directive(csp, 'font-src')) === JSON.stringify(["'self'", 'data:']), directive(csp, 'font-src'));
-      check(`${label} style-src names no outside host`, !!directive(csp, 'style-src') && !directive(csp, 'style-src').some((t) => /^https?:/.test(t)), directive(csp, 'style-src'));
+      check(`font-src is exactly 'self' data:`, JSON.stringify(directive(csp, 'font-src')) === JSON.stringify(["'self'", 'data:']), directive(csp, 'font-src'));
+      check(`style-src names no outside host`, !!directive(csp, 'style-src') && !directive(csp, 'style-src').some((t) => /^https?:/.test(t)), directive(csp, 'style-src'));
       await A.page.waitForFunction(() => window.CVPortal && window.CVPortal.brand && window.CVPortal.signature && document.querySelector('#app'), null, { timeout: 30000 });
       const fr = A.page.mainFrame();
       fr.p10 = { size, A };

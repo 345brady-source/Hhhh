@@ -4,7 +4,8 @@
 // only, regular files only (no symlink is followed), assets/ only by extension, never rebuilt while the server runs, so no
 // request path can reach the store, the keys or the code. Served pages carry a content security policy (W-07) that names
 // every inline script by its SHA-256 and exactly the outside hosts the pages load scripts, workers, stylesheets and fonts
-// from, found by reading the files at start-up (nothing typed by hand).
+// from, found by reading the files at start-up (nothing typed by hand): the pages, assets/js, and the stylesheets under
+// assets/css and assets/fonts. Every font comes from this origin (quick own-fonts), so no font host is named today.
 import { createHash } from 'node:crypto';
 import { closeSync, constants, fstatSync, lstatSync, openSync, readdirSync, readFileSync, readSync } from 'node:fs';
 import { dirname, extname, join, relative, sep } from 'node:path';
@@ -41,9 +42,6 @@ const PAGES = [
 /** Told to every served page before its first script: it has a sign-in server, here, and no demo control. */
 export const INJECTED_SCRIPT =
   'window.CVPortalConfig=Object.assign({},window.CVPortalConfig||{},{signInServer:true,demo:false,integrationServers:[location.origin]});';
-
-/** Some style hosts serve their font files from a second host named in the stylesheets they return. */
-const FONT_HOST_OF_STYLE_HOST = { 'https://fonts.googleapis.com': ['https://fonts.gstatic.com'] };
 
 const sha256 = (buf) => createHash('sha256').update(buf).digest();
 const isRegular = (p) => {
@@ -101,14 +99,15 @@ function kindsOfUrl(url) {
   const p = u.pathname.toLowerCase();
   if (/\.m?js$/.test(p)) return /worker[^/]*\.m?js$/.test(p) ? ['script', 'worker'] : ['script'];
   if (/\.(woff2?|ttf|otf)$/.test(p)) return ['font'];
-  if (/\.css$/.test(p) || (u.hostname === 'fonts.googleapis.com' && /^\/css2?$/.test(p))) return ['style'];
+  if (/\.css$/.test(p)) return ['style'];
   return [];
 }
 
 /**
  * The outside origins the files load from, by use. Pages: <script src>, <link rel=stylesheet href>, <link rel=preload
  * as=font|script|style href>; scripts: string literals that are https addresses of a script, worker, stylesheet or font;
- * stylesheets: @import and url(...). A link in page text (an address that is none of these) is not a source.
+ * stylesheets (those under assets/css and assets/fonts): @import and url(...). A link in page text (an address that is
+ * none of these) is not a source.
  */
 export function outsideOrigins({ pages = [], scripts = [], styles = [] }) {
   const found = { script: new Set(), worker: new Set(), style: new Set(), font: new Set() };
@@ -138,7 +137,6 @@ export function outsideOrigins({ pages = [], scripts = [], styles = [] }) {
     for (const m of css.matchAll(/@import\s+(?:url\(\s*)?["']?(https:\/\/[^"')\s]+)/gi)) add('style', m[1]);
     for (const m of css.matchAll(/url\(\s*["']?(https:\/\/[^"')\s]+)["']?\s*\)/gi)) for (const kind of kindsOfUrl(m[1])) add(kind, m[1]);
   }
-  for (const origin of found.style) for (const f of FONT_HOST_OF_STYLE_HOST[origin] || []) found.font.add(f);
   const sorted = (s) => [...s].sort();
   return { script: sorted(new Set([...found.script, ...found.worker])), worker: sorted(found.worker), style: sorted(found.style), font: sorted(found.font) };
 }
@@ -222,7 +220,7 @@ export function createPages({ env = process.env, root = CHECKOUT, now = Date.now
     walk(join(root, dir))
       .filter((p) => dirname(p) === join(root, dir) && extname(p).toLowerCase() === ext)
       .map((p) => readFileSync(p, 'utf8'));
-  const origins = enabled ? outsideOrigins({ pages: pageTexts, scripts: readAll('assets/js', '.js'), styles: readAll('assets/css', '.css') }) : { script: [], worker: [], style: [], font: [] };
+  const origins = enabled ? outsideOrigins({ pages: pageTexts, scripts: readAll('assets/js', '.js'), styles: [...readAll('assets/css', '.css'), ...readAll('assets/fonts', '.css')] }) : { script: [], worker: [], style: [], font: [] };
   const hashes = [...new Set(pageTexts.flatMap((html) => inlineScripts(inject(html))))].map((s) => `'sha256-${sha256(Buffer.from(s, 'utf8')).toString('base64')}'`);
   const join1 = (...parts) => parts.flat().filter(Boolean).join(' ');
   const POLICY = [

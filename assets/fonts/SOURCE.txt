@@ -1,0 +1,71 @@
+Font files served by the portal from its own origin. No page links this file or the licence texts.
+
+funnel-display: @fontsource/funnel-display@5.3.0
+  integrity sha512-3TA/c8FdK+W8Sme1A0Ukg7oEofFk1h+LJYy7A3NFqAJiL2KYDwJHwPTkgPA/GLCridQcaIcYaNJW8OjoQvWFrA==
+  files (unmodified copies of the package's woff2 files): funnel-display-latin-ext-300-normal.woff2 funnel-display-latin-300-normal.woff2 funnel-display-latin-ext-400-normal.woff2 funnel-display-latin-400-normal.woff2 funnel-display-latin-ext-500-normal.woff2 funnel-display-latin-500-normal.woff2
+  licence: licenses/funnel-display.txt (the package's LICENSE, unmodified)
+
+funnel-sans: @fontsource/funnel-sans@5.3.0
+  integrity sha512-LmINq/6qfoYW1LOkOwaiZw7YVEpi3QACa36V7jxgBlO8MPGPbeSxFrPjk4lF6uP1ZbCp2VsBWmneo+1b59GbbA==
+  files (unmodified copies of the package's woff2 files): funnel-sans-latin-ext-400-normal.woff2 funnel-sans-latin-400-normal.woff2 funnel-sans-latin-ext-500-normal.woff2 funnel-sans-latin-500-normal.woff2
+  licence: licenses/funnel-sans.txt (the package's LICENSE, unmodified)
+
+caveat: @fontsource/caveat@5.3.0
+  integrity sha512-eHTfzQxFSW9ABERRLNruHoNJmKed2J7pqTUc5lp4a4POMgXGKpxmWj3d9Hz10kmAg6iuTTLe6UagbA4bnsmfQw==
+  files (unmodified copies of the package's woff2 files): caveat-cyrillic-ext-500-normal.woff2 caveat-cyrillic-500-normal.woff2 caveat-latin-ext-500-normal.woff2 caveat-latin-500-normal.woff2
+  licence: licenses/caveat.txt (the package's LICENSE, unmodified)
+
+hanken-grotesk: @fontsource/hanken-grotesk@5.3.0
+  integrity sha512-eiqAvcMT88tCMCBzn6qKgMHGLJKq3NEXO3+0y9JXqzyty2U6KZnaGtbfiQgzRAXfwFp559hJQ0zBgJ6d89AuTA==
+  files (unmodified copies of the package's woff2 files): hanken-grotesk-cyrillic-ext-400-normal.woff2 hanken-grotesk-vietnamese-400-normal.woff2 hanken-grotesk-latin-ext-400-normal.woff2 hanken-grotesk-latin-400-normal.woff2 hanken-grotesk-cyrillic-ext-500-normal.woff2 hanken-grotesk-vietnamese-500-normal.woff2 hanken-grotesk-latin-ext-500-normal.woff2 hanken-grotesk-latin-500-normal.woff2 hanken-grotesk-cyrillic-ext-600-normal.woff2 hanken-grotesk-vietnamese-600-normal.woff2 hanken-grotesk-latin-ext-600-normal.woff2 hanken-grotesk-latin-600-normal.woff2 hanken-grotesk-cyrillic-ext-700-normal.woff2 hanken-grotesk-vietnamese-700-normal.woff2 hanken-grotesk-latin-ext-700-normal.woff2 hanken-grotesk-latin-700-normal.woff2
+  licence: licenses/hanken-grotesk.txt (the package's LICENSE, unmodified)
+
+source-serif-4: @fontsource-variable/source-serif-4@5.3.1
+  integrity sha512-4Rtay22SC4lMvw11r/+9kxANB6P3M0X8s1NudBC2v0J1KU2y3DcMoNcT3lBoZ/CqLirzf+StlO6UlJilyrvaUg==
+  files (unmodified copies of the package's woff2 files): source-serif-4-cyrillic-ext-opsz-normal.woff2 source-serif-4-cyrillic-opsz-normal.woff2 source-serif-4-greek-opsz-normal.woff2 source-serif-4-vietnamese-opsz-normal.woff2 source-serif-4-latin-ext-opsz-normal.woff2 source-serif-4-latin-opsz-normal.woff2
+  licence: licenses/source-serif-4.txt (the package's LICENSE; its first line, a placeholder, replaced by the font's own copyright notice: © 2014 - 2021 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name ‘Source’.)
+
+source-sans-3: @fontsource/source-sans-3@5.3.1
+  integrity sha512-O3YxvbotUOgYI2Zx0bBcEMNjnwitRf9P2+9pd54sMoux1NHrdXnMwZusw2P78lFhEzOPN4glOEQmX0ASaS68uA==
+  files (unmodified copies of the package's woff2 files): source-sans-3-cyrillic-ext-400-normal.woff2 source-sans-3-cyrillic-400-normal.woff2 source-sans-3-greek-ext-400-normal.woff2 source-sans-3-greek-400-normal.woff2 source-sans-3-vietnamese-400-normal.woff2 source-sans-3-latin-ext-400-normal.woff2 source-sans-3-latin-400-normal.woff2 source-sans-3-cyrillic-ext-500-normal.woff2 source-sans-3-cyrillic-500-normal.woff2 source-sans-3-greek-ext-500-normal.woff2 source-sans-3-greek-500-normal.woff2 source-sans-3-vietnamese-500-normal.woff2 source-sans-3-latin-ext-500-normal.woff2 source-sans-3-latin-500-normal.woff2 source-sans-3-cyrillic-ext-600-normal.woff2 source-sans-3-cyrillic-600-normal.woff2 source-sans-3-greek-ext-600-normal.woff2 source-sans-3-greek-600-normal.woff2 source-sans-3-vietnamese-600-normal.woff2 source-sans-3-latin-ext-600-normal.woff2 source-sans-3-latin-600-normal.woff2 source-sans-3-cyrillic-ext-700-normal.woff2 source-sans-3-cyrillic-700-normal.woff2 source-sans-3-greek-ext-700-normal.woff2 source-sans-3-greek-700-normal.woff2 source-sans-3-vietnamese-700-normal.woff2 source-sans-3-latin-ext-700-normal.woff2 source-sans-3-latin-700-normal.woff2
+  licence: licenses/source-sans-3.txt (the package's LICENSE; its first line, a placeholder, replaced by the font's own copyright notice: © 2023 Adobe (http://www.adobe.com/), with Reserved Font Name ‘Source’)
+
+ibm-plex-sans: @fontsource/ibm-plex-sans@5.3.0
+  integrity sha512-CbE4CbbEEZJX860XyUiRpsksXIQR8Rp2XDva2VO53NJox9tVNtusrysd2x5YkUEY3ErQ66W1IiiQL8/wihhw5w==
+  files (unmodified copies of the package's woff2 files): ibm-plex-sans-cyrillic-ext-400-normal.woff2 ibm-plex-sans-cyrillic-400-normal.woff2 ibm-plex-sans-greek-400-normal.woff2 ibm-plex-sans-vietnamese-400-normal.woff2 ibm-plex-sans-latin-ext-400-normal.woff2 ibm-plex-sans-latin-400-normal.woff2 ibm-plex-sans-cyrillic-ext-500-normal.woff2 ibm-plex-sans-cyrillic-500-normal.woff2 ibm-plex-sans-greek-500-normal.woff2 ibm-plex-sans-vietnamese-500-normal.woff2 ibm-plex-sans-latin-ext-500-normal.woff2 ibm-plex-sans-latin-500-normal.woff2 ibm-plex-sans-cyrillic-ext-600-normal.woff2 ibm-plex-sans-cyrillic-600-normal.woff2 ibm-plex-sans-greek-600-normal.woff2 ibm-plex-sans-vietnamese-600-normal.woff2 ibm-plex-sans-latin-ext-600-normal.woff2 ibm-plex-sans-latin-600-normal.woff2 ibm-plex-sans-cyrillic-ext-700-normal.woff2 ibm-plex-sans-cyrillic-700-normal.woff2 ibm-plex-sans-greek-700-normal.woff2 ibm-plex-sans-vietnamese-700-normal.woff2 ibm-plex-sans-latin-ext-700-normal.woff2 ibm-plex-sans-latin-700-normal.woff2
+  licence: licenses/ibm-plex-sans.txt (the package's LICENSE, unmodified)
+
+public-sans: @fontsource/public-sans@5.3.0
+  integrity sha512-kjODI0S3zdv0mBYCIQ8TbBayaiqszpc2UbhJiO3bjIqVVXzcWfHSt2o3WBCLOY3juaGaQoy4MoWCcgmfI5hCuA==
+  files (unmodified copies of the package's woff2 files): public-sans-vietnamese-400-normal.woff2 public-sans-latin-ext-400-normal.woff2 public-sans-latin-400-normal.woff2 public-sans-vietnamese-500-normal.woff2 public-sans-latin-ext-500-normal.woff2 public-sans-latin-500-normal.woff2 public-sans-vietnamese-600-normal.woff2 public-sans-latin-ext-600-normal.woff2 public-sans-latin-600-normal.woff2 public-sans-vietnamese-700-normal.woff2 public-sans-latin-ext-700-normal.woff2 public-sans-latin-700-normal.woff2
+  licence: licenses/public-sans.txt (the package's LICENSE, unmodified)
+
+manrope: @fontsource/manrope@5.3.0
+  integrity sha512-obJ1Dv3+uCA6HlHgW8u4BGYxJR9In2HW7gjJhlflEvkrj1X1iSEwu0fToL+JYGC/FEKFfIz1sBuPduvcL2gIAA==
+  files (unmodified copies of the package's woff2 files): manrope-cyrillic-ext-400-normal.woff2 manrope-cyrillic-400-normal.woff2 manrope-greek-400-normal.woff2 manrope-vietnamese-400-normal.woff2 manrope-latin-ext-400-normal.woff2 manrope-latin-400-normal.woff2 manrope-cyrillic-ext-500-normal.woff2 manrope-cyrillic-500-normal.woff2 manrope-greek-500-normal.woff2 manrope-vietnamese-500-normal.woff2 manrope-latin-ext-500-normal.woff2 manrope-latin-500-normal.woff2 manrope-cyrillic-ext-600-normal.woff2 manrope-cyrillic-600-normal.woff2 manrope-greek-600-normal.woff2 manrope-vietnamese-600-normal.woff2 manrope-latin-ext-600-normal.woff2 manrope-latin-600-normal.woff2 manrope-cyrillic-ext-700-normal.woff2 manrope-cyrillic-700-normal.woff2 manrope-greek-700-normal.woff2 manrope-vietnamese-700-normal.woff2 manrope-latin-ext-700-normal.woff2 manrope-latin-700-normal.woff2
+  licence: licenses/manrope.txt (the package's LICENSE, unmodified)
+
+pinyon-script: @fontsource/pinyon-script@5.3.0
+  integrity sha512-ilhy4l5apzyDkfuKb7PZBUT5Sf6nfxucdXT5TQ0wQDyWtDPlouLy1lQq3lMEPk1lPsHHVrd11EkPnEG8FqDgUA==
+  files (unmodified copies of the package's woff2 files): pinyon-script-vietnamese-400-normal.woff2 pinyon-script-latin-ext-400-normal.woff2 pinyon-script-latin-400-normal.woff2
+  licence: licenses/pinyon-script.txt (the package's LICENSE, unmodified)
+
+mrs-saint-delafield: @fontsource/mrs-saint-delafield@5.3.0
+  integrity sha512-OH6pmSgyh8CqpiFmAxthdrlhreJj2jt49kk+NpEZ4UMRrSOcF7qxF1AT0QNxuVVCQWy4h5TOIvep7Hglenrtig==
+  files (unmodified copies of the package's woff2 files): mrs-saint-delafield-latin-ext-400-normal.woff2 mrs-saint-delafield-latin-400-normal.woff2
+  licence: licenses/mrs-saint-delafield.txt (the package's LICENSE, unmodified)
+
+nothing-you-could-do: @fontsource/nothing-you-could-do@5.3.0
+  integrity sha512-695oxA7Odedd4rqN9aDhgVUwtyYhfmIJH02y32g/B0yoaVMRwTCZe3TYFt8LodpKeN/8v5w+svcyde0eBBE28g==
+  files (unmodified copies of the package's woff2 files): nothing-you-could-do-latin-400-normal.woff2
+  licence: licenses/nothing-you-could-do.txt (the package's LICENSE, unmodified)
+
+bad-script: @fontsource/bad-script@5.3.0
+  integrity sha512-7MElotXA5LHyvyElVXnwPpT71wYSKLmpvm7TV0e4ahaRP6D1vXocyfHOgENi9MHgRmGxhmz7Gr1fDuji0MNvkQ==
+  files (unmodified copies of the package's woff2 files): bad-script-cyrillic-ext-400-normal.woff2 bad-script-cyrillic-400-normal.woff2 bad-script-vietnamese-400-normal.woff2 bad-script-latin-ext-400-normal.woff2 bad-script-latin-400-normal.woff2
+  licence: licenses/bad-script.txt (the package's LICENSE, unmodified)
+
+mr-dafoe: @fontsource/mr-dafoe@5.3.0
+  integrity sha512-zYTNXnERIkYWqFDTOaw5Z5xL9H1twFhAhFwxFIEWA/Y+dt0E3XpySsFFxhiOElIZUAOMuVvxrd/s976G/3cEzg==
+  files (unmodified copies of the package's woff2 files): mr-dafoe-latin-ext-400-normal.woff2 mr-dafoe-latin-400-normal.woff2
+  licence: licenses/mr-dafoe.txt (the package's LICENSE, unmodified)
