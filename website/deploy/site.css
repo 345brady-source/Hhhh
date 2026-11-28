@@ -41,7 +41,11 @@ p { margin: 0; }
 /* masthead */
 .mast { background: var(--navy); color: var(--on-navy); margin-top: calc(-1 * env(safe-area-inset-top, 0px)); padding-top: env(safe-area-inset-top, 0px); }
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 26px; border-bottom: 1px solid rgba(241,235,223,.12); }
-.brand { text-decoration: none; display: grid; gap: 6px; justify-items: start; }
+.brand { text-decoration: none; display: flex; align-items: center; gap: 14px; }
+.brand-mark { width: 38px; height: 38px; flex: none; display: block; }
+.brand-text { display: grid; gap: 6px; justify-items: start; }
+.foot-brand { display: inline-flex; align-items: center; gap: 10px; }
+.foot-mark { width: 18px; height: 18px; flex: none; }
 .brand b { font: 400 21px/1 var(--display); letter-spacing: .24em; }
 .brand b i { font-style: normal; color: var(--gold-2); }
 .brand span { font: 500 10px/1 var(--body); letter-spacing: .38em; color: var(--on-navy-2); }
