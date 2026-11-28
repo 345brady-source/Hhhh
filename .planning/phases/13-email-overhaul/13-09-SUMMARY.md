@@ -77,3 +77,27 @@ FAIL managed each of the three pages loads help.js once, right after coinvestor.
 Server tests in that run: 607 of 607 (# tests 607, # pass 607, # fail 0). Steps before HELP CHAT passed. Fixed in f29a9c2
 (emails-ui.js now loads right after help.js); HELP CHAT 10, HELP PREVIEW 6, EMAILS PAGE 8 PASS on f29a9c2. The run was stopped
 there rather than left two more hours, because every later step would have to run again on the fixed tree anyway.
+
+### Gate13 run 2 (every phase, HEAD 6655644): GATE_EXIT=0, 103 "GATE ok", 0 FAIL
+```
+GATE ok   server tests 607 = base 607 + 0 declared
+GATE ok   WAYS OUT (7)
+GATE ok   HELP PREVIEW (6)
+GATE ok   EMAILS PAGE
+GATE_EXIT=0
+```
+
+### Gate16 run 1 (GATE16_PHASES="15", HEAD 6655644): GATE_EXIT=1
+```
+GATE FAIL SERVER MODE (15)
+GATE FAIL ROLES TABLE
+```
+- ROLES TABLE (my change): "FAIL pages every menu page has a row or is listed as taking the default :: console-emails has no
+  row and is not in DEFAULT_PAGES". Fixed in 756488d (one row in assets/js/roles.js); ROLES TABLE: PASS (cases run: 3); server
+  tests 607/607.
+- SERVER MODE include-tax (a check I touched only with the B1b setup line): "FAIL include-tax include-tax: the snapshot carries
+  the flag, the offering and the form's pre-fill, and no taxpayer ID, bank or other record detail" (the printed invitation and
+  investor satisfy the visible conditions, so one of !!snap.offering, sj without '7318', or sj without routing/"account"/
+  tinLast4 failed; the line does not say which). Rerun alone twice on the same tree: "SERVER MODE: PASS (parts run: 1)" both
+  times; it also passed in batch 2 and in gate13 run 2. Intermittent; the postal address the setup adds
+  ('1 Harbor Way, Boston, MA 02110') holds none of those strings. Not fixed here; reported as open.
