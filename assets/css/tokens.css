@@ -75,6 +75,29 @@
   --shadow-lift: 22px 34px 56px -26px oklch(52% 0.09 220 / 0.42), 2px 4px 8px -2px oklch(40% 0.05 230 / 0.14);
   --shadow: 0 24px 64px -24px oklch(30% 0.06 230 / 0.45), 0 2px 6px -2px oklch(30% 0.05 230 / 0.18);
   --scrim: oklch(23% 0.035 245 / 0.5);
+
+  /* Phase 18 (18-UI-SPEC, D-13): direction B's colour scheme exactly, under names no existing token uses ("Color", light). */
+  --color-paper: #F3F5F8; --color-panel: #FFFFFF; --color-band: #EEF2F7; --color-band-2: #E3EAF3;
+  --color-ink: #0F1B2A; --color-ink-2: #3B4A5E; --color-ink-3: #5B6B80;
+  --color-rule: #D8DEE7; --color-rule-dot: #B9C3D1; --color-edge: #8A94A6;
+  /* the navy frame and what sits on it ("Color": secondary, on frame, frame lines, accent) */
+  --color-night: #0D1B2A; --color-night-2: #1B2D45; --color-night-edge: #2C4262; --color-night-rule: #22344E;
+  --color-on-night: #F5F8FC; --color-on-night-2: #C9D4E3; --color-sky: #8FB3D9;
+  /* links, focus and state ("Color": links and focus, good, warning, destructive) */
+  --color-steel: #3D5A80; --color-focus: #3D5A80; --color-focus-night: #8FB3D9;
+  --color-good: #1F6B4A; --color-warn: #8A5A00; --color-bad: #A12A2A; --color-on-bad: #FFF7F7;
+  /* the spacing scale ("Spacing Scale"): multiples of 4; the --space-<size> names above keep their values */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px;
+  --space-10: 40px; --space-12: 48px; --space-14: 56px; --space-16: 64px; --space-20: 80px;
+  /* the type scale ("Typography"): four sizes and the 12px exception; the --text-* names above keep their values */
+  --type-xs: 12px; --type-s: 14px; --type-m: 16px; --type-l: 24px; --type-xl: 40px;
+  /* the panel system ("The panel system", D-15): the firm's card radius, a lit top edge, an underlay tinted with steel */
+  --radius-panel: var(--r-card); --radius-inner: 10px;
+  --panel-edge: inset 0 1px 0 color-mix(in oklab, var(--color-panel) 92%, transparent);
+  --shadow-panel: 18px 28px 48px -26px color-mix(in oklab, var(--color-steel) 38%, transparent), 2px 3px 6px -2px color-mix(in oklab, var(--color-night) 12%, transparent);
+  --shadow-pop: 0 24px 64px -24px color-mix(in oklab, var(--color-night) 45%, transparent), 0 2px 6px -2px color-mix(in oklab, var(--color-night) 18%, transparent);
+  /* the console's column ("Layout contract" 6.1); --container keeps 1160px, the investor container */
+  --container-cs: 1120px;
 }
 
 /*
@@ -103,6 +126,16 @@
     --shadow-card: none; --shadow-cast: none; --shadow-lift: none;
     --shadow: 0 24px 64px -24px oklch(8% 0.02 245 / 0.8);
     --scrim: oklch(8% 0.02 245 / 0.66);
+    /* Phase 18 dark ("Color", dark): the page goes midnight, the frame stays navy; frame tokens the spec's dark table does
+       not list keep their light values; band-2 and rule-dot are derived from the dark band, rule and ink-3. */
+    --color-paper: #0B1520; --color-panel: #111E2E; --color-band: #16263A;
+    --color-band-2: color-mix(in oklab, var(--color-band) 82%, var(--color-ink-3));
+    --color-ink: #E8EEF5; --color-ink-2: #C3CEDB; --color-ink-3: #9AA8BA;
+    --color-rule: #24354C; --color-rule-dot: color-mix(in oklab, var(--color-rule) 70%, var(--color-ink-3)); --color-edge: #6B7A90;
+    --color-night: #070F19; --color-steel: #8FB3D9; --color-focus: #8FB3D9;
+    --color-good: #86C9A5; --color-warn: #E3BE6E; --color-bad: #E39A9A;
+    /* panels keep their 1px rule edge only */
+    --shadow-panel: none; --panel-edge: none;
   }
 }
 :root[data-theme="dark"] {
@@ -125,4 +158,14 @@
   --shadow-card: none; --shadow-cast: none; --shadow-lift: none;
   --shadow: 0 24px 64px -24px oklch(8% 0.02 245 / 0.8);
   --scrim: oklch(8% 0.02 245 / 0.66);
+  /* Phase 18 dark ("Color", dark): the page goes midnight, the frame stays navy; frame tokens the spec's dark table does
+     not list keep their light values; band-2 and rule-dot are derived from the dark band, rule and ink-3. */
+  --color-paper: #0B1520; --color-panel: #111E2E; --color-band: #16263A;
+  --color-band-2: color-mix(in oklab, var(--color-band) 82%, var(--color-ink-3));
+  --color-ink: #E8EEF5; --color-ink-2: #C3CEDB; --color-ink-3: #9AA8BA;
+  --color-rule: #24354C; --color-rule-dot: color-mix(in oklab, var(--color-rule) 70%, var(--color-ink-3)); --color-edge: #6B7A90;
+  --color-night: #070F19; --color-steel: #8FB3D9; --color-focus: #8FB3D9;
+  --color-good: #86C9A5; --color-warn: #E3BE6E; --color-bad: #E39A9A;
+  /* panels keep their 1px rule edge only */
+  --shadow-panel: none; --panel-edge: none;
 }

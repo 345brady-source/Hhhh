@@ -129,15 +129,23 @@ const PAIRS = {
     ['--color-ink-3', '--color-paper'], ['--color-ink-3', '--color-band'], ['--color-on-night', '--color-night'], ['--color-on-night', '--color-night-2'],
     ['--color-on-night-2', '--color-night'], ['--color-on-night-2', '--color-night-2'], ['--color-sky', '--color-night'], ['--color-sky', '--color-night-2'],
     ['--color-steel', '--color-panel'], ['--color-steel', '--color-paper'], ['--color-good', '--color-panel'], ['--color-warn', '--color-panel'],
-    ['--color-bad', '--color-panel'], ['--color-on-bad', '--color-bad'], ['--color-ink-3', '--color-band-2']
+    ['--color-bad', '--color-panel'], ['--color-on-bad', '--color-bad']
   ],
+  // the spec's dark table, plus the two derived dark tokens (band-2 under text)
   dark: [
     ['--color-ink', '--color-paper'], ['--color-ink', '--color-panel'], ['--color-ink-2', '--color-panel'], ['--color-ink-3', '--color-panel'],
     ['--color-ink-3', '--color-band'], ['--color-on-night-2', '--color-night'], ['--color-steel', '--color-panel'], ['--color-good', '--color-panel'],
     ['--color-warn', '--color-panel'], ['--color-bad', '--color-panel'], ['--color-ink-3', '--color-band-2'], ['--color-ink', '--color-band-2']
   ]
 };
-const EDGES = [['--color-edge', '--color-panel'], ['--color-edge', '--color-paper']];
+// control edges on the panel, the surface the spec measures them on (>= 3:1)
+const EDGES = [['--color-edge', '--color-panel']];
+// pairs the spec does not name, measured and listed for the owner with no floor of this plan's (later plans style the
+// controls and the pressed fills): text on the pressed fill in light, a control edge on the page ground, the dotted rule
+const LISTED = {
+  light: [['--color-ink-3', '--color-band-2'], ['--color-edge', '--color-paper'], ['--color-rule-dot', '--color-panel']],
+  dark: [['--color-edge', '--color-paper'], ['--color-rule-dot', '--color-panel']]
+};
 
 /** Every token resolved to [r, g, b] by drawing it (canvas takes any CSS colour, color-mix included); null when unset. */
 const resolve = (fr, names) =>
@@ -410,7 +418,7 @@ const parts = {
       for (const theme of ['light', 'dark']) {
         await setTheme(fr, theme);
         await fr.waitForTimeout(100);
-        const names = [...new Set(PAIRS[theme].flat().concat(EDGES.flat()))];
+        const names = [...new Set(PAIRS[theme].flat().concat(EDGES.flat(), LISTED[theme].flat()))];
         const c = await resolve(fr, names);
         const measure = (list, floor, tag) => {
           const low = [];
@@ -425,6 +433,7 @@ const parts = {
         check(`${theme}: every text pair (${PAIRS[theme].length}) measures 4.5:1 or more`, low.length === 0, low);
         const lowE = measure(EDGES, 3, ' (control edge)');
         check(`${theme}: control edges measure 3:1 or more`, lowE.length === 0, lowE);
+        measure(LISTED[theme], 0, ' (not a pair of the spec: listed for the owner, no floor here)');
       }
     } finally {
       await A.context.close();

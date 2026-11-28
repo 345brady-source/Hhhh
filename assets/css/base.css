@@ -1,23 +1,51 @@
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: brand · redesign: polish
+ * paper: oklch(97.1% 0.005 255) · accent: oklch(46.6% 0.069 257) · display: Brygada 1918 · body: Ysabeau Office
+ * nav: kept (A's grouped menu in B's navy frame) · signature: the ledger (statement tables, double rule under totals) in complete Refract panels (D-15) · states: default, hover, focus, active, disabled, current
+ * axes: cool-white/old-style-serif/steel · posture: restrained · surface: absolute · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V, the composition is direction A kept by the owner (D-13); variety comes from the ledger and the navy frame, not a new shape */
+/* Hallmark · conflict 19 and 63 (Floor) with owner decision D-02 · the portal's own strings keep their "—" (an empty Unfunded cell, console.js:245) and " · " joins (console.js:330, portal.js:727); D-02 forbids changing words or punctuation, so they stay verbatim and are listed for the owner */
+/* Hallmark · conflict 67 (Floor) with owner decision D-02 · the menu label "AML/KYC" is an acronym in today's menu (console.js:51), not tracked capitals; it stays verbatim */
+/* Hallmark · conflict 9 and 67 (Floor) with owner decision D-14 ("keep the font of a") · column heads, menu group names, figure labels and nav links are set in Ysabeau SC, the small-caps cut direction A used; tracking is removed, the words are the portal's own in sentence case */
+/* Hallmark · waive 7b · white panels and table bodies on the cool-white page · direction B's colour scheme is kept exactly (D-13), and its panels are white */
+/* Hallmark · answered F4 · each page has one filled primary: navy on the console, the sponsor's colour on the investor's pages (.pt) */
+/* Hallmark · answered F7 · the panels do not lift on hover: they are reading surfaces, not controls, and only controls move */
+/* Hallmark · waive 3 · the notice keeps a 4px rule in the sponsor's colour on its left edge · it is where the sponsor's colour sits on the investor's page (D-07) */
+/* Hallmark · waive 24b · four lengths, the 3px text inset of the three field boxes on the page and the 6px edge of the phone signing tray · they set where a signature lands on the document being signed, and this restyle leaves the page geometry exactly where it was */
+/* Hallmark · waive 39b · the text buttons in panel headings and lists stand 22px tall and each carries a 44px or larger hit area through its after box · they read as links in the heading row of a panel, and a taller box would push every heading off its line */
+/* Hallmark · waive 49b · fund and investment names in tables, two lines at most at tablet width · an investment's legal name is the firm's own record and cannot be cut short in the investor portal */
+/* Hallmark · dismissed 41 · brand-ink is only ever set on the brand fill, where it measures 5.3:1 or more for each sample firm in light and dark, and the dark panels named take their ink from the page wrapper in the same token scope */
+/* Hallmark · conflict 37 (Reflex) with owner decision D-14 ("keep the font of a") · four families: Brygada 1918, Ysabeau Office and its small-caps cut Ysabeau SC, which D-14 keeps, and Caveat, the typed signature's face (--font-sign), a signing function the overhaul leaves alone; a waiver is refused because the waiver guard also counts the generic --font-mono */
 /*
  * Base rules shared by every screen: what the design system has already decided, so no page decides it again.
- * Colors, fonts, sizes and timings come from tokens.css.
+ * Colors, fonts, sizes and timings come from tokens.css (phase 18: B's colours, A's faces, the one panel system).
  */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { overflow-x: clip; }
 html { scrollbar-color: var(--fg-3) var(--bg); }
-body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: var(--text-md); line-height: 1.55; -webkit-font-smoothing: antialiased; caret-color: var(--brand); font-variant-ligatures: no-common-ligatures; }
+body { margin: 0; background: var(--color-paper); color: var(--color-ink); font: 400 var(--type-m)/1.5 var(--font-body); font-variant-numeric: lining-nums; -webkit-font-smoothing: antialiased; caret-color: var(--brand); font-variant-ligatures: no-common-ligatures; }
 ::selection { background: color-mix(in oklab, var(--brand) 22%, transparent); color: var(--fg); }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.16em; }
-h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-synthesis: none; letter-spacing: var(--tracking-display); line-height: 1.1; overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
+:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+a { color: var(--color-steel); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+/* Headings: Brygada 1918 at 500 for the standard pair (the firm's own display weight and tracking otherwise) */
+h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight, 500); font-synthesis: none; letter-spacing: var(--tracking-display); line-height: 1.1; overflow-wrap: break-word; min-width: 0; text-wrap: balance; }
+h1 { font-size: var(--type-xl); }
+h2 { font-size: var(--type-l); line-height: 1.2; }
 p { margin: 0; text-wrap: pretty; }
 img, video { max-width: 100%; }
 [hidden] { display: none !important; }
 button, input, select, textarea { font: inherit; color: inherit; }
-.num, td.num { font-variant-numeric: tabular-nums; }
+.num, td.num { font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; }
 .nowrap { white-space: nowrap; }
 .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+/* One panel style, one level (D-15): every content section is a complete box with its own surface and underlay */
+:where(.panel, .cs-panel, .sec, .sheet) { background: var(--color-panel); border: 1px solid var(--color-rule); border-radius: var(--radius-panel); box-shadow: var(--panel-edge), var(--shadow-panel); padding: var(--space-6); margin-bottom: var(--space-8); }
+/* A panel inside a panel draws no box of its own: a rule divides it from what comes before */
+:where(.panel, .cs-panel, .sec, .sheet) :where(.panel, .cs-panel, .sec, .sheet) { background: none; border: 0; border-top: 1px solid var(--color-rule); border-radius: 0; box-shadow: none; padding: 0; }
+@media (max-width: 900px) {
+  :where(.panel, .cs-panel, .sec, .sheet) { padding: var(--space-4); }
+  :where(.panel, .cs-panel, .sec, .sheet) :where(.panel, .cs-panel, .sec, .sheet) { padding: 0; }
+}
 /* Phones: an iPhone enlarges the page when a field with text under 16px takes focus, and does not zoom back. Every text
    field, select and text area is 16px there (the blanks drawn on a document's page are scaled with the page). */
 @media (max-width: 640px) {

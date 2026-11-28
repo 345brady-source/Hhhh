@@ -1,7 +1,3 @@
-/* Hallmark · shape: app screen · genre: atmospheric · theme: Refract (by request)
- * nav: the firm's top bar (portal) and the console menu · signature: the document being signed, on white paper · states: default, hover, focus, active, disabled, filled, over, locked, selected, loading, error · refract: light left out/pool
- * axes: light/grotesk-sans/cool · posture: restrained · contrast: pass · redesign: restyle · v2.0.0 */
-/* Hallmark · waive 24b · four lengths, the 3px text inset of the three field boxes on the page and the 6px edge of the phone signing tray · they set where a signature lands on the document being signed, and this restyle leaves the page geometry exactly where it was */
 /*
  * E-sign: envelope editor (console), signing experience (portal and countersignature), adopt-signature dialog.
  * Page images are always white paper, so anything drawn on them uses paper ink in both themes; the chrome around
