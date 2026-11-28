@@ -18,8 +18,8 @@
   --cv-warn: color-mix(in oklab, var(--warn) 78%, var(--fg)); --cv-warn-soft: color-mix(in oklab, var(--warn) 14%, var(--surface));
   --cv-bad: color-mix(in oklab, var(--bad) 90%, var(--fg)); --cv-bad-soft: color-mix(in oklab, var(--bad) 10%, var(--surface));
   --cv-rec-file: var(--surface-3); --cv-rec-batch: var(--surface-2); --cv-rec-pad: color-mix(in oklab, var(--surface-2) 50%, var(--surface));
-  --cv-font: "Funnel Sans", ui-sans-serif, system-ui, sans-serif;
-  --cv-font-display: "Funnel Display", ui-sans-serif, system-ui, sans-serif;
+  --cv-font: "Ysabeau Office", "Segoe UI", system-ui, sans-serif;
+  --cv-font-display: "Brygada 1918", Georgia, serif;
   --cv-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
   --cv-tracking: -0.032em;
   --cv-r-card: 22px; --cv-r-inner: 12px; --cv-r-sm: 8px; --cv-r-pill: 999px;

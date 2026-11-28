@@ -14,8 +14,10 @@
   /* Type: a fixed 1.2 scale for app screens, and its roles. */
   --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.2rem; --text-xl: 1.44rem; --text-2xl: 1.728rem; --text-3xl: 2.074rem;
   --text-display-s: 1.44rem; --text-display: 1.728rem; --text-section: 1.2rem; --text-title: 1rem; --text-lead: 1rem;
-  --font-display: "Funnel Display", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Funnel Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Faces (18-UI-SPEC "Typography", D-14): the standard pair; brand.js writes a firm's own pair over these two. */
+  --font-display: "Brygada 1918", Georgia, serif;
+  --font-body: "Ysabeau Office", "Segoe UI", system-ui, sans-serif;
+  --font-label: "Ysabeau SC", "Ysabeau Office", system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
   --font-sign: "Caveat", "Segoe Script", "Brush Script MT", cursive;
   --display-weight: 400; --tracking-display: -0.032em;

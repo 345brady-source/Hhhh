@@ -39,7 +39,12 @@ const PINS = [
   { stem: 'mrs-saint-delafield', family: 'Mrs Saint Delafield', pkg: '@fontsource/mrs-saint-delafield', version: '5.3.0', kind: 'static', weights: [400], integrity: 'sha512-OH6pmSgyh8CqpiFmAxthdrlhreJj2jt49kk+NpEZ4UMRrSOcF7qxF1AT0QNxuVVCQWy4h5TOIvep7Hglenrtig==' },
   { stem: 'nothing-you-could-do', family: 'Nothing You Could Do', pkg: '@fontsource/nothing-you-could-do', version: '5.3.0', kind: 'static', weights: [400], integrity: 'sha512-695oxA7Odedd4rqN9aDhgVUwtyYhfmIJH02y32g/B0yoaVMRwTCZe3TYFt8LodpKeN/8v5w+svcyde0eBBE28g==' },
   { stem: 'bad-script', family: 'Bad Script', pkg: '@fontsource/bad-script', version: '5.3.0', kind: 'static', weights: [400], integrity: 'sha512-7MElotXA5LHyvyElVXnwPpT71wYSKLmpvm7TV0e4ahaRP6D1vXocyfHOgENi9MHgRmGxhmz7Gr1fDuji0MNvkQ==' },
-  { stem: 'mr-dafoe', family: 'Mr Dafoe', pkg: '@fontsource/mr-dafoe', version: '5.3.0', kind: 'static', weights: [400], integrity: 'sha512-zYTNXnERIkYWqFDTOaw5Z5xL9H1twFhAhFwxFIEWA/Y+dt0E3XpySsFFxhiOElIZUAOMuVvxrd/s976G/3cEzg==' }
+  { stem: 'mr-dafoe', family: 'Mr Dafoe', pkg: '@fontsource/mr-dafoe', version: '5.3.0', kind: 'static', weights: [400], integrity: 'sha512-zYTNXnERIkYWqFDTOaw5Z5xL9H1twFhAhFwxFIEWA/Y+dt0E3XpySsFFxhiOElIZUAOMuVvxrd/s976G/3cEzg==' },
+  // plan 18-02 (18-UI-SPEC "Fonts", D-14): the default families; a variable row with no `declared` takes the weight range
+  // its package declares
+  { stem: 'brygada-1918', family: 'Brygada 1918', pkg: '@fontsource-variable/brygada-1918', version: '5.3.0', kind: 'wght', styles: ['normal', 'italic'], integrity: 'sha512-BbsFcgXc6HkA8JJs0YMdHe9JxF2aUjOQuSSJIpuz+yv749Kv5KxPkP3L7X6sJZQsFvYZ8WW+m5d12xhqu46SiA==' },
+  { stem: 'ysabeau-office', family: 'Ysabeau Office', pkg: '@fontsource-variable/ysabeau-office', version: '5.3.0', kind: 'wght', integrity: 'sha512-bsfzFCRVg7IP77t5rDLsHYaiCJW7HEn3JgAsh0FEnewsoOXo51+ZMJHxZ8+WVM3M1H3jwtalm1IPNfD7QjCFvg==' },
+  { stem: 'ysabeau-sc', family: 'Ysabeau SC', pkg: '@fontsource/ysabeau-sc', version: '5.3.0', kind: 'static', weights: [500], integrity: 'sha512-CynXun/fBB/uKFxzpNhQJOVvBa5ymhoLWNQMnaR5ZuammZAA3LmmlzTsT9oZzA07AlnLXsuZ4jN7Um0Ow/fmSg==' }
 ];
 
 const args = process.argv.slice(2);
@@ -94,12 +99,13 @@ function rulesOf(pkgDir, cssName, row, tag, style) {
     const body = m[1];
     const src = body.match(/url\(\.\/files\/([^)]+\.woff2)\)/);
     const range = body.match(/unicode-range:\s*([^;]+);/);
+    const weight = body.match(/font-weight:\s*([^;]+);/);
     if (!src) continue;
     const file = src[1];
     const re = new RegExp(`^${row.stem}-(.+)-${tag}-${style}\\.woff2$`);
     const sm = file.match(re);
     if (!sm) continue;
-    out.push({ file, subset: sm[1], range: range ? range[1].trim() : null });
+    out.push({ file, subset: sm[1], range: range ? range[1].trim() : null, weight: weight ? weight[1].trim() : null });
   }
   return out;
 }
@@ -190,6 +196,7 @@ function build(out, tmp) {
       for (const r of rulesOf(dir, s.css, row, s.tag, s.style)) {
         if (!SUBSET_NAMES.includes(r.subset)) continue;
         if (!r.range) throw new Error(`${row.pkg}: ${r.file} has no unicode-range in ${s.css}`);
+        if (!s.weight && !r.weight) throw new Error(`${row.pkg}: ${r.file} has no font-weight in ${s.css}`);
         const from = path.join(dir, 'files', r.file);
         if (!fs.existsSync(from)) throw new Error(`${row.pkg}: ${s.css} names ${r.file}, which the package lacks`);
         fs.copyFileSync(from, path.join(out, 'files', r.file));
@@ -201,7 +208,7 @@ function build(out, tmp) {
             `  font-family: '${row.family}';`,
             `  font-style: ${s.style};`,
             '  font-display: swap;',
-            `  font-weight: ${s.weight};`,
+            `  font-weight: ${s.weight || r.weight};`,
             `  src: url(files/${r.file}) format('woff2');`,
             `  unicode-range: ${r.range};`,
             '}'
