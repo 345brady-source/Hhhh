@@ -133,6 +133,12 @@ section { padding-block: 112px; }
 .close h2 { font-size: clamp(32px, 4vw, 52px); line-height: 1.1; margin-top: 16px; }
 .close .lines { display: grid; gap: 8px; font-size: 18px; color: var(--on-navy-2); justify-items: start; }
 .close .lines a { text-decoration: none; color: var(--on-navy); }
+.close-brand { display: flex; align-items: center; gap: 18px; margin-bottom: 56px; color: var(--on-navy); }
+.close-mark { width: 64px; height: 64px; flex: none; display: block; }
+.close-brand .brand-text b { font: 400 30px/1 var(--display); letter-spacing: .24em; }
+.close-brand .brand-text b i { font-style: normal; color: var(--gold-2); }
+.close-brand .brand-text > span { font: 500 12px/1 var(--body); letter-spacing: .4em; color: var(--on-navy-2); margin-top: 4px; }
+@media (max-width: 600px) { .close-mark { width: 48px; height: 48px; } .close-brand .brand-text b { font-size: 22px; } .close-brand { margin-bottom: 40px; } }
 .close .addr { font-style: normal; color: var(--on-navy-2); line-height: 1.5; margin-bottom: 6px; }
 .close .lines .btn { margin-top: 18px; }
 footer { background: var(--navy); color: var(--on-navy-2); font-size: 13px; border-top: 1px solid rgba(241,235,223,.12); }
