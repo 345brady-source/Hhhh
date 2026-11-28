@@ -251,7 +251,7 @@ button.btn { cursor: pointer; }
 @media (max-width: 980px) { .contact-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; } }
 @media (max-width: 600px) { .field-row { grid-template-columns: minmax(0, 1fr); gap: 0; } .form-panel { padding: 26px 20px; } }
 /* portal feature boxes: icon header, one feature per line */
-.feat-head { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.feat-head { display: block; margin-bottom: 14px; }
 .feat-icon { width: 48px; height: 48px; flex: none; display: grid; place-items: center; border-radius: 14px; background: var(--navy); }
 .feat-icon svg { width: 24px; height: 24px; fill: none; stroke: var(--gold-2); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .feat-head .num { display: block; font: 600 11px/1 var(--body); letter-spacing: .18em; color: var(--gold); }
@@ -266,7 +266,7 @@ button.btn { cursor: pointer; }
 .flow-step { position: relative; background: var(--panel); border: 1px solid var(--rule); border-top: 3px solid var(--gold); border-radius: 18px; box-shadow: var(--edge-light), var(--shadow-panel); padding: 22px 20px 20px; min-width: 0; }
 .flow-step:not(:last-child)::after { content: ""; position: absolute; top: 44px; right: -24px; width: 20px; height: 2px; background: var(--gold); }
 .flow-step:not(:last-child)::before { content: ""; position: absolute; top: 40px; right: -25px; width: 8px; height: 8px; border-top: 2px solid var(--gold); border-right: 2px solid var(--gold); transform: rotate(45deg); }
-.flow-n { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--navy); color: var(--gold-2); font: 400 16px/1 var(--display); }
+.flow-n { display: block; color: var(--gold); font: 400 28px/1 var(--display); }
 .flow-step h3 { font-size: 19px; margin: 14px 0 10px; }
 .flow-step ul { list-style: none; margin: 0; padding: 0; }
 .flow-step li { font-size: 14px; line-height: 1.45; color: var(--ink-2); padding: 7px 0; border-top: 1px solid var(--rule); }
