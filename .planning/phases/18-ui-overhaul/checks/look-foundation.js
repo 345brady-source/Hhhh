@@ -364,14 +364,15 @@ const parts = {
             const el = document.activeElement;
             if (!el || el === document.body || !el.matches(':focus-visible')) return null;
             const s = getComputedStyle(el);
-            return { tag: el.tagName, el: `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : ''}`, style: s.outlineStyle, width: s.outlineWidth, offset: s.outlineOffset };
+            return { tag: el.tagName, menu: !!el.closest('.cs-nav'), el: `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/)[0] : ''}${el.closest('.cs-nav') ? ' (in the menu)' : ''}`, style: s.outlineStyle, width: s.outlineWidth, offset: s.outlineOffset };
           });
           if (r) reached.push(r);
-          if (r && (!hasButton || r.tag === 'BUTTON')) break;
+          if (r && (hasButton ? r.tag === 'BUTTON' : !r.menu)) break;
         }
-        const focus = reached.find((r) => (hasButton ? r.tag === 'BUTTON' : true)) || null;
+        // with no button, the first control of the page's content (the menu's links keep an inset ring, console.css)
+        const focus = reached.find((r) => (hasButton ? r.tag === 'BUTTON' : !r.menu)) || null;
         reached.filter((r) => r !== focus && !(r.style !== 'none' && r.width === '2px' && r.offset === '2px')).slice(0, 5).forEach((r) => console.log(`NOTE ${page}: ${r.el} keeps its own focus ring (${r.style} ${r.width}, offset ${r.offset}): its stylesheet is a later plan's`));
-        check(`${page}: a keyboard-focused ${hasButton ? 'button' : 'control (the screen has no button)'} shows a 2px outline offset 2px`, !!focus && focus.style !== 'none' && focus.width === '2px' && focus.offset === '2px', focus);
+        check(`${page}: a keyboard-focused ${hasButton ? 'button' : 'control of the content (the screen has no button)'} shows a 2px outline offset 2px`, !!focus && focus.style !== 'none' && focus.width === '2px' && focus.offset === '2px', focus);
         const icon = await fr.evaluate(() => {
           const el = document.querySelector('svg.i');
           return el ? getComputedStyle(el).strokeWidth : null;
