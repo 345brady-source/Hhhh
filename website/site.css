@@ -129,6 +129,7 @@ section { padding-block: 112px; }
 .close h2 { font-size: clamp(32px, 4vw, 52px); line-height: 1.1; margin-top: 16px; }
 .close .lines { display: grid; gap: 8px; font-size: 18px; color: var(--on-navy-2); justify-items: start; }
 .close .lines a { text-decoration: none; color: var(--on-navy); }
+.close .addr { font-style: normal; color: var(--on-navy-2); line-height: 1.5; margin-bottom: 6px; }
 .close .lines .btn { margin-top: 18px; }
 footer { background: var(--navy); color: var(--on-navy-2); font-size: 13px; border-top: 1px solid rgba(241,235,223,.12); }
 footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 14px 32px; padding-block: 30px calc(30px + env(safe-area-inset-bottom, 0px)); }
