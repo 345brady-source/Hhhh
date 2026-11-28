@@ -192,6 +192,7 @@ footer a:hover { color: var(--on-navy); }
 @media (max-width: 600px) { .features { grid-template-columns: minmax(0, 1fr); } }
 /* founder */
 .founder { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); gap: 64px; align-items: start; }
+.founder h2 .reg { font-size: .45em; vertical-align: super; line-height: 0; margin-left: 1px; }
 .founder h2 { font-size: clamp(28px, 2.8vw, 36px); line-height: 1.1; margin-top: 16px; }
 .leader-title { font: 600 13px/1.2 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--gold); margin-top: 12px; }
 #experience .principles h3 { font-size: 21px; }
