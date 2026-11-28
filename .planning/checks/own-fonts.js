@@ -58,7 +58,17 @@ const TABLE = [
   { stem: 'mrs-saint-delafield', family: 'Mrs Saint Delafield', weights: [400], styles: ['normal'], subsets: ['latin', 'latin-ext'], pkg: '@fontsource/mrs-saint-delafield@5.3.0', integrity: 'sha512-OH6pmSgyh8CqpiFmAxthdrlhreJj2jt49kk+NpEZ4UMRrSOcF7qxF1AT0QNxuVVCQWy4h5TOIvep7Hglenrtig==' },
   { stem: 'nothing-you-could-do', family: 'Nothing You Could Do', weights: [400], styles: ['normal'], subsets: ['latin'], pkg: '@fontsource/nothing-you-could-do@5.3.0', integrity: 'sha512-695oxA7Odedd4rqN9aDhgVUwtyYhfmIJH02y32g/B0yoaVMRwTCZe3TYFt8LodpKeN/8v5w+svcyde0eBBE28g==' },
   { stem: 'bad-script', family: 'Bad Script', weights: [400], styles: ['normal'], subsets: ['latin', 'latin-ext', 'vietnamese', 'cyrillic', 'cyrillic-ext'], pkg: '@fontsource/bad-script@5.3.0', integrity: 'sha512-7MElotXA5LHyvyElVXnwPpT71wYSKLmpvm7TV0e4ahaRP6D1vXocyfHOgENi9MHgRmGxhmz7Gr1fDuji0MNvkQ==' },
-  { stem: 'mr-dafoe', family: 'Mr Dafoe', weights: [400], styles: ['normal'], subsets: ['latin', 'latin-ext'], pkg: '@fontsource/mr-dafoe@5.3.0', integrity: 'sha512-zYTNXnERIkYWqFDTOaw5Z5xL9H1twFhAhFwxFIEWA/Y+dt0E3XpySsFFxhiOElIZUAOMuVvxrd/s976G/3cEzg==' }
+  { stem: 'mr-dafoe', family: 'Mr Dafoe', weights: [400], styles: ['normal'], subsets: ['latin', 'latin-ext'], pkg: '@fontsource/mr-dafoe@5.3.0', integrity: 'sha512-zYTNXnERIkYWqFDTOaw5Z5xL9H1twFhAhFwxFIEWA/Y+dt0E3XpySsFFxhiOElIZUAOMuVvxrd/s976G/3cEzg==' },
+  // plan 18-02 (18-UI-SPEC "Fonts", D-14): the three default families, every subset the packages have (no greek-ext in any)
+  { stem: 'brygada-1918', family: 'Brygada 1918', weights: [400, 500, 700], declared: '400 700', styles: ['normal', 'italic'], subsets: ['latin', 'latin-ext', 'vietnamese', 'cyrillic', 'cyrillic-ext', 'greek'], pkg: '@fontsource-variable/brygada-1918@5.3.0', integrity: 'sha512-BbsFcgXc6HkA8JJs0YMdHe9JxF2aUjOQuSSJIpuz+yv749Kv5KxPkP3L7X6sJZQsFvYZ8WW+m5d12xhqu46SiA==' },
+  { stem: 'ysabeau-office', family: 'Ysabeau Office', weights: [400, 600], declared: '1 1000', styles: ['normal'], subsets: ['latin', 'latin-ext', 'vietnamese', 'cyrillic', 'cyrillic-ext', 'greek'], pkg: '@fontsource-variable/ysabeau-office@5.3.0', integrity: 'sha512-bsfzFCRVg7IP77t5rDLsHYaiCJW7HEn3JgAsh0FEnewsoOXo51+ZMJHxZ8+WVM3M1H3jwtalm1IPNfD7QjCFvg==' },
+  { stem: 'ysabeau-sc', family: 'Ysabeau SC', weights: [500], styles: ['normal'], subsets: ['latin', 'latin-ext', 'vietnamese', 'cyrillic', 'cyrillic-ext', 'greek'], pkg: '@fontsource/ysabeau-sc@5.3.0', integrity: 'sha512-CynXun/fBB/uKFxzpNhQJOVvBa5ymhoLWNQMnaR5ZuammZAA3LmmlzTsT9oZzA07AlnLXsuZ4jN7Um0Ow/fmSg==' }
+];
+// The families every page links by default (plan 18-02): their stylesheets, and the styles and weights that must load.
+const DEFAULTS = [
+  { stem: 'brygada-1918', family: 'Brygada 1918', loads: ['400', 'italic 400', '500', '700'] },
+  { stem: 'ysabeau-office', family: 'Ysabeau Office', loads: ['400', '600'] },
+  { stem: 'ysabeau-sc', family: 'Ysabeau SC', loads: ['500'] }
 ];
 const ROW = Object.fromEntries(TABLE.map((r) => [r.stem, r]));
 const ROW_OF_FAMILY = Object.fromEntries(TABLE.map((r) => [r.family, r]));
@@ -318,6 +328,17 @@ function covers(range, cp) {
     });
 }
 
+/** The three default families: their stylesheets linked by the page and loaded, every style and weight for latin and latin-ext. */
+async function defaultFaces(check, fr) {
+  const sheets = await sheetsIn(fr, DEFAULTS.map((d) => d.stem));
+  check('the default families\' stylesheets (brygada-1918, ysabeau-office, ysabeau-sc) are linked from <origin>/assets/fonts and loaded', sheets.every((x) => x.present && x.loaded), sheets);
+  const specs = [];
+  for (const d of DEFAULTS) for (const w of d.loads) for (const t of ['Aa', '\u0141\u0142']) specs.push([`${w} 20px "${d.family}"`, t]);
+  const got = await loadFaces(fr, specs);
+  const bad = got.filter((g) => !g.faces || !g.faces.length || g.faces.some((f) => f.status !== 'loaded') || (/^italic/.test(g.font) && !g.faces.some((f) => f.style === 'italic')));
+  check("the default families load for 'Aa' and '\u0141\u0142' (Brygada 1918 400, italic 400, 500, 700; Ysabeau Office 400, 600; Ysabeau SC 500)", bad.length === 0, bad.slice(0, 4));
+}
+
 /** One Typeface choice: its stylesheets loaded from the origin, its families loaded for latin and latin-ext at every weight. */
 async function latinPass(check, fr, net, k, label) {
   const c = CHOICES[k];
@@ -502,6 +523,7 @@ function pagePart(page, size) {
     const { A, fr, net } = await framedFonts(S, size, page);
     try {
       await T.sample(fr, { role: page === 'index.html' ? 'staff' : 'admin' });
+      await defaultFaces(check, fr);
       const keys = await fr.evaluate(() => Object.keys(window.CVPortal.brand.FONTS));
       check(`the Typeface choices are the table's`, JSON.stringify(keys) === JSON.stringify(Object.keys(CHOICES)), keys);
       const choose = async (k) => {
@@ -592,6 +614,7 @@ function servedPart(size) {
       await A.page.waitForFunction(() => window.CVPortal && window.CVPortal.brand && window.CVPortal.signature && document.querySelector('#app'), null, { timeout: 30000 });
       const fr = A.page.mainFrame();
       fr.p10 = { size, A };
+      await defaultFaces(check, fr);
       const keys = await fr.evaluate(() => Object.keys(window.CVPortal.brand.FONTS));
       for (const k of keys.filter((x) => CHOICES[x])) {
         await fr.evaluate((k) => window.CVPortal.brand.apply(Object.assign({ name: 'Own Fonts' }, { font: k })), k);
