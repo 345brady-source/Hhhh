@@ -30,13 +30,30 @@
 //   editor   the field editor with fields marked Review: the sentence above it, the properties sheet with "Confirm
 //            this field"
 // A desktop part compares every element with a run on the tree before when PHONE_LAYOUT_BASE names that run's phone-layout folder.
-//   [PHONE_LAYOUT_BASE=<dir>] NODE_PATH=$(npm root -g) node phone-layout.js [--only sample-phone,sample-desktop,firms-phone,firms-desktop,owner-phone,owner-desktop,editor-phone,editor-desktop]
+// Each desktop screen is also recorded as phase 18's screen record (lib18.record: its words and controls) in
+// ident-<part>.json beside geometry-<part>.json, and every control of its content is tried for reach (its middle on screen
+// or in a sideways scroller, the hit test after scrollIntoView landing on it or its label).
+// PHONE_LAYOUT_18=1 (set by phase 18's gate only) adds the one entry of the owner-approved overhaul (plan 18-02, D-13 to
+// D-17): on a screen whose elements moved, the move is accepted only when every control of the base record is present,
+// the words are identical (screens18.compare, its rules), every control of the content is reachable and the part has no
+// failed check so far; each accepted screen is printed (NOTE ... phase 18 layout change on "<screen>") and its before and
+// after lines are written to desktop-diff-18-<part>.txt for the owner. Without the variable nothing may move, as before.
+// PHONE_LAYOUT_STANDIN=cover, read only together with PHONE_LAYOUT_18=1 and never set by a gate, lays one box over the
+// first desktop screen while its reach is tried (the proof that the reach test fails).
+//   [PHONE_LAYOUT_BASE=<dir>] [PHONE_LAYOUT_18=1] NODE_PATH=$(npm root -g) node phone-layout.js [--only sample-phone,sample-desktop,firms-phone,firms-desktop,owner-phone,owner-desktop,editor-phone,editor-desktop]
 // The last line is "PHONE LAYOUT: PASS (parts run: N)" or "PHONE LAYOUT: FAIL (parts run: N) - <failed parts>".
 const path = require('path');
 const fs = require('fs');
 const Lib = require('./lib.js');
 
 const OUT = path.join(Lib.OUT, 'phone-layout');
+const P18 = process.env.PHONE_LAYOUT_18 === '1';
+const STANDIN = P18 ? process.env.PHONE_LAYOUT_STANDIN || '' : '';
+// phase 18's screen record and comparison (loaded when a desktop screen is measured)
+let x18 = null;
+const L18 = () => x18 || (x18 = require(path.join(__dirname, '../../18-ui-overhaul/checks/lib18.js')));
+// the part running now: its failed checks so far (the phase 18 entry's "the part still works")
+const CURRENT = { failed: () => 0 };
 fs.mkdirSync(OUT, { recursive: true });
 Lib.describeShots([
   [/-signup\.png$/, 'The sign-up page.'],
@@ -77,8 +94,14 @@ const DESKTOP_EXPECTED = [
   // Allowed only on the signing screens: the elements inside the signing bar, the elements around it taller by that line,
   // and the elements below it moved down by one and the same distance (the extra line), at the same left, size and text
   // size. Anything else still fails.
-  { at: /^onboarding: (the tax form to sign|the agreement to sign|the agreement, a field open|Subscription agreement)$/, test: (gone, added) => hintLine(gone, added), why: 'walkthrough 2, earlier failure 14 (the rest), plan 06-35: the signing bar’s hint is shown in full on a desktop; the bar grows by a line and what lies below it moves down by that line' }
+  { at: /^onboarding: (the tax form to sign|the agreement to sign|the agreement, a field open|Subscription agreement)$/, test: (gone, added) => hintLine(gone, added), why: 'walkthrough 2, earlier failure 14 (the rest), plan 06-35: the signing bar’s hint is shown in full on a desktop; the bar grows by a line and what lies below it moves down by that line' },
+  // plan 18-02: used only when process.env.PHONE_LAYOUT_18 === '1' (phase 18's gate); last, so every entry above is tried first
+  { at: /./, phase18: true, test: (gone, added, ctx) => overhaul18(ctx), why: 'phase 18 (D-13 to D-17, the owner-approved regal overhaul): layout may move on the screens of 18-UI-SPEC §11; on each, every element is present, its words are identical (screens18 rules), every control is reachable and the part still works' }
 ];
+/** The phase 18 entry's verdict on one screen: { ok, why } (why: present, words, reachable or works, with the detail). */
+function overhaul18(ctx) {
+  return { ok: false, why: 'not written yet' };
+}
 /** The signing bar grown by its hint's extra line: every change is inside the bar's box, or a move straight down by one shared distance. */
 function hintLine(gone, added) {
   const parse = (x) => {
@@ -245,6 +268,72 @@ function measure(arg) {
   return out;
 }
 
+/**
+ * Every rendered control of the content (lib18.readScreen's: the open dialog, else #view without its frame) tried for
+ * reach, in the frame: its middle on screen after scrollIntoView, or inside a sideways scroller, and the hit test at its
+ * middle landing on it, inside it or on its label. The page's scroll is put back. arg.cover lays one box over the screen
+ * first (PHONE_LAYOUT_STANDIN=cover) and takes it away after.
+ */
+function reachOf(arg) {
+  const FRAME_SEL = '#view .cs-nav, #view .pt-head, #view header, #view footer, #opbar, #demo, #notes';
+  const ACTION_SEL = 'a[href], button, input, select, textarea, summary, [data-action], [tabindex="0"]';
+  const dlg = document.querySelector('#dlg[open]') || Array.from(document.querySelectorAll('dialog[open]')).pop() || null;
+  const root = dlg || document.getElementById('view');
+  if (!root) return [];
+  const frames = dlg ? [] : Array.from(document.querySelectorAll(FRAME_SEL));
+  const rendered = (el) => {
+    if (!el.isConnected || getComputedStyle(el).visibility === 'hidden') return false;
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      if (getComputedStyle(n).display === 'none') return false;
+      if (n.tagName === 'DETAILS' && !n.open && n !== el && !(n.querySelector(':scope > summary') || { contains: () => false }).contains(el)) return false;
+      if (n.tagName === 'DIALOG' && !n.open) return false;
+    }
+    return true;
+  };
+  const scroller = (el) => {
+    for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+      const s = getComputedStyle(n);
+      if (/(auto|scroll)/.test(s.overflowX) && n.scrollWidth > n.clientWidth + 1) return n;
+    }
+    return null;
+  };
+  const name = (el) => `${el.tagName.toLowerCase()}${el.getAttribute('data-action') ? `[${el.getAttribute('data-action')}]` : ''}${el.id ? '#' + el.id : ''} ${String(el.getAttribute('aria-label') || el.innerText || el.value || '').replace(/\s+/g, ' ').trim().slice(0, 40)}`;
+  let box = null;
+  if (arg && arg.cover) {
+    box = document.createElement('div');
+    box.setAttribute('data-standin', 'cover');
+    box.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:transparent';
+    (dlg || document.body).appendChild(box);
+  }
+  const sx = window.scrollX;
+  const sy = window.scrollY;
+  const out = [];
+  for (const el of Array.from(root.querySelectorAll(ACTION_SEL))) {
+    if (frames.some((f) => f.contains(el)) || !rendered(el)) continue;
+    el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+    const r = el.getBoundingClientRect();
+    const mx = r.left + r.width / 2;
+    const my = r.top + r.height / 2;
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    const onScreen = (mx >= 0 && mx <= vw && my >= 0 && my <= vh) || !!scroller(el);
+    const targets = [el].concat(el.labels ? Array.from(el.labels) : [], el.closest('label') ? [el.closest('label')] : []);
+    let hit = false;
+    const probe = (t) => {
+      const q = t.getBoundingClientRect();
+      const x = Math.min(Math.max(q.left + q.width / 2, 0), vw - 1);
+      const y = Math.min(Math.max(q.top + q.height / 2, 0), vh - 1);
+      const at = document.elementFromPoint(x, y);
+      return !!at && (at === t || t.contains(at) || at.contains(t));
+    };
+    for (const t of targets) if (!hit && rendered(t)) hit = probe(t);
+    out.push({ name: name(el), on: onScreen, hit, ok: onScreen && hit });
+  }
+  window.scrollTo(sx, sy);
+  if (box) box.remove();
+  return out;
+}
+
 /** Measure the screen as it stands and keep it under `label`. */
 async function screen(W, label, wait) {
   await W.fr.waitForTimeout(wait == null ? 250 : wait);
@@ -252,6 +341,14 @@ async function screen(W, label, wait) {
   if (m.geo) {
     W.geo[label] = m.geo;
     delete m.geo;
+  }
+  if (W.vp === 'desktop') {
+    W.ident = W.ident || {};
+    W.reach = W.reach || {};
+    W.ident[label] = await L18().record(W.fr, { key: label, size: 'desktop', wait: 0 });
+    const cover = STANDIN === 'cover' && !W.covered;
+    if (cover) W.covered = label;
+    W.reach[label] = await W.fr.evaluate(reachOf, { cover });
   }
   m.at = label;
   W.M.push(m);
@@ -358,6 +455,7 @@ function verdict(check, W) {
     check(`failure 14: every open dialog’s close X stands beside its title (${xs.length} dialogs)`, !under.length, under);
   } else {
     fs.writeFileSync(path.join(OUT, `geometry-${W.part}.json`), JSON.stringify(W.geo));
+    fs.writeFileSync(path.join(OUT, `ident-${W.part}.json`), JSON.stringify(W.ident || {}));
     check(`desktop: the place and size of every element on ${Object.keys(W.geo).length} screens is recorded for comparison with the tree before`, Object.keys(W.geo).length > 0);
     // PHONE_LAYOUT_BASE=<the phone-layout folder of a run on the tree before>: every element on every screen of this part
     // must stand where it stood there, at the same size and text size (a line per element: name, place, size, text size)
@@ -365,6 +463,11 @@ function verdict(check, W) {
     if (baseDir) {
       const f = path.join(baseDir, `geometry-${W.part}.json`);
       const B = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {};
+      const fi = path.join(baseDir, `ident-${W.part}.json`);
+      const BI = fs.existsSync(fi) ? JSON.parse(fs.readFileSync(fi, 'utf8')) : {};
+      const entries = DESKTOP_EXPECTED.filter((e) => !e.phase18 || P18);
+      const diff18 = [];
+      const rejected18 = [];
       const labels = Object.keys(W.geo);
       const missing = labels.filter((k) => !B[k]).concat(Object.keys(B).filter((k) => !W.geo[k]));
       const moved = [];
@@ -388,10 +491,28 @@ function verdict(check, W) {
         const added = now.filter((x) => addedKeys.indexOf(key(x)) >= 0);
         if (!gone.length && !added.length) return;
         // a change the fix makes on every screen size on purpose, named with its reason (DESKTOP_EXPECTED); anything else fails
-        const why = DESKTOP_EXPECTED.find((e) => e.at.test(k) && (e.test ? e.test(gone, added) : gone.concat(added).every((x) => e.el.test(x))));
-        (why ? expected : moved).push({ at: k, why: why ? why.why : undefined, before: gone.slice(0, 4), now: added.slice(0, 4), n: Math.max(gone.length, added.length) });
+        const ctx = { k, base: BI[k], now: (W.ident || {})[k], reach: (W.reach || {})[k] || [], failed: CURRENT.failed() };
+        const why = entries.find((e) => {
+          if (!e.at.test(k)) return false;
+          if (!e.test) return gone.concat(added).every((x) => e.el.test(x));
+          const r = e.test(gone, added, ctx);
+          if (e.phase18) {
+            if (!r.ok) rejected18.push({ at: k, why: r.why });
+            return r.ok;
+          }
+          return r;
+        });
+        if (why && why.phase18) diff18.push({ at: k, gone, added });
+        (why ? expected : moved).push({ at: k, why: why ? why.why : undefined, phase18: !!(why && why.phase18), before: gone.slice(0, 4), now: added.slice(0, 4), n: Math.max(gone.length, added.length) });
       });
-      expected.forEach((e) => console.log(`NOTE ${W.part} desktop change made on purpose on "${e.at}": ${e.why} (before: ${JSON.stringify(e.before)}; now: ${JSON.stringify(e.now)})`));
+      expected.filter((e) => !e.phase18).forEach((e) => console.log(`NOTE ${W.part} desktop change made on purpose on "${e.at}": ${e.why} (before: ${JSON.stringify(e.before)}; now: ${JSON.stringify(e.now)})`));
+      expected.filter((e) => e.phase18).forEach((e) => console.log(`NOTE ${W.part} phase 18 layout change on "${e.at}": before ${JSON.stringify(e.before)}; after ${JSON.stringify(e.now)}`));
+      if (P18) {
+        const lines = [`PHONE LAYOUT, part ${W.part}: the desktop screens whose layout moved under phase 18's entry (PHONE_LAYOUT_18=1), each with every element line before (-) and after (+): name, place, size, text size.`, ''];
+        diff18.forEach((d) => lines.push(`== ${d.at} (${d.gone.length} lines before, ${d.added.length} after)`, ...d.gone.map((x) => `- ${x}`), ...d.added.map((x) => `+ ${x}`), ''));
+        fs.writeFileSync(path.join(OUT, `desktop-diff-18-${W.part}.txt`), lines.join('\n'));
+        rejected18.forEach((r) => check(`desktop phase 18: "${r.at}" ${r.why}`, false));
+      }
       check(`desktop: compared with the tree before, all ${labels.length} screens (${lines} elements) are unchanged: every element in the same place, at the same size and text size${expected.length ? ` (apart from ${expected.length} change${expected.length === 1 ? '' : 's'} made on purpose, listed above)` : ''}`, !missing.length && !moved.length, { screensMissing: missing, screensChanged: moved.length, first: moved.slice(0, 6) });
     }
   }
@@ -894,16 +1015,22 @@ function editorPart(vp) {
   };
 }
 
+/** A part whose failed checks are counted for the phase 18 entry's "the part still works". */
+const counted = (fn) => (ctx) => {
+  let failed = 0;
+  CURRENT.failed = () => failed;
+  return fn(Object.assign({}, ctx, { check: (n, ok, info) => { if (!ok) failed++; ctx.check(n, ok, info); } }));
+};
 Lib.runParts(
   {
-    'sample-phone': samplePart('phone'),
-    'sample-desktop': samplePart('desktop'),
-    'firms-phone': firmsPart('phone'),
-    'firms-desktop': firmsPart('desktop'),
-    'owner-phone': ownerPart('phone'),
-    'owner-desktop': ownerPart('desktop'),
-    'editor-phone': editorPart('phone'),
-    'editor-desktop': editorPart('desktop')
+    'sample-phone': counted(samplePart('phone')),
+    'sample-desktop': counted(samplePart('desktop')),
+    'firms-phone': counted(firmsPart('phone')),
+    'firms-desktop': counted(firmsPart('desktop')),
+    'owner-phone': counted(ownerPart('phone')),
+    'owner-desktop': counted(ownerPart('desktop')),
+    'editor-phone': counted(editorPart('phone')),
+    'editor-desktop': counted(editorPart('desktop'))
   },
   { name: 'PHONE LAYOUT', unit: 'parts', flag: '--only', browser: true }
 );
