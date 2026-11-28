@@ -1,4 +1,4 @@
-// gate: tests 7
+// gate: tests 8
 // The server serves the portal's own pages (plan 15-13, C-07, W-07, W-20): one origin for the pages, the API and the session
 // cookie; a fixed list of files built at start-up, so no request path reaches another file; a content security policy that
 // names every inline script by its SHA-256 and exactly the outside hosts the pages load from; security.txt built from the
@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { createHash } from 'node:crypto';
-import { lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -174,11 +174,12 @@ test("headers: nosniff, no-referrer, no-cache and an ETag on every answer, 304 o
 
 test('outside hosts: the policy names exactly the origins the pages, scripts and stylesheets load from, and no page link', () => {
   const pages = createPages({ env: { SERVE_PORTAL: '1', PUBLIC_URL: PUBLIC } });
-  // The test's own scan: every https address in portal.html, assets/js/*.js and assets/css/*.css, classed by its path.
+  // The test's own scan: every https address in portal.html, assets/js/*.js, assets/css/*.css and the font stylesheets
+  // assets/fonts/*.css, classed by its path.
   const want = { script: new Set(), worker: new Set(), style: new Set(), font: new Set() };
   const texts = [readFileSync(join(ROOT, 'portal.html'), 'utf8')];
-  for (const dir of ['assets/js', 'assets/css'])
-    for (const f of readdirSync(join(ROOT, dir))) if (/\.(js|css)$/.test(f) && lstatSync(join(ROOT, dir, f)).isFile()) texts.push(readFileSync(join(ROOT, dir, f), 'utf8'));
+  for (const dir of ['assets/js', 'assets/css', 'assets/fonts'])
+    for (const f of existsSync(join(ROOT, dir)) ? readdirSync(join(ROOT, dir)) : []) if (/\.(js|css)$/.test(f) && lstatSync(join(ROOT, dir, f)).isFile()) texts.push(readFileSync(join(ROOT, dir, f), 'utf8'));
   const URLS = /https:\/\/([a-z0-9-]+(?:\.[a-z0-9-]+)+)(\/[^\s'"`<>()]*)?/gi;
   let seen = 0;
   for (const text of texts)
@@ -189,11 +190,9 @@ test('outside hosts: the policy names exactly the origins the pages, scripts and
       if (/\.m?js$/.test(path)) want.script.add(origin);
       if (/worker[^/]*\.m?js$/.test(path)) want.worker.add(origin);
       if (/\.(woff2?|ttf|otf)$/.test(path)) want.font.add(origin);
-      if (/\.css$/.test(path) || (origin === 'https://fonts.googleapis.com' && /^\/css2?$/.test(path))) want.style.add(origin);
+      if (/\.css$/.test(path)) want.style.add(origin);
     }
   assert.ok(seen > 10, 'the scan found addresses');
-  // Google's stylesheets name their font files on fonts.gstatic.com.
-  if (want.style.has('https://fonts.googleapis.com')) want.font.add('https://fonts.gstatic.com');
   for (const w of want.worker) want.script.add(w);
   const hosts = (csp, name) => directive(csp, name).filter((t) => t.startsWith('https://')).sort();
   const csp = pages.policy();
@@ -203,12 +202,15 @@ test('outside hosts: the policy names exactly the origins the pages, scripts and
   assert.deepEqual(hosts(csp, 'font-src'), [...want.font].sort(), 'font-src');
   for (const name of ['script-src', 'style-src', 'font-src', 'worker-src', 'connect-src', 'img-src', 'frame-src', 'default-src'])
     assert.ok(!directive(csp, name).some((t) => /irs\.gov|example/.test(t)), `no page link in ${name}`);
-  // Outside hosts the phase allows: the two library hosts the research names and Google Fonts. A new one fails here, so
-  // adding one is a decision, not an accident.
-  const allowed = new Set(['https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net', 'https://fonts.googleapis.com', 'https://fonts.gstatic.com']);
+  // Every font and font stylesheet comes from this origin (quick own-fonts): no outside font host is allowed.
+  assert.deepEqual(directive(csp, 'font-src'), ["'self'", 'data:'], 'font-src');
+  assert.deepEqual(directive(csp, 'style-src'), ["'self'", "'unsafe-inline'"], 'style-src');
+  // Outside hosts allowed: the two library hosts the research names (scripts only). A new one fails here, so adding one,
+  // a font host among them, is a decision, not an accident.
+  const allowed = new Set(['https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net']);
   const named = csp.split(/[\s;]+/).filter((t) => /^https?:\/\//.test(t));
   for (const h of named) assert.ok(allowed.has(h), `outside host ${h} is one the phase allows`);
-  assert.ok(named.includes('https://cdnjs.cloudflare.com') && named.includes('https://fonts.googleapis.com'), 'the hosts the pages load from today are named');
+  assert.ok(named.includes('https://cdnjs.cloudflare.com'), 'the host the pages load from today is named');
 });
 
 test('off: with SERVE_PORTAL unset or 0 nothing is served', () => {
@@ -301,5 +303,37 @@ test('health: each warning exactly when its condition holds, none on a correct s
       for (const [k, v] of Object.entries(r.headers)) assert.ok(!NAMES.test(`${k}: ${v}`), `${p} ${k}`);
       if (p === '/') assert.ok(r.body.toString('utf8').includes(`<script>${INJECTED}</script>`), 'the injected script is the one checked');
     }
+  });
+});
+
+test('own fonts: the font stylesheets and files under assets/fonts are served from this origin with their types and name no outside address', async () => {
+  const dir = join(ROOT, 'assets/fonts');
+  const sheets = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.css') && lstatSync(join(dir, f)).isFile()) : [];
+  assert.ok(sheets.length > 0, 'assets/fonts holds font stylesheets');
+  const pages = createPages({ env: { SERVE_PORTAL: '1', PUBLIC_URL: PUBLIC } });
+  await withPages(pages, async (base) => {
+    let files = 0;
+    for (const f of sheets) {
+      const r = await fetch(`${base}/assets/fonts/${f}`);
+      assert.equal(r.status, 200, f);
+      assert.equal(r.headers.get('content-type'), 'text/css; charset=utf-8', `${f} type`);
+      assert.equal(r.headers.get('x-content-type-options'), 'nosniff', `${f} nosniff`);
+      const body = await r.text();
+      assert.ok(!/https?:\/\//i.test(body), `${f} names no address`);
+      const urls = [...body.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)].map((m) => m[1]);
+      assert.ok(urls.length > 0, `${f} names its files`);
+      for (const u of urls) {
+        const p = new URL(u, `${base}/assets/fonts/${f}`).pathname;
+        assert.ok(p.startsWith('/assets/fonts/files/'), `${f}: ${u} lies under /assets/fonts/files/`);
+        const fr = await fetch(base + p);
+        assert.equal(fr.status, 200, p);
+        assert.equal(fr.headers.get('content-type'), 'font/woff2', `${p} type`);
+        await fr.arrayBuffer();
+        files += 1;
+      }
+    }
+    assert.ok(files > 0, 'font files were fetched');
+    // Licence and source texts stay in the repository: the server serves no .txt.
+    for (const p of ['/assets/fonts/SOURCE.txt', '/assets/fonts/licenses/caveat.txt']) assert.equal((await fetch(base + p)).status, 404, p);
   });
 });
